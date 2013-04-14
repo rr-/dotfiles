@@ -316,7 +316,7 @@ Launch_Media::FRun("ahk_class {97E27FAA-C0B3-4b8e-A693-ED7881E99FC1}", "C:\progr
 #IfWinActive ahk_class CabinetWClass
 	;new folder
 	^n::
-		Send {Alt down}f{Alt up}wf
+		Send {AppsKey}wf
 		return
 #IfWinActive
 
