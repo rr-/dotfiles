@@ -9,8 +9,7 @@ for file in "$@"; do
 	mul=(2 2 5 4 3)
 	idx=(14 3 6 8 2)
 	checksum=''
-	for i in {0..4}
-	do
+	for i in {0..4}; do
 		a=${add[@]:$i:1}
 		m=${mul[@]:$i:1}
 		x=${idx[@]:$i:1}
@@ -20,21 +19,16 @@ for file in "$@"; do
 	done
 
 	url="http://napiprojekt.pl/unit_napisy/dl.php?l=PL&f=$md5&t=$checksum&v=other&kolejka=false&nick=&pass=&napios=posix"
-	tmpfile=$(mktemp)
+	tmpfile="$(mktemp)"
 	wget "$url" -qO "$tmpfile"
 
-	if [[ $(head "$tmpfile" -c 3) == "NPc" ]]; then
+	if [[ "$(head "$tmpfile" -c 3)" == "NPc" ]]; then
 		echo "Subtitles not found."
 	else
-		outfile=${file%.*}.sub
+		outfile="${file%.*}.sub"
 		napipass="iBlm8NTigvru0Jr0"
 		/usr/bin/7z x -q -y -so -p"$napipass" "$tmpfile" > "$outfile"
-		if [[ $? -eq 0 ]]
-		then
-			echo "Subtitles stored OK."
-		else
-			echo "Error extracting."
-		fi
+		[[ $? -eq 0 ]] && echo "Subtitles stored OK." || echo "Error extracting."
 	fi
 
 	rm "$tmpfile"

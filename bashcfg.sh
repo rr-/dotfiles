@@ -1,7 +1,9 @@
 #the one and only editor
 EDITOR=vim
 export EDITOR
-alias editor=$EDITOR
+alias editor="$EDITOR"
+
+. config.ini
 
 #useful PATH
 export PATH=${PATH}:$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
@@ -16,7 +18,7 @@ shopt -s checkwinsize #check the window size after each command and, if necessar
 #cool command prompt
 case "$TERM" in
 xterm*|rxvt|linux|screen*)
-	if [ $(hostname) = "burza" ]; then
+	if [ "$(hostname)" = "$server" ]; then
 		COL='\[\e[0;36m\]'
 	else
 		COL='\[\e[1;31m\]'
