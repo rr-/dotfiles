@@ -360,22 +360,6 @@ MakeScreen(arguments)
 		return
 #IfWinActive
 
-;putty
-#IfWinActive ahk_class PuTTY
-	;putty ctrl+alt+pageup/pagedown
-	^!PgUp::SendInput {Escape}:tabprev{Return}
-	^!PgDn::SendInput {Escape}:tabnext{Return}
-	;putty pasting
-	+Numpad0::
-	+NumpadIns::
-	+Insert::
-		WinGetPos, winX, winY, winW, winH
-		tempX := winX+(winW//2)
-		tempY := winY+(winH//2)
-		MouseClick, Right, %tempX%, %tempY%
-		return
-#IfWinActive
-
 ;adobe products
 #IfWinActive ahk_group adobe
 	~LAlt::return
