@@ -20,7 +20,7 @@ find "$transit_root_dir" -type f -print0|while read -d '' -r src_file; do
 	#check image size
 	if [[ "$src_file" =~ .*\.(jpg|png) ]]; then
 		dimensions=$(identify -format '%w*%h' "$src_file" 2>/dev/nll)
-		if [ $? -eq "0" ]; then
+		if [ $? -eq 0 ]; then
 			size=$(echo "$dimensions"|bc)
 			if [ "$size" -lt "$min_size" ]; then
 				echo "$dimensions < $min_width*$min_height"
