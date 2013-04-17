@@ -49,17 +49,6 @@ RandomFileName()
 	return fileName
 }
 
-;replace stuff in clipboard when it changes
-OnClipboardChange:
-{
-	if (A_EventInfo == 1) and (SubStr(clipboard, 1, 7) == "http://")
-	{
-		StringReplace, clipboard, clipboard, `%5b, [, All
-		StringReplace, clipboard, clipboard, `%5d, ], All
-	}
-	return
-}
-
 
 
 ;check for cygwin path
@@ -362,3 +351,16 @@ Launch_Media::FRun("ahk_class {97E27FAA-C0B3-4b8e-A693-ED7881E99FC1}", "C:\progr
 	~LAlt::return
 	LAlt UP::Send {Escape}
 #IfWinActive
+
+
+return
+;replace stuff in clipboard when it changes
+OnClipboardChange:
+{
+	if (A_EventInfo == 1) and (SubStr(clipboard, 1, 7) == "http://")
+	{
+		StringReplace, clipboard, clipboard, `%5b, [, All
+		StringReplace, clipboard, clipboard, `%5d, ], All
+	}
+	return
+}
