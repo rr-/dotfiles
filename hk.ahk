@@ -181,15 +181,29 @@ Launch_Media::FRun("ahk_class {97E27FAA-C0B3-4b8e-A693-ED7881E99FC1}", "C:\progr
 
 ;web browser - activate/run
 ^!;::
-	IfWinExist, Mozilla Firefox
+	if WinExist("Mozilla Firefox")
 	{
 		WinShow
 		WinActivate
 		Send, !d
 	}
+	else if WinExist("ahk_class Chrome_WidgetWin_1")
+	{
+		WinActivate
+		ControlFocus, Chrome_OmniboxView1
+		SendInput, {Home}+{End}
+	}
 	else
 	{
-		Run, "C:\Program Files (x86)\Mozilla Firefox\firefox.exe"
+		BrowserPath = C:\Program Files (x86)\Mozilla Firefox\firefox.exe
+		IfNotExist %BrowserPath%
+		{
+			BrowserPath = "C:\Users\vleeshue\AppData\Local\Google\Chrome\Application\chrome.exe"
+		}
+		IfExist %BrowserPath%
+		{
+			Run, %BrowserPath%
+		}
 	}
 	return
 
