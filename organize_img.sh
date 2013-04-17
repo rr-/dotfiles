@@ -1,19 +1,17 @@
 #!/bin/bash
-desktop=luna
-server=burza
-user=rr-
+. config.ini
 [ `hostname` != $desktop ] && echo "Must be run on $desktop" 1>&2 && exit 1
 
 shopt -s nocasematch
-remote_root_dir='/home/rr-/img/dead/'
-transit_root_dir='/cygdrive/z/hub/img/'
-dst_root_dir='/cygdrive/z/img/net/'
+remote_root_dir=/home/$user/img/dead/
+transit_root_dir=/cygdrive/z/hub/img/
+dst_root_dir=/cygdrive/z/img/net/
 min_width=500
 min_height=500
 min_size=$[$min_width*$min_height]
 
 #download the images
-rsync -avz --remove-source-files "$server:$remote_root_dir" "$transit_root_dir"
+rsync -avz --remove-source-files "$user@$server:$remote_root_dir" "$transit_root_dir"
 
 #distribute the images
 find "$transit_root_dir" -type f -print0|while read -d '' -r src_file
@@ -44,4 +42,4 @@ done
 
 #remove empty directores
 find "$transit_root_dir/*" -depth -type d -exec rmdir --ignore-fail-on-non-empty "{}" \;
-ssh $server "bash -c 'find \"$remote_root_dir/*\" -depth -type d -exec rmdir --ignore-fail-on-non-empty \"{}\" \;'"
+ssh "$user@$server" "bash -c 'find \"$remote_root_dir/*\" -depth -type d -exec rmdir --ignore-fail-on-non-empty \"{}\" \;'"
