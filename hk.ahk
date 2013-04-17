@@ -14,14 +14,43 @@ CoordMode, Mouse, Screen
 CoordMode, ToolTip, Screen
 OldTicks = 0
 
+;check for cygwin path
+CygPath = C:\Program Files (x86)\cygwin
+IfNotExist %CygPath%
+	CygPath = C:\Cygwin
+
+BrowserPath = C:\Program Files (x86)\Mozilla Firefox\firefox.exe
+IfNotExist %BrowserPath%
+	BrowserPath = "C:\Users\vleeshue\AppData\Local\Google\Chrome\Application\chrome.exe"
+
+WTWPath = C:\Program Files\WTW\WTW.exe
+IfNotExist %WTWPath%
+	WTWPath = C:\Program Files\K2T\WTW\WTW.exe
+
 GroupAdd, adobe, ahk_class OWL.DocumentWindow
 GroupAdd, adobe, ahk_class illustrator
 GroupAdd, adobe, ahk_class PSViewC
 GroupAdd, adobe, ahk_class Photoshop
 GroupAdd, adobe, Photoshop
 
-;fun functions
-;activate/run
+return
+
+
+
+;replace stuff in clipboard when it changes
+OnClipboardChange:
+{
+	if (A_EventInfo == 1) and (SubStr(clipboard, 1, 7) == "http://")
+	{
+		StringReplace, clipboard, clipboard, `%5b, [, All
+		StringReplace, clipboard, clipboard, `%5d, ], All
+	}
+	return
+}
+
+;declare some fun functions...
+
+;activate/run a program
 FRun(window, path, folder)
 {
 	if (!window or !WinExist(window))
@@ -49,62 +78,55 @@ RandomFileName()
 	return fileName
 }
 
-
-
-;check for cygwin path
-CygPath = C:\Program Files (x86)\cygwin
-IfNotExist %CygPath%
+;calling upload script
+UploadFiles()
 {
-	CygPath = C:\Cygwin
+	ToolTip, Uploading files..., -1920+50, 50
+	RunWait, %CygPath%\bin\mintty.exe "/bin/bash -l -c send_to_pinkyard.py|clip", %CygPath%
+	ToolTip
+	return
 }
 
-IfExist %CygPath%
+;calling screen script
+MakeScreen(arguments)
 {
-	;cygwin related functions go in here...
-
-	UploadFiles()
+	baseFileName := "Z:\hub\pinkyard\queued\" . RandomFileName()
+	PNGFileName := "Z:\tmp.png"
+	JPGFileName := "Z:\tmp.jpg"
+	RunWait, % "C:\program files (x86)\scrsh.exe --path " . PNGFileName . " " . arguments, "Z:\", Hide
+	if %ErrorLevel% = 0
 	{
-		ToolTip, Uploading files..., -1920+50, 50
-		RunWait, %CygPath%\bin\mintty.exe "/bin/bash -l -c send_to_pinkyard.py|clip", %CygPath%
-		ToolTip
-		return
-	}
-
-	MakeScreen(arguments)
-	{
-		baseFileName := "Z:\hub\pinkyard\queued\" . RandomFileName()
-		PNGFileName := "Z:\tmp.png"
-		JPGFileName := "Z:\tmp.jpg"
-		RunWait, % "C:\program files (x86)\scrsh.exe --path " . PNGFileName . " " . arguments, "Z:\", Hide
-		if %ErrorLevel% = 0
+		RunWait, % "Z:\src\optipng\support\optipng.exe -o1 " . PNGFileName, "Z:\", Hide
+		RunWait, % CygPath . "bin\convert.exe " . PNGFileName . " -quality 80 " . JPGFileName, "Z:\", Hide
+		FileGetSize, JPGFileSize, % JPGFileName
+		FileGetSize, PNGFileSize, % PNGFileName
+		if % PNGFileSize > JPGFileSize
 		{
-			RunWait, % "Z:\src\optipng\support\optipng.exe -o1 " . PNGFileName, "Z:\", Hide
-			RunWait, % CygPath . "bin\convert.exe " . PNGFileName . " -quality 80 " . JPGFileName, "Z:\", Hide
-			FileGetSize, JPGFileSize, % JPGFileName
-			FileGetSize, PNGFileSize, % PNGFileName
-			if % PNGFileSize > JPGFileSize
-			{
-				path1 := JPGFileName
-				path2 := baseFileName . ".jpg"
-			}
-			else
-			{
-				path1 := PNGFileName
-				path2 := baseFileName . ".png"
-			}
-			FileCopy, % path1, % path2
-			FileDelete, % JPGFileName
-			FileDelete, % PNGFileName
-			SoundPlay, Z:\clutter\sounds\ping.wav
+			path1 := JPGFileName
+			path2 := baseFileName . ".jpg"
 		}
-		return path
+		else
+		{
+			path1 := PNGFileName
+			path2 := baseFileName . ".png"
+		}
+		FileCopy, % path1, % path2
+		FileDelete, % JPGFileName
+		FileDelete, % PNGFileName
+		SoundPlay, Z:\clutter\sounds\ping.wav
 	}
+	return path
+}
 
+
+
+#If FileExist(CygPath)
 	;cygwin - activate/run
 	+^![::
 		Run, %CygPath%\bin\mintty.exe --size "120`,40" --position "1050`,45" --class "mintty_thetty" --exec /bin/bash --login -i, %CygPath%
 		return
 	 ^![::
+	 {
 		if (!WinExist("ahk_class mintty_thetty"))
 		{
 			Run, %CygPath%\bin\mintty.exe --size "120`,40" --position "1050`,45" --class "mintty_thetty" --exec /bin/bash --login -i -c 'while /bin/true; do /bin/bash; cygstart "%A_AhkPath%" "Z:\src\hide.ahk"; clear; done', %CygPath%
@@ -117,10 +139,11 @@ IfExist %CygPath%
 		}
 		WinSet, Style, -0x004b0000
 		return
-
+	}
 	;ssh to burza - activate/run
 	+^!]::Run, %CygPath%\bin\mintty.exe --size "200`,70" --position "100`,45" --class mintty_ssh --exec /bin/ssh -p 65000 rr-@sakuya.pl, %CygPath%/bin
 	^!]::
+	{
 		if (!WinExist("ahk_class mintty_ssh"))
 		{
 			Run, %CygPath%\bin\mintty.exe --size "200`,70" --position "100`,45" --class mintty_ssh --exec /bin/ssh -p 65000 rr-@sakuya.pl, %CygPath%/bin
@@ -132,9 +155,10 @@ IfExist %CygPath%
 			WinActivate
 		}
 		return
-
+	}
 	;text editor - activate/run + fix screen position
 	+^!N::
+	{
 		IfWinExist, ahk_class Vim
 		{
 			WinShow
@@ -147,75 +171,69 @@ IfExist %CygPath%
 		}
 		WinMove, , , 100, 100, 1600, 900
 		return
-
+	}
 	+PrintScreen::MakeScreen("-g")
 	!PrintScreen::MakeScreen("-r active-window --shift -8,-8,+16,+16 --force-gui")
 	!#PrintScreen::MakeScreen("-r active-monitor")
 	#PrintScreen::MakeScreen("-r all-monitors")
-
 	+^!U::UploadFiles() ;upload files
-}
 
 
 ;explorer - activate/run
 #E::FRun("ahk_class CabinetWClass", "Z:\", "Z:\")
 
 ;foobar - activate/run
-Launch_Media::FRun("ahk_class {97E27FAA-C0B3-4b8e-A693-ED7881E99FC1}", "C:\program files (x86)\foobar2000\foobar2000.exe", "C:\Program Files (x86)\foobar2000")
+#If FileExist("C:\program files (x86)\foobar2000\foobar2000.exe")
+	Launch_Media::FRun("ahk_class {97E27FAA-C0B3-4b8e-A693-ED7881E99FC1}", "C:\program files (x86)\foobar2000\foobar2000.exe", "C:\Program Files (x86)\foobar2000")
 
-;wtw - activate/run
-+^!M::
-	if (!WinExist("^WTW"))
-	{
-		Run, "C:\Program Files\WTW\WTW.exe" -x, "C:\Program Files\WTW"
-	}
-	else
-	{
-		WinShow
-		WinActivate
-	}
-	return
+;wtw
+#If FileExist(WTWPath)
+	;wtw - activate/run
+	+^!M::
+		if (!WinExist("^WTW"))
+		{
+			Run, %WTWPath% -x
+		}
+		else
+		{
+			WinShow
+			WinActivate
+		}
+		return
 
 ;cdisplayex - activate/run
-^!/::FRun("CDisplayEx", "C:\Program Files (x86)\CDisplayEx\cdisplayex.exe", "Z:\")
+#If FileExist("C:\Program Files (x86)\CDisplayEx\cdisplayex.exe")
+	^!/::FRun("CDisplayEx", "C:\Program Files (x86)\CDisplayEx\cdisplayex.exe", "Z:\")
 
-;web browser - activate/run
-^!;::
-	if WinExist("Mozilla Firefox")
-	{
-		WinShow
-		WinActivate
-		Send, !d
-	}
-	else if WinExist("ahk_class Chrome_WidgetWin_1")
-	{
-		WinActivate
-		ControlFocus, Chrome_OmniboxView1
-		SendInput, {Home}+{End}
-	}
-	else
-	{
-		BrowserPath = C:\Program Files (x86)\Mozilla Firefox\firefox.exe
-		IfNotExist %BrowserPath%
+;browser
+#If FileExist(BrowserPath)
+	;web browser - activate/run
+	^!;::
+		if WinExist("Mozilla Firefox")
 		{
-			BrowserPath = "C:\Users\vleeshue\AppData\Local\Google\Chrome\Application\chrome.exe"
+			WinShow
+			WinActivate
+			Send, !d
 		}
-		IfExist %BrowserPath%
+		else if WinExist("ahk_class Chrome_WidgetWin_1")
 		{
-			Run, %BrowserPath%
+			WinActivate
+			ControlFocus, Chrome_OmniboxView1
+			SendInput, {Home}+{End}
 		}
-	}
-	return
-
+		else
+		{
+			IfExist %BrowserPath%
+				Run, %BrowserPath%
+		}
+		return
 
 ;windows powershell / cmd functionalities
 #IfWinActive ahk_class ConsoleWindowClass
-^V::SendInput {Raw}%clipboard% ;paste on ctrl+v
-^!PgUp::Send ! el{PgUp}{Enter} ;scroll on ctrl+page up
-^!PgDn::Send ! el{PgDn}{Enter} ;scroll on ctrl+page down
+	^V::SendInput {Raw}%clipboard% ;paste on ctrl+v
+	^!PgUp::Send ! el{PgUp}{Enter} ;scroll on ctrl+page up
+	^!PgDn::Send ! el{PgDn}{Enter} ;scroll on ctrl+page down
 #IfWinActive
-
-
 
 ;acdsee functionalities
 #IfWinActive ahk_class ACDBrowser
@@ -257,8 +275,6 @@ Launch_Media::FRun("ahk_class {97E27FAA-C0B3-4b8e-A693-ED7881E99FC1}", "C:\progr
 		Send {Pause}
 		return
 #IfWinActive
-
-
 
 ;other functionalities
 
@@ -365,16 +381,3 @@ Launch_Media::FRun("ahk_class {97E27FAA-C0B3-4b8e-A693-ED7881E99FC1}", "C:\progr
 	~LAlt::return
 	LAlt UP::Send {Escape}
 #IfWinActive
-
-
-return
-;replace stuff in clipboard when it changes
-OnClipboardChange:
-{
-	if (A_EventInfo == 1) and (SubStr(clipboard, 1, 7) == "http://")
-	{
-		StringReplace, clipboard, clipboard, `%5b, [, All
-		StringReplace, clipboard, clipboard, `%5d, ], All
-	}
-	return
-}
