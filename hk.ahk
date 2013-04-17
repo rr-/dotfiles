@@ -68,6 +68,7 @@ IfNotExist %CygPath%
 {
 	CygPath = C:\Cygwin
 }
+
 IfExist %CygPath%
 {
 	;cygwin related functions go in here...
@@ -111,11 +112,13 @@ IfExist %CygPath%
 	}
 
 	;cygwin - activate/run
-	+^![::FRun(false, %CygPath% . "\bin\mintty.exe -", %CygPath% . "\bin")
+	+^![::
+		Run, %CygPath%\bin\mintty.exe --size "120`,40" --position "1050`,45" --class "mintty_thetty" --exec /bin/bash --login -i, %CygPath%
+		return
 	 ^![::
 		if (!WinExist("ahk_class mintty_thetty"))
 		{
-			Run, %CygPath%\bin\mintty.exe --size "120`,40" --position "1050`,45" --class "mintty_thetty" --exec "/bin/bash" --login -i -c 'while /bin/true; do /bin/bash; cygstart "%A_AhkPath%" "Z:\src\hide.ahk"; clear; done', %CygPath%
+			Run, %CygPath%\bin\mintty.exe --size "120`,40" --position "1050`,45" --class "mintty_thetty" --exec /bin/bash --login -i -c 'while /bin/true; do /bin/bash; cygstart "%A_AhkPath%" "Z:\src\hide.ahk"; clear; done', %CygPath%
 			WinWait ahk_class mintty_thetty
 		}
 		else
@@ -124,6 +127,21 @@ IfExist %CygPath%
 			WinActivate
 		}
 		WinSet, Style, -0x004b0000
+		return
+
+	;ssh to burza - activate/run
+	+^!]::Run, %CygPath%\bin\mintty.exe --size "200`,70" --position "100`,45" --class mintty_ssh --exec /bin/ssh -p 65000 rr-@sakuya.pl, %CygPath%/bin
+	^!]::
+		if (!WinExist("ahk_class mintty_ssh"))
+		{
+			Run, %CygPath%\bin\mintty.exe --size "200`,70" --position "100`,45" --class mintty_ssh --exec /bin/ssh -p 65000 rr-@sakuya.pl, %CygPath%/bin
+			WinWait ahk_class mintty_ssh
+		}
+		else
+		{
+			WinShow
+			WinActivate
+		}
 		return
 
 	;text editor - activate/run + fix screen position
@@ -161,26 +179,6 @@ Launch_Media::FRun("ahk_class {97E27FAA-C0B3-4b8e-A693-ED7881E99FC1}", "C:\progr
 	if (!WinExist("^WTW"))
 	{
 		Run, "C:\Program Files\WTW\WTW.exe" -x, "C:\Program Files\WTW"
-	}
-	else
-	{
-		WinShow
-		WinActivate
-	}
-	return
-
-;putty @burza - activate/run + fix screen position
-+^!]::
-	Run, "C:\Program Files (x86)\putty\putty.exe" -load burza, "C:\Program Files (x86)"
-	WinWaitActive ahk_class PuTTY
-	WinMove, , , 100, 100
-	return
-^!]::
-	if (!WinExist("ahk_class PuTTY"))
-	{
-		Run, "C:\Program Files (x86)\putty\putty.exe" -load burza, "C:\Program Files (x86)"
-		WinWait ahk_class PuTTY
-		WinMove, , , 100, 100
 	}
 	else
 	{
