@@ -1,0 +1,1 @@
+WinHide ahk_class mintty_thetty
