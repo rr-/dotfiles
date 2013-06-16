@@ -1,5 +1,5 @@
 #!/usr/bin/python
-#coding: utf-8
+# -*- coding: utf-8 -*-
 
 #Recursively downloads images from popular image boards.
 #Only images will be saved on HDD. Only one thread is supported.

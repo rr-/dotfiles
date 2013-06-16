@@ -1,5 +1,5 @@
 #!/usr/bin/python
-# -*- coding: UTF-8 -*-
+# -*- coding: utf-8 -*-
 #
 #  Copyright (C) 2009 Arkadiusz MiĹ�kiewicz <arekm@pld-linux.org>
 #
@@ -16,7 +16,6 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-
 
 import sys
 import urllib
