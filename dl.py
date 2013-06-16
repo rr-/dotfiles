@@ -3,13 +3,13 @@
 
 #Recursively downloads images from popular image boards.
 #Only images will be saved on HDD. Only one thread is supported.
-#Usage: dl.py service additional arguments
+#Usage: dl.py path-to-save service additional arguments
 #Examples:
-#dl.py 2chan dat 45: 2chan photography board
-#dl.py 2chan cgi k: fetch 2chan wallpapers board
-#dl.py 2chan dat l: fetch 2chan wallpapers 2d board
-#dl.py 2chan img 9: fetch 2chan problem consulting board
-#dl.py 4chan hr: fetch 4chan high resolution board
+#dl.py ./saved/ 2chan dat 45 #chan photography board
+#dl.py ./saved/ 2chan cgi k  #fetch 2chan wallpapers board
+#dl.py ./saved/ 2chan dat l  #fetch 2chan wallpapers 2d board
+#dl.py ./saved/ 2chan img 9  #fetch 2chan problem consulting board
+#dl.py ./saved/ 4chan hr     #fetch 4chan high resolution board
 
 import httplib2, urlparse
 import re
