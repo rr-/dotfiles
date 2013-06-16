@@ -3,7 +3,7 @@
 
 #Recursively downloads images from popular image boards.
 #Only images will be saved on HDD. Only one thread is supported.
-#Usage: dl.py path-to-save service additional arguments
+#Usage: dl.py service additional arguments
 #Examples:
 #dl.py 2chan dat 45: 2chan photography board
 #dl.py 2chan cgi k: fetch 2chan wallpapers board
@@ -16,7 +16,7 @@ import re
 import os, sys, os.path
 from BeautifulSoup import BeautifulSoup as be
 from time import time, strftime
-h = httplib2.Http(timeout=15)
+h = httplib2.Http(timeout=15, disable_ssl_certificate_validation=True)
 
 class main:
 	def __init__(self, savePath, args):
@@ -37,8 +37,9 @@ class main:
 			self.accept = re.compile('(http://.+\.2chan\.net/' + args[1] + '/' + args[2] + '/.+)|(http://.+\.2chan.net/(.+/)?res/.+\.htm)|(http://' + args[1] + '.2chan.net/' + args[2] + '/.+)')
 			self.reject = re.compile('(http://' + args[1] + '.2chan.net/' + args[2] + '/res/futaba.+)')
 		elif args[0] == '4chan' and len(args) >= 2:
-			self.links = [['http://boards.4chan.org/' + args[1] + '/', 0]]
-			self.accept = re.compile('(http://boards\.4chan\.org/[a-z0-9]+/res/\d+$)|(http://boards\.4chan\.org/[a-z0-9]+/\d+$)|(http://images\.4chan\.org/[a-z0-9]+/src/.+)')
+			board = args[1]
+			self.links = [['http://boards.4chan.org/' + board + '/', 0]]
+			self.accept = re.compile('(http://boards\.4chan\.org/' + board + '/res/\d+$)|(http://boards\.4chan\.org/' + board + '/\d+$)|(http://images\.4chan\.org/' + board + '/src/.+)')
 			self.reject = re.compile('-')
 		elif args[0] == 'gelbooru' and len(args) >= 2:
 			self.links = [['http://gelbooru.com/index.php?page=post&s=list&tags=' + args[1] + '&pid=0', 0]]
