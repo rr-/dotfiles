@@ -22,7 +22,6 @@ else
 fi
 
 #aliases w/o colors
-alias unversioned='svn status|grep \?|grep -v logs|grep -v cache'
 alias plen='~/src/tl.py pl en'
 alias enpl='~/src/tl.py en pl'
 alias rfn='date "+%Y%m%d_%H%M%S"'
