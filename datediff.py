@@ -1,4 +1,6 @@
 #!/usr/bin/python
+# -*- coding: utf-8 -*-
+
 import sys
 from calendar import monthrange
 from datetime import datetime, timedelta
