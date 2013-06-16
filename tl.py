@@ -1,5 +1,5 @@
 #!/usr/bin/python
-# coding: utf-8
+# -*- coding: utf-8 -*-
 
 import httplib2
 import json
@@ -10,6 +10,7 @@ try:
 	colorama.init()
 except:
 	pass
+
 h = httplib2.Http(timeout=3)
 
 def getLanguage(code):
@@ -20,15 +21,16 @@ def getLanguage(code):
 	raise ValueError('Unknown language: {0}'.format(code))
 
 def colorize(text, attrs):
-	try:
-		a = ''
-		for attr in attrs:
-			(member1, member2) = attr.split('.')
-			a += getattr(getattr(colorama, member1), member2)
-		return a + text + colorama.Fore.RESET + colorama.Back.RESET + colorama.Style.RESET_ALL
-	except:
-		pass
-	return text
+	if attrs is not None:
+		try:
+			a = ''
+			for attr in attrs:
+				(member1, member2) = attr.split('.')
+				a += getattr(getattr(colorama, member1), member2)
+			return a + text + colorama.Fore.RESET + colorama.Back.RESET + colorama.Style.RESET_ALL
+		except:
+			pass
+	return colorama.Fore.RESET + colorama.Back.RESET + colorama.Style.RESET_ALL
 
 if len(sys.argv) < 4:
 	print >>sys.stderr, 'Too few arguments. Usage:'
