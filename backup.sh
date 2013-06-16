@@ -1,10 +1,15 @@
 #!/bin/sh
+desktop=luna
+server=burza
+user=rr-
+[ `hostname` != $desktop ] && echo "Must be run on $desktop" 1>&2 && exit 1
+
 cmd='rsync -azvK --delete-after -e ssh'
-$cmd rr-@burza:/etc/ ~/clutter/backup-burza/etc
-$cmd rr-@burza:/home/rr-/ ~/clutter/backup-burza/home/rr-/ --exclude 'img/' --exclude 'backup-luna/'
-$cmd rr-@burza:/home/srv/ ~/clutter/backup-burza/home/srv/ --exclude 'www/mal-dev/'
-$cmd ~/clutter/ rr-@burza:~/backup-luna/clutter/ --exclude 'backup-burza/'
-$cmd ~/img/ rr-@burza:~/backup-luna/img/ --exclude 'net/'
-$cmd ~/mgr/ rr-@burza:~/backup-luna/mgr/
-$cmd ~/text/ rr-@burza:~/backup-luna/text/
-$cmd ~/src/ rr-@burza:~/backup-luna/src/
+$cmd $user@$server:/etc/ ~/clutter/backup-$server/etc
+$cmd $user@$server:/home/rr-/ ~/clutter/backup-$server/home/rr-/ --exclude img/ --exclude backup-$desktop/
+$cmd $user@$server:/home/srv/ ~/clutter/backup-$server/home/srv/ --exclude www/mal-dev/
+$cmd ~/clutter/ $user@$server:~/backup-luna/clutter/ --exclude backup-$server/
+$cmd ~/img/ $user@$server:~/backup-luna/img/ --exclude net/
+$cmd ~/mgr/ $user@$server:~/backup-luna/mgr/
+$cmd ~/text/ $user@$server:~/backup-luna/text/
+$cmd ~/src/ $user@$server:~/backup-luna/src/
