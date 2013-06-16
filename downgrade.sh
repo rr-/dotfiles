@@ -1,4 +1,5 @@
 #!/bin/bash
+[ -z "$@" ] && echo "No files selected" && exit 1
 for p in "$@"
 do
 	echo "$p"
