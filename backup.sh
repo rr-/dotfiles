@@ -4,7 +4,7 @@ server=burza
 user=rr-
 [ `hostname` != $desktop ] && echo "Must be run on $desktop" 1>&2 && exit 1
 
-cmd='rsync -azvK --delete-after -e ssh'
+cmd='rsync -azK --delete-after -e ssh'
 $cmd $user@$server:/etc/ ~/clutter/backup-$server/etc
 $cmd $user@$server:/home/rr-/ ~/clutter/backup-$server/home/rr-/ --exclude img/ --exclude backup-$desktop/
 $cmd $user@$server:/home/srv/ ~/clutter/backup-$server/home/srv/ --exclude www/mal-dev/
