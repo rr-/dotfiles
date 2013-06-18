@@ -56,3 +56,11 @@ xterm*|rxvt|linux|screen*)
 	PS1="\[\e]0;\u@\h: \w\a\]$PS1"
 	;;
 esac
+
+#autocompletion for imgop.py
+_imgop()
+{
+	local cur=${COMP_WORDS[COMP_CWORD]}
+	COMPREPLY=( $(compgen -W "degrade downgrade" -- $cur) )
+}
+complete -F _imgop imgop.py
