@@ -24,6 +24,11 @@ class Operation(object):
 		os.rename(file, backup)
 		return backup, file
 
+	def transferFileStats(self, src, dst):
+		atime = os.path.getmtime(src)
+		mtime = os.path.getmtime(src)
+		os.utime(dst, (atime, mtime))
+
 
 
 class DegradeOperation(Operation):
@@ -37,6 +42,7 @@ class DegradeOperation(Operation):
 		args += ['-quality', '80']
 		args += ['jpg:' + new]
 		subprocess.call(['convert'] + args)
+		self.transferFileStats(backup, file)
 
 
 
@@ -57,6 +63,7 @@ class FixAnamorphicOperation(Operation):
 		args += ['-resize', '%dx%d!' % (nw, nh)]
 		args += [file]
 		subprocess.call(['convert'] + args)
+		self.transferFileStats(backup, file)
 
 
 
