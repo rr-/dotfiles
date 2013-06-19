@@ -25,7 +25,7 @@ class Operation(object):
 		return backup, file
 
 	def transferFileStats(self, src, dst):
-		atime = os.path.getmtime(src)
+		atime = os.path.getatime(src) #this is changed immediately after rename
 		mtime = os.path.getmtime(src)
 		os.utime(dst, (atime, mtime))
 
