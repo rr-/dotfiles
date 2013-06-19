@@ -3,6 +3,9 @@ EDITOR=vim
 export EDITOR
 alias editor=$EDITOR
 
+#useful PATH
+export PATH=${PATH}:$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
+
 #aliases w/ colors
 if [ -x /usr/bin/dircolors ]; then
 	test -r ~/.dircolors && eval "$(dircolors -b ~/.dircolors)" || eval "$(dircolors -b)"
