@@ -12,6 +12,10 @@ import locale
 class GodzinyMaker(object):
 	def __init__(self, mail, password, keyword, path):
 		hours = self.getWorkingHours(mail, password, keyword)
+		for row in hours.values():
+			print \
+				row[0].strftime('%Y-%m-%d %H:%M:%S'), '-', \
+				row[1].strftime('%Y-%m-%d %H:%M:%S')
 		self.saveSpreadsheet(hours, path)
 
 	def getWorkingHours(self, mail, password, keyword):
