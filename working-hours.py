@@ -3,20 +3,11 @@
 
 import gdata.calendar.client
 from pyExcelerator import *
+from lib.dateutil import get_month_day_range
 import getpass
 import dateutil.parser
 import datetime
 import locale
-
-def daterange(start_date, end_date):
-	for n in range((end_date - start_date).days + 1):
-		yield start_date + datetime.timedelta(days=n)
-
-def get_month_day_range(date):
-	first_day = datetime.date(date.year, date.month, 1)
-	nm = datetime.date(date.year, date.month, 15) + datetime.timedelta(days=31)
-	last_day = datetime.date(nm.year, nm.month, 1) - datetime.timedelta(days=1)
-	return first_day, last_day
 
 class GodzinyMaker(object):
 	def __init__(self):
@@ -42,7 +33,8 @@ class GodzinyMaker(object):
 		hours = {}
 
 		query = gdata.calendar.client.CalendarEventQuery()
-		query.start_min, query.start_max = get_month_day_range(datetime.date.today())
+		dayRange = list(get_month_day_range(datetime.date.today()))
+		query.start_min, query.start_max = dayRange[0], dayRange[-1]
 		feed = client.GetCalendarEventFeed(q=query, uri=calendarUrl)
 		for i, event in enumerate(feed.entry):
 			for when in event.when:
@@ -112,8 +104,9 @@ class GodzinyMaker(object):
 		row = 10
 		i = 1
 		style.font = self.normalFont
-		firstDay, lastDay = get_month_day_range(datetime.date.today())
-		for date in daterange(firstDay, lastDay):
+		dayRange = list(get_month_day_range(datetime.date.today()))
+		firstDay, lastDay = dayRange[0], dayRange[-1]
+		for date in dayRange:
 			ws.write(row, 1, i, style)
 			ws.write(row, 5, u'%sr.' % date.strftime('%d.%m.%Y'), style)
 			#todo fetch actual hours
