@@ -29,6 +29,11 @@ class Operation(object):
 		mtime = os.path.getmtime(src)
 		os.utime(dst, (atime, mtime))
 
+	def call(self, cmd):
+		proc = subprocess.Popen(cmd, stdout=subprocess.PIPE)
+		out = proc.communicate()[0]
+		return out
+
 
 
 class DegradeOperation(Operation):
@@ -37,35 +42,53 @@ class DegradeOperation(Operation):
 	def run(self, file):
 		backup, file = self.backup(file)
 		new = os.path.splitext(file)[0] + '.jpg'
-		args = []
-		args += [backup + '[0]']
-		args += ['-quality', '80']
-		args += ['jpg:' + new]
-		subprocess.call(['convert'] + args)
+		cmd = [
+			'convert',
+			'%s[0]' % backup,
+			'-quality', '80',
+			'jpg:' + new]
+		self.call(cmd)
 		self.transferFileStats(backup, file)
-
 
 
 class FixAnamorphicOperation(Operation):
 	name = ['fix-anamorphic']
 
 	def run(self, file):
-		args = []
-		args += ['-format', '%w %h']
-		args += [file + '[0]']
-		proc = subprocess.Popen(['identify'] + args, stdout=subprocess.PIPE)
-		w, h = map(int, proc.communicate()[0].split(' '))
+		cmd = [
+			'identify',
+			'-format', '%w %h',
+			file + '[0]']
+		out = self.call(cmd)
+		w, h = map(int, out.split(' '))
 		nw = h * 16 // 9
 		nh = h
 		backup, file = self.backup(file)
-		args = []
-		args += [backup]
-		args += ['-resize', '%dx%d!' % (nw, nh)]
-		args += [file]
-		subprocess.call(['convert'] + args)
+		cmd = ['convert',
+			'%s[0]' % backup,
+			'-resize', '%dx%d!' % (nw, nh),
+			file]
+		self.call(cmd)
 		self.transferFileStats(backup, file)
 
 
+class FixPngOperation(Operation):
+	name = ['fix-png']
+
+	def run(self, file):
+		_, extension = os.path.splitext(file)
+		if extension.lower() != '.png':
+			raise Exception(file + ' is not a PNG file')
+		cmd = ['identify',
+			'-format', '%r',
+			file]
+		out = self.call(cmd)
+		if out.strip() == 'PseudoClassGrayMatte':
+			cmd = ['convert',
+				file,
+				'-alpha', 'off',
+				file]
+			subprocess.call(cmd)
 
 
 if __name__ == '__main__':
