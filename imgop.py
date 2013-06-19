@@ -70,7 +70,7 @@ if __name__ == '__main__':
 	files = sys.argv[2:]
 
 	for operation in Operation.__subclasses__():
-		if op_name in list(operation.name):
+		if op_name in operation.name:
 			op = operation()
 			op.run_all(files)
 			sys.exit(0)
