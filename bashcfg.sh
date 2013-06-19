@@ -6,6 +6,30 @@ alias editor=$EDITOR
 #useful PATH
 export PATH=${PATH}:$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 
+
+#various shell options
+export HISTCONTROL=ignoredups #ignore duplicate commands in history
+shopt -s histappend #append to the history file, don't overwrite it
+shopt -s globstar #allow ** recursive wildcards
+shopt -s checkwinsize #check the window size after each command and, if necessary, update the values of LINES and COLUMNS.
+
+#cool command prompt
+case "$TERM" in
+xterm*|rxvt|linux|screen*)
+	if [ $(hostname) = "burza" ]; then
+		COL='\[\e[0;36m\]'
+	else
+		COL='\[\e[1;31m\]'
+	fi
+	PS1=$COL'\u@\h\[\e[0;37m\]:\[\e[0;32m\]\w\[\e[1;34m\]($SHLVL:\#) \[\e[0m\]\$ '
+	unset COL
+	;;
+*)
+	PS1="\[\e]0;\u@\h: \w\a\]$PS1"
+	;;
+esac
+
+
 #aliases w/ colors
 if [ -x /usr/bin/dircolors ]; then
 	test -r ~/.dircolors && eval "$(dircolors -b ~/.dircolors)" || eval "$(dircolors -b)"
@@ -29,36 +53,17 @@ alias plen='~/src/tl.py pl en'
 alias enpl='~/src/tl.py en pl'
 alias rfn='date "+%Y%m%d_%H%M%S"'
 alias isvim='ps ux|grep vim|grep -v grep'
+
+#legacy aliases
 command -v hd >/dev/null 2>&1 || alias hd='od -Ax -t x1'
 
-#ignore duplicate commands in history
-export HISTCONTROL=ignoredups
+#aliases for cygwin
+if [[ $(uname | tr '[A-Z]' '[a-z]' ) == *cygwin* ]]; then
+	alias poweroff='shutdown /s /t 5'
+	alias reboot='shutdown /g /t 5'
+fi
 
-#append to the history file, don't overwrite it
-shopt -s histappend
 
-#allow ** recursive wildcards
-shopt -s globstar
-
-#check the window size after each command and, if necessary,
-#update the values of LINES and COLUMNS.
-shopt -s checkwinsize
-
-#set command prompt
-case "$TERM" in
-xterm*|rxvt|linux|screen*)
-	if [ $(hostname) = "burza" ]; then
-		COL='\[\e[0;36m\]'
-	else
-		COL='\[\e[1;31m\]'
-	fi
-	PS1=$COL'\u@\h\[\e[0;37m\]:\[\e[0;32m\]\w\[\e[1;34m\]($SHLVL:\#) \[\e[0m\]\$ '
-	unset COL
-	;;
-*)
-	PS1="\[\e]0;\u@\h: \w\a\]$PS1"
-	;;
-esac
 
 #autocompletion for imgop.py
 _imgop()
