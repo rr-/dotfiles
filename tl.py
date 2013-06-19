@@ -4,12 +4,8 @@
 import httplib2
 import json
 import sys
+import lib.colors as colors
 from urllib import urlencode
-try:
-	import colorama
-	colorama.init()
-except:
-	pass
 
 h = httplib2.Http(timeout=3)
 
@@ -19,18 +15,6 @@ def getLanguage(code):
 		if code in val:
 			return key
 	raise ValueError('Unknown language: {0}'.format(code))
-
-def colorize(text, attrs):
-	if attrs is not None:
-		try:
-			a = ''
-			for attr in attrs:
-				(member1, member2) = attr.split('.')
-				a += getattr(getattr(colorama, member1), member2)
-			return a + text + colorama.Fore.RESET + colorama.Back.RESET + colorama.Style.RESET_ALL
-		except:
-			pass
-	return colorama.Fore.RESET + colorama.Back.RESET + colorama.Style.RESET_ALL
 
 if len(sys.argv) < 4:
 	print >>sys.stderr, 'Too few arguments. Usage:'
@@ -60,8 +44,8 @@ for text in sys.argv[3:]:
 	data = json.loads(content)
 	for sentence in data['sentences']:
 		print '  ',
-		print colorize(sentence['trans'].encode('utf-8'), ['Fore.RED', 'Style.BRIGHT']),
-		print colorize('(Transliteration: {0})'.format(sentence['translit'].encode('utf-8')), ['Fore.WHITE', 'Style.DIM']) if 'translit' in sentence and sentence['translit'] else ''
+		print colors.colorize(sentence['trans'].encode('utf-8'), ['Fore.RED', 'Style.BRIGHT']),
+		print colors.colorize('(Transliteration: {0})'.format(sentence['translit'].encode('utf-8')), ['Fore.WHITE', 'Style.DIM']) if 'translit' in sentence and sentence['translit'] else ''
 
 	if 'dict' in data:
 		for dict in sorted(data['dict'], key = lambda x: len(x['entry'])):
@@ -69,7 +53,5 @@ for text in sys.argv[3:]:
 			print 'Dictionary ({0}):'.format(dict['pos']) if 'pos' in dict and dict['pos'] else 'Dictionary:'
 			for entry in dict['entry']:
 				print '  ',
-				print colorize(entry['word'].encode('utf-8'), ['Fore.RED']),
-				print colorize('(Reverse translation: {0})'.format(', '.join(entry['reverse_translation']).encode('utf-8')), ['Fore.WHITE', 'Style.DIM']) if 'reverse_translation' in entry and entry['reverse_translation'] else ''
-
-	#print colorize('---', ['Fore.WHITE', 'Style.DIM'])
+				print colors.colorize(entry['word'].encode('utf-8'), ['Fore.RED']),
+				print colors.colorize('(Reverse translation: {0})'.format(', '.join(entry['reverse_translation']).encode('utf-8')), ['Fore.WHITE', 'Style.DIM']) if 'reverse_translation' in entry and entry['reverse_translation'] else ''

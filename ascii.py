@@ -1,23 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-try:
-	import colorama
-	colorama.init()
-except:
-	pass
-
-def colorize(attrs = None):
-	if attrs is not None:
-		try:
-			a = ''
-			for attr in attrs:
-				(member1, member2) = attr.split('.')
-				a += getattr(getattr(colorama, member1), member2)
-			return a
-		except:
-			pass
-	return colorama.Fore.RESET + colorama.Back.RESET + colorama.Style.RESET_ALL
+import lib.colors as colors
 
 columns = 4
 low = 0
@@ -94,15 +78,11 @@ for x in xrange(columns):
 		text = ''
 		text += '%0*d' % (pad1, cell['char']) + ' '
 		text += 'x%02X' % cell['char'] + ' '
-		text += colorize(cell['color'])
-		text += '%-*s' % (pad2, cell['short']) + ' '
-		text += colorize()
+		text += colors.colorize('%-*s' % (pad2, cell['short']) + ' ', cell['color'])
 		if pad3 > 0:
 			text += '(%s)%-*s' % (cell['long'], pad3 + 1 - len(cell['long']), ' ')
 		if x != columns - 1:
-			text += colorize(['Fore.WHITE'])
-			text += '|'
-			text += colorize()
+			text += colors.colorize('|', ['Fore.WHITE'])
 		table[x, y] = text
 
 for y in xrange((up - low) / columns):
