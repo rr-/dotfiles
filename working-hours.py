@@ -10,21 +10,17 @@ import datetime
 import locale
 
 class GodzinyMaker(object):
-	def __init__(self):
-		mail = 'mkurczew@gmail.com'
-		password = getpass.getpass()
-		path = 'working-hours.xls'
-
-		hours = self.getWorkingHours(mail, password)
+	def __init__(self, mail, password, keyword, path):
+		hours = self.getWorkingHours(mail, password, keyword)
 		self.saveSpreadsheet(hours, path)
 
-	def getWorkingHours(self, mail, password):
+	def getWorkingHours(self, mail, password, keyword):
 		client = gdata.calendar.client.CalendarClient(source='working-hours-client')
 		client.ClientLogin(mail, password, client.source)
 
 		feed = client.GetAllCalendarsFeed()
 		for i, cal in enumerate(feed.entry):
-			if cal.title.text.lower().find('forcom') > 0:
+			if cal.title.text.lower().find(keyword.lower()) > 0:
 				calendarUrl = cal.content.src
 				break
 		if calendarUrl is None:
@@ -162,4 +158,8 @@ class GodzinyMaker(object):
 
 if __name__ == '__main__':
 	locale.setlocale(locale.LC_ALL, 'pl_PL.UTF-8')
-	GodzinyMaker()
+	mail = 'mkurczew@gmail.com'
+	password = getpass.getpass()
+	keyword = 'forcom'
+	path = 'working-hours.xls'
+	GodzinyMaker(mail, password, keyword, path)
