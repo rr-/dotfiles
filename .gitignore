@@ -1,2 +1,3 @@
 *.py[cod]
 pip-log.txt
+.*.swp
