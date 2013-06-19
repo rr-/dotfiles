@@ -64,6 +64,6 @@ esac
 _imgop()
 {
 	local cur=${COMP_WORDS[COMP_CWORD]}
-	COMPREPLY=( $(compgen -W "degrade downgrade" -- $cur) )
+	COMPREPLY=( $(compgen -W "degrade downgrade fix-anamorphic" -- $cur) )
 }
 complete -F _imgop imgop.py

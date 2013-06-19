@@ -40,6 +40,27 @@ class DegradeOperation(Operation):
 
 
 
+class FixAnamorphicOperation(Operation):
+	name = ['fix-anamorphic']
+
+	def run(self, file):
+		args = []
+		args += ['-format', '%w %h']
+		args += [file + '[0]']
+		proc = subprocess.Popen(['identify'] + args, stdout=subprocess.PIPE)
+		w, h = map(int, proc.communicate()[0].split(' '))
+		nw = h * 16 // 9
+		nh = h
+		backup, file = self.backup(file)
+		args = []
+		args += [backup]
+		args += ['-resize', '%dx%d!' % (nw, nh)]
+		args += [file]
+		subprocess.call(['convert'] + args)
+
+
+
+
 if __name__ == '__main__':
 	if len(sys.argv) < 3:
 		print >>sys.stderr, 'Too few arguments.'
