@@ -64,6 +64,10 @@ esac
 _imgop()
 {
 	local cur=${COMP_WORDS[COMP_CWORD]}
-	COMPREPLY=( $(compgen -W "degrade downgrade fix-anamorphic fix-png" -- $cur) )
+	if [[ $COMP_CWORD -eq 1 ]]; then
+		COMPREPLY=( $(compgen -W "degrade downgrade fix-anamorphic fix-png" -- $cur) )
+	else
+		COMPREPLY=( $(compgen -A file -- $cur) )
+	fi
 }
 complete -F _imgop imgop.py
