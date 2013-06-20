@@ -70,7 +70,7 @@ _imgop()
 {
 	local cur=${COMP_WORDS[COMP_CWORD]}
 	if [[ $COMP_CWORD -eq 1 ]]; then
-		COMPREPLY=( $(compgen -W "degrade downgrade fix-anamorphic fix-png" -- $cur) )
+		COMPREPLY=( $(compgen -W "degrade downgrade fix-anamorphic fix-png stitch" -- $cur) )
 	else
 		COMPREPLY=( $(compgen -A file -- $cur) )
 	fi
