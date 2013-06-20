@@ -47,7 +47,7 @@ def clean_movie_name(x):
 	return x
 
 
-def clean(x):
+def clean_screencap_name(x):
 	result = re.match(
 		r'^(.*)\.' + \
 		'(mkv|avi|mp4|mov|ogm|flv)' + \
@@ -96,9 +96,9 @@ if __name__ == '__main__':
 	if len(sys.argv) == 1:
 		print >>sys.stderr, 'No argument specified'
 		sys.exit(1)
-	if '--test' in sys.argv:
+	elif '--test' in sys.argv:
 		suite = unittest.TestLoader().loadTestsFromTestCase(MainTest)
 		unittest.TextTestRunner().run(suite)
-		sys.exit(0)
-	for x in sys.argv[1:]:
-		print clean(x)
+	else:
+		for x in sys.argv[1:]:
+			print clean_screencap_name(x)
