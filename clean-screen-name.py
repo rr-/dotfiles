@@ -4,6 +4,10 @@ import sys
 import re
 import unittest
 
+def replace(pattern, replacement, subject):
+	regex = re.compile(pattern, flags=re.IGNORECASE)
+	return re.sub(regex, replacement, subject)
+
 def clean_movie_name(x):
 	# special characters
 	x = x.replace('(', '[')
@@ -12,37 +16,37 @@ def clean_movie_name(x):
 		x = x.replace(c, '_')
 
 	# remove technical release info
-	x = re.sub(r'x264|h264|h_264|xvid|divx|avc|flac|aac|sub|ac3|mp3|hi10p|10_?bit|8_?bit', '', x, flags=re.I)
-	x = re.sub(r'dvdrip|dvd|hdtv|_bd|bd_|bdrip|blu_ray|bluray|web', '', x, flags=re.I)
-	x = re.sub(r'2[0-9]_?[0-9]{,3}_?fps', '', x, flags=re.I)
-	x = re.sub(r'dts|hdmi', '', x, flags=re.I)
-	x = re.sub(r'5_1ch|5_1', '', x, flags=re.I)
-	x = re.sub(r'480p|540p|720p|1080p|\d{3,}x\d{3,}', '', x, flags=re.I)
-	x = re.sub(r'anamorphic', '', x, flags=re.I)
+	x = replace(r'x264|h264|h_264|xvid|divx|avc|flac|aac|sub|ac3|mp3|hi10p|10_?bit|8_?bit', '', x)
+	x = replace(r'dvdrip|dvd|hdtv|_bd|bd_|bdrip|blu_ray|bluray|web', '', x)
+	x = replace(r'2[0-9]_?[0-9]{,3}_?fps', '', x)
+	x = replace(r'dts|hdmi', '', x)
+	x = replace(r'5_1ch|5_1', '', x)
+	x = replace(r'480p|540p|720p|1080p|\d{3,}x\d{3,}', '', x)
+	x = replace(r'anamorphic', '', x)
 
 	# remove additional release info
-	x = re.sub(r'v[2-9]', '', x, flags=re.I)
-	x = re.sub(r'([0-9]{1,})v[0-9]', '\\1', x, flags=re.I)
-	x = re.sub(r'fixed$', '', x, flags=re.I)
-	x = re.sub(r'_end_', '', x, flags=re.I)
+	x = replace(r'v[2-9]', '', x)
+	x = replace(r'([0-9]{1,})v[0-9]', '\\1', x)
+	x = replace(r'fixed$', '', x)
+	x = replace(r'_end_', '', x)
 	# episode number
-	x = re.sub(r'_ep(isode)?_*(\d+)', '_\\2', x, flags=re.I)
+	x = replace(r'_ep(isode)?_*(\d+)', '_\\2', x)
 	# crc and default groups
-	x = re.sub(r'\[\w{1,26}\]', '', x)
+	x = replace(r'\[\w{1,26}\]', '', x)
 
 	# specific titles
-	x = re.sub(r'Ore_no_Imouto_ga_Konna_ni_Kawaii_Wake_ga_Nai', 'Oreimo', x, flags=re.I)
+	x = replace(r'Ore_no_Imouto_ga_Konna_ni_Kawaii_Wake_ga_Nai', 'Oreimo', x)
 
 	# specific groups with no brackets
-	x = re.sub(r'_commie', '', x, flags=re.I)
-	x = re.sub(r'steins_sub', '', x, flags=re.I)
-	x = re.sub(r'a_f_k_', '', x, flags=re.I)
-	x = re.sub(r'thora', '', x, flags=re.I)
+	x = replace(r'_commie', '', x)
+	x = replace(r'steins_sub', '', x)
+	x = replace(r'a_f_k_', '', x)
+	x = replace(r'thora', '', x)
 
 	# final fixes
-	x = re.sub(r'\]_*\[', '', x)
-	x = re.sub(r'\[_*\]', '', x)
-	x = re.sub(r'__+', '_', x)
+	x = replace(r'\]_*\[', '', x)
+	x = replace(r'\[_*\]', '', x)
+	x = replace(r'__+', '_', x)
 	x = x.strip('_')
 	return x
 
@@ -55,7 +59,7 @@ def clean_screencap_name(x):
 		'([0-9.]+)_' + \
 		'\[([0-9._]+)\]' + \
 		'(\w*)' + \
-		'\.(jpg|jpeg|png|jfif|gif)$', x, flags=re.I)
+		'\.(jpg|jpeg|png|jfif|gif)$', x)
 	if not result:
 		return x
 	mname, mext, mts, sts, extra, sext = result.groups()
@@ -85,6 +89,7 @@ class MainTest(unittest.TestCase):
 			'[Commie] Red Data Girl - 12 [B0D20687]': 'Red_Data_Girl_12',
 			'[Mabushii] Saint Seiya Omega - 43 [WEB][134FE830]': 'Saint_Seiya_Omega_43',
 			'[Anime-Koi] Dansai Bunri no Crime Edge - 12 [h264-720p][3098FF6E]': 'Dansai_Bunri_no_Crime_Edge_12',
+			'[SFW] Queen\'s Blade Rebellion - A Saint\'s Agony ~ The Door of Faith Reopens [Hi10P][46EF7E6B]': 'Queen\'s_Blade_Rebellion_A_Saint\'s_Agony_The_Door_of_Faith_Reopens',
 		}
 
 		for source, expected in assertions.iteritems():
