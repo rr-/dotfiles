@@ -1,10 +1,8 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-
 import os
 import time
 import subprocess
-import threading
 import tempfile
 import urllib
 import datetime
