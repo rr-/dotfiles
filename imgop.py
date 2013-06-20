@@ -7,7 +7,7 @@ import subprocess
 def backup(file):
 	backup = file + '~'
 	if os.path.exists(backup):
-		raise Exception(backup + ' already exists')
+		raise Exception('%s already exists' % backup)
 	os.rename(file, backup)
 	return backup, file
 
@@ -27,9 +27,9 @@ class Operation(object):
 		for file in files:
 			try:
 				if not os.path.exists(file):
-					raise Exception(file + ' does not exist')
+					raise Exception('%s does not exist' % file)
 				elif not os.path.isfile(file):
-					raise Exception(file + ' is not a file')
+					raise Exception('%s is not a file' % file)
 				else:
 					self.run(file)
 			except Exception as e:
@@ -45,7 +45,7 @@ class DegradeOperation(Operation):
 		cmd  = ['convert']
 		cmd += ['%s[0]' % backup]
 		cmd += ['-quality', '80']
-		cmd += ['jpg:' + new]
+		cmd += ['jpg:%s' % new]
 		call(cmd)
 		transferFileStats(backup, file)
 
@@ -56,7 +56,7 @@ class FixAnamorphicOperation(Operation):
 	def run(self, file):
 		cmd  = ['identify']
 		cmd += ['-format', '%w %h']
-		cmd += [file + '[0]']
+		cmd += ['%s[0]' % file]
 		out = call(cmd)
 		w, h = map(int, out.split(' '))
 		nw = h * 16 // 9
@@ -76,7 +76,7 @@ class FixPngOperation(Operation):
 	def run(self, file):
 		_, extension = os.path.splitext(file)
 		if extension.lower() != '.png':
-			raise Exception(file + ' is not a PNG file')
+			raise Exception('%s is not a PNG file' % file)
 		cmd  = ['identify']
 		cmd += ['-format', '%r']
 		cmd += [file]
