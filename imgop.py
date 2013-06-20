@@ -88,7 +88,8 @@ class FixPngOperation(Operation):
 				file,
 				'-alpha', 'off',
 				file]
-			subprocess.call(cmd)
+			self.call(cmd)
+
 
 
 if __name__ == '__main__':
