@@ -44,48 +44,40 @@ definitions = \
 	127: {'short': 'DEL'},
 }
 
-table = {}
+#fill the rest of the ascii table
+for i in xrange(low, up):
+	if not i in definitions:
+		definition = {'short': chr(i)}
+		definitions[i] = definition
+		definitions[i]['color'] = ['Fore.RED']
+	else:
+		definitions[i]['color'] = ['Fore.GREEN']
+	definitions[i]['char'] = i
 
+#compute column padding
+pads = {}
+max_y = (up - low) / columns
 for x in xrange(columns):
-	max_y = (up - low) / columns
+	column = [definitions[y + x * max_y + low] for y in xrange(0, max_y)]
+	pad1 = max(len(str(definition['char'])) for definition in column)
+	pad2 = max(len(definition['short']) for definition in column)
+	pad3 = max(len(definition['long']) if 'long' in definition else 0 for definition in column)
+	if pad3 > 0:
+		pad3 += 2 #add spaces for brackets
+	pads[x] = (pad1, pad2, pad3)
 
-	column = []
-	for y in xrange(max_y):
-		c = x * max_y + y + low
-
-		cell = {}
-		cell['char'] = c
-		if c in definitions:
-			definition = definitions[c]
-			cell['color'] = ['Fore.GREEN']
-			cell['short'] = definition['short']
-			if 'long' in definition:
-				cell['long'] = definition['long']
-			else:
-				cell['long'] = ''
-		else:
-			cell['color'] = ['Fore.RED']
-			cell['short'] = chr(c)
-			cell['long'] = ''
-
-		column.append(cell)
-
-	pad1 = max(len(str(column[y]['char'])) for y in xrange(max_y))
-	pad2 = max(len(column[y]['short']) for y in xrange(max_y))
-	pad3 = max(len(column[y]['long']) for y in xrange(max_y))
-	for y in xrange(max_y):
-		cell = column[y]
-		text = ''
-		text += '%0*d' % (pad1, cell['char']) + ' '
-		text += 'x%02X' % cell['char'] + ' '
-		text += colors.colorize('%-*s' % (pad2, cell['short']) + ' ', cell['color'])
-		if pad3 > 0:
-			text += '(%s)%-*s' % (cell['long'], pad3 + 1 - len(cell['long']), ' ')
-		if x != columns - 1:
-			text += colors.colorize('|', ['Fore.WHITE'])
-		table[x, y] = text
-
-for y in xrange((up - low) / columns):
+#print the table
+for y in xrange(max_y):
 	for x in xrange(columns):
-		print table[x,y],
+		pad1, pad2, pad3 = pads[x]
+		definition = definitions[x * max_y + y + low]
+		print str(definition['char']).ljust(pad1),
+		print 'x%02X' % definition['char'],
+		print colors.colorize(definition['short'].ljust(pad2), definition['color']),
+		if 'long' in definition:
+			print ('(%s)' % definition['long']).ljust(pad3),
+		else:
+			print ''.ljust(pad3),
+		if x != columns - 1:
+			print colors.colorize('|', ['Fore.WHITE']),
 	print
