@@ -1,11 +1,15 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-import subprocess, threading
-import os, tempfile
+import os
 import time
+import subprocess
+import threading
+import tempfile
 import urllib
 import datetime
+from lib.proc import execute
+from lib.string import clean_screen_name
 
 commonArgs = \
 {
@@ -27,12 +31,6 @@ class dotdict(dict):
 	__setattr__= dict.__setitem__
 	__delattr__= dict.__delitem__
 
-#normal command
-def execute(commands):
-	proc = subprocess.Popen(commands, stdout=subprocess.PIPE)
-	(out, err) = proc.communicate()
-	return (proc.returncode, out, err)
-
 #prepare commands
 commands = []
 y = ''
@@ -48,7 +46,7 @@ for name in os.listdir(sourceFolder):
 	file.sourcePath = os.path.join(sourceFolder, name)
 	if not os.path.isfile(file.sourcePath):
 		continue
-	file.destName = execute(['clean-screen-name.py', name])[1]
+	file.destName = clean_screen_name(name)
 	file.urlName = urllib.quote(file.destName)
 	file.time = os.stat(file.sourcePath).st_atime
 	args = dict(file.items() + commonArgs.items())

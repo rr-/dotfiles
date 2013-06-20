@@ -3,6 +3,7 @@
 import os
 import sys
 import subprocess
+from lib.proc import execute
 
 def backup(file):
 	backup = file + '~'
@@ -15,12 +16,6 @@ def transferFileStats(src, dst):
 	atime = os.path.getatime(src) #this is changed immediately after rename
 	mtime = os.path.getmtime(src)
 	os.utime(dst, (atime, mtime))
-
-def call(cmd):
-	proc = subprocess.Popen(cmd, stdout=subprocess.PIPE)
-	out = proc.communicate()[0]
-	return out
-
 
 class Operation(object):
 	def run_all(self, files):
@@ -46,7 +41,7 @@ class DegradeOperation(Operation):
 		cmd += ['%s[0]' % backup]
 		cmd += ['-quality', '80']
 		cmd += ['jpg:%s' % new]
-		call(cmd)
+		execute(cmd)
 		transferFileStats(backup, file)
 
 
@@ -57,7 +52,7 @@ class FixAnamorphicOperation(Operation):
 		cmd  = ['identify']
 		cmd += ['-format', '%w %h']
 		cmd += ['%s[0]' % file]
-		out = call(cmd)
+		out = execute(cmd)[1]
 		w, h = map(int, out.split(' '))
 		nw = h * 16 // 9
 		nh = h
@@ -66,7 +61,7 @@ class FixAnamorphicOperation(Operation):
 		cmd += ['%s[0]' % backup]
 		cmd += ['-resize', '%dx%d!' % (nw, nh)]
 		cmd += [file]
-		call(cmd)
+		execute(cmd)
 		transferFileStats(backup, file)
 
 
@@ -80,13 +75,13 @@ class FixPngOperation(Operation):
 		cmd  = ['identify']
 		cmd += ['-format', '%r']
 		cmd += [file]
-		out = call(cmd)
+		out = execute(cmd)[1]
 		if out.strip() == 'PseudoClassGrayMatte':
 			cmd  = ['convert']
 			cmd += [file]
 			cmd += ['-alpha', 'off']
 			cmd += [file]
-			call(cmd)
+			execute(cmd)
 
 
 class StitchOperation(Operation):
@@ -100,7 +95,7 @@ class StitchOperation(Operation):
 		cmd += files
 		cmd += ['-append', '-trim']
 		cmd += [output]
-		call(cmd)
+		execute(cmd)
 
 
 
