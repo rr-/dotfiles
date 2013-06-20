@@ -89,6 +89,20 @@ class FixPngOperation(Operation):
 			call(cmd)
 
 
+class StitchOperation(Operation):
+	name = ['stitch']
+
+	def run_all(self, files):
+		output = 'stitched.jpg'
+		cmd  = ['convert']
+		cmd += ['-border', '0x1']
+		cmd += ['-bordercolor', 'black']
+		cmd += files
+		cmd += ['-append', '-trim']
+		cmd += [output]
+		call(cmd)
+
+
 
 if __name__ == '__main__':
 	if len(sys.argv) < 3:
