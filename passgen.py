@@ -1,14 +1,12 @@
 #!/usr/bin/python
-import re
 import os
 import random
+import string
 from signal import signal, SIGPIPE, SIG_DFL
 
 signal(SIGPIPE, SIG_DFL)
 
-alpha = '[0-9a-zA-Z]'
-alpha = filter(lambda x: re.match(alpha, x), map(chr, xrange(256)))
-
+alpha = list(string.letters + string.digits)
 min = 6
 max = 10
 
