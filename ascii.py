@@ -6,7 +6,7 @@ import lib.colors as colors
 columns = 4
 low = 0
 up = 128
-definitions = \
+items = \
 {
 	0:   {'short': 'NUL', 'long': 'null'},
 	1:   {'short': 'SOH', 'long': 'start of heading'},
@@ -40,42 +40,39 @@ definitions = \
 	29:  {'short': 'GS',  'long': 'group separator'},
 	30:  {'short': 'RS',  'long': 'record separator'},
 	31:  {'short': 'US',  'long': 'unit separator'},
-	32:  {'short': ' '},
 	127: {'short': 'DEL'},
 }
 
 #fill the rest of the ascii table
 for i in xrange(low, up):
-	if not i in definitions:
-		definition = {'short': chr(i)}
-		definitions[i] = definition
-		definitions[i]['color'] = ['Fore.RED']
+	if i not in items:
+		items[i] = {'short': chr(i), 'color': ['Fore.RED']}
 	else:
-		definitions[i]['color'] = ['Fore.GREEN']
-	definitions[i]['char'] = i
+		items[i]['color'] = ['Fore.GREEN']
+	items[i]['char'] = i
 
 #compute column padding
 pads = {}
 max_y = (up - low) / columns
 for x in xrange(columns):
-	column = [definitions[y + x * max_y + low] for y in xrange(0, max_y)]
-	pad1 = max(len(str(definition['char'])) for definition in column)
-	pad2 = max(len(definition['short']) for definition in column)
-	pad3 = max(len(definition['long']) if 'long' in definition else 0 for definition in column)
+	column = [items[y + x * max_y + low] for y in xrange(0, max_y)]
+	pad1 = max(len(str(item['char'])) for item in column)
+	pad2 = max(len(item['short']) for item in column)
+	pad3 = max(len(item['long']) if 'long' in item else 0 for item in column)
 	if pad3 > 0:
-		pad3 += 2 #add spaces for brackets
+		pad3 += 2 #add space for brackets
 	pads[x] = (pad1, pad2, pad3)
 
 #print the table
 for y in xrange(max_y):
 	for x in xrange(columns):
 		pad1, pad2, pad3 = pads[x]
-		definition = definitions[x * max_y + y + low]
-		print str(definition['char']).ljust(pad1),
-		print 'x%02X' % definition['char'],
-		print colors.colorize(definition['short'].ljust(pad2), definition['color']),
-		if 'long' in definition:
-			print ('(%s)' % definition['long']).ljust(pad3),
+		item = items[y + x * max_y + low]
+		print str(item['char']).ljust(pad1),
+		print 'x%02X' % item['char'],
+		print colors.colorize(item['short'].ljust(pad2), item['color']),
+		if 'long' in item:
+			print ('(%s)' % item['long']).ljust(pad3),
 		else:
 			print ''.ljust(pad3),
 		if x != columns - 1:
