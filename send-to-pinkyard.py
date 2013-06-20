@@ -48,7 +48,7 @@ for name in os.listdir(sourceFolder):
 	file.sourcePath = os.path.join(sourceFolder, name)
 	if not os.path.isfile(file.sourcePath):
 		continue
-	file.destName = execute(['clean-screen-name.pl', name])[1]
+	file.destName = execute(['clean-screen-name.py', name])[1]
 	file.urlName = urllib.quote(file.destName)
 	file.time = os.stat(file.sourcePath).st_atime
 	args = dict(file.items() + commonArgs.items())
