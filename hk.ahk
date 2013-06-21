@@ -36,7 +36,7 @@ RandomFileName()
 UploadFiles()
 {
 	ToolTip, Uploading files..., -1920+50, 50
-	RunWait, C:\Program Files (x86)\cygwin\bin\mintty.exe /bin/bash -l -c send-to-pinkyard.py|clip, C:\Program Files (x86)\cygwin
+	RunWait, C:\Program Files (x86)\cygwin\bin\mintty.exe /bin/bash -l -c send_to_pinkyard.py|clip, C:\Program Files (x86)\cygwin
 	ToolTip
 	return
 }
