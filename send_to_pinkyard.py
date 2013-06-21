@@ -9,75 +9,58 @@ import datetime
 from lib.proc import execute
 from lib.string import clean_screen_name
 
-commonArgs = \
-{
-	'year': datetime.date.today().year,
-	'month': datetime.date.today().month,
-}
-
 #settings
 user = 'rr-'
-host = '192.168.1.4'
-sourceFolder = "/cygdrive/z/hub/pinkyard/queued/"
-safeFolder = '/cygdrive/z/hub/pinkyard/done/'
-destFolder = '/srv/www/pinkyard/public_html/files/{year:04d}-{month:02d}'.format(**commonArgs)
-clipUrl = 'http://pink.sakuya.pl/resolve/{year:04d}-{month:02d}/{urlName:s}'
+host = 'burza'
+src_folder = '/cygdrive/z/hub/pinkyard/queued/'
+safe_folder = '/cygdrive/z/hub/pinkyard/done/'
 
-class dotdict(dict):
-	def __getattr__(self, attr):
-		return self.get(attr, None)
-	__setattr__= dict.__setitem__
-	__delattr__= dict.__delitem__
+folder = datetime.date.today().strftime('%Y-%m')
+dst_folder = '/srv/www/pinkyard/public_html/files/%s/' % folder
+resolver_url = 'http://pink.sakuya.pl/resolve/%s/' % folder
 
 #prepare commands
 commands = []
 y = ''
-for x in destFolder.strip('/').split('/'):
+for x in dst_folder.strip('/').split('/'):
 	y += '/' + x
 	commands.append('-mkdir "{0}"'.format(y))
 
-files = []
-for name in os.listdir(sourceFolder):
-	file = dotdict()
-	file.sourceFolder = sourceFolder
-	file.sourceName = name
-	file.sourcePath = os.path.join(sourceFolder, name)
-	if not os.path.isfile(file.sourcePath):
+items = []
+for name in os.listdir(src_folder):
+	item = {}
+	item['src_name'] = name
+	item['src_path'] = os.path.join(src_folder, item['src_name'])
+	if not os.path.isfile(item['src_path']):
 		continue
-	file.destName = clean_screen_name(name)
-	file.urlName = urllib.quote(file.destName)
-	file.time = os.stat(file.sourcePath).st_atime
-	args = dict(file.items() + commonArgs.items())
-	file.destFolder = destFolder
-	file.safePath = os.path.join(safeFolder.format(**args), name)
-	files.append(file)
-if len(files) == 0:
+	item['src_time'] = os.stat(item['src_path'])
+	item['dst_name'] = clean_screen_name(item['src_name'])
+	item['dst_path'] = os.path.join(dst_folder, item['dst_name'])
+	item['safe_path'] = os.path.join(safe_folder, item['src_name'])
+	item['resolver_url'] = resolver_url + urllib.quote(item['dst_name'])
+	items.append(item)
+if len(items) == 0:
 	os.sys.exit(0)
 
-i = 0
-for file in sorted(files, key=lambda f: f['time']):
+for i, item in enumerate(sorted(items, key=lambda f: f['src_time'])):
 	future = time.mktime((datetime.datetime.now() + datetime.timedelta(seconds=i)).timetuple())
-	os.utime(file.sourcePath, (future, future))
-	i += 1
-	commands.append('put -p "{sourceFolder}/{sourceName}" "{destFolder}/{destName}"'.format(**file))
-	commands.append('chmod 0744 "{destFolder}/{destName}"'.format(**file))
+	os.utime(item['src_path'], (future, future))
+	commands.append('put -p "%s" "%s"' % (item['src_path'], item['dst_path']))
+	commands.append('chmod 0744 "%s"' % item['dst_path'])
 
-#os.sys.exit(1)
 #write file, execute sftp
-commandListFile = tempfile.TemporaryFile()
-commandListFile.write("\n".join(commands))
-commandListFile.flush()
+cmds_file = tempfile.TemporaryFile()
+cmds_file.write("\n".join(commands))
+cmds_file.flush()
 
-result = execute(['sftp', '-b', commandListFile.name, user + '@' + host])
-print >>os.sys.stderr, result[1]
-commandListFile.close()
+status, output, _ = execute(['sftp', '-b', cmds_file.name, user + '@' + host])
+print >>os.sys.stderr, output
+cmds_file.close()
 
-if result[0] == 0:
-	clip = ''
-	for file in files:
+if status == 0:
+	for item in items:
 		try:
-			os.rename (file.sourcePath, file.safePath)
+			os.rename(item['src_path'], item['safe_path'])
 		except:
-			print >>os.sys.stderr, 'Error', file.sourcePath, file.safePath
-		args = dict(commonArgs.items() + file.items())
-		print execute(['wget', '-qO-', clipUrl.format(**args)])[1]
+			print >>os.sys.stderr, 'Error renaming', item['src_path'], 'to', item['safe_path']
+		print execute(['wget', '-qO-', item['resolver_url']])[1]
