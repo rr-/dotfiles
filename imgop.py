@@ -5,14 +5,14 @@ import sys
 import subprocess
 from lib.proc import execute
 
-def backup(file):
+def make_backup(file):
 	backup = file + '~'
 	if os.path.exists(backup):
 		raise Exception('%s already exists' % backup)
 	os.rename(file, backup)
 	return backup, file
 
-def transferFileStats(src, dst):
+def transfer_stat(src, dst):
 	atime = os.path.getatime(src) #this is changed immediately after rename
 	mtime = os.path.getmtime(src)
 	os.utime(dst, (atime, mtime))
@@ -35,14 +35,14 @@ class DegradeOperation(Operation):
 	name = ['degrade', 'downgrade']
 
 	def run(self, file):
-		backup, file = makeBackup(file)
+		backup, file = make_backup(file)
 		new = os.path.splitext(file)[0] + '.jpg'
 		cmd  = ['convert']
 		cmd += ['%s[0]' % backup]
 		cmd += ['-quality', '80']
 		cmd += ['jpg:%s' % new]
 		execute(cmd)
-		transferFileStats(backup, file)
+		transfer_stat(backup, file)
 
 
 class FixAnamorphicOperation(Operation):
@@ -56,13 +56,13 @@ class FixAnamorphicOperation(Operation):
 		w, h = map(int, out.split(' '))
 		nw = h * 16 // 9
 		nh = h
-		backup, file = makeBackup(file)
+		backup, file = make_backup(file)
 		cmd  = ['convert']
 		cmd += ['%s[0]' % backup]
 		cmd += ['-resize', '%dx%d!' % (nw, nh)]
 		cmd += [file]
 		execute(cmd)
-		transferFileStats(backup, file)
+		transfer_stat(backup, file)
 
 
 class FixPngOperation(Operation):
