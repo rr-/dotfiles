@@ -1,9 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 import os
-import time
-import subprocess
-import tempfile
 import urllib
 import datetime
 from lib.proc import execute
@@ -19,13 +16,6 @@ folder = datetime.date.today().strftime('%Y-%m')
 dst_folder = '/srv/www/pinkyard/public_html/files/%s/' % folder
 resolver_url = 'http://pink.sakuya.pl/resolve/%s/' % folder
 
-#prepare commands
-commands = []
-y = ''
-for x in dst_folder.strip('/').split('/'):
-	y += '/' + x
-	commands.append('-mkdir "{0}"'.format(y))
-
 items = []
 for name in os.listdir(src_folder):
 	item = {}
@@ -34,7 +24,7 @@ for name in os.listdir(src_folder):
 	if not os.path.isfile(item['src_path']):
 		continue
 	item['src_time'] = os.stat(item['src_path'])
-	item['dst_name'] = clean_screen_name(item['src_name'])
+	item['dst_name'] = clean_screen_name(item['src_name']).replace('\'', '')
 	item['dst_path'] = os.path.join(dst_folder, item['dst_name'])
 	item['safe_path'] = os.path.join(safe_folder, item['src_name'])
 	item['resolver_url'] = resolver_url + urllib.quote(item['dst_name'])
@@ -42,25 +32,22 @@ for name in os.listdir(src_folder):
 if len(items) == 0:
 	os.sys.exit(0)
 
-for i, item in enumerate(sorted(items, key=lambda f: f['src_time'])):
-	future = time.mktime((datetime.datetime.now() + datetime.timedelta(seconds=i)).timetuple())
-	os.utime(item['src_path'], (future, future))
-	commands.append('put -p "%s" "%s"' % (item['src_path'], item['dst_path']))
-	commands.append('chmod 0744 "%s"' % item['dst_path'])
+#make remote destination directory
+execute(['echo', '%s@%s' % (user, host), 'bash -c \'mkdir -p "%s"\'' % dst_folder])
+execute(['echo', '%s@%s' % (user, host), 'bash -c \'chmod 0755 "%s"\'' % dst_folder])
 
-#write file, execute sftp
-cmds_file = tempfile.TemporaryFile()
-cmds_file.write("\n".join(commands))
-cmds_file.flush()
+for i, item in enumerate(sorted(items, key=lambda item: item['src_time'])):
+	#transfer the file
+	execute(['scp', item['src_path'], '%s@%s:%s' % (user, host, item['dst_path'])])
 
-status, output, _ = execute(['sftp', '-b', cmds_file.name, user + '@' + host])
-print >>os.sys.stderr, output
-cmds_file.close()
+	#update file stats
+	future = datetime.datetime.now() + datetime.timedelta(seconds=i)
+	execute(['ssh', '%s@%s' % (user, host), 'bash -c \'touch "%s" -d "%s"\'' % (item['dst_path'], future.strftime('%Y-%m-%d %H:%M:%S'))])
+	execute(['ssh', '%s@%s' % (user, host), 'bash -c \'chmod 0644 "%s"\'' % item['dst_path']])
 
-if status == 0:
-	for item in items:
-		try:
-			os.rename(item['src_path'], item['safe_path'])
-		except:
-			print >>os.sys.stderr, 'Error renaming', item['src_path'], 'to', item['safe_path']
-		print execute(['wget', '-qO-', item['resolver_url']])[1]
+	#move the file
+	try:
+		os.rename(item['src_path'], item['safe_path'])
+	except:
+		print >>sys.stderr, 'Error renaming', item['src_path'], 'to', item['safe_path']
+	print execute(['wget', '-qO-', item['resolver_url']])[1]
