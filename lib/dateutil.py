@@ -1,4 +1,8 @@
 import datetime
+import dateutil.parser
+
+def parse(string):
+	return dateutil.parser.parse(string)
 
 def date_range(start_date, end_date):
 	for n in range((end_date - start_date).days + 1):
