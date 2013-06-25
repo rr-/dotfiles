@@ -25,4 +25,4 @@ def reset():
 	return colorama.Fore.RESET + colorama.Back.RESET + colorama.Style.RESET_ALL
 
 def colorize(text, attrs):
-	return mkcolor(attrs) + text + reset()
+	return mkcolor(attrs) + str(text) + reset()
