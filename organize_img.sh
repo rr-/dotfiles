@@ -43,5 +43,5 @@ do
 done
 
 #remove empty directores
-find "$transit_root_dir" -depth -type d -exec rmdir --ignore-fail-on-non-empty "{}" \;
-ssh $server "bash -c 'find \"$remote_root_dir\" -depth -type d -exec rmdir --ignore-fail-on-non-empty \"{}\" \;'"
+find "$transit_root_dir/*" -depth -type d -exec rmdir --ignore-fail-on-non-empty "{}" \;
+ssh $server "bash -c 'find \"$remote_root_dir/*\" -depth -type d -exec rmdir --ignore-fail-on-non-empty \"{}\" \;'"
