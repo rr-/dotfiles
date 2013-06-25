@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
 import lib.colors as colors
@@ -44,7 +44,7 @@ items = \
 }
 
 #fill the rest of the ascii table
-for i in xrange(low, up):
+for i in range(low, up):
 	if i not in items:
 		items[i] = {'short': chr(i), 'color': ['Fore.RED']}
 	else:
@@ -53,9 +53,9 @@ for i in xrange(low, up):
 
 #compute column padding
 pads = {}
-max_y = (up - low) / columns
-for x in xrange(columns):
-	column = [items[y + x * max_y + low] for y in xrange(0, max_y)]
+max_y = (up - low) // columns
+for x in range(columns):
+	column = [items[y + x * max_y + low] for y in range(0, max_y)]
 	pad1 = max(len(str(item['char'])) for item in column)
 	pad2 = max(len(item['short']) for item in column)
 	pad3 = max(len(item['long']) if 'long' in item else 0 for item in column)
@@ -64,17 +64,17 @@ for x in xrange(columns):
 	pads[x] = (pad1, pad2, pad3)
 
 #print the table
-for y in xrange(max_y):
-	for x in xrange(columns):
+for y in range(max_y):
+	for x in range(columns):
 		pad1, pad2, pad3 = pads[x]
 		item = items[y + x * max_y + low]
-		print str(item['char']).ljust(pad1),
-		print 'x%02X' % item['char'],
-		print colors.colorize(item['short'].ljust(pad2), item['color']),
+		print(str(item['char']).ljust(pad1), end=' ')
+		print('x{0:02X}'.format(item['char']), end=' ')
+		print(colors.colorize(item['short'].ljust(pad2), item['color']), end=' ')
 		if 'long' in item:
-			print ('(%s)' % item['long']).ljust(pad3),
+			print(('({0})'.format(item['long'])).ljust(pad3), end=' ')
 		else:
-			print ''.ljust(pad3),
+			print(''.ljust(pad3), end=' ')
 		if x != columns - 1:
-			print colors.colorize('|', ['Fore.WHITE']),
-	print
+			print(colors.colorize('|', ['Fore.WHITE']), end=' ')
+	print()
