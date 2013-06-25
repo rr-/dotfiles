@@ -1,7 +1,7 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 # -*- coding: utf-8 -*-
 import os
-import urllib
+import urllib.request, urllib.parse, urllib.error
 import datetime
 from lib.proc import execute
 from lib.string import clean_screen_name
@@ -27,7 +27,7 @@ for name in os.listdir(src_folder):
 	item['dst_name'] = clean_screen_name(item['src_name']).replace('\'', '')
 	item['dst_path'] = os.path.join(dst_folder, item['dst_name'])
 	item['safe_path'] = os.path.join(safe_folder, item['src_name'])
-	item['resolver_url'] = resolver_url + urllib.quote(item['dst_name'])
+	item['resolver_url'] = resolver_url + urllib.parse.quote(item['dst_name'])
 	items.append(item)
 if len(items) == 0:
 	os.sys.exit(0)
@@ -49,5 +49,5 @@ for i, item in enumerate(sorted(items, key=lambda item: item['src_time'])):
 	try:
 		os.rename(item['src_path'], item['safe_path'])
 	except:
-		print >>sys.stderr, 'Error renaming', item['src_path'], 'to', item['safe_path']
-	print execute(['wget', '-qO-', item['resolver_url']])[1]
+		print('Error renaming', item['src_path'], 'to', item['safe_path'], file=sys.stderr)
+	print(execute(['wget', '-qO-', item['resolver_url']])[1])

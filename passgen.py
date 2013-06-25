@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 import os
 import sys
 import random
@@ -15,9 +15,9 @@ if len(os.sys.argv) > 1:
 signal(SIGPIPE, SIG_DFL)
 while True:
 	n = random.randint(min, max)
-	p = ''.join(random.choice(alpha) for x in xrange(n))
+	p = ''.join(random.choice(alpha) for x in range(n))
 	try:
-		print p
+		print(p)
 	except KeyboardInterrupt:
 		sys.exit(0)
 	except:
