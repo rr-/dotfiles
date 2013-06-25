@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 import sys
-from lib.dateutil import get_month_day_range, parse
+from lib.dt import get_month_day_range, parse
 from datetime import datetime, timedelta
 
 def monthdelta(d1, d2):

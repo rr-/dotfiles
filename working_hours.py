@@ -1,13 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-
+import datetime
+import getpass
+import locale
 import gdata.calendar.client
 from pyExcelerator import *
-from lib.dateutil import get_month_day_range
-import getpass
-import dateutil.parser
-import datetime
-import locale
+from lib.dt import get_month_day_range, parse
 
 class GodzinyMaker(object):
 	def __init__(self, mail, password, keyword, path):
@@ -38,8 +36,8 @@ class GodzinyMaker(object):
 		feed = client.GetCalendarEventFeed(q=query, uri=calendarUrl)
 		for i, event in enumerate(feed.entry):
 			for when in event.when:
-				start = dateutil.parser.parse(when.start)
-				end = dateutil.parser.parse(when.end)
+				start = parse(when.start)
+				end = parse(when.end)
 				key = datetime.date.strftime(start, '%Y-%m-%d')
 				hours[key] = [start, end]
 
