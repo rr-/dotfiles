@@ -33,8 +33,8 @@ if len(items) == 0:
 	os.sys.exit(0)
 
 #make remote destination directory
-execute(['echo', '%s@%s' % (user, host), 'bash -c \'mkdir -p "%s"\'' % dst_folder])
-execute(['echo', '%s@%s' % (user, host), 'bash -c \'chmod 0755 "%s"\'' % dst_folder])
+execute(['ssh', '%s@%s' % (user, host), 'bash -c \'mkdir -p "%s"\'' % dst_folder])
+execute(['ssh', '%s@%s' % (user, host), 'bash -c \'chmod 0755 "%s"\'' % dst_folder])
 
 for i, item in enumerate(sorted(items, key=lambda item: item['src_time'])):
 	#transfer the file
