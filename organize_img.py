@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
 import os
@@ -60,7 +60,7 @@ class Worker(threading.Thread):
 		return (dst_dir, subdir_number, file_counter)
 
 	def run(self):
-		print >>sys.stderr, 'Working...'
+		print('Working...', file=sys.stderr)
 		dirs = [self.src_dir]
 		dirs_final = []
 		while not self.kill_received and len(dirs) > 0:
@@ -84,7 +84,7 @@ class Worker(threading.Thread):
 					continue
 
 				stats['processed'] += 1
-				print path,
+				print(path, end=' ')
 
 				shouldRemove = False
 				try:
@@ -94,7 +94,7 @@ class Worker(threading.Thread):
 						if img.format != 'GIF':
 							if re.search('(2chan|4chan)', dst_dir):
 								shouldRemove = True
-								print '%dx%d < %dx%d' % (width, height, min_width, min_height)
+								print('%dx%d < %dx%d' % (width, height, min_width, min_height))
 				except:
 					pass
 
@@ -109,7 +109,7 @@ class Worker(threading.Thread):
 						pass
 
 					dst_path = os.path.join(dst_dir, os.path.basename(path))
-					print 'moving to %s' % dst_path
+					print('moving to %s' % dst_path)
 					os.rename(path, dst_path)
 					stats['moved'] += 1
 					file_counter += 1
@@ -119,14 +119,14 @@ class Worker(threading.Thread):
 			if os.path.exists(dir) and dir != self.src_dir:
 				os.rmdir(dir)
 
-		print >>sys.stderr, 'Done'
-		print >>sys.stderr, 'Files moved:     %d' % stats['moved']
-		print >>sys.stderr, 'Files removed:   %d' % stats['removed']
-		print >>sys.stderr, 'Files processed: %d' % stats['processed']
+		print('Done', file=sys.stderr)
+		print('Files moved:     %d' % stats['moved'], file=sys.stderr)
+		print('Files removed:   %d' % stats['removed'], file=sys.stderr)
+		print('Files processed: %d' % stats['processed'], file=sys.stderr)
 
 def main(args):
 	cmd = 'rsync -avz --remove-source-files %s %s' % (src_rsync, src_dir)
-	print cmd
+	print(cmd)
 	subprocess.call(cmd, shell=True)
 	t = Worker(src_dir, dst_dir, min_width, min_height, max_files)
 	t.start()
@@ -136,7 +136,7 @@ def main(args):
 			time.sleep(1)
 			pass
 	except KeyboardInterrupt:
-		print >>sys.stderr, 'Ctrl+C received.'
+		print('Ctrl+C received.', file=sys.stderr)
 		t.kill_received = True
 
 if __name__ == '__main__':

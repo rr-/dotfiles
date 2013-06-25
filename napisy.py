@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 # -*- coding: utf-8 -*-
 #
 #  Copyright (C) 2009 Arkadiusz MiĹ�kiewicz <arekm@pld-linux.org>
@@ -18,7 +18,7 @@
 #
 
 import sys
-import urllib
+import urllib.request, urllib.parse, urllib.error
 import subprocess
 import tempfile
 import os
@@ -30,7 +30,6 @@ except ImportError:
 	from md5 import md5
 
 napipass = 'iBlm8NTigvru0Jr0'
-
 prog = os.path.basename(sys.argv[0])
 
 video_files = [ 'asf', 'avi', 'divx', 'mkv', 'mp4', 'mpeg', 'mpg', 'ogm', 'rm', 'rmvb', 'wmv' ]
@@ -40,45 +39,37 @@ def f(z):
 	idx = [ 0xe, 0x3,  0x6, 0x8, 0x2 ]
 	mul = [   2,   2,    5,   4,   3 ]
 	add = [   0, 0xd, 0x10, 0xb, 0x5 ]
-
 	b = []
-	for i in xrange(len(idx)):
+	for i in range(len(idx)):
 		a = add[i]
 		m = mul[i]
 		i = idx[i]
-
 		t = a + int(z[i], 16)
 		v = int(z[t:t+2], 16)
 		b.append( ("%x" % (v*m))[-1] )
-
 	return ''.join(b)
 
 def usage():
-	print >> sys.stderr, "Usage: %s [OPTIONS]... [FILE|DIR]..." % prog
-	print >> sys.stderr, "Find video files and download matching subtitles from napiprojekt server."
-	print >> sys.stderr
-	print >> sys.stderr, "Supported options:"
-	print >> sys.stderr, "     -h, --help            display this help and exit"
-	print >> sys.stderr, "     -l, --lang=LANG       subtitles language"
-	print >> sys.stderr, "     -n, --nobackup        make no backup when in update mode"
-	print >> sys.stderr, "     -u, --update          fetch new and also update existing subtitles"
-	print >> sys.stderr
-	print >> sys.stderr, "pynapi $Revision: 1.27 $"
-	print >> sys.stderr
-	print >> sys.stderr, "Report bugs to <arekm@pld-linux.org>."
+	print("Usage: %s [OPTIONS]... [FILE|DIR]..." % prog, file=sys.stderr)
+	print("Find video files and download matching subtitles from napiprojekt server.", file=sys.stderr)
+	print(file=sys.stderr)
+	print("Supported options:", file=sys.stderr)
+	print("     -h, --help            display this help and exit", file=sys.stderr)
+	print("     -l, --lang=LANG       subtitles language", file=sys.stderr)
+	print("     -u, --update          fetch new and also update existing subtitles", file=sys.stderr)
+	print(file=sys.stderr)
 
 def main(argv=sys.argv):
 
 	try:
-		opts, args = getopt.getopt(argv[1:], "hl:nu", ["help", "lang", "nobackup", "update"])
-	except getopt.GetoptError, err:
-		print str(err)
+		opts, args = getopt.getopt(argv[1:], "hl:nu", ["help", "lang", "update"])
+	except getopt.GetoptError as err:
+		print(str(err))
 		usage()
 		return 2
 
 	output = None
 	verbose = False
-	nobackup = False
 	update = False
 	lang = 'pl'
 	for o, a in opts:
@@ -91,17 +82,15 @@ def main(argv=sys.argv):
 			if a in languages:
 				lang = a
 			else:
-				print >> sys.stderr, "%s: unsupported language `%s'. Supported languages: %s" % (prog, a, str(languages.keys()))
+				print("%s: unsupported language `%s'. Supported languages: %s" % (prog, a, str(list(languages.keys()))), file=sys.stderr)
 				return 1
-		elif o in ("-n", "--nobackup"):
-			nobackup = True
 		elif o in ("-u", "--update"):
 			update = True
 		else:
-			print >> sys.stderr, "%s: unhandled option" % prog
+			print("%s: unhandled option" % prog, file=sys.stderr)
 			return 1
 
-	print >> sys.stderr, "%s: Subtitles language `%s'. Finding video files..." % (prog, lang)
+	print("%s: Subtitles language `%s'. Finding video files..." % (prog, lang), file=sys.stderr)
 
 	files = []
 	for arg in args:
@@ -128,23 +117,13 @@ def main(argv=sys.argv):
 		if not update and os.path.exists(vfile):
 			continue
 
-		if not nobackup and os.path.exists(vfile):
-			vfile_bak = vfile + '-bak'
-			try:
-				os.rename(vfile, vfile_bak)
-			except (IOError, OSError), e:
-				print >> sys.stderr, "%s: Skipping due to backup of `%s' as `%s' failure: %s" % (prog, vfile, vfile_bak, e)
-				continue
-			else:
-				print >> sys.stderr, "%s: Old subtitle backed up as `%s'" % (prog, vfile_bak)
-
-		print >> sys.stderr, "%s: %d/%d: Processing subtitle for %s" % (prog, i, i_total, file)
+		print("%s: %d/%d: Processing subtitle for %s" % (prog, i, i_total, file), file=sys.stderr)
 
 		d = md5()
 		try:
 			d.update(open(file).read(10485760))
-		except (IOError, OSError), e:
-			print >> sys.stderr, "%s: %d/%d: Hashing video file failed: %s" % (prog, i, i_total, e)
+		except (IOError, OSError) as e:
+			print("%s: %d/%d: Hashing video file failed: %s" % (prog, i, i_total, e), file=sys.stderr)
 			continue
 
 		url = "http://napiprojekt.pl/unit_napisy/dl.php?l=%s&f=%s&t=%s&v=other&kolejka=false&nick=&pass=&napios=%s" % \
@@ -153,20 +132,20 @@ def main(argv=sys.argv):
 		sub = None
 		http_code = 200
 		try:
-			sub = urllib.urlopen(url)
+			sub = urllib.request.urlopen(url)
 			if hasattr(sub, 'getcode'):
 				http_code = sub.getcode()
 			sub = sub.read()
-		except (IOError, OSError), e:
-			print >> sys.stderr, "%s: %d/%d: Fetching subtitle failed: %s" % (prog, i, i_total, e)
+		except (IOError, OSError) as e:
+			print("%s: %d/%d: Fetching subtitle failed: %s" % (prog, i, i_total, e), file=sys.stderr)
 			continue
 
 		if http_code != 200:
-			print >> sys.stderr, "%s: %d/%d: Fetching subtitle failed, HTTP code: %s" % (prog, i, i_total, str(http_code))
+			print("%s: %d/%d: Fetching subtitle failed, HTTP code: %s" % (prog, i, i_total, str(http_code)), file=sys.stderr)
 			continue
 
 		if sub.startswith('NPc'):
-			print >> sys.stderr, "%s: %d/%d: Subtitle NOT FOUND" % (prog, i, i_total)
+			print("%s: %d/%d: Subtitle NOT FOUND" % (prog, i, i_total), file=sys.stderr)
 			continue
 
 		fp = open('Z:/hub/napisy.7z', 'wb')
@@ -180,7 +159,7 @@ def main(argv=sys.argv):
 			sa = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, close_fds=True)
 			(so, se) = sa.communicate(sub)
 			retcode = sa.returncode
-		except OSError, e:
+		except OSError as e:
 			se = e
 			retcode = True
 
@@ -188,14 +167,14 @@ def main(argv=sys.argv):
 
 
 		if retcode:
-			print >> sys.stderr, "%s: %d/%d: Subtitle decompression FAILED: %s" % (prog, i, i_total, se)
+			print("%s: %d/%d: Subtitle decompression FAILED: %s" % (prog, i, i_total, se), file=sys.stderr)
 			continue
 
 		fp = open(vfile, 'w')
 		fp.write(so)
 		fp.close()
 
-		print >> sys.stderr, "%s: %d/%d: STORED (%d bytes)" % (prog, i, i_total, len(so))
+		print("%s: %d/%d: STORED (%d bytes)" % (prog, i, i_total, len(so)), file=sys.stderr)
 
 	return 0
 
@@ -204,5 +183,5 @@ if __name__ == "__main__":
 	try:
 		ret = main()
 	except (KeyboardInterrupt, SystemExit):
-		print >> sys.stderr, "%s: Interrupted, aborting." % prog
+		print("%s: Interrupted, aborting." % prog, file=sys.stderr)
 	sys.exit(ret)

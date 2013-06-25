@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 # -*- coding: utf-8 -*-
 import os
 import sys
@@ -28,7 +28,7 @@ class Operation(object):
 				else:
 					self.run(file)
 			except Exception as e:
-				print >>sys.stderr, str(e)
+				print(str(e), file=sys.stderr)
 
 
 class DegradeOperation(Operation):
@@ -53,7 +53,7 @@ class FixAnamorphicOperation(Operation):
 		cmd += ['-format', '%w %h']
 		cmd += ['%s[0]' % file]
 		out = execute(cmd)[1]
-		w, h = map(int, out.split(' '))
+		w, h = list(map(int, out.split(' ')))
 		nw = h * 16 // 9
 		nh = h
 		backup, file = make_backup(file)
@@ -101,7 +101,7 @@ class StitchOperation(Operation):
 
 if __name__ == '__main__':
 	if len(sys.argv) < 3:
-		print >>sys.stderr, 'Too few arguments.'
+		print('Too few arguments.', file=sys.stderr)
 		sys.exit(1)
 
 	op_name = sys.argv[1]
@@ -113,5 +113,5 @@ if __name__ == '__main__':
 			op.run_all(files)
 			sys.exit(0)
 
-	print >>sys.stderr, 'Unknown argument:', sys.argv[1]
+	print('Unknown argument:', sys.argv[1], file=sys.stderr)
 	sys.exit(1)
