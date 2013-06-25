@@ -21,7 +21,7 @@ do
 	echo -n "$src_file "
 
 	#check image size
-	if [[ "$src_file" =~ .*\.(jpg|png|gif) ]]
+	if [[ "$src_file" =~ .*\.(jpg|png) ]]
 	then
 		dimensions=$(identify -format '%w*%h' "$src_file" 2>/dev/nll)
 		if [ $? -eq "0" ]
