@@ -56,13 +56,12 @@ def usage():
 	print("Supported options:", file=sys.stderr)
 	print("     -h, --help            display this help and exit", file=sys.stderr)
 	print("     -l, --lang=LANG       subtitles language", file=sys.stderr)
-	print("     -u, --update          fetch new and also update existing subtitles", file=sys.stderr)
 	print(file=sys.stderr)
 
 def main(argv=sys.argv):
 
 	try:
-		opts, args = getopt.getopt(argv[1:], "hl:nu", ["help", "lang", "update"])
+		opts, args = getopt.getopt(argv[1:], "hl:nu", ["help", "lang"])
 	except getopt.GetoptError as err:
 		print(str(err))
 		usage()
@@ -70,7 +69,6 @@ def main(argv=sys.argv):
 
 	output = None
 	verbose = False
-	update = False
 	lang = 'pl'
 	for o, a in opts:
 		if o == "-v":
@@ -84,8 +82,6 @@ def main(argv=sys.argv):
 			else:
 				print("%s: unsupported language `%s'. Supported languages: %s" % (prog, a, str(list(languages.keys()))), file=sys.stderr)
 				return 1
-		elif o in ("-u", "--update"):
-			update = True
 		else:
 			print("%s: unhandled option" % prog, file=sys.stderr)
 			return 1
@@ -113,9 +109,6 @@ def main(argv=sys.argv):
 		vfile = file + '.sub'
 		if len(file) > 4:
 			vfile = file[:-4] + '.sub'
-
-		if not update and os.path.exists(vfile):
-			continue
 
 		print("%s: %d/%d: Processing subtitle for %s" % (prog, i, i_total, file), file=sys.stderr)
 
