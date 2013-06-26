@@ -121,7 +121,7 @@ def main(argv=sys.argv):
 
 		d = md5()
 		try:
-			d.update(open(file).read(10485760))
+			d.update(open(file, 'rb').read(10485760))
 		except (IOError, OSError) as e:
 			print("%s: %d/%d: Hashing video file failed: %s" % (prog, i, i_total, e), file=sys.stderr)
 			continue
@@ -144,7 +144,7 @@ def main(argv=sys.argv):
 			print("%s: %d/%d: Fetching subtitle failed, HTTP code: %s" % (prog, i, i_total, str(http_code)), file=sys.stderr)
 			continue
 
-		if sub.startswith('NPc'):
+		if str(sub).startswith('NPc'):
 			print("%s: %d/%d: Subtitle NOT FOUND" % (prog, i, i_total), file=sys.stderr)
 			continue
 
@@ -170,7 +170,7 @@ def main(argv=sys.argv):
 			print("%s: %d/%d: Subtitle decompression FAILED: %s" % (prog, i, i_total, se), file=sys.stderr)
 			continue
 
-		fp = open(vfile, 'w')
+		fp = open(vfile, 'wb')
 		fp.write(so)
 		fp.close()
 
