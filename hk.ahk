@@ -15,14 +15,17 @@ CoordMode, ToolTip, Screen
 OldTicks = 0
 
 ;check for cygwin path
+global CygPath
 CygPath = C:\Program Files (x86)\cygwin
 IfNotExist %CygPath%
 	CygPath = C:\Cygwin
 
+global BrowserPath
 BrowserPath = C:\Program Files (x86)\Mozilla Firefox\firefox.exe
 IfNotExist %BrowserPath%
 	BrowserPath = "C:\Users\vleeshue\AppData\Local\Google\Chrome\Application\chrome.exe"
 
+global WTWPath
 WTWPath = C:\Program Files\WTW\WTW.exe
 IfNotExist %WTWPath%
 	WTWPath = C:\Program Files\K2T\WTW\WTW.exe
@@ -82,7 +85,7 @@ RandomFileName()
 UploadFiles()
 {
 	ToolTip, Uploading files..., -1920+50, 50
-	RunWait, %CygPath%\bin\mintty.exe "/bin/bash -l -c send_to_pinkyard.sh|clip", %CygPath%
+	RunWait, %CygPath%\bin\mintty.exe --exec /bin/bash -l -c send_to_pinkyard.sh|clip, %CygPath%/bin
 	ToolTip
 	return
 }
@@ -97,7 +100,7 @@ MakeScreen(arguments)
 	if %ErrorLevel% = 0
 	{
 		RunWait, % "Z:\src\optipng\support\optipng.exe -o1 " . PNGFileName, "Z:\", Hide
-		RunWait, % CygPath . "bin\convert.exe " . PNGFileName . " -quality 80 " . JPGFileName, "Z:\", Hide
+		RunWait, % CygPath . "\bin\convert.exe " . PNGFileName . " -quality 80 " . JPGFileName, "Z:\", Hide
 		FileGetSize, JPGFileSize, % JPGFileName
 		FileGetSize, PNGFileSize, % PNGFileName
 		if % PNGFileSize > JPGFileSize
@@ -124,14 +127,14 @@ MakeScreen(arguments)
 	;cygwin - activate/run
 	+^![::
 	{
-		Run, %CygPath%\bin\mintty.exe --size "120`,40" --position "1050`,45" --class "mintty_thetty" --exec /bin/bash --login -i, %CygPath%
+		Run, %CygPath%\bin\mintty.exe --size "120`,40" --position "1050`,45" --class "mintty_thetty" --exec /bin/bash -l -i, %CygPath%
 		return
 	}
 	^![::
 	{
 		if (!WinExist("ahk_class mintty_thetty"))
 		{
-			Run, %CygPath%\bin\mintty.exe --size "120`,40" --position "1050`,45" --class "mintty_thetty" --exec /bin/bash --login -i -c 'while /bin/true`; do /bin/bash`; cygstart "%A_AhkPath%" "Z:\src\hide.ahk"`; clear; done', %CygPath%
+			Run, %CygPath%\bin\mintty.exe --size "120`,40" --position "1050`,45" --class "mintty_thetty" --exec /bin/bash -l -i -c 'while /bin/true`; do /bin/bash`; cygstart "%A_AhkPath%" "Z:\src\hide.ahk"`; clear; done', %CygPath%
 			WinWait ahk_class mintty_thetty
 		}
 		else
