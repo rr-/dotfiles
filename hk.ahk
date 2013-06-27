@@ -239,8 +239,6 @@ Launch_Media::FRun("ahk_class {97E27FAA-C0B3-4b8e-A693-ED7881E99FC1}", "C:\progr
 !W:: ;minimize active window
 	if WinActive("WTW$") {
 		WinHide
-	} else if WinActive("ahk_class OperaWindowClass") {
-		SendInput +!^h
 	} else {
 		ActiveHwnd := WinExist("A")
 		PostMessage 0x112, 0xF020 ;WM_SYSCOMMAND, SC_MINIMIZE
@@ -299,16 +297,6 @@ Launch_Media::FRun("ahk_class {97E27FAA-C0B3-4b8e-A693-ED7881E99FC1}", "C:\progr
  !PrintScreen::MakeScreen("-r active-window --shift -8,-8,+16,+16 --force-gui")
 !#PrintScreen::MakeScreen("-r active-monitor")
  #PrintScreen::MakeScreen("-r all-monitors")
-
-
-
-;screenshots [media player classic]
-#IfWinActive ahk_class MediaPlayerClassicW
-[::
-	Send {F5}
-	return
-#IfWinActive
-
 
 
 
