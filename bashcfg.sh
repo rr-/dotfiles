@@ -3,10 +3,9 @@ EDITOR=vim
 export EDITOR
 alias editor="$EDITOR"
 
-. config.ini
-
 #useful PATH
 export PATH=${PATH}:$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
+. config.ini
 
 
 #various shell options
