@@ -2,12 +2,18 @@
 . config.ini
 [ "$(hostname)" != "$desktop" ] && echo "Must be run on $desktop" 1>&2 && exit 1
 
-cmd='rsync -azK --delete-after -e ssh'
-$cmd "$user@$server:/etc/" "/cygdrive/z/clutter/backup-$server/etc"
-$cmd "$user@$server:/home/$user/" "/cygdrive/z/clutter/backup-$server/home/$user/" --exclude "img/" --exclude "backup-$desktop/"
-$cmd "$user@$server:/home/srv/" "/cygdrive/z/clutter/backup-$server/home/srv/" --exclude "www/mal-dev/"
-$cmd "/cygdrive/z/clutter/" "$user@$server:/home/$user/backup-$desktop/clutter/" --exclude "backup-$server/"
-$cmd "/cygdrive/z/img/" "$user@$server:/home/$user/backup-$desktop/img/" --exclude "net/"
-$cmd "/cygdrive/z/mgr/" "$user@$server:/home/$user/backup-$desktop/mgr/"
-$cmd "/cygdrive/z/text/" "$user@$server:/home/$user/backup-$desktop/text/"
-$cmd "/cygdrive/z/src/" "$user@$server:/home/$user/backup-$desktop/src/"
+backup_user=backup
+server_backup=( /etc "/home/$user" /home/srv )
+desktop_backup=( clutter img mgr text src )
+
+for x in ${server_backup[@]}; do
+	echo "$server --> $desktop: $x"
+	rsync -avzKR --delete-during -e "ssh -i /home/rr-/.ssh/id_rsa" "$user@$server:$x/" "/cygdrive/z/backup-$server/" --exclude "/home/$user/img/"
+	echo
+done
+
+for x in ${desktop_backup[@]}; do
+	echo "$desktop --> $server: $x"
+	rsync -avzKR --delete-during -e "ssh -i /home/rr-/.ssh/id_rsa" "/cygdrive/z/$x/" "$backup_user@$server:/home/backup/backup-$desktop/" --exclude "/cygdrive/z/img/net/"
+	echo
+done
