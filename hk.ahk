@@ -123,13 +123,15 @@ MakeScreen(arguments)
 #If FileExist(CygPath)
 	;cygwin - activate/run
 	+^![::
+	{
 		Run, %CygPath%\bin\mintty.exe --size "120`,40" --position "1050`,45" --class "mintty_thetty" --exec /bin/bash --login -i, %CygPath%
 		return
-	 ^![::
-	 {
+	}
+	^![::
+	{
 		if (!WinExist("ahk_class mintty_thetty"))
 		{
-			Run, %CygPath%\bin\mintty.exe --size "120`,40" --position "1050`,45" --class "mintty_thetty" --exec /bin/bash --login -i -c 'while /bin/true; do /bin/bash; cygstart "%A_AhkPath%" "Z:\src\hide.ahk"; clear; done', %CygPath%
+			Run, %CygPath%\bin\mintty.exe --size "120`,40" --position "1050`,45" --class "mintty_thetty" --exec /bin/bash --login -i -c 'while /bin/true`; do /bin/bash`; cygstart "%A_AhkPath%" "Z:\src\hide.ahk"`; clear; done', %CygPath%
 			WinWait ahk_class mintty_thetty
 		}
 		else
