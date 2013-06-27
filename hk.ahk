@@ -82,7 +82,7 @@ RandomFileName()
 UploadFiles()
 {
 	ToolTip, Uploading files..., -1920+50, 50
-	RunWait, %CygPath%\bin\mintty.exe "/bin/bash -l -c send_to_pinkyard.py|clip", %CygPath%
+	RunWait, %CygPath%\bin\mintty.exe "/bin/bash -l -c send_to_pinkyard.sh|clip", %CygPath%
 	ToolTip
 	return
 }
