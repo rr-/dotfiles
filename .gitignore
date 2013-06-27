@@ -1,3 +1,4 @@
 *.py[cod]
-pip-log.txt
-.*.swp
+*.swp
+
+vim/.netrwhist
