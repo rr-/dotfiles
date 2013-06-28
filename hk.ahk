@@ -30,6 +30,13 @@ WTWPath = C:\Program Files\WTW\WTW.exe
 IfNotExist %WTWPath%
 	WTWPath = C:\Program Files\K2T\WTW\WTW.exe
 
+global MonitorWorkAreaLeft
+global MonitorWorkAreaRight
+global MonitorWorkAreaTop
+global MonitorWorkAreaBottom
+SysGet, MonitorPrimary, MonitorPrimary
+SysGet, MonitorWorkArea, MonitorWorkArea, %MonitorPrimary%
+
 GroupAdd, adobe, ahk_class OWL.DocumentWindow
 GroupAdd, adobe, ahk_class illustrator
 GroupAdd, adobe, ahk_class PSViewC
@@ -127,14 +134,18 @@ MakeScreen(arguments)
 	;cygwin - activate/run
 	+^![::
 	{
-		Run, %CygPath%\bin\mintty.exe --size "120`,40" --position "1050`,45" --class "mintty_thetty" --exec /bin/bash -l -i, %CygPath%
+		X := MonitorWorkAreaRight - 920
+		Y := 45
+		Run, %CygPath%\bin\mintty.exe --size "120`,40" --position "%X%`,%Y%" --class "mintty_thetty" --exec /bin/bash -l -i, %CygPath%
 		return
 	}
 	^![::
 	{
 		if (!WinExist("ahk_class mintty_thetty"))
 		{
-			Run, %CygPath%\bin\mintty.exe --size "120`,40" --position "1050`,45" --class "mintty_thetty" --exec /bin/bash -l -i -c 'while /bin/true`; do /bin/bash`; cygstart "%A_AhkPath%" "Z:\src\hide.ahk"`; clear; done', %CygPath%
+			X := MonitorWorkAreaRight - 920
+			Y := 45
+			Run, %CygPath%\bin\mintty.exe --size "120`,40" --position "%X%`,%Y%" --class "mintty_thetty" --exec /bin/bash -l -i -c 'while /bin/true`; do /bin/bash`; cygstart "%A_AhkPath%" "Z:\src\hide.ahk"`; clear; done', %CygPath%
 			WinWait ahk_class mintty_thetty
 		}
 		else
@@ -146,12 +157,19 @@ MakeScreen(arguments)
 		return
 	}
 	;ssh to burza - activate/run
-	+^!]::Run, %CygPath%\bin\mintty.exe --size "200`,70" --position "100`,45" --class mintty_ssh --exec /bin/ssh -p 65000 rr-@sakuya.pl, %CygPath%/bin
+	+^!]::
+	{
+		X := 45
+		Y := 45
+		Run, %CygPath%\bin\mintty.exe --size "200`,70" --position "%X%`,%Y%" --class mintty_ssh --exec /bin/ssh -p 65000 rr-@sakuya.pl, %CygPath%/bin
+	}
 	^!]::
 	{
+		X := 45
+		Y := 45
 		if (!WinExist("ahk_class mintty_ssh"))
 		{
-			Run, %CygPath%\bin\mintty.exe --size "200`,70" --position "100`,45" --class mintty_ssh --exec /bin/ssh -p 65000 rr-@sakuya.pl, %CygPath%/bin
+			Run, %CygPath%\bin\mintty.exe --size "200`,70" --position "%X%`,%Y%" --class mintty_ssh --exec /bin/ssh -p 65000 rr-@sakuya.pl, %CygPath%/bin
 			WinWait ahk_class mintty_ssh
 		}
 		else
