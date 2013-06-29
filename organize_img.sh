@@ -3,7 +3,7 @@
 [ "$(hostname)" != "$desktop" ] && echo "Must be run on $desktop" 1>&2 && exit 1
 
 shopt -s nocasematch
-remote_root_dir="/home/$user/img/dead/"
+remote_root_dir="/home/$user/img/"
 transit_root_dir="/cygdrive/z/hub/img/"
 dst_root_dir="/cygdrive/z/img/net/"
 min_width=500
