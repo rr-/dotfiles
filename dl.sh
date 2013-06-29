@@ -49,7 +49,7 @@ while true; do
 	#a website
 	if grep -qi 'Content-Type:\s*text/html' "$headers_file"; then
 		echo "adding links"
-		grep -oP '(?<=href=")[^"#]*(?=")' "$content_file"|sort|uniq|grep -P "$accept"|while read suburl; do
+		grep -oP "http:\/\/[^'\"#<>]*" "$content_file"|sort|uniq|grep -P "$accept"|while read suburl; do
 			addurl "$suburl"
 		done
 		echo "$url">>"$sess_completed_file"
