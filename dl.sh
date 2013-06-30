@@ -11,13 +11,6 @@ content_file="$tmp_dir/dl_content.dat"
 headers_file="$tmp_dir/dl_headers.dat"
 sess_completed_file="$tmp_dir/completed.lst"
 
-addurl () {
-	if ! grep -Fxq "$1" "$completed_file"; then
-		if ! grep -Fxq "$1" "$sess_completed_file"; then
-			echo "$1" >>"$queue_file"
-		fi
-	fi
-}
 onexit () {
 	rm -rf "$tmp_dir"
 	exit 0
@@ -31,7 +24,7 @@ atomic () {
 trap onexit EXIT
 touch "$completed_file"
 touch "$sess_completed_file"
-addurl "$first_url"
+echo "$first_url" >>"$queue_file"
 
 while true; do
 	if ! read url <"$queue_file"; then
@@ -46,7 +39,7 @@ while true; do
 	if grep -qi 'Content-Type:\s*text/html' "$headers_file"; then
 		echo "adding links"
 		grep -oP "http:\/\/[^'\"#<>]*" "$content_file"|sort|uniq|grep -P "$accept"|while read suburl; do
-			addurl "$suburl"
+			echo "$suburl" >>"$queue_file"
 		done
 		echo "$url">>"$sess_completed_file"
 	#an image
@@ -61,7 +54,7 @@ while true; do
 	fi
 
 	atomic
-	tail "$queue_file" -n +2|sort|uniq > "$queue_file~"
+	tail "$queue_file" -n +2|sort|uniq|grep -Fxv -f "$completed_file" -f "$sess_completed_file" > "$queue_file~"
 	mv "$queue_file~" "$queue_file"
 	atomic
 done
