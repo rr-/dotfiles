@@ -61,6 +61,8 @@ while true; do
 		mkdir -p "$(dirname "$dst_path")"
 		mv "$content_file" "$dst_path"
 		echo "$url">>"$completed_file"
+	else
+		echo "ignoring"
 	fi
 
 	atomic
