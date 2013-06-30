@@ -20,7 +20,7 @@ addurl () {
 }
 onexit () {
 	rm -rf "$tmp_dir"
-	exit 1
+	exit 0
 }
 atomic () {
 	if [ "$atomic" == 1 ]; then
@@ -45,6 +45,7 @@ while true; do
 	echo -n "Downloading $url... "
 
 	wget "$url" -kqSO "$content_file" 2>"$headers_file"
+	[ $? -ne 0 ] && echo "error" && exit 1
 
 	#a website
 	if grep -qi 'Content-Type:\s*text/html' "$headers_file"; then
