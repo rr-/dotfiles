@@ -23,13 +23,9 @@ onexit () {
 	exit 0
 }
 atomic () {
-	if [ "$atomic" == 1 ]; then
-		atomic=0
-		trap "exit 1" SIGINT
-	else
-		atomic=1
-		trap "" SIGINT
-	fi
+	[ "$atomic" == 1 ] \
+		&& { atomic=0; trap "exit 1" SIGINT; } \
+		|| { atomic=1; trap "" SIGINT; }
 }
 
 trap onexit EXIT
@@ -43,7 +39,6 @@ while true; do
 	fi
 
 	echo -n "Downloading $url... "
-
 	wget "$url" -kqSO "$content_file" 2>"$headers_file"
 	[ $? -ne 0 ] && echo "error" && exit 1
 
