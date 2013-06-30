@@ -33,24 +33,26 @@ while true; do
 
 	echo -n "Downloading $url... "
 	wget "$url" -kqSO "$content_file" 2>"$headers_file"
-	[ $? -ne 0 ] && echo "error" && exit 1
-
-	#a website
-	if grep -qi 'Content-Type:\s*text/html' "$headers_file"; then
-		echo "adding links"
-		grep -oP "http:\/\/[^'\"#<>]*" "$content_file"|sort|uniq|grep -P "$accept"|while read suburl; do
-			echo "$suburl" >>"$queue_file"
-		done
+	if [ $? -eq 0 ]; then
+		#a website
+		if grep -qi 'Content-Type:\s*text/html' "$headers_file"; then
+			echo "adding links"
+			grep -oP "http:\/\/[^'\"#<>]*" "$content_file"|sort|uniq|grep -P "$accept"|while read suburl; do
+				echo "$suburl" >>"$queue_file"
+			done
+		#an image
+		elif grep -qi 'Content-Type:\s*image/' "$headers_file"; then
+			echo "saving"
+			dst_path="$dst_dir"/"$(echo -n ${url##*://}|sed 's/[^a-zA-Z0-9\/\.-]/_/')"
+			mkdir -p "$(dirname "$dst_path")"
+			mv "$content_file" "$dst_path"
+			echo "$url">>"$completed_file"
+		else
+			echo "ignoring"
+		fi
 		echo "$url">>"$sess_completed_file"
-	#an image
-	elif grep -qi 'Content-Type:\s*image/' "$headers_file"; then
-		echo "saving"
-		dst_path="$dst_dir"/"$(echo -n ${url##*://}|sed 's/[^a-zA-Z0-9\/\.-]/_/')"
-		mkdir -p "$(dirname "$dst_path")"
-		mv "$content_file" "$dst_path"
-		echo "$url">>"$completed_file"
 	else
-		echo "ignoring"
+		echo "error"
 	fi
 
 	atomic
