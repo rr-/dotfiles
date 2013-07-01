@@ -60,6 +60,7 @@ else
 fi
 
 #aliases w/o colors
+alias subs="$DIR/../sh-napiprojekt/subs.sh"
 alias tl="$DIR/../sh-translator/tl.py"
 alias plen='tl pl en'
 alias enpl='tl en pl'
