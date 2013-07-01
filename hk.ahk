@@ -136,7 +136,7 @@ MakeScreen(arguments)
 	{
 		X := MonitorWorkAreaRight - 920
 		Y := 45
-		Run, %CygPath%\bin\mintty.exe --title "Terminal" --size "120`,40" --position "%X%`,%Y%" --class "mintty_thetty" --exec /bin/bash -l -i, %CygPath%
+		Run, %CygPath%\bin\mintty.exe --title "Terminal" --size "120`,40" --position "%X%`,%Y%" --class "mintty_thetty" --exec /bin/bash -l, %CygPath%
 		return
 	}
 	^![::
@@ -145,7 +145,7 @@ MakeScreen(arguments)
 		{
 			X := MonitorWorkAreaRight - 920
 			Y := 45
-			Run, %CygPath%\bin\mintty.exe --title "Terminal" --size "120`,40" --position "%X%`,%Y%" --class "mintty_thetty" --exec /bin/bash -l -i -c 'while /bin/true`; do /bin/bash`; cygstart "%A_AhkPath%" "Z:\src\scripts\hide.ahk"`; clear; done', %CygPath%
+			Run, %CygPath%\bin\mintty.exe --title "Terminal" --size "120`,40" --position "%X%`,%Y%" --class "mintty_thetty" --exec /bin/bash -l -c 'while /bin/true`; do /bin/bash`; cygstart "%A_AhkPath%" "Z:\src\scripts\hide.ahk"`; clear; done', %CygPath%
 			WinWait ahk_class mintty_thetty
 		}
 		else
@@ -188,7 +188,7 @@ MakeScreen(arguments)
 		}
 		else
 		{
-			Run, %CygPath%\bin\mintty.exe --size "240`,90" --position "100`,45" --class "Vim" --exec "/bin/vim" --cmd 'cd /cygdrive/z', %CygPath%/bin
+			Run, %CygPath%\bin\mintty.exe --size "240`,90" --position "100`,45" --class "Vim" --exec /bin/bash -l -c /bin/vim, %CygPath%/bin
 			WinWait, ahk_class Vim
 		}
 		WinMove, , , 100, 100, 1600, 900
