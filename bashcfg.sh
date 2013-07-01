@@ -60,7 +60,7 @@ else
 fi
 
 #aliases w/o colors
-alias tl='~/proj/sh-translator/tl.py'
+alias tl="$DIR/../sh-translator/tl.py"
 alias plen='tl pl en'
 alias enpl='tl en pl'
 alias rfn='date "+%Y%m%d_%H%M%S"'
