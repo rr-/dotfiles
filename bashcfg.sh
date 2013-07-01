@@ -13,6 +13,7 @@ export HISTCONTROL=ignoredups #ignore duplicate commands in history
 shopt -s histappend #append to the history file, don't overwrite it
 shopt -s globstar #allow ** recursive wildcards
 shopt -s checkwinsize #check the window size after each command and, if necessary, update the values of LINES and COLUMNS.
+shopt -s nocasematch #case insensitive matching
 
 #cool command prompt
 case "$TERM" in
@@ -57,14 +58,8 @@ alias isvim='ps ux|grep vim|grep -v grep'
 
 #legacy aliases
 command -v hd >/dev/null 2>&1 || alias hd='od -Ax -t x1'
-
-#aliases for cygwin
-if [[ $(uname | tr '[A-Z]' '[a-z]' ) == *cygwin* ]]; then
-	alias poweroff='shutdown /s /t 5'
-	alias reboot='shutdown /g /t 5'
-fi
-
-
+command -v poweroff >/dev/null 2>&1 && [[ ! $(uname) =~ cygwin ]] || alias poweroff='shutdown -s now'
+command -v reboot >/dev/null 2>&1 && [[ ! $(uname) =~ cygwin ]] || alias reboot='shutdown -r now'
 
 #autocompletion for imgop.py
 _imgop()
