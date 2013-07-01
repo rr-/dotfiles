@@ -3,7 +3,11 @@
 import os
 import sys
 import subprocess
-from lib.proc import execute
+
+def execute(cmd):
+	proc = subprocess.Popen(cmd, stdout=subprocess.PIPE)
+	out, err = proc.communicate()
+	return (proc.returncode, out, err)
 
 def make_backup(file):
 	backup = file + '~'
