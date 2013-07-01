@@ -5,7 +5,7 @@ import random
 import string
 from signal import signal, SIGPIPE, SIG_DFL
 
-alpha = string.letters + string.digits
+alpha = string.ascii_letters + string.digits
 min = 6
 max = 10
 
