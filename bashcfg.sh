@@ -3,8 +3,17 @@ EDITOR=vim
 export EDITOR
 alias editor="$EDITOR"
 
+#get path to self
+SOURCE="${BASH_SOURCE[0]}"
+while [ -h "$SOURCE" ]; do
+	DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
+	SOURCE="$(readlink "$SOURCE")"
+	[[ $SOURCE != /* ]] && SOURCE="$DIR/$SOURCE"
+done
+DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
+
 #useful PATH
-export PATH=${PATH}:$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
+export PATH=${PATH}:"$DIR"
 . config.ini
 
 
