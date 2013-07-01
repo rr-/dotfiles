@@ -51,8 +51,9 @@ else
 fi
 
 #aliases w/o colors
-alias plen='~/src/tl.py pl en'
-alias enpl='~/src/tl.py en pl'
+alias tl='~/proj/sh-translator/tl.py'
+alias plen='tl pl en'
+alias enpl='tl en pl'
 alias rfn='date "+%Y%m%d_%H%M%S"'
 alias isvim='ps ux|grep vim|grep -v grep'
 
