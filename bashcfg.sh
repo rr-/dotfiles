@@ -73,7 +73,7 @@ command -v hd >/dev/null 2>&1 || alias hd='od -Ax -t x1'
 command -v poweroff >/dev/null 2>&1 && [[ ! $(uname) =~ cygwin ]] || alias poweroff='shutdown -s now'
 command -v reboot >/dev/null 2>&1 && [[ ! $(uname) =~ cygwin ]] || alias reboot='shutdown -r now'
 
-#autocompletion for imgop.py
+#autocompletion for imgop.sh
 _imgop()
 {
 	local cur=${COMP_WORDS[COMP_CWORD]}
@@ -83,4 +83,4 @@ _imgop()
 		COMPREPLY=( $(compgen -A file -- $cur) )
 	fi
 }
-complete -F _imgop imgop.py
+complete -F _imgop imgop.sh
