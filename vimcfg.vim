@@ -22,7 +22,8 @@ set noincsearch                               " disable "live" search
 set hlsearch                                  " highlight searches
 set ignorecase smartcase                      " ignore case in searches, but don't ignore case in searches if they contain uppercase characters
 set number                                    " turn on line numbers
-set mouse=a                                   " enable mouse support
+set mouse=a                                   " enable mouse suppor
+set spell spelllang=en_us                     " enable spell checker
 "set virtualedit=all                          " allow moving cursor past eol
 
 " color scheme
