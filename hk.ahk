@@ -52,8 +52,8 @@ OnClipboardChange:
 {
 	if (A_EventInfo == 1) and (SubStr(clipboard, 1, 7) == "http://")
 	{
-		StringReplace, clipboard, clipboard, `%5b, [, All
-		StringReplace, clipboard, clipboard, `%5d, ], All
+		StringReplace, clipboard, clipboard, [, `%5b, All
+		StringReplace, clipboard, clipboard, ], `%5d, All
 	}
 	return
 }
