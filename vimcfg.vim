@@ -24,6 +24,7 @@ set ignorecase smartcase                      " ignore case in searches, but don
 set number                                    " turn on line numbers
 set mouse=a                                   " enable mouse suppor
 set spell spelllang=en_us                     " enable spell checker
+set modeline                                  " allow files to embed vim settings
 "set virtualedit=all                          " allow moving cursor past eol
 
 " color scheme
