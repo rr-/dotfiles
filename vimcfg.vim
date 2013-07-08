@@ -39,13 +39,10 @@ endif
 " various highlights
 highlight SpecialKey ctermbg=NONE ctermfg=187                 " whitespace
 highlight ExtraWhitespace ctermbg=red guibg=red               " trailing white space
-"highlight LineNr ctermfg=darkgray guifg=darkgray             " line number colors
 highlight OverLength ctermbg=red ctermfg=white guibg=#592929
-" match lines longer than 80 characters
-" autocmd BufWinEnter * let w:m1=matchadd('Search', '\%<81v.\%>77v', -1)
 autocmd BufWinEnter * set cc=80
 " match trailing spaces and spaces before a tab
-autocmd BufWinEnter * match ExtraWhitespace /\s\+$\| \+\ze\t/
+autocmd BufWinEnter * match ExtraWhitespace /\s\+$\|\s* \+\t\+\|\s*\t\+ \+/
 
 " ctrl+t = new tab
 :nmap <C-t> :tabnew<CR>
