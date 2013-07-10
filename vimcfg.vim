@@ -139,6 +139,9 @@ autocmd VimEnter * imap <F3> <esc>:NERDTreeFind<CR>
 autocmd VimEnter * nmap <F3> :NERDTreeFind<CR>
 
 
+"file type specific settings
+autocmd BufRead,BufNewFile *.txt,*.tex setlocal expandtab textwidth=79
+
 
 function! ReloadConfig()
 	source $MYVIMRC
