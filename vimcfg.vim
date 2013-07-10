@@ -23,7 +23,7 @@ set hlsearch                                  " highlight searches
 set ignorecase smartcase                      " ignore case in searches, but don't ignore case in searches if they contain uppercase characters
 set number                                    " turn on line numbers
 set mouse=a                                   " enable mouse suppor
-set spell spelllang=en_us                     " enable spell checker
+set spell spelllang=en_us,pl                  " enable spell checker
 set nomodeline                                " disallow files to embed vim settings
 
 " color scheme
