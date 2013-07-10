@@ -65,7 +65,7 @@ alias subs="$DIR/../sh-napiprojekt/subs.sh"
 alias tl="$DIR/../sh-translator/tl.py"
 alias plen='tl pl en'
 alias enpl='tl en pl'
-alias rfn='date "+%Y%m%d_%H%M%S"'
+alias rfn='date "+%Y%m%d_%H%M%S"|tr -d "\r\n"'
 alias isvim='ps ux|grep vim|grep -v grep'
 
 #legacy aliases
