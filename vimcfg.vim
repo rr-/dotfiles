@@ -55,7 +55,7 @@ inoremap <buffer> <silent> <Home> <C-o>g<Home>
 inoremap <buffer> <silent> <End>  <C-o>g<End>
 
 
-"change cursor buffer position in newly splitted buffers
+"change cursor buffer position in newly split buffers
 set splitbelow splitright
 "disable beeping
 set noeb vb t_vb=
@@ -80,8 +80,8 @@ set smartcase
 
 "enable mouse support
 set mouse=a
-"enable spell checker
-set spell
+"setup spell checker
+set nospell
 set spelllang=en_us,pl
 
 
@@ -140,7 +140,7 @@ autocmd VimEnter * nmap <F3> :NERDTreeFind<CR>
 
 
 "file type specific settings
-autocmd BufRead,BufNewFile *.txt,*.tex setlocal expandtab textwidth=79
+autocmd BufRead,BufNewFile *.txt,*.tex setlocal spell expandtab textwidth=79
 
 
 function! ReloadConfig()
