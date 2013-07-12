@@ -11,9 +11,8 @@ if $TERM == "xterm" || $TERM == "xterm-256color" || $TERM == "screen-256color" |
 endif
 
 " color scheme
-let g:solarized_termcolors=256
 set background=light
-colorscheme solarized
+colorscheme hemisu
 
 "highlight whitespace
 highlight SpecialKey ctermbg=NONE ctermfg=187
