@@ -4,7 +4,7 @@
 
 backup_user=backup
 server_backup=( /etc "/home/$user" /home/srv )
-desktop_backup=( clutter img mgr text src )
+desktop_backup=( clutter img text src )
 
 for x in ${server_backup[@]}; do
 	echo "$server --> $desktop: $x"
