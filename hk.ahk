@@ -91,9 +91,8 @@ RandomFileName()
 ;calling upload script
 UploadFiles()
 {
-	ToolTip, Uploading files..., -1920+50, 50
-	RunWait, %CygPath%\bin\mintty.exe --exec /bin/bash -l -c send_to_pinkyard.sh|clip, %CygPath%/bin
-	ToolTip
+	RunWait, %CygPath%\bin\mintty.exe --exec /bin/bash -l -c send_to_pinkyard.sh|clip, %CygPath%/bin, Hide
+	SoundPlay, Z:\clutter\sounds\ping.wav
 	return
 }
 
