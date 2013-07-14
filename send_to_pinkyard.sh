@@ -14,7 +14,9 @@ find "$src_folder" -type f -print0|xargs -r0 stat -c '%A %n'|sort|while read lin
 	resolver_url="http://pink.sakuya.pl/resolve/$(date +'%Y-%m')/"
 	resolver_url+=$(echo -ne "${src_file##*/}"|xxd -plain|sed 's/\(..\)/%\1/g')
 
-	scp -q "$src_file" "$user@$server:${dst_file// /\ }"
+	src_quoted=$(echo "$src_file"|sed 's/[ ()]/\0/g;')
+	dst_quoted=$(echo "$dst_file"|sed 's/[ ()]/\\\0/g;')
+	scp -q "$src_quoted" "$user@$server:$dst_quoted"
 	ssh -n "$user@$server" "touch \"$dst_file\" -d \"$ts\"; chmod 0644 \"$dst_file\""
 
 	wget "$resolver_url" -qO -
