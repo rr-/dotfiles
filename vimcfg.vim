@@ -6,7 +6,7 @@ set number
 "show white characters
 set list listchars=tab:→\ ,trail:·
 " set terminal to 256 color
-if $TERM == "xterm" || $TERM == "xterm-256color" || $TERM == "screen-256color" || $COLORTERM == "gnome-terminal"
+if $TERM == "xterm" || $TERM == "xterm-256color" || $TERM == "screen" || $TERM == "screen-256color" || $COLORTERM == "gnome-terminal"
 	set t_Co=256
 endif
 
