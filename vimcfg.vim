@@ -18,6 +18,8 @@ colorscheme hemisu
 highlight SpecialKey ctermbg=NONE ctermfg=187
 "highlight trailing white space
 highlight ExtraWhitespace ctermbg=red guibg=red
+"highlight searches
+highlight IncSearch ctermfg=black ctermbg=yellow
 
 "set gutter width to 80 characters
 autocmd BufWinEnter * set cc=80
