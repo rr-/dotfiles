@@ -261,6 +261,9 @@ MakeScreen(arguments)
 #IfWinActive ahk_class ACDBrowser
 	WheelDown::Send, ^{Down}^{Space}
 	WheelUp::Send, ^{Up}^{Space}
+	^!X::
+		SendInput {Left 10}{Shift down}{Right 10}{Shift up}
+		return
 #IfWinActive
 #IfWinActive ACDSee
 	WheelDown::
@@ -301,6 +304,12 @@ MakeScreen(arguments)
 ;other functionalities
 
 ;autohotkey - reload this script
+!F11::
+{
+	Process, Close, Rainmeter.exe
+	Run, C:\Program Files \Rainmeter\Rainmeter.exe
+	return
+}
 !F12::Reload
 
 ;maximize active window
