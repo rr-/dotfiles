@@ -19,9 +19,13 @@ find "$transit_root_dir" -type f -print0|while read -d '' -r src_file; do
 
 	#check image size
 	if [[ "$src_file" =~ .*\.(jpg|png) ]]; then
-		dimensions=$(identify -format '%w*%h' "$src_file" 2>/dev/nll)
+		read format dimensions <<<$(identify -format '%r %w*%h' "$src_file" 2>/dev/nll)
 		if [ $? -eq 0 ]; then
 			size=$(echo "$dimensions"|bc)
+			if [[ "$format" == "DirectClassGrayMatte" ]]; then
+				convert "$src_file" -type TrueColorMatte png32:"$src_file"
+				echo -n "converted; ";
+			fi
 			if [ "$size" -lt "$min_size" ]; then
 				echo "$dimensions < $min_width*$min_height"
 				rm "$src_file"
