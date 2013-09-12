@@ -4,7 +4,7 @@ src_folder=/cygdrive/z/hub/pinkyard/queued/
 done_folder=/cygdrive/z/hub/pinkyard/done/
 dst_folder=/srv/www/pinkyard/public_html/files/$(date +'%Y-%m')/
 
-ssh -n "$user@$server" "mkdir -p \"$dst_folder\"; chmod 0755 \"$dst_folder\""
+ssh -n "$user@$server_addr" "mkdir -p \"$dst_folder\"; chmod 0755 \"$dst_folder\""
 i=0
 find "$src_folder" -type f -print0|xargs -r0 stat -c '%A %n'|sort|while read line; do
 	src_file=$(echo "$line"|cut -f2- -d ' ')
@@ -16,8 +16,8 @@ find "$src_folder" -type f -print0|xargs -r0 stat -c '%A %n'|sort|while read lin
 
 	src_quoted=$(echo "$src_file"|sed 's/[ ()]/\0/g;')
 	dst_quoted=$(echo "$dst_file"|sed 's/[ ()]/\\\0/g;')
-	scp -q "$src_quoted" "$user@$server:$dst_quoted"
-	ssh -n "$user@$server" "touch \"$dst_file\" -d \"$ts\"; chmod 0644 \"$dst_file\""
+	scp -q "$src_quoted" "$user@$server_addr:$dst_quoted"
+	ssh -n "$user@$server_addr" "touch \"$dst_file\" -d \"$ts\"; chmod 0644 \"$dst_file\""
 
 	wget "$resolver_url" -qO -
 	echo
