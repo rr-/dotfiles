@@ -4,6 +4,17 @@ src_folder=/cygdrive/z/hub/pinkyard/queued/
 done_folder=/cygdrive/z/hub/pinkyard/done/
 dst_folder=/srv/www/pinkyard/public_html/files/$(date +'%Y-%m')/
 
+mkdir -p $src_folder
+mkdir -p $done_folder
+
+for file in "$@"; do
+	if [ ! -f "$file" ]; then
+		echo "$file not found" 2>&1
+	else
+		cp "$file" "$src_folder"
+	fi
+done
+
 ssh -n "$user@$server_addr" "mkdir -p \"$dst_folder\"; chmod 0755 \"$dst_folder\""
 i=0
 find "$src_folder" -type f -print0|xargs -r0 stat -c '%A %n'|sort|while read line; do
