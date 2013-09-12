@@ -11,7 +11,7 @@ min_height=500
 min_size=$[$min_width*$min_height]
 
 #download the images
-rsync -avz --remove-source-files "$user@$server:$remote_root_dir" "$transit_root_dir"
+rsync -avz --remove-source-files "$user@$server_addr:$remote_root_dir" "$transit_root_dir"
 
 #distribute the images
 find "$transit_root_dir" -type f -print0|while read -d '' -r src_file; do
