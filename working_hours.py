@@ -4,6 +4,7 @@ import datetime
 import getpass
 import locale
 import gdata.calendar.client
+import sys
 from pyExcelerator import *
 from dateutil.parser import parse
 
@@ -94,7 +95,7 @@ class GodzinyMaker(object):
 		ws.write_merge(5, 5, 1, 3, u'Zleceniobiorca:', style)
 		style.alignment = self.alLeft
 		style.font = self.boldFont
-		ws.write(3, 4, datetime.date.today().strftime('%B %Yr.'), style)
+		ws.write(3, 4, datetime.date.today().strftime('%B %Yr.').decode('utf-8'), style)
 		ws.write(5, 4, u'Marcin Kurczewski', style)
 
 
@@ -173,5 +174,8 @@ if __name__ == '__main__':
 	mail = 'mkurczew@gmail.com'
 	password = getpass.getpass()
 	keyword = 'forcom'
-	path = 'working-hours.xls'
+	if len(sys.argv) >= 1:
+		path = sys.argv[1]
+	else:
+		path = 'working-hours.xls'
 	GodzinyMaker(mail, password, keyword, path)
