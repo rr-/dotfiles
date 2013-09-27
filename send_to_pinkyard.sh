@@ -23,7 +23,7 @@ find "$src_folder" -type f -print0|xargs -r0 stat -c '%A %n'|sort|while read lin
 	i=$[ $i + 1 ]
 	ts=$(date -d "+$i seconds")
 	resolver_url="http://pink.sakuya.pl/resolve/$(date +'%Y-%m')/"
-	resolver_url+=$(echo -ne "${src_file##*/}"|xxd -plain|sed 's/\(..\)/%\1/g')
+	resolver_url+=$(echo -ne "${src_file##*/}"|od -A n -t x1 -w999|tr -dc '0-9a-f'|sed 's/\(..\)/%\1/g')
 
 	src_quoted=$(echo "$src_file"|sed 's/[ ()]/\0/g;')
 	dst_quoted=$(echo "$dst_file"|sed 's/[ ()]/\\\0/g;')
