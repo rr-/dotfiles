@@ -100,7 +100,7 @@ UploadFiles()
 ;calling screen script
 MakeScreen(arguments)
 {
-	baseFileName := "Z:\hub\pinkyard\queued\" . RandomFileName()
+	baseFileName := "Z:\" . RandomFileName()
 	PNGFileName := "Z:\tmp.png"
 	JPGFileName := "Z:\tmp.jpg"
 	RunWait, % "C:\program files (x86)\scrsh.exe --path " . PNGFileName . " " . arguments, "Z:\", Hide
@@ -286,7 +286,7 @@ MakeScreen(arguments)
 	~LButton & RButton::
 		Send {LAlt down}c
 		Send {LAlt up}
-		SendInput Z:\hub\pinkyard\queued
+		SendInput Z:\hub\yume.pl
 		Send {Return}
 		Sleep 100
 		return
