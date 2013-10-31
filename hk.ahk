@@ -90,12 +90,12 @@ RandomFileName()
 }
 
 ;calling upload script
-UploadFiles()
-{
-	RunWait, %CygPath%\bin\mintty.exe --exec /bin/bash -l -c send_to_pinkyard.sh|clip, %CygPath%/bin, Hide
-	SoundPlay, Z:\clutter\sounds\ping.wav
-	return
-}
+;UploadFiles()
+;{
+;	RunWait, %CygPath%\bin\mintty.exe --exec /bin/bash -l -c send_to_pinkyard.sh|clip, %CygPath%/bin, Hide
+;	SoundPlay, Z:\clutter\sounds\ping.wav
+;	return
+;}
 
 ;calling screen script
 MakeScreen(arguments)
@@ -199,7 +199,7 @@ MakeScreen(arguments)
 	!PrintScreen::MakeScreen("-r active-window --shift -8,-8,+16,+16 --force-gui")
 	!#PrintScreen::MakeScreen("-r active-monitor")
 	#PrintScreen::MakeScreen("-r all-monitors")
-	+^!U::UploadFiles() ;upload files
+	;+^!U::UploadFiles() ;upload files
 
 
 ;explorer - activate/run
