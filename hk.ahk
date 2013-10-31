@@ -160,7 +160,7 @@ MakeScreen(arguments)
 	{
 		X := 45
 		Y := 45
-		Run, %CygPath%\bin\mintty.exe --title "Remote terminal" --size "200`,70" --position "%X%`,%Y%" --class mintty_ssh --exec /bin/ssh -p 65000 rr-@sakuya.pl, %CygPath%/bin
+		Run, %CygPath%\bin\mintty.exe --title "Remote terminal" --size "200`,70" --position "%X%`,%Y%" --class mintty_ssh --exec /bin/ssh -p 65000 rr-@sakuya.pl -t /bin/bash -i, %CygPath%/bin
 		return
 	}
 	^!]::
