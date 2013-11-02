@@ -62,6 +62,7 @@ fi
 #aliases w/o colors
 alias datediff="$DIR/../sh-date-diff/datediff.py"
 alias subs="$DIR/../sh-napiprojekt/subs.sh"
+alias wallchanger="$DIR/../sh-wall-changer/sh-wall-changer.exe"
 alias tl="$DIR/../sh-translator/tl.py"
 alias plen='tl pl en'
 alias enpl='tl en pl'
