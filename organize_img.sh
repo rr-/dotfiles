@@ -19,7 +19,7 @@ find "$transit_root_dir" -type f -print0|while read -d '' -r src_file; do
 
 	#check image size
 	if [[ "$src_file" =~ .*\.(jpg|png) ]]; then
-		read format dimensions <<<$(identify -format '%r %w*%h' "$src_file" 2>/dev/nll)
+		read format dimensions < <(identify -format '%r %w*%h' "$src_file" 2>/dev/null)
 		if [ $? -eq 0 ]; then
 			size=$(echo "$dimensions"|bc)
 			if [[ "$format" == "DirectClassGrayMatte" ]]; then
