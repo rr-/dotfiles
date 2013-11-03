@@ -26,7 +26,7 @@ find "$transit_root_dir" -type f -print0|while read -d '' -r src_file; do
 				convert "$src_file" -type TrueColorMatte png32:"$src_file"
 				echo -n "converted; ";
 			fi
-			if [ "$size" -lt "$min_size" ]; then
+			if [[ "$size" -lt "$min_size" ]]; then
 				echo "$dimensions < $min_width*$min_height"
 				rm "$src_file"
 				continue
