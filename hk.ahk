@@ -23,7 +23,7 @@ IfNotExist %CygPath%
 global BrowserPath
 BrowserPath = C:\Program Files (x86)\Mozilla Firefox\firefox.exe
 IfNotExist %BrowserPath%
-	BrowserPath = "C:\Users\vleeshue\AppData\Local\Google\Chrome\Application\chrome.exe"
+	BrowserPath = "C:\Users\rr-\AppData\Local\Google\Chrome\Application\chrome.exe"
 
 global WTWPath
 WTWPath = C:\Program Files\WTW\WTW.exe
@@ -103,7 +103,7 @@ MakeScreen(arguments)
 	baseFileName := "Z:\" . RandomFileName()
 	PNGFileName := "Z:\tmp.png"
 	JPGFileName := "Z:\tmp.jpg"
-	RunWait, % "C:\program files (x86)\scrsh.exe --path " . PNGFileName . " " . arguments, "Z:\", Hide
+	RunWait, % "Z:\software\utilities\scrsh.exe --path " . PNGFileName . " " . arguments, "Z:\", Hide
 	if %ErrorLevel% = 0
 	{
 		RunWait, % "Z:\src\optipng\support\optipng.exe -o1 " . PNGFileName, "Z:\", Hide
