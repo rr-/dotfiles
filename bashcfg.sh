@@ -16,7 +16,6 @@ DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
 export PATH=${PATH}:"$DIR"
 . config.ini
 
-
 #various shell options
 export HISTCONTROL=ignoredups #ignore duplicate commands in history
 shopt -s histappend #append to the history file, don't overwrite it
@@ -39,6 +38,10 @@ xterm*|rxvt|linux|screen*)
 	PS1="\[\e]0;\u@\h: \w\a\]$PS1"
 	;;
 esac
+
+#set command window title
+title='\u@\h \w'
+PS1+="\[\e]0;$title\007\]"
 
 
 #aliases w/ colors
