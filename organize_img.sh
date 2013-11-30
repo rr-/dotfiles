@@ -17,25 +17,27 @@ rsync -avz --remove-source-files "$user@$server_addr:$remote_root_dir" "$transit
 find "$transit_root_dir" -type f -print0|while read -d '' -r src_file; do
 	echo -n "$src_file "
 
-	#check image size
+	#preprocess image
 	if [[ "$src_file" =~ .*\.(jpg|png) ]]; then
 		read format dimensions < <(identify -format '%r %w*%h' "$src_file" 2>/dev/null)
 		if [ $? -eq 0 ]; then
 			size=$(echo "$dimensions"|bc)
-			if [[ "$format" == "DirectClassGrayMatte" ]]; then
-				convert "$src_file" -type TrueColorMatte png32:"$src_file"
-				echo -n "converted; ";
-			fi
+			#check if too small
 			if [[ "$size" -lt "$min_size" ]]; then
 				echo "$dimensions < $min_width*$min_height"
 				rm "$src_file"
 				continue
 			fi
+			#convert certain pngs for ancient versions of acdsee
+			if [[ "$format" == "DirectClassGrayMatte" ]]; then
+				convert "$src_file" -type TrueColorMatte png32:"$src_file"
+				echo -n "converted; ";
+			fi
 		fi
 	fi
 
 	dst_file="$dst_root_dir${src_file##$transit_root_dir}"
-	dst_file="$(echo $dst_file|sed -e 's/[^/]*\.2chan\.net/2chan/;s/images\.4chan\.org/4chan/;s/\/src//')"
+	dst_file="$(echo $dst_file|sed -e 's/[^/]*\.2chan\.net/2chan/;s/\w\+\.\(4chan\|4cdn\)\.org/4chan/;s/\/src//')"
 	dst_dir="$(dirname "$dst_file")"
 	mkdir -p "$dst_dir"
 	mv "$src_file" "$dst_file" && echo 'ok'
