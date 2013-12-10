@@ -27,7 +27,10 @@ highlight ExtraWhitespace ctermbg=red guibg=red
 highlight IncSearch ctermfg=black ctermbg=yellow
 
 "set gutter width to 80 characters
-autocmd BufWinEnter * set cc=80
+if exists('+colorcolumn')
+	set colorcolumn=80
+endif
+
 "match trailing spaces and spaces before a tab
 autocmd BufWinEnter * match ExtraWhitespace /\s\+$\|\s* \+\t\+\|\s*\t\+ \+/
 
