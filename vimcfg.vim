@@ -149,7 +149,8 @@ autocmd VimEnter * nmap <F3> :NERDTreeFind<CR>
 
 
 "file type specific settings
-autocmd BufRead,BufNewFile *.txt,*.tex,*.lst setlocal spell expandtab textwidth=79
+autocmd BufRead,BufNewFile *.txt,*.tex setlocal spell expandtab textwidth=79
+autocmd BufRead,BufNewFile *.lst setlocal expandtab
 
 
 function! ReloadConfig()
