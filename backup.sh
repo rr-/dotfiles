@@ -1,5 +1,8 @@
 #!/bin/bash
-. config.ini
+desktop=luna
+server=burza
+server_addr=sakuya.pl
+user=rr-
 [ "$(hostname)" != "$desktop" ] && echo "Must be run on $desktop" 1>&2 && exit 1
 
 backup_user=backup

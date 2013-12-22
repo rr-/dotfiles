@@ -1,17 +1,22 @@
 #!/bin/bash
-. config.ini
-[ "$(hostname)" != "$desktop" ] && echo "Must be run on $desktop" 1>&2 && exit 1
 
 shopt -s nocasematch
-remote_root_dir="/home/$user/img/"
-transit_root_dir="/cygdrive/z/hub/img/"
+remote_root_dir="/home/rr-/img/"
 dst_root_dir="/cygdrive/z/img/net/"
+remote_user=rr-
+remote_addr=burza
+local_addr=luna
 min_width=500
 min_height=500
 min_size=$[$min_width*$min_height]
 
+[ "$(hostname)" != "$local_addr" ] && echo "Must be run on $local_addr" 1>&2 && exit 1
+
+#prepare transit dir
+transit_root_dir=$(mktemp -d)
+
 #download the images
-rsync -avz --remove-source-files "$user@$server_addr:$remote_root_dir" "$transit_root_dir"
+rsync -avz --remove-source-files "$remote_user@$remote_addr:$remote_root_dir" "$transit_root_dir"
 
 #distribute the images
 find "$transit_root_dir" -type f -print0|while read -d '' -r src_file; do
@@ -44,5 +49,5 @@ find "$transit_root_dir" -type f -print0|while read -d '' -r src_file; do
 done
 
 #remove empty directores
-find "$transit_root_dir"/* -depth -type d -exec rmdir --ignore-fail-on-non-empty "{}" \;
-ssh "$user@$server" "bash -c 'find \"$remote_root_dir\"/* -depth -type d -exec rmdir --ignore-fail-on-non-empty \"{}\" \;'"
+find "$transit_root_dir" -depth -type d -exec rmdir --ignore-fail-on-non-empty "{}" \;
+ssh "$remote_user@$remote_addr" "bash -c 'find \"$remote_root_dir\" -depth -mindepth 1 -type d -exec rmdir --ignore-fail-on-non-empty \"{}\" \;'"

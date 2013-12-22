@@ -3,7 +3,6 @@ for x in .bashrc .vimrc .vim; do
 	mv "$HOME/$x" "$HOME/$x~"
 done
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-. "$DIR/config.ini"
 ln -s "$DIR/bashcfg.sh" "$HOME/.bashrc"
 ln -s "$DIR/vimcfg.vim" "$HOME/.vimrc"
 ln -s "$DIR/vim" "$HOME/.vim"
