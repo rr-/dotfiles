@@ -56,7 +56,7 @@ fi
 
 
 #aliases w/o colors
-alias datediff="$DIR/../sh-date-diff/datediff.py"
+alias datediff="$DIR/../sh-date-diff/datediff.sh"
 alias tl="$DIR/../sh-translator/tl.py"
 alias plen='tl pl en'
 alias enpl='tl en pl'
