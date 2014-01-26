@@ -12,6 +12,10 @@ while [ -h "$SOURCE" ]; do
 done
 DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
 
+#clear history
+history -w
+history -c
+
 #useful PATH
 export PATH=${PATH}:"$DIR"
 
