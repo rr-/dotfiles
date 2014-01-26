@@ -72,6 +72,6 @@ command -v reboot >/dev/null 2>&1 && [[ ! $(uname) =~ cygwin ]] || alias reboot=
 
 #host-specific config
 hostname=$(hostname)
-if [ -f "$DIR/bashcfg_$hostname.sh" ]; then
-	. "$DIR/bashcfg_$hostname.sh"
+if [ -f "$DIR/bashcfg-$hostname.sh" ]; then
+	. "$DIR/bashcfg-$hostname.sh"
 fi
