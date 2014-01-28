@@ -33,7 +33,7 @@ PS1+='\[\e[0;37m\]'
 PS1+=':'
 PS1+='\[\e[0;32m\]'
 PS1+='\w'
-PS1+='`if [ $? = 0 ]; then echo -e "\e[0;37m"; else echo -e "\e[1;31m"; fi`'
+PS1+='\[`if [ $? = 0 ]; then echo -e "\e[0;37m"; else echo -e "\e[1;31m"; fi`\]'
 PS1+='\$ '
 PS1+='\[\e[0m\]'
 #titlebar
