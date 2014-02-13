@@ -92,32 +92,10 @@ RandomFileName()
 ;calling screen script
 MakeScreen(arguments)
 {
-	baseFileName := "Z:\" . RandomFileName()
-	PNGFileName := "Z:\tmp.png"
-	JPGFileName := "Z:\tmp.jpg"
-	RunWait, % "Z:\software\utilities\scrsh.exe --path " . PNGFileName . " " . arguments, "Z:\", Hide
-	if %ErrorLevel% = 0
-	{
-		RunWait, % "Z:\src\optipng\support\optipng.exe -o1 " . PNGFileName, "Z:\", Hide
-		RunWait, % CygPath . "\bin\convert.exe " . PNGFileName . " -quality 80 " . JPGFileName, "Z:\", Hide
-		FileGetSize, JPGFileSize, % JPGFileName
-		FileGetSize, PNGFileSize, % PNGFileName
-		if % PNGFileSize > JPGFileSize
-		{
-			path1 := JPGFileName
-			path2 := baseFileName . ".jpg"
-		}
-		else
-		{
-			path1 := PNGFileName
-			path2 := baseFileName . ".png"
-		}
-		FileCopy, % path1, % path2
-		FileDelete, % JPGFileName
-		FileDelete, % PNGFileName
-		SoundPlay, Z:\clutter\sounds\ping.wav
-	}
-	return path
+	baseFileName := "Z:\" . RandomFileName() . ".png"
+	RunWait, % "Z:\software\utilities\scrsh.exe --path " . baseFileName . " " . arguments, "Z:\", Hide
+	SoundPlay, Z:\clutter\sounds\ping.wav
+	return baseFileName
 }
 
 
