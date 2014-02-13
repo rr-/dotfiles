@@ -223,8 +223,8 @@ MakeScreen(arguments)
 ;windows powershell / cmd functionalities
 #IfWinActive ahk_class ConsoleWindowClass
 	^V::SendInput {Raw}%clipboard% ;paste on ctrl+v
-	^!PgUp::Send ! el{PgUp}{Enter} ;scroll on ctrl+page up
-	^!PgDn::Send ! el{PgDn}{Enter} ;scroll on ctrl+page down
+	^!PgUp::SendInput ! {Up}{Up}{Up}{Right}{Up}{Up}{Enter}{PgUp}{Enter} ;scroll on ctrl+page up
+	^!PgDn::SendInput ! {Up}{Up}{Up}{Right}{Up}{Up}{Enter}{PgDn}{Enter} ;scroll on ctrl+page down
 #IfWinActive
 
 ;acdsee functionalities
@@ -357,7 +357,7 @@ MakeScreen(arguments)
 #IfWinActive ahk_class CabinetWClass
 	;new folder
 	^n::
-		Send {AppsKey}wf
+		SendInput {Up}{Ctrl Down}{Space}{Ctrl Up}{AppsKey}{Up}{Up}{Right}{Enter}
 		return
 #IfWinActive
 
