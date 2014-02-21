@@ -178,6 +178,15 @@ MakeScreen(arguments)
 #If FileExist("C:\program files (x86)\foobar2000\foobar2000.exe")
 	Launch_Media::FRun("ahk_class {97E27FAA-C0B3-4b8e-A693-ED7881E99FC1}", "C:\program files (x86)\foobar2000\foobar2000.exe", "C:\Program Files (x86)\foobar2000")
 
+;foobar - media shortcuts
+AppsKey::Send {AppsKey}
+AppsKey & Insert::Send {Launch_Media}
+AppsKey & Home::Send {Media_Prev}
+AppsKey & End::Send {Media_Next}
+AppsKey & Del::Send {Media_Play_Pause}
+AppsKey & PgUp::Send {Volume_Up}
+AppsKey & PgDn::Send {Volume_Down}
+
 ;wtw
 #If FileExist(WTWPath)
 	;wtw - activate/run
