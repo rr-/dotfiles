@@ -2,6 +2,7 @@ runtime bundle/pathogen/autoload/pathogen.vim
 execute pathogen#infect()
 
 syntax on
+set virtualedit=onemore
 set number
 "show white characters
 set list listchars=tab:→\ ,trail:·
