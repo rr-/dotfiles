@@ -20,7 +20,7 @@ if [ -z "$foobar_path" ]; then
 	exit 1
 fi
 
-while read line; do
+cat "radios.lst" | sed '/^\s*$/d' | while read line; do
 	url=$(echo "$line"|sed 's/\s*;.*$//g')
 	"$foobar_path" /add "$url"
-done < "radios.lst"
+done
