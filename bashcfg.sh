@@ -26,6 +26,10 @@ shopt -s globstar #allow ** recursive wildcards
 shopt -s checkwinsize #check the window size after each command and, if necessary, update the values of LINES and COLUMNS.
 shopt -s nocasematch #case insensitive matching
 
+if [ -e /dev/clipboard ]; then
+	alias clip="cat >/dev/clipboard"
+fi
+
 #cool command prompt
 PS1='\[\e[1;31m\]'
 PS1+='\u@\h'
