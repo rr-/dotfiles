@@ -10,3 +10,5 @@
 
 "\e[3;5~": kill-word
 "\C-_": backward-kill-word
+
+set completion-ignore-case on
