@@ -36,6 +36,18 @@ case "$op" in
 			fi
 		done
 		;;
+	base64)
+		for file; do
+			[ -f "$file" ] ||continue
+			if [[ "$file" = *.png ]]; then
+				echo -n data:image/png\;base64,
+			elif [[ "$file" = *.gif ]]; then
+				echo -n data:image/png\;base64,
+			fi
+			base64 -w0 <"$file"
+			echo
+		done
+		;;
 	stitch)
 		convert -border 0x1 -bordercolor black "$@" -append -trim "stitched.jpg"
 		;;
