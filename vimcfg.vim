@@ -152,6 +152,14 @@ autocmd VimEnter * nmap <F3> :NERDTreeFind<CR>
 "file type specific settings
 autocmd BufRead,BufNewFile *.txt,*.tex setlocal spell expandtab textwidth=79
 autocmd BufRead,BufNewFile *.lst setlocal expandtab
+autocmd BufRead,BufNewFile *.php,*.phtml call SetPhpOptions()
+
+function SetPhpOptions()
+	if exists('+colorcolumn')
+		setlocal cc=120
+	endif
+	setlocal tw=119
+endfunction
 
 
 function! ReloadConfig()
