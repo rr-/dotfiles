@@ -138,6 +138,10 @@ let g:ctrlp_match_window_bottom = 1
 let g:ctrlp_match_window_reversed = 1
 
 
+"enable rainbow parentheses
+let g:rainbow_active = 1
+
+
 "enable on console startup
 let g:nerdtree_tabs_open_on_console_startup = 1
 "always focus on files
