@@ -8,7 +8,7 @@ ln -s "$DIR/bashcfg.sh" "$HOME/.bashrc"
 ln -s "$DIR/vimcfg.vim" "$HOME/.vimrc"
 ln -s "$DIR/vim" "$HOME/.vim"
 ln -s "$DIR/inputrc" "$HOME/.inputrc"
-ln -s "$DIR/minttyrc" "$HOME/minttyrc"
+ln -s "$DIR/minttyrc" "$HOME/.minttyrc"
 
 shopt -s nocasematch
 if [[ "$(uname)" =~ cygwin ]]; then
