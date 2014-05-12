@@ -37,13 +37,15 @@ autocmd BufWinEnter * match ExtraWhitespace /\s\+$\|\s* \+\t\+\|\s*\t\+ \+/
 
 
 
+"case insensitive filename completion in normal mode
+set wildignorecase
 "don't use spaces instead of tab
 set noexpandtab
 "number of spaces that tab counts for
 set tabstop=4
 "number of spaces that tab counts for while editing
 set softtabstop=4
-"number of spaces for each step of autoindent
+"number of spaces for each step of auto-indent
 set shiftwidth=4
 "auto indentation
 set autoindent
