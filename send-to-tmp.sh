@@ -9,17 +9,25 @@ remote_port=65000
 ssh -p"$remote_port" -n "$remote_user@$remote_addr" "mkdir -p \"$dst_folder\"; chmod 0755 \"$dst_folder\""
 
 for src_path in "$@"; do
-	if [ ! -f "$src_path" ]; then
+	if [ ! -e "$src_path" ]; then
 		echo "$src_path not found" 2>&1
 	else
-		dst_path="$dst_folder"${src_path##*/}
+		fragment=$(basename "$src_path")
+		dst_path="$dst_folder$fragment"
 
 		src_quoted=$(echo "$src_path"|sed 's/[ ()]/\0/g;')
 		dst_quoted=$(echo "$dst_path"|sed 's/[ ()]/\\\0/g;')
 
-		scp -P"$remote_port" -q "$src_quoted" "$remote_user@$remote_addr:$dst_quoted"
-		ssh -p"$remote_port" -n "$remote_user@$remote_addr" "touch \"$dst_path\"; chmod 0644 \"$dst_path\""
+		scp -r -P"$remote_port" -q "$src_quoted" "$remote_user@$remote_addr:$dst_quoted"
 
-		echo "${base_url}${src_path##*/}"
+		if [ -d "$src_path" ]; then
+			chmod=0755
+		elif [ -f "$src_path" ]; then
+			chmod=0644
+		fi
+
+		ssh -p"$remote_port" -n "$remote_user@$remote_addr" "touch \"$dst_path\"; chmod $chmod \"$dst_path\""
+
+		echo "$base_url$fragment"
 	fi
 done
