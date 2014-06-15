@@ -42,7 +42,7 @@ case "$op" in
 			if [[ "$file" = *.png ]]; then
 				echo -n data:image/png\;base64,
 			elif [[ "$file" = *.gif ]]; then
-				echo -n data:image/png\;base64,
+				echo -n data:image/gif\;base64,
 			fi
 			base64 -w0 <"$file"
 			echo
