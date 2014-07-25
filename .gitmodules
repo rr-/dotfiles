@@ -1,21 +1,21 @@
-[submodule "vim/bundle/pathogen"]
-	path = vim/bundle/pathogen
+[submodule "configs/vim-plugins/pathogen"]
+	path = configs/vim-plugins/pathogen
 	url = https://github.com/tpope/vim-pathogen.git
-[submodule "vim/bundle/ctrlp"]
-	path = vim/bundle/ctrlp
+[submodule "configs/vim-plugins/ctrlp"]
+	path = configs/vim-plugins/ctrlp
 	url = https://github.com/kien/ctrlp.vim.git
-[submodule "vim/bundle/nerdtree"]
-	path = vim/bundle/nerdtree
+[submodule "configs/vim-plugins/nerdtree"]
+	path = configs/vim-plugins/nerdtree
 	url = https://github.com/scrooloose/nerdtree.git
-[submodule "vim/bundle/nerdtree-tabs"]
-	path = vim/bundle/nerdtree-tabs
+[submodule "configs/vim-plugins/nerdtree-tabs"]
+	path = configs/vim-plugins/nerdtree-tabs
 	url = https://github.com/jistr/vim-nerdtree-tabs.git
-[submodule "vim/bundle/colors-hemisu"]
-	path = vim/bundle/colors-hemisu
+[submodule "configs/vim-plugins/colors-hemisu"]
+	path = configs/vim-plugins/colors-hemisu
 	url = https://github.com/noahfrederick/Hemisu
-[submodule "vim/bundle/numbers"]
-	path = vim/bundle/numbers
+[submodule "configs/vim-plugins/numbers"]
+	path = configs/vim-plugins/numbers
 	url = https://github.com/myusuf3/numbers.vim
-[submodule "vim/bundle/easymotion"]
-	path = vim/bundle/easymotion
+[submodule "configs/vim-plugins/easymotion"]
+	path = configs/vim-plugins/easymotion
 	url = https://github.com/Lokaltog/vim-easymotion.git
