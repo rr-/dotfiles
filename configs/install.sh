@@ -1,12 +1,18 @@
 #!/bin/bash
-for x in .bashrc .vimrc .vim .inputrc; do
-	mv "$HOME/$x" "$HOME/$x~"
+for x in .bashrc .vimrc .vim .inputrc .minttyrc; do
+	source=$HOME/$x
+	target=$source~
+	rm -rf "$target"
+	if [ -e "$source" ] || [ -L "$source" ]; then
+		mv "$source" "$target"
+	fi
 done
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-ln -s "$DIR/bashcfg.sh" "$HOME/.bashrc"
-ln -s "$DIR/vimcfg.vim" "$HOME/.vimrc"
-ln -s "$DIR/vim" "$HOME/.vim"
+mkdir "$HOME/.vim"
+ln -s "$DIR/vim-plugins" "$HOME/.vim/bundle"
+ln -s "$DIR/vimrc" "$HOME/.vimrc"
+ln -s "$DIR/bashrc" "$HOME/.bashrc"
 ln -s "$DIR/inputrc" "$HOME/.inputrc"
 ln -s "$DIR/minttyrc" "$HOME/.minttyrc"
 
