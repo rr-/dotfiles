@@ -17,7 +17,7 @@ DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
 #history -c
 
 #useful PATH
-export PATH=${PATH}:"$DIR"
+export PATH=${PATH}:"$DIR/.."
 
 #various shell options
 export HISTCONTROL=ignoredups #ignore duplicate commands in history
