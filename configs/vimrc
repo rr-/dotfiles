@@ -161,7 +161,7 @@ autocmd VimEnter * nmap <F3> :NERDTreeFind<CR>
 autocmd BufRead,BufNewFile *.txt,*.tex setlocal spell expandtab textwidth=79
 autocmd BufRead,BufNewFile *.lst setlocal expandtab
 autocmd BufRead,BufNewFile *.php,*.phtml call SetPhpOptions()
-autocmd BufRead,BufNewFile COMMIT_EDITMSG setlocal textwidth=72 colorcolumn=50,72
+autocmd BufRead,BufNewFile COMMIT_EDITMSG setlocal spell textwidth=72 colorcolumn=50,72
 
 function SetPhpOptions()
 	if exists('+colorcolumn')
