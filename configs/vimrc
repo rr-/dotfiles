@@ -109,14 +109,10 @@ let g:ctrlp_custom_ignore = {}
 let g:ctrlp_custom_ignore.dir  = '\v'
 "folders: cvs general
 let g:ctrlp_custom_ignore.dir .= '\.hg|\.git|\.bzr'
-"folders: 'data'
-let g:ctrlp_custom_ignore.dir .= '|data'
-"folders: pinkyard
-let g:ctrlp_custom_ignore.dir .= '|files|thumbs'
-"folders: 'library/Zend'
-let g:ctrlp_custom_ignore.dir .= '|library[/\\]Zend'
+"large data folders
+let g:ctrlp_custom_ignore.dir .= '|posts|files|thumbs'
 "folders: subfolders of luna:/cygdrive/z
-let g:ctrlp_custom_ignore.dir .= '|\.dl|\.ul|archive|img|software|video'
+let g:ctrlp_custom_ignore.dir .= '|clutter|img|software|video'
 let g:ctrlp_custom_ignore.file  = '\v'
 "backups
 let g:ctrlp_custom_ignore.file .= '\~$'
