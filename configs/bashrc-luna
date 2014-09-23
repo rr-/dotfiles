@@ -1,6 +1,6 @@
 #some aliases
-alias subs="$DIR/../sh-napiprojekt/subs.sh"
-alias wallchanger="$DIR/../sh-wall-changer/sh-wall-changer.exe"
+alias subs="$DIR/../../sh-napiprojekt/subs.sh"
+alias wallchanger="$DIR/../../sh-wall-changer/sh-wall-changer.exe"
 
 
 #autocompletion for imgop.sh
