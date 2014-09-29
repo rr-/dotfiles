@@ -67,6 +67,8 @@ inoremap <buffer> <silent> <Home> <C-o>g<Home>
 inoremap <buffer> <silent> <End>  <C-o>g<End>
 "disable Ctrl+Q Ex Mode
 nnoremap Q <nop>
+"less keystrokes to access easy motion search
+nmap z <Leader><Leader>s
 
 
 "change cursor buffer position in newly split buffers
