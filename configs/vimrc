@@ -65,13 +65,12 @@ inoremap <buffer> <silent> <Up>   <C-o>gk
 inoremap <buffer> <silent> <Down> <C-o>gj
 inoremap <buffer> <silent> <Home> <C-o>g<Home>
 inoremap <buffer> <silent> <End>  <C-o>g<End>
-inoremap <silent> <C-W> <Esc>:q<CR>
-nnoremap <silent> <C-W> :q<CR>
 inoremap <silent> <C-S> <C-o>:update<CR>
 nnoremap <silent> <C-S> :<C-u>update<CR>
 nnoremap <silent> <C-Z> :sh<CR>
 "disable Ctrl+Q Ex Mode
-nnoremap Q <nop>
+inoremap <silent> <C-Q> <Esc>:q<CR>
+nnoremap <silent> <C-Q> :q<CR>
 "less keystrokes to access easy motion search
 nmap z <Leader><Leader>s
 
@@ -89,7 +88,8 @@ set enc=utf-8 fileencoding=utf-8
 "disable making "file~"
 set nobackup
 "disallow files to embed vim settings
-set nomodeline
+set modeline
+set modelines=5
 
 "disable "live" search
 set noincsearch
