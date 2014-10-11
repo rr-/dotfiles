@@ -12,6 +12,8 @@ min_size=$[$min_width*$min_height]
 
 [ "$(hostname)" != "$local_addr" ] && echo "Must be run on $local_addr" 1>&2 && exit 1
 
+trap "exit" INT
+
 #prepare transit dir
 transit_root_dir=/cygdrive/z/hub/img-tmp
 
