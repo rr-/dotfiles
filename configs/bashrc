@@ -20,11 +20,13 @@ DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
 export PATH=${PATH}:"$DIR/.."
 
 #various shell options
+export HISTIGNORE="fg*"
 export HISTCONTROL=ignoredups #ignore duplicate commands in history
 shopt -s histappend #append to the history file, don't overwrite it
 shopt -s globstar #allow ** recursive wildcards
 shopt -s checkwinsize #check the window size after each command and, if necessary, update the values of LINES and COLUMNS.
 shopt -s nocasematch #case insensitive matching
+stty stop '' -ixoff
 
 if [ -e /dev/clipboard ]; then
 	alias clip="cat >/dev/clipboard"
