@@ -1,9 +1,6 @@
-#the one and only editor
-EDITOR=vim
-export EDITOR
-alias editor="$EDITOR"
+# vim: syntax=sh
 
-#get path to self
+#meta information
 SOURCE="${BASH_SOURCE[0]}"
 while [ -h "$SOURCE" ]; do
 	DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
@@ -12,24 +9,30 @@ while [ -h "$SOURCE" ]; do
 done
 DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
 
-#clear history
-#history -w
-#history -c
+if [ -t 0 ]; then
+	interactive=1
+else
+	interactive=0
+fi
+
+#the one and only editor
+EDITOR=vim
+export EDITOR
+alias editor="$EDITOR"
 
 #useful PATH
 export PATH=${PATH}:"$DIR/.."
 
 #various shell options
-export HISTIGNORE="fg*"
-export HISTCONTROL=ignoredups #ignore duplicate commands in history
-shopt -s histappend #append to the history file, don't overwrite it
-shopt -s globstar #allow ** recursive wildcards
-shopt -s checkwinsize #check the window size after each command and, if necessary, update the values of LINES and COLUMNS.
-shopt -s nocasematch #case insensitive matching
-stty stop '' -ixoff
+if [ $interactive -eq 1 ]; then
+	stty -ixon
+	export HISTIGNORE="fg*"
+	export HISTCONTROL=ignoredups #ignore duplicate commands in history
 
-if [ -e /dev/clipboard ]; then
-	alias clip="cat >/dev/clipboard"
+	shopt -s histappend #append to the history file, don't overwrite it
+	shopt -s globstar #allow ** recursive wildcards
+	shopt -s checkwinsize #check the window size after each command and, if necessary, update the values of LINES and COLUMNS.
+	shopt -s nocasematch #case insensitive matching
 fi
 
 #cool command prompt
@@ -49,9 +52,7 @@ PS1+='\[\e]0;\u@\h \w\007\]'
 #aliases w/ colors
 if [ -x /usr/bin/dircolors ]; then
 	test -r ~/.dircolors && eval "$(dircolors -b ~/.dircolors)" || eval "$(dircolors -b)"
-	alias ls='ls -vhF1 --color=auto --group-directories-first'
-	alias ll='ls -vhFlX --color=auto --group-directories-first'
-	alias la='ls -vhFlXA --color=auto --group-directories-first'
+	ls='ls --color=auto'
 	alias dir='dir --color=auto'
 	alias vdir='vdir --color=auto'
 
@@ -59,13 +60,10 @@ if [ -x /usr/bin/dircolors ]; then
 	alias fgrep='fgrep --color=auto'
 	alias egrep='egrep --color=auto'
 else
-	alias ls='ls -vhF1 --group-directories-first'
-	alias ll='ls -vhFlX --group-directories-first'
-	alias la='ls -vhFlXA --group-directories-first'
+	ls=ls
 fi
 
-
-#aliases w/o colors
+#aliases
 alias datediff="$DIR/../../sh-date-diff/datediff.sh"
 alias tl="$DIR/../../sh-translator/tl.py"
 alias plen='tl pl en'
@@ -73,15 +71,20 @@ alias enpl='tl en pl'
 alias rfn='date "+%Y%m%d_%H%M%S"|tr -d "\r\n"'
 alias isvim='ps ux|grep vim|grep -v grep'
 
+alias ls="$ls"' -vhF1 --group-directories-first'
+alias ll="$ls"' -vhFlX --group-directories-first'
+alias la="$ls"' -vhFlXA --group-directories-first'
 
 #legacy aliases
 command -v hd >/dev/null 2>&1 || alias hd='od -Ax -t x1'
 command -v poweroff >/dev/null 2>&1 && [[ ! $(uname) =~ cygwin ]] || alias poweroff='shutdown -s now'
 command -v reboot >/dev/null 2>&1 && [[ ! $(uname) =~ cygwin ]] || alias reboot='shutdown -r now'
 
-
-#host-specific config
-hostname=$(hostname)
-if [ -f "$DIR/bashrc-$hostname" ]; then
-	. "$DIR/bashrc-$hostname"
+if [ -e /dev/clipboard ]; then
+	alias clip="cat >/dev/clipboard"
 fi
+
+#additional config
+hostname=$(hostname)
+[ -f "$DIR/bash_config-$hostname" ] && . "$DIR/bash_config-$hostname"
+/bin/true

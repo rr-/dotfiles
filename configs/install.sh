@@ -1,5 +1,5 @@
 #!/bin/bash
-for x in .bashrc .vimrc .vim .inputrc .minttyrc; do
+for x in .bashrc .vimrc .vim .inputrc .minttyrc .bash_profile; do
 	source=$HOME/$x
 	target=$source~
 	rm -rf "$target"
@@ -12,7 +12,8 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 mkdir "$HOME/.vim"
 ln -s "$DIR/vim-plugins" "$HOME/.vim/bundle"
 ln -s "$DIR/vimrc" "$HOME/.vimrc"
-ln -s "$DIR/bashrc" "$HOME/.bashrc"
+ln -s "$DIR/bash_config" "$HOME/.bashrc"
+ln -s "$DIR/bash_config" "$HOME/.bash_profile"
 ln -s "$DIR/inputrc" "$HOME/.inputrc"
 ln -s "$DIR/minttyrc" "$HOME/.minttyrc"
 
