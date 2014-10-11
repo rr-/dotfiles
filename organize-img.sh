@@ -13,10 +13,10 @@ min_size=$[$min_width*$min_height]
 [ "$(hostname)" != "$local_addr" ] && echo "Must be run on $local_addr" 1>&2 && exit 1
 
 #prepare transit dir
-transit_root_dir=$(mktemp -d)
+transit_root_dir=/cygdrive/z/hub/img-tmp
 
 #download the images
-rsync -avz --remove-source-files "$remote_user@$remote_addr:$remote_root_dir" "$transit_root_dir"
+rsync --info=progress2 -a --remove-source-files "$remote_user@$remote_addr:$remote_root_dir" "$transit_root_dir"
 
 #distribute the images
 find "$transit_root_dir" -type f -print0|while read -d '' -r src_file; do
