@@ -5,6 +5,8 @@ server_addr=sakuya.pl
 user=rr-
 [ "$(hostname)" != "$desktop" ] && echo "Must be run on $desktop" 1>&2 && exit 1
 
+trap "exit" INT
+
 backup_user=backup
 server_backup=( /etc "/home/$user" /home/srv )
 desktop_backup=( software/utilities clutter img text src )
