@@ -19,3 +19,6 @@
 [submodule "configs/vim-plugins/easymotion"]
 	path = configs/vim-plugins/easymotion
 	url = https://github.com/Lokaltog/vim-easymotion.git
+[submodule "configs/vim-plugins/airline"]
+	path = configs/vim-plugins/airline
+	url = https://github.com/bling/vim-airline
