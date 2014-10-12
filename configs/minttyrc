@@ -1,7 +1,7 @@
 BoldAsFont=no
 Transparency=low
 CursorType=block
-FontSmoothing=full
+FontSmoothing=default
 Columns=140
 Rows=50
 Scrollbar=right
@@ -17,3 +17,5 @@ Locale=C
 Charset=UTF-8
 OpaqueWhenFocused=no
 SwitchShortcuts=no
+Font=InputMono Light
+FontHeight=9

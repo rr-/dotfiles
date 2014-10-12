@@ -106,7 +106,7 @@ MakeScreen(arguments)
 	{
 		X := MonitorWorkAreaRight - 920
 		Y := 45
-		Run, %CygPath%\bin\mintty.exe --title "Terminal" --size "120`,40" --position "%X%`,%Y%" --class "mintty_thetty" --exec /bin/bash -l, %CygPath%
+		Run, %CygPath%\bin\mintty.exe --title "Terminal" --size "110`,35" --position "%X%`,%Y%" --class "mintty_thetty" --exec /bin/bash -l, %CygPath%
 		return
 	}
 	^![::
@@ -115,7 +115,7 @@ MakeScreen(arguments)
 		{
 			X := MonitorWorkAreaRight - 920
 			Y := 45
-			Run, %CygPath%\bin\mintty.exe --title "Terminal" --size "120`,40" --position "%X%`,%Y%" --class "mintty_thetty" --exec /bin/bash -l -c 'while /bin/true`; do /bin/bash`; cygstart "%A_AhkPath%" "Z:\src\scripts\hide.ahk"`; clear; done', %CygPath%
+			Run, %CygPath%\bin\mintty.exe --title "Terminal" --size "110`,35" --position "%X%`,%Y%" --class "mintty_thetty" --exec /bin/bash -l -c 'while /bin/true`; do /bin/bash`; cygstart "%A_AhkPath%" "Z:\src\scripts\hide.ahk"`; clear; done', %CygPath%
 			WinWait ahk_class mintty_thetty
 		}
 		else
