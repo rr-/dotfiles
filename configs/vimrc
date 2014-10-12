@@ -65,12 +65,14 @@ inoremap <buffer> <silent> <Up>   <C-o>gk
 inoremap <buffer> <silent> <Down> <C-o>gj
 inoremap <buffer> <silent> <Home> <C-o>g<Home>
 inoremap <buffer> <silent> <End>  <C-o>g<End>
-inoremap <silent> <C-S> <C-o>:update<CR>
-nnoremap <silent> <C-S> :<C-u>update<CR>
-nnoremap <silent> <C-Z> :sh<CR>
-"disable Ctrl+Q Ex Mode
-inoremap <silent> <C-Q> <Esc>:q<CR>
-nnoremap <silent> <C-Q> :q<CR>
+inoremap <silent> <C-s> <C-o>:update<CR>
+nnoremap <silent> <C-s> :<C-u>update<CR>
+nnoremap <silent> <C-z> :sh<CR>
+inoremap <silent> <C-q> <Esc>:q<CR>
+nnoremap <silent> <C-q> :q<CR>
+inoremap <silent> <C-t> <Esc>:tabnew<CR>
+nnoremap <silent> <C-t> :tabnew<CR>
+nnoremap <silent> <C-o> :CtrlPLine<CR>
 "less keystrokes to access easy motion search
 nmap z <Leader><Leader>s
 
@@ -106,11 +108,6 @@ set nospell
 set spelllang=en_us,pl
 
 
-"ctrl+t = new tab
-:nmap <C-t> :tabnew<CR>
-:imap <C-t> <Esc>:tabnew<CR>
-
-
 "config ctrl+p
 let g:ctrlp_custom_ignore = {}
 let g:ctrlp_custom_ignore.dir  = '\v'
@@ -143,11 +140,20 @@ let g:ctrlp_dotfiles = 1
 let g:ctrlp_match_window_bottom = 1
 "show list top->bottom
 let g:ctrlp_match_window_reversed = 1
+let g:ctrlp_by_filename = 1
+let g:ctrlp_match_window = 'bottom,order:btt,min:1,max:1,results:1'
 
 
 "enable rainbow parentheses
 let g:rainbow_active = 1
 
+
+"config airline
+let g:airline_theme = 'light'
+let g:airline_powerline_fonts = 1
+let g:airline#extensions#tabline#enabled = 1
+let g:airline#extensions#tabline#show_buffers = 0
+let g:airline#extensions#tabline#tab_nr_type = 1
 
 "enable on console startup
 let g:nerdtree_tabs_open_on_console_startup = 1
@@ -166,7 +172,7 @@ autocmd BufRead,BufNewFile *.lst setlocal expandtab
 autocmd BufRead,BufNewFile *.php,*.phtml call SetPhpOptions()
 autocmd BufRead,BufNewFile COMMIT_EDITMSG setlocal spell textwidth=72 colorcolumn=50,72
 
-function SetPhpOptions()
+function! SetPhpOptions()
 	if exists('+colorcolumn')
 		setlocal colorcolumn=120
 	endif
