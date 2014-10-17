@@ -1,27 +1,53 @@
 #!/bin/bash
-for x in .bashrc .vimrc .vim .inputrc .minttyrc .bash_profile .gitconfig; do
+for x in .bashrc .vimrc .vim/bundle .inputrc .minttyrc .bash_profile .gitconfig; do
 	source=$HOME/$x
 	target=$source~
-	rm -rf "$target"
-	if [ -e "$source" ] || [ -L "$source" ]; then
-		mv "$source" "$target"
+
+	if [ -e "$target" ]; then
+		echo Removing old backup "$target"
+		rm -rf "$target"
+	fi
+
+	if [ -e "$source" ]; then
+		if [ -L "$source" ]; then
+			echo Removing symlink "$source"
+			rm "$source"
+		else
+			echo Not a symlink: "$source". Aborting.
+			exit 1
+		fi
 	fi
 done
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-mkdir "$HOME/.vim"
+[ ! -d "$HOME/.vim" ] && mkdir "$HOME/.vim"
+
+echo "Installing vim plugins"
 ln -s "$DIR/vim-plugins" "$HOME/.vim/bundle"
+
+echo "Installing vimrc"
 ln -s "$DIR/vimrc" "$HOME/.vimrc"
+
+echo "Installing bashrc"
 ln -s "$DIR/bash_config" "$HOME/.bashrc"
+
+echo "Installing bashprofile"
 ln -s "$DIR/bash_config" "$HOME/.bash_profile"
+
+echo "Installing inputrc"
 ln -s "$DIR/inputrc" "$HOME/.inputrc"
+
+echo "Installing minttyrc"
 ln -s "$DIR/minttyrc" "$HOME/.minttyrc"
+
+echo "Installing gitconfig"
 ln -s "$DIR/gitconfig" "$HOME/.gitconfig"
 
 shopt -s nocasematch
 if [[ "$(uname)" =~ cygwin ]]; then
-	for x in .bashrc .vimrc .vim .inputrc .minttyrc; do
+	for x in .bashrc .vimrc .vim .inputrc .minttyrc .bash_profile .gitconfig; do
 		winpath=$(cygpath -w "$HOME")\\$x
 		attrib +h +s "$winpath"
+		echo "Hiding $winpath"
 	done
 fi
