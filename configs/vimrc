@@ -110,28 +110,24 @@ set spelllang=en_us,pl
 
 "config ctrl+p
 let g:ctrlp_custom_ignore = {}
+"folders
 let g:ctrlp_custom_ignore.dir  = '\v'
-"folders: cvs general
 let g:ctrlp_custom_ignore.dir .= '\.hg|\.git|\.bzr'
-"large data folders
 let g:ctrlp_custom_ignore.dir .= '|posts|files|thumbs'
-"folders: subfolders of luna:/cygdrive/z
+let g:ctrlp_custom_ignore.dir .= '|vendor|node_modules'
 let g:ctrlp_custom_ignore.dir .= '|clutter|img|software|video'
+"files
 let g:ctrlp_custom_ignore.file  = '\v'
-"backups
 let g:ctrlp_custom_ignore.file .= '\~$'
+"file extensions
 let g:ctrlp_custom_ignore.file .= '|\.('
-"extensions: programming rubbish files
 let g:ctrlp_custom_ignore.file .= 'o|swp|pyc|svn-base'
-"extensions: archives
 let g:ctrlp_custom_ignore.file .= '|tar|zip|7z|gz'
-"extensions: images
 let g:ctrlp_custom_ignore.file .= '|jpg|jpeg|gif|png|tga|bmp'
-"extensions: documents
 let g:ctrlp_custom_ignore.file .= '|pdf|doc|xls'
-"extensions: multimedia
 let g:ctrlp_custom_ignore.file .= '|wav|ogg|mp3|mp4|avi|mkv|ttf'
 let g:ctrlp_custom_ignore.file .= ')$'
+
 "disable CWD bullshit
 let g:ctrlp_working_path_mode = 0
 "enable .htaccess etc
