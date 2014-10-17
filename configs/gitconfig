@@ -1,0 +1,17 @@
+[user]
+	name = Marcin Kurczewski
+	email = mkurczew@gmail.com
+[github]
+	user = rr-
+[branch]
+	autosetuprebase = always
+[color]
+	diff = always
+[core]
+	excludesfile = /home/rr-/src/scripts/configs/gitignore
+[alias]
+	hist = log --pretty=format:\"%h %ad | %s%d [%an]\" --graph --date=short
+[diff]
+	tool = vimdiff
+[push]
+	default = simple

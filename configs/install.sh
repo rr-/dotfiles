@@ -1,5 +1,5 @@
 #!/bin/bash
-for x in .bashrc .vimrc .vim .inputrc .minttyrc .bash_profile; do
+for x in .bashrc .vimrc .vim .inputrc .minttyrc .bash_profile .gitconfig; do
 	source=$HOME/$x
 	target=$source~
 	rm -rf "$target"
@@ -16,6 +16,7 @@ ln -s "$DIR/bash_config" "$HOME/.bashrc"
 ln -s "$DIR/bash_config" "$HOME/.bash_profile"
 ln -s "$DIR/inputrc" "$HOME/.inputrc"
 ln -s "$DIR/minttyrc" "$HOME/.minttyrc"
+ln -s "$DIR/gitconfig" "$HOME/.gitconfig"
 
 shopt -s nocasematch
 if [[ "$(uname)" =~ cygwin ]]; then
