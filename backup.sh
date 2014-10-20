@@ -12,6 +12,9 @@ server_backup=( /etc "/home/$user" /home/srv )
 desktop_backup=( software/utilities clutter img text src )
 transit_dir=/cygdrive/z/hub/backup-tmp
 
+mkdir -p "$transit_dir"
+chmod 0777 "$transit_dir"
+
 for x in ${server_backup[@]}; do
 	echo "$server --> $desktop: $x"
 	rsync -T "$transit_dir" \
@@ -40,3 +43,5 @@ for x in ${desktop_backup[@]}; do
 		--exclude "/cygdrive/z/software/utilities/cygwin"
 	echo
 done
+
+rmdir --ignore-fail-on-non-empty "$transit_dir"
