@@ -27,7 +27,6 @@ find "$transit_root_dir" -depth -type d -print0|while read -d '' -r src_folder; 
 	dst_folder="${dst_folder/*([^\/]).@(4chan|4cdn).org/4chan}"
 	dst_folder="${dst_folder/\/src/}"
 
-	echo $src_folder $dst_folder
 	mkdir -p "$dst_folder"
 
 	find "$src_folder" -type f -maxdepth 1 -print0|while read -d '' -r src_file; do
