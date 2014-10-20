@@ -66,6 +66,8 @@ inoremap <buffer> <silent> <Up>   <C-o>gk
 inoremap <buffer> <silent> <Down> <C-o>gj
 inoremap <buffer> <silent> <Home> <C-o>g<Home>
 inoremap <buffer> <silent> <End>  <C-o>g<End>
+nnoremap <Esc>[1;5I gt<CR>
+nnoremap <Esc>[1;6I gT<CR>
 inoremap <silent> <C-s> <Esc>:update<CR>
 nnoremap <silent> <C-s> :<C-u>update<CR>
 nnoremap <silent> <C-z> :sh<CR>
