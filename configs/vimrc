@@ -49,9 +49,10 @@ set softtabstop=4
 set shiftwidth=4
 "auto indentation
 set autoindent
+"search from top when no further matches found
+set wrapscan
 "disable auto indentation based on file types
 filetype indent off
-
 
 set nowrap
 "allow backspacing over indent, eol and ?
