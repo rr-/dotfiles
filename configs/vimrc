@@ -33,7 +33,7 @@ if exists('+colorcolumn')
 endif
 
 "match trailing spaces and spaces before a tab
-autocmd BufWinEnter * match ExtraWhitespace /\s\+$\|\s* \+\t\+\|\s*\t\+ \+/
+autocmd BufWinEnter * match ExtraWhitespace /\v\s+$|\t+ ([^*]|$)| \t+/
 
 
 
