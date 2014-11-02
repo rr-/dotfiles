@@ -47,12 +47,12 @@ end
 
 def save_downloaded_url(url)
 	open(get_log_path(), 'a') do |f|
-		f << url + "\n"
+		f << File.basename(url) + "\n"
 	end
 end
 
 def downloaded?(url)
-	get_downloaded_urls().include? url
+	get_downloaded_urls().include? File.basename(url)
 end
 
 while true
