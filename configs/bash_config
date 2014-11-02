@@ -79,6 +79,8 @@ alias la="$ls"' -vhFlXA --group-directories-first'
 command -v hd >/dev/null 2>&1 || alias hd='od -Ax -t x1'
 command -v poweroff >/dev/null 2>&1 && [[ ! $(uname) =~ cygwin ]] || alias poweroff='shutdown -s now'
 command -v reboot >/dev/null 2>&1 && [[ ! $(uname) =~ cygwin ]] || alias reboot='shutdown -r now'
+command -v phpunit >/dev/null 2>&1 || alias phpunit='php vendor/phpunit/phpunit/phpunit'
+command -v composer >/dev/null 2>&1 || alias composer='php composer'
 
 if [ -e /dev/clipboard ]; then
 	alias clip="cat >/dev/clipboard"
