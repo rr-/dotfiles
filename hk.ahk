@@ -37,8 +37,8 @@ global MonitorWorkAreaBottom
 SysGet, MonitorPrimary, MonitorPrimary
 SysGet, MonitorWorkArea, MonitorWorkArea, %MonitorPrimary%
 
-GroupAdd, adobe, ahk_class OWL.DocumentWindow
-GroupAdd, adobe, ahk_class illustrator
+;GroupAdd, adobe, ahk_class OWL.DocumentWindow
+;GroupAdd, adobe, ahk_class illustrator
 ;GroupAdd, adobe, ahk_class PSViewC
 ;GroupAdd, adobe, ahk_class Photoshop
 ;GroupAdd, adobe, Photoshop
