@@ -54,6 +54,8 @@ set wrapscan
 "disable auto indentation based on file types
 filetype indent off
 
+set shell=/bin/bash\ -i
+
 set nowrap
 "allow backspacing over indent, eol and ?
 set bs=indent,eol,start
