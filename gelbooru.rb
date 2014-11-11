@@ -55,26 +55,31 @@ class Downloader
 	end
 
 	def download_file(url, post_id)
-		puts url
+		print url, "... "
 
 		target_path = File.join(
 			$base_folder,
 			'gelbooru_' + post_id.to_s + '_' + File.basename(url))
 
 		if @url_list.downloaded?(File.basename(url))
+			puts "already downloaded"
 			return
 		end
 
 		if File.exist?(target_path)
+			puts "already exists"
 			return
 		end
 
+		print "downloading... "
 		content = Net::HTTP.get_response(URI.parse(url)).body
 		open(target_path, "wb") do |file|
 			file.write(content)
 		end
 		@url_list.add(File.basename(url))
 		@url_list.flush()
+
+		puts "ok"
 	end
 
 	def run(tags)
