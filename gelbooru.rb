@@ -35,7 +35,7 @@ def download_file(url, post_id)
 end
 
 def get_log_path()
-	File.join(File.expand_path File.dirname(__FILE__), '.gelbooru.log')
+	File.join(File.expand_path(File.dirname(__FILE__)), '.gelbooru.log')
 end
 
 def get_downloaded_urls()
