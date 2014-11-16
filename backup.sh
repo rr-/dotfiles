@@ -8,7 +8,7 @@ user=rr-
 trap "exit" INT
 
 backup_user=backup
-server_backup=( /etc "/home/$user" /home/srv )
+server_backup=( /home/backup/backup-sql /etc "/home/$user" /home/srv )
 desktop_backup=( software/utilities clutter img text src )
 transit_dir=/cygdrive/z/hub/backup-tmp
 
