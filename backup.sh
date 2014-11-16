@@ -25,7 +25,11 @@ function sync {
 		--exclude "/cygdrive/z/software/utilities/cygwin" \
 		--exclude "/home/$user/img/" \
 		--exclude "/home/srv/www/mal-dev/data/" \
-		--exclude "/home/srv/www/booru-dev/public_html/data/"
+		--exclude "/home/srv/www/booru-dev/public_html/data/" \
+		--exclude "thumbnails/" \
+		--exclude '.git/' \
+		--exclude 'node_modules/' \
+		--exclude 'vendor/'
 }
 
 mkdir -p "$transit_dir"
