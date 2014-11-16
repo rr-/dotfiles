@@ -38,6 +38,7 @@ class UrlList
 				|url|
 				f << url + "\n"
 			}
+		@buffered_urls = []
 		end
 	end
 
