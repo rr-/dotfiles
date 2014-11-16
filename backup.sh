@@ -9,7 +9,7 @@ trap "exit" INT
 
 backup_user=backup
 server_backup=( /home/backup/backup-sql /etc "/home/$user" /home/srv )
-desktop_backup=( software/utilities clutter img text src )
+desktop_backup=( clutter img text src )
 transit_dir=/cygdrive/z/hub/backup-tmp
 
 function sync {
