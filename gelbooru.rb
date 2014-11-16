@@ -47,9 +47,22 @@ class UrlList
 	end
 end
 
+class DownloadStats
+	attr_accessor :ignored
+	attr_accessor :downloaded
+
+	def initialize()
+		@ignored = 0
+		@downloaded = 0
+	end
+end
+
 class Downloader
+	@stats
 	@url_list
+
 	def initialize(url_list)
+		@stats = DownloadStats.new
 		@url_list = url_list
 	end
 
@@ -62,11 +75,13 @@ class Downloader
 
 		if @url_list.downloaded?(File.basename(url))
 			puts "already downloaded"
+			@stats.ignored += 1
 			return
 		end
 
 		if File.exist?(target_path)
 			puts "already exists"
+			@stats.ignored += 1
 			return
 		end
 
@@ -77,6 +92,7 @@ class Downloader
 		end
 		@url_list.add(File.basename(url))
 		@url_list.flush()
+		@stats.downloaded += 1
 
 		puts "ok"
 	end
@@ -106,6 +122,9 @@ class Downloader
 
 			page += 1
 		end
+
+		puts "Downloaded: #{@stats.downloaded}"
+		puts "Ignored: #{@stats.ignored}"
 	end
 end
 
