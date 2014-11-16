@@ -13,9 +13,7 @@ class UrlList
 		@buffered_urls = []
 		if File.exist?(get_log_path())
 			File.readlines(get_log_path()) \
-				.each { |line| line.strip! } \
-				.uniq() \
-				.each { |line| @downloaded_urls[line] = true }
+				.each { |line| @downloaded_urls[line.strip!] = true }
 		end
 	end
 
