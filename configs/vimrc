@@ -116,17 +116,18 @@ set spelllang=en_us,pl
 "config ctrl+p
 let g:ctrlp_custom_ignore = {}
 "folders
-let g:ctrlp_custom_ignore.dir  = '\v'
+let g:ctrlp_custom_ignore.dir  = '\v('
 let g:ctrlp_custom_ignore.dir .= '\.hg|\.git|\.bzr'
 let g:ctrlp_custom_ignore.dir .= '|posts|files|thumbs'
 let g:ctrlp_custom_ignore.dir .= '|vendor|node_modules'
 let g:ctrlp_custom_ignore.dir .= '|clutter|img|software|video'
+let g:ctrlp_custom_ignore.dir .= ')($|\/)'
 "files
 let g:ctrlp_custom_ignore.file  = '\v'
 let g:ctrlp_custom_ignore.file .= '\~$'
 "file extensions
 let g:ctrlp_custom_ignore.file .= '|\.('
-let g:ctrlp_custom_ignore.file .= 'o|swp|pyc|svn-base'
+let g:ctrlp_custom_ignore.file .= 'o|exe|swp|pyc|svn-base'
 let g:ctrlp_custom_ignore.file .= '|tar|zip|7z|gz'
 let g:ctrlp_custom_ignore.file .= '|jpg|jpeg|gif|png|tga|bmp'
 let g:ctrlp_custom_ignore.file .= '|pdf|doc|xls'
