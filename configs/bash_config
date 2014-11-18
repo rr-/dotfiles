@@ -66,6 +66,7 @@ fi
 #aliases
 alias datediff="$DIR/../../sh-date-diff/datediff.sh"
 alias tl="$DIR/../../sh-translator/tl.py"
+alias sjp="$DIR/../sjp.rb"
 alias plen='tl pl en'
 alias enpl='tl en pl'
 alias rfn='date "+%Y%m%d_%H%M%S"|tr -d "\r\n"'
