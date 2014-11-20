@@ -10,10 +10,9 @@ trap "exit" INT
 backup_user=backup
 server_backup=( /home/backup/backup-sql /etc "/home/$user" /home/srv )
 desktop_backup=( clutter img text src )
-transit_dir=/cygdrive/z/hub/backup-tmp
 
 function sync {
-	rsync -T "$transit_dir" \
+	rsync \
 		--chmod=D=rwxrxrx,F=rwrr \
 		--info=progress2 \
 		-aKR \
@@ -32,9 +31,6 @@ function sync {
 		--exclude 'vendor/'
 }
 
-mkdir -p "$transit_dir"
-chmod 0777 "$transit_dir"
-
 for x in ${server_backup[@]}; do
 	echo "$server --> $desktop: $x"
 	sync "$user@$server_addr:$x/" "/cygdrive/z/backup-$server/"
@@ -46,5 +42,3 @@ for x in ${desktop_backup[@]}; do
 	sync "/cygdrive/z/$x/" "$backup_user@$server_addr:/home/backup/backup-$desktop/"
 	echo
 done
-
-rmdir --ignore-fail-on-non-empty "$transit_dir"
