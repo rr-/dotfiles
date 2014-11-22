@@ -118,7 +118,7 @@ let g:ctrlp_custom_ignore = {}
 "folders
 let g:ctrlp_custom_ignore.dir  = '\v('
 let g:ctrlp_custom_ignore.dir .= '\.hg|\.git|\.bzr'
-let g:ctrlp_custom_ignore.dir .= '|posts|files|thumbs'
+let g:ctrlp_custom_ignore.dir .= '|data\/posts|files|thumbs'
 let g:ctrlp_custom_ignore.dir .= '|vendor|node_modules'
 let g:ctrlp_custom_ignore.dir .= '|clutter|img|software|video'
 let g:ctrlp_custom_ignore.dir .= ')($|\/)'
