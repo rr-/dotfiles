@@ -1,2 +1,4 @@
 .*.swp
 *.py[cod]
+*.exe
+*.dll
