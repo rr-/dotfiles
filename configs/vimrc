@@ -1,44 +1,34 @@
 runtime bundle/pathogen/autoload/pathogen.vim
 execute pathogen#infect()
 
-syntax on
-set virtualedit=onemore
-set number
-"show white characters
-set list listchars=tab:→\ ,trail:·
-"set terminal to 256 color
-if $TERM == "xterm" || $TERM == "xterm-256color" || $TERM == "screen" || $TERM == "screen-256color" || $COLORTERM == "gnome-terminal"
-	set t_Co=256
-endif
-
-"disable .vimrc in Windows
-if has('win32') || has('win64') || has('win32unix')
-	set viminfo="NONE"
-endif
-
 "color scheme
 set background=light
 colorscheme hemisu
-
-"highlight whitespace
-highlight SpecialKey ctermbg=NONE ctermfg=187
-"highlight trailing white space
-highlight ExtraWhitespace ctermbg=red guibg=red
-"highlight searches
-highlight IncSearch ctermfg=black ctermbg=yellow
 
 "set gutter width to 80 characters
 if exists('+colorcolumn')
 	set colorcolumn=80
 endif
 
-"match trailing spaces and spaces before a tab
-autocmd BufWinEnter * match ExtraWhitespace /\v\s+$|\t+ ([^*]|$)| \t+/
+"-------------------------------------------------
+" basic settings
+"-------------------------------------------------
+"enable syntax highlighting
+syntax on
+"enable line numbers
+set number
+"set terminal to 256 color
+if $TERM == "xterm" || $TERM == "xterm-256color" || $TERM == "screen" || $TERM == "screen-256color" || $COLORTERM == "gnome-terminal"
+	set t_Co=256
+endif
 
-
-
-"case insensitive filename completion in normal mode
-set wildignorecase
+"-----------------------------------------
+" whitespace settings
+"-----------------------------------------
+"preferred eol styles
+set ff=unix ffs=unix,dos
+"preferred character encoding
+set enc=utf-8 fileencoding=utf-8
 "don't use spaces instead of tab
 set noexpandtab
 "number of spaces that tab counts for
@@ -51,14 +41,81 @@ set shiftwidth=4
 set autoindent
 "search from top when no further matches found
 set wrapscan
+"don't wrap long lines
+set nowrap
 "disable auto indentation based on file types
 filetype indent off
 
-set shell=/bin/bash\ -i
-
-set nowrap
+"----------------------------------------
+" editor behavior
+"----------------------------------------
 "allow backspacing over indent, eol and ?
 set bs=indent,eol,start
+"allow to move cursor after the last character in the line
+set virtualedit=onemore
+"case insensitive filename completion in normal mode
+set wildignorecase
+"change cursor buffer position in newly split buffers
+set splitbelow splitright
+"when opening shell, use bash in interactive mode
+set shell=/bin/bash\ -i
+"enable mouse support
+set mouse=a
+"disable "live" search
+set noincsearch
+"highlight searches
+set hlsearch
+"ignore case in searches unless they contain uppercase characters
+set ignorecase
+set smartcase
+
+
+"----------------------------------------
+" miscellaneous
+"----------------------------------------
+"disable beeping
+set noeb vb t_vb=
+"always display status line
+set laststatus=2
+"setup spell checker
+set nospell
+set spelllang=en_us,pl
+"allow files to embed file-specific vim settings
+set modeline
+"number of top lines in the file that can contain file-specific vim settings
+set modelines=5
+
+
+"------------------------------------------
+" storage
+"------------------------------------------
+"set path to last session data storage
+set viminfo+=n~/.vim/viminfo
+"set path to backups that are created on every file (*~)
+"double slash prevents file name collision, by using full file paths
+set backupdir=~/.vim/backup//
+"set path to swap files (.*.swp)
+set directory=~/.vim/swap//
+"set path to undo data file
+set undodir=~/.vim/undo//
+
+
+"----------------------------------------
+" highlight bad whitespace
+"----------------------------------------
+"highlight color for bad whitespace
+highlight SpecialKey ctermbg=NONE ctermfg=187
+"highlight trailing white space
+highlight ExtraWhitespace ctermbg=red guibg=red
+"show white characters
+set list listchars=tab:→\ ,trail:·
+"match trailing spaces and spaces before a tab
+autocmd BufWinEnter * match ExtraWhitespace /\v\s+$|\t+ ([^*]|$)| \t+/
+
+
+"----------------------------------------
+" custom keyboard bindings
+"----------------------------------------
 "arrows over visible lines, not physical lines
 noremap  <buffer> <silent> <Up>   gk
 noremap  <buffer> <silent> <Down> gj
@@ -68,64 +125,105 @@ inoremap <buffer> <silent> <Up>   <C-o>gk
 inoremap <buffer> <silent> <Down> <C-o>gj
 inoremap <buffer> <silent> <Home> <C-o>g<Home>
 inoremap <buffer> <silent> <End>  <C-o>g<End>
+"ctrl+tab, ctrl+shift+tab = move to next/prev tab
 nnoremap <Esc>[1;5I gt<CR>
 nnoremap <Esc>[1;6I gT<CR>
-inoremap <silent> <C-s> <Esc>:update<CR>
-nnoremap <silent> <C-s> :<C-u>update<CR>
-nnoremap <silent> <C-z> :sh<CR>
-inoremap <silent> <C-q> <Esc>:q<CR>
-nnoremap <silent> <C-q> :q<CR>
+"ctrl+t = open new tab
 inoremap <silent> <C-t> <Esc>:tabnew<CR>
 nnoremap <silent> <C-t> :tabnew<CR>
+"ctrl+s = save
+inoremap <silent> <C-s> <Esc>:update<CR>
+nnoremap <silent> <C-s> :<C-u>update<CR>
+"ctrl+z = open shell
+nnoremap <silent> <C-z> :sh<CR>
+"ctrl+q = exit
+inoremap <silent> <C-q> <Esc>:q<CR>
+nnoremap <silent> <C-q> :q<CR>
+"ctrl+o = open Ctrl+P prompt
 nnoremap <silent> <C-o> :CtrlPLine<CR>
 "less keystrokes to access easy motion search
 nmap z <Leader><Leader>s
 
+	"----------------------------------------
+	" ctrl+up/down = move line up/down
+	"----------------------------------------
+	function! MoveLineUp()
+		call MoveLineOrVisualUp(".", "")
+	endfunction
 
-"change cursor buffer position in newly split buffers
-set splitbelow splitright
-"disable beeping
-set noeb vb t_vb=
-"always display status line
-set laststatus=2
+	function! MoveLineDown()
+		call MoveLineOrVisualDown(".", "")
+	endfunction
+
+	function! MoveVisualUp()
+		call MoveLineOrVisualUp("'<", "'<,'>")
+		normal gv
+	endfunction
+
+	function! MoveVisualDown()
+		call MoveLineOrVisualDown("'>", "'<,'>")
+		normal gv
+	endfunction
+
+	function! MoveLineOrVisualUp(line_getter, range)
+		let l_num = line(a:line_getter)
+		if l_num - v:count1 - 1 < 0
+			let move_arg = "0"
+		else
+			let move_arg = a:line_getter." -".(v:count1 + 1)
+		endif
+		call MoveLineOrVisualUpOrDown(a:range."move ".move_arg)
+	endfunction
+
+	function! MoveLineOrVisualDown(line_getter, range)
+		let l_num = line(a:line_getter)
+		if l_num + v:count1 > line("$")
+			let move_arg = "$"
+		else
+			let move_arg = a:line_getter." +".v:count1
+		endif
+		call MoveLineOrVisualUpOrDown(a:range."move ".move_arg)
+	endfunction
+
+	function! MoveLineOrVisualUpOrDown(move_arg)
+		let col_num = virtcol(".")
+		execute "silent! ".a:move_arg
+		execute "normal! ".col_num."|"
+	endfunction
+
+	nnoremap <silent> <C-Up> :<C-u>call MoveLineUp()<CR>
+	nnoremap <silent> <C-Down> :<C-u>call MoveLineDown()<CR>
+	inoremap <silent> <C-Up> <C-o>:call MoveLineUp()<CR>
+	inoremap <silent> <C-Down> <C-o>:call MoveLineDown()<CR>
+	"vnoremap <silent> <C-Up> :<C-u>call MoveVisualUp()<CR>
+	"vnoremap <silent> <C-Down> :<C-u>call MoveVisualDown()<CR>
+	xnoremap <silent> <C-Up> :<C-u>call MoveVisualUp()<CR>
+	xnoremap <silent> <C-Down> :<C-u>call MoveVisualDown()<CR>
 
 
-set ff=unix ffs=unix,dos
-set enc=utf-8 fileencoding=utf-8
-"disable making "file~"
-set nobackup
-"disallow files to embed vim settings
-set modeline
-set modelines=5
-
-"disable "live" search
-set noincsearch
-"highlight searches
-set hlsearch
-"ignore case in searches unless they contain uppercase characters
-set ignorecase
-set smartcase
-
-"enable mouse support
-set mouse=a
-"setup spell checker
-set nospell
-set spelllang=en_us,pl
-
-
-"config ctrl+p
+"----------------------------------------
+" config Ctrl+P
+"----------------------------------------
+"disable CWD bullshit
+let g:ctrlp_working_path_mode = 0
+"enable matching files such as .htaccess
+let g:ctrlp_dotfiles = 1
+"show selected element at the top
+let g:ctrlp_match_window_bottom = 1
+"show list top->bottom
+let g:ctrlp_match_window_reversed = 1
+let g:ctrlp_by_filename = 1
+let g:ctrlp_match_window = 'bottom,order:btt,min:1,max:3,results:3'
+"ignored files and directories
 let g:ctrlp_custom_ignore = {}
-"folders
 let g:ctrlp_custom_ignore.dir  = '\v('
 let g:ctrlp_custom_ignore.dir .= '\.hg|\.git|\.bzr'
 let g:ctrlp_custom_ignore.dir .= '|data\/posts|files|thumbs'
 let g:ctrlp_custom_ignore.dir .= '|vendor|node_modules'
 let g:ctrlp_custom_ignore.dir .= '|clutter|img|software|video'
 let g:ctrlp_custom_ignore.dir .= ')($|\/)'
-"files
 let g:ctrlp_custom_ignore.file  = '\v'
 let g:ctrlp_custom_ignore.file .= '\~$'
-"file extensions
 let g:ctrlp_custom_ignore.file .= '|\.('
 let g:ctrlp_custom_ignore.file .= 'o|exe|swp|pyc|svn-base'
 let g:ctrlp_custom_ignore.file .= '|tar|zip|7z|gz'
@@ -134,29 +232,25 @@ let g:ctrlp_custom_ignore.file .= '|pdf|doc|xls'
 let g:ctrlp_custom_ignore.file .= '|wav|ogg|mp3|mp4|avi|mkv|ttf'
 let g:ctrlp_custom_ignore.file .= ')$'
 
-"disable CWD bullshit
-let g:ctrlp_working_path_mode = 0
-"enable .htaccess etc
-let g:ctrlp_dotfiles = 1
-"show selected element at the top
-let g:ctrlp_match_window_bottom = 1
-"show list top->bottom
-let g:ctrlp_match_window_reversed = 1
-let g:ctrlp_by_filename = 1
-let g:ctrlp_match_window = 'bottom,order:btt,min:1,max:3,results:3'
 
-
-"enable rainbow parentheses
-let g:rainbow_active = 1
-
-
-"config airline
+"----------------------------------------
+" config airline
+"----------------------------------------
+"because of white background
 let g:airline_theme = 'light'
+"allow use of special characters that are supplied by terminal font
 let g:airline_powerline_fonts = 1
+"enable tabs
 let g:airline#extensions#tabline#enabled = 1
+"don't show buffers in the tabline - show tabs instead
 let g:airline#extensions#tabline#show_buffers = 0
+"show tab number near tab for easy navigation with :![number]gt
 let g:airline#extensions#tabline#tab_nr_type = 1
 
+
+"----------------------------------------
+" config NERDtree
+"----------------------------------------
 "enable on console startup
 let g:nerdtree_tabs_open_on_console_startup = 1
 "always focus on files
@@ -168,77 +262,27 @@ autocmd VimEnter * imap <F3> <esc>:NERDTreeFind<CR>
 autocmd VimEnter * nmap <F3> :NERDTreeFind<CR>
 
 
-"file type specific settings
-autocmd BufRead,BufNewFile *.txt,*.tex setlocal spell expandtab textwidth=79
-autocmd BufRead,BufNewFile *.lst setlocal expandtab
-autocmd BufRead,BufNewFile *.php,*.phtml call SetPhpOptions()
-autocmd BufRead,BufNewFile COMMIT_EDITMSG setlocal spell textwidth=72 colorcolumn=50,72
 
+"----------------------------------------
+" file-type specific settings
+"----------------------------------------
 function! SetPhpOptions()
+	"set max width to 120 characters
 	if exists('+colorcolumn')
 		setlocal colorcolumn=120
 	endif
 	setlocal tw=119
+	"f5 = quick lint
 	setlocal makeprg=php\ -l\ %
 	setlocal errorformat=%m\ in\ %f\ on\ line\ %l,%-GErrors\ parsing\ %f,%-G
 	nnoremap <f5> :update<bar>silent make<bar>redraw!<bar>cwindow<cr>
 endfunction
 
-
-function! ReloadConfig()
-	source $MYVIMRC
-endfunction
-
-
-function! MoveLineUp()
-	call MoveLineOrVisualUp(".", "")
-endfunction
-
-function! MoveLineDown()
-	call MoveLineOrVisualDown(".", "")
-endfunction
-
-function! MoveVisualUp()
-	call MoveLineOrVisualUp("'<", "'<,'>")
-	normal gv
-endfunction
-
-function! MoveVisualDown()
-	call MoveLineOrVisualDown("'>", "'<,'>")
-	normal gv
-endfunction
-
-function! MoveLineOrVisualUp(line_getter, range)
-	let l_num = line(a:line_getter)
-	if l_num - v:count1 - 1 < 0
-		let move_arg = "0"
-	else
-		let move_arg = a:line_getter." -".(v:count1 + 1)
-	endif
-	call MoveLineOrVisualUpOrDown(a:range."move ".move_arg)
-endfunction
-
-function! MoveLineOrVisualDown(line_getter, range)
-	let l_num = line(a:line_getter)
-	if l_num + v:count1 > line("$")
-		let move_arg = "$"
-	else
-		let move_arg = a:line_getter." +".v:count1
-	endif
-	call MoveLineOrVisualUpOrDown(a:range."move ".move_arg)
-endfunction
-
-function! MoveLineOrVisualUpOrDown(move_arg)
-	let col_num = virtcol(".")
-	execute "silent! ".a:move_arg
-	execute "normal! ".col_num."|"
-endfunction
-
-nnoremap <silent> <C-Up> :<C-u>call MoveLineUp()<CR>
-nnoremap <silent> <C-Down> :<C-u>call MoveLineDown()<CR>
-inoremap <silent> <C-Up> <C-o>:call MoveLineUp()<CR>
-inoremap <silent> <C-Down> <C-o>:call MoveLineDown()<CR>
-"vnoremap <silent> <C-Up> :<C-u>call MoveVisualUp()<CR>
-"vnoremap <silent> <C-Down> :<C-u>call MoveVisualDown()<CR>
-xnoremap <silent> <C-Up> :<C-u>call MoveVisualUp()<CR>
-xnoremap <silent> <C-Down> :<C-u>call MoveVisualDown()<CR>
+"enable spellcheck and space indentation in text files
+autocmd BufRead,BufNewFile *.txt,*.tex setlocal spell expandtab textwidth=79
+"enable space indentation in list files
+autocmd BufRead,BufNewFile *.lst setlocal expandtab
+"set PHP options for PHP files
+autocmd BufRead,BufNewFile *.php,*.phtml call SetPhpOptions()
+"enable spellcheck and double gutter in git commit messages
+autocmd BufRead,BufNewFile COMMIT_EDITMSG setlocal spell textwidth=72 colorcolumn=50,72

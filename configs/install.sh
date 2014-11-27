@@ -21,6 +21,9 @@ done
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 [ ! -d "$HOME/.vim" ] && mkdir "$HOME/.vim"
+[ ! -d "$HOME/.vim/undo" ] && mkdir "$HOME/.vim/undo"
+[ ! -d "$HOME/.vim/backup" ] && mkdir "$HOME/.vim/backup"
+[ ! -d "$HOME/.vim/swap" ] && mkdir "$HOME/.vim/swap"
 
 echo "Installing vim plugins"
 ln -s "$DIR/vim-plugins" "$HOME/.vim/bundle"
