@@ -94,6 +94,8 @@ set viminfo+=n~/.vim/viminfo
 "set path to backups that are created on every file (*~)
 "double slash prevents file name collision, by using full file paths
 set backupdir=~/.vim/backup//
+"enable backups
+set backup
 "set path to swap files (.*.swp)
 set directory=~/.vim/swap//
 "set path to undo data file
