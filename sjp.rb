@@ -1,4 +1,4 @@
-#!/usr/bin/ruby
+#!/usr/bin/ruby -w
 require 'rubygems'
 require 'nokogiri'
 require 'net/http'
@@ -9,14 +9,14 @@ def render_to_ascii(node)
   dup = node.dup
 
   dup.xpath('.//text()').each { |t| t.content = t.text.gsub(/\s+/, ' ') }
-  dup.css(swaps.keys.join(',')).each { |n| n.replace( swaps[n.name] ) }
+  dup.css(swaps.keys.join(',')).each { |n| n.replace(swaps[n.name]) }
   dup.css(blocks.join(',')).each { |n| n.after("\n\n") }
   dup.text
 end
 
 def get(word)
-  url = 'http://sjp.pl/' + word
-  content = Net::HTTP.get_response(URI(URI.encode(url))).body
+  url = 'http://sjp.pl/' + URI.encode_www_form_component(word)
+  content = Net::HTTP.get_response(URI(URI.parse(url))).body
   doc = Nokogiri::HTML(content)
   nodes = doc.xpath('//p[contains(@style, "5em")]')
   if nodes.empty?
