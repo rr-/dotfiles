@@ -1,4 +1,4 @@
-#!/usr/bin/ruby
+#!/usr/bin/ruby -w
 require 'rubygems'
 require 'json'
 require 'net/http'
@@ -8,8 +8,9 @@ def wrap_long_string(text, max_width = 80)
 end
 
 def get(word)
-  url = 'http://api.urbandictionary.com/v0/define?term=' + word
-  content = Net::HTTP.get_response(URI(URI.encode(url))).body
+  url = 'http://api.urbandictionary.com/v0/define?term=' \
+    + URI.encode_www_form_component(word)
+  content = Net::HTTP.get_response(URI(URI.parse(url))).body
   defs = JSON.parse(content)['list']
   if defs.empty?
     puts 'Nothing found'

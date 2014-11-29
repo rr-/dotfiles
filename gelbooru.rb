@@ -1,4 +1,4 @@
-#!/usr/bin/ruby
+#!/usr/bin/ruby -w
 require 'fileutils'
 require 'net/http'
 require 'open-uri'
@@ -65,9 +65,8 @@ class DownloadStats
 end
 
 class Downloader
-  @limit = 75
-
   def initialize(base_folder, url_list)
+    @limit = 75
     @base_folder = base_folder
     @stats = DownloadStats.new
     @url_list = url_list
@@ -105,7 +104,7 @@ class Downloader
   def download_page(page, tags)
     url = 'http://gelbooru.com/index.php?page=dapi&s=post&q=index' \
       + '&limit=' + @limit.to_s \
-      + '&tags=' + URI.encode(tags) \
+      + '&tags=' + URI.encode_www_form_component(tags) \
       + '&pid=' + page.to_s
 
     xml_data = Net::HTTP.get_response(URI.parse(url)).body
