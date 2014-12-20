@@ -60,6 +60,8 @@ class DownloadStats
       print url, '... downloading... '
       yield self
       puts 'ok'
+    rescue => e
+      puts 'error: ' + e.to_s
     end
   end
 end
