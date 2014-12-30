@@ -1,5 +1,5 @@
 #!/bin/bash
-for x in .bashrc .vimrc .vim/bundle .inputrc .minttyrc .bash_profile .gitconfig; do
+for x in .bashrc .vimrc .vim/vundle .inputrc .minttyrc .bash_profile .gitconfig; do
 	source=$HOME/$x
 	target=$source~
 
@@ -25,8 +25,8 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 [ ! -d "$HOME/.vim/backup" ] && mkdir "$HOME/.vim/backup"
 [ ! -d "$HOME/.vim/swap" ] && mkdir "$HOME/.vim/swap"
 
-echo "Installing vim plugins"
-ln -s "$DIR/vim-plugins" "$HOME/.vim/bundle"
+echo "Installing vim configuration manager"
+ln -s "$DIR/vundle" "$HOME/.vim/vundle"
 
 echo "Installing vimrc"
 ln -s "$DIR/vimrc" "$HOME/.vimrc"

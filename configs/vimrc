@@ -1,5 +1,16 @@
-runtime bundle/pathogen/autoload/pathogen.vim
-execute pathogen#infect()
+set nocompatible
+filetype off
+set rtp+=~/.vim/vundle/
+call vundle#begin()
+Plugin 'gmarik/Vundle.vim'
+Plugin 'kien/ctrlp.vim'
+Plugin 'scrooloose/nerdtree'
+Plugin 'jistr/vim-nerdtree-tabs'
+Plugin 'noahfrederick/vim-hemisu'
+Plugin 'myusuf3/numbers.vim'
+Plugin 'Lokaltog/vim-easymotion'
+Plugin 'bling/vim-airline'
+call vundle#end()
 
 "color scheme
 set background=light
