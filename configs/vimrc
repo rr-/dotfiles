@@ -7,7 +7,7 @@ Plugin 'kien/ctrlp.vim'
 Plugin 'scrooloose/nerdtree'
 Plugin 'jistr/vim-nerdtree-tabs'
 Plugin 'noahfrederick/vim-hemisu'
-Plugin 'myusuf3/numbers.vim'
+"Plugin 'myusuf3/numbers.vim'
 Plugin 'Lokaltog/vim-easymotion'
 Plugin 'bling/vim-airline'
 call vundle#end()
