@@ -293,7 +293,7 @@ function! SetPhpOptions()
 endfunction
 
 "enable spellcheck and space indentation in text files
-autocmd BufRead,BufNewFile *.txt,*.tex setlocal spell expandtab textwidth=79
+autocmd BufRead,BufNewFile *.txt,*.tex,*.md setlocal spell expandtab textwidth=79
 "enable space indentation in list files
 autocmd BufRead,BufNewFile *.lst setlocal expandtab
 "enable space indentation in Ruby and Yaml files; use 2 spaces
