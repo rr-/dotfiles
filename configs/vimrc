@@ -155,6 +155,8 @@ inoremap <silent> <C-q> <Esc>:q<CR>
 nnoremap <silent> <C-q> :q<CR>
 "ctrl+o = open Ctrl+P prompt
 nnoremap <silent> <C-o> :CtrlPLine<CR>
+"f4 = copy current path to buffer
+noremap <silent> <F4> :let @" = expand("%")<CR>
 "less keystrokes to access easy motion search
 nmap z <Leader><Leader>s
 
