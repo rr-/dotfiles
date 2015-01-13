@@ -128,6 +128,15 @@ autocmd BufWinEnter * match ExtraWhitespace /\v\s+$|\t+ ([^*]|$)| \t+/
 
 
 "----------------------------------------
+" custom commands
+"----------------------------------------
+"fast indentation styles for working with other people's projects
+command! TwoSpaces set et sts=2 ts=2 sw=2
+command! FourSpaces set et sts=4 ts=4 sw=4
+command! Tabs set noet sts=4 ts=4 sw=4
+
+
+"----------------------------------------
 " custom keyboard bindings
 "----------------------------------------
 "arrows over visible lines, not physical lines
