@@ -309,6 +309,8 @@ autocmd BufRead,BufNewFile *.txt,*.tex,*.md setlocal spell expandtab textwidth=7
 autocmd BufRead,BufNewFile *.lst setlocal expandtab
 "enable space indentation in Ruby and Yaml files; use 2 spaces
 autocmd BufRead,BufNewFile *.rb,*.yml setlocal expandtab softtabstop=2 tabstop=2 shiftwidth=2
+"enable space indentation in Python files; use 4 spaces
+autocmd BufRead,BufNewFile *.py setlocal expandtab softtabstop=4 tabstop=4 shiftwidth=4
 "set PHP options for PHP files
 autocmd BufRead,BufNewFile *.php,*.phtml call SetPhpOptions()
 "enable spellcheck and double gutter in git commit messages
