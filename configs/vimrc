@@ -7,10 +7,10 @@ Plugin 'kien/ctrlp.vim'
 Plugin 'scrooloose/nerdtree'
 Plugin 'jistr/vim-nerdtree-tabs'
 Plugin 'noahfrederick/vim-hemisu'
-"Plugin 'myusuf3/numbers.vim'
 Plugin 'Lokaltog/vim-easymotion'
 Plugin 'bling/vim-airline'
 Plugin 'wting/rust.vim'
+Plugin 'fatih/vim-go'
 call vundle#end()
 
 "color scheme
@@ -285,6 +285,23 @@ let g:nerdtree_tabs_smart_startup_focus = 2
 "f3 = find current file in nerdtree
 autocmd VimEnter * imap <F3> <esc>:NERDTreeFind<CR>
 autocmd VimEnter * nmap <F3> :NERDTreeFind<CR>
+
+
+
+"----------------------------------------
+" config vim-go
+"----------------------------------------
+"all I ever wanted was just fucking syntax highlighting
+let g:go_fmt_autosave = 0
+let g:go_auto_type_info = 0
+let g:go_play_open_browser = 0
+let g:go_textobj_enabled = 0
+let g:go_def_mapping_enabled = 0
+let g:go_doc_keywordprg_enabled = 0
+"enable enhanced syntax highlighting
+let g:go_highlight_functions = 1
+let g:go_highlight_methods = 1
+let g:go_highlight_structs = 1
 
 
 
