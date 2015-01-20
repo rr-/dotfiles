@@ -12,3 +12,4 @@
 "\C-_": backward-kill-word
 
 set completion-ignore-case on
+set bell-style none
