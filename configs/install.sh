@@ -1,5 +1,5 @@
 #!/bin/bash
-for x in .bashrc .vimrc .vim/vundle .inputrc .minttyrc .bash_profile .gitconfig; do
+for x in .bashrc .vimrc .vim/vundle .inputrc .minttyrc .bash_profile .gitconfig .mplayer; do
 	source=$HOME/$x
 	target=$source~
 
@@ -46,9 +46,12 @@ ln -s "$DIR/minttyrc" "$HOME/.minttyrc"
 echo "Installing gitconfig"
 ln -s "$DIR/gitconfig" "$HOME/.gitconfig"
 
+echo "Installing mplayer"
+ln -s "$DIR/mplayer" "$HOME/.mplayer"
+
 shopt -s nocasematch
 if [[ "$(uname)" =~ cygwin ]]; then
-	for x in .bashrc .vimrc .vim .inputrc .minttyrc .bash_profile .gitconfig; do
+	for x in .bashrc .vimrc .vim .inputrc .minttyrc .bash_profile .gitconfig .mplayer; do
 		winpath=$(cygpath -w "$HOME")\\$x
 		attrib +h +s "$winpath"
 		echo "Hiding $winpath"
