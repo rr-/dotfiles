@@ -1,0 +1,6 @@
+ao=alsa
+ass=yes
+embeddedfonts=yes
+framedrop=yes
+lavdopts=threads=4
+vf=screenshot
