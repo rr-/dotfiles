@@ -56,6 +56,7 @@ set wrapscan
 "don't wrap long lines
 set nowrap
 "disable auto indentation based on file types
+filetype on
 filetype indent off
 
 "----------------------------------------
@@ -320,6 +321,8 @@ function! SetPhpOptions()
 	nnoremap <f5> :update<bar>silent make<bar>redraw!<bar>cwindow<cr>
 endfunction
 
+"strip trailing whitespace for common source code
+autocmd FileType c,cpp,java,php,py,rb,vim autocmd BufWritePre <buffer> :%s/\s\+$//e
 "enable spellcheck and space indentation in text files
 autocmd BufRead,BufNewFile *.txt,*.tex,*.md setlocal spell expandtab textwidth=79
 "enable space indentation in list files
