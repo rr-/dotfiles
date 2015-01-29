@@ -81,6 +81,8 @@ set hlsearch
 "ignore case in searches unless they contain uppercase characters
 set ignorecase
 set smartcase
+"always keep at least 10 lines below and above cursor for context
+set scrolloff=10
 
 
 "----------------------------------------
