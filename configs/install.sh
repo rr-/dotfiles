@@ -36,9 +36,7 @@ install_link "$DIR/mplayer" ".mplayer"
 
 shopt -s nocasematch
 if [[ "$(uname)" =~ cygwin ]]; then
-	for x in "$HOME"/.*; do
-		winpath=$(cygpath -w "$x")
-		attrib +h +s "$winpath"
-		echo "Hiding $winpath"
-	done
+	cd "$HOME"
+	echo "Hiding dotfiles in $HOME"
+	attrib +h +s .\*
 fi
