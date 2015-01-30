@@ -137,6 +137,9 @@ autocmd BufWinEnter * match ExtraWhitespace /\v\s+$|\t+ ([^*]|$)| \t+/
 command! TwoSpaces set et sts=2 ts=2 sw=2
 command! FourSpaces set et sts=4 ts=4 sw=4
 command! Tabs set noet sts=4 ts=4 sw=4
+"create working dirs for current file
+command! CreateDirs execute ':silent !mkdir -p %:h' | write
+
 
 
 "----------------------------------------
