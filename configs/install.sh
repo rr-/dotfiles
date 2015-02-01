@@ -6,11 +6,11 @@ function install_link {
 
 	echo "Installing $source to $target"
 
-	if [ -e "$target" ]; then
-		if [ -L "$target" ]; then
-			echo Removing old symlink "$target"
-			rm "$target"
-		else
+	if [ -h "$target" ]; then
+		echo Removing old symlink "$target"
+		rm "$target"
+	else
+		if [ -e "$target" ]; then
 			echo Not a symlink: "$target". Aborting.
 			exit 1
 		fi
