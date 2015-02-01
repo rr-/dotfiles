@@ -15,8 +15,13 @@ Plugin 'Yggdroot/indentLine'
 call vundle#end()
 
 "color scheme
-set background=light
 colorscheme hemisu
+let background_file=$HOME."/.vimrc-background"
+if filereadable(background_file)
+	exec 'so ' . background_file
+else
+	set background=light
+endif
 
 "set gutter width to 80 characters
 if exists('+colorcolumn')
