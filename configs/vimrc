@@ -11,6 +11,7 @@ Plugin 'Lokaltog/vim-easymotion'
 Plugin 'bling/vim-airline'
 Plugin 'wting/rust.vim'
 Plugin 'fatih/vim-go'
+Plugin 'Yggdroot/indentLine'
 call vundle#end()
 
 "color scheme
