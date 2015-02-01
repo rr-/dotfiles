@@ -30,7 +30,7 @@ install_link "$DIR/vimrc" ".vimrc"
 install_link "$DIR/bash_config" ".bashrc"
 install_link "$DIR/bash_config" ".bash_profile"
 install_link "$DIR/inputrc" ".inputrc"
-install_link "$DIR/minttyrc" ".minttyrc"
+install_link "$DIR/minttyrc-light" ".minttyrc"
 install_link "$DIR/gitconfig" ".gitconfig"
 install_link "$DIR/mplayer" ".mplayer"
 
