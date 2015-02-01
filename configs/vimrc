@@ -332,6 +332,8 @@ autocmd FileType c,cpp,java,php,py,rb,vim autocmd BufWritePre <buffer> :%s/\s\+$
 autocmd BufRead,BufNewFile *.txt,*.tex,*.md setlocal spell expandtab textwidth=79
 "enable space indentation in list files
 autocmd BufRead,BufNewFile *.lst setlocal expandtab
+"enable space indentation in C and C++ files; use 4 spaces
+autocmd BufRead,BufNewFile *.c,*.cc,*.cpp,*.cxx,*.h,*.hpp setlocal expandtab softtabstop=4 tabstop=4 shiftwidth=4
 "enable space indentation in Ruby and Yaml files; use 2 spaces
 autocmd BufRead,BufNewFile *.rb,*.yml setlocal expandtab softtabstop=2 tabstop=2 shiftwidth=2
 "enable space indentation in Python files; use 4 spaces
