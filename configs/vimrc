@@ -130,6 +130,10 @@ set undodir=~/.vim/undo//
 highlight SpecialKey ctermbg=NONE ctermfg=187
 "highlight trailing white space
 highlight ExtraWhitespace ctermbg=red guibg=red
+"fix ColorColumn on dark backgrounds
+if &background == 'dark'
+	highlight ColorColumn ctermbg=52
+end
 "show white characters
 set list listchars=tab:→\ ,trail:·
 "match trailing spaces and spaces before a tab
