@@ -15,11 +15,11 @@ Plugin 'Yggdroot/indentLine'
 call vundle#end()
 
 "color scheme
-colorscheme hemisu
 let background_file=$HOME."/.vimrc-background"
 if filereadable(background_file)
 	exec 'so ' . background_file
 else
+	colorscheme hemisu
 	set background=light
 endif
 
