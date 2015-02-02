@@ -352,6 +352,7 @@ autocmd BufRead,BufNewFile *.py FourSpaces
 autocmd BufRead,BufNewFile *.rb TwoSpaces
 autocmd BufRead,BufNewFile *.yml TwoSpaces
 autocmd BufRead,BufNewFile *.vim Tabs
+autocmd BufRead,BufNewFile *.vimrc Tabs
 autocmd BufRead,BufNewFile Makefile Tabs
 autocmd BufRead,BufNewFile *.php,*.phtml FourSpaces
 
