@@ -33,6 +33,8 @@ endif
 "-------------------------------------------------
 "enable syntax highlighting
 syntax on
+"enable syntax highlighting only for first X columns (useful for binary files)
+set synmaxcol=256
 "enable line numbers
 set number
 "set terminal to 256 color
