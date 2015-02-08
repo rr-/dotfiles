@@ -18,7 +18,7 @@ trap "exit" INT
 transit_root_dir=/cygdrive/z/hub/img-tmp
 
 #download the images
-rsync --info=progress2 -a --remove-source-files "$remote_user@$remote_addr:$remote_root_dir" "$transit_root_dir"
+rsync --progress --whole-file -a --remove-source-files "$remote_user@$remote_addr:$remote_root_dir" "$transit_root_dir"
 
 #distribute the images
 find "$transit_root_dir" -depth -type d -print0|while read -d '' -r src_folder; do

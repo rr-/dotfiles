@@ -14,7 +14,8 @@ desktop_backup=( clutter img text src )
 function sync {
 	rsync \
 		--chmod=D=rwxrxrx,F=rwrr \
-		--info=progress2 \
+		--progress \
+		--whole-file \
 		-aKR \
 		--delete-excluded \
 		--delete-during \
