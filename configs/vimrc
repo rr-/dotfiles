@@ -152,6 +152,15 @@ command! Tabs set noet sts=4 ts=4 sw=4
 "create working dirs for current file
 command! CreateDirs execute ':silent !mkdir -p %:h' | write
 
+function! CopyWithoutHardWrapping()
+	let old_tw=&textwidth
+	:set tw=10000
+	silent! normal gg gqG
+	silent! normal gg "*yG
+	let &textwidth=old_tw
+	undo
+endfunction
+command! CopyWithoutHardWrapping call CopyWithoutHardWrapping()
 
 
 "----------------------------------------
@@ -300,10 +309,12 @@ let g:nerdtree_tabs_open_on_console_startup = 1
 let g:nerdtree_tabs_focus_on_files = 1
 "don't focus nerdtree on parameterless startup
 let g:nerdtree_tabs_smart_startup_focus = 2
+"f2 = disable NERDtree
+autocmd VimEnter * imap <F2> <esc>:NERDTreeTabsToggle<CR>
+autocmd VimEnter * nmap <F2> :NERDTreeTabsToggle<CR>
 "f3 = find current file in nerdtree
 autocmd VimEnter * imap <F3> <esc>:NERDTreeFind<CR>
 autocmd VimEnter * nmap <F3> :NERDTreeFind<CR>
-
 
 
 "----------------------------------------
@@ -320,7 +331,6 @@ let g:go_doc_keywordprg_enabled = 0
 let g:go_highlight_functions = 1
 let g:go_highlight_methods = 1
 let g:go_highlight_structs = 1
-
 
 
 "----------------------------------------
