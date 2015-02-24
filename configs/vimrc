@@ -309,6 +309,8 @@ let g:nerdtree_tabs_open_on_console_startup = 1
 let g:nerdtree_tabs_focus_on_files = 1
 "don't focus nerdtree on parameterless startup
 let g:nerdtree_tabs_smart_startup_focus = 2
+"don't display these kinds of files
+let NERDTreeIgnore=['\.pyc$', '\.pyo$', '\.obj$', '\.o$']
 "f2 = disable NERDtree
 autocmd VimEnter * imap <F2> <esc>:NERDTreeTabsToggle<CR>
 autocmd VimEnter * nmap <F2> :NERDTreeTabsToggle<CR>
