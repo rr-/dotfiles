@@ -91,6 +91,8 @@ set ignorecase
 set smartcase
 "always keep at least 10 lines below and above cursor for context
 set scrolloff=10
+"don't put double spaces after !, ? and . when wrapping words automatically
+set nojoinspaces
 
 
 "----------------------------------------
