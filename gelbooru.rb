@@ -84,7 +84,7 @@ class Downloader
   def download_file(url, post_id)
     target_path = target_path(post_id, url)
 
-    if @url_list.downloaded?(File.basename(url))
+    if !@url_list.nil? && @url_list.downloaded?(File.basename(url))
       @stats.ignore(url, 'already downloaded')
       return
     end
@@ -99,8 +99,10 @@ class Downloader
       open(target_path, 'wb') do |file|
         file.write(content)
       end
-      @url_list.add(File.basename(url))
-      @url_list.flush
+      unless @url_list.nil?
+        @url_list.add(File.basename(url))
+        @url_list.flush
+      end
     end
   end
 
@@ -141,10 +143,10 @@ if ARGV.length < 1
   exit 1
 end
 
-tags = ARGV.join(' ')
+tags = ARGV.select { |a| !a[/^--/] }.join(' ')
 base_folder = '/cygdrive/z/img/net/gelbooru/' + tags.gsub(/[\\\/:*?"<>|]/, '_')
 FileUtils.mkpath base_folder
 
-url_list = UrlList.new
+url_list = ARGV.include?('--force') ? nil : UrlList.new
 downloader = Downloader.new(base_folder, url_list)
 downloader.run(tags)
