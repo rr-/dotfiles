@@ -68,11 +68,12 @@ class DownloadStats
 end
 
 class Downloader
-  def initialize(base_folder, url_list)
+  def initialize(base_folder, url_list, force)
     @limit = 75
     @base_folder = base_folder
     @stats = DownloadStats.new
     @url_list = url_list
+    @force = force
   end
 
   def target_path(post_id, url)
@@ -84,7 +85,7 @@ class Downloader
   def download_file(url, post_id)
     target_path = target_path(post_id, url)
 
-    if !@url_list.nil? && @url_list.downloaded?(File.basename(url))
+    if !@force && !@url_list.nil? && @url_list.downloaded?(File.basename(url))
       @stats.ignore(url, 'already downloaded')
       return
     end
@@ -147,6 +148,7 @@ tags = ARGV.select { |a| !a[/^--/] }.join(' ')
 base_folder = '/cygdrive/z/img/net/gelbooru/' + tags.gsub(/[\\\/:*?"<>|]/, '_')
 FileUtils.mkpath base_folder
 
-url_list = ARGV.include?('--force') ? nil : UrlList.new
-downloader = Downloader.new(base_folder, url_list)
+force = ARGV.include?('--force')
+url_list = UrlList.new
+downloader = Downloader.new(base_folder, url_list, force)
 downloader.run(tags)
