@@ -22,5 +22,5 @@ ssh_command = format('echo %s >> %s',
   Shellwords.escape(json),
   Shellwords.escape(remote_log_path))
 
-`mplayer #{Shellwords.escape(video_path)}`
+`mpv #{Shellwords.escape(video_path)}`
 `ssh #{remote_host} #{Shellwords.escape(ssh_command)}`
