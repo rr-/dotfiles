@@ -353,7 +353,7 @@ function! SetPhpOptions()
 endfunction
 
 "strip trailing whitespace for common source code
-autocmd FileType c,cc,cxx,cpp,h,hpp,java,php,py,rb,vim autocmd BufWritePre <buffer> :%s/\s\+$//e
+autocmd FileType c,cc,cxx,cpp,h,hpp,java,php,python,ruby,vim autocmd BufWritePre <buffer> :%s/\s\+$//e
 
 "enable spellcheck and hard wrapping for text files
 autocmd BufRead,BufNewFile *.txt,*.tex,*.md setlocal spell textwidth=79
