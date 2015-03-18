@@ -191,7 +191,7 @@ AppsKey & PgDn::Send {Volume_Down}
 #If FileExist(WTWPath)
 	;wtw - activate/run
 	+^!M::
-		if (!WinExist("^{B993D471-D465-43f2-BBA5-DEEA18A1789E}"))
+		if (!WinExist("ahk_class {B993D471-D465-43f2-BBA5-DEEA18A1789E}"))
 		{
 			Run, %WTWPath% -x
 		}
