@@ -65,6 +65,7 @@ fi
 
 #aliases
 alias datediff="$DIR/../../sh-date-diff/datediff.sh"
+alias w="$DIR/../watch.rb"
 alias tl="$DIR/../../sh-translator/tl.py"
 alias sjp="$DIR/../sjp.rb"
 alias urban="$DIR/../urban.rb"

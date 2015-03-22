@@ -22,5 +22,10 @@ ssh_command = format('echo %s >> %s',
   Shellwords.escape(json),
   Shellwords.escape(remote_log_path))
 
-`mpv #{Shellwords.escape(video_path)}`
+Dir.chdir(Dir.home)
+if RUBY_PLATFORM.include?('cygwin')
+  `mpv.exe "$(cygpath -w #{Shellwords.escape(video_path)})" --config-dir="$(cygpath -w ~/.mpv)"`
+else
+  `mpv #{Shellwords.escape(video_path)}`
+end
 `ssh #{remote_host} #{Shellwords.escape(ssh_command)}`
