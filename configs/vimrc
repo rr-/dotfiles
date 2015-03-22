@@ -361,6 +361,9 @@ autocmd BufRead,BufNewFile *.txt,*.tex,*.md setlocal spell textwidth=79
 "enable spellcheck and double gutter in git commit messages
 autocmd BufRead,BufNewFile COMMIT_EDITMSG setlocal spell textwidth=72 colorcolumn=50,72
 
+"disable syntax for certain files
+autocmd BufRead,BufNewFile *.txt,*.lst,*.xml,*.json setlocal syntax=
+
 "setup indentation for common file types
 autocmd BufRead,BufNewFile *.txt,*.tex,*.md,*.lst FourSpaces
 autocmd BufRead,BufNewFile *.c,*.cc,*.cpp,*.cxx,*.h,*.hpp FourSpaces
