@@ -1,0 +1,11 @@
+vo=opengl-hq
+
+alang=jpn,jp,jap,Japanese,en,eng,English
+audio-channels=2
+
+slang=en,eng,English,pl,pol,Polish
+
+screenshot-format=jpg
+screenshot-template=shot-%f-%P
+
+stop-screensaver=yes

@@ -36,6 +36,7 @@ install_link "$DIR/inputrc" ".inputrc"
 install_link "$DIR/minttyrc-light" ".minttyrc"
 install_link "$DIR/gitconfig" ".gitconfig"
 install_link "$DIR/mplayer" ".mplayer"
+install_link "$DIR/mpv" ".mpv"
 
 shopt -s nocasematch
 if [[ "$(uname)" =~ cygwin ]]; then
