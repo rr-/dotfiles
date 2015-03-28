@@ -1,4 +1,5 @@
 vo=opengl-hq
+fullscreen
 
 alang=jpn,jp,jap,Japanese,en,eng,English
 audio-channels=2
