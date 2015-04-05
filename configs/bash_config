@@ -23,6 +23,10 @@ alias editor="$EDITOR"
 #useful PATH
 export PATH=${PATH}:"$DIR/.."
 
+#rvm stuff
+export PATH=${PATH}:${HOME}/.rvm/bin
+[ -s ~/.rvm/scripts/rvm ] && source ~/.rvm/scripts/rvm
+
 #various shell options
 if [ $interactive -eq 1 ]; then
 	stty -ixon
