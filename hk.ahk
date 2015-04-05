@@ -180,6 +180,7 @@ MakeScreen(arguments)
 
 ;foobar - media shortcuts
 AppsKey::Send {AppsKey}
++AppsKey::Send +{AppsKey}
 AppsKey & Insert::Send {Launch_Media}
 AppsKey & Home::Send {Media_Prev}
 AppsKey & End::Send {Media_Next}
