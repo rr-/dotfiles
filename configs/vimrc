@@ -8,7 +8,6 @@ Plugin 'scrooloose/nerdtree'
 Plugin 'jistr/vim-nerdtree-tabs'
 Plugin 'Lokaltog/vim-easymotion'
 Plugin 'bling/vim-airline'
-Plugin 'wting/rust.vim'
 Plugin 'Yggdroot/indentLine'
 Plugin 'flazz/vim-colorschemes'
 call vundle#end()
