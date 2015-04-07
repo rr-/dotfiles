@@ -93,6 +93,8 @@ set smartcase
 set scrolloff=10
 "don't put double spaces after !, ? and . when wrapping words automatically
 set nojoinspaces
+"better fill chars
+set fillchars=vert:\│
 
 
 "----------------------------------------
