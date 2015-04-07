@@ -2,15 +2,22 @@ set nocompatible
 filetype off
 set rtp+=~/.vim/vundle/
 call vundle#begin()
-Plugin 'gmarik/Vundle.vim'
-Plugin 'kien/ctrlp.vim'
-Plugin 'scrooloose/nerdtree'
-Plugin 'jistr/vim-nerdtree-tabs'
-Plugin 'Lokaltog/vim-easymotion'
-Plugin 'bling/vim-airline'
-Plugin 'Yggdroot/indentLine'
-Plugin 'flazz/vim-colorschemes'
+Plugin 'gmarik/Vundle.vim'         "better plugin manager
+Plugin 'kien/ctrlp.vim'            "open files using fuzzy matching
+Plugin 'scrooloose/nerdtree'       "file explorer sidebar
+Plugin 'jistr/vim-nerdtree-tabs'   "better NERDtree integration with tabs
+Plugin 'Lokaltog/vim-easymotion'   "move to any character!
+Plugin 'bling/vim-airline'         "riced status bar
+Plugin 'Yggdroot/indentLine'       "vertical bars showing indent level
+Plugin 'flazz/vim-colorschemes'    "color schemes!
 call vundle#end()
+
+"-------------------------------------------------
+" basic settings
+"-------------------------------------------------
+syntax on                     "enable syntax highlighting
+set synmaxcol=256             "highlight up to X columns (binary files)
+set number                    "enable line numbers
 
 "color scheme
 let background_file=$HOME."/.vimrc-background"
@@ -21,111 +28,66 @@ else
 	set background=light
 endif
 
-"set gutter width to 80 characters
-if exists('+colorcolumn')
-	set colorcolumn=80
-endif
-
-"-------------------------------------------------
-" basic settings
-"-------------------------------------------------
-"enable syntax highlighting
-syntax on
-"enable syntax highlighting only for first X columns (useful for binary files)
-set synmaxcol=256
-"enable line numbers
-set number
 "set terminal to 256 color
 if $TERM == "xterm" || $TERM == "xterm-256color" || $TERM == "screen" || $TERM == "screen-256color"
 	set t_Co=256
 endif
 
+"set gutter width to 80 characters
+if exists('+colorcolumn')
+	set colorcolumn=80
+endif
+
 "-----------------------------------------
 " whitespace settings
 "-----------------------------------------
-"preferred eol styles
-set ff=unix ffs=unix,dos
-"preferred character encoding
-set enc=utf-8 fileencoding=utf-8
-"don't use spaces instead of tab
-set noexpandtab
-"number of spaces that tab counts for
-set tabstop=4
-"number of spaces that tab counts for while editing
-set softtabstop=4
-"number of spaces for each step of auto-indent
-set shiftwidth=4
-"auto indentation
-set autoindent
-"search from top when no further matches found
-set wrapscan
-"don't wrap long lines
-set nowrap
-"disable auto indentation based on file types
-filetype on
-filetype indent off
+set ff=unix ffs=unix,dos      "preferred eol styles
+set enc=utf-8 fenc=utf-8      "preferred character encoding
+set noexpandtab               "don't use spaces instead of tab
+set tabstop=4                 "spaces that tab counts for
+set softtabstop=4             "spaces that tab counts for in edit mode
+set shiftwidth=4              "spaces for each step of auto-indent
+set autoindent                "auto indentation
+set wrapscan                  "search again from top if no matches
+set nowrap                    "don't wrap long lines
+filetype on                   "enable setting options based on file
 
 "----------------------------------------
 " editor behavior
 "----------------------------------------
-"allow backspacing over indent, eol and ?
-set bs=indent,eol,start
-"allow to move cursor after the last character in the line
-set virtualedit=onemore
-"case insensitive filename completion in normal mode
-set wildignorecase
-"change cursor buffer position in newly split buffers
-set splitbelow splitright
-"when opening shell, use bash in interactive mode
-set shell=/bin/bash\ -i
-"enable mouse support
-set mouse=a
-"disable "live" search
-set noincsearch
-"highlight searches
-set hlsearch
-"ignore case in searches unless they contain uppercase characters
-set ignorecase
-set smartcase
-"always keep at least 10 lines below and above cursor for context
-set scrolloff=10
-"don't put double spaces after !, ? and . when wrapping words automatically
-set nojoinspaces
-"better fill chars
-set fillchars=vert:\│
-
+set bs=indent,eol,start       "allow backspacing over indent, eol and ?
+set virtualedit=onemore       "allow moving cursor up to EOL+1 character
+set wildignorecase            "case-insensitive filename completion in commands
+set splitbelow splitright     "change placement when splitting a buffer
+set shell=/bin/bash\ -i       "when opening shell, use bash in interactive mode
+set mouse=a                   "enable mouse support
+set noincsearch               "disable "live" search
+set hlsearch                  "highlight searches
+set ignorecase                "ignore case in searches
+set smartcase                 " ...unless they contain uppercase chars
+set scrolloff=10              "keep at least 10 lines below and above cursor
+set nojoinspaces              "don't put double spaces when using auto wrapping
+set fillchars=vert:\│         "better vertical fill character
 
 "----------------------------------------
 " miscellaneous
 "----------------------------------------
-"disable beeping
-set noeb vb t_vb=
-"always display status line
-set laststatus=2
-"setup spell checker
-set nospell
-set spelllang=en_us,pl
-"allow files to embed file-specific vim settings
-set modeline
-"number of top lines in the file that can contain file-specific vim settings
-set modelines=5
-
+set noeb vb t_vb=             "disable beeping
+set laststatus=2              "always display status line
+set nospell                   "spell checker is off by default
+set spelllang=en_us,pl        "spell checker languages
+set modeline                  "allow files to embed file-specific vim settings
+set modelines=5               " ...within X lines at the top of that file
 
 "------------------------------------------
 " storage
 "------------------------------------------
-"set path to last session data storage
-set viminfo+=n~/.vim/viminfo
-"set path to backups that are created on every file (*~)
 "double slash prevents file name collision, by using full file paths
-set backupdir=~/.vim/backup//
-"enable backups
-set backup
-"set path to swap files (.*.swp)
-set directory=~/.vim/swap//
-"set path to undo data file
-set undodir=~/.vim/undo//
-
+set viminfo+=n~/.vim/viminfo       "set path to last session data storage
+set backupdir=~/.vim/backup//      "set path to file backups
+set backup                         "enable backups
+set directory=~/.vim/swap//        "set path to swap files (.*.swp)
+set undodir=~/.vim/undo//          "set path to undo data file
 
 "----------------------------------------
 " highlight bad whitespace
@@ -143,7 +105,6 @@ set list listchars=tab:→\ ,trail:·
 "match trailing spaces and spaces before a tab
 autocmd BufWinEnter * match ExtraWhitespace /\v\s+$|\t+ ([^*]|$)| \t+/
 
-
 "----------------------------------------
 " custom commands
 "----------------------------------------
@@ -153,7 +114,7 @@ command! FourSpaces set et sts=4 ts=4 sw=4
 command! Tabs set noet sts=4 ts=4 sw=4
 "create working dirs for current file
 command! CreateDirs execute ':silent !mkdir -p %:h' | write
-
+"copy text file with hard wraps (e.g. Markdown) as one line
 function! CopyWithoutHardWrapping()
 	let old_tw=&textwidth
 	:set tw=10000
@@ -163,7 +124,6 @@ function! CopyWithoutHardWrapping()
 	undo
 endfunction
 command! CopyWithoutHardWrapping call CopyWithoutHardWrapping()
-
 
 "----------------------------------------
 " custom keyboard bindings
@@ -254,7 +214,6 @@ nmap z <Leader><Leader>s
 	xnoremap <silent> <C-Up> :<C-u>call MoveVisualUp()<CR>
 	xnoremap <silent> <C-Down> :<C-u>call MoveVisualDown()<CR>
 
-
 "----------------------------------------
 " config Ctrl+P
 "----------------------------------------
@@ -286,7 +245,6 @@ let g:ctrlp_custom_ignore.file .= '|pdf|doc|xls'
 let g:ctrlp_custom_ignore.file .= '|wav|ogg|mp3|mp4|avi|mkv|ttf'
 let g:ctrlp_custom_ignore.file .= ')$'
 
-
 "----------------------------------------
 " config airline
 "----------------------------------------
@@ -300,7 +258,6 @@ let g:airline#extensions#tabline#enabled = 1
 let g:airline#extensions#tabline#show_buffers = 0
 "show tab number near tab for easy navigation with :![number]gt
 let g:airline#extensions#tabline#tab_nr_type = 1
-
 
 "----------------------------------------
 " config NERDtree
@@ -319,7 +276,6 @@ autocmd VimEnter * nmap <F2> :NERDTreeTabsToggle<CR>
 "f3 = find current file in nerdtree
 autocmd VimEnter * imap <F3> <esc>:NERDTreeFind<CR>
 autocmd VimEnter * nmap <F3> :NERDTreeFind<CR>
-
 
 "----------------------------------------
 " file-type specific settings
