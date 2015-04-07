@@ -38,7 +38,7 @@ set synmaxcol=256
 "enable line numbers
 set number
 "set terminal to 256 color
-if $TERM == "xterm" || $TERM == "xterm-256color" || $TERM == "screen" || $TERM == "screen-256color" || $COLORTERM == "gnome-terminal"
+if $TERM == "xterm" || $TERM == "xterm-256color" || $TERM == "screen" || $TERM == "screen-256color"
 	set t_Co=256
 endif
 
