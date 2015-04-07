@@ -348,10 +348,6 @@ function! SetPhpOptions()
 		setlocal colorcolumn=120
 	endif
 	setlocal tw=119
-	"f5 = quick lint
-	setlocal makeprg=php\ -l\ %
-	setlocal errorformat=%m\ in\ %f\ on\ line\ %l,%-GErrors\ parsing\ %f,%-G
-	nnoremap <f5> :update<bar>silent make<bar>redraw!<bar>cwindow<cr>
 endfunction
 
 "strip trailing whitespace for common source code
