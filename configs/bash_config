@@ -99,10 +99,29 @@ alias dark='rm ~/.minttyrc && ln -s "'"$DIR"'/minttyrc-dark" ~/.minttyrc; echo -
 alias light='rm ~/.minttyrc && ln -s "'"$DIR"'/minttyrc-light" ~/.minttyrc; echo -e "set background=light\ncolor hemisu">~/.vimrc-background'
 
 if [ -e /dev/clipboard ]; then
-	alias clip="cat >/dev/clipboard"
+	alias clip='cat >/dev/clipboard'
 fi
 
 #additional config
 hostname=$(hostname)
-[ -f "$DIR/bash_config-$hostname" ] && . "$DIR/bash_config-$hostname"
-/bin/true
+if [[ hostname -eq luna ]]; then
+	#some aliases
+	alias subs="$DIR/../../sh-napiprojekt/subs.sh"
+	alias wallchanger="$DIR/../../sh-wall-changer/sh-wall-changer.exe"
+	export PATH=${PATH}:':/cygdrive/z/software/utilities/php5.6.2'
+
+	#autocompletion for imgop.sh
+	_imgop()
+	{
+		local cur=${COMP_WORDS[COMP_CWORD]}
+		if [[ $COMP_CWORD -eq 1 ]]; then
+			COMPREPLY=( $(compgen -W 'degrade downgrade fix-anamorphic fix-png stitch' -- $cur) )
+		else
+			COMPREPLY=( $(compgen -A file -- $cur) )
+		fi
+	}
+	complete -F _imgop imgop.sh
+elif [[ hostname -eq burza ]]; then
+	#command prompt in different color
+	PS1=$(echo "$PS1"|sed 's/1;31/0;36/')
+fi
