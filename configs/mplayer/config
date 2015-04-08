@@ -1,7 +1,0 @@
-ao=alsa
-ass=yes
-embeddedfonts=yes
-framedrop=yes
-lavdopts=threads=4
-af=scaletempo
-vf=ass,screenshot
