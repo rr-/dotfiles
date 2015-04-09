@@ -12,7 +12,9 @@ export PATH=${PATH}:${HOME}/.rvm/bin    # PATH to rvm
 autoload -Uz compinit                   # ?
 compinit                                # initialize autocompletion engine
 
+# miscellaneous
 unsetopt beep                           # disable beep on errors
+setopt correct                          # enable [nyae] correction
 
 # history
 HISTFILE=~/.histfile                    # set path to history file
