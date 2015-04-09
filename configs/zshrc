@@ -9,8 +9,10 @@ export PATH=${PATH}:${HOME}/.rvm/bin    # PATH to rvm
     [ -s ~/.rvm/scripts/rvm ] &&        # Check if rvm exists
         source ~/.rvm/scripts/rvm       # And run its init script
 
-autoload -Uz compinit                   # ?
-compinit                                # initialize autocompletion engine
+# autocomplete
+autoload -Uz compinit                   # initialize autocompletion engine
+compinit                                # initialize autocompletion engine (2)
+zstyle ':completion:*' matcher-list 'm:{a-zA-Z}={A-Za-z}' # case insensitive
 
 # miscellaneous
 unsetopt beep                           # disable beep on errors
