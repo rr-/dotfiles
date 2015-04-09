@@ -115,7 +115,7 @@ MakeScreen(arguments)
 		{
 			X := MonitorWorkAreaRight - 920
 			Y := 45
-			Run, %CygPath%\bin\mintty.exe --title "Terminal" --size "110`,35" --position "%X%`,%Y%" --class "mintty_thetty" --exec /bin/zsh -l -c 'while /bin/true`; do /bin/zsh`; cygstart "%A_AhkPath%" "Z:\src\scripts\hide.ahk"`; clear; done', %CygPath%
+			Run, %CygPath%\bin\mintty.exe --title "Terminal" --size "110`,35" --position "%X%`,%Y%" --class "mintty_thetty" --exec /bin/zsh -l -c 'while /bin/true`; do /bin/zsh`; cygstart "%A_AhkPath%" "Z:\src\dotfiles\hide.ahk"`; clear; done', %CygPath%
 			WinWait ahk_class mintty_thetty
 		}
 		else
