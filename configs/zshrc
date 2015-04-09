@@ -15,6 +15,7 @@ compinit                                # initialize autocompletion engine
 # miscellaneous
 unsetopt beep                           # disable beep on errors
 setopt correct                          # enable [nyae] correction
+WORDCHARS='*?_-.[]~=&;!#$%^(){}<>'      # what kill-word should delete
 
 # history
 HISTFILE=~/.histfile                    # set path to history file
