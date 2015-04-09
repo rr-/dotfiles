@@ -102,12 +102,12 @@ command -v bundle >/dev/null 2>&1 || alias bundle='~/.gem/**/gems/bundle*/bin/bu
 [ -e /dev/clipboard ] && alias clip='cat >/dev/clipboard'
 
 # additional config
-if [[ ${HOST} -eq luna ]]; then
+if [[ ${HOST} == luna ]]; then
     # even more aliases
     alias subs="$DIR/../../sh-napiprojekt/subs.sh"
     alias wallchanger="$DIR/../../sh-wall-changer/sh-wall-changer.exe"
     export PATH=${PATH}:':/cygdrive/z/software/utilities/php5.6.2'
-elif [[ ${HOST} -eq burza ]]; then
+elif [[ ${HOST} == burza ]]; then
     # command prompt in different color
     PS1=$(echo "$PS1"|sed 's/1;31/0;36/')
 fi
