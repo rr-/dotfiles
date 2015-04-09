@@ -1,10 +1,10 @@
 vo=opengl-hq
 fullscreen
 
-alang=jpn,jp,jap,Japanese,en,eng,English
 audio-channels=2
-
+alang=jpn,jp,jap,Japanese,en,eng,English
 slang=en,eng,English,pl,pol,Polish
+sub-codepage=utf8:cp1250
 
 screenshot-format=jpg
 screenshot-template=shot-%f-%P
