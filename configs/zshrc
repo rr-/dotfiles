@@ -1,0 +1,98 @@
+SOURCE=$(readlink ${ZDOTDIR-~}/.zshrc)
+DIR=${SOURCE:h}
+HOST=$(hostname)
+
+# environment variables
+export EDITOR=vim                       # for stuff that need interactive editor
+export PATH=${PATH}:"$DIR/.."           # PATH for all the goodies in this repo
+export PATH=${PATH}:${HOME}/.rvm/bin    # PATH to rvm
+    [ -s ~/.rvm/scripts/rvm ] &&        # Check if rvm exists
+        source ~/.rvm/scripts/rvm       # And run its init script
+
+autoload -Uz compinit                   # ?
+compinit                                # initialize autocompletion engine
+
+unsetopt beep                           # disable beep on errors
+
+# history
+HISTFILE=~/.histfile                    # set path to history file
+HISTSIZE=1000                           # how many entries in history
+SAVEHIST=1000                           # how many entries in history (2)
+setopt appendhistory                    # append lines (for concurrent sessions)
+
+# basic key bindings
+bindkey -e                              # use Emacs keybindings
+stty -ixon                              # reclaim ctrl+q for Vim
+stty stop undef                         # reclaim ctrl+s for Vim
+
+# key bindings for terminal emulator
+bindkey "\e[3~"   delete-char          # delete
+bindkey '\eOH'    beginning-of-line    # home
+bindkey '\eOF'    end-of-line          # end
+bindkey ';5H'     beginning-of-line    # ctrl+home
+bindkey ';5F'     end-of-line          # ctrl+end
+bindkey '^_'      backward-kill-word   # ctrl+backspace
+bindkey "\e[3;5~" kill-word            # ctrl+delete
+bindkey ';5D'     backward-word        # ctrl+left
+bindkey ';5C'     forward-word         # ctrl+right
+
+    # necessary for the above to work
+    function zle-line-init () {
+        echoti smkx
+    }
+    function zle-line-finish () {
+        echoti rmkx
+    }
+    zle -N zle-line-init
+    zle -N zle-line-finish
+
+# cool command prompt
+PS1=$'%{\e[1;31m%}%n@%M'               # user@host
+PS1+=$'%{\e[0;37m%}:'                  # :
+PS1+=$'%{\e[0;32m%}%~'                 # path relative to $HOME
+PS1+=$'%(?.%{\e[0;37m%}.%{\e[1;31m%})$ ' # colored $ depending on last exit code
+PS1+=$'%{\e[0m%}'                      # reset colors
+PS1+=$'%{\e]0;%n@%M:%~\007%}'          # add titlebar user@host:~/
+
+# aliases
+alias datediff="$DIR/../../sh-date-diff/datediff.sh"
+alias w="$DIR/../watch.rb"
+alias tl="$DIR/../../sh-translator/tl.py"
+alias sjp="$DIR/../sjp.rb"
+alias urban="$DIR/../urban.rb"
+alias plen='tl pl en'
+alias enpl='tl en pl'
+alias rfn='date "+%Y%m%d_%H%M%S"'
+alias isvim='ps ux|grep vim|grep -v grep'
+
+alias ls='ls -vhF1 --group-directories-first'
+alias ll='ls -vhFlX --group-directories-first'
+alias la='ls -vhFlXA --group-directories-first'
+
+alias dark='rm ~/.minttyrc && ln -s "'"$DIR"'/minttyrc-dark" ~/.minttyrc; echo -e "set background=dark\ncolor sorcerer">~/.vimrc-background'
+alias light='rm ~/.minttyrc && ln -s "'"$DIR"'/minttyrc-light" ~/.minttyrc; echo -e "set background=light\ncolor hemisu">~/.vimrc-background'
+
+# legacy aliases
+command -v hd >/dev/null 2>&1 || alias hd='od -Ax -t x1'
+if ! command -v poweroff >/dev/null 2>&1; then
+    [[ $(uname) =~ cygwin ]] && alias poweroff='shutdown /p /f' || alias poweroff='shutdown -s now'
+fi
+if ! command -v reboot >/dev/null 2>&1; then
+    [[ $(uname) =~ cygwin ]] && alias reboot='shutdown /r /t 0 /f' || alias reboot='shutdown -r now'
+fi
+command -v phpunit >/dev/null 2>&1 || alias phpunit='php vendor/phpunit/phpunit/phpunit'
+command -v composer >/dev/null 2>&1 || alias composer='php composer'
+command -v rubocop >/dev/null 2>&1 || alias rubocop='~/.gem/**/gems/rubocop*/bin/rubocop'
+command -v bundle >/dev/null 2>&1 || alias bundle='~/.gem/**/gems/bundle*/bin/bundle'
+[ -e /dev/clipboard ] && alias clip='cat >/dev/clipboard'
+
+# additional config
+if [[ ${HOST} -eq luna ]]; then
+    # even more aliases
+    alias subs="$DIR/../../sh-napiprojekt/subs.sh"
+    alias wallchanger="$DIR/../../sh-wall-changer/sh-wall-changer.exe"
+    export PATH=${PATH}:':/cygdrive/z/software/utilities/php5.6.2'
+elif [[ ${HOST} -eq burza ]]; then
+    # command prompt in different color
+    PS1=$(echo "$PS1"|sed 's/1;31/0;36/')
+fi
