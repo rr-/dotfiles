@@ -59,7 +59,7 @@ set bs=indent,eol,start       "allow backspacing over indent, eol and ?
 set virtualedit=onemore       "allow moving cursor up to EOL+1 character
 set wildignorecase            "case-insensitive filename completion in commands
 set splitbelow splitright     "change placement when splitting a buffer
-set shell=/bin/bash\ -i       "when opening shell, use bash in interactive mode
+set shell=/bin/zsh\ -i        "when opening shell, use zsh in interactive mode
 set mouse=a                   "enable mouse support
 set noincsearch               "disable "live" search
 set hlsearch                  "highlight searches
