@@ -17,6 +17,7 @@ zstyle ':completion:*' matcher-list 'm:{a-zA-Z}={A-Za-z}' # case insensitive
 # miscellaneous
 unsetopt beep                           # disable beep on errors
 setopt correct                          # enable [nyae] correction
+setopt auto_cd                          # "cd /usr/" becomes "/usr/"
 WORDCHARS='*?_-.[]~=&;!#$%^(){}<>'      # what kill-word should delete
 
 # history
