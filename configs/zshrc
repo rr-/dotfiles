@@ -60,6 +60,11 @@ PS1+=$'%(?.%{\e[0;37m%}.%{\e[1;31m%})$ ' # colored $ depending on last exit code
 PS1+=$'%{\e[0m%}'                      # reset colors
 PS1+=$'%{\e]0;%n@%M:%~\007%}'          # add titlebar user@host:~/
 
+# command prompt in different color for SSH sessions
+if [ -n "$SSH_CLIENT" ] || [ -n "$SSH_TTY" ]; then
+    PS1=$(echo "$PS1"|sed 's/1;31/0;36/')
+fi
+
 # aliases related to colors
 if [[ -x "`whence -p dircolors`" ]]; then
 	eval `dircolors`
@@ -107,7 +112,4 @@ if [[ ${HOST} == luna ]]; then
     alias subs="$DIR/../../sh-napiprojekt/subs.sh"
     alias wallchanger="$DIR/../../sh-wall-changer/sh-wall-changer.exe"
     export PATH=${PATH}:':/cygdrive/z/software/utilities/php5.6.2'
-elif [[ ${HOST} == burza ]]; then
-    # command prompt in different color
-    PS1=$(echo "$PS1"|sed 's/1;31/0;36/')
 fi
