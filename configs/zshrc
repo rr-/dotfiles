@@ -60,7 +60,20 @@ PS1+=$'%(?.%{\e[0;37m%}.%{\e[1;31m%})$ ' # colored $ depending on last exit code
 PS1+=$'%{\e[0m%}'                      # reset colors
 PS1+=$'%{\e]0;%n@%M:%~\007%}'          # add titlebar user@host:~/
 
+# aliases related to colors
+if [[ -x "`whence -p dircolors`" ]]; then
+	eval `dircolors`
+	alias ls='ls --color=auto'
+	alias grep='grep --color=auto'
+	alias fgrep='fgrep --color=auto'
+	alias egrep='egrep --color=auto'
+fi
+
 # aliases
+alias ls="`whence ls`"' -vhF1 --group-directories-first'
+alias ll='ls -X --group-directories-first'
+alias la='ls -XA --group-directories-first'
+
 alias datediff="$DIR/../../sh-date-diff/datediff.sh"
 alias w="$DIR/../watch.rb"
 alias tl="$DIR/../../sh-translator/tl.py"
@@ -71,21 +84,8 @@ alias enpl='tl en pl'
 alias rfn='date "+%Y%m%d_%H%M%S"'
 alias isvim='ps ux|grep vim|grep -v grep'
 
-alias ls='ls -vhF1 --group-directories-first'
-alias ll='ls -vhFlX --group-directories-first'
-alias la='ls -vhFlXA --group-directories-first'
-
 alias dark='rm ~/.minttyrc && ln -s "'"$DIR"'/minttyrc-dark" ~/.minttyrc; echo -e "set background=dark\ncolor sorcerer">~/.vimrc-background'
 alias light='rm ~/.minttyrc && ln -s "'"$DIR"'/minttyrc-light" ~/.minttyrc; echo -e "set background=light\ncolor hemisu">~/.vimrc-background'
-
-# aliases related to colors
-if [[ -x "`whence -p dircolors`" ]]; then
-	eval `dircolors`
-	alias ls='ls --color=auto'
-	alias grep='grep --color=auto'
-	alias fgrep='fgrep --color=auto'
-	alias egrep='egrep --color=auto'
-fi
 
 # legacy aliases
 command -v hd >/dev/null 2>&1 || alias hd='od -Ax -t x1'
