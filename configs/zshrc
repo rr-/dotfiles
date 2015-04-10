@@ -13,6 +13,7 @@ export PATH=${PATH}:${HOME}/.rvm/bin    # PATH to rvm
 autoload -Uz compinit                   # initialize autocompletion engine
 compinit                                # initialize autocompletion engine (2)
 zstyle ':completion:*' matcher-list 'm:{a-zA-Z}={A-Za-z}' # case insensitive
+setopt NO_NOMATCH                       # if extended glob fails, run cmd as-is
 
 # miscellaneous
 unsetopt beep                           # disable beep on errors
