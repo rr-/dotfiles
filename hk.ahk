@@ -130,7 +130,7 @@ MakeScreen(arguments)
 	{
 		X := 45
 		Y := 45
-		Run, %CygPath%\bin\mintty.exe --title "Remote terminal" --size "200`,70" --position "%X%`,%Y%" --class mintty_ssh --exec /bin/ssh -p 65000 rr-@sakuya.pl, %CygPath%/bin
+		Run, %CygPath%\bin\mintty.exe --title "Remote terminal" --size "190`,65" --position "%X%`,%Y%" --class mintty_ssh --exec /bin/ssh -p 65000 rr-@sakuya.pl, %CygPath%/bin
 		return
 	}
 	^!]::
@@ -139,7 +139,7 @@ MakeScreen(arguments)
 		Y := 45
 		if (!WinExist("ahk_class mintty_ssh"))
 		{
-			Run, %CygPath%\bin\mintty.exe --title "Remote terminal" --size "200`,70" --position "%X%`,%Y%" --class mintty_ssh --exec /bin/ssh -p 65000 rr-@sakuya.pl, %CygPath%/bin
+			Run, %CygPath%\bin\mintty.exe --title "Remote terminal" --size "190`,65" --position "%X%`,%Y%" --class mintty_ssh --exec /bin/ssh -p 65000 rr-@sakuya.pl, %CygPath%/bin
 			WinWait ahk_class mintty_ssh
 		}
 		else
