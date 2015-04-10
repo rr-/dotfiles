@@ -22,20 +22,20 @@ set number                    "enable line numbers
 "color scheme
 let background_file=$HOME."/.vimrc-background"
 if filereadable(background_file)
-	exec 'so ' . background_file
+    exec 'so ' . background_file
 else
-	colorscheme hemisu
-	set background=light
+    colorscheme hemisu
+    set background=light
 endif
 
 "set terminal to 256 color
 if $TERM == "xterm" || $TERM == "xterm-256color" || $TERM == "screen" || $TERM == "screen-256color"
-	set t_Co=256
+    set t_Co=256
 endif
 
 "set gutter width to 80 characters
 if exists('+colorcolumn')
-	set colorcolumn=80
+    set colorcolumn=80
 endif
 
 "-----------------------------------------
@@ -98,7 +98,7 @@ highlight SpecialKey ctermbg=NONE ctermfg=187
 highlight ExtraWhitespace ctermbg=red guibg=red
 "fix ColorColumn on dark backgrounds
 if &background == 'dark'
-	highlight ColorColumn ctermbg=52
+    highlight ColorColumn ctermbg=52
 end
 "show white characters
 set list listchars=tab:→\ ,trail:·
@@ -116,12 +116,12 @@ command! Tabs set noet sts=4 ts=4 sw=4
 command! CreateDirs execute ':silent !mkdir -p %:h' | write
 "copy text file with hard wraps (e.g. Markdown) as one line
 function! CopyWithoutHardWrapping()
-	let old_tw=&textwidth
-	:set tw=10000
-	silent! normal gg gqG
-	silent! normal gg "*yG
-	let &textwidth=old_tw
-	undo
+    let old_tw=&textwidth
+    :set tw=10000
+    silent! normal gg gqG
+    silent! normal gg "*yG
+    let &textwidth=old_tw
+    undo
 endfunction
 command! CopyWithoutHardWrapping call CopyWithoutHardWrapping()
 
@@ -158,61 +158,61 @@ noremap <silent> <F4> :let @" = expand("%")<CR>
 "less keystrokes to access easy motion search
 nmap z <Leader><Leader>s
 
-	"----------------------------------------
-	" ctrl+up/down = move line up/down
-	"----------------------------------------
-	function! MoveLineUp()
-		call MoveLineOrVisualUp(".", "")
-	endfunction
+    "----------------------------------------
+    " ctrl+up/down = move line up/down
+    "----------------------------------------
+    function! MoveLineUp()
+        call MoveLineOrVisualUp(".", "")
+    endfunction
 
-	function! MoveLineDown()
-		call MoveLineOrVisualDown(".", "")
-	endfunction
+    function! MoveLineDown()
+        call MoveLineOrVisualDown(".", "")
+    endfunction
 
-	function! MoveVisualUp()
-		call MoveLineOrVisualUp("'<", "'<,'>")
-		normal gv
-	endfunction
+    function! MoveVisualUp()
+        call MoveLineOrVisualUp("'<", "'<,'>")
+        normal gv
+    endfunction
 
-	function! MoveVisualDown()
-		call MoveLineOrVisualDown("'>", "'<,'>")
-		normal gv
-	endfunction
+    function! MoveVisualDown()
+        call MoveLineOrVisualDown("'>", "'<,'>")
+        normal gv
+    endfunction
 
-	function! MoveLineOrVisualUp(line_getter, range)
-		let l_num = line(a:line_getter)
-		if l_num - v:count1 - 1 < 0
-			let move_arg = "0"
-		else
-			let move_arg = a:line_getter." -".(v:count1 + 1)
-		endif
-		call MoveLineOrVisualUpOrDown(a:range."move ".move_arg)
-	endfunction
+    function! MoveLineOrVisualUp(line_getter, range)
+        let l_num = line(a:line_getter)
+        if l_num - v:count1 - 1 < 0
+            let move_arg = "0"
+        else
+            let move_arg = a:line_getter." -".(v:count1 + 1)
+        endif
+        call MoveLineOrVisualUpOrDown(a:range."move ".move_arg)
+    endfunction
 
-	function! MoveLineOrVisualDown(line_getter, range)
-		let l_num = line(a:line_getter)
-		if l_num + v:count1 > line("$")
-			let move_arg = "$"
-		else
-			let move_arg = a:line_getter." +".v:count1
-		endif
-		call MoveLineOrVisualUpOrDown(a:range."move ".move_arg)
-	endfunction
+    function! MoveLineOrVisualDown(line_getter, range)
+        let l_num = line(a:line_getter)
+        if l_num + v:count1 > line("$")
+            let move_arg = "$"
+        else
+            let move_arg = a:line_getter." +".v:count1
+        endif
+        call MoveLineOrVisualUpOrDown(a:range."move ".move_arg)
+    endfunction
 
-	function! MoveLineOrVisualUpOrDown(move_arg)
-		let col_num = virtcol(".")
-		execute "silent! ".a:move_arg
-		execute "normal! ".col_num."|"
-	endfunction
+    function! MoveLineOrVisualUpOrDown(move_arg)
+        let col_num = virtcol(".")
+        execute "silent! ".a:move_arg
+        execute "normal! ".col_num."|"
+    endfunction
 
-	nnoremap <silent> <C-Up> :<C-u>call MoveLineUp()<CR>
-	nnoremap <silent> <C-Down> :<C-u>call MoveLineDown()<CR>
-	inoremap <silent> <C-Up> <C-o>:call MoveLineUp()<CR>
-	inoremap <silent> <C-Down> <C-o>:call MoveLineDown()<CR>
-	"vnoremap <silent> <C-Up> :<C-u>call MoveVisualUp()<CR>
-	"vnoremap <silent> <C-Down> :<C-u>call MoveVisualDown()<CR>
-	xnoremap <silent> <C-Up> :<C-u>call MoveVisualUp()<CR>
-	xnoremap <silent> <C-Down> :<C-u>call MoveVisualDown()<CR>
+    nnoremap <silent> <C-Up> :<C-u>call MoveLineUp()<CR>
+    nnoremap <silent> <C-Down> :<C-u>call MoveLineDown()<CR>
+    inoremap <silent> <C-Up> <C-o>:call MoveLineUp()<CR>
+    inoremap <silent> <C-Down> <C-o>:call MoveLineDown()<CR>
+    "vnoremap <silent> <C-Up> :<C-u>call MoveVisualUp()<CR>
+    "vnoremap <silent> <C-Down> :<C-u>call MoveVisualDown()<CR>
+    xnoremap <silent> <C-Up> :<C-u>call MoveVisualUp()<CR>
+    xnoremap <silent> <C-Down> :<C-u>call MoveVisualDown()<CR>
 
 "----------------------------------------
 " config Ctrl+P
@@ -281,11 +281,11 @@ autocmd VimEnter * nmap <F3> :NERDTreeFind<CR>
 " file-type specific settings
 "----------------------------------------
 function! SetPhpOptions()
-	"set max width to 120 characters
-	if exists('+colorcolumn')
-		setlocal colorcolumn=120
-	endif
-	setlocal tw=119
+    "set max width to 120 characters
+    if exists('+colorcolumn')
+        setlocal colorcolumn=120
+    endif
+    setlocal tw=119
 endfunction
 
 "strip trailing whitespace for common source code
@@ -307,7 +307,7 @@ autocmd BufRead,BufNewFile *.py FourSpaces
 autocmd BufRead,BufNewFile *.rb TwoSpaces
 autocmd BufRead,BufNewFile *.yml TwoSpaces
 autocmd BufRead,BufNewFile *.vim Tabs
-autocmd BufRead,BufNewFile *.vimrc Tabs
+autocmd BufRead,BufNewFile .*rc FourSpaces
 autocmd BufRead,BufNewFile Makefile Tabs
 autocmd BufRead,BufNewFile *.php,*.phtml FourSpaces
 
