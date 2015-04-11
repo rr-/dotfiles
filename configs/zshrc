@@ -44,14 +44,16 @@ bindkey ';5D'     backward-word         # ctrl+left
 bindkey ';5C'     forward-word          # ctrl+right
 
     # necessary for the above to work
-    function zle-line-init () {
-        echoti smkx
-    }
-    function zle-line-finish () {
-        echoti rmkx
-    }
-    zle -N zle-line-init
-    zle -N zle-line-finish
+    if [[ -n ${terminfo[smkx]} ]] && [[ -n ${terminfo[rmkx]} ]]; then
+        function zle-line-init () {
+            echoti smkx
+        }
+        function zle-line-finish () {
+            echoti rmkx
+        }
+        zle -N zle-line-init
+        zle -N zle-line-finish
+    fi
 
 # cool command prompt
 PS1=$'%{\e[1;31m%}%n@%M'               # user@host
