@@ -8,7 +8,7 @@
 [color]
 	diff = always
 [core]
-	excludesfile = ~/src/scripts/configs/gitignore
+	excludesfile = ~/.gitignore
 [alias]
 	hist = log --pretty=format:\"%h %ad | %s%d [%an]\" --graph --date=short
 [diff]

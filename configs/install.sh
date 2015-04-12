@@ -36,6 +36,7 @@ install_link "$DIR/bash_config" ".bash_profile"
 install_link "$DIR/inputrc" ".inputrc"
 install_link "$DIR/minttyrc-light" ".minttyrc"
 install_link "$DIR/gitconfig" ".gitconfig"
+install_link "$DIR/gitignore" ".gitignore"
 install_link "$DIR/mpv" ".mpv"
 
 shopt -s nocasematch
