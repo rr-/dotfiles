@@ -326,6 +326,10 @@ AppsKey & PgDn::Send {Volume_Down}
 	{
 		WinHide
 	}
+	else if WinActive("Buddy List")
+	{
+		WinHide
+	}
 	else
 	{
 		ActiveHwnd := WinExist("A")
