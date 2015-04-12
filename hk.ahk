@@ -25,10 +25,20 @@ BrowserPath = C:\Program Files (x86)\Mozilla Firefox\firefox.exe
 IfNotExist %BrowserPath%
 	BrowserPath = "C:\Users\rr-\AppData\Local\Google\Chrome\Application\chrome.exe"
 
-global WTWPath
-WTWPath = C:\Program Files\WTW\WTW.exe
-IfNotExist %WTWPath%
-	WTWPath = C:\Program Files\K2T\WTW\WTW.exe
+global IMClass
+global IMPath
+
+;pidgin
+IMClass := "Buddy List"
+IMPath := "C:\Program Files (x86)\pidgin\pidgin.exe"
+If !FileExist(IMPath) {
+	;wtw
+	IMClass := "ahk_class {B993D471-D465-43f2-BBA5-DEEA18A1789E}"
+	IMPath := "C:\Program Files\WTW\WTW.exe"
+	If !FileExist(IMPath) {
+		IMPath := "C:\Program Files\K2T\WTW\WTW.exe"
+	}
+}
 
 global MonitorWorkAreaLeft
 global MonitorWorkAreaRight
@@ -188,13 +198,13 @@ AppsKey & Del::Send {Media_Play_Pause}
 AppsKey & PgUp::Send {Volume_Up}
 AppsKey & PgDn::Send {Volume_Down}
 
-;wtw
-#If FileExist(WTWPath)
-	;wtw - activate/run
+;im
+#If FileExist(IMPath)
+	;im - activate/run
 	+^!M::
-		if (!WinExist("ahk_class {B993D471-D465-43f2-BBA5-DEEA18A1789E}"))
+		if (!WinExist(IMClass))
 		{
-			Run, %WTWPath% -x
+			Run, %IMPath% -x
 		}
 		else
 		{
