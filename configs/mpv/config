@@ -10,3 +10,5 @@ screenshot-format=jpg
 screenshot-template=shot-%f-%P
 
 stop-screensaver=yes
+
+framedrop=decoder+vo
