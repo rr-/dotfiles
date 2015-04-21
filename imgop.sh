@@ -29,7 +29,7 @@ case "$op" in
 			[ -f "$file" ] || continue
 			if [[ "$file" = *.png ]]; then
 				fmt=$(identify -format "%r" "$file");
-				if [[ "$fmt" == "PseudoClassGrayMatte" ]]; then
+				if [[ "$fmt" == "PseudoClassGrayMatte" ]] || [[ "$fmt" == 'DirectClass Gray Matte' ]]; then
 					echo "$file"
 					convert "$file" -alpha off "$file"
 				fi
