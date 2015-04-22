@@ -1,2 +1,6 @@
-radios.pls
-.gelbooru.log
+.*.swp
+*.py[cod]
+*.exe
+*.dll
+*.o
+*.so

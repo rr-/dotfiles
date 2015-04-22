@@ -4,7 +4,7 @@ HOST=$(hostname)
 
 # environment variables
 export EDITOR=vim                       # for stuff that need interactive editor
-export PATH=$PATH:$(dirname $DIR)       # PATH for all the goodies in this repo
+export PATH=$PATH:$DIR/bin              # PATH for all the goodies in this repo
 export PATH=$PATH:$HOME/.rvm/bin        # PATH to rvm
     [ -s ~/.rvm/scripts/rvm ] &&        # Check if rvm exists
         source ~/.rvm/scripts/rvm       # And run its init script
@@ -83,18 +83,18 @@ alias ls="`whence ls`"' -vhF1 --group-directories-first'
 alias ll='ls -X --group-directories-first'
 alias la='ls -XA --group-directories-first'
 
-alias datediff="$DIR/../../sh-date-diff/datediff.sh"
-alias w="$DIR/../watch.rb"
-alias tl="$DIR/../../sh-translator/tl.py"
-alias sjp="$DIR/../sjp.rb"
-alias urban="$DIR/../urban.rb"
+alias datediff="$DIR/../sh-date-diff/datediff.sh"
+alias w="$DIR/bin/watch.rb"
+alias tl="$DIR/../sh-translator/tl.py"
+alias sjp="$DIR/bin/sjp.rb"
+alias urban="$DIR/bin/urban.rb"
 alias plen='tl pl en'
 alias enpl='tl en pl'
 alias rfn='date "+%Y%m%d_%H%M%S"'
 alias isvim='ps ux|grep vim|grep -v grep'
 
-alias dark='rm ~/.minttyrc && ln -s "'"$DIR"'/minttyrc-dark" ~/.minttyrc; echo -e "set background=dark\ncolor sorcerer">~/.vimrc-background'
-alias light='rm ~/.minttyrc && ln -s "'"$DIR"'/minttyrc-light" ~/.minttyrc; echo -e "set background=light\ncolor hemisu">~/.vimrc-background'
+alias dark='rm ~/.minttyrc && ln -s "'"$DIR"'/.minttyrc-dark" ~/.minttyrc; echo -e "set background=dark\ncolor sorcerer">~/.vimrc-background'
+alias light='rm ~/.minttyrc && ln -s "'"$DIR"'/.minttyrc-light" ~/.minttyrc; echo -e "set background=light\ncolor hemisu">~/.vimrc-background'
 
 # legacy aliases
 command -v hd >/dev/null 2>&1 || alias hd='od -Ax -t x1'
@@ -113,7 +113,7 @@ command -v bundle >/dev/null 2>&1 || alias bundle='~/.gem/**/gems/bundle*/bin/bu
 # additional config
 if [[ ${HOST} == luna ]]; then
     # even more aliases
-    alias subs="$DIR/../../sh-napiprojekt/subs.sh"
-    alias wallchanger="$DIR/../../sh-wall-changer/sh-wall-changer.exe"
+    alias subs="$DIR/../sh-napiprojekt/subs.sh"
+    alias wallchanger="$DIR/../sh-wall-changer/sh-wall-changer.exe"
     export PATH=${PATH}:':/cygdrive/z/software/utilities/php5.6.2'
 fi

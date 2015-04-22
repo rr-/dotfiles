@@ -21,7 +21,7 @@ export EDITOR
 alias editor="$EDITOR"
 
 #useful PATH
-export PATH=${PATH}:"$DIR/.."
+export PATH=${PATH}:"$DIR/bin"
 
 #rvm stuff
 export PATH=${PATH}:${HOME}/.rvm/bin
@@ -68,11 +68,11 @@ else
 fi
 
 #aliases
-alias datediff="$DIR/../../sh-date-diff/datediff.sh"
-alias w="$DIR/../watch.rb"
-alias tl="$DIR/../../sh-translator/tl.py"
-alias sjp="$DIR/../sjp.rb"
-alias urban="$DIR/../urban.rb"
+alias datediff="$DIR/../sh-date-diff/datediff.sh"
+alias w="$DIR/bin/watch.rb"
+alias tl="$DIR/../sh-translator/tl.py"
+alias sjp="$DIR/bin/sjp.rb"
+alias urban="$DIR/bin/urban.rb"
 alias plen='tl pl en'
 alias enpl='tl en pl'
 alias rfn='date "+%Y%m%d_%H%M%S"|tr -d "\r\n"'
@@ -95,8 +95,8 @@ command -v composer >/dev/null 2>&1 || alias composer='php composer'
 command -v rubocop >/dev/null 2>&1 || alias rubocop='~/.gem/**/gems/rubocop*/bin/rubocop'
 command -v bundle >/dev/null 2>&1 || alias bundle='~/.gem/**/gems/bundle*/bin/bundle'
 
-alias dark='rm ~/.minttyrc && ln -s "'"$DIR"'/minttyrc-dark" ~/.minttyrc; echo -e "set background=dark\ncolor sorcerer">~/.vimrc-background'
-alias light='rm ~/.minttyrc && ln -s "'"$DIR"'/minttyrc-light" ~/.minttyrc; echo -e "set background=light\ncolor hemisu">~/.vimrc-background'
+alias dark='rm ~/.minttyrc && ln -s "'"$DIR"'/.minttyrc-dark" ~/.minttyrc; echo -e "set background=dark\ncolor sorcerer">~/.vimrc-background'
+alias light='rm ~/.minttyrc && ln -s "'"$DIR"'/.minttyrc-light" ~/.minttyrc; echo -e "set background=light\ncolor hemisu">~/.vimrc-background'
 
 if [ -e /dev/clipboard ]; then
     alias clip='cat >/dev/clipboard'
@@ -106,8 +106,8 @@ fi
 hostname=$(hostname)
 if [[ hostname -eq luna ]]; then
     #some aliases
-    alias subs="$DIR/../../sh-napiprojekt/subs.sh"
-    alias wallchanger="$DIR/../../sh-wall-changer/sh-wall-changer.exe"
+    alias subs="$DIR/../sh-napiprojekt/subs.sh"
+    alias wallchanger="$DIR/../sh-wall-changer/sh-wall-changer.exe"
     export PATH=${PATH}:':/cygdrive/z/software/utilities/php5.6.2'
 
     #autocompletion for imgop.sh
