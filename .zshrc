@@ -108,7 +108,6 @@ command -v bundle >/dev/null 2>&1 || alias bundle='~/.gem/**/gems/bundle*/bin/bu
 # additional config
 if [[ ${HOST} == luna ]]; then
     # even more aliases
-    alias subs="$DIR/../sh-napiprojekt/subs.sh"
     alias wallchanger="$DIR/../sh-wall-changer/sh-wall-changer.exe"
     export PATH=${PATH}:':/cygdrive/z/software/utilities/php5.6.2'
 fi
