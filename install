@@ -26,6 +26,7 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 [ ! -d "$HOME/.vim/swap" ] && mkdir "$HOME/.vim/swap"
 [ ! -d "$HOME/.vim/spell" ] && mkdir "$HOME/.vim/spell"
 
+install_link "$DIR/ext/translator/tl" "$DIR/bin/ext/tl"
 install_link "$DIR/.vim/spell/pl.utf-8.add" "$HOME/.vim/spell/pl.utf-8.add"
 install_link "$DIR/.vim/spell/en.utf-8.add" "$HOME/.vim/spell/en.utf-8.add"
 install_link "$DIR/.vim/vundle" "$HOME/.vim/vundle"

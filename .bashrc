@@ -21,7 +21,7 @@ export EDITOR
 alias editor="$EDITOR"
 
 #useful PATH
-export PATH=${PATH}:"$DIR/bin"
+export PATH=${PATH}:"$DIR/bin":"$DIR/bin/ext"
 
 #rvm stuff
 export PATH=${PATH}:${HOME}/.rvm/bin
@@ -69,7 +69,6 @@ fi
 
 #aliases
 alias datediff="$DIR/../sh-date-diff/datediff.sh"
-alias tl="$DIR/../sh-translator/tl.py"
 alias plen='tl pl en'
 alias enpl='tl en pl'
 alias rfn='date "+%Y%m%d_%H%M%S"|tr -d "\r\n"'
