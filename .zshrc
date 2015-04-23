@@ -84,10 +84,7 @@ alias ll='ls -X --group-directories-first'
 alias la='ls -XA --group-directories-first'
 
 alias datediff="$DIR/../sh-date-diff/datediff.sh"
-alias w="$DIR/bin/watch.rb"
 alias tl="$DIR/../sh-translator/tl.py"
-alias sjp="$DIR/bin/sjp.rb"
-alias urban="$DIR/bin/urban.rb"
 alias plen='tl pl en'
 alias enpl='tl en pl'
 alias rfn='date "+%Y%m%d_%H%M%S"'
