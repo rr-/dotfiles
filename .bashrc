@@ -101,7 +101,6 @@ fi
 hostname=$(hostname)
 if [[ hostname -eq luna ]]; then
     #some aliases
-    alias subs="$DIR/../sh-napiprojekt/subs.sh"
     alias wallchanger="$DIR/../sh-wall-changer/sh-wall-changer.exe"
     export PATH=${PATH}:':/cygdrive/z/software/utilities/php5.6.2'
 
