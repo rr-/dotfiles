@@ -1,0 +1,59 @@
+#!/bin/sh
+
+#load arguments
+if [ -z "$1" ]; then
+	echo 'No date specified' 1>&2
+	exit 1
+else
+	date1="$1"
+fi
+
+if [ -z "$2" ]; then
+	date2=now
+else
+	date2="$2"
+fi
+
+
+#try to parse dates, abort on failures
+#(error message will be print by `date`)
+ts1=$(date --date="$date1" +'%s')
+[ $? -ne 0 ] && exit 1
+
+ts2=$(date --date="$date2" +'%s')
+[ $? -ne 0 ] && exit 1
+
+
+#compute the difference
+diff=$(( $ts1 - $ts2 ))
+
+#ensure the difference is positive
+diff=$(echo ${diff#-})
+
+
+if `command -v >/dev/null 2>&1 bc`; then
+	year_days=365.25
+	month_days=$(echo "scale = 10; $year_days / 12" | bc)
+	calc () {
+		echo "scale = 2; x=($1); if (x < 1) print 0; if (x > 0) print x" | bc
+		echo
+	}
+	#execute using bc (greater precision)
+	echo -n 'Seconds: '; calc "$diff / 1"
+	echo -n 'Minutes: '; calc "$diff / 60"
+	echo -n 'Hours:   '; calc "$diff / ( 60 * 60 )"
+	echo -n 'Days:    '; calc "$diff / ( 24 * 60 * 60 )"
+	echo -n 'Months:  '; calc "$diff / ( $month_days * 24 * 60 * 60 )"
+	echo -n 'Years:   '; calc "$diff / ( $year_days * 24 * 60 * 60 )"
+else
+	#execute using sh internals
+	month_days=30
+	year_days=365
+	echo 'To have greater precision, please install bc.' 1>&2
+	echo 'Seconds: ' $diff
+	echo 'Minutes: ' $((diff / 60))
+	echo 'Hours:   ' $((diff / ( 60 * 60 ) ))
+	echo 'Days:    ' $((diff / ( 24 * 60 * 60 ) ))
+	echo 'Months:  ' $((diff / ( month_days * 24 * 60 * 60 ) ))
+	echo 'Years:   ' $((diff / ( year_days * 24 * 60 * 60 ) ))
+fi
