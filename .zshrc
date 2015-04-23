@@ -4,7 +4,7 @@ HOST=$(hostname)
 
 # environment variables
 export EDITOR=vim                       # for stuff that need interactive editor
-export PATH=$PATH:$DIR/bin              # PATH for all the goodies in this repo
+export PATH=$PATH:$DIR/bin:$DIR/bin/ext # PATH for all the goodies in this repo
 export PATH=$PATH:$HOME/.rvm/bin        # PATH to rvm
     [ -s ~/.rvm/scripts/rvm ] &&        # Check if rvm exists
         source ~/.rvm/scripts/rvm       # And run its init script
@@ -84,7 +84,6 @@ alias ll='ls -X --group-directories-first'
 alias la='ls -XA --group-directories-first'
 
 alias datediff="$DIR/../sh-date-diff/datediff.sh"
-alias tl="$DIR/../sh-translator/tl.py"
 alias plen='tl pl en'
 alias enpl='tl en pl'
 alias rfn='date "+%Y%m%d_%H%M%S"'
