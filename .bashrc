@@ -68,7 +68,6 @@ else
 fi
 
 #aliases
-alias datediff="$DIR/../sh-date-diff/datediff.sh"
 alias plen='tl pl en'
 alias enpl='tl en pl'
 alias rfn='date "+%Y%m%d_%H%M%S"|tr -d "\r\n"'
