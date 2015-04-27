@@ -17,7 +17,7 @@ class UrlList
   end
 
   def log_path
-    File.join(File.expand_path(File.dirname(__FILE__)), '.gelbooru.log')
+    File.join(File.expand_path('~/.cache'), 'gelbooru.log')
   end
 
   def add(url)
@@ -27,6 +27,7 @@ class UrlList
   end
 
   def flush
+    FileUtils.mkdir_p(File.dirname(log_path))
     open(log_path, 'a') do |f|
       @buffered_urls.each do |url|
         f << url + "\n"
