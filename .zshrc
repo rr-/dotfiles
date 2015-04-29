@@ -80,8 +80,8 @@ fi
 
 # aliases
 alias ls="`whence ls`"' -vhF1 --group-directories-first'
-alias ll='ls -X --group-directories-first'
-alias la='ls -XA --group-directories-first'
+alias ll="`whence ls`"' -lX --group-directories-first'
+alias la="`whence ls`"' -lXA --group-directories-first'
 
 alias plen='tl pl en'
 alias enpl='tl en pl'
