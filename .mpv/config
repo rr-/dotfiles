@@ -7,7 +7,7 @@ slang=en,eng,English,pl,pol,Polish
 sub-codepage=utf8:cp1250
 
 screenshot-format=jpg
-screenshot-template=shot-%f-%P
+screenshot-template=~/shot-%f-%P
 
 stop-screensaver=yes
 
