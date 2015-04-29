@@ -40,6 +40,7 @@ install_link "$DIR/.minttyrc-light"         "$HOME/.minttyrc"
 install_link "$DIR/.gitconfig"              "$HOME/.gitconfig"
 install_link "$DIR/.gitignore"              "$HOME/.gitignore"
 install_link "$DIR/.mpv"                    "$HOME/.mpv"
+install_link "$DIR/.i3"                     "$HOME/.i3"
 
 shopt -s nocasematch
 if [[ "$(uname)" =~ cygwin ]]; then
