@@ -1,5 +1,5 @@
-URxvt*font: xft:Anonymice Powerline:size=10
-URxvt*boldFont: xft:Anonymice Powerline:size=10
+URxvt*font: xft:Input Mono Light:pixelsize=12
+URxvt*boldFont: xft:Input Mono Light:pixelsize=12
 URxvt*allowBoldFonts: false
 URxvt*scrollBar: false
 URxvt*scrollWithBuffer: true
