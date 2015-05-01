@@ -167,6 +167,8 @@ bar {
 #run some programs
 exec_always --no-startup-id feh --bg-fill "$HOME/.wallpaper1" "$HOME/.wallpaper2"
 exec --no-startup-id i3-msg "workspace $w0; exec trackma-qt"
-exec --no-startup-id i3-msg "workspace $w9; exec firefox"
+exec --no-startup-id i3-msg "workspace $w9; exec clementine"
+exec --no-startup-id i3-msg "workspace $w8; exec pidgin"
+exec --no-startup-id i3-msg "workspace $w1; exec firefox"
 exec --no-startup-id i3-msg "workspace $w1"
 exec --no-startup-id i3-msg "workspace $w2"
