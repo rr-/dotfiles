@@ -32,3 +32,5 @@ URxvt.color12:       #0adcdd
 URxvt.color13:       #d900ff
 URxvt.color14:       #66fff2
 URxvt.color15:       #FFFFFF
+
+URxvt.cursorBlink:   1
