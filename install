@@ -7,17 +7,12 @@ git submodule update
 function install_link {
 	source=$1
 	target=$2
-	use_sudo=$3
 
 	echo "Installing $source to $target"
 
 	if [ -h "$target" ]; then
 		echo Removing old symlink "$target"
-		if [ $use_sudo ]; then
-			sudo rm "$target"
-		else
-			rm "$target"
-		fi
+		rm "$target"
 	else
 		if [ -e "$target" ]; then
 			echo Not a symlink: "$target". Aborting.
@@ -25,20 +20,14 @@ function install_link {
 		fi
 	fi
 
-	if [ $use_sudo ]; then
-		sudo ln -s "$source" "$target"
-	else
-		ln -s "$source" "$target"
-	fi
+	ln -s "$source" "$target"
 }
 
-fonts_dir=/usr/share/fonts
-if [ -d $fonts_dir ]; then
-	for x in $DIR/misc/*.ttf; do
-		install_link "$x" "$fonts_dir/TTF/$(basename "$x")" 1
-	done
-	for x in $DIR/misc/*.otf; do
-		install_link "$x" "$fonts_dir/OTF/$(basename "$x")" 1
+if [ -d /usr/share/fonts ]; then
+	fonts_dir="$HOME/.local/share/fonts"
+	[ -d "$fonts_dir" ] || mkdir -p "$fonts_dir"
+	for x in $DIR/misc/*.{ttf,otf}; do
+		install_link "$x" "$fonts_dir/$(basename "$x")"
 	done
 	fc-cache -fv
 fi
