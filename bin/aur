@@ -1,6 +1,6 @@
-#!/bin/bash
-cd ~/aur
+#!/bin/sh
+cd ~/src/aur
 p=$1
 url=https://aur.archlinux.org/packages/${p:0:2}/$p/$p.tar.gz
 wget "$url" -O- | tar xz
-cd $p
+cd  $p
