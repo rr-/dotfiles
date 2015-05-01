@@ -123,16 +123,16 @@ bindsym $mod+9 workspace $w9
 bindsym $mod+0 workspace $w0
 
 #hotkeys for moving focused container to another workspace
-bindsym $mod+Shift+1 move container to workspace $w1
-bindsym $mod+Shift+2 move container to workspace $w2
-bindsym $mod+Shift+3 move container to workspace $w3
-bindsym $mod+Shift+4 move container to workspace $w4
-bindsym $mod+Shift+5 move container to workspace $w5
-bindsym $mod+Shift+6 move container to workspace $w6
-bindsym $mod+Shift+7 move container to workspace $w7
-bindsym $mod+Shift+8 move container to workspace $w8
-bindsym $mod+Shift+9 move container to workspace $w9
-bindsym $mod+Shift+0 move container to workspace $w0
+bindsym $mod+Shift+1 exec "i3-msg move container to workspace $w1 && i3-msg workspace $w1"
+bindsym $mod+Shift+2 exec "i3-msg move container to workspace $w2 && i3-msg workspace $w2"
+bindsym $mod+Shift+3 exec "i3-msg move container to workspace $w3 && i3-msg workspace $w3"
+bindsym $mod+Shift+4 exec "i3-msg move container to workspace $w4 && i3-msg workspace $w4"
+bindsym $mod+Shift+5 exec "i3-msg move container to workspace $w5 && i3-msg workspace $w5"
+bindsym $mod+Shift+6 exec "i3-msg move container to workspace $w6 && i3-msg workspace $w6"
+bindsym $mod+Shift+7 exec "i3-msg move container to workspace $w7 && i3-msg workspace $w7"
+bindsym $mod+Shift+8 exec "i3-msg move container to workspace $w8 && i3-msg workspace $w8"
+bindsym $mod+Shift+9 exec "i3-msg move container to workspace $w9 && i3-msg workspace $w9"
+bindsym $mod+Shift+0 exec "i3-msg move container to workspace $w0 && i3-msg workspace $w0"
 
 #hotkeys for changing window / container layouts
 #change container layout (stacked, tabbed, toggle split)
