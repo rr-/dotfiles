@@ -129,13 +129,11 @@ command! CopyWithoutHardWrapping call CopyWithoutHardWrapping()
 "----------------------------------------
 " custom keyboard bindings
 "----------------------------------------
-"arrows over visible lines, not physical lines
-noremap  <buffer> <silent> <Up>   gk
-noremap  <buffer> <silent> <Down> gj
+"movement over visible lines, not physical lines
+noremap  <buffer> <silent> k      gk
+noremap  <buffer> <silent> j      gj
 noremap  <buffer> <silent> <Home> g<Home>
 noremap  <buffer> <silent> <End>  g<End>
-inoremap <buffer> <silent> <Up>   <C-o>gk
-inoremap <buffer> <silent> <Down> <C-o>gj
 inoremap <buffer> <silent> <Home> <C-o>g<Home>
 inoremap <buffer> <silent> <End>  <C-o>g<End>
 "ctrl+tab, ctrl+shift+tab = move to next/prev tab
@@ -158,6 +156,15 @@ nnoremap <silent> <C-o> :CtrlPLine<CR>
 noremap <silent> <F4> :let @" = expand("%")<CR>
 "less keystrokes to access easy motion search
 nmap z <Leader><Leader>s
+"trying to be badass
+noremap <Up> <Nop>
+noremap <Down> <Nop>
+noremap <Left> <Nop>
+noremap <Right> <Nop>
+inoremap <Up> <Nop>
+inoremap <Down> <Nop>
+inoremap <Left> <Nop>
+inoremap <Right> <Nop>
 
     "----------------------------------------
     " ctrl+up/down = move line up/down
