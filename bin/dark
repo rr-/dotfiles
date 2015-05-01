@@ -1,8 +1,0 @@
-#!/bin/sh
-DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-rm ~/.minttyrc
-ln -s $DIR/.minttyrc-dark ~/.minttyrc
-echo -e 'set background=dark' >~/.vimrc-background
-echo -e 'color sorcerer' >~/.vimrc-background
-cp $HOME/.config/sakura/sakura-base.conf $HOME/.config/sakura/sakura.conf
-sed -i 's/last_colorset=2/last_colorset=1/' $HOME/.config/sakura/sakura.conf

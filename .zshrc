@@ -98,6 +98,9 @@ alias enpl='tl en pl'
 alias rfn='date "+%Y%m%d_%H%M%S"'
 alias isvim='ps ux|grep vim|grep -v grep'
 
+alias dark='term-lightness 0'
+alias light='term-lightness 1'
+
 # legacy aliases
 command -v hd >/dev/null 2>&1 || alias hd='od -Ax -t x1'
 if ! command -v poweroff >/dev/null 2>&1; then

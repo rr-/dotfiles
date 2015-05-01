@@ -1,0 +1,23 @@
+#!/bin/sh
+
+use_light=$1
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+[ -h ~/.minttyrc ] && rm ~/.minttyrc
+if [[ $use_light -eq 1 ]]; then
+	ln -s $DIR/.minttyrc-light ~/.minttyrc
+	echo -e 'set background=light' >~/.vimrc-background
+	echo -e 'color hemisu' >~/.vimrc-background
+else
+	ln -s $DIR/.minttyrc-dark ~/.minttyrc
+	echo -e 'set background=dark' >~/.vimrc-background
+	echo -e 'color sorcerer' >~/.vimrc-background
+fi
+
+if [[ $use_light -eq 1 ]]; then
+	sakura_theme=2
+else
+	sakura_theme=1
+fi
+cp ~/.config/sakura/sakura-base.conf ~/.config/sakura/sakura.conf
+sed -i 's/last_colorset=./last_colorset='$sakura_theme'/' ~/.config/sakura/sakura.conf
