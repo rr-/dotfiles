@@ -74,8 +74,14 @@ exec_always --no-startup-id xmodmap -e "keysym Menu = Hyper_L"
 #volume up and down
 bindsym Mod3+Prior exec amixer -q set Master 1dB+ unmute
 bindsym Mod3+Next exec amixer -q set Master 1dB- unmute
-#toggle mute
-bindsym Mod3+Delete exec amixer -q set Master toggle
+#toggle play
+bindsym Mod3+Delete exec clementine --play-pause
+#previous and next track
+bindsym Mod3+Home exec clementine --previous
+bindsym Mod3+End exec clementine --next
+#seek backward and forward
+bindsym Mod1+Shift+Ctrl+Left exec clementine --seek-by -10
+bindsym Mod1+Shift+Ctrl+Right exec clementine --seek-by 10
 
 #move focused window
 bindsym $mod+Shift+Left move left
