@@ -170,6 +170,7 @@ bindsym $mod+Shift+e exec "i3-nagbar -t warning -m 'You pressed the exit shortcu
 
 #i3 status bar
 bar {
+        position top
         status_command i3status
 }
 
