@@ -49,7 +49,8 @@ if [ -x "`which pacman`" ]; then
 	install_pacman automake
 	install_pacman mpv
 	install_pacman ttf-dejavu
-	install_pacman rxvt-unicode
+	install_pacman xcompmgr
+	install_pacman sakura
 	install_pacman feh
 	install_pacman xdotool
 	aur i3-gaps-next-git -i -q
@@ -87,6 +88,7 @@ install_link "$DIR/.config/Xresources"      "$HOME/.config/Xresources"
 install_link "$DIR/.config/mpv"             "$HOME/.config/mpv"
 install_link "$DIR/.config/i3"              "$HOME/.config/i3"
 install_link "$DIR/.config/fontconfig"      "$HOME/.config/fontconfig"
+install_link "$DIR/.config/sakura"          "$HOME/.config/sakura"
 
 shopt -s nocasematch
 if [[ "$(uname)" =~ cygwin ]]; then
