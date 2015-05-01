@@ -78,10 +78,25 @@ bindsym Mod1+Shift+Ctrl+Right exec clementine --seek-by 10
 bindsym Mod3+Insert exec i3-run-or-raise -n clementine -p clementine
 
 #hotkeys for focusing windows around
+bindsym $mod+h focus left
+bindsym $mod+j focus down
+bindsym $mod+k focus up
+bindsym $mod+l focus right
+
 bindsym $mod+Left focus left
 bindsym $mod+Down focus down
 bindsym $mod+Up focus up
 bindsym $mod+Right focus right
+
+#hotkeys for moving focused window
+bindsym $mod+Shift+h move left
+bindsym $mod+Shift+j move down
+bindsym $mod+Shift+k move up
+bindsym $mod+Shift+l move right
+bindsym $mod+Shift+Left move left
+bindsym $mod+Shift+Down move down
+bindsym $mod+Shift+Up move up
+bindsym $mod+Shift+Right move right
 
 #hotkeys for executing various programs
 bindsym Mod1+Ctrl+bracketleft exec i3-run-or-raise -c URxvt -p urxvt
@@ -91,12 +106,6 @@ bindsym Mod1+Ctrl+Shift+bracketright exec urxvt -e zsh -i -l -c 'ssh burza'
 bindsym Mod1+Ctrl+semicolon exec i3-run-or-raise -n 'Mozilla Firefox' -p firefox
 bindsym Mod1+Ctrl+Shift+m exec i3-run-or-raise -n 'Buddy List' -p pidgin
 bindsym Mod1+Ctrl+Shift+n exec 'urxvt -e zsh -i -l -c vim'
-
-#hotkeys for moving focused window
-bindsym $mod+Shift+Left move left
-bindsym $mod+Shift+Down move down
-bindsym $mod+Shift+Up move up
-bindsym $mod+Shift+Right move right
 
 #bind workspace 1 to left monitor, place everything else on right monitor
 workspace $w1 output HDMI-0
