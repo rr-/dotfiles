@@ -1,0 +1,40 @@
+#!/bin/sh
+
+type=
+match=
+program=
+
+while [[ $# > 0 ]]
+do
+    key=$1
+    case $key in
+        -n|--name)
+            shift
+            type=name
+            match=$1
+            ;;
+        -c|--class)
+            shift
+            type=class
+            match=$1
+            ;;
+        -p|--program)
+            shift
+            program=$1
+            ;;
+        *)
+            echo "Unknown option: $key"
+            exit 1
+            ;;
+    esac
+    shift
+done
+
+echo $match
+window=$(xdotool search --$type "$match" | head -1)
+echo $window
+if [ -z "$window" ]; then
+    eval "$program" &
+else
+    i3-msg "[id=$window] focus"
+fi
