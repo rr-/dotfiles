@@ -1,11 +1,11 @@
 #!/bin/bash
-DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-
-pushd $DIR >/dev/null
-echo 'Updating git submodules...'
-git submodule init
-git submodule update
-popd >/dev/null
+function install_pacman {
+	pacman -Q "$1" >/dev/null
+	if [ $? -ne 0 ]; then
+		echo "Installing $1 with pacman..."
+		sudo pacman -S "$1"
+	fi
+}
 
 function install_link {
 	source=$1
@@ -25,6 +25,38 @@ function install_link {
 	echo "Linking $source to $target..."
 	ln -s "$source" "$target"
 }
+
+function die {
+	echo "$*"
+	exit 1
+}
+
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+pushd $DIR >/dev/null
+echo 'Updating git submodules...'
+git submodule init
+git submodule update
+popd >/dev/null
+
+if [ -x "`which pacman`" ]; then
+	echo 'Checking pacman packages...'
+	pacman -Q sudo >/dev/null || die 'Install sudo first.'
+	install_pacman git
+	install_pacman zsh
+	install_pacman vim
+	install_pacman wget
+	install_pacman curl
+	install_pacman openssh
+	install_pacman make
+	install_pacman gcc
+	install_pacman automake
+	install_pacman mpv
+	install_pacman ttf-dejavu
+	install_pacman rxvt-unicode
+	#aur i3-gaps-next-git
+	#aur ttf-ipa-mono
+	#aur trackma-git
+fi
 
 if [ -d /usr/share/fonts ]; then
 	fonts_dir="$HOME/.local/share/fonts"
