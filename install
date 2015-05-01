@@ -1,27 +1,28 @@
 #!/bin/bash
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-pushd $DIR
+pushd $DIR >/dev/null
+echo 'Updating git submodules...'
 git submodule init
 git submodule update
-popd
+popd >/dev/null
 
 function install_link {
 	source=$1
 	target=$2
 
-	echo "Installing $source to $target"
-
 	if [ -h "$target" ]; then
-		echo Removing old symlink "$target"
+		echo -n 'Removing old symlink... '
 		rm "$target"
 	else
 		if [ -e "$target" ]; then
-			echo Not a symlink: "$target". Aborting.
+			echo "Not a symlink: $target."
+			echo 'Aborting.'
 			exit 1
 		fi
 	fi
 
+	echo "Linking $source to $target..."
 	ln -s "$source" "$target"
 }
 
@@ -59,11 +60,11 @@ install_link "$DIR/.config/fontconfig"      "$HOME/.config/fontconfig"
 shopt -s nocasematch
 if [[ "$(uname)" =~ cygwin ]]; then
 	cd "$HOME"
-	echo "Hiding dotfiles in $HOME"
+	echo "Hiding dotfiles in $HOME..."
 	attrib +h +s .\*
 fi
 
 if [ -d /usr/share/fonts ]; then
-	echo "Generating font cache"
-	fc-cache -fv
+	echo 'Generating font cache...'
+	fc-cache -f
 fi
