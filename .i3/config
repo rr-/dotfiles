@@ -62,11 +62,20 @@ bindsym $mod+Shift+q kill
 bindsym $mod+d exec dmenu_run
 #bindsym $mod+d exec --no-startup-id i3-dmenu-desktop
 
-#focs windows around
+#focus windows around
 bindsym $mod+Left focus left
 bindsym $mod+Down focus down
 bindsym $mod+Up focus up
 bindsym $mod+Right focus right
+
+#appmenu = mod3
+exec_always --no-startup-id xmodmap -e 'add mod3 = Menu'
+exec_always --no-startup-id xmodmap -e "keysym Menu = Hyper_L"
+#volume up and down
+bindsym Mod3+Prior exec amixer -q set Master 1dB+ unmute
+bindsym Mod3+Next exec amixer -q set Master 1dB- unmute
+#toggle mute
+bindsym Mod3+Delete exec amixer -q set Master toggle
 
 #move focused window
 bindsym $mod+Shift+Left move left
