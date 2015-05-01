@@ -1,8 +1,5 @@
 #set win-key as base key
 set $mod Mod4
-#set Menu as Mod3
-exec_always --no-startup-id xmodmap -e "keysym Menu = Hyper_L"
-exec_always --no-startup-id xmodmap -e 'add mod3 = Menu'
 
 #workspace names
 set $w1 一
