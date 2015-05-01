@@ -1,8 +1,10 @@
 #!/bin/bash
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
+pushd $DIR
 git submodule init
 git submodule update
+popd
 
 function install_link {
 	source=$1
