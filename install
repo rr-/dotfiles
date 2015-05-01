@@ -31,7 +31,6 @@ if [ -d /usr/share/fonts ]; then
 	for x in $DIR/misc/*.{ttf,otf}; do
 		install_link "$x" "$fonts_dir/$(basename "$x")"
 	done
-	fc-cache -fv
 fi
 
 [ ! -d "$HOME/.vim" ] && mkdir "$HOME/.vim"
@@ -55,10 +54,16 @@ install_link "$DIR/.mpv"                    "$HOME/.mpv"
 install_link "$DIR/.i3"                     "$HOME/.i3"
 install_link "$DIR/.Xresources"             "$HOME/.Xresources"
 install_link "$DIR/.xinitrc"                "$HOME/.xinitrc"
+install_link "$DIR/.config/fontconfig"      "$HOME/.config/fontconfig"
 
 shopt -s nocasematch
 if [[ "$(uname)" =~ cygwin ]]; then
 	cd "$HOME"
 	echo "Hiding dotfiles in $HOME"
 	attrib +h +s .\*
+fi
+
+if [ -d /usr/share/fonts ]; then
+	echo "Generating font cache"
+	fc-cache -fv
 fi
