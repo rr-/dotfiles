@@ -103,15 +103,15 @@ bindsym $mod+Shift+Right move right
 
 #bind workspace 1 to left monitor, place everything else on right monitor
 workspace $w1 output HDMI-0
-workspace $w2 output DVI-0
-workspace $w3 output DVI-0
-workspace $w4 output DVI-0
-workspace $w5 output DVI-0
-workspace $w6 output DVI-0
-workspace $w7 output DVI-0
-workspace $w8 output DVI-0
-workspace $w9 output DVI-0
-workspace $w0 output DVI-0
+workspace $w2 output DVI-I-1
+workspace $w3 output DVI-I-1
+workspace $w4 output DVI-I-1
+workspace $w5 output DVI-I-1
+workspace $w6 output DVI-I-1
+workspace $w7 output DVI-I-1
+workspace $w8 output DVI-I-1
+workspace $w9 output DVI-I-1
+workspace $w0 output DVI-I-1
 
 #hotkeys for workspace switching
 bindsym $mod+1 workspace $w1
