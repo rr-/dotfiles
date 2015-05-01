@@ -32,10 +32,13 @@ function install_link {
 	fi
 }
 
-fonts_dir=/usr/share/fonts/TTF
+fonts_dir=/usr/share/fonts
 if [ -d $fonts_dir ]; then
 	for x in $DIR/misc/*.ttf; do
-		install_link "$x" "$fonts_dir/$(basename "$x")" 1
+		install_link "$x" "$fonts_dir/TTF/$(basename "$x")" 1
+	done
+	for x in $DIR/misc/*.otf; do
+		install_link "$x" "$fonts_dir/OTF/$(basename "$x")" 1
 	done
 	fc-cache -fv
 fi
