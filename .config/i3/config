@@ -164,6 +164,8 @@ bar {
         status_command i3status
 }
 
+for_window [class="feh"] floating enable
+
 #run some programs
 exec_always --no-startup-id feh --bg-fill "$HOME/.wallpaper1" "$HOME/.wallpaper2"
 exec --no-startup-id i3-msg "workspace $w0; exec trackma-qt"
