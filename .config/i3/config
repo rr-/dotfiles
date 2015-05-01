@@ -25,28 +25,14 @@ assign [class="clementine"] $w9
 assign [class="trackma-qt"] $w0
 
 #colors!
-set $black          #2c2836
-set $darkblack      #73707e
-set $red            #bb7473
-set $darkred        #cf9fa4
-set $green          #68b782
-set $darkgreen      #9acbad
-set $yellow         #abb773
-set $darkyellow     #c5cba4
-set $blue           #7865c5
-set $darkblue       #a396d9
-set $magenta        #bb65b6
-set $darkmagenta    #cf96cf
-set $cyan           #68a8c5
-set $darkcyan       #9ac1d9
+set $active         #1ba1f5
+set $inactive       #8fb0c4
 set $white          #f1edfb
-set $darkwhite      #f1edfb
-set $background     #133B47
 
 #what                   border     background text   indicator
-client.focused          $cyan      $cyan      $white $cyan
-client.unfocused        $darkcyan  $darkcyan  $white $darkcyan
-client.focused_inactive $darkcyan  $darkcyan  $white $darkcyan
+client.focused          $active    $active    $text  $active
+client.unfocused        $inactive  $inactive  $text  $inactive
+client.focused_inactive $inactive  $inactive  $text  $inactive
 client.urgent           $red       $red       $white $red
 
 #fonts
