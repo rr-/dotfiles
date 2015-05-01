@@ -1,13 +1,33 @@
 #set win-key as base key
 set $mod Mod4
+#set Menu as Mod3
+exec_always --no-startup-id xmodmap -e 'add Mod3 = Menu'
+exec_always --no-startup-id xmodmap -e "keysym Menu = Hyper_L"
+
+#workspace names
+set $w1 一
+set $w2 二
+set $w3 三
+set $w4 四
+set $w5 五
+set $w6 六
+set $w7 七
+set $w8 八
+set $w9 九
+set $w0 十
+
 #gaps around windows, in pixels
 gaps inner 15
 #gaps around desktop, in pixels
 gaps outer 0
-
 #border around windows, in pixels
 new_window pixel 5
 
+#assign workspaces to common programs
+assign [class="clementine"] $w9
+assign [class="trackma-qt"] $w0
+
+#colors!
 set $black          #2c2836
 set $darkblack      #73707e
 set $red            #bb7473
@@ -26,51 +46,26 @@ set $white          #f1edfb
 set $darkwhite      #f1edfb
 set $background     #133B47
 
-# bind workspace 1 to left monitor, place everything else on right monitor
-workspace 1 output HDMI-0
-workspace 2 output DVI-0
-workspace 3 output DVI-0
-workspace 4 output DVI-0
-workspace 5 output DVI-0
-workspace 6 output DVI-0
-workspace 7 output DVI-0
-workspace 8 output DVI-0
-workspace 9 output DVI-0
-
-#                       BORDER     BACKGROUND TEXT   INDICATOR
+#what                   border     background text   indicator
 client.focused          $cyan      $cyan      $white $cyan
 client.unfocused        $darkcyan  $darkcyan  $white $darkcyan
 client.focused_inactive $darkcyan  $darkcyan  $white $darkcyan
 client.urgent           $red       $red       $white $red
 
-exec_always --no-startup-id feh --bg-fill "$HOME/.wallpaper1" "$HOME/.wallpaper2"
-exec trackma-qt
-
+#fonts
 font pango:monospace 10
-#font pango:DejaVu Sans Mono 8
+font pango:DejaVu Sans Mono 8
 
-#use Mouse+$mod to drag floating windows to their wanted position
-floating_modifier $mod
-
+#hotkeys for basic stuff
 #start a terminal
-bindsym $mod+Return exec i3-sensible-terminal
-
+bindsym $mod+Return exec urxvt
 #kill focused window
 bindsym $mod+Shift+q kill
-
 #start dmenu (a program launcher)
 bindsym $mod+d exec dmenu_run
-#bindsym $mod+d exec --no-startup-id i3-dmenu-desktop
+bindsym $mod+r exec dmenu_run
 
-#focus windows around
-bindsym $mod+Left focus left
-bindsym $mod+Down focus down
-bindsym $mod+Up focus up
-bindsym $mod+Right focus right
-
-#appmenu = mod3
-exec_always --no-startup-id xmodmap -e 'add mod3 = Menu'
-exec_always --no-startup-id xmodmap -e "keysym Menu = Hyper_L"
+#hotkeys related to music player
 #volume up and down
 bindsym Mod3+Prior exec amixer -q set Master 1dB+ unmute
 bindsym Mod3+Next exec amixer -q set Master 1dB- unmute
@@ -82,91 +77,99 @@ bindsym Mod3+End exec clementine --next
 #seek backward and forward
 bindsym Mod1+Shift+Ctrl+Left exec clementine --seek-by -10
 bindsym Mod1+Shift+Ctrl+Right exec clementine --seek-by 10
+#focus music player
+bindsym Mod3+Insert exec i3-run-or-raise -n clementine -p clementine
 
-#move focused window
+#hotkeys for focusing windows around
+bindsym $mod+Left focus left
+bindsym $mod+Down focus down
+bindsym $mod+Up focus up
+bindsym $mod+Right focus right
+
+#hotkeys for executing various programs
+bindsym Mod1+Ctrl+bracketleft exec i3-run-or-raise -c URxvt -p urxvt
+bindsym Mod1+Ctrl+Shift+bracketleft exec urxvt
+bindsym Mod1+Ctrl+bracketright exec i3-run-or-raise -n '@burza' -p 'urxvt -e zsh -i -l -c "ssh burza"'
+bindsym Mod1+Ctrl+Shift+bracketright exec urxvt -e zsh -i -l -c 'ssh burza'
+bindsym Mod1+Ctrl+semicolon exec i3-run-or-raise -n 'Mozilla Firefox' -p firefox
+bindsym Mod1+Ctrl+Shift+m exec i3-run-or-raise -n 'Buddy List' -p pidgin
+bindsym Mod1+Ctrl+Shift+n exec 'urxvt -e zsh -i -l -c vim'
+
+#hotkeys for moving focused window
 bindsym $mod+Shift+Left move left
 bindsym $mod+Shift+Down move down
 bindsym $mod+Shift+Up move up
 bindsym $mod+Shift+Right move right
 
-#split in horizontal orientation
-bindsym $mod+h split h
+#bind workspace 1 to left monitor, place everything else on right monitor
+workspace $w1 output HDMI-0
+workspace $w2 output DVI-0
+workspace $w3 output DVI-0
+workspace $w4 output DVI-0
+workspace $w5 output DVI-0
+workspace $w6 output DVI-0
+workspace $w7 output DVI-0
+workspace $w8 output DVI-0
+workspace $w9 output DVI-0
+workspace $w0 output DVI-0
 
-#split in vertical orientation
-bindsym $mod+v split v
+#hotkeys for workspace switching
+bindsym $mod+1 workspace $w1
+bindsym $mod+2 workspace $w2
+bindsym $mod+3 workspace $w3
+bindsym $mod+4 workspace $w4
+bindsym $mod+5 workspace $w5
+bindsym $mod+6 workspace $w6
+bindsym $mod+7 workspace $w7
+bindsym $mod+8 workspace $w8
+bindsym $mod+9 workspace $w9
+bindsym $mod+0 workspace $w0
 
-#enter fullscreen mode for the focused container
-bindsym $mod+f fullscreen toggle
+#hotkeys for moving focused container to another workspace
+bindsym $mod+Shift+1 move container to workspace $w1
+bindsym $mod+Shift+2 move container to workspace $w2
+bindsym $mod+Shift+3 move container to workspace $w3
+bindsym $mod+Shift+4 move container to workspace $w4
+bindsym $mod+Shift+5 move container to workspace $w5
+bindsym $mod+Shift+6 move container to workspace $w6
+bindsym $mod+Shift+7 move container to workspace $w7
+bindsym $mod+Shift+8 move container to workspace $w8
+bindsym $mod+Shift+9 move container to workspace $w9
+bindsym $mod+Shift+0 move container to workspace $w0
 
+#hotkeys for changing window / container layouts
 #change container layout (stacked, tabbed, toggle split)
 bindsym $mod+s layout stacking
 bindsym $mod+w layout tabbed
 bindsym $mod+e layout toggle split
-
+#change split orientation
+bindsym $mod+h split h
+bindsym $mod+v split v
 #toggle tiling / floating
 bindsym $mod+Shift+space floating toggle
-
 #change focus between tiling / floating windows
 bindsym $mod+space focus mode_toggle
+#enter fullscreen mode for the focused container
+bindsym $mod+f fullscreen toggle
+#use Mouse+$mod to drag floating windows to their wanted position
+floating_modifier $mod
 
-#focus the parent container
-bindsym $mod+a focus parent
-#focus the child container
-#bindsym $mod+d focus child
-
-#switch to workspace
-bindsym $mod+1 workspace 1
-bindsym $mod+2 workspace 2
-bindsym $mod+3 workspace 3
-bindsym $mod+4 workspace 4
-bindsym $mod+5 workspace 5
-bindsym $mod+6 workspace 6
-bindsym $mod+7 workspace 7
-bindsym $mod+8 workspace 8
-bindsym $mod+9 workspace 9
-bindsym $mod+0 workspace 10
-
-#move focused container to workspace
-bindsym $mod+Shift+1 move container to workspace 1
-bindsym $mod+Shift+2 move container to workspace 2
-bindsym $mod+Shift+3 move container to workspace 3
-bindsym $mod+Shift+4 move container to workspace 4
-bindsym $mod+Shift+5 move container to workspace 5
-bindsym $mod+Shift+6 move container to workspace 6
-bindsym $mod+Shift+7 move container to workspace 7
-bindsym $mod+Shift+8 move container to workspace 8
-bindsym $mod+Shift+9 move container to workspace 9
-bindsym $mod+Shift+0 move container to workspace 10
-
+#hotkeys for i3wm management
 #reload the configuration file
 bindsym $mod+Shift+c reload
-#restart i3 inplace (preserves your layout/session, can be used to upgrade i3)
+#restart i3 inplace (preserves layout/session, can be used to upgrade i3)
 bindsym $mod+Shift+r restart
-#exit i3 (logs you out of your X session)
+#exit i3 (logs out of the X session)
 bindsym $mod+Shift+e exec "i3-nagbar -t warning -m 'You pressed the exit shortcut. Do you really want to exit i3? This will end your X session.' -b 'Yes, exit i3' 'i3-msg exit'"
 
-#resize window (you can also use the mouse for that)
-mode "resize" {
-        #These bindings trigger as soon as you enter the resize mode
-
-        #Pressing left will shrink the window’s width.
-        #Pressing right will grow the window’s width.
-        #Pressing up will shrink the window’s height.
-        #Pressing down will grow the window’s height.
-        bindsym Left resize shrink width 10 px or 10 ppt
-        bindsym Down resize grow height 10 px or 10 ppt
-        bindsym Up resize shrink height 10 px or 10 ppt
-        bindsym Right resize grow width 10 px or 10 ppt
-
-        #back to normal: Enter or Escape
-        bindsym Return mode "default"
-        bindsym Escape mode "default"
-}
-
-bindsym $mod+r mode "resize"
-
-#Start i3bar to display a workspace bar (plus the system information i3status
-#finds out, if available)
+#i3 status bar
 bar {
         status_command i3status
 }
+
+#run some programs
+exec_always --no-startup-id feh --bg-fill "$HOME/.wallpaper1" "$HOME/.wallpaper2"
+exec --no-startup-id i3-msg "workspace $w0; exec trackma-qt"
+exec --no-startup-id i3-msg "workspace $w9; exec firefox"
+exec --no-startup-id i3-msg "workspace $w1"
+exec --no-startup-id i3-msg "workspace $w2"
