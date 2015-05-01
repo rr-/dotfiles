@@ -1,4 +1,10 @@
 #!/bin/bash
+function die {
+	echo "$*"
+	echo 'Installation aborted.'
+	exit 1
+}
+
 function install_pacman {
 	pacman -Q "$1" >/dev/null
 	if [ $? -ne 0 ]; then
@@ -15,20 +21,11 @@ function install_link {
 		echo -n 'Removing old symlink... '
 		rm "$target"
 	else
-		if [ -e "$target" ]; then
-			echo "Not a symlink: $target."
-			echo 'Aborting.'
-			exit 1
-		fi
+		[ -e "$target" ] && die "Not a symlink: $target."
 	fi
 
 	echo "Linking $source to $target..."
 	ln -s "$source" "$target"
-}
-
-function die {
-	echo "$*"
-	exit 1
 }
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
