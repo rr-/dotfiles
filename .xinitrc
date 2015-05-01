@@ -18,4 +18,7 @@ xmodmap -e 'add Mod3 = Hyper_L'
 xmodmap -e 'keycode 135 = Menu'
 xmodmap -e 'keysym Menu = Hyper_L'
 
+#enable transparency manager
+xcompmgr -n &
+
 exec i3
