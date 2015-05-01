@@ -1,16 +1,23 @@
 #!/bin/bash
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
 git submodule init
 git submodule update
 
 function install_link {
 	source=$1
 	target=$2
+	use_sudo=$3
 
 	echo "Installing $source to $target"
 
 	if [ -h "$target" ]; then
 		echo Removing old symlink "$target"
-		rm "$target"
+		if [ $use_sudo ]; then
+			sudo rm "$target"
+		else
+			rm "$target"
+		fi
 	else
 		if [ -e "$target" ]; then
 			echo Not a symlink: "$target". Aborting.
@@ -18,10 +25,21 @@ function install_link {
 		fi
 	fi
 
-	ln -s "$source" "$target"
+	if [ $use_sudo ]; then
+		sudo ln -s "$source" "$target"
+	else
+		ln -s "$source" "$target"
+	fi
 }
 
-DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+fonts_dir=/usr/share/fonts/TTF
+if [ -d $fonts_dir ]; then
+	for x in $DIR/misc/*.ttf; do
+		install_link "$x" "$fonts_dir/$(basename "$x")" 1
+	done
+	fc-cache -fv
+fi
+
 [ ! -d "$HOME/.vim" ] && mkdir "$HOME/.vim"
 [ ! -d "$HOME/.vim/undo" ] && mkdir "$HOME/.vim/undo"
 [ ! -d "$HOME/.vim/backup" ] && mkdir "$HOME/.vim/backup"
