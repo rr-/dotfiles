@@ -72,6 +72,7 @@ fi
 [ ! -d "$HOME/.vim/swap" ] && mkdir "$HOME/.vim/swap"
 [ ! -d "$HOME/.vim/spell" ] && mkdir "$HOME/.vim/spell"
 
+cp "$DIR/.config/sakura/sakura-base.conf"   "$DIR/.config/sakura/sakura.conf"
 install_link "$DIR/ext/translator/tl"       "$DIR/bin/ext/tl"
 install_link "$DIR/.vim/spell/pl.utf-8.add" "$HOME/.vim/spell/pl.utf-8.add"
 install_link "$DIR/.vim/spell/en.utf-8.add" "$HOME/.vim/spell/en.utf-8.add"
