@@ -10,6 +10,8 @@ fi
 xrandr --output DVI-I-1 --auto --output HDMI-0 --auto --left-of DVI-I-1
 xrdb ~/.config/Xresources
 
+#set Polish keyboard
+setxkbmap pl
 #set app menu as mod3
 xmodmap -e 'remove Mod4 = Hyper_L'
 xmodmap -e 'add Mod3 = Hyper_L'
