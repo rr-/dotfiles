@@ -40,6 +40,7 @@ bindkey '\eOF'    end-of-line           # end
 bindkey ';5H'     beginning-of-line     # ctrl+home
 bindkey ';5F'     end-of-line           # ctrl+end
 bindkey '^_'      backward-kill-word    # ctrl+backspace
+bindkey '^?'      backward-kill-word    # ctrl+backspace
 bindkey "\e[3;5~" kill-word             # ctrl+delete
 bindkey ';5D'     backward-word         # ctrl+left
 bindkey ';5C'     forward-word          # ctrl+right
