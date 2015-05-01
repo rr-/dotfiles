@@ -59,6 +59,7 @@ install_link "$DIR/.gitconfig"              "$HOME/.gitconfig"
 install_link "$DIR/.gitignore"              "$HOME/.gitignore"
 install_link "$DIR/.mpv"                    "$HOME/.mpv"
 install_link "$DIR/.i3"                     "$HOME/.i3"
+install_link "$DIR/.Xresources"             "$HOME/.Xresources"
 
 shopt -s nocasematch
 if [[ "$(uname)" =~ cygwin ]]; then

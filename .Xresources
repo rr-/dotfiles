@@ -1,0 +1,12 @@
+URxvt*font: xft:Source Code Pro for Powerline:style=Light:size=10
+URxvt*boldFont: xft:Source Code Pro for Powerline:sstyle=Light:ize=10
+URxvt*allowBoldFonts: false
+URxvt*scrollBar: false
+URxvt*scrollWithBuffer: true
+URxvt*keysym.Home: \033[1~
+URxvt*keysym.End: \033[4~
+
+URxvt.keysym.C-Tab: \033[1;5I
+URxvt.keysym.Control-Shift-ISO_Left_Tab: \033[1;6I
+URxvt*iso14755: False 
+URxvt*iso14755_52: False

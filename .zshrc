@@ -34,18 +34,25 @@ stty -ixon                              # reclaim ctrl+q for Vim
 stty stop undef                         # reclaim ctrl+s for Vim
 
 # key bindings for terminal emulator
-bindkey "\e[3~"   delete-char           # delete
-bindkey '\eOH'    beginning-of-line     # home
-bindkey '\eOF'    end-of-line           # end
-bindkey ';5H'     beginning-of-line     # ctrl+home
-bindkey ';5F'     end-of-line           # ctrl+end
-bindkey '^_'      backward-kill-word    # ctrl+backspace
-if [[ ${HOST} == tornado ]]; then
-    bindkey '^?'      backward-kill-word    # ctrl+backspace
+if [ "$TERM" =~ rxvt ]; then
+    bindkey "\e[3~"   delete-char           # delete
+    bindkey '\e[1~'   beginning-of-line     # home and ctrl+home
+    bindkey '\e[4~'   end-of-line           # end adn ctrl+end
+    bindkey '^H'      backward-kill-word    # ctrl+backspace
+    bindkey "^[3^"    kill-word             # ctrl+delete
+    bindkey '\eOd'    backward-word         # ctrl+left
+    bindkey '\eOc'    forward-word          # ctrl+right
+else
+    bindkey "\e[3~"   delete-char           # delete
+    bindkey '\eOH'    beginning-of-line     # home
+    bindkey '\eOF'    end-of-line           # end
+    bindkey ';5H'     beginning-of-line     # ctrl+home
+    bindkey ';5F'     end-of-line           # ctrl+end
+    bindkey '^_'      backward-kill-word    # ctrl+backspace
+    bindkey "\e[3;5~" kill-word             # ctrl+delete
+    bindkey ';5D'     backward-word         # ctrl+left
+    bindkey ';5C'     forward-word          # ctrl+right
 fi
-bindkey "\e[3;5~" kill-word             # ctrl+delete
-bindkey ';5D'     backward-word         # ctrl+left
-bindkey ';5C'     forward-word          # ctrl+right
 
     # necessary for the above to work
     if [[ -n ${terminfo[smkx]} ]] && [[ -n ${terminfo[rmkx]} ]]; then
