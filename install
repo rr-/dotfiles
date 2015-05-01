@@ -50,6 +50,7 @@ if [ -x "`which pacman`" ]; then
 	install_pacman mpv
 	install_pacman ttf-dejavu
 	install_pacman rxvt-unicode
+	install_pacman xdotool
 	aur i3-gaps-next-git -i -q
 	aur ttf-ipa-mona -i -q
 	aur trackma-git -i -q
