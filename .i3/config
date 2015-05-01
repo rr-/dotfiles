@@ -43,7 +43,7 @@ client.unfocused        $darkcyan  $darkcyan  $white $darkcyan
 client.focused_inactive $darkcyan  $darkcyan  $white $darkcyan
 client.urgent           $red       $red       $white $red
 
-exec_always --no-startup-id feh --bg-center "$HOME/.wallpaper"
+exec_always --no-startup-id feh --bg-fill "$HOME/.wallpaper"
 exec_always --no-startup-id trackma-qt
 
 font pango:monospace 8
