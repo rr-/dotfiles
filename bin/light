@@ -1,0 +1,6 @@
+#!/bin/sh
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+rm ~/.minttyrc
+ln -s $DIR/.minttyrc-light ~/.minttyrc
+echo -e 'set background=light' >~/.vimrc-background
+echo -e 'color hemisu' >~/.vimrc-background

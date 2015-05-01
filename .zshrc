@@ -98,9 +98,6 @@ alias enpl='tl en pl'
 alias rfn='date "+%Y%m%d_%H%M%S"'
 alias isvim='ps ux|grep vim|grep -v grep'
 
-alias dark='rm ~/.minttyrc && ln -s "'"$DIR"'/.minttyrc-dark" ~/.minttyrc; echo -e "set background=dark\ncolor sorcerer">~/.vimrc-background'
-alias light='rm ~/.minttyrc && ln -s "'"$DIR"'/.minttyrc-light" ~/.minttyrc; echo -e "set background=light\ncolor hemisu">~/.vimrc-background'
-
 # legacy aliases
 command -v hd >/dev/null 2>&1 || alias hd='od -Ax -t x1'
 if ! command -v poweroff >/dev/null 2>&1; then
