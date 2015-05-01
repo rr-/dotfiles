@@ -90,9 +90,6 @@ command -v composer >/dev/null 2>&1 || alias composer='php composer'
 command -v rubocop >/dev/null 2>&1 || alias rubocop='~/.gem/**/gems/rubocop*/bin/rubocop'
 command -v bundle >/dev/null 2>&1 || alias bundle='~/.gem/**/gems/bundle*/bin/bundle'
 
-alias dark='rm ~/.minttyrc && ln -s "'"$DIR"'/.minttyrc-dark" ~/.minttyrc; echo -e "set background=dark\ncolor sorcerer">~/.vimrc-background'
-alias light='rm ~/.minttyrc && ln -s "'"$DIR"'/.minttyrc-light" ~/.minttyrc; echo -e "set background=light\ncolor hemisu">~/.vimrc-background'
-
 if [ -e /dev/clipboard ]; then
     alias clip='cat >/dev/clipboard'
 fi
