@@ -5,11 +5,11 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 [ -h ~/.minttyrc ] && rm ~/.minttyrc
 if [[ $use_light -eq 1 ]]; then
-	ln -s $DIR/.minttyrc-light ~/.minttyrc
+	ln -s $DIR/../.minttyrc-light ~/.minttyrc
 	echo -e 'set background=light' >~/.vimrc-background
 	echo -e 'color hemisu' >~/.vimrc-background
 else
-	ln -s $DIR/.minttyrc-dark ~/.minttyrc
+	ln -s $DIR/../.minttyrc-dark ~/.minttyrc
 	echo -e 'set background=dark' >~/.vimrc-background
 	echo -e 'color sorcerer' >~/.vimrc-background
 fi
