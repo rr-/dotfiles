@@ -128,12 +128,10 @@ bindsym $mod+Shift+0 exec "i3-msg move container to workspace $w0 && i3-msg work
 
 #hotkeys for changing window / container layouts
 #change container layout (stacked, tabbed, toggle split)
-bindsym $mod+s layout stacking
-bindsym $mod+w layout tabbed
-bindsym $mod+e layout toggle split
+bindsym $mod+s layout toggle all
 #change split orientation
-bindsym $mod+h split h
-bindsym $mod+v split v
+bindsym $mod+w split v
+bindsym $mod+a split h
 #toggle tiling / floating
 bindsym $mod+Shift+space floating toggle
 #change focus between tiling / floating windows
