@@ -25,7 +25,10 @@ do
     shift
 done
 
-cd ~/src/aur
+DIR=~/src/aur
+[ ! -d $DIR ] && mkdir -p $DIR
+cd $DIR
+
 url=https://aur.archlinux.org/packages/${package:0:2}/$package/$package.tar.gz
 
 if [ -d "$package" ]; then
