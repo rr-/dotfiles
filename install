@@ -53,6 +53,7 @@ if [ -x "`which pacman`" ]; then
 	install_pacman ttf-dejavu
 	install_pacman xcompmgr
 	install_pacman sakura
+	install_pacman thunar
 	install_pacman feh
 	install_pacman xdotool
 	aur i3-gaps-next-git -i -q
