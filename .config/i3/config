@@ -88,6 +88,7 @@ bindsym Mod1+Ctrl+Shift+bracketright exec sakura -x "zsh -i -l -c 'ssh burza'"
 bindsym Mod1+Ctrl+semicolon exec i3-run-or-raise -n 'Mozilla Firefox' -p firefox
 bindsym Mod1+Ctrl+Shift+m exec i3-run-or-raise -n 'Buddy List' -p pidgin
 bindsym Mod1+Ctrl+Shift+n exec 'sakura -x zsh -i -l -c vim'
+bindsym $mod+e exec thunar
 
 #bind workspace 1 to left monitor, place everything else on right monitor
 workspace $w1 output HDMI-0
