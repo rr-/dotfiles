@@ -56,6 +56,7 @@ if [ -x "`which pacman`" ]; then
 	install_pacman thunar
 	install_pacman feh
 	install_pacman xdotool
+	aur xcb-util-cursor-git -i -q
 	aur i3-gaps-next-git -i -q
 	aur ttf-ipa-mona -i -q
 	aur trackma-git -i -q
