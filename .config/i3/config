@@ -164,8 +164,8 @@ assign [class="(?i)pidgin"] $w0
 assign [class="(?i)firefox"] $w2
 assign [class="(?i)steam"] $w8
 assign [class="(?i)qbittorrent"] $w9
-assign [class="trackma-qt"] $w9
-assign [class="clementine"] $w10
+assign [class="(?i)trackma-qt"] $w9
+assign [class="(?i)clementine"] $w10
 
 #position windows
 for_window [class="feh"] floating enable
@@ -174,9 +174,9 @@ for_window [title="(?i)buddy list"] floating enable move absolute position 3480 
 
 #run some programs
 exec_always --no-startup-id feh --bg-fill "$HOME/.wallpaper1" "$HOME/.wallpaper2"
-exec --no-startup-id i3-msg "workspace $w10; exec trackma-qt"
-exec --no-startup-id i3-msg "workspace $w9; exec clementine"
-exec --no-startup-id i3-msg "workspace $w0; exec pidgin"
-exec --no-startup-id i3-msg "workspace $w1; exec firefox"
+exec --no-startup-id i3-msg "exec pidgin"
+exec --no-startup-id i3-msg "exec firefox"
+exec --no-startup-id i3-msg "exec trackma-qt"
+exec --no-startup-id i3-msg "exec clementine"
 exec --no-startup-id i3-msg "workspace $w1"
 exec --no-startup-id i3-msg "workspace $w2"
