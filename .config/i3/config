@@ -20,10 +20,6 @@ gaps outer 0
 #border around windows, in pixels
 new_window pixel 5
 
-#assign workspaces to common programs
-assign [class="clementine"] $w9
-assign [class="trackma-qt"] $w0
-
 #colors!
 set $active         #1ba1f5
 set $inactive       #8fb0c4
@@ -160,7 +156,18 @@ bar {
         status_command i3status
 }
 
+#assign workspaces to common programs
+assign [class="(?i)firefox"] $w2
+assign [class="(?i)steam"] $w7
+assign [class="(?i)pidgin"] $w8
+assign [class="(?i)qbittorrent"] $w9
+assign [class="trackma-qt"] $w9
+assign [class="clementine"] $w10
+
+#position windows
 for_window [class="feh"] floating enable
+for_window [class="Pidgin"] floating enable move absolute position 1960 55
+for_window [title="(?i)buddy list"] floating enable move absolute position 3480 55
 
 #run some programs
 exec_always --no-startup-id feh --bg-fill "$HOME/.wallpaper1" "$HOME/.wallpaper2"
