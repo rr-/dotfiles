@@ -2,6 +2,7 @@
 set $mod Mod4
 
 #workspace names
+set $w0 霊
 set $w1 一
 set $w2 二
 set $w3 三
@@ -91,6 +92,7 @@ bindsym Mod1+Ctrl+Shift+n exec 'sakura -x zsh -i -l -c vim'
 bindsym $mod+e exec thunar
 
 #bind workspace 1 to left monitor, place everything else on right monitor
+workspace $w0 output DVI-I-1
 workspace $w1 output HDMI-0
 workspace $w2 output DVI-I-1
 workspace $w3 output DVI-I-1
@@ -103,6 +105,7 @@ workspace $w9 output DVI-I-1
 workspace $w10 output DVI-I-1
 
 #hotkeys for workspace switching
+bindsym $mod+grave workspace $w0
 bindsym $mod+1 workspace $w1
 bindsym $mod+2 workspace $w2
 bindsym $mod+3 workspace $w3
@@ -115,6 +118,7 @@ bindsym $mod+9 workspace $w9
 bindsym $mod+0 workspace $w10
 
 #hotkeys for moving focused container to another workspace
+bindsym $mod+Shift+grave exec "i3-msg move container to workspace $w0 && i3-msg workspace $w0"
 bindsym $mod+Shift+1 exec "i3-msg move container to workspace $w1 && i3-msg workspace $w1"
 bindsym $mod+Shift+2 exec "i3-msg move container to workspace $w2 && i3-msg workspace $w2"
 bindsym $mod+Shift+3 exec "i3-msg move container to workspace $w3 && i3-msg workspace $w3"
@@ -156,9 +160,9 @@ bar {
 }
 
 #assign workspaces to common programs
+assign [class="(?i)pidgin"] $w0
 assign [class="(?i)firefox"] $w2
-assign [class="(?i)steam"] $w7
-assign [class="(?i)pidgin"] $w8
+assign [class="(?i)steam"] $w8
 assign [class="(?i)qbittorrent"] $w9
 assign [class="trackma-qt"] $w9
 assign [class="clementine"] $w10
@@ -172,7 +176,7 @@ for_window [title="(?i)buddy list"] floating enable move absolute position 3480 
 exec_always --no-startup-id feh --bg-fill "$HOME/.wallpaper1" "$HOME/.wallpaper2"
 exec --no-startup-id i3-msg "workspace $w10; exec trackma-qt"
 exec --no-startup-id i3-msg "workspace $w9; exec clementine"
-exec --no-startup-id i3-msg "workspace $w8; exec pidgin"
+exec --no-startup-id i3-msg "workspace $w0; exec pidgin"
 exec --no-startup-id i3-msg "workspace $w1; exec firefox"
 exec --no-startup-id i3-msg "workspace $w1"
 exec --no-startup-id i3-msg "workspace $w2"
