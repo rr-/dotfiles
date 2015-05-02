@@ -11,7 +11,7 @@ set $w6 六
 set $w7 七
 set $w8 八
 set $w9 九
-set $w0 十
+set $w10 十
 
 #gaps around windows, in pixels
 gaps inner 15
@@ -100,7 +100,7 @@ workspace $w6 output DVI-I-1
 workspace $w7 output DVI-I-1
 workspace $w8 output DVI-I-1
 workspace $w9 output DVI-I-1
-workspace $w0 output DVI-I-1
+workspace $w10 output DVI-I-1
 
 #hotkeys for workspace switching
 bindsym $mod+1 workspace $w1
@@ -112,7 +112,7 @@ bindsym $mod+6 workspace $w6
 bindsym $mod+7 workspace $w7
 bindsym $mod+8 workspace $w8
 bindsym $mod+9 workspace $w9
-bindsym $mod+0 workspace $w0
+bindsym $mod+0 workspace $w10
 
 #hotkeys for moving focused container to another workspace
 bindsym $mod+Shift+1 exec "i3-msg move container to workspace $w1 && i3-msg workspace $w1"
@@ -124,7 +124,7 @@ bindsym $mod+Shift+6 exec "i3-msg move container to workspace $w6 && i3-msg work
 bindsym $mod+Shift+7 exec "i3-msg move container to workspace $w7 && i3-msg workspace $w7"
 bindsym $mod+Shift+8 exec "i3-msg move container to workspace $w8 && i3-msg workspace $w8"
 bindsym $mod+Shift+9 exec "i3-msg move container to workspace $w9 && i3-msg workspace $w9"
-bindsym $mod+Shift+0 exec "i3-msg move container to workspace $w0 && i3-msg workspace $w0"
+bindsym $mod+Shift+0 exec "i3-msg move container to workspace $w10 && i3-msg workspace $w10"
 
 #hotkeys for changing window / container layouts
 #change container layout (stacked, tabbed, toggle split)
@@ -170,7 +170,7 @@ for_window [title="(?i)buddy list"] floating enable move absolute position 3480 
 
 #run some programs
 exec_always --no-startup-id feh --bg-fill "$HOME/.wallpaper1" "$HOME/.wallpaper2"
-exec --no-startup-id i3-msg "workspace $w0; exec trackma-qt"
+exec --no-startup-id i3-msg "workspace $w10; exec trackma-qt"
 exec --no-startup-id i3-msg "workspace $w9; exec clementine"
 exec --no-startup-id i3-msg "workspace $w8; exec pidgin"
 exec --no-startup-id i3-msg "workspace $w1; exec firefox"
