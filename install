@@ -47,6 +47,7 @@ if [ -x "`which pacman`" ]; then
 	install_pacman make
 	install_pacman gcc
 	install_pacman automake
+	install_pacman htop
 	install_pacman mpv
 	install_pacman ttf-dejavu
 	install_pacman xcompmgr
