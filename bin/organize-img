@@ -1,9 +1,10 @@
 #!/bin/bash
-remote_root_dir="/home/rr-/img/"
-dst_root_dir="/cygdrive/z/img/net/"
+remote_root_dir="$HOME/img/"
+dst_root_dir="$HOME/img/net/"
+transit_root_dir="$HOME/img/transit"
 remote_user=rr-
 remote_addr=burza
-local_addr=luna
+local_addr=tornado
 min_width=500
 min_height=500
 min_size=$[$min_width*$min_height]
@@ -13,9 +14,6 @@ min_size=$[$min_width*$min_height]
 shopt -s extglob
 shopt -s nocasematch
 trap "exit" INT
-
-#prepare transit dir
-transit_root_dir=/cygdrive/z/hub/img-tmp
 
 #download the images
 rsync --progress --whole-file -a --remove-source-files "$remote_user@$remote_addr:$remote_root_dir" "$transit_root_dir"
