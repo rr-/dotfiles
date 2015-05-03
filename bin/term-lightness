@@ -19,9 +19,6 @@ else
 	echo -e 'color sorcerer' >>~/.vimrc-background
 fi
 
-[ -h ~/.config/sakura/sakura.conf ] && rm ~/.config/sakura/sakura.conf
-ln -s ~/.config/sakura/sakura-$word.conf ~/.config/sakura/sakura.conf
-
 [ -h ~/.config/Xresources-theme ] && rm ~/.config/Xresources-theme
 ln -s ~/.config/Xresources-$word ~/.config/Xresources-theme
 xrdb -override ~/.config/Xresources-theme
