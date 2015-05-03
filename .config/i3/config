@@ -38,7 +38,7 @@ font pango:DejaVu Sans Mono 8
 
 #hotkeys for basic stuff
 #start a terminal
-bindsym $mod+Return exec sakura
+bindsym $mod+Return exec urxvt
 #kill focused window
 bindsym $mod+Shift+q kill
 #start dmenu (a program launcher)
@@ -82,13 +82,13 @@ bindsym $mod+Shift+Up move up
 bindsym $mod+Shift+Right move right
 
 #hotkeys for executing various programs
-bindsym Mod1+Ctrl+bracketleft exec i3-run-or-raise -n '@.*:~$' -p sakura
-bindsym Mod1+Ctrl+Shift+bracketleft exec sakura
-bindsym Mod1+Ctrl+bracketright exec i3-run-or-raise -n '@burza' -p 'sakura -x "zsh -i -l -c '"'"'ssh burza'"'"'"'
-bindsym Mod1+Ctrl+Shift+bracketright exec sakura -x "zsh -i -l -c 'ssh burza'"
+bindsym Mod1+Ctrl+bracketleft exec i3-run-or-raise -n '@.*:~$' -p urxvt
+bindsym Mod1+Ctrl+Shift+bracketleft exec urxvt
+bindsym Mod1+Ctrl+bracketright exec i3-run-or-raise -n '@burza' -p 'urxvt -e zsh -i -l -c "ssh burza"'
+bindsym Mod1+Ctrl+Shift+bracketright exec urxvt -e zsh -i -l -c 'ssh burza'
 bindsym Mod1+Ctrl+semicolon exec i3-run-or-raise -n 'Mozilla Firefox' -p firefox
 bindsym Mod1+Ctrl+Shift+m exec i3-run-or-raise -n 'Buddy List' -p pidgin
-bindsym Mod1+Ctrl+Shift+n exec 'sakura -x zsh -i -l -c vim'
+bindsym Mod1+Ctrl+Shift+n exec 'urxvt -e zsh -i -l -c vim'
 bindsym $mod+e exec thunar
 
 #bind workspace 1 to left monitor, place everything else on right monitor
