@@ -15,9 +15,9 @@ else
 fi
 
 if [[ $use_light -eq 1 ]]; then
-	sakura_theme=2
+	sakura_theme=light
 else
-	sakura_theme=1
+	sakura_theme=dark
 fi
-cp ~/.config/sakura/sakura-base.conf ~/.config/sakura/sakura.conf
-sed -i 's/last_colorset=./last_colorset='$sakura_theme'/' ~/.config/sakura/sakura.conf
+[ -h ~/.config/sakura/sakura.conf ] && rm ~/.config/sakura/sakura.conf
+ln -s ~/.config/sakura/sakura-$sakura_theme.conf ~/.config/sakura/sakura.conf
