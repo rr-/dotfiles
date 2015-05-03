@@ -96,23 +96,7 @@ fi
 
 #additional config
 hostname=$(hostname)
-if [[ hostname -eq luna ]]; then
-    #some aliases
-    alias wallchanger="$DIR/../sh-wall-changer/sh-wall-changer.exe"
-    export PATH=${PATH}:':/cygdrive/z/software/utilities/php5.6.2'
-
-    #autocompletion for imgop.sh
-    _imgop()
-    {
-        local cur=${COMP_WORDS[COMP_CWORD]}
-        if [[ $COMP_CWORD -eq 1 ]]; then
-            COMPREPLY=( $(compgen -W 'degrade downgrade fix-anamorphic fix-png stitch' -- $cur) )
-        else
-            COMPREPLY=( $(compgen -A file -- $cur) )
-        fi
-    }
-    complete -F _imgop imgop.sh
-elif [[ hostname -eq burza ]]; then
+if [[ hostname -eq burza ]]; then
     #command prompt in different color
     PS1=$(echo "$PS1"|sed 's/1;31/0;36/')
 fi
