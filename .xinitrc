@@ -19,6 +19,7 @@ xmodmap -e 'keycode 135 = Menu'
 xmodmap -e 'keysym Menu = Hyper_L'
 
 #enable transparency manager
-xcompmgr -n &
+#this is also supposed to eliminate problems with tearing.
+/usr/bin/compton -b --backend glx --paint-on-overlay --vsync opengl-swc
 
 exec i3
