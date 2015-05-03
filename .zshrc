@@ -115,10 +115,3 @@ command -v composer >/dev/null 2>&1 || alias composer='php composer'
 command -v rubocop >/dev/null 2>&1 || alias rubocop='~/.gem/**/gems/rubocop*/bin/rubocop'
 command -v bundle >/dev/null 2>&1 || alias bundle='~/.gem/**/gems/bundle*/bin/bundle'
 [ -e /dev/clipboard ] && alias clip='cat >/dev/clipboard'
-
-# additional config
-if [[ ${HOST} == luna ]]; then
-    # even more aliases
-    alias wallchanger="$DIR/../sh-wall-changer/sh-wall-changer.exe"
-    export PATH=${PATH}:':/cygdrive/z/software/utilities/php5.6.2'
-fi
