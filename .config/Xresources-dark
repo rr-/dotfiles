@@ -1,7 +1,7 @@
-URxvt.background: #0b0d22
+URxvt.background: #000000
 URxvt.foreground: #f5f2df
-URxvt.color0:     #0b0d22
-URxvt.color1:     #eb0c4f
+URxvt.color0:     #000000
+URxvt.color1:     #eb4f0c
 URxvt.color2:     #97bf5f
 URxvt.color3:     #cccc3d
 URxvt.color4:     #3a9495
@@ -9,7 +9,7 @@ URxvt.color5:     #850cd5
 URxvt.color6:     #7accc5
 URxvt.color7:     #f5f2df
 URxvt.color8:     #252525
-URxvt.color9:     #ff4262
+URxvt.color9:     #ff6242
 URxvt.color10:    #b1e06f
 URxvt.color11:    #ebe200
 URxvt.color12:    #0adcdd
