@@ -19,6 +19,15 @@ syntax on                     "enable syntax highlighting
 set synmaxcol=256             "highlight up to X columns (binary files)
 set number                    "enable line numbers
 
+"set terminal to 256 color
+if $TERM == "xterm"
+\ || $TERM == "xterm-256color"
+\ || $TERM == "screen"
+\ || $TERM == "screen-256color"
+\ || $TERM == "rxvt-unicode-256color"
+    set t_Co=256
+endif
+
 "color scheme
 let background_file=$HOME."/.vimrc-background"
 if filereadable(background_file)
@@ -26,11 +35,6 @@ if filereadable(background_file)
 else
     colorscheme hemisu
     set background=light
-endif
-
-"set terminal to 256 color
-if $TERM == "xterm" || $TERM == "xterm-256color" || $TERM == "screen" || $TERM == "screen-256color"
-    set t_Co=256
 endif
 
 "set gutter width to 80 characters
