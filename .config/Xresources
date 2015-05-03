@@ -11,6 +11,10 @@ URxvt.keysym.Control-Shift-ISO_Left_Tab: \033[1;6I
 URxvt*iso14755: False
 URxvt*iso14755_52: False
 
+URxvt.keysym.C-0: command:\033]50;xft:Input Mono Light:pixelsize=12\007
+URxvt.keysym.C-minus: command:\033]50;xft:Input Mono Light:pixelsize=12\007
+URxvt.keysym.C-equal: command:\033]50;xft:Input Mono Light:pixelsize=16\007
+
 URxvt.transparent:   true
 URxvt.shading:       25
 
