@@ -1,0 +1,23 @@
+URxvt.depth:       32
+URxvt.transparent: false
+URxvt.shading:     100
+
+URxvt.intensityStyles: false
+URxvt.background:  rgba:f0f0/f0f0/f0f0/dddd
+URxvt.foreground:  rgba:1010/1010/1010/dddd
+URxvt.color0:      rgba:2B2B/2B2B/2B2B/dddd
+URxvt.color1:      rgba:8787/0000/0000/dddd
+URxvt.color2:      rgba:5F5F/8787/5F5F/dddd
+URxvt.color3:      rgba:8787/5F5F/0000/dddd
+URxvt.color4:      rgba:0000/5F5F/AFAF/dddd
+URxvt.color5:      rgba:5F5F/5F5F/8787/dddd
+URxvt.color6:      rgba:0000/8787/8787/dddd
+URxvt.color7:      rgba:8181/8181/8181/dddd
+URxvt.color8:      rgba:4141/4141/4141/dddd
+URxvt.color9:      rgba:D7D7/0000/0000/dddd
+URxvt.color10:     rgba:AFAF/D7D7/AFAF/dddd
+URxvt.color11:     rgba:D7D7/AFAF/0000/dddd
+URxvt.color12:     rgba:0000/AFAF/FFFF/dddd
+URxvt.color13:     rgba:AFAF/AFAF/D7D7/dddd
+URxvt.color14:     rgba:0000/D7D7/D7D7/dddd
+URxvt.color15:     rgba:CECE/CECE/CECE/dddd

@@ -9,6 +9,7 @@ fi
 
 xrandr --output DVI-I-1 --auto --output HDMI-0 --auto --left-of DVI-I-1
 xrdb ~/.config/Xresources
+xrdb -override ~/.config/Xresources-theme
 
 #set Polish keyboard
 setxkbmap pl

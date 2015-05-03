@@ -3,21 +3,25 @@
 use_light=$1
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-[ -h ~/.minttyrc ] && rm ~/.minttyrc
 if [[ $use_light -eq 1 ]]; then
-	ln -s $DIR/../.minttyrc-light ~/.minttyrc
-	echo -e 'set background=light' >~/.vimrc-background
+	word=light
+else
+	word=dark
+fi
+
+[ -h ~/.minttyrc ] && rm ~/.minttyrc
+ln -s $DIR/../.minttyrc-$word ~/.minttyrc
+
+echo -e 'set background='$word >~/.vimrc-background
+if [[ $use_light -eq 1 ]]; then
 	echo -e 'color hemisu' >>~/.vimrc-background
 else
-	ln -s $DIR/../.minttyrc-dark ~/.minttyrc
-	echo -e 'set background=dark' >~/.vimrc-background
 	echo -e 'color sorcerer' >>~/.vimrc-background
 fi
 
-if [[ $use_light -eq 1 ]]; then
-	sakura_theme=light
-else
-	sakura_theme=dark
-fi
 [ -h ~/.config/sakura/sakura.conf ] && rm ~/.config/sakura/sakura.conf
-ln -s ~/.config/sakura/sakura-$sakura_theme.conf ~/.config/sakura/sakura.conf
+ln -s ~/.config/sakura/sakura-$word.conf ~/.config/sakura/sakura.conf
+
+[ -h ~/.config/Xresources-theme ] && rm ~/.config/Xresources-theme
+ln -s ~/.config/Xresources-$word ~/.config/Xresources-theme
+xrdb -override ~/.config/Xresources-theme
