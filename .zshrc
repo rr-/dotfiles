@@ -27,6 +27,7 @@ HISTFILE=~/.histfile                    # set path to history file
 HISTSIZE=1000                           # how many entries in history
 SAVEHIST=1000                           # how many entries in history (2)
 setopt appendhistory                    # append lines (for concurrent sessions)
+setopt histignoredups                   # don't put duplicates in history
 
 # basic key bindings
 bindkey -e                              # use Emacs keybindings
