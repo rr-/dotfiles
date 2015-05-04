@@ -47,6 +47,11 @@ global MonitorWorkAreaBottom
 SysGet, MonitorPrimary, MonitorPrimary
 SysGet, MonitorWorkArea, MonitorWorkArea, %MonitorPrimary%
 
+TermX := MonitorWorkAreaRight - 920
+TermY := 45
+RemoteTermX := 45
+RemoteTermY := 45
+
 ;GroupAdd, adobe, ahk_class OWL.DocumentWindow
 ;GroupAdd, adobe, ahk_class illustrator
 ;GroupAdd, adobe, ahk_class PSViewC
@@ -108,24 +113,23 @@ MakeScreen(arguments)
 	return baseFileName
 }
 
-
-
 #If FileExist(CygPath)
 	;cygwin - activate/run
+	#Enter::
+	{
+		Run, %CygPath%\bin\mintty.exe --title "Terminal" --size "110`,35" --position "%TermX%`,%TermY%" --class "mintty_thetty" --exec /bin/zsh -l, %CygPath%
+		return
+	}
 	+^![::
 	{
-		X := MonitorWorkAreaRight - 920
-		Y := 45
-		Run, %CygPath%\bin\mintty.exe --title "Terminal" --size "110`,35" --position "%X%`,%Y%" --class "mintty_thetty" --exec /bin/zsh -l, %CygPath%
+		Run, %CygPath%\bin\mintty.exe --title "Terminal" --size "110`,35" --position "%TermX%`,%TermY%" --class "mintty_thetty" --exec /bin/zsh -l, %CygPath%
 		return
 	}
 	^![::
 	{
 		if (!WinExist("ahk_class mintty_thetty"))
 		{
-			X := MonitorWorkAreaRight - 920
-			Y := 45
-			Run, %CygPath%\bin\mintty.exe --title "Terminal" --size "110`,35" --position "%X%`,%Y%" --class "mintty_thetty" --exec /bin/zsh -c 'while /bin/true`; do /bin/zsh -l`; cygstart "%A_AhkPath%" "Z:\src\dotfiles\hide.ahk"`; clear; done', %CygPath%
+			Run, %CygPath%\bin\mintty.exe --title "Terminal" --size "110`,35" --position "%TermX%`,%TermY%" --class "mintty_thetty" --exec /bin/zsh -c 'while /bin/true`; do /bin/zsh -l`; cygstart "%A_AhkPath%" "Z:\src\dotfiles\hide.ahk"`; clear; done', %CygPath%
 			WinWait ahk_class mintty_thetty
 		}
 		else
@@ -138,18 +142,14 @@ MakeScreen(arguments)
 	;ssh to burza - activate/run
 	+^!]::
 	{
-		X := 45
-		Y := 45
-		Run, %CygPath%\bin\mintty.exe --title "Remote terminal" --size "190`,65" --position "%X%`,%Y%" --class mintty_ssh --exec /bin/ssh -p 65000 rr-@sakuya.pl, %CygPath%/bin
+		Run, %CygPath%\bin\mintty.exe --title "Remote terminal" --size "190`,65" --position "%RemoteTermX%`,%RemoteTermY%" --class mintty_ssh --exec /bin/ssh -p 65000 rr-@sakuya.pl, %CygPath%/bin
 		return
 	}
 	^!]::
 	{
-		X := 45
-		Y := 45
 		if (!WinExist("ahk_class mintty_ssh"))
 		{
-			Run, %CygPath%\bin\mintty.exe --title "Remote terminal" --size "190`,65" --position "%X%`,%Y%" --class mintty_ssh --exec /bin/ssh -p 65000 rr-@sakuya.pl, %CygPath%/bin
+			Run, %CygPath%\bin\mintty.exe --title "Remote terminal" --size "190`,65" --position "%RemoteTermX%`,%RemoteTermY%" --class mintty_ssh --exec /bin/ssh -p 65000 rr-@sakuya.pl, %CygPath%/bin
 			WinWait ahk_class mintty_ssh
 		}
 		else
