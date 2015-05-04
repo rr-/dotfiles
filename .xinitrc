@@ -21,6 +21,14 @@ xmodmap -e 'keysym Menu = Hyper_L'
 
 #enable transparency manager
 #this is also supposed to eliminate problems with tearing.
-/usr/bin/compton -b --backend glx --paint-on-overlay --vsync opengl-swc
+if [[ `hostname` == tornado ]]; then
+    # nvidia
+    compton -b --backend glx --vsync opengl-swc --paint-on-overlay
+elif [[ `hostname` == chibi ]]; then
+    # amd
+    compton -b --backend xrender --paint-on-overlay --unredir-if-possible
+else
+    compton -b
+fi
 
 exec i3
