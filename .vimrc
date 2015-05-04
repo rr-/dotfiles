@@ -143,6 +143,9 @@ inoremap <buffer> <silent> <End>  <C-o>g<End>
 "ctrl+tab, ctrl+shift+tab = move to next/prev tab
 nnoremap <Esc>[1;5I gt<CR>
 nnoremap <Esc>[1;6I gT<CR>
+"fix ctrl+up/down for URxvt
+map <Esc>Oa <C-up>
+map <Esc>Ob <C-down>
 "ctrl+t = open new tab
 inoremap <silent> <C-t> <Esc>:tabnew<CR>
 nnoremap <silent> <C-t> :tabnew<CR>
@@ -217,6 +220,8 @@ inoremap <Right> <Nop>
         execute "normal! ".col_num."|"
     endfunction
 
+    nnoremap <silent> <C-k> :<C-u>call MoveLineUp()<CR>
+    nnoremap <silent> <C-j> :<C-u>call MoveLineDown()<CR>
     nnoremap <silent> <C-Up> :<C-u>call MoveLineUp()<CR>
     nnoremap <silent> <C-Down> :<C-u>call MoveLineDown()<CR>
     inoremap <silent> <C-Up> <C-o>:call MoveLineUp()<CR>
