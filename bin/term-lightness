@@ -9,9 +9,11 @@ else
 	word=dark
 fi
 
+# MinTTY
 [ -h ~/.minttyrc ] && rm ~/.minttyrc
 ln -s $DIR/../.minttyrc-$word ~/.minttyrc
 
+# vim
 echo -e 'set background='$word >~/.vimrc-background
 if [[ $use_light -eq 1 ]]; then
 	echo -e 'color hemisu' >>~/.vimrc-background
@@ -19,6 +21,11 @@ else
 	echo -e 'color sorcerer' >>~/.vimrc-background
 fi
 
+# URxvt
 [ -h ~/.config/Xresources-theme ] && rm ~/.config/Xresources-theme
 ln -s ~/.config/Xresources-$word ~/.config/Xresources-theme
-xrdb -override ~/.config/Xresources-theme
+if [ `command -v xset` ]; then
+	if xset q &>/dev/null; then
+		xrdb -override ~/.config/Xresources-theme
+	fi
+fi
