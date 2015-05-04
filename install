@@ -109,5 +109,5 @@ fi
 
 if [ -d /usr/share/fonts ]; then
 	echo 'Generating font cache...'
-	fc-cache -f
+	fc-cache
 fi
