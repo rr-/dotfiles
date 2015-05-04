@@ -1,0 +1,37 @@
+#!/bin/sh
+
+# opens thunar and sets its selection to the given file.
+# equivalent to rox's -s/--show or ms explorer's /select,file.
+# this assumes that the file is visible to thunar - dotfiles may not work.
+
+file=$1
+if [ -z "$file" ]; then
+	echo 'No file selected' 1>&2
+	exit 1
+fi
+
+if [[ ! $(command -v thunar) ]]; then
+	echo 'Thunar is not installed' 1>&2
+	exit 1
+fi
+
+if [ -d "$file" ]; then
+	thunar "$file" &
+else
+	if [ ! -f "$file" ]; then
+		echo 'File does not exist' 1>&2
+		exit 1
+	fi
+
+	if [[ ! $(command -v xdotool) ]]; then
+		echo 'Xdotool is not installed'
+		exit 1
+	fi
+
+	set -e
+	thunar "$(dirname "$file")" &
+	window_id=`xdotool search --sync --onlyvisible --class 'Thunar' | head -n1`
+	xdotool key --clearmodifiers 'ctrl+s'
+	xdotool type "$(basename "$file")"
+	xdotool key Return
+fi
