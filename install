@@ -100,9 +100,10 @@ install_link "$DIR/.config/compton.conf"     "$HOME/.config/compton.conf"
 
 shopt -s nocasematch
 if [[ "$(uname)" =~ cygwin ]]; then
-	cd "$HOME"
 	echo "Hiding dotfiles in $HOME..."
-	attrib +h +s .\*
+	find "$HOME" -maxdepth 1 -iname '.*' | while read -r x; do
+		attrib +h +s $(cygpath -w `dirname "$x"`)`basename "$x"`
+	done
 fi
 
 if [ -d /usr/share/fonts ]; then
