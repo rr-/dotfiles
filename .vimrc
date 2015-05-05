@@ -131,107 +131,6 @@ endfunction
 command! CopyWithoutHardWrapping call CopyWithoutHardWrapping()
 
 "----------------------------------------
-" custom keyboard bindings
-"----------------------------------------
-"movement over visible lines, not physical lines
-noremap  <buffer> <silent> k      gk
-noremap  <buffer> <silent> j      gj
-noremap  <buffer> <silent> <Home> g<Home>
-noremap  <buffer> <silent> <End>  g<End>
-inoremap <buffer> <silent> <Home> <C-o>g<Home>
-inoremap <buffer> <silent> <End>  <C-o>g<End>
-"ctrl+tab, ctrl+shift+tab = move to next/prev tab
-nnoremap <Esc>[1;5I gt<CR>
-nnoremap <Esc>[1;6I gT<CR>
-"fix ctrl+up/down for URxvt
-map <Esc>Oa <C-up>
-map <Esc>Ob <C-down>
-"ctrl+t = open new tab
-inoremap <silent> <C-t> <Esc>:tabnew<CR>
-nnoremap <silent> <C-t> :tabnew<CR>
-"ctrl+s = save
-inoremap <silent> <C-s> <Esc>:update<CR>
-nnoremap <silent> <C-s> :<C-u>update<CR>
-"ctrl+z = open shell
-nnoremap <silent> <C-z> :sh<CR>
-"ctrl+q = exit
-inoremap <silent> <C-q> <Esc>:q<CR>
-nnoremap <silent> <C-q> :q<CR>
-"ctrl+o = open Ctrl+P prompt
-nnoremap <silent> <C-o> :CtrlPLine<CR>
-"f4 = copy current path to buffer
-noremap <silent> <F4> :let @" = expand("%")<CR>
-"less keystrokes to access easy motion search
-nmap z <Leader><Leader>s
-"trying to be badass
-noremap <Up> <Nop>
-noremap <Down> <Nop>
-noremap <Left> <Nop>
-noremap <Right> <Nop>
-inoremap <Up> <Nop>
-inoremap <Down> <Nop>
-inoremap <Left> <Nop>
-inoremap <Right> <Nop>
-
-    "----------------------------------------
-    " ctrl+up/down = move line up/down
-    "----------------------------------------
-    function! MoveLineUp()
-        call MoveLineOrVisualUp(".", "")
-    endfunction
-
-    function! MoveLineDown()
-        call MoveLineOrVisualDown(".", "")
-    endfunction
-
-    function! MoveVisualUp()
-        call MoveLineOrVisualUp("'<", "'<,'>")
-        normal gv
-    endfunction
-
-    function! MoveVisualDown()
-        call MoveLineOrVisualDown("'>", "'<,'>")
-        normal gv
-    endfunction
-
-    function! MoveLineOrVisualUp(line_getter, range)
-        let l_num = line(a:line_getter)
-        if l_num - v:count1 - 1 < 0
-            let move_arg = "0"
-        else
-            let move_arg = a:line_getter." -".(v:count1 + 1)
-        endif
-        call MoveLineOrVisualUpOrDown(a:range."move ".move_arg)
-    endfunction
-
-    function! MoveLineOrVisualDown(line_getter, range)
-        let l_num = line(a:line_getter)
-        if l_num + v:count1 > line("$")
-            let move_arg = "$"
-        else
-            let move_arg = a:line_getter." +".v:count1
-        endif
-        call MoveLineOrVisualUpOrDown(a:range."move ".move_arg)
-    endfunction
-
-    function! MoveLineOrVisualUpOrDown(move_arg)
-        let col_num = virtcol(".")
-        execute "silent! ".a:move_arg
-        execute "normal! ".col_num."|"
-    endfunction
-
-    nnoremap <silent> <C-k> :<C-u>call MoveLineUp()<CR>
-    nnoremap <silent> <C-j> :<C-u>call MoveLineDown()<CR>
-    nnoremap <silent> <C-Up> :<C-u>call MoveLineUp()<CR>
-    nnoremap <silent> <C-Down> :<C-u>call MoveLineDown()<CR>
-    inoremap <silent> <C-Up> <C-o>:call MoveLineUp()<CR>
-    inoremap <silent> <C-Down> <C-o>:call MoveLineDown()<CR>
-    "vnoremap <silent> <C-Up> :<C-u>call MoveVisualUp()<CR>
-    "vnoremap <silent> <C-Down> :<C-u>call MoveVisualDown()<CR>
-    xnoremap <silent> <C-Up> :<C-u>call MoveVisualUp()<CR>
-    xnoremap <silent> <C-Down> :<C-u>call MoveVisualDown()<CR>
-
-"----------------------------------------
 " config Ctrl+P
 "----------------------------------------
 "disable CWD bullshit
@@ -329,3 +228,100 @@ autocmd BufRead,BufNewFile *.php,*.phtml FourSpaces
 
 "other options
 autocmd BufRead,BufNewFile *.php,*.phtml call SetPhpOptions()
+
+"----------------------------------------
+" custom keyboard bindings
+"----------------------------------------
+"movement over visual lines, not physical lines
+noremap <buffer> <silent> k gk
+noremap <buffer> <silent> j gj
+"ctrl+tab, ctrl+shift+tab = move to next/prev tab
+nnoremap <Esc>[1;5I gt<CR>
+nnoremap <Esc>[1;6I gT<CR>
+"fix ctrl+up/down for URxvt
+map <Esc>Oa <C-up>
+map <Esc>Ob <C-down>
+"ctrl+t = open new tab
+inoremap <silent> <C-t> <Esc>:tabnew<CR>
+nnoremap <silent> <C-t> :tabnew<CR>
+"ctrl+s = save
+inoremap <silent> <C-s> <Esc>:update<CR>
+nnoremap <silent> <C-s> :<C-u>update<CR>
+"ctrl+z = open shell
+nnoremap <silent> <C-z> :sh<CR>
+"ctrl+q = exit
+inoremap <silent> <C-q> <Esc>:q<CR>
+nnoremap <silent> <C-q> :q<CR>
+"ctrl+o = open Ctrl+P prompt
+nnoremap <silent> <C-o> :CtrlPLine<CR>
+"f4 = copy current path to buffer
+noremap <silent> <F4> :let @" = expand("%")<CR>
+"less keystrokes to access easy motion search
+nmap z <Leader><Leader>s
+"trying to be badass
+noremap <Up> <Nop>
+noremap <Down> <Nop>
+noremap <Left> <Nop>
+noremap <Right> <Nop>
+inoremap <Up> <Nop>
+inoremap <Down> <Nop>
+inoremap <Left> <Nop>
+inoremap <Right> <Nop>
+
+    "----------------------------------------
+    " ctrl+up/down = move line up/down
+    "----------------------------------------
+    function! MoveLineUp()
+        call MoveLineOrVisualUp(".", "")
+    endfunction
+
+    function! MoveLineDown()
+        call MoveLineOrVisualDown(".", "")
+    endfunction
+
+    function! MoveVisualUp()
+        call MoveLineOrVisualUp("'<", "'<,'>")
+        normal gv
+    endfunction
+
+    function! MoveVisualDown()
+        call MoveLineOrVisualDown("'>", "'<,'>")
+        normal gv
+    endfunction
+
+    function! MoveLineOrVisualUp(line_getter, range)
+        let l_num = line(a:line_getter)
+        if l_num - v:count1 - 1 < 0
+            let move_arg = "0"
+        else
+            let move_arg = a:line_getter." -".(v:count1 + 1)
+        endif
+        call MoveLineOrVisualUpOrDown(a:range."move ".move_arg)
+    endfunction
+
+    function! MoveLineOrVisualDown(line_getter, range)
+        let l_num = line(a:line_getter)
+        if l_num + v:count1 > line("$")
+            let move_arg = "$"
+        else
+            let move_arg = a:line_getter." +".v:count1
+        endif
+        call MoveLineOrVisualUpOrDown(a:range."move ".move_arg)
+    endfunction
+
+    function! MoveLineOrVisualUpOrDown(move_arg)
+        let col_num = virtcol(".")
+        execute "silent! ".a:move_arg
+        execute "normal! ".col_num."|"
+    endfunction
+
+    nnoremap <silent> <C-k> :<C-u>call MoveLineUp()<CR>
+    nnoremap <silent> <C-j> :<C-u>call MoveLineDown()<CR>
+    nnoremap <silent> <C-Up> :<C-u>call MoveLineUp()<CR>
+    nnoremap <silent> <C-Down> :<C-u>call MoveLineDown()<CR>
+    inoremap <silent> <C-Up> <C-o>:call MoveLineUp()<CR>
+    inoremap <silent> <C-Down> <C-o>:call MoveLineDown()<CR>
+    "vnoremap <silent> <C-Up> :<C-u>call MoveVisualUp()<CR>
+    "vnoremap <silent> <C-Down> :<C-u>call MoveVisualDown()<CR>
+    xnoremap <silent> <C-Up> :<C-u>call MoveVisualUp()<CR>
+    xnoremap <silent> <C-Down> :<C-u>call MoveVisualDown()<CR>
