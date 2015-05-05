@@ -164,7 +164,7 @@ let g:ctrlp_custom_ignore.file .= ')$'
 " config airline
 "----------------------------------------
 "because of white background
-let g:airline_theme = 'light'
+let g:airline_theme = 'bubblegum'
 "allow use of special characters that are supplied by terminal font
 let g:airline_powerline_fonts = 1
 "enable tabs
