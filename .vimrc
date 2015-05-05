@@ -269,7 +269,7 @@ inoremap <Left> <Nop>
 inoremap <Right> <Nop>
 
     "----------------------------------------
-    " ctrl+up/down = move line up/down
+    " ctrl+k/j = move line up/down
     "----------------------------------------
     function! MoveLineUp()
         call MoveLineOrVisualUp(".", "")
@@ -317,11 +317,7 @@ inoremap <Right> <Nop>
 
     nnoremap <silent> <C-k> :<C-u>call MoveLineUp()<CR>
     nnoremap <silent> <C-j> :<C-u>call MoveLineDown()<CR>
-    nnoremap <silent> <C-Up> :<C-u>call MoveLineUp()<CR>
-    nnoremap <silent> <C-Down> :<C-u>call MoveLineDown()<CR>
-    inoremap <silent> <C-Up> <C-o>:call MoveLineUp()<CR>
-    inoremap <silent> <C-Down> <C-o>:call MoveLineDown()<CR>
-    "vnoremap <silent> <C-Up> :<C-u>call MoveVisualUp()<CR>
-    "vnoremap <silent> <C-Down> :<C-u>call MoveVisualDown()<CR>
-    xnoremap <silent> <C-Up> :<C-u>call MoveVisualUp()<CR>
-    xnoremap <silent> <C-Down> :<C-u>call MoveVisualDown()<CR>
+    vnoremap <silent> <C-k> :<C-u>call MoveVisualUp()<CR>
+    vnoremap <silent> <C-j> :<C-u>call MoveVisualDown()<CR>
+    inoremap <silent> <C-k> <Esc>:call MoveLineUp()<CR>a
+    inoremap <silent> <C-j> <Esc>:call MoveLineDown()<CR>a
