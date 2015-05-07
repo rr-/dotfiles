@@ -156,6 +156,10 @@ bindsym $mod+f fullscreen toggle
 #use Mouse+$mod to drag floating windows to their wanted position
 floating_modifier $mod
 
+#hotkeys for changing window transparency
+bindsym --border --whole-window --release $mod+Button4 exec "compton-trans -c -5"
+bindsym --border --whole-window --release $mod+Button5 exec "compton-trans -c +5"
+
 #hotkeys for i3wm management
 #reload the configuration file
 bindsym $mod+Shift+c reload

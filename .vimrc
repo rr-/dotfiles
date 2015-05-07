@@ -195,13 +195,6 @@ autocmd VimEnter * nmap <F3> :NERDTreeFind<CR>
 "----------------------------------------
 " file-type specific settings
 "----------------------------------------
-function! SetPhpOptions()
-    "set max width to 120 characters
-    if exists('+colorcolumn')
-        setlocal colorcolumn=120
-    endif
-    setlocal tw=119
-endfunction
 
 "correct .lst filetype from assembler to text
 autocmd BufRead,BufNewFile *.lst set filetype=text
@@ -231,9 +224,6 @@ autocmd FileType zsh      FourSpaces
 autocmd FileType sh       FourSpaces
 autocmd FileType make     Tabs
 autocmd FileType php      FourSpaces
-
-"other options
-autocmd FileType php call SetPhpOptions()
 
 "----------------------------------------
 " custom keyboard bindings
