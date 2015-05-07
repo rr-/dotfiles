@@ -203,31 +203,37 @@ function! SetPhpOptions()
     setlocal tw=119
 endfunction
 
+"correct .lst filetype from assembler to text
+autocmd BufRead,BufNewFile *.lst set filetype=text
+
 "strip trailing whitespace for common source code
 autocmd FileType c,cc,cxx,cpp,h,hpp,java,php,python,ruby,vim autocmd BufWritePre <buffer> :%s/\s\+$//e
 
 "enable spellcheck and hard wrapping for text files
-autocmd BufRead,BufNewFile *.txt,*.tex,*.md setlocal spell textwidth=79
+autocmd FileType text,markdown setlocal spell textwidth=79
 
 "enable spellcheck and double gutter in git commit messages
-autocmd BufRead,BufNewFile COMMIT_EDITMSG setlocal spell textwidth=72 colorcolumn=50,72
+autocmd FileType gitcommit setlocal spell textwidth=72 colorcolumn=50,72
 
 "disable syntax for certain files
-autocmd BufRead,BufNewFile *.txt,*.lst,*.xml,*.json setlocal syntax=
+autocmd FileType text,xml,json setlocal syntax=
 
 "setup indentation for common file types
-autocmd BufRead,BufNewFile *.txt,*.tex,*.md,*.lst FourSpaces
-autocmd BufRead,BufNewFile *.c,*.cc,*.cpp,*.cxx,*.h,*.hpp FourSpaces
-autocmd BufRead,BufNewFile *.py FourSpaces
-autocmd BufRead,BufNewFile *.rb TwoSpaces
-autocmd BufRead,BufNewFile *.yml TwoSpaces
-autocmd BufRead,BufNewFile *.vim Tabs
-autocmd BufRead,BufNewFile .*rc FourSpaces
-autocmd BufRead,BufNewFile Makefile Tabs
-autocmd BufRead,BufNewFile *.php,*.phtml FourSpaces
+autocmd FileType text     FourSpaces
+autocmd FileType plaintex FourSpaces
+autocmd FileType markdown FourSpaces
+autocmd FileType c        FourSpaces
+autocmd FileType cpp      FourSpaces
+autocmd FileType python   FourSpaces
+autocmd FileType ruby     TwoSpaces
+autocmd FileType vim      TwoSpaces
+autocmd FileType zsh      FourSpaces
+autocmd FileType sh       FourSpaces
+autocmd FileType make     Tabs
+autocmd FileType php      FourSpaces
 
 "other options
-autocmd BufRead,BufNewFile *.php,*.phtml call SetPhpOptions()
+autocmd FileType php call SetPhpOptions()
 
 "----------------------------------------
 " custom keyboard bindings
