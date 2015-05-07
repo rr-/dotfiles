@@ -4,3 +4,6 @@
 [submodule "ext/translator"]
 	path = ext/translator
 	url = git@github.com:rr-/translator
+[submodule "ext/i3-floater"]
+	path = ext/i3-floater
+	url = https://github.com/rr-/i3-floater.git
