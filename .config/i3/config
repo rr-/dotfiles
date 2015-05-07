@@ -131,15 +131,15 @@ bindsym $mod+Shift+9 exec "i3-msg move container to workspace $w9 && i3-msg work
 bindsym $mod+Shift+0 exec "i3-msg move container to workspace $w10 && i3-msg workspace $w10"
 
 #hotkeys for moving floating windows
-bindsym $mod+KP_Up    exec "i3-floater --width 0.5 --height 0.5 -x 0.5 -y 0   --xgap 30 --ygap 30"
-bindsym $mod+KP_Right exec "i3-floater --width 0.5 --height 0.5 -x 1   -y 0.5 --xgap 30 --ygap 30"
-bindsym $mod+KP_Down  exec "i3-floater --width 0.5 --height 0.5 -x 0.5 -y 1   --xgap 30 --ygap 30"
-bindsym $mod+KP_Left  exec "i3-floater --width 0.5 --height 0.5 -x 0   -y 0.5 --xgap 30 --ygap 30"
-bindsym $mod+KP_Prior exec "i3-floater --width 0.5 --height 0.5 -x 1   -y 0   --xgap 30 --ygap 30"
-bindsym $mod+KP_Next  exec "i3-floater --width 0.5 --height 0.5 -x 1   -y 1   --xgap 30 --ygap 30"
-bindsym $mod+KP_End   exec "i3-floater --width 0.5 --height 0.5 -x 0   -y 1   --xgap 30 --ygap 30"
-bindsym $mod+KP_Home  exec "i3-floater --width 0.5 --height 0.5 -x 0   -y 0   --xgap 30 --ygap 30"
-bindsym $mod+KP_Begin exec "i3-floater --width 0.5 --height 0.5 -x 0.5 -y 0.5 --xgap 30 --ygap 30 --toggle-floating"
+bindsym $mod+KP_Up    exec "i3-floater --width 0.475 --height 0.475 -x 0.5 -y 0   --xgap 30 --ygap 30"
+bindsym $mod+KP_Right exec "i3-floater --width 0.475 --height 0.475 -x 1   -y 0.5 --xgap 30 --ygap 30"
+bindsym $mod+KP_Down  exec "i3-floater --width 0.475 --height 0.475 -x 0.5 -y 1   --xgap 30 --ygap 30"
+bindsym $mod+KP_Left  exec "i3-floater --width 0.475 --height 0.475 -x 0   -y 0.5 --xgap 30 --ygap 30"
+bindsym $mod+KP_Prior exec "i3-floater --width 0.475 --height 0.475 -x 1   -y 0   --xgap 30 --ygap 30"
+bindsym $mod+KP_Next  exec "i3-floater --width 0.475 --height 0.475 -x 1   -y 1   --xgap 30 --ygap 30"
+bindsym $mod+KP_End   exec "i3-floater --width 0.475 --height 0.475 -x 0   -y 1   --xgap 30 --ygap 30"
+bindsym $mod+KP_Home  exec "i3-floater --width 0.475 --height 0.475 -x 0   -y 0   --xgap 30 --ygap 30"
+bindsym $mod+KP_Begin exec "i3-floater --width 0.475 --height 0.475 -x 0.5 -y 0.5 --xgap 30 --ygap 30 --toggle-floating"
 
 #hotkeys for changing window / container layouts
 #change container layout (stacked, tabbed, toggle split)
