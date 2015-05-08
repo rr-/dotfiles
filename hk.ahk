@@ -169,7 +169,7 @@ MakeScreen(arguments)
 		}
 		else
 		{
-			Run, %CygPath%\bin\mintty.exe --size "240`,90" --position "100`,45" --class "Vim" --exec /bin/zsh -l -c /bin/vim, %CygPath%/bin
+			Run, %CygPath%\bin\mintty.exe --size "240`,90" --position "100`,45" --class "Vim" --exec /bin/zsh -l -i -c /bin/vim, %CygPath%/bin
 			WinWait, ahk_class Vim
 		}
 		WinMove, , , 100, 100, 1600, 900
