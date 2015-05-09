@@ -17,6 +17,7 @@ setopt NO_NOMATCH                       # if extended glob fails, run cmd as-is
 
 # miscellaneous
 unsetopt beep                           # disable beep on errors
+setopt rcquotes                         # fix fucking escape quoting
 setopt correct                          # enable [nyae] correction
 setopt auto_cd                          # "cd /usr/" becomes "/usr/"
 setopt nocasematch                      # regex should work case-insensitive
