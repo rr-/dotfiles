@@ -24,7 +24,7 @@ else
 	fi
 
 	if [[ ! $(command -v xdotool) ]]; then
-		echo 'Xdotool is not installed'
+		echo 'Xdotool is not installed' 1>&2
 		exit 1
 	fi
 
