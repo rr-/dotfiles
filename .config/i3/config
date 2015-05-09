@@ -44,6 +44,7 @@ bindsym $mod+Shift+q kill
 #start dmenu (a program launcher)
 bindsym $mod+d exec --no-startup-id dmenu_run
 bindsym $mod+r exec --no-startup-id dmenu_run
+bindsym XF86Calculator exec --no-startup-id qalculate
 
 #hotkeys related to music player
 #volume up and down
