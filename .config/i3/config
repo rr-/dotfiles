@@ -180,7 +180,7 @@ bar {
 assign [class="(?i)pidgin"] $w0
 assign [class="(?i)firefox" window_role="(?i)browser"] $w2
 assign [class="(?i)steam"] $w8
-assign [class="(?i)qbittorrent"] $w9
+assign [class="(?i)qbittorrent" title="(?i)qbittorrent"] $w9
 assign [class="(?i)trackma-qt"] $w9
 assign [class="(?i)clementine"] $w10
 
