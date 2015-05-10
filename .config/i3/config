@@ -178,7 +178,7 @@ bar {
 
 #assign workspaces to common programs
 assign [class="(?i)pidgin"] $w0
-assign [class="(?i)firefox"] $w2
+assign [class="(?i)firefox" window_role="(?i)browser"] $w2
 assign [class="(?i)steam"] $w8
 assign [class="(?i)qbittorrent"] $w9
 assign [class="(?i)trackma-qt"] $w9
