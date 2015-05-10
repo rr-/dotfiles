@@ -1,0 +1,9 @@
+"ctrl + a
+inoremap <C-a> <C-Home><C-S-End>
+cnoremap <C-a> <C-Home><C-S-End>
+
+"disable search engine autocomplete
+set complete=l
+
+"disable everything but tabs
+set gui=none,tabs
