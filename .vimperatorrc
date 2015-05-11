@@ -10,3 +10,6 @@ set gui=none,tabs
 
 noremap J 50j
 noremap K 50k
+
+"fix hints on youtube
+highlight Hint -append z-index:2999999999
