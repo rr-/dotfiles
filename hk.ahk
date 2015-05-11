@@ -416,3 +416,7 @@ AppsKey & PgDn::Send {Volume_Down}
 	ActiveHwnd := WinExist("A")
 	PostMessage 0x112, 0xf030 ;WM_SYSCOMMAND, SC_MAXIMIZE
 	return
+#H::return
+#J::return
+#K::return
+#L::return
