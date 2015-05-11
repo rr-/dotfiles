@@ -227,6 +227,12 @@ AppsKey & PgDn::Send {Volume_Down}
 			WinActivate
 			Send, !d
 		}
+		else if WinExist("Vimperator")
+		{
+			WinShow
+			WinActivate
+			Send, !d
+		}
 		else if WinExist("ahk_class Chrome_WidgetWin_1")
 		{
 			WinActivate
