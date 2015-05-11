@@ -47,6 +47,9 @@ global MonitorWorkAreaBottom
 SysGet, MonitorPrimary, MonitorPrimary
 SysGet, MonitorWorkArea, MonitorWorkArea, %MonitorPrimary%
 
+;disable windows+l
+RegWrite, REG_DWORD, HKEY_CURRENT_USER, Software\Microsoft\Windows\CurrentVersion\Policies\System, DisableLockWorkstation, 1
+
 TermX := MonitorWorkAreaRight - 920
 TermY := 45
 RemoteTermX := 45
@@ -402,3 +405,17 @@ AppsKey & PgDn::Send {Volume_Down}
 	~LAlt::return
 	LAlt UP::Send {Escape}
 #IfWinActive
+
+;shortcuts like in i3
+;close active window
+#Q::
+	ActiveHwnd := WinExist("A")
+	WinClose
+	return
+#D::
+	SendInput, {LWin down}r{LWin up}
+	return
+#F::
+	ActiveHwnd := WinExist("A")
+	PostMessage 0x112, 0xf030 ;WM_SYSCOMMAND, SC_MAXIMIZE
+	return
