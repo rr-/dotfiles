@@ -4,7 +4,6 @@
 ;Windows key Win- #
 
 #Persistent
-;#NoTrayIcon
 #SingleInstance Force
 DetectHiddenWindows, On
 DetectHiddenText, On
@@ -216,10 +215,6 @@ AppsKey & PgDn::Send {Volume_Down}
 		}
 		return
 
-;cdisplayex - activate/run
-#If FileExist("C:\Program Files (x86)\CDisplayEx\cdisplayex.exe")
-	^!/::FRun("CDisplayEx", "C:\Program Files (x86)\CDisplayEx\cdisplayex.exe", "Z:\")
-
 ;browser
 #If FileExist(BrowserPath)
 	;web browser - activate/run
@@ -254,50 +249,6 @@ AppsKey & PgDn::Send {Volume_Down}
 	+Insert::SendInput {Raw}%clipboard% ;paste on shift+insert
 	+PgUp::SendInput ! {Up}{Up}{Up}{Right}{Up}{Up}{Enter}{PgUp}{Enter} ;scroll on shift+page up
 	+PgDn::SendInput ! {Up}{Up}{Up}{Right}{Up}{Up}{Enter}{PgDn}{Enter} ;scroll on shift+page down
-#IfWinActive
-
-;acdsee functionalities
-#IfWinActive ahk_class ACDBrowser
-	WheelDown::Send, ^{Down}^{Space}
-	WheelUp::Send, ^{Up}^{Space}
-	^!X::
-		SendInput {Left 10}{Shift down}{Right 10}{Shift up}
-		return
-#IfWinActive
-#IfWinActive ACDSee
-	WheelDown::
-		if (A_TickCount - OldTicks >= 80)
-		{
-			Send, {WheelDown}
-			OldTicks := A_TickCount
-		}
-		return
-	]:: ;send to document folder
-	RButton & ~LButton::
-		FormatTime, Folder,, 'Z:\'
-		Send {LAlt down}c
-		Send {LAlt up}
-		SendInput %Folder%
-		Send {Return}
-		return
-	[:: ;send to upload folder
-	~LButton & RButton::
-		Send {LAlt down}c
-		Send {LAlt up}
-		SendInput Z:\hub\yume.pl
-		Send {Return}
-		Sleep 100
-		return
-	XButton1::
-		WinGet, Transparency, Transparent, A
-		if ! Transparency
-			WinSet, Transparent, 255, A
-		else if Transparency = 255
-			WinSet, Transparent, 0, A
-		return
-	XButton2:: ;start slideshow
-		Send {Pause}
-		return
 #IfWinActive
 
 ;other functionalities
