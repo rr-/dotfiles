@@ -115,6 +115,45 @@ MakeScreen(arguments)
 	return baseFileName
 }
 
+;focus window in given direction
+DirectionalFocus(direction)
+{
+	DetectHiddenWindows, Off
+	ActiveHwnd := WinExist("A")
+	WinGetPos bx, by, _, _, ahk_id %ActiveHwnd%
+	WinGet windows, List
+	Loop %windows%
+	{
+		id := windows%A_Index%
+		WinGetPos wx, wy, _, _, ahk_id %id%
+
+		if (direction == "left")
+			condition := wx < bx
+		else if (direction == "right")
+			condition := wx > bx
+		else if (direction == "up")
+			condition := wy < by
+		else if (direction == "down")
+			condition := wy > by
+		else
+		{
+			MsgBox % "Bad direction"
+			return
+		}
+		if (condition)
+		{
+			WinGetTitle, wtitle, ahk_id %id%
+			if (wtitle != "")
+			{
+				WinActivate, ahk_id %id%
+				break
+			}
+		}
+	}
+	DetectHiddenWindows, On
+	return
+}
+
 #If FileExist(CygPath)
 	;cygwin - activate/run
 	#Enter::
@@ -360,7 +399,7 @@ AppsKey & PgDn::Send {Volume_Down}
 	ActiveHwnd := WinExist("A")
 	PostMessage 0x112, 0xf030 ;WM_SYSCOMMAND, SC_MAXIMIZE
 	return
-#H::return
-#J::return
-#K::return
-#L::return
+#H::DirectionalFocus("left")
+#J::DirectionalFocus("down")
+#K::DirectionalFocus("up")
+#L::DirectionalFocus("right")
