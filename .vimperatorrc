@@ -7,3 +7,6 @@ set complete=l
 
 "disable everything but tabs
 set gui=none,tabs
+
+noremap J 50j
+noremap K 50k
