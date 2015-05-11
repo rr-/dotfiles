@@ -403,3 +403,13 @@ AppsKey & PgDn::Send {Volume_Down}
 #J::DirectionalFocus("down")
 #K::DirectionalFocus("up")
 #L::DirectionalFocus("right")
+#1::return
+#2::return
+#3::return
+#4::return
+#5::return
+#6::return
+#7::return
+#8::return
+#9::return
+#0::return
