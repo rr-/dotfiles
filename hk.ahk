@@ -350,9 +350,6 @@ AppsKey & PgDn::Send {Volume_Down}
 !A::WinSet, AlwaysOnTop, Toggle, A
 
 ;transparency
-#1::WinSet, Transparent, 0, A
-#2::WinSet, Transparent, 64, A
-#3::WinSet, Transparent, 255, A
 #WheelUp::
 	WinGet, Transparency, Transparent, A
 	if ! Transparency
