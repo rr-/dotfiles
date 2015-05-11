@@ -249,17 +249,11 @@ AppsKey & PgDn::Send {Volume_Down}
 		}
 		return
 
-;mintty functionalities
-#IfWinActive ahk_class mintty*
-	^!PgUp::SendInput +{PgUp} ;scroll on ctrl+alt+page up
-	^!PgDn::SendInput +{PgDn} ;scroll on ctrl+alt+page down
-#IfWinActive
-
 ;windows powershell / cmd functionalities
 #IfWinActive ahk_class ConsoleWindowClass
-	^V::SendInput {Raw}%clipboard% ;paste on ctrl+v
-	^!PgUp::SendInput ! {Up}{Up}{Up}{Right}{Up}{Up}{Enter}{PgUp}{Enter} ;scroll on ctrl+alt+page up
-	^!PgDn::SendInput ! {Up}{Up}{Up}{Right}{Up}{Up}{Enter}{PgDn}{Enter} ;scroll on ctrl+alt+page down
+	+Insert::SendInput {Raw}%clipboard% ;paste on shift+insert
+	+PgUp::SendInput ! {Up}{Up}{Up}{Right}{Up}{Up}{Enter}{PgUp}{Enter} ;scroll on shift+page up
+	+PgDn::SendInput ! {Up}{Up}{Up}{Right}{Up}{Up}{Enter}{PgDn}{Enter} ;scroll on shift+page down
 #IfWinActive
 
 ;acdsee functionalities
