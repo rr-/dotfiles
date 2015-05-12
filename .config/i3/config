@@ -88,7 +88,7 @@ bindsym Mod1+Ctrl+bracketleft exec i3-run-or-raise -cn 'local_terminal' -p "$ter
 bindsym Mod1+Ctrl+Shift+bracketleft exec $term -name 'local_terminal'
 bindsym Mod1+Ctrl+bracketright exec i3-run-or-raise -cn 'remote_terminal' -p "$term -name 'remote_terminal' -e zsh -i -l -c 'ssh burza'"
 bindsym Mod1+Ctrl+Shift+bracketright exec $term -name 'remote_terminal' -e zsh -i -l -c 'ssh burza'
-bindsym Mod1+Ctrl+semicolon exec i3-run-or-raise -n 'Mozilla Firefox' -p firefox
+bindsym Mod1+Ctrl+semicolon exec i3-run-or-raise -n 'Mozilla Firefox|Vimperator' -p firefox
 bindsym Mod1+Ctrl+Shift+m exec i3-run-or-raise -n 'Buddy List' -p pidgin
 bindsym Mod1+Ctrl+Shift+n exec "$term -e zsh -i -l -c vim"
 bindsym $mod+e exec thunar
