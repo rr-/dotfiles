@@ -164,7 +164,7 @@ bindsym --border --whole-window --release $mod+Button5 exec "compton-trans -c +5
 
 #hotkeys for i3wm management
 #reload the configuration file
-bindsym $mod+Shift+c reload
+bindsym Mod1+F12 reload
 #restart i3 inplace (preserves layout/session, can be used to upgrade i3)
 bindsym $mod+Shift+r restart
 #exit i3 (logs out of the X session)
