@@ -18,6 +18,11 @@ do
             type=class
             match=$1
             ;;
+        -cn|--classname)
+            shift
+            type=classname
+            match=$1
+            ;;
         -p|--program)
             shift
             program=$1
