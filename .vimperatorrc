@@ -13,3 +13,6 @@ noremap K 50k
 
 "fix hints on youtube
 highlight Hint -append z-index:2999999999
+
+"don't enter insert mode automatically
+set focuscontent
