@@ -16,3 +16,7 @@ highlight Hint -append z-index:2999999999
 
 "don't enter insert mode automatically
 set focuscontent
+
+"make it easier to navigate hints single-handed
+set hintchars=12345
+set hintmatching=fuzzy
