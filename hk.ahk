@@ -413,3 +413,5 @@ AppsKey & PgDn::Send {Volume_Down}
 #8::return
 #9::return
 #0::return
++#H::SendInput, {LWin down}{LShift down}{Left}{LShift up}{LWin up}
++#L::SendInput, {LWin down}{LShift down}{Right}{LShift up}{LWin up}
