@@ -19,7 +19,7 @@ set focuscontent
 
 "make it easier to navigate hints single-handed
 set hintchars=12345
-set hintmatching=fuzzy
+set hintmatching=contains
 
 "disable scrollbars
 set scrollbars=false
