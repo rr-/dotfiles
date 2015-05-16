@@ -52,13 +52,13 @@ bindsym XF86Calculator exec --no-startup-id qalculate
 bindsym Mod3+Prior exec amixer -q set Master 1dB+ unmute
 bindsym Mod3+Next exec amixer -q set Master 1dB- unmute
 #toggle play
-bindsym Mod3+Delete exec clementine --play-pause
+bindsym Mod3+Delete exec --no-startup-id clementine --play-pause
 #previous and next track
-bindsym Mod3+Home exec clementine --previous
-bindsym Mod3+End exec clementine --next
+bindsym Mod3+Home exec --no-startup-id clementine --previous
+bindsym Mod3+End exec --no-startup-id clementine --next
 #seek backward and forward
-bindsym Mod1+Shift+Ctrl+Left exec clementine --seek-by -10
-bindsym Mod1+Shift+Ctrl+Right exec clementine --seek-by 10
+bindsym Mod1+Shift+Ctrl+Left exec --no-startup-id clementine --seek-by -10
+bindsym Mod1+Shift+Ctrl+Right exec --no-startup-id clementine --seek-by 10
 #focus music player
 bindsym Mod3+Insert exec i3-run-or-raise -n clementine -p clementine
 
