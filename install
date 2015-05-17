@@ -1,4 +1,6 @@
 #!/bin/bash
+uname="$(uname)"
+
 function die {
 	echo "$*"
 	echo 'Installation aborted.'
@@ -26,6 +28,22 @@ function install_link {
 
 	echo "Linking $source to $target..."
 	ln -s "$source" "$target"
+}
+
+function install_link_or_cp {
+	source=$1
+	target=$2
+
+	if [[ "$uname" =~ cygwin ]]; then
+		if [ -h "$target" ]; then
+			echo -n 'Removing old symlink... '
+			rm "$target"
+		fi
+		echo "Copying $source to $target..."
+		cp "$source" "$target"
+	else
+		install_link "$source" "$target"
+	fi
 }
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
@@ -84,8 +102,8 @@ install_link "$DIR/.vim/spell/pl.utf-8.add"   "$HOME/.vim/spell/pl.utf-8.add"
 install_link "$DIR/.vim/spell/en.utf-8.add"   "$HOME/.vim/spell/en.utf-8.add"
 install_link "$DIR/.vim/vundle"               "$HOME/.vim/vundle"
 install_link "$DIR/.vimrc"                    "$HOME/.vimrc"
-cp           "$DIR/.vimrc"                    "$HOME/.vsvimrc"
-cp           "$DIR/.vimperatorrc"             "$HOME/.vimperatorrc"
+install_link_or_cp "$DIR/.vimrc"              "$HOME/.vsvimrc"
+install_link_or_cp "$DIR/.vimperatorrc"       "$HOME/.vimperatorrc"
 install_link "$DIR/.zlogin"                   "$HOME/.zlogin"
 install_link "$DIR/.zshrc"                    "$HOME/.zshrc"
 install_link "$DIR/.bashrc"                   "$HOME/.bashrc"
@@ -103,7 +121,7 @@ install_link "$DIR/.config/fontconfig"        "$HOME/.config/fontconfig"
 install_link "$DIR/.config/compton.conf"      "$HOME/.config/compton.conf"
 
 shopt -s nocasematch
-if [[ "$(uname)" =~ cygwin ]]; then
+if [[ "$uname" =~ cygwin ]]; then
 	echo "Hiding dotfiles in $HOME..."
 	find "$HOME" -maxdepth 1 -iname '.*' | while read -r x; do
 		attrib +h +s $(cygpath -w `dirname "$x"`)`basename "$x"`
