@@ -29,9 +29,8 @@ else
 	fi
 
 	set -e
-	thunar "$(dirname "$file")" &
-	window_id=`xdotool search --sync --onlyvisible --class 'Thunar' | head -n1`
-	sleep 1
+	thunar "$(dirname "$file")" --name "thunar $file" &
+	window_id=`xdotool search --sync --onlyvisible --classname "thunar $file" | head -n1`
 	xdotool key --clearmodifiers 'ctrl+s'
 	xdotool type "$(basename "$file")"
 	xdotool key Return
