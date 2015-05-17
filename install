@@ -61,6 +61,7 @@ if [ -x "`which pacman`" ]; then
 	aur i3-gaps-next-git -i -q
 	aur ttf-ipa-mona -i -q
 	aur trackma-git -i -q
+	aur escrotum-git -i -q
 fi
 
 if [ -d /usr/share/fonts ]; then
