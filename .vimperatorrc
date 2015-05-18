@@ -2,24 +2,26 @@
 inoremap <C-a> <C-Home><C-S-End>
 cnoremap <C-a> <C-Home><C-S-End>
 
-"disable search engine autocomplete
-set complete=l
+"long jump
+noremap J 50j
+noremap K 50k
+
+nnoremap <C-q> :xall<CR>
+
+ "fix hints on youtube
+highlight Hint -append z-index:2999999999
+
+"disable history autocomplete
+set complete=sl
 
 "disable everything but tabs
 set gui=none,tabs
 
-noremap J 50j
-noremap K 50k
-
-"fix hints on youtube
-highlight Hint -append z-index:2999999999
-
 "don't enter insert mode automatically
 set focuscontent
 
-"make it easier to navigate hints single-handed
+"use only 12345 to constructs hints
 set hintchars=12345
-set hintmatching=contains
 
 "disable scrollbars
 set scrollbars=false
