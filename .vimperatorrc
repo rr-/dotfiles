@@ -23,3 +23,6 @@ set hintmatching=contains
 
 "disable scrollbars
 set scrollbars=false
+
+"show small numbers above each tab
+set tabnumbers=true
