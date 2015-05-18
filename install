@@ -1,5 +1,5 @@
 #!/bin/bash
-uname="$(uname)"
+uname="$(uname|tr '[:upper:]' '[:lower:]')"
 
 function die {
 	echo "$*"
