@@ -291,13 +291,7 @@ AppsKey & PgDn::Send {Volume_Down}
 
 ;other functionalities
 
-;autohotkey - reload this script
-!F11::
-{
-	Process, Close, Rainmeter.exe
-	Run, C:\Program Files \Rainmeter\Rainmeter.exe
-	return
-}
+;reload autohotkey
 !F12::Reload
 
 ;maximize active window
