@@ -146,8 +146,8 @@ if ARGV.length < 1
 end
 
 tags = ARGV.select { |a| !a[/^--/] }.join(' ')
-base_folder = '/cygdrive/z/img/net/gelbooru/' + tags.gsub(/[\\\/:*?"<>|]/, '_')
-FileUtils.mkpath base_folder
+base_folder = File.expand_path('~/img/net/gelbooru/' + tags.gsub(/[\\\/:*?"<>|]/, '_'))
+FileUtils.mkdir_p(base_folder)
 
 force = ARGV.include?('--force')
 url_list = UrlList.new
