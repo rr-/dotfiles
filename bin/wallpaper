@@ -8,6 +8,7 @@ if [ "$1" = swap ]; then
     mv ~/.wallpaper1 ~/.wallpaper3
     mv ~/.wallpaper2 ~/.wallpaper1
     mv ~/.wallpaper3 ~/.wallpaper2
+
 elif [ "$1" = set ]; then
     if [[ ! "$2" =~ [12] ]]; then
         echo 'Unknown monitor'
@@ -21,7 +22,13 @@ elif [ "$1" = set ]; then
 
     cp ~/.wallpaper"$2" ~/.wallpaper"$2"~
     cp "$3" ~/.wallpaper"$2"
+
 elif [ "$1" = identify ]; then
+    if [[ ! $(command -v convert) ]]; then
+        echo 'imagemagick is not installed' 1>&2
+        exit 1
+    fi
+
     tmp=()
     for i in {1..2}; do
         tmp[$i]=/tmp/tmp$i.jpg
@@ -30,6 +37,7 @@ elif [ "$1" = identify ]; then
     feh --bg-fill "${tmp[1]}" "${tmp[2]}" 2>/dev/null
     sleep 1
     rm "${tmp[1]}" "${tmp[2]}"
+
 elif [ "$1" != '' ]; then
     echo 'Unknown command "'"$1"'"'
     exit 1
