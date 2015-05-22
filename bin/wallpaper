@@ -32,11 +32,12 @@ elif [ "$1" = identify ]; then
     tmp=()
     for i in {1..2}; do
         tmp[$i]=/tmp/tmp$i.jpg
+        [ ! -f ~/.wallpaper$i ] && continue
         convert -compose difference ~/.wallpaper$i \( -size 500x500 xc:black -gravity center -fill white -pointsize 500 -draw "text 0,0 '$i'" \) -composite "${tmp[$i]}"
     done
     feh --bg-fill "${tmp[1]}" "${tmp[2]}" 2>/dev/null
     sleep 1
-    rm "${tmp[1]}" "${tmp[2]}"
+    rm -f "${tmp[1]}" "${tmp[2]}"
 
 elif [ "$1" != '' ]; then
     echo 'Unknown command "'"$1"'"'
