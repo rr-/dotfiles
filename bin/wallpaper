@@ -1,0 +1,38 @@
+#!/bin/bash
+if [[ ! $(command -v feh) ]]; then
+    echo 'feh is not installed' 1>&2
+    exit 1
+fi
+
+if [ "$1" = swap ]; then
+    mv ~/.wallpaper1 ~/.wallpaper3
+    mv ~/.wallpaper2 ~/.wallpaper1
+    mv ~/.wallpaper3 ~/.wallpaper2
+elif [ "$1" = set ]; then
+    if [[ ! "$2" =~ [12] ]]; then
+        echo 'Unknown monitor'
+        exit 1
+    fi
+
+    if [ ! -e "$3" ]; then
+        echo 'File "'"$3"'" does not exist'
+        exit 1
+    fi
+
+    cp ~/.wallpaper"$2" ~/.wallpaper"$2"~
+    cp "$3" ~/.wallpaper"$2"
+elif [ "$1" = identify ]; then
+    tmp=()
+    for i in {1..2}; do
+        tmp[$i]=/tmp/tmp$i.jpg
+        convert -compose difference ~/.wallpaper$i \( -size 500x500 xc:black -gravity center -fill white -pointsize 500 -draw "text 0,0 '$i'" \) -composite "${tmp[$i]}"
+    done
+    feh --bg-fill "${tmp[1]}" "${tmp[2]}" 2>/dev/null
+    sleep 1
+    rm "${tmp[1]}" "${tmp[2]}"
+elif [ "$1" != '' ]; then
+    echo 'Unknown command "'"$1"'"'
+    exit 1
+fi
+
+feh --bg-fill "$HOME/.wallpaper1" "$HOME/.wallpaper2" 2>/dev/null
