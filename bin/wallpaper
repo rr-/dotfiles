@@ -33,7 +33,14 @@ elif [ "$1" = identify ]; then
     for i in {1..2}; do
         tmp[$i]=/tmp/tmp$i.jpg
         [ ! -f ~/.wallpaper$i ] && continue
-        convert -compose difference ~/.wallpaper$i \( -size 500x500 xc:black -gravity center -fill white -pointsize 500 -draw "text 0,0 '$i'" \) -composite "${tmp[$i]}"
+        convert ~/.wallpaper$i \( \
+            -size 500x500 xc:black \
+            -gravity center \
+            -font DejaVu-Sans \
+            -fill white \
+            -pointsize 500 \
+            -annotate 0,0 "$i" \
+            \) -compose exclusion -composite "${tmp[$i]}"
     done
     feh --bg-fill "${tmp[1]}" "${tmp[2]}" 2>/dev/null
     sleep 1
