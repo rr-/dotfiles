@@ -74,6 +74,8 @@ if [ -x "`which pacman`" ]; then
 	install_pacman feh
 	install_pacman xdotool
 	install_pacman libconfig #for compton
+	install_pacman autocutsel #synchronize primary and selection clipboards
+	install_pacman clipit #keep clipboard content even after application closes
 	aur compton -i -q
 	aur xcb-util-cursor-git -i -q
 	aur i3-gaps-next-git -i -q
