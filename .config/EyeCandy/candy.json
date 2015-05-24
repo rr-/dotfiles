@@ -56,6 +56,9 @@
         ["RockerLeftToRight",  ["copy_file", "~/hub/yume/"]],
         ["RockerRightToLeft",  ["copy_file", "~/"]],
 
+        ["Ctrl+1",             ["run_script", ["wallpaper", "set", "1", "{}"]]],
+        ["Ctrl+2",             ["run_script", ["wallpaper", "set", "2", "{}"]]],
+
         ["Button2",            ["zoom_in"]],
         ["Button5",            ["toggle_slideshow"]]
     ]
