@@ -123,6 +123,7 @@ install_link "$DIR/.config/i3"                "$HOME/.config/i3"
 install_link "$DIR/.config/i3status"          "$HOME/.config/i3status"
 install_link "$DIR/.config/fontconfig"        "$HOME/.config/fontconfig"
 install_link "$DIR/.config/compton.conf"      "$HOME/.config/compton.conf"
+install_link "$DIR/.config/EyeCandy"          "$HOME/.config/EyeCandy"
 
 echo 'Configuring applications...'
 if [ -x "`which xfconf-query`" ]; then
