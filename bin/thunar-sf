@@ -4,7 +4,13 @@
 # equivalent to rox's -s/--show or ms explorer's /select,file.
 # this assumes that the file is visible to thunar - dotfiles may not work.
 
+# if misc-full-path-in-title is enabled, will also focus relevant window
+# instead of opening new one, if such window exists.
+
 file=$1
+file="${file/#\~/$HOME}" #expand tilde to $HOME
+file=${1%/} #remove trailing slash
+
 if [ -z "$file" ]; then
 	echo 'No file selected' 1>&2
 	exit 1
@@ -15,22 +21,31 @@ if [[ ! $(command -v thunar) ]]; then
 	exit 1
 fi
 
+if [[ ! $(command -v xdotool) ]]; then
+	echo 'Xdotool is not installed' 1>&2
+	exit 1
+fi
+
 if [ -d "$file" ]; then
-	thunar "$file" &
+	window_id=`xdotool search --onlyvisible --name "$file" | head -n1`
+	if [ -z $window_id ]; then
+		thunar "$file" &
+	else
+		xdotool windowactivate "$window_id"
+	fi
 else
 	if [ ! -f "$file" ]; then
 		echo 'File does not exist' 1>&2
 		exit 1
 	fi
 
-	if [[ ! $(command -v xdotool) ]]; then
-		echo 'Xdotool is not installed' 1>&2
-		exit 1
+	dir="$(dirname "$file")"
+	window_id=`xdotool search --onlyvisible --name "$dir" | head -n1`
+	if [ -z $window_id ]; then
+		thunar "$dir" --name "thunar $file" &
+		window_id=`xdotool search --sync --onlyvisible --classname "thunar $file" | head -n1`
 	fi
-
-	set -e
-	thunar "$(dirname "$file")" --name "thunar $file" &
-	window_id=`xdotool search --sync --onlyvisible --classname "thunar $file" | head -n1`
+	xdotool windowactivate "$window_id"
 	xdotool key --clearmodifiers 'ctrl+s'
 	xdotool type "$(basename "$file")"
 	xdotool key Return
