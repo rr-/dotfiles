@@ -21,15 +21,15 @@ xmodmap -e 'keysym Menu = Hyper_L'
 
 #enable transparency manager
 #this is also supposed to eliminate problems with tearing.
+comptonflags=( -b )
 if [[ `hostname` == tornado ]]; then
     # nvidia
-    compton -b --backend glx --vsync opengl-swc --paint-on-overlay
+    comptonflags+=( --backend glx --vsync opengl-swc --paint-on-overlay )
 elif [[ `hostname` == chibi ]]; then
     # amd
-    compton -b --backend xrender --paint-on-overlay --unredir-if-possible
-else
-    compton -b
+    comptonflags+=( --backend xrender --paint-on-overlay --unredir-if-possible )
 fi
+compton "${comptonflags[@]}"
 
 clipit -d &
 autocutsel -fork &

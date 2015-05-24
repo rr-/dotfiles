@@ -161,6 +161,8 @@ floating_modifier $mod
 #hotkeys for changing window transparency
 bindsym --whole-window --release $mod+Button4 exec "compton-trans -c -5"
 bindsym --whole-window --release $mod+Button5 exec "compton-trans -c +5"
+bindsym $mod+Z exec "compton-trans -c -10"
+bindsym $mod+X exec "compton-trans -c +10"
 
 #hotkeys for i3wm management
 #reload the configuration file
