@@ -1,5 +1,6 @@
 #!/usr/bin/ruby
 require 'nokogiri'
+
 doc = Nokogiri.XML(STDIN.read)
 STDOUT.set_encoding('cp1250')
 

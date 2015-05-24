@@ -2,48 +2,48 @@
 uname="$(uname|tr '[:upper:]' '[:lower:]')"
 
 function die {
-	echo "$*"
-	echo 'Installation aborted.'
-	exit 1
+    echo "$*"
+    echo 'Installation aborted.'
+    exit 1
 }
 
 function install_pacman {
-	pacman -Q "$1" >/dev/null
-	if [ $? -ne 0 ]; then
-		echo "Installing $1 with pacman..."
-		sudo pacman -S "$1"
-	fi
+    pacman -Q "$1" >/dev/null
+    if [ $? -ne 0 ]; then
+        echo "Installing $1 with pacman..."
+        sudo pacman -S "$1"
+    fi
 }
 
 function install_link {
-	source=$1
-	target=$2
+    source=$1
+    target=$2
 
-	if [ -h "$target" ]; then
-		echo -n 'Removing old symlink... '
-		rm "$target"
-	else
-		[ -e "$target" ] && die "Not a symlink: $target."
-	fi
+    if [ -h "$target" ]; then
+        echo -n 'Removing old symlink... '
+        rm "$target"
+    else
+        [ -e "$target" ] && die "Not a symlink: $target."
+    fi
 
-	echo "Linking $source to $target..."
-	ln -s "$source" "$target"
+    echo "Linking $source to $target..."
+    ln -s "$source" "$target"
 }
 
 function install_link_or_cp {
-	source=$1
-	target=$2
+    source=$1
+    target=$2
 
-	if [[ "$uname" =~ cygwin ]]; then
-		if [ -h "$target" ]; then
-			echo -n 'Removing old symlink... '
-			rm "$target"
-		fi
-		echo "Copying $source to $target..."
-		cp "$source" "$target"
-	else
-		install_link "$source" "$target"
-	fi
+    if [[ "$uname" =~ cygwin ]]; then
+        if [ -h "$target" ]; then
+            echo -n 'Removing old symlink... '
+            rm "$target"
+        fi
+        echo "Copying $source to $target..."
+        cp "$source" "$target"
+    else
+        install_link "$source" "$target"
+    fi
 }
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
@@ -54,42 +54,42 @@ git submodule update
 popd >/dev/null
 
 if [ -x "`which pacman`" ]; then
-	echo 'Checking pacman packages...'
-	pacman -Q sudo >/dev/null || die 'Install sudo first.'
-	install_pacman git
-	install_pacman zsh
-	install_pacman gvim
-	install_pacman wget
-	install_pacman curl
-	install_pacman openssh
-	install_pacman make
-	install_pacman gcc
-	install_pacman automake
-	install_pacman lsof
-	install_pacman htop
-	install_pacman mpv
-	install_pacman ttf-dejavu
-	install_pacman rxvt-unicode
-	install_pacman thunar
-	install_pacman feh
-	install_pacman xdotool
-	install_pacman libconfig #for compton
-	install_pacman autocutsel #synchronize primary and selection clipboards
-	install_pacman clipit #keep clipboard content even after application closes
-	aur compton -i -q
-	aur xcb-util-cursor-git -i -q
-	aur i3-gaps-next-git -i -q
-	aur ttf-ipa-mona -i -q
-	aur trackma-git -i -q
-	aur escrotum-git -i -q
+    echo 'Checking pacman packages...'
+    pacman -Q sudo >/dev/null || die 'Install sudo first.'
+    install_pacman git
+    install_pacman zsh
+    install_pacman gvim
+    install_pacman wget
+    install_pacman curl
+    install_pacman openssh
+    install_pacman make
+    install_pacman gcc
+    install_pacman automake
+    install_pacman lsof
+    install_pacman htop
+    install_pacman mpv
+    install_pacman ttf-dejavu
+    install_pacman rxvt-unicode
+    install_pacman thunar
+    install_pacman feh
+    install_pacman xdotool
+    install_pacman libconfig #for compton
+    install_pacman autocutsel #synchronize primary and selection clipboards
+    install_pacman clipit #keep clipboard content even after application closes
+    aur compton -i -q
+    aur xcb-util-cursor-git -i -q
+    aur i3-gaps-next-git -i -q
+    aur ttf-ipa-mona -i -q
+    aur trackma-git -i -q
+    aur escrotum-git -i -q
 fi
 
 if [ -d /usr/share/fonts ]; then
-	fonts_dir="$HOME/.local/share/fonts"
-	[ -d "$fonts_dir" ] || mkdir -p "$fonts_dir"
-	find $DIR/misc -iregex '.*\.[to]tf' | while read -r x; do
-		install_link "$x" "$fonts_dir/$(basename "$x")"
-	done
+    fonts_dir="$HOME/.local/share/fonts"
+    [ -d "$fonts_dir" ] || mkdir -p "$fonts_dir"
+    find $DIR/misc -iregex '.*\.[to]tf' | while read -r x; do
+        install_link "$x" "$fonts_dir/$(basename "$x")"
+    done
 fi
 
 [ ! -d "$HOME/.vim" ] && mkdir "$HOME/.vim"
@@ -126,19 +126,19 @@ install_link "$DIR/.config/compton.conf"      "$HOME/.config/compton.conf"
 
 echo 'Configuring applications...'
 if [ -x "`which xfconf-query`" ]; then
-	#enable full path in thunar window title for scripting
-	xfconf-query --channel thunar --property /misc-full-path-in-title --create --type bool --set true
+    #enable full path in thunar window title for scripting
+    xfconf-query --channel thunar --property /misc-full-path-in-title --create --type bool --set true
 fi
 
 shopt -s nocasematch
 if [[ "$uname" =~ cygwin ]]; then
-	echo "Hiding dotfiles in $HOME..."
-	find "$HOME" -maxdepth 1 -iname '.*' | while read -r x; do
-		attrib +h +s $(cygpath -w `dirname "$x"`)`basename "$x"`
-	done
+    echo "Hiding dotfiles in $HOME..."
+    find "$HOME" -maxdepth 1 -iname '.*' | while read -r x; do
+        attrib +h +s $(cygpath -w `dirname "$x"`)`basename "$x"`
+    done
 fi
 
 if [ -d /usr/share/fonts ]; then
-	echo 'Generating font cache...'
-	fc-cache
+    echo 'Generating font cache...'
+    fc-cache
 fi
