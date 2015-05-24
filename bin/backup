@@ -12,36 +12,36 @@ server_backup=( /home/backup/backup-sql "/home/$user" /home/srv )
 desktop_backup=( $HOME/clutter $HOME/img $HOME/text $HOME/src )
 
 function sync {
-	rsync \
-		--chmod=D=rwxrxrx,F=rwrr \
-		--progress \
-		--whole-file \
-		-aKR \
-		--delete-excluded \
-		--delete-during \
-		"$1" \
-		"$2" \
-		--exclude "*.vdi" \
-		--exclude "$HOME/img/net/" \
-		--exclude "/home/$user/img/" \
-		--exclude "/home/srv/www/mal-dev/data/" \
-		--exclude "/home/srv/www/booru-dev/public_html/data/" \
-		--exclude "thumbnails/" \
-		--exclude '.git/' \
-		--exclude 'node_modules/' \
-		--exclude 'vendor/'
+    rsync \
+        --chmod=D=rwxrxrx,F=rwrr \
+        --progress \
+        --whole-file \
+        -aKR \
+        --delete-excluded \
+        --delete-during \
+        "$1" \
+        "$2" \
+        --exclude "*.vdi" \
+        --exclude "$HOME/img/net/" \
+        --exclude "/home/$user/img/" \
+        --exclude "/home/srv/www/mal-dev/data/" \
+        --exclude "/home/srv/www/booru-dev/public_html/data/" \
+        --exclude "thumbnails/" \
+        --exclude '.git/' \
+        --exclude 'node_modules/' \
+        --exclude 'vendor/'
 }
 
 for x in ${server_backup[@]}; do
-	echo "$server --> $desktop: $x"
-	target_dir="$HOME/.backup/$server/"
-	[ ! -d "$target_dir" ] && mkdir -p "$target_dir"
-	sync "$user@$server_addr:$x/" "$target_dir"
-	echo
+    echo "$server --> $desktop: $x"
+    target_dir="$HOME/.backup/$server/"
+    [ ! -d "$target_dir" ] && mkdir -p "$target_dir"
+    sync "$user@$server_addr:$x/" "$target_dir"
+    echo
 done
 
 for x in ${desktop_backup[@]}; do
-	echo "$desktop --> $server: $x"
-	sync "$x/" "$backup_user@$server_addr:/home/backup/$desktop/"
-	echo
+    echo "$desktop --> $server: $x"
+    sync "$x/" "$backup_user@$server_addr:/home/backup/$desktop/"
+    echo
 done

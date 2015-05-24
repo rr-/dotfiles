@@ -12,41 +12,41 @@ file="${file/#\~/$HOME}" #expand tilde to $HOME
 file=${1%/} #remove trailing slash
 
 if [ -z "$file" ]; then
-	echo 'No file selected' 1>&2
-	exit 1
+    echo 'No file selected' 1>&2
+    exit 1
 fi
 
 if [[ ! $(command -v thunar) ]]; then
-	echo 'Thunar is not installed' 1>&2
-	exit 1
+    echo 'Thunar is not installed' 1>&2
+    exit 1
 fi
 
 if [[ ! $(command -v xdotool) ]]; then
-	echo 'Xdotool is not installed' 1>&2
-	exit 1
+    echo 'Xdotool is not installed' 1>&2
+    exit 1
 fi
 
 if [ -d "$file" ]; then
-	window_id=`xdotool search --onlyvisible --name "$file" | head -n1`
-	if [ -z $window_id ]; then
-		thunar "$file" &
-	else
-		xdotool windowactivate "$window_id"
-	fi
+    window_id=`xdotool search --onlyvisible --name "$file" | head -n1`
+    if [ -z $window_id ]; then
+        thunar "$file" &
+    else
+        xdotool windowactivate "$window_id"
+    fi
 else
-	if [ ! -f "$file" ]; then
-		echo 'File does not exist' 1>&2
-		exit 1
-	fi
+    if [ ! -f "$file" ]; then
+        echo 'File does not exist' 1>&2
+        exit 1
+    fi
 
-	dir="$(dirname "$file")"
-	window_id=`xdotool search --onlyvisible --name "$dir" | head -n1`
-	if [ -z $window_id ]; then
-		thunar "$dir" --name "thunar $file" &
-		window_id=`xdotool search --sync --onlyvisible --classname "thunar $file" | head -n1`
-	fi
-	xdotool windowactivate "$window_id"
-	xdotool key --clearmodifiers 'ctrl+s'
-	xdotool type "$(basename "$file")"
-	xdotool key Return
+    dir="$(dirname "$file")"
+    window_id=`xdotool search --onlyvisible --name "$dir" | head -n1`
+    if [ -z $window_id ]; then
+        thunar "$dir" --name "thunar $file" &
+        window_id=`xdotool search --sync --onlyvisible --classname "thunar $file" | head -n1`
+    fi
+    xdotool windowactivate "$window_id"
+    xdotool key --clearmodifiers 'ctrl+s'
+    xdotool type "$(basename "$file")"
+    xdotool key Return
 fi

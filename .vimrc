@@ -25,21 +25,21 @@ if $TERM == "xterm"
 \ || $TERM == "screen"
 \ || $TERM == "screen-256color"
 \ || $TERM == "rxvt-unicode-256color"
-    set t_Co=256
+  set t_Co=256
 endif
 
 "color scheme
 let background_file=$HOME."/.vimrc-background"
 if filereadable(background_file)
-    exec 'so ' . background_file
+  exec 'so ' . background_file
 else
-    colorscheme hemisu
-    set background=light
+  colorscheme hemisu
+  set background=light
 endif
 
 "set gutter width to 80 characters
 if exists('+colorcolumn')
-    set colorcolumn=80
+  set colorcolumn=80
 endif
 
 "-----------------------------------------
@@ -103,7 +103,7 @@ highlight SpecialKey ctermbg=NONE ctermfg=187
 highlight ExtraWhitespace ctermbg=red guibg=red
 "fix ColorColumn on dark backgrounds
 if &background == 'dark'
-    highlight ColorColumn ctermbg=52
+  highlight ColorColumn ctermbg=52
 end
 "show white characters
 set list listchars=tab:→\ ,trail:·
@@ -121,12 +121,12 @@ command! Tabs set noet sts=4 ts=4 sw=4
 command! CreateDirs execute ':silent !mkdir -p %:h' | write
 "copy text file with hard wraps (e.g. Markdown) as one line
 function! CopyWithoutHardWrapping()
-    let old_tw=&textwidth
-    :set tw=10000
-    silent! normal gg gqG
-    silent! normal gg "*yG
-    let &textwidth=old_tw
-    undo
+  let old_tw=&textwidth
+  :set tw=10000
+  silent! normal gg gqG
+  silent! normal gg "*yG
+  let &textwidth=old_tw
+  undo
 endfunction
 command! CopyWithoutHardWrapping call CopyWithoutHardWrapping()
 
@@ -264,56 +264,56 @@ inoremap <Down> <Nop>
 inoremap <Left> <Nop>
 inoremap <Right> <Nop>
 
-    "----------------------------------------
-    " ctrl+k/j = move line up/down
-    "----------------------------------------
-    function! MoveLineUp()
-        call MoveLineOrVisualUp(".", "")
-    endfunction
+  "----------------------------------------
+  " ctrl+k/j = move line up/down
+  "----------------------------------------
+  function! MoveLineUp()
+    call MoveLineOrVisualUp(".", "")
+  endfunction
 
-    function! MoveLineDown()
-        call MoveLineOrVisualDown(".", "")
-    endfunction
+  function! MoveLineDown()
+    call MoveLineOrVisualDown(".", "")
+  endfunction
 
-    function! MoveVisualUp()
-        call MoveLineOrVisualUp("'<", "'<,'>")
-        normal gv
-    endfunction
+  function! MoveVisualUp()
+    call MoveLineOrVisualUp("'<", "'<,'>")
+    normal gv
+  endfunction
 
-    function! MoveVisualDown()
-        call MoveLineOrVisualDown("'>", "'<,'>")
-        normal gv
-    endfunction
+  function! MoveVisualDown()
+    call MoveLineOrVisualDown("'>", "'<,'>")
+    normal gv
+  endfunction
 
-    function! MoveLineOrVisualUp(line_getter, range)
-        let l_num = line(a:line_getter)
-        if l_num - v:count1 - 1 < 0
-            let move_arg = "0"
-        else
-            let move_arg = a:line_getter." -".(v:count1 + 1)
-        endif
-        call MoveLineOrVisualUpOrDown(a:range."move ".move_arg)
-    endfunction
+  function! MoveLineOrVisualUp(line_getter, range)
+    let l_num = line(a:line_getter)
+    if l_num - v:count1 - 1 < 0
+        let move_arg = "0"
+    else
+        let move_arg = a:line_getter." -".(v:count1 + 1)
+    endif
+    call MoveLineOrVisualUpOrDown(a:range."move ".move_arg)
+  endfunction
 
-    function! MoveLineOrVisualDown(line_getter, range)
-        let l_num = line(a:line_getter)
-        if l_num + v:count1 > line("$")
-            let move_arg = "$"
-        else
-            let move_arg = a:line_getter." +".v:count1
-        endif
-        call MoveLineOrVisualUpOrDown(a:range."move ".move_arg)
-    endfunction
+  function! MoveLineOrVisualDown(line_getter, range)
+    let l_num = line(a:line_getter)
+    if l_num + v:count1 > line("$")
+        let move_arg = "$"
+    else
+        let move_arg = a:line_getter." +".v:count1
+    endif
+    call MoveLineOrVisualUpOrDown(a:range."move ".move_arg)
+  endfunction
 
-    function! MoveLineOrVisualUpOrDown(move_arg)
-        let col_num = virtcol(".")
-        execute "silent! ".a:move_arg
-        execute "normal! ".col_num."|"
-    endfunction
+  function! MoveLineOrVisualUpOrDown(move_arg)
+    let col_num = virtcol(".")
+    execute "silent! ".a:move_arg
+    execute "normal! ".col_num."|"
+  endfunction
 
-    nnoremap <silent> <C-k> :<C-u>call MoveLineUp()<CR>
-    nnoremap <silent> <C-j> :<C-u>call MoveLineDown()<CR>
-    vnoremap <silent> <C-k> :<C-u>call MoveVisualUp()<CR>
-    vnoremap <silent> <C-j> :<C-u>call MoveVisualDown()<CR>
-    inoremap <silent> <C-k> <Esc>:call MoveLineUp()<CR>a
-    inoremap <silent> <C-j> <Esc>:call MoveLineDown()<CR>a
+  nnoremap <silent> <C-k> :<C-u>call MoveLineUp()<CR>
+  nnoremap <silent> <C-j> :<C-u>call MoveLineDown()<CR>
+  vnoremap <silent> <C-k> :<C-u>call MoveVisualUp()<CR>
+  vnoremap <silent> <C-j> :<C-u>call MoveVisualDown()<CR>
+  inoremap <silent> <C-k> <Esc>:call MoveLineUp()<CR>a
+  inoremap <silent> <C-j> <Esc>:call MoveLineDown()<CR>a
