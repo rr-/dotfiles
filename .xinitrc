@@ -31,4 +31,8 @@ else
     compton -b
 fi
 
+clipit -d &
+autocutsel -fork &
+autocutsel -selection PRIMARY -fork &
+
 exec i3
