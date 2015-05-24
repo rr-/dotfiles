@@ -33,13 +33,14 @@ elif [ "$1" = identify ]; then
     for i in {1..2}; do
         tmp[$i]=/tmp/tmp$i.jpg
         [ ! -f ~/.wallpaper$i ] && continue
-        convert ~/.wallpaper$i \( \
+        convert \( ~/.wallpaper$i -resize 1920x1080 -crop 1920x1080+0+0 \) \( \
             -size 500x500 xc:black \
             -gravity center \
             -font DejaVu-Sans \
             -fill white \
-            -pointsize 500 \
+            -pointsize 400 \
             -annotate 0,0 "$i" \
+            -trim \
             \) -compose exclusion -composite "${tmp[$i]}"
     done
     feh --bg-fill "${tmp[1]}" "${tmp[2]}" 2>/dev/null
