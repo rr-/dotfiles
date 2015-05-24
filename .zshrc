@@ -5,6 +5,7 @@ HOST=$(hostname)
 # environment variables
 export EDITOR=vim                       # for stuff that need interactive editor
 export PATH=$DIR/bin:$DIR/bin/ext:$PATH # PATH for all the goodies in this repo
+export PATH=/usr/local/bin:$PATH        # prefer manually compiled libaries
 export PATH=$PATH:$HOME/.rvm/bin        # PATH to rvm
     [ -s ~/.rvm/scripts/rvm ] &&        # Check if rvm exists
         source ~/.rvm/scripts/rvm       # And run its init script
