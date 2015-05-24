@@ -124,6 +124,12 @@ install_link "$DIR/.config/i3status"          "$HOME/.config/i3status"
 install_link "$DIR/.config/fontconfig"        "$HOME/.config/fontconfig"
 install_link "$DIR/.config/compton.conf"      "$HOME/.config/compton.conf"
 
+echo 'Configuring applications...'
+if [ -x "`which xfconf-query`" ]; then
+	#enable full path in thunar window title for scripting
+	xfconf-query --channel thunar --property /misc-full-path-in-title --create --type bool --set true
+fi
+
 shopt -s nocasematch
 if [[ "$uname" =~ cygwin ]]; then
 	echo "Hiding dotfiles in $HOME..."
