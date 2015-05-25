@@ -1,5 +1,15 @@
 #!/bin/sh
 
+if ! command -v makepkg &>/dev/null; then
+    echo 1>&2 'makepkg not installed. Aborting.'
+    exit 1
+fi
+
+if ! command -v wget &>/dev/null; then
+    echo 1>&2 'wget not installed. Aborting.'
+    exit 1
+fi
+
 install=0
 force=0
 quiet=0
