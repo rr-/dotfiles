@@ -390,8 +390,11 @@ AppsKey & PgDn::Send {Volume_Down}
 	SendInput, {LWin down}r{LWin up}
 	return
 #F::
-	ActiveHwnd := WinExist("A")
-	PostMessage 0x112, 0xf030 ;WM_SYSCOMMAND, SC_MAXIMIZE
+	WinGet MX, MinMax, A
+	if MX
+		WinRestore A
+	else
+		WinMaximize A
 	return
 #H::DirectionalFocus("left")
 #J::DirectionalFocus("down")
