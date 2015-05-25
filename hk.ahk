@@ -78,6 +78,28 @@ OnClipboardChange:
 
 ;declare some fun functions...
 
+AddTransparency(delta)
+{
+	WinGet, Transparency, Transparent, A
+	if ! Transparency
+		Transparency = 255
+	Transparency := Transparency + delta
+	if Transparency <= 10
+	{
+		WinSet, Transparent, 10, A
+	}
+	else if Transparency >= 255
+	{
+		WinSet, Transparent, 255, A
+		WinSet, Transparent, OFF, A
+	}
+	else
+	{
+		WinSet, Transparent, %Transparency%, A
+	}
+	return
+}
+
 ;activate/run a program
 FRun(window, path, folder)
 {
@@ -327,44 +349,10 @@ AppsKey & PgDn::Send {Volume_Down}
 !A::WinSet, AlwaysOnTop, Toggle, A
 
 ;transparency
-#WheelUp::
-	WinGet, Transparency, Transparent, A
-	if ! Transparency
-		Transparency = 255
-	Transparency := Transparency + 16
-	if Transparency <= 10
-	{
-		WinSet, Transparent, 10, A
-	}
-	else if Transparency >= 255
-	{
-		WinSet, Transparent, 255, A
-		WinSet, Transparent, OFF, A
-	}
-	else
-	{
-		WinSet, Transparent, %Transparency%, A
-	}
-	return
-#WheelDown::
-	WinGet, Transparency, Transparent, A
-	if ! Transparency
-		Transparency = 255
-	Transparency := Transparency - 16
-	if Transparency <= 10
-	{
-		WinSet, Transparent, 10, A
-	}
-	else if Transparency >= 255
-	{
-		WinSet, Transparent, 255, A
-		WinSet, Transparent, OFF, A
-	}
-	else
-	{
-		WinSet, Transparent, %Transparency%, A
-	}
-	return
+#WheelUp::AddTransparency(16)
+#WheelDown::AddTransparency(-16)
+#Z::AddTransparency(-25)
+#X::AddTransparency(25)
 
 ;explorer
 #IfWinActive ahk_class CabinetWClass
