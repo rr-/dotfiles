@@ -49,6 +49,8 @@
         ["Ctrl+Shift+M",       ["move_file", "~/"]],
         ["Delete",             ["delete_file"]],
         ["9",                  ["volume_down", 0.05]],
+        ["Shift+Left",         ["seek", -2500]],
+        ["Shift+Right",        ["seek", 2500]],
         ["0",                  ["volume_up", 0.05]],
         ["Ctrl+T",             ["run_script", ["thunar-sf", "{}"]], ["close"]],
         ["[",                  ["copy_file", "~/hub/yume/"]],
