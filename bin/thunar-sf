@@ -12,17 +12,17 @@ file="${file/#\~/$HOME}" #expand tilde to $HOME
 file=${1%/} #remove trailing slash
 
 if [ -z "$file" ]; then
-    echo 'No file selected' 1>&2
+    echo 'No file selected. Aborting.' 1>&2
     exit 1
 fi
 
-if [[ ! $(command -v thunar) ]]; then
-    echo 'Thunar is not installed' 1>&2
+if ! command -v thunar &>/dev/null; then
+    echo 1>&2 'Thunar not found. Aborting.'
     exit 1
 fi
 
-if [[ ! $(command -v xdotool) ]]; then
-    echo 'Xdotool is not installed' 1>&2
+if ! command -v xdotool &>/dev/null; then
+    echo 1>&2 'xdotool not found. Aborting.'
     exit 1
 fi
 
@@ -35,7 +35,7 @@ if [ -d "$file" ]; then
     fi
 else
     if [ ! -f "$file" ]; then
-        echo 'File does not exist' 1>&2
+        echo 'File does not exist. Aborting.' 1>&2
         exit 1
     fi
 

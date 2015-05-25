@@ -1,6 +1,6 @@
 #!/bin/bash
-if [[ ! $(command -v feh) ]]; then
-    echo 'feh is not installed' 1>&2
+if ! command -v feh &>/dev/null; then
+    echo 1>&2 'feh not found. Aborting.'
     exit 1
 fi
 
@@ -24,8 +24,8 @@ elif [ "$1" = set ]; then
     cp "$3" ~/.wallpaper"$2"
 
 elif [ "$1" = identify ]; then
-    if [[ ! $(command -v convert) ]]; then
-        echo 'imagemagick is not installed' 1>&2
+    if ! command -v convert &>/dev/null; then
+        echo 1>&2 'imagemagick not found. Aborting.'
         exit 1
     fi
 
