@@ -154,6 +154,8 @@ function install_link_or_cp {
             install_link "$dir/.xinitrc" "$HOME/.xinitrc"
         fi
         install_pacman libconfig #for compton
+        install_pacman xorg-xprop #for compton-trans
+        install_pacman xorg-xwininfo #for compton-trans
         install_aur compton
         if has_installed compton 'compton config'; then
             install_link "$dir/.config/compton.conf" "$HOME/.config/compton.conf"
