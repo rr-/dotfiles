@@ -5,18 +5,12 @@ if [ -z "$1" ]; then
     exit 1
 fi
 
-ffmpeg=$(command -v ffmpeg)
-if [ -z "$ffmpeg" ]; then
-    list=( /cygdrive/z/software/utilities/*ffmpeg*/bin/ffmpeg.exe )
-    ffmpeg="${list[0]}"
-fi
-
-if [ -z "$ffmpeg" ]; then
-    echo ffmpeg not found. 1>&2
+if ! command -v ffmpeg &>/dev/null; then
+    echo 1>&2 'ffmpeg not found. Aborting.'
     exit 1
 fi
 
 in="$1"
 out="$(echo $1|sed 's/gif/webm/i')"
 
-"$ffmpeg" -i "$in" -c:v libvpx -crf 12 -b:v 500K "$out"
+ffmpeg -i "$in" -c:v libvpx -crf 12 -b:v 500K "$out"

@@ -1,12 +1,12 @@
 #!/bin/sh
 
 if [ "$(id -u)" != '0' ]; then
-    echo 'This script must be run as root' 1>&2
+    echo 1>&2 'This script must be run as root'
     exit 1
 fi
 
 if [ ! -f /backup.tgz ]; then
-    echo 'Backup not found.' 1>&2
+    echo 1>&2 'Backup not found.'
     return 1
 fi
 

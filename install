@@ -53,7 +53,7 @@ git submodule init
 git submodule update
 popd >/dev/null
 
-if [ -x "`which pacman`" ]; then
+if command -v pacman &>/dev/null; then
     echo 'Checking pacman packages...'
     pacman -Q sudo >/dev/null || die 'Install sudo first.'
     install_pacman git
@@ -127,7 +127,7 @@ install_link "$DIR/.config/compton.conf"      "$HOME/.config/compton.conf"
 install_link "$DIR/.config/EyeCandy"          "$HOME/.config/EyeCandy"
 
 echo 'Configuring applications...'
-if [ -x "`which xfconf-query`" ]; then
+if command -v xfconf-query &>/dev/null; then
     #enable full path in thunar window title for scripting
     xfconf-query --channel thunar --property /misc-full-path-in-title --create --type bool --set true
 fi

@@ -5,6 +5,11 @@
 lst_file="$1"
 pls_file="$2"
 
+if ! command -v wget &>/dev/null; then
+    echo 1>&2 'wget not found. Aborting.'
+    exit 1
+fi
+
 echo '[playlist]' > "$pls_file"
 
 index=1

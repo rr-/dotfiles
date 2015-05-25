@@ -31,7 +31,7 @@ diff=$(( $ts1 - $ts2 ))
 diff=$(echo ${diff#-})
 
 
-if `command -v >/dev/null 2>&1 bc`; then
+if command -v bc &>/dev/null; then
     year_days=365.25
     month_days=$(echo "scale = 10; $year_days / 12" | bc)
     calc () {

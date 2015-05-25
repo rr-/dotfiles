@@ -1,4 +1,8 @@
 #!/bin/bash
+if ! command -v convert &>/dev/null; then
+    echo 1>&2 'imagemagick not found. Aborting.'
+    exit 1
+fi
 
 op="$1"
 shift 1
