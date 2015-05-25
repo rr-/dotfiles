@@ -1,5 +1,11 @@
 #!/bin/bash
+shopt -s nocasematch
 uname="$(uname|tr '[:upper:]' '[:lower:]')"
+dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+function create_folder {
+    [ ! -d "$1" ] && mkdir -p "$1"
+}
 
 function die {
     echo "$*"
@@ -7,11 +13,38 @@ function die {
     exit 1
 }
 
+function has_installed {
+    command -v "$1" &>/dev/null && return 0
+    echo 1>&2 "$1 not installed, $2 ignored"
+    return 1
+}
+
 function install_pacman {
-    pacman -Q "$1" >/dev/null
-    if [ $? -ne 0 ]; then
+    has_installed pacman "$1" || return
+    has_installed sudo "$1" || return
+    if pacman -Q "$1" >/dev/null; then
+        echo "$1 already installed"
+    else
         echo "Installing $1 with pacman..."
         sudo pacman -S "$1"
+    fi
+}
+
+function install_aur {
+    url=https://aur.archlinux.org/packages/${1:0:2}/$1/$1.tar.gz
+    has_installed pacman "$1" || return
+    has_installed sudo "$1" || return
+    has_installed wget "$1" || return
+    has_installed tar "$1" || return
+    if pacman -Q "$1" >/dev/null; then
+        echo "$1 already installed"
+    else
+        pushd /tmp >/dev/null
+        wget "$url" -qO- | tar xz || { echo "Package $1 not found!"; exit 1; }
+        cd "$1"
+        makepkg -i
+        cd /tmp
+        popd >/dev/null
     fi
 }
 
@@ -27,6 +60,7 @@ function install_link {
     fi
 
     echo "Linking $source to $target..."
+    create_folder $(dirname "$target")
     ln -s "$source" "$target"
 }
 
@@ -46,102 +80,151 @@ function install_link_or_cp {
     fi
 }
 
-DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-pushd $DIR >/dev/null
-echo 'Updating git submodules...'
-git submodule init
-git submodule update
-popd >/dev/null
+#basic stuff
+    pushd $dir >/dev/null
+    echo 'Updating git submodules...'
+    git submodule init
+    git submodule update
+    popd >/dev/null
 
-if command -v pacman &>/dev/null; then
-    echo 'Checking pacman packages...'
-    pacman -Q sudo >/dev/null || die 'Install sudo first.'
-    install_pacman git
-    install_pacman zsh
-    install_pacman gvim
-    install_pacman wget
+#networking
+    install_pacman wget #required for install_aur
     install_pacman curl
     install_pacman openssh
+
+#fonts
+    install_pacman ttf-dejavu
+    install_aur ttf-ipa-mona
+    if has_installed fc-list 'font config'; then
+        install_link "$dir/.config/fontconfig" "$HOME/.config/fontconfig"
+        fc-cache
+    fi
+    if [ -d /usr/share/fonts ]; then
+        fonts_dir="$HOME/.local/share/fonts"
+        [ -d "$fonts_dir" ] || mkdir -p "$fonts_dir"
+        find "$dir/misc" -iregex '.*\.[to]tf' | while read -r x; do
+            install_link "$x" "$fonts_dir/$(basename "$x")"
+        done
+    fi
+
+#i3
+    if [[ "$uname" =~ linux ]]; then
+        install_pacman feh
+        install_aur xcb-util-cursor-git
+        install_aur i3-gaps-next-git
+        if has_installed i3 'i3 config'; then
+            install_link "$dir/ext/i3-floater/i3-floater" "$dir/bin/ext/i3-floater"
+            install_link "$dir/.config/i3" "$HOME/.config/i3"
+            install_link "$dir/.config/i3status" "$HOME/.config/i3status"
+        fi
+    fi
+
+#git
+    install_pacman git
+    install_link "$dir/.gitconfig" "$HOME/.gitconfig"
+    install_link "$dir/.gitignore" "$HOME/.gitignore"
+
+#vim
+    install_pacman gvim
+    if has_installed vim 'vim config'; then
+        create_folder "$HOME/.vim/undo"
+        create_folder "$HOME/.vim/backup"
+        create_folder "$HOME/.vim/swap"
+        create_folder "$HOME/.vim/spell"
+        install_link "$dir/.vim/spell/pl.utf-8.add" "$HOME/.vim/spell/pl.utf-8.add"
+        install_link "$dir/.vim/spell/en.utf-8.add" "$HOME/.vim/spell/en.utf-8.add"
+        install_link "$dir/.vim/vundle" "$HOME/.vim/vundle"
+        install_link "$dir/.vimrc" "$HOME/.vimrc"
+    fi
+
+#zsh
+    install_pacman zsh
+    if has_installed zsh 'zsh config'; then
+        install_link "$dir/.zlogin" "$HOME/.zlogin"
+        install_link "$dir/.zshrc" "$HOME/.zshrc"
+    fi
+
+#x
+    if [[ "$uname" =~ linux ]]; then
+        install_aur escrotum-git
+        install_pacman xdotool
+        install_pacman autocutsel #synchronize primary and selection clipboards
+        install_pacman clipit #keep clipboard content even after application closes
+        if has_installed Xorg 'x init script'; then
+            install_link "$dir/.xinitrc" "$HOME/.xinitrc"
+        fi
+        install_pacman libconfig #for compton
+        install_aur compton
+        if has_installed compton 'compton config'; then
+            install_link "$dir/.config/compton.conf" "$HOME/.config/compton.conf"
+        fi
+    fi
+
+#development
     install_pacman make
     install_pacman gcc
     install_pacman automake
-    install_pacman lsof
-    install_pacman htop
-    install_pacman mpv
-    install_pacman ttf-dejavu
+
+    #visual studio
+        if has_installed devenv 'visual studio config'; then
+            install_link_or_cp "$dir/.vimrc" "$HOME/.vsvimrc"
+        fi
+
+#firefox
+    if has_installed firefox 'vimperator config'; then
+        install_link_or_cp "$dir/.vimperatorrc" "$HOME/.vimperatorrc"
+    fi
+
+#terminal emulators
     install_pacman rxvt-unicode
+    if has_installed urxvt 'urxvt config'; then
+        install_link "$dir/.config/Xresources" "$HOME/.config/Xresources"
+        install_link "$dir/.config/Xresources-light" "$HOME/.config/Xresources-light"
+        install_link "$dir/.config/Xresources-dark" "$HOME/.config/Xresources-dark"
+    fi
+    if has_installed mintty 'mintty config'; then
+        install_link "$dir/.inputrc" "$HOME/.inputrc"
+        install_link "$dir/.minttyrc-light" "$HOME/.minttyrc"
+    fi
+
+#mpv
+    install_pacman mpv
+    if has_installed mpv 'mpv config'; then
+        install_link "$dir/.config/mpv" "$HOME/.config/mpv"
+    fi
+
+#eyecandy
+    install_link "$dir/ext/eyecandy/eyecandy" "$dir/bin/ext/eyecandy"
+    if has_installed eyecandy 'eyecandy config'; then
+        install_link "$dir/.config/EyeCandy" "$HOME/.config/EyeCandy"
+    fi
+
+#trackma
+    if [[ "$uname" =~ linux ]]; then
+        install_pacman lsof
+        install_aur trackma-git
+    fi
+
+#htop
+    install_pacman htop
+    if has_installed htop 'htop config'; then
+        install_link "$dir/.config/htop" "$HOME/.config/htop"
+    fi
+
+#translator
+    install_link "$dir/ext/translator/tl" "$dir/bin/ext/tl"
+
+#thunar
     install_pacman thunar
-    install_pacman feh
-    install_pacman xdotool
-    install_pacman libconfig #for compton
-    install_pacman autocutsel #synchronize primary and selection clipboards
-    install_pacman clipit #keep clipboard content even after application closes
-    aur compton -i -q
-    aur xcb-util-cursor-git -i -q
-    aur i3-gaps-next-git -i -q
-    aur ttf-ipa-mona -i -q
-    aur trackma-git -i -q
-    aur escrotum-git -i -q
-fi
+    if command -v xfconf-query &>/dev/null; then
+        #enable full path in thunar window title for scripting
+        xfconf-query --channel thunar --property /misc-full-path-in-title --create --type bool --set true
+    fi
 
-if [ -d /usr/share/fonts ]; then
-    fonts_dir="$HOME/.local/share/fonts"
-    [ -d "$fonts_dir" ] || mkdir -p "$fonts_dir"
-    find $DIR/misc -iregex '.*\.[to]tf' | while read -r x; do
-        install_link "$x" "$fonts_dir/$(basename "$x")"
-    done
-fi
-
-[ ! -d "$HOME/.vim" ] && mkdir "$HOME/.vim"
-[ ! -d "$HOME/.vim/undo" ] && mkdir "$HOME/.vim/undo"
-[ ! -d "$HOME/.vim/backup" ] && mkdir "$HOME/.vim/backup"
-[ ! -d "$HOME/.vim/swap" ] && mkdir "$HOME/.vim/swap"
-[ ! -d "$HOME/.vim/spell" ] && mkdir "$HOME/.vim/spell"
-
-install_link "$DIR/ext/translator/tl"         "$DIR/bin/ext/tl"
-install_link "$DIR/ext/i3-floater/i3-floater" "$DIR/bin/ext/i3-floater"
-install_link "$DIR/ext/eyecandy/eyecandy"     "$DIR/bin/ext/eyecandy"
-install_link "$DIR/.vim/spell/pl.utf-8.add"   "$HOME/.vim/spell/pl.utf-8.add"
-install_link "$DIR/.vim/spell/en.utf-8.add"   "$HOME/.vim/spell/en.utf-8.add"
-install_link "$DIR/.vim/vundle"               "$HOME/.vim/vundle"
-install_link "$DIR/.vimrc"                    "$HOME/.vimrc"
-install_link_or_cp "$DIR/.vimrc"              "$HOME/.vsvimrc"
-install_link_or_cp "$DIR/.vimperatorrc"       "$HOME/.vimperatorrc"
-install_link "$DIR/.zlogin"                   "$HOME/.zlogin"
-install_link "$DIR/.zshrc"                    "$HOME/.zshrc"
-install_link "$DIR/.bashrc"                   "$HOME/.bashrc"
-install_link "$DIR/.inputrc"                  "$HOME/.inputrc"
-install_link "$DIR/.minttyrc-light"           "$HOME/.minttyrc"
-install_link "$DIR/.gitconfig"                "$HOME/.gitconfig"
-install_link "$DIR/.gitignore"                "$HOME/.gitignore"
-install_link "$DIR/.xinitrc"                  "$HOME/.xinitrc"
-[ ! -d "$DIR/.config" ] && mkdir "$DIR/.config"
-install_link "$DIR/.config/Xresources"        "$HOME/.config/Xresources"
-install_link "$DIR/.config/Xresources-light"  "$HOME/.config/Xresources-light"
-install_link "$DIR/.config/Xresources-dark"   "$HOME/.config/Xresources-dark"
-install_link "$DIR/.config/mpv"               "$HOME/.config/mpv"
-install_link "$DIR/.config/i3"                "$HOME/.config/i3"
-install_link "$DIR/.config/i3status"          "$HOME/.config/i3status"
-install_link "$DIR/.config/fontconfig"        "$HOME/.config/fontconfig"
-install_link "$DIR/.config/compton.conf"      "$HOME/.config/compton.conf"
-install_link "$DIR/.config/EyeCandy"          "$HOME/.config/EyeCandy"
-install_link "$DIR/.config/htop"              "$HOME/.config/htop"
-
-echo 'Configuring applications...'
-if command -v xfconf-query &>/dev/null; then
-    #enable full path in thunar window title for scripting
-    xfconf-query --channel thunar --property /misc-full-path-in-title --create --type bool --set true
-fi
-
-shopt -s nocasematch
-if [[ "$uname" =~ cygwin ]]; then
-    echo "Hiding dotfiles in $HOME..."
-    find "$HOME" -maxdepth 1 -iname '.*' | while read -r x; do
-        attrib +h +s $(cygpath -w `dirname "$x"`)`basename "$x"`
-    done
-fi
-
-if [ -d /usr/share/fonts ]; then
-    echo 'Generating font cache...'
-    fc-cache
-fi
+#windows
+    if [[ "$uname" =~ cygwin ]]; then
+        echo "Hiding dotfiles in $HOME..."
+        find "$HOME" -maxdepth 1 -iname '.*' | while read -r x; do
+            attrib +h +s $(cygpath -w `dirname "$x"`)`basename "$x"`
+        done
+    fi
