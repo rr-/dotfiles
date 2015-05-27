@@ -33,18 +33,26 @@ function on_time_change(_, new_time)
 end
 
 function playback_finished(event)
-    json = mputils.format_json({
-        host=hostname,
-        path=last_file_path,
-        time=os.date('%c')
-    })
-
     if last_remaining_time > minimum_remaining_time then
         mp.log('info', string.format(
             'Too much remaining time (%.02f > %.02f), skipping',
             last_remaining_time,
             minimum_remaining_time))
     else
+        json = mputils.format_json({
+            date=os.date('%c'),
+            host=hostname,
+            path=last_file_path
+        })
+
+        json = run({
+            args={
+                'sh',
+                '-c',
+                'echo ' .. escape(json) .. '|' ..
+                'python -c "import json,sys;print(json.dumps(json.load(sys.stdin),sort_keys=True))"'},
+            cancellable=false})
+
         mp.log('info', 'Sending JSON: ' .. json)
         output = run({
             args={
