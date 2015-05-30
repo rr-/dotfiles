@@ -52,15 +52,15 @@ bindsym XF86Calculator exec --no-startup-id qalculate
 bindsym Mod3+Prior exec amixer -q set Master 1dB+ unmute
 bindsym Mod3+Next exec amixer -q set Master 1dB- unmute
 #toggle play
-bindsym Mod3+Delete exec --no-startup-id clementine --play-pause
+bindsym Mod3+Delete exec --no-startup-id cmus-remote --pause
 #previous and next track
-bindsym Mod3+Home exec --no-startup-id clementine --previous
-bindsym Mod3+End exec --no-startup-id clementine --next
+bindsym Mod3+Home exec --no-startup-id cmus-remote --prev
+bindsym Mod3+End exec --no-startup-id cmus-remote --next
 #seek backward and forward
-bindsym Mod1+Shift+Ctrl+Left exec --no-startup-id clementine --seek-by -10
-bindsym Mod1+Shift+Ctrl+Right exec --no-startup-id clementine --seek-by 10
+bindsym Mod1+Shift+Ctrl+Left exec --no-startup-id cmus-remote --seek -10
+bindsym Mod1+Shift+Ctrl+Right exec --no-startup-id cmus-remote --seek +10
 #focus music player
-bindsym Mod3+Insert exec i3-run-or-raise -n clementine -p clementine
+bindsym Mod3+Insert exec i3-run-or-raise -cn 'music_player' -p "$term -name 'music_player' -e cmus"
 
 #hotkeys for focusing windows around
 bindsym $mod+h focus left
@@ -184,7 +184,7 @@ assign [class="(?i)firefox" window_role="(?i)browser"] $w2
 assign [class="(?i)steam"] $w8
 assign [class="(?i)qbittorrent" title="(?i)qbittorrent"] $w9
 assign [class="(?i)trackma-qt" title="(?i)trackma"] $w9
-assign [class="(?i)clementine"] $w10
+assign [class="(?i)music_player"] $w10
 
 #position windows
 for_window [class="feh"] floating enable
@@ -196,6 +196,5 @@ exec_always --no-startup-id feh --bg-fill "$HOME/.wallpaper1" "$HOME/.wallpaper2
 exec --no-startup-id i3-msg "exec pidgin"
 exec --no-startup-id i3-msg "exec firefox"
 exec --no-startup-id i3-msg "exec trackma-qt"
-exec --no-startup-id i3-msg "exec clementine"
 exec --no-startup-id i3-msg "workspace $w1"
 exec --no-startup-id i3-msg "workspace $w2"

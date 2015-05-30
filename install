@@ -201,6 +201,12 @@ function install_link_or_cp {
         install_link "$dir/.config/EyeCandy" "$HOME/.config/EyeCandy"
     fi
 
+#cmus
+    install_pacman cmus
+    if has_installed cmus 'cmus config'; then
+        install_link "$dir/.config/cmus" "$HOME/.config/cmus"
+    fi
+
 #trackma
     if [[ "$uname" =~ linux ]]; then
         install_pacman lsof
