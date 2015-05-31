@@ -20,7 +20,7 @@ gaps inner 15
 #gaps around desktop, in pixels
 gaps outer 0
 #border around windows, in pixels
-new_window pixel 5
+new_window pixel 3
 
 #colors!
 set $active         #1ba1f5
