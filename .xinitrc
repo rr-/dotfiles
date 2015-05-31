@@ -35,4 +35,5 @@ clipit -d &
 autocutsel -fork &
 autocutsel -selection PRIMARY -fork &
 
+feh --bg-fill "$HOME/.wallpaper1" "$HOME/.wallpaper2" &
 exec i3

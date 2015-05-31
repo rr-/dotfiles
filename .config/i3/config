@@ -192,7 +192,6 @@ for_window [class="Pidgin"] floating enable move absolute position 1960 55
 for_window [title="(?i)buddy list"] floating enable move absolute position 3480 55
 
 #run some programs
-exec_always --no-startup-id feh --bg-fill "$HOME/.wallpaper1" "$HOME/.wallpaper2"
 exec --no-startup-id i3-msg "exec pidgin"
 exec --no-startup-id i3-msg "exec firefox"
 exec --no-startup-id i3-msg "exec trackma-qt"
