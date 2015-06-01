@@ -205,14 +205,14 @@ DirectionalFocus(direction)
 	;ssh to burza - activate/run
 	+^!]::
 	{
-		Run, %CygPath%\bin\mintty.exe --title "Remote terminal" --size "190`,65" --position "%RemoteTermX%`,%RemoteTermY%" --class mintty_ssh --exec /bin/ssh -p 65000 rr-@sakuya.pl, %CygPath%/bin
+		Run, %CygPath%\bin\mintty.exe --title "Remote terminal" --size "190`,65" --position "%RemoteTermX%`,%RemoteTermY%" --class mintty_ssh --exec /bin/ssh -p 60000 rr-@sakuya.pl, %CygPath%/bin
 		return
 	}
 	^!]::
 	{
 		if (!WinExist("ahk_class mintty_ssh"))
 		{
-			Run, %CygPath%\bin\mintty.exe --title "Remote terminal" --size "190`,65" --position "%RemoteTermX%`,%RemoteTermY%" --class mintty_ssh --exec /bin/ssh -p 65000 rr-@sakuya.pl, %CygPath%/bin
+			Run, %CygPath%\bin\mintty.exe --title "Remote terminal" --size "190`,65" --position "%RemoteTermX%`,%RemoteTermY%" --class mintty_ssh --exec /bin/ssh -p 60000 rr-@sakuya.pl, %CygPath%/bin
 			WinWait ahk_class mintty_ssh
 		}
 		else
