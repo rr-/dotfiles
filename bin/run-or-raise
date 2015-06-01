@@ -37,9 +37,8 @@ done
 
 echo $match
 window=$(xdotool search --$type "$match" | head -1)
-echo $window
 if [ -z "$window" ]; then
     eval "$program" &
 else
-    i3-msg "[id=$window] focus"
+    xdotool search --$type "$match" windowactivate
 fi
