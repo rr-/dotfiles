@@ -60,7 +60,7 @@ bindsym Mod3+End exec --no-startup-id cmus-remote --next
 bindsym Mod1+Shift+Ctrl+Left exec --no-startup-id cmus-remote --seek -10
 bindsym Mod1+Shift+Ctrl+Right exec --no-startup-id cmus-remote --seek +10
 #focus music player
-bindsym Mod3+Insert exec i3-run-or-raise -cn 'music_player' -p "$term -name 'music_player' -e cmus"
+bindsym Mod3+Insert exec run-or-raise -cn 'music_player' -p "$term -name 'music_player' -e cmus"
 
 #hotkeys for focusing windows around
 bindsym $mod+h focus left
@@ -84,12 +84,12 @@ bindsym $mod+Shift+Up move up
 bindsym $mod+Shift+Right move right
 
 #hotkeys for executing various programs
-bindsym Mod1+Ctrl+bracketleft exec i3-run-or-raise -cn 'local_terminal' -p "$term -name 'local_terminal'"
+bindsym Mod1+Ctrl+bracketleft exec run-or-raise -cn 'local_terminal' -p "$term -name 'local_terminal'"
 bindsym Mod1+Ctrl+Shift+bracketleft exec $term -name 'local_terminal'
-bindsym Mod1+Ctrl+bracketright exec i3-run-or-raise -cn 'remote_terminal' -p "$term -name 'remote_terminal' -e zsh -i -l -c 'ssh burza'"
+bindsym Mod1+Ctrl+bracketright exec run-or-raise -cn 'remote_terminal' -p "$term -name 'remote_terminal' -e zsh -i -l -c 'ssh burza'"
 bindsym Mod1+Ctrl+Shift+bracketright exec $term -name 'remote_terminal' -e zsh -i -l -c 'ssh burza'
-bindsym Mod1+Ctrl+semicolon exec i3-run-or-raise -n 'Mozilla Firefox|Vimperator' -p firefox
-bindsym Mod1+Ctrl+Shift+m exec i3-run-or-raise -n 'Buddy List' -p pidgin
+bindsym Mod1+Ctrl+semicolon exec run-or-raise -n 'Mozilla Firefox|Vimperator' -p firefox
+bindsym Mod1+Ctrl+Shift+m exec run-or-raise -n 'Buddy List' -p pidgin
 bindsym Mod1+Ctrl+Shift+n exec "$term -e zsh -i -l -c vim"
 bindsym $mod+e exec thunar
 
