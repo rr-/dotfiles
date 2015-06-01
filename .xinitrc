@@ -11,6 +11,9 @@ xrandr --output DVI-I-1 --auto --output HDMI-0 --auto --left-of DVI-I-1
 xrdb ~/.config/Xresources
 xrdb -override ~/.config/Xresources-theme
 
+#left pointing cursor
+xsetroot -cursor_name left_ptr
+
 #set Polish keyboard
 setxkbmap pl
 #set app menu as mod3
@@ -36,4 +39,5 @@ autocutsel -fork &
 autocutsel -selection PRIMARY -fork &
 
 feh --bg-fill "$HOME/.wallpaper1" "$HOME/.wallpaper2" &
-exec i3
+sxhkd &
+exec bspwm

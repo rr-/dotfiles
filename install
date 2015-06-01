@@ -119,6 +119,17 @@ function install_link_or_cp {
         fi
     fi
 
+#bspwm
+    if [[ "$uname" =~ linux ]]; then
+        install_aur bspwm-git
+        install_aur sxhkd-git
+        install_aur lemonbar-git
+        if has_installed bspwm 'bspwm config'; then
+            install_link "$dir/.config/bspwm" "$HOME/.config/bspwm"
+            install_link "$dir/.config/sxhkd" "$HOME/.config/sxhkd"
+        fi
+    fi
+
 #git
     install_pacman git
     install_link "$dir/.gitconfig" "$HOME/.gitconfig"

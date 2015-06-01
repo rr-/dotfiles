@@ -1,0 +1,138 @@
+#
+# executing various programs
+#
+
+# dmenu (a program launcher)
+super + {space, r, d}
+    dmenu_run
+
+# calculator
+XF86Calculator
+    qalculate
+
+# local terminal
+alt + ctrl + bracketleft
+    run-or-raise -cn 'local_terminal' -p "urxvt -name 'local_terminal'"
+{super + Return,alt + crl + shift + bracketleft}
+    urxvt -name 'local_terminal'
+
+# remote terminal
+alt + ctrl + bracketright
+    run-or-raise -cn 'remote_terminal' -p "urxvt -name 'remote_terminal' -e zsh -i -l -c 'ssh burza'"
+alt + ctrl + shift + bracketright
+    urxvt -name 'remote_terminal' -e zsh -i -l -c 'ssh burza'
+
+# web browser
+alt + ctrl + semicolon
+    run-or-raise -n 'Mozilla Firefox|Vimperator' -p firefox
+
+# instant messenger
+alt + ctrl + shift + m
+    run-or-raise -n 'Buddy List' -p pidgin
+
+# text editor
+alt + ctrl + shift + n
+    urxvt -e zsh -i -l -c vim
+
+# file manager
+super + e
+    thunar
+
+
+
+#
+# music and audio
+#
+
+# volume up and down
+hyper + {Prior,Next}
+    amixer -q set Master 1dB{+,-} unmute
+
+# toggle play
+hyper + Delete
+    cmus-remote --pause
+
+# previous and next track
+hyper + {Home,End}
+    cmus-remote --{prev,next}
+
+# seek backward and forward
+alt + shift + ctrl + {Left,Right}
+    cmus-remote --seek {-,+}10
+
+# focus music player
+hyper + Insert
+    run-or-raise -cn 'music_player' -p "urxvt -name 'music_player' -e cmus"
+
+
+
+#
+# window manager
+#
+
+super + {button5,button4}
+    compton-trans -c {-,+}5
+
+super + {z,x}
+    compton-trans -c {-,+}5
+
+# exit bpswm
+super + shift + q
+    bspc quit
+
+# close active window
+super + q
+    bspc window -c
+
+# send active window to given another workspace
+super + shift + {grave,1-9,0}
+    bspc window -d {IM,1-9,10}
+
+# focus workspace
+super + {grave,1-9,0}
+    bspc desktop -f {IM,1-9,10}
+
+# focus window in given direction
+super + {h,j,k,l}
+    bspc window -f {left,down,up,right}
+
+# swap window with another one in given direction
+super + shift + {h,j,k,l}
+    bspc window -s {left,down,up,right}
+
+# set current window as floating
+super + s
+    bspc window -t floating
+
+# set current window as fullscreen
+super + f
+    bspc window -t fullscreen
+
+# swap current window with last focused window
+super + apostrophe
+    bspc window -s last
+
+# swap current window with the biggest one
+super + m
+    bspc window -s biggest
+
+# focus window with regard to focus history
+super + {o,i}
+    bspc control --record-history off; \
+    bspc window {older,newer} -f; \
+    bspc control --record-history on
+
+# reload sxhkd configuration
+alt + F12
+    bash -c '~/.config/bspwm/bspwmrc; pkill -USR1 -x sxhkd'
+
+# resize/move while holding mod and LMB/RMB
+super + button{1,3}
+    bspc pointer -g {move,resize_corner}
+
+# finish resize/move
+super + @button{1,3}
+    bspc pointer -u
+
+~button1
+    bspc pointer -g focus
