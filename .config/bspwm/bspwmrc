@@ -35,6 +35,7 @@ fi
 bspc rule -a Buddy desktop=IM
 bspc rule -a Pidgin desktop=IM floating=on
 bspc rule -a Trackma-qt desktop=10 floating=on
+bspc rule -a music_player desktop=10 floating=on
 bspc rule -a qbittorrent desktop=9
 bspc rule -a Steam desktop=8
 bspc rule -a Firefox desktop=2
