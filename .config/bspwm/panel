@@ -1,0 +1,194 @@
+#!/bin/python3
+from subprocess import Popen, PIPE
+from datetime import datetime
+import alsaaudio
+import re
+import psutil
+import sys
+
+font1 = 'Input Mono Light-12'
+font2 = 'Literation Mono-9'
+font3 = 'Font Awesome-11'
+background_color1 =  '#689cb8'
+background_color2 =  '#70b0d0'
+background_color3 =  '#90d0f0'
+shadow_color = '#507090'
+font_color1 =  '#333333'
+font_color2 =  '#333333'
+font_color3 =  '#333333'
+icon_color1 = '#111111'
+icon_color2 = '#222222'
+icon_color3 = '#333333'
+
+class Renderer(object):
+    def __init__(self):
+        self.font = self.font_color = self.background_color = None
+        self.clear()
+
+    def clear(self):
+        self.text = ''
+        self.set_font(2)
+        self.set_font_color('white')
+        self.set_background_color('black')
+
+    def set_font_color(self, color):
+        if color != self.font_color:
+            self.print('%%{F%s}' % (color))
+            self.font_color = color
+
+    def get_font_color(self):
+        return self.font_color
+
+    def set_background_color(self, color):
+        if color != self.background_color:
+            self.print('%%{B%s}' % (color))
+            self.background_color = color
+
+    def get_background_color(self):
+        return self.background_color
+
+    def set_font(self, font):
+        if font != self.font:
+            self.print('%%{T%d}' % (font))
+            self.font = font
+
+    def get_font(self):
+        return self.font
+
+    def print(self, text):
+        self.text += text
+
+    def print_icon(self, text):
+        with self.temporary():
+            self.set_font(3)
+            self.print_space(2)
+            self.print(text)
+            self.print_space(2)
+
+    def print_number(self, text):
+        match = re.match('^(0*(?!\.|$))(.*)$', text)
+        with self.temporary():
+            self.set_font_color(shadow_color)
+            self.print(match.group(1))
+        self.print(match.group(2))
+
+    def print_space(self, number):
+        if not re.match('.*[\s\u2000-\u200b](%{[^}]*})*$', self.text):
+            self.print('\u2004' * number) #number/3 em space
+
+    def get_text(self):
+        return self.text
+
+    def switch_to_next_monitor(self):
+        self.print('%{S+}')
+
+    def align_to_right(self):
+        self.print('%{r}')
+
+    def temporary(self):
+        return self.Temporary(self)
+
+    class Temporary(object):
+        def __init__(self, renderer):
+            self.renderer = renderer
+
+        def __enter__(self):
+            self.font = self.renderer.font
+            self.font_color = self.renderer.font_color
+            self.background_color = self.renderer.background_color
+
+        def __exit__(self, *args):
+            self.renderer.set_font(self.font)
+            self.renderer.set_font_color(self.font_color)
+            self.renderer.set_background_color(self.background_color)
+
+
+
+class MyRenderer(object):
+    def __init__(self, monitor_count=1):
+        self.renderer = Renderer()
+        self.cpu = 0
+        self.time = datetime.now()
+        self.monitor_count = monitor_count
+
+    def refresh(self):
+        self.cpu = psutil.cpu_percent(interval=1)
+        self.time = datetime.now()
+
+    def print_cpu_usage(self):
+        self.renderer.print_space(2)
+        self.print_right_switch(background_color1, font_color1)
+        with self.renderer.temporary():
+            self.renderer.set_font_color(icon_color1)
+            #self.renderer.print_icon('\uf085')
+            self.renderer.print_icon('\uf0e7')
+        self.renderer.print_number('%03.0f' % self.cpu)
+
+    def print_volume(self):
+        with self.renderer.temporary():
+            self.renderer.set_font_color(icon_color1)
+            self.renderer.print_icon('\uf028')
+        self.renderer.print_number('%03d' % alsaaudio.Mixer().getvolume()[0])
+
+    def print_date(self):
+        self.print_right_switch(background_color2, font_color2)
+        with self.renderer.temporary():
+            self.renderer.set_font_color(icon_color2)
+            self.renderer.print_icon('\uf073')
+            #self.renderer.print_icon('\uf133')
+        self.renderer.print(datetime.strftime(self.time, '%a, %Y-%m-%d'))
+
+    def print_clock(self):
+        self.print_right_switch(background_color3, font_color3)
+        with self.renderer.temporary():
+            self.renderer.set_font_color(icon_color3)
+            self.renderer.print_icon('\uf017')
+        self.renderer.print(datetime.strftime(self.time, '%H:%M'))
+
+    def print_right_switch(self, bg_color, fg_color):
+        with self.renderer.temporary():
+            self.renderer.set_font(1)
+            self.renderer.set_font_color(bg_color)
+            self.renderer.print_space(2)
+            self.renderer.print('')
+        self.renderer.set_background_color(bg_color)
+        self.renderer.set_font_color(fg_color)
+        self.renderer.print_space(1)
+
+    def render(self):
+        self.renderer.clear()
+        for m in range(self.monitor_count):
+            self.renderer.set_background_color('black')
+            self.renderer.set_font_color('#dddddd')
+            self.renderer.align_to_right()
+            self.print_cpu_usage()
+            self.print_volume()
+            self.print_date()
+            self.print_clock()
+            self.renderer.print_space(2)
+            self.renderer.switch_to_next_monitor()
+            self.renderer.set_background_color('black')
+        return self.renderer.get_text()
+
+def main():
+    process = Popen([
+        'lemonbar',
+        '-f', font1,
+        '-o', '2',
+        '-f', font2,
+        '-o', '-2',
+        '-f', font3,
+        '-o', '-3',
+        '-gx20'],
+        stdout=PIPE,
+        stdin=PIPE,
+        bufsize=1)
+
+    renderer = MyRenderer(monitor_count=2)
+    while True:
+        process.stdin.write((renderer.render() + "\n").encode('utf8'))
+        process.stdin.flush()
+        renderer.refresh()
+
+if __name__ == '__main__':
+    main()
