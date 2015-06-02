@@ -16,6 +16,7 @@ desktop_config urgent_border_color "#DE3333"
 desktop_config active_border_color "#333333"
 desktop_config normal_border_color "#333333"
 
+desktop_config top_padding 22
 desktop_config border_width 3
 desktop_config window_gap 12
 desktop_config split_ratio             0.50
@@ -40,6 +41,9 @@ bspc rule -a qbittorrent desktop=9
 bspc rule -a Steam desktop=8
 bspc rule -a Firefox desktop=2
 bspc rule -a mpv desktop=1
+
+pkill -f bspwm/panel
+nohup $HOME/.config/bspwm/panel </dev/null &>/dev/null &
 
 if [[ "$(hostname)" -eq tornado ]]; then
     run_if_needed pidgin pidgin

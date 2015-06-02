@@ -105,6 +105,7 @@ function install_link_or_cp {
 
 #fonts
     install_pacman ttf-dejavu
+    install_aur ttf-font-awesome
     install_aur ttf-ipa-mona
     if has_installed fc-list 'font config'; then
         install_link "$dir/.config/fontconfig" "$HOME/.config/fontconfig"
@@ -138,7 +139,9 @@ function install_link_or_cp {
     if [[ "$uname" =~ linux ]]; then
         install_aur bspwm-git
         install_aur sxhkd-git
-        install_aur lemonbar-git
+        install_aur lemonbar-xft-git
+        install_pip psutil      #CPU usage
+        install_pip pyalsaaudio #volume
         if has_installed bspwm 'bspwm config'; then
             install_link "$dir/.config/bspwm" "$HOME/.config/bspwm"
             install_link "$dir/.config/sxhkd" "$HOME/.config/sxhkd"
