@@ -30,6 +30,17 @@ function install_pacman {
     fi
 }
 
+function install_pip {
+    has_installed pip "$1" || return
+    has_installed sudo "$1" || return
+    if pip list|grep "$1" &>/dev/null; then
+        echo "$1 already installed"
+    else
+        echo "Installing $1 with pip..."
+        sudo pip install "$1"
+    fi
+}
+
 function install_aur {
     url=https://aur.archlinux.org/packages/${1:0:2}/$1/$1.tar.gz
     has_installed pacman "$1" || return
@@ -106,6 +117,10 @@ function install_link_or_cp {
             install_link "$x" "$fonts_dir/$(basename "$x")"
         done
     fi
+
+#python
+    install_pacman python
+    install_pacman python-pip
 
 #i3
     if [[ "$uname" =~ linux ]]; then
