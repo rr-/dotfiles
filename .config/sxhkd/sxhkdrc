@@ -13,7 +13,7 @@ XF86Calculator
 # local terminal
 alt + ctrl + bracketleft
     run-or-raise -cn 'local_terminal' -p "urxvt -name 'local_terminal'"
-{super + Return,alt + crl + shift + bracketleft}
+{super + Return,alt + ctrl + shift + bracketleft}
     urxvt -name 'local_terminal'
 
 # remote terminal
