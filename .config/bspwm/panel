@@ -6,19 +6,14 @@ import re
 import psutil
 import sys
 
-font1 = 'Input Mono Light-12'
-font2 = 'Literation Mono-9'
-font3 = 'Font Awesome-11'
-background_color1 =  '#689cb8'
-background_color2 =  '#70b0d0'
-background_color3 =  '#90d0f0'
+fonts = \
+[
+    ['DejaVu Sans:size=9', 0],
+    ['Font Awesome:size=10', 0],
+    ['DejaVu Sans:pixelsize=11', -2],
+]
 shadow_color = '#507090'
-font_color1 =  '#333333'
-font_color2 =  '#333333'
-font_color3 =  '#333333'
-icon_color1 = '#111111'
-icon_color2 = '#222222'
-icon_color3 = '#333333'
+inactive_color = '#707070'
 
 class Renderer(object):
     def __init__(self):
@@ -27,7 +22,7 @@ class Renderer(object):
 
     def clear(self):
         self.text = ''
-        self.set_font(2)
+        self.set_font(1)
         self.set_font_color('white')
         self.set_background_color('black')
 
@@ -60,7 +55,7 @@ class Renderer(object):
 
     def print_icon(self, text):
         with self.temporary():
-            self.set_font(3)
+            self.set_font(2)
             self.print_space(2)
             self.print(text)
             self.print_space(2)
@@ -75,6 +70,14 @@ class Renderer(object):
     def print_space(self, number):
         if not re.match('.*[\s\u2000-\u200b](%{[^}]*})*$', self.text):
             self.print('\u2004' * number) #number/3 em space
+
+    def print_progressbar(self, number, width = 10):
+        filled = int(number * width / 100.)
+        with self.temporary():
+            self.set_font(3)
+            self.print('\u2588' * filled)
+            self.set_font_color(inactive_color)
+            self.print('█' * (width - filled))
 
     def get_text(self):
         return self.text
@@ -116,44 +119,25 @@ class MyRenderer(object):
         self.time = datetime.now()
 
     def print_cpu_usage(self):
-        self.renderer.print_space(2)
-        self.print_right_switch(background_color1, font_color1)
-        with self.renderer.temporary():
-            self.renderer.set_font_color(icon_color1)
-            #self.renderer.print_icon('\uf085')
-            self.renderer.print_icon('\uf0e7')
-        self.renderer.print_number('%03.0f' % self.cpu)
+        #self.renderer.print_icon('\uf085')
+        self.renderer.print_icon('\uf0e7')
+        self.renderer.print_progressbar(self.cpu)
 
     def print_volume(self):
-        with self.renderer.temporary():
-            self.renderer.set_font_color(icon_color1)
-            self.renderer.print_icon('\uf028')
-        self.renderer.print_number('%03d' % alsaaudio.Mixer().getvolume()[0])
+        self.renderer.print_icon('\uf028')
+        self.renderer.print_progressbar(alsaaudio.Mixer().getvolume()[0])
 
     def print_date(self):
-        self.print_right_switch(background_color2, font_color2)
-        with self.renderer.temporary():
-            self.renderer.set_font_color(icon_color2)
-            self.renderer.print_icon('\uf073')
-            #self.renderer.print_icon('\uf133')
-        self.renderer.print(datetime.strftime(self.time, '%a, %Y-%m-%d'))
+        #self.renderer.print_icon('\uf073')
+        #self.renderer.print_icon('\uf133')
+        self.renderer.print_space(2)
+        self.renderer.print(datetime.strftime(self.time, '%a, %b %d'))
 
     def print_clock(self):
-        self.print_right_switch(background_color3, font_color3)
-        with self.renderer.temporary():
-            self.renderer.set_font_color(icon_color3)
-            self.renderer.print_icon('\uf017')
+        self.renderer.set_font_color('white')
+        #self.renderer.print_icon('\uf017')
+        self.renderer.print_space(2)
         self.renderer.print(datetime.strftime(self.time, '%H:%M'))
-
-    def print_right_switch(self, bg_color, fg_color):
-        with self.renderer.temporary():
-            self.renderer.set_font(1)
-            self.renderer.set_font_color(bg_color)
-            self.renderer.print_space(2)
-            self.renderer.print('')
-        self.renderer.set_background_color(bg_color)
-        self.renderer.set_font_color(fg_color)
-        self.renderer.print_space(1)
 
     def render(self):
         self.renderer.clear()
@@ -171,18 +155,11 @@ class MyRenderer(object):
         return self.renderer.get_text()
 
 def main():
-    process = Popen([
-        'lemonbar',
-        '-f', font1,
-        '-o', '2',
-        '-f', font2,
-        '-o', '-2',
-        '-f', font3,
-        '-o', '-3',
-        '-gx20'],
-        stdout=PIPE,
-        stdin=PIPE,
-        bufsize=1)
+    command = ['/home/rr-/src/bar/lemonbar', '-gx19']
+    for font in fonts:
+        command += ['-f', font[0], '-o', font[1]]
+    command = [str(x) for x in command]
+    process = Popen(command, stdout=PIPE, stdin=PIPE, bufsize=1)
 
     renderer = MyRenderer(monitor_count=2)
     while True:
