@@ -230,11 +230,18 @@ function install_link_or_cp {
         install_link "$dir/.config/EyeCandy" "$HOME/.config/EyeCandy"
     fi
 
-#cmus
-    install_pacman cmus
-    if has_installed cmus 'cmus config'; then
-        install_link "$dir/.config/cmus" "$HOME/.config/cmus"
+#music player
+    install_pacman mpd
+    install_pacman mpc
+    if has_installed mpd 'mpd config'; then
+        install_link "$dir/.config/mpd" "$HOME/.config/mpd"
+        create_folder "$HOME/.config/mpd/playlists"
+        touch "$HOME/.config/mpd/"{database,log,pid,state,sticker.sql}
     fi
+    #install_pacman cmus
+    #if has_installed cmus 'cmus config'; then
+    #    install_link "$dir/.config/cmus" "$HOME/.config/cmus"
+    #fi
 
 #trackma
     if [[ "$uname" =~ linux ]]; then
