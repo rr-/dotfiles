@@ -155,7 +155,7 @@ class MyRenderer(object):
         return self.renderer.get_text()
 
 def main():
-    command = ['/home/rr-/src/bar/lemonbar', '-gx19']
+    command = ['lemonbar', '-gx19']
     for font in fonts:
         command += ['-f', font[0], '-o', font[1]]
     command = [str(x) for x in command]
