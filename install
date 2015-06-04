@@ -107,16 +107,20 @@ function install_link_or_cp {
     install_pacman ttf-dejavu
     install_aur ttf-font-awesome
     install_aur ttf-ipa-mona
-    if has_installed fc-list 'font config'; then
-        install_link "$dir/.config/fontconfig" "$HOME/.config/fontconfig"
-        fc-cache
-    fi
     if [ -d /usr/share/fonts ]; then
         fonts_dir="$HOME/.local/share/fonts"
         [ -d "$fonts_dir" ] || mkdir -p "$fonts_dir"
-        find "$dir/misc" -iregex '.*\.[to]tf' | while read -r x; do
+        find "$dir/misc" -iregex '.*\.\(ttf\|otf\|pcf\|bdf\)' | while read -r x; do
             install_link "$x" "$fonts_dir/$(basename "$x")"
         done
+        mkfontscale "$fonts_dir"
+        mkfontdir "$fonts_dir"
+        xset +fp "$fonts_dir"
+        xset fp rehash
+    fi
+    if has_installed fc-list 'font config'; then
+        install_link "$dir/.config/fontconfig" "$HOME/.config/fontconfig"
+        fc-cache
     fi
 
 #python
