@@ -4,20 +4,22 @@ from subprocess import Popen, PIPE
 import alsaaudio
 import psutil
 import re
-import sys
 import threading
 import time
 import mpd
 import math
 
-fonts = \
-[
+fonts = [
     ['DejaVu Sans:size=9', 0],
     ['Font Awesome:size=10', 0],
     ['DejaVu Sans:pixelsize=12', -1],
 ]
-shadow_color = '#507090'
-inactive_color = '#707070'
+inactive_progressbar_color = '#707070'
+workspaces_background = '#4a4a4a'
+active_workspace_color = '#bbcccc'
+inactive_workspace_color = '#667777'
+default_background_color = 'black'
+default_font_color = '#dddddd'
 
 class Data(object):
     def __init__(self):
@@ -46,103 +48,77 @@ class Workspace(object):
         self.urgent = False
 
 
-
 class Renderer(object):
+    ALIGN_LEFT = 'l'
+    ALIGN_CENTER = 'c'
+    ALIGN_RIGHT = 'r'
+
     def __init__(self):
-        self.font = self.font_color = self.background_color = None
+        self.__properties = {}
+        self.__setters = {
+            'background_color': (lambda value: '%%{B%s}' % value, 'black'),
+            'font_color':       (lambda value: '%%{F%s}' % value, 'white'),
+            'font':             (lambda value: '%%{T%d}' % value, 1),
+            'current_monitor':  (lambda value: '%%{S%d}' % value, 1),
+            'alignment':        (lambda value: '%%{%s}' % value, self.ALIGN_LEFT),
+        }
         self.clear()
 
+    def __getattr__(self, name):
+        if name in self.__setters:
+            if name in self.__properties:
+                return self.__properties[name]
+            return None
+        return object.__getattribute__(self, name)
+
+    def __setattr__(self, name, value):
+        if name.startswith('_'):
+            return super(Renderer, self).__setattr__(name, value)
+        if not name in self.__setters:
+            raise AttributeError
+        if name not in self.__properties or self.__properties[name] != value:
+            self.print(self.__setters[name][0](value))
+            self.__properties[name] = value
+
     def clear(self):
-        self.text = ''
-        self.set_font(1)
-        self.set_font_color('white')
-        self.set_background_color('black')
+        self._text = ''
+        for k, v in self.__setters.items():
+            self.__setattr__(k, v[1])
 
-    def set_font_color(self, color):
-        if color != self.font_color:
-            self.print('%%{F%s}' % (color))
-            self.font_color = color
-
-    def get_font_color(self):
-        return self.font_color
-
-    def set_background_color(self, color):
-        if color != self.background_color:
-            self.print('%%{B%s}' % (color))
-            self.background_color = color
-
-    def get_background_color(self):
-        return self.background_color
-
-    def set_font(self, font):
-        if font != self.font:
-            self.print('%%{T%d}' % (font))
-            self.font = font
-
-    def get_font(self):
-        return self.font
+    @property
+    def text(self):
+        return self._text
 
     def print(self, text):
-        self.text += text
-
-    def print_icon(self, text):
-        with self.temporary():
-            self.set_font(2)
-            self.print_space(2)
-            self.print(text)
-            self.print_space(2)
-
-    def print_number(self, text):
-        match = re.match('^(0*(?!\.|$))(.*)$', text)
-        with self.temporary():
-            self.set_font_color(shadow_color)
-            self.print(match.group(1))
-        self.print(match.group(2))
-
-    def print_space(self, number, force=False):
-        if not re.match('.*[\s\u2000-\u200b](%{[^}]*})*$', self.text) or force:
-            self.print('\u2004' * number) #number/3 em space
-
-    def print_progressbar(self, number, width = 10):
-        filled = int(number * width / 100.)
-        with self.temporary():
-            self.set_font(3)
-            self.print('\u2588' * filled)
-            self.set_font_color(inactive_color)
-            self.print('█' * (width - filled))
-
-    def get_text(self):
-        return self.text
-
-    def switch_to_monitor(self, number):
-        self.print('%%{S%d}' % number)
-
-    def align_to_left(self):
-        self.print('%{l}')
-
-    def align_to_center(self):
-        self.print('%{c}')
-
-    def align_to_right(self):
-        self.print('%{r}')
+        self._text += text
 
     def temporary(self):
         return self.Temporary(self)
 
+    def clickable(self, button, command):
+        return self.Clickable(self, button, command)
+
     class Temporary(object):
         def __init__(self, renderer):
             self.renderer = renderer
-
         def __enter__(self):
             self.font = self.renderer.font
             self.font_color = self.renderer.font_color
             self.background_color = self.renderer.background_color
-
         def __exit__(self, *args):
-            self.renderer.set_font(self.font)
-            self.renderer.set_font_color(self.font_color)
-            self.renderer.set_background_color(self.background_color)
+            self.renderer.font = self.font
+            self.renderer.font_color = self.font_color
+            self.renderer.background_color = self.background_color
 
+    class Clickable(object):
+        def __init__(self, renderer, button, command):
+            self.renderer = renderer
+            self.button = button
+            self.command = command
+        def __enter__(self):
+            self.renderer.print('%%{A%d:%s:}' % (self.button, self.command.replace(':', '\:')))
+        def __exit__(self, *args):
+            self.renderer.print('%{A}')
 
 
 class MyRenderer(object):
@@ -150,97 +126,109 @@ class MyRenderer(object):
         self.renderer = Renderer()
         self.data = data
 
-        command = ['lemonbar', '-gx19']
+        command = ['/home/rr-/src/lemonbar-xft/lemonbar', '-gx19']
         for font in fonts:
-            command += ['-f', font[0], '-o', font[1]]
-        command = [str(x) for x in command]
+            command += ['-f', font[0], '-o', str(font[1])]
         sh_process = Popen('sh', stdin=PIPE)
         self.lemonbar_process = Popen(command, stdout=sh_process.stdin, stdin=PIPE)
 
+    def print_text(self, text):
+        self.renderer.print(text)
+
+    def print_space(self, number, force=False):
+        if force or not re.match('.*[\s\u2000-\u200b](%{[^}]*})*$', self.renderer.text):
+            self.print_text('\u2004' * number) #number/3 em space
+
     def print_seconds(self, seconds):
         seconds = math.floor(float(seconds))
-        self.renderer.print('%02d:%02d' % (seconds // 60, seconds % 60))
+        self.print_text('%02d:%02d' % (seconds // 60, seconds % 60))
+
+    def print_icon(self, text):
+        with self.renderer.temporary():
+            self.renderer.font = 2
+            self.print_space(2)
+            self.print_text(text)
+            self.print_space(2)
+
+    def print_progressbar(self, number, width = 10):
+        filled = int(number * width / 100.)
+        with self.renderer.temporary():
+            self.renderer.font = 3
+            self.print_text('\u2588' * filled)
+            self.renderer.font_color = inactive_progressbar_color
+            self.print_text('\u2588' * (width - filled))
 
     def print_workspaces(self, monitor):
-        with self.renderer.temporary():
-            self.renderer.set_background_color('#444444')
-            self.renderer.print('%{A5:bspc monitor -f ' + monitor.name + ';bspc desktop -f prev;:}')
-            self.renderer.print('%{A4:bspc monitor -f ' + monitor.name + ';bspc desktop -f next;:}')
-            self.renderer.print_space(1, True)
+        with self.renderer.temporary(), \
+             self.renderer.clickable(5, 'bspc monitor -f %s;bspc desktop -f prev' % monitor.name), \
+             self.renderer.clickable(4, 'bspc monitor -f %s;bspc desktop -f next' % monitor.name):
+            self.renderer.background_color = workspaces_background
+            self.renderer.font = 3
+            self.print_space(1, force=True)
             for workspace in monitor.workspaces:
-                self.renderer.print('%{A:bspc monitor -f ' + monitor.name + ';bspc desktop -f ' + workspace.name + ':}')
-                self.renderer.set_font(3)
-                if workspace.focused:
-                    self.renderer.set_font_color('#bbcccc')
-                    self.renderer.print('\u25a0')
-                else:
-                    self.renderer.set_font_color('#667777')
-                    self.renderer.print('\u25a0')
-                self.renderer.print_space(1)
-                self.renderer.print('%{A}')
-            self.renderer.print_space(1, True)
-            self.renderer.print('%{A}')
-            self.renderer.print('%{A}')
+                with self.renderer.clickable(1, 'bspc monitor -f %s;bspc desktop -f %s' % (monitor.name, workspace.name)):
+                    if workspace.focused:
+                        self.renderer.font_color = active_workspace_color
+                    else:
+                        self.renderer.font_color = inactive_workspace_color
+                    self.print_text('\u25a0')
+                self.print_space(1)
+            self.print_space(1, force=True)
 
     def print_mpd_status(self):
         if self.data.mpd_status:
-            self.renderer.print(self.data.current_song['artist'])
-            self.renderer.print(' - ')
-            self.renderer.print(self.data.current_song['title'])
-            self.renderer.print_space(3)
+            self.print_text(self.data.current_song['artist'])
+            self.print_text(' - ')
+            self.print_text(self.data.current_song['title'])
+            self.print_space(3)
             if 'elapsed' in self.data.mpd_status:
                 self.print_seconds(self.data.mpd_status['elapsed'])
-                self.renderer.print('/')
+                self.print_text('/')
                 self.print_seconds(self.data.current_song['time'])
 
     def print_cpu_usage(self):
-        #self.renderer.print_icon('\uf085')
-        self.renderer.print_icon('\uf0e7')
-        self.renderer.print_progressbar(self.data.cpu)
+        self.print_icon('\uf0e7')
+        self.print_progressbar(self.data.cpu)
 
     def print_volume(self):
-        self.renderer.print_icon('\uf028')
-        self.renderer.print_progressbar(self.data.volume)
+        self.print_icon('\uf028')
+        self.print_progressbar(self.data.volume)
 
     def print_date(self):
-        #self.renderer.print_icon('\uf073')
-        #self.renderer.print_icon('\uf133')
-        self.renderer.print_space(2)
-        self.renderer.print(datetime.strftime(self.data.time, '%a, %b %d'))
+        self.print_space(2)
+        self.print_text(datetime.strftime(self.data.time, '%a, %b %d'))
 
     def print_clock(self):
-        self.renderer.set_font_color('white')
-        #self.renderer.print_icon('\uf017')
-        self.renderer.print_space(2)
-        self.renderer.print(datetime.strftime(self.data.time, '%H:%M:%S'))
+        self.renderer.font_color = 'white'
+        self.print_space(2)
+        self.print_text(datetime.strftime(self.data.time, '%H:%M:%S'))
 
     def render(self):
         self.renderer.clear()
         for monitor_number, monitor in enumerate(self.data.monitors):
-            self.renderer.switch_to_monitor(monitor_number)
-            self.renderer.set_background_color('black')
-            self.renderer.set_font_color('#dddddd')
-            self.renderer.align_to_left()
+            self.renderer.current_monitor = monitor_number
+            self.renderer.background_color = default_background_color
+            self.renderer.font_color = default_font_color
+            self.renderer.alignment = Renderer.ALIGN_LEFT
             self.print_workspaces(monitor)
-            self.renderer.align_to_center()
+            self.renderer.alignment = Renderer.ALIGN_CENTER
             self.print_mpd_status()
-            self.renderer.align_to_right()
+            self.renderer.alignment = Renderer.ALIGN_RIGHT
             self.print_cpu_usage()
             self.print_volume()
             self.print_date()
             self.print_clock()
-            self.renderer.print_space(2)
-            self.renderer.set_background_color('black')
+            self.print_space(2)
+            self.renderer.background_color = 'black'
 
-        line = (self.renderer.get_text() + "\n").encode('utf8')
+        line = (self.renderer.text + "\n").encode('utf8')
         self.lemonbar_process.stdin.write(line)
         self.lemonbar_process.stdin.flush()
 
 
-
 def refresh_cpu(data, render_func):
     while True:
-        data.cpu = psutil.cpu_percent(interval=3)
+        data.cpu = psutil.cpu_percent(interval=1)
 
 def refresh_song(data, render_func):
     client = mpd.MPDClient()
@@ -248,63 +236,57 @@ def refresh_song(data, render_func):
     while True:
         data.mpd_status = client.status()
         data.current_song = client.currentsong()
-        time.sleep(0.25)
+        time.sleep(1)
 
 def refresh_workspaces(data, render_func):
-    command = ['bspc', 'control', '--subscribe']
-    bspc_process = Popen(command, stdout=PIPE)
+    bspc_process = Popen(['bspc', 'control', '--subscribe'], stdout=PIPE)
     while True:
         line = bspc_process.stdout.readline().decode('utf8').strip()
-        if line.startswith('W'):
-            line = line[1:]
-        elif line == '':
+        line = re.sub('^W', '', line)
+        if line == '':
             continue
-        items = line.split(':')
 
         data.monitors = []
         current_monitor = None
-        for item in items:
-            key = item[0]
-            value = item[1:]
-            key_type = key.lower()
+        for item in line.split(':'):
+            key, value = item[0], item[1:]
 
-            if key_type == 'm':
+            if key in 'mM':
                 current_monitor = Monitor()
                 current_monitor.name = value
                 current_monitor.focused = key.isupper()
                 data.monitors.append(current_monitor)
 
-            elif key_type in 'ofu':
+            elif key in 'oOfFuU':
                 workspace = Workspace()
                 workspace.name = value
                 workspace.focused = key.isupper()
-                workspace.free = key_type == 'f'
-                workspace.urgent = key_type == 'u'
+                workspace.free = key in 'fF'
+                workspace.urgent = key in 'uU'
                 current_monitor.workspaces.append(workspace)
 
-            elif key_type in 'l':
-                if value == 'M':
+            elif key in 'lL':
+                if value in 'mM':
                     current_monitor.layout = Monitor.LAYOUT_MONOCLE
-                else:
+                elif value in 'tT':
                     current_monitor.layout = Monitor.LAYOUT_TILED
 
         data.monitors.reverse() #hack...
         render_func()
 
-def refresh(data, render_func):
+def refresh_common(data, render_func):
     while True:
         data.time = datetime.now()
         data.volume = alsaaudio.Mixer().getvolume()[0]
-        time.sleep(1)
+        time.sleep(0.3)
 
 def main():
     data = Data()
     renderer = MyRenderer(data)
 
     threads = []
-    for worker in [refresh_cpu, refresh_song, refresh_workspaces, refresh]:
-        thread = threading.Thread(target=worker, args=(data, renderer.render))
-        thread.daemon = True
+    for worker in [refresh_cpu, refresh_song, refresh_workspaces, refresh_common]:
+        thread = threading.Thread(target=worker, args=(data, renderer.render), daemon=True)
         threads.append(thread)
         thread.start()
 
