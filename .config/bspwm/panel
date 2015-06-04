@@ -14,7 +14,7 @@ fonts = \
 [
     ['DejaVu Sans:size=9', 0],
     ['Font Awesome:size=10', 0],
-    ['DejaVu Sans:pixelsize=11', -2],
+    ['DejaVu Sans:pixelsize=12', -1],
 ]
 shadow_color = '#507090'
 inactive_color = '#707070'
