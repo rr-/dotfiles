@@ -154,7 +154,8 @@ class MyRenderer(object):
         for font in fonts:
             command += ['-f', font[0], '-o', font[1]]
         command = [str(x) for x in command]
-        self.lemonbar_process = Popen(command, stdout=PIPE, stdin=PIPE)
+        sh_process = Popen('sh', stdin=PIPE)
+        self.lemonbar_process = Popen(command, stdout=sh_process.stdin, stdin=PIPE)
 
     def print_seconds(self, seconds):
         seconds = math.floor(float(seconds))
@@ -163,8 +164,11 @@ class MyRenderer(object):
     def print_workspaces(self, monitor):
         with self.renderer.temporary():
             self.renderer.set_background_color('#444444')
+            self.renderer.print('%{A5:bspc monitor -f ' + monitor.name + ';bspc desktop -f prev;:}')
+            self.renderer.print('%{A4:bspc monitor -f ' + monitor.name + ';bspc desktop -f next;:}')
             self.renderer.print_space(1, True)
             for workspace in monitor.workspaces:
+                self.renderer.print('%{A:bspc monitor -f ' + monitor.name + ';bspc desktop -f ' + workspace.name + ':}')
                 self.renderer.set_font(3)
                 if workspace.focused:
                     self.renderer.set_font_color('#bbcccc')
@@ -173,7 +177,10 @@ class MyRenderer(object):
                     self.renderer.set_font_color('#667777')
                     self.renderer.print('\u25a0')
                 self.renderer.print_space(1)
+                self.renderer.print('%{A}')
             self.renderer.print_space(1, True)
+            self.renderer.print('%{A}')
+            self.renderer.print('%{A}')
 
     def print_mpd_status(self):
         if self.data.mpd_status:
