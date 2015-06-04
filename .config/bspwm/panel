@@ -172,7 +172,10 @@ class MyRenderer(object):
                         self.renderer.font_color = active_workspace_color
                     else:
                         self.renderer.font_color = inactive_workspace_color
-                    self.print_text('\u25a0')
+                    if workspace.free:
+                        self.print_text('\u25a1')
+                    else:
+                        self.print_text('\u25a0')
                 self.print_space(1)
             self.print_space(1, force=True)
 
