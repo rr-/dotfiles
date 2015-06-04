@@ -19,6 +19,34 @@ fonts = \
 shadow_color = '#507090'
 inactive_color = '#707070'
 
+class Data(object):
+    def __init__(self):
+        self.cpu = 0
+        self.volume = 0
+        self.time = datetime.now()
+        self.mpd_status = None
+        self.current_song = None
+        self.monitors = []
+
+class Monitor(object):
+    LAYOUT_TILED = 1
+    LAYOUT_MONOCLE = 2
+
+    def __init__(self):
+        self.name = None
+        self.focused = False
+        self.workspaces = []
+        self.layout = None
+
+class Workspace(object):
+    def __init__(self):
+        self.name = None
+        self.focused = False
+        self.free = True
+        self.urgent = False
+
+
+
 class Renderer(object):
     def __init__(self):
         self.font = self.font_color = self.background_color = None
@@ -71,8 +99,8 @@ class Renderer(object):
             self.print(match.group(1))
         self.print(match.group(2))
 
-    def print_space(self, number):
-        if not re.match('.*[\s\u2000-\u200b](%{[^}]*})*$', self.text):
+    def print_space(self, number, force=False):
+        if not re.match('.*[\s\u2000-\u200b](%{[^}]*})*$', self.text) or force:
             self.print('\u2004' * number) #number/3 em space
 
     def print_progressbar(self, number, width = 10):
@@ -86,8 +114,14 @@ class Renderer(object):
     def get_text(self):
         return self.text
 
-    def switch_to_next_monitor(self):
-        self.print('%{S+}')
+    def switch_to_monitor(self, number):
+        self.print('%%{S%d}' % number)
+
+    def align_to_left(self):
+        self.print('%{l}')
+
+    def align_to_center(self):
+        self.print('%{c}')
 
     def align_to_right(self):
         self.print('%{r}')
@@ -116,9 +150,30 @@ class MyRenderer(object):
         self.renderer = Renderer()
         self.data = data
 
+        command = ['lemonbar', '-gx19']
+        for font in fonts:
+            command += ['-f', font[0], '-o', font[1]]
+        command = [str(x) for x in command]
+        self.lemonbar_process = Popen(command, stdout=PIPE, stdin=PIPE)
+
     def print_seconds(self, seconds):
         seconds = math.floor(float(seconds))
         self.renderer.print('%02d:%02d' % (seconds // 60, seconds % 60))
+
+    def print_workspaces(self, monitor):
+        with self.renderer.temporary():
+            self.renderer.set_background_color('#444444')
+            self.renderer.print_space(1, True)
+            for workspace in monitor.workspaces:
+                self.renderer.set_font(3)
+                if workspace.focused:
+                    self.renderer.set_font_color('#bbcccc')
+                    self.renderer.print('\u25a0')
+                else:
+                    self.renderer.set_font_color('#667777')
+                    self.renderer.print('\u25a0')
+                self.renderer.print_space(1)
+            self.renderer.print_space(1, True)
 
     def print_mpd_status(self):
         if self.data.mpd_status:
@@ -154,9 +209,13 @@ class MyRenderer(object):
 
     def render(self):
         self.renderer.clear()
-        for m in range(self.data.monitor_count):
+        for monitor_number, monitor in enumerate(self.data.monitors):
+            self.renderer.switch_to_monitor(monitor_number)
             self.renderer.set_background_color('black')
             self.renderer.set_font_color('#dddddd')
+            self.renderer.align_to_left()
+            self.print_workspaces(monitor)
+            self.renderer.align_to_center()
             self.print_mpd_status()
             self.renderer.align_to_right()
             self.print_cpu_usage()
@@ -164,25 +223,19 @@ class MyRenderer(object):
             self.print_date()
             self.print_clock()
             self.renderer.print_space(2)
-            self.renderer.switch_to_next_monitor()
             self.renderer.set_background_color('black')
-        return self.renderer.get_text()
+
+        line = (self.renderer.get_text() + "\n").encode('utf8')
+        self.lemonbar_process.stdin.write(line)
+        self.lemonbar_process.stdin.flush()
 
 
 
-class Data(object):
-    def __init__(self):
-        self.monitor_count = 1
-        self.cpu = 0
-        self.volume = 0
-        self.time = datetime.now()
-        self.mpd_status = None
-
-def refresh_cpu(data):
+def refresh_cpu(data, render_func):
     while True:
         data.cpu = psutil.cpu_percent(interval=3)
 
-def refresh_song(data):
+def refresh_song(data, render_func):
     client = mpd.MPDClient()
     client.connect(host='localhost', port=6600)
     while True:
@@ -190,7 +243,48 @@ def refresh_song(data):
         data.current_song = client.currentsong()
         time.sleep(0.25)
 
-def refresh(data):
+def refresh_workspaces(data, render_func):
+    command = ['bspc', 'control', '--subscribe']
+    bspc_process = Popen(command, stdout=PIPE)
+    while True:
+        line = bspc_process.stdout.readline().decode('utf8').strip()
+        if line.startswith('W'):
+            line = line[1:]
+        elif line == '':
+            continue
+        items = line.split(':')
+
+        data.monitors = []
+        current_monitor = None
+        for item in items:
+            key = item[0]
+            value = item[1:]
+            key_type = key.lower()
+
+            if key_type == 'm':
+                current_monitor = Monitor()
+                current_monitor.name = value
+                current_monitor.focused = key.isupper()
+                data.monitors.append(current_monitor)
+
+            elif key_type in 'ofu':
+                workspace = Workspace()
+                workspace.name = value
+                workspace.focused = key.isupper()
+                workspace.free = key_type == 'f'
+                workspace.urgent = key_type == 'u'
+                current_monitor.workspaces.append(workspace)
+
+            elif key_type in 'l':
+                if value == 'M':
+                    current_monitor.layout = Monitor.LAYOUT_MONOCLE
+                else:
+                    current_monitor.layout = Monitor.LAYOUT_TILED
+
+        data.monitors.reverse() #hack...
+        render_func()
+
+def refresh(data, render_func):
     while True:
         data.time = datetime.now()
         data.volume = alsaaudio.Mixer().getvolume()[0]
@@ -198,27 +292,17 @@ def refresh(data):
 
 def main():
     data = Data()
+    renderer = MyRenderer(data)
 
     threads = []
-    for worker in [refresh_cpu, refresh_song, refresh]:
-        thread = threading.Thread(target=worker, args=(data,))
+    for worker in [refresh_cpu, refresh_song, refresh_workspaces, refresh]:
+        thread = threading.Thread(target=worker, args=(data, renderer.render))
         thread.daemon = True
         threads.append(thread)
         thread.start()
 
-    command = ['bspc', 'control', '--subscribe']
-    bspc_process = Popen(command, stdout=PIPE)
-
-    command = ['lemonbar', '-gx19']
-    for font in fonts:
-        command += ['-f', font[0], '-o', font[1]]
-    command = [str(x) for x in command]
-    lemonbar_process = Popen(command, stdout=PIPE, stdin=PIPE)
-
-    renderer = MyRenderer(data)
     while True:
-        lemonbar_process.stdin.write((renderer.render() + "\n").encode('utf8'))
-        lemonbar_process.stdin.flush()
+        renderer.render()
         time.sleep(1)
 
 if __name__ == '__main__':
