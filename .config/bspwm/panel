@@ -198,7 +198,7 @@ class MyRenderer(object):
                 self.print_icon('\uf074')
 
     def print_cpu_usage(self):
-        self.print_icon('\uf0e7')
+        self.print_icon('\uf085')
         self.print_progressbar(self.data.cpu)
 
     def print_volume(self):
