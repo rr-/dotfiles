@@ -142,6 +142,7 @@ function install_link_or_cp {
         install_aur lemonbar-xft-git
         install_pip psutil      #CPU usage
         install_pip pyalsaaudio #volume
+        install_pip python-mpd2 #mpd interaction
         if has_installed bspwm 'bspwm config'; then
             install_link "$dir/.config/bspwm" "$HOME/.config/bspwm"
             install_link "$dir/.config/sxhkd" "$HOME/.config/sxhkd"

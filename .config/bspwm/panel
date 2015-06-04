@@ -1,10 +1,14 @@
 #!/bin/python3
+from datetime import datetime, timedelta
 from subprocess import Popen, PIPE
-from datetime import datetime
 import alsaaudio
-import re
 import psutil
+import re
 import sys
+import threading
+import time
+import mpd
+import math
 
 fonts = \
 [
@@ -108,42 +112,52 @@ class Renderer(object):
 
 
 class MyRenderer(object):
-    def __init__(self, monitor_count=1):
+    def __init__(self, data):
         self.renderer = Renderer()
-        self.cpu = 0
-        self.time = datetime.now()
-        self.monitor_count = monitor_count
+        self.data = data
 
-    def refresh(self):
-        self.cpu = psutil.cpu_percent(interval=1)
-        self.time = datetime.now()
+    def print_seconds(self, seconds):
+        seconds = math.floor(float(seconds))
+        self.renderer.print('%02d:%02d' % (seconds // 60, seconds % 60))
+
+    def print_mpd_status(self):
+        if self.data.mpd_status:
+            self.renderer.print(self.data.current_song['artist'])
+            self.renderer.print(' - ')
+            self.renderer.print(self.data.current_song['title'])
+            self.renderer.print_space(3)
+            if 'elapsed' in self.data.mpd_status:
+                self.print_seconds(self.data.mpd_status['elapsed'])
+                self.renderer.print('/')
+                self.print_seconds(self.data.current_song['time'])
 
     def print_cpu_usage(self):
         #self.renderer.print_icon('\uf085')
         self.renderer.print_icon('\uf0e7')
-        self.renderer.print_progressbar(self.cpu)
+        self.renderer.print_progressbar(self.data.cpu)
 
     def print_volume(self):
         self.renderer.print_icon('\uf028')
-        self.renderer.print_progressbar(alsaaudio.Mixer().getvolume()[0])
+        self.renderer.print_progressbar(self.data.volume)
 
     def print_date(self):
         #self.renderer.print_icon('\uf073')
         #self.renderer.print_icon('\uf133')
         self.renderer.print_space(2)
-        self.renderer.print(datetime.strftime(self.time, '%a, %b %d'))
+        self.renderer.print(datetime.strftime(self.data.time, '%a, %b %d'))
 
     def print_clock(self):
         self.renderer.set_font_color('white')
         #self.renderer.print_icon('\uf017')
         self.renderer.print_space(2)
-        self.renderer.print(datetime.strftime(self.time, '%H:%M'))
+        self.renderer.print(datetime.strftime(self.data.time, '%H:%M:%S'))
 
     def render(self):
         self.renderer.clear()
-        for m in range(self.monitor_count):
+        for m in range(self.data.monitor_count):
             self.renderer.set_background_color('black')
             self.renderer.set_font_color('#dddddd')
+            self.print_mpd_status()
             self.renderer.align_to_right()
             self.print_cpu_usage()
             self.print_volume()
@@ -154,18 +168,58 @@ class MyRenderer(object):
             self.renderer.set_background_color('black')
         return self.renderer.get_text()
 
+
+
+class Data(object):
+    def __init__(self):
+        self.monitor_count = 1
+        self.cpu = 0
+        self.volume = 0
+        self.time = datetime.now()
+        self.mpd_status = None
+
+def refresh_cpu(data):
+    while True:
+        data.cpu = psutil.cpu_percent(interval=3)
+
+def refresh_song(data):
+    client = mpd.MPDClient()
+    client.connect(host='localhost', port=6600)
+    while True:
+        data.mpd_status = client.status()
+        data.current_song = client.currentsong()
+        time.sleep(0.25)
+
+def refresh(data):
+    while True:
+        data.time = datetime.now()
+        data.volume = alsaaudio.Mixer().getvolume()[0]
+        time.sleep(1)
+
 def main():
+    data = Data()
+
+    threads = []
+    for worker in [refresh_cpu, refresh_song, refresh]:
+        thread = threading.Thread(target=worker, args=(data,))
+        thread.daemon = True
+        threads.append(thread)
+        thread.start()
+
+    command = ['bspc', 'control', '--subscribe']
+    bspc_process = Popen(command, stdout=PIPE)
+
     command = ['lemonbar', '-gx19']
     for font in fonts:
         command += ['-f', font[0], '-o', font[1]]
     command = [str(x) for x in command]
-    process = Popen(command, stdout=PIPE, stdin=PIPE, bufsize=1)
+    lemonbar_process = Popen(command, stdout=PIPE, stdin=PIPE)
 
-    renderer = MyRenderer(monitor_count=2)
+    renderer = MyRenderer(data)
     while True:
-        process.stdin.write((renderer.render() + "\n").encode('utf8'))
-        process.stdin.flush()
-        renderer.refresh()
+        lemonbar_process.stdin.write((renderer.render() + "\n").encode('utf8'))
+        lemonbar_process.stdin.flush()
+        time.sleep(1)
 
 if __name__ == '__main__':
     main()
