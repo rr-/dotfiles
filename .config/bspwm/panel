@@ -39,6 +39,7 @@ class Data(object):
         self.monitors = []
         self.battery_present = False
         self.battery_percent = 0
+        self.battery_discharging = False
 
 class Monitor(object):
     LAYOUT_TILED = 1
@@ -227,7 +228,10 @@ class MyRenderer(object):
 
     def render_battery(self):
         if self.data.battery_present:
-            self.print_icon('\uf1e6', margin=2)
+            with self.renderer.temporary():
+                if self.data.battery_discharging:
+                    self.renderer.font_color = inactive_text_color
+                self.print_icon('\uf1e6', margin=2)
             self.render_progressbar(self.data.battery_percent)
 
     def render_cpu_usage(self):
@@ -329,6 +333,7 @@ def refresh_battery(data, render_func):
     try:
         charge_now = glob.glob('/sys/class/power_supply/*/charge_now')[0]
         charge_max = glob.glob('/sys/class/power_supply/*/charge_full')[0]
+        charge_status = glob.glob('/sys/class/power_supply/*/status')[0]
         data.battery_present = True
     except IndexError:
         data.battery_present = False
@@ -336,9 +341,12 @@ def refresh_battery(data, render_func):
         return
     while True:
         with open(charge_now, 'r') as charge_now_fh, \
-             open(charge_max, 'r') as charge_max_fh:
+             open(charge_max, 'r') as charge_max_fh, \
+             open(charge_status, 'r') as charge_status_fh:
             now = int(charge_now_fh.read())
             max = int(charge_max_fh.read())
+            status = charge_status_fh.read().strip().lower()
+            data.battery_discharging = status == 'discharging'
             data.battery_percent = now * 100.0 / max
             time.sleep(10)
 
