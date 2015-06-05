@@ -2,12 +2,14 @@
 from datetime import datetime, timedelta
 from subprocess import Popen, PIPE
 import alsaaudio
+import glob
 import psutil
 import re
 import threading
 import time
 import mpd
 import math
+import os
 
 fonts = [
     ['terminesspowerline:size=8', -1],
@@ -35,6 +37,8 @@ class Data(object):
         self.mpd_status = None
         self.current_song = None
         self.monitors = []
+        self.battery_present = False
+        self.battery_percent = 0
 
 class Monitor(object):
     LAYOUT_TILED = 1
@@ -221,6 +225,11 @@ class MyRenderer(object):
                 self.renderer.font_color = inactive_text_color
             self.print_icon('\uf074')
 
+    def render_battery(self):
+        if self.data.battery_present:
+            self.print_icon('\uf1e6', margin=2)
+            self.render_progressbar(self.data.battery_percent)
+
     def render_cpu_usage(self):
         with self.renderer.clickable(1, 'run-or-raise -n htop -p "urxvt -e htop"'):
             self.print_icon('\uf085', margin=2)
@@ -255,6 +264,7 @@ class MyRenderer(object):
             self.render_mpd_status()
 
             self.renderer.alignment = Renderer.ALIGN_RIGHT
+            self.render_battery()
             self.render_cpu_usage()
             self.render_volume()
             self.render_date()
@@ -315,6 +325,23 @@ def refresh_workspaces(data, render_func):
         data.monitors.reverse() #hack...
         render_func()
 
+def refresh_battery(data, render_func):
+    try:
+        charge_now = glob.glob('/sys/class/power_supply/*/charge_now')[0]
+        charge_max = glob.glob('/sys/class/power_supply/*/charge_full')[0]
+        data.battery_present = True
+    except IndexError:
+        data.battery_present = False
+    if not data.battery_present:
+        return
+    while True:
+        with open(charge_now, 'r') as charge_now_fh, \
+             open(charge_max, 'r') as charge_max_fh:
+            now = int(charge_now_fh.read())
+            max = int(charge_max_fh.read())
+            data.battery_percent = now * 100.0 / max
+            time.sleep(10)
+
 def refresh_common(data, render_func):
     while True:
         data.time = datetime.now()
@@ -326,7 +353,7 @@ def main():
     renderer = MyRenderer(data)
 
     threads = []
-    for worker in [refresh_cpu, refresh_song, refresh_workspaces, refresh_common]:
+    for worker in [refresh_cpu, refresh_song, refresh_workspaces, refresh_battery, refresh_common]:
         thread = threading.Thread(target=worker, args=(data, renderer.render), daemon=True)
         threads.append(thread)
         thread.start()
