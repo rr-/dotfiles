@@ -30,6 +30,16 @@ function install_pacman {
     fi
 }
 
+function install_cygwin {
+    has_installed apt-cyg "$1" || return
+    if apt-cyg list|grep "$1" >/dev/null; then
+        echo "$1 already installed"
+    else
+        echo "Installing $1 with apt-cyg..."
+        apt-cyg install "$1"
+    fi
+}
+
 function install_pip {
     has_installed pip "$1" || return
     has_installed sudo "$1" || return
@@ -98,7 +108,18 @@ function install_link_or_cp {
     git submodule update
     popd >/dev/null
 
+#cygwin
+    if [[ "$uname" =~ cygwin ]]; then
+        if ! command -v apt-cyg &>/dev/null; then
+            echo Installing apt-cyg...
+            lynx -source rawgit.com/transcode-open/apt-cyg/master/apt-cyg > apt-cyg
+            install apt-cyg /bin
+        fi
+    fi
+
 #networking
+    install_cygwin wget
+    install_cygwin curl
     install_pacman wget #required for install_aur
     install_pacman curl
     install_pacman openssh
@@ -124,6 +145,8 @@ function install_link_or_cp {
     fi
 
 #python
+    install_cygwin python
+    install_cygwin python3
     install_pacman python
     install_pacman python-pip
 
@@ -154,11 +177,13 @@ function install_link_or_cp {
     fi
 
 #git
+    install_cygwin git
     install_pacman git
     install_link "$dir/.gitconfig" "$HOME/.gitconfig"
     install_link "$dir/.gitignore" "$HOME/.gitignore"
 
 #vim
+    install_cygwin vim
     install_pacman gvim
     if has_installed vim 'vim config'; then
         create_folder "$HOME/.vim/undo"
@@ -172,6 +197,7 @@ function install_link_or_cp {
     fi
 
 #zsh
+    install_cygwin zsh
     install_pacman zsh
     if has_installed zsh 'zsh config'; then
         install_link "$dir/.zlogin" "$HOME/.zlogin"
@@ -197,6 +223,9 @@ function install_link_or_cp {
     fi
 
 #development
+    install_cygwin make
+    install_cygwin gcc
+    install_cygwin automake
     install_pacman make
     install_pacman gcc
     install_pacman automake
@@ -255,6 +284,7 @@ function install_link_or_cp {
     fi
 
 #htop
+    install_cygwin htop
     install_pacman htop
     if has_installed htop 'htop config'; then
         install_link "$dir/.config/htop" "$HOME/.config/htop"
