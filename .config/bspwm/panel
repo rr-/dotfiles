@@ -185,11 +185,17 @@ class MyRenderer(object):
                 self.print_icon('\uf04b')
             else:
                 self.print_icon('\uf04c')
-            self.print_space(3)
-            self.print_text(self.data.current_song['artist'])
-            self.print_text(' - ')
-            self.print_text(self.data.current_song['title'])
-            self.print_space(3)
+
+            if 'artist' in self.data.current_song:
+                self.print_space(3)
+                self.print_text(self.data.current_song['artist'])
+                self.print_text(' - ')
+                self.print_text(self.data.current_song['title'])
+            else:
+                self.print_text('Stopped')
+
+            self.print_space(2)
+
             if 'elapsed' in self.data.mpd_status:
                 self.print_seconds(self.data.mpd_status['elapsed'])
                 self.print_text('/')
