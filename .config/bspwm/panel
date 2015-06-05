@@ -28,6 +28,7 @@ active_workspace_color     = '#dddddd'
 inactive_workspace_color   = '#888888'
 clock_background_color     = '#333333'
 clock_text_color           = 'white'
+interval                   = 1
 
 class Data(object):
     def __init__(self):
@@ -283,7 +284,7 @@ class MyRenderer(object):
 
 def refresh_cpu(data, render_func):
     while True:
-        data.cpu = psutil.cpu_percent(interval=1)
+        data.cpu = psutil.cpu_percent(interval=interval)
 
 def refresh_song(data, render_func):
     client = mpd.MPDClient()
@@ -291,7 +292,7 @@ def refresh_song(data, render_func):
     while True:
         data.mpd_status = client.status()
         data.current_song = client.currentsong()
-        time.sleep(1)
+        time.sleep(interval)
 
 def refresh_workspaces(data, render_func):
     bspc_process = Popen(['bspc', 'control', '--subscribe'], stdout=PIPE)
@@ -348,13 +349,13 @@ def refresh_battery(data, render_func):
             status = charge_status_fh.read().strip().lower()
             data.battery_discharging = status == 'discharging'
             data.battery_percent = now * 100.0 / max
-            time.sleep(10)
+            time.sleep(interval * 3)
 
 def refresh_common(data, render_func):
     while True:
         data.time = datetime.now()
         data.volume = alsaaudio.Mixer().getvolume()[0]
-        time.sleep(0.3)
+        time.sleep(interval)
 
 def main():
     data = Data()
@@ -368,7 +369,7 @@ def main():
 
     while True:
         renderer.render()
-        time.sleep(1)
+        time.sleep(interval)
 
 if __name__ == '__main__':
     main()
