@@ -23,10 +23,10 @@ default_font_color         = '#dddddd'
 inactive_text_color        = '#666666'
 active_progressbar_color   = '#d0bbbbbb'
 inactive_progressbar_color = '#d0888888'
-workspaces_background      = '#333333'
+workspaces_background      = '#c0333333'
 active_workspace_color     = '#dddddd'
 inactive_workspace_color   = '#888888'
-clock_background_color     = '#333333'
+clock_background_color     = '#c0333333'
 clock_text_color           = 'white'
 interval                   = 1
 
