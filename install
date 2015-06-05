@@ -128,6 +128,7 @@ function install_link_or_cp {
     install_pacman ttf-dejavu
     install_aur ttf-font-awesome
     install_aur ttf-ipa-mona
+    install_aur ttf-symbola
     if [ -d /usr/share/fonts ]; then
         fonts_dir="$HOME/.local/share/fonts"
         [ -d "$fonts_dir" ] || mkdir -p "$fonts_dir"
