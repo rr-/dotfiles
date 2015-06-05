@@ -41,6 +41,9 @@ class Data(object):
         self.battery_present = False
         self.battery_percent = 0
         self.battery_discharging = False
+        self.network_enabled = False
+        self.network_traffic_received = 0
+        self.network_traffic_sent = 0
 
 class Monitor(object):
     LAYOUT_TILED = 1
@@ -227,6 +230,15 @@ class MyRenderer(object):
                 self.renderer.font_color = inactive_text_color
             self.print_icon('\uf074')
 
+    def render_traffic(self):
+        if self.data.network_enabled:
+            self.print_icon('\uf019', margin=2)
+            self.print_text('%03.0f' % (self.data.network_traffic_received / 1024.0))
+            self.print_text('K')
+            self.print_icon('\uf093', margin=2)
+            self.print_text('%03.0f' % (self.data.network_traffic_sent / 1024.0))
+            self.print_text('K')
+
     def render_battery(self):
         if self.data.battery_present:
             with self.renderer.temporary():
@@ -269,6 +281,7 @@ class MyRenderer(object):
             self.render_mpd_status()
 
             self.renderer.alignment = Renderer.ALIGN_RIGHT
+            self.render_traffic()
             self.render_battery()
             self.render_cpu_usage()
             self.render_volume()
@@ -338,18 +351,43 @@ def refresh_battery(data, render_func):
         data.battery_present = True
     except IndexError:
         data.battery_present = False
-    if not data.battery_present:
-        return
-    while True:
-        with open(charge_now, 'r') as charge_now_fh, \
-             open(charge_max, 'r') as charge_max_fh, \
-             open(charge_status, 'r') as charge_status_fh:
-            now = int(charge_now_fh.read())
-            max = int(charge_max_fh.read())
-            status = charge_status_fh.read().strip().lower()
-            data.battery_discharging = status == 'discharging'
-            data.battery_percent = now * 100.0 / max
-            time.sleep(interval * 3)
+    if data.battery_present:
+        while True:
+            with open(charge_now, 'r') as charge_now_fh, \
+                 open(charge_max, 'r') as charge_max_fh, \
+                 open(charge_status, 'r') as charge_status_fh:
+                now = int(charge_now_fh.read())
+                max = int(charge_max_fh.read())
+                status = charge_status_fh.read().strip().lower()
+                data.battery_discharging = status == 'discharging'
+                data.battery_percent = now * 100.0 / max
+                time.sleep(interval * 3)
+
+def refresh_network(data, render_func):
+    try:
+        rx_path = None
+        tx_path = None
+        for interface in glob.glob('/sys/class/net/*'):
+            with open(os.path.join(interface, 'operstate'), 'r') as fh:
+                if fh.read().strip().lower() == 'up':
+                    rx_path = os.path.join(interface, 'statistics', 'rx_bytes')
+                    tx_path = os.path.join(interface, 'statistics', 'tx_bytes')
+                    data.network_enabled = True
+    except:
+        data.network_enabled = False
+    if data.network_enabled:
+        with open(rx_path, 'r') as rx_fh, open(tx_path, 'r') as tx_fh:
+            old_rx_bytes = int(rx_fh.read())
+            old_tx_bytes = int(tx_fh.read())
+        while True:
+            with open(rx_path, 'r') as rx_fh, open(tx_path, 'r') as tx_fh:
+                rx_bytes = int(rx_fh.read())
+                tx_bytes = int(tx_fh.read())
+                data.network_traffic_received = (rx_bytes - old_rx_bytes) / interval
+                data.network_traffic_sent = (tx_bytes - old_tx_bytes) / interval
+                old_rx_bytes = rx_bytes
+                old_tx_bytes = tx_bytes
+            time.sleep(interval)
 
 def refresh_common(data, render_func):
     while True:
@@ -362,7 +400,7 @@ def main():
     renderer = MyRenderer(data)
 
     threads = []
-    for worker in [refresh_cpu, refresh_song, refresh_workspaces, refresh_battery, refresh_common]:
+    for worker in [refresh_cpu, refresh_song, refresh_workspaces, refresh_network, refresh_battery, refresh_common]:
         thread = threading.Thread(target=worker, args=(data, renderer.render), daemon=True)
         threads.append(thread)
         thread.start()
