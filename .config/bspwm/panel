@@ -186,19 +186,24 @@ class MyRenderer(object):
             self.print_space(1, force=True)
 
     def print_mpd_status(self):
-        if self.data.mpd_status:
+        if not self.data.mpd_status:
+            return
+
+        with self.renderer.clickable(1, 'mpc toggle'):
             if 'state' in self.data.mpd_status and self.data.mpd_status['state'] == 'play':
                 self.print_icon('\uf04b')
             else:
                 self.print_icon('\uf04c')
 
-            if 'artist' in self.data.current_song:
-                self.print_space(3)
-                self.print_text(self.data.current_song['artist'])
-                self.print_text(' - ')
-                self.print_text(self.data.current_song['title'])
-            else:
-                self.print_text('Stopped')
+            with self.renderer.clickable(4, 'mpc prev'), \
+                 self.renderer.clickable(5, 'mpc next'):
+                if 'artist' in self.data.current_song:
+                    self.print_space(3)
+                    self.print_text(self.data.current_song['artist'])
+                    self.print_text(' - ')
+                    self.print_text(self.data.current_song['title'])
+                else:
+                    self.print_text('Stopped')
 
             self.print_space(2)
 
@@ -207,18 +212,22 @@ class MyRenderer(object):
                 self.print_text('/')
                 self.print_seconds(self.data.current_song['time'])
                 self.print_space(2)
+
+        with self.renderer.clickable(1, 'mpc random'):
             with self.renderer.temporary():
                 if 'random' not in self.data.mpd_status or self.data.mpd_status['random'] != '1':
                     self.renderer.font_color = inactive_text_color
                 self.print_icon('\uf074')
 
     def print_cpu_usage(self):
-        self.print_icon('\uf085')
-        self.print_progressbar(self.data.cpu)
+        with self.renderer.clickable(1, 'run-or-raise -n htop -p "urxvt -e htop"'):
+            self.print_icon('\uf085')
+            self.print_progressbar(self.data.cpu)
 
     def print_volume(self):
-        self.print_icon('\uf028')
-        self.print_progressbar(self.data.volume)
+        with self.renderer.clickable(1, 'run-or-raise -n alsamixer -p "urxvt -e alsamixer"'):
+            self.print_icon('\uf028')
+            self.print_progressbar(self.data.volume)
 
     def print_date(self):
         self.print_space(2)
