@@ -207,7 +207,7 @@ class MyRenderer(object):
 
             with self.renderer.clickable(4, 'mpc prev'), \
                  self.renderer.clickable(5, 'mpc next'):
-                if 'artist' in self.data.current_song:
+                if self.data.current_song and 'artist' in self.data.current_song:
                     self.print_text(self.data.current_song['artist'])
                     self.print_text(' - ')
                     self.print_text(self.data.current_song['title'])
