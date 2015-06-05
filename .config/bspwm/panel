@@ -132,7 +132,7 @@ class MyRenderer(object):
         self.renderer = Renderer()
         self.data = data
 
-        command = ['/home/rr-/src/lemonbar-xft/lemonbar', '-gx' + str(height)]
+        command = ['lemonbar', '-gx' + str(height)]
         for font in fonts:
             command += ['-f', font[0], '-o', str(font[1])]
         sh_process = Popen('sh', stdin=PIPE)
