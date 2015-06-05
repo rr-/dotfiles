@@ -304,6 +304,6 @@ function install_link_or_cp {
     if [[ "$uname" =~ cygwin ]]; then
         echo "Hiding dotfiles in $HOME..."
         find "$HOME" -maxdepth 1 -iname '.*' | while read -r x; do
-            attrib +h +s $(cygpath -w `dirname "$x"`)`basename "$x"`
+            attrib +h +s $(cygpath -w `dirname "$x"`)/`basename "$x"`
         done
     fi
