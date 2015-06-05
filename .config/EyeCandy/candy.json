@@ -42,6 +42,7 @@
         ["Ctrl+Down",          ["pan", 0, 100]],
 
         ["S",                  ["toggle_smooth"]],
+        ["B",                  ["toggle_status"]],
         ["P",                  ["play_pause"]],
         ["F5",                 ["reload"]],
         ["Ctrl+R",             ["remove_dead"], ["reload"]],
