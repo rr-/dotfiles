@@ -3,10 +3,10 @@
 	url = https://github.com/gmarik/Vundle.vim.git
 [submodule "ext/translator"]
 	path = ext/translator
-	url = git@github.com:rr-/translator
+	url = https://github.com/rr-/translator.git
 [submodule "ext/i3-floater"]
 	path = ext/i3-floater
 	url = https://github.com/rr-/i3-floater.git
 [submodule "ext/eyecandy"]
 	path = ext/eyecandy
-	url = https://github.com/rr-/eyecandy
+	url = https://github.com/rr-/eyecandy.git
