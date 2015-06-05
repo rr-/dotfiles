@@ -51,21 +51,14 @@ hyper + {Prior,Next}
 # toggle play
 hyper + Delete
     mpc toggle
-    cmus-remote --pause
 
 # previous and next track
 hyper + {Home,End}
     mpc {prev,next}
-    cmus-remote --{prev,next}
 
 # seek backward and forward
 alt + shift + ctrl + {Left,Right}
     mpc seek {-,+}10
-    cmus-remote --seek {-,+}10
-
-# focus music player
-hyper + Insert
-    run-or-raise -cn 'music_player' -p "urxvt -name 'music_player' -e cmus"
 
 
 
