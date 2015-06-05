@@ -54,6 +54,8 @@
         ["9",                  ["volume_down", 0.05]],
         ["Shift+Left",         ["seek", -2500]],
         ["Shift+Right",        ["seek", 2500]],
+        ["Alt+Left",           ["run_script", ["convert", "{}", "-rotate", "-90", "bmp:{}"]], ["reload"]],
+        ["Alt+Right",          ["run_script", ["convert", "{}", "-rotate", "90", "bmp:{}"]], ["reload"]],
         ["0",                  ["volume_up", 0.05]],
         ["Return",             ["run_script", ["thunar-sf", "{}"]], ["close"]],
         ["[",                  ["copy_file", "~/hub/yume/"]],
