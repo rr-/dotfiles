@@ -206,16 +206,17 @@ function install_link_or_cp {
 
 #x
     if [[ "$uname" =~ linux ]]; then
-        install_aur escrotum-git
-        install_pacman xdotool
-        install_pacman autocutsel #synchronize primary and selection clipboards
-        install_pacman clipit #keep clipboard content even after application closes
+        install_aur escrotum-git     # to make screenshots
+        install_pacman xorg-xsetroot # to fix X cursor
+        install_pacman xdotool       # for all sort of things
+        install_pacman autocutsel    # synchronize primary and selection clipboards
+        install_pacman clipit        # keep clipboard content even after application closes
         if has_installed Xorg 'x init script'; then
             install_link "$dir/.xinitrc" "$HOME/.xinitrc"
         fi
-        install_pacman libconfig #for compton
-        install_pacman xorg-xprop #for compton-trans
-        install_pacman xorg-xwininfo #for compton-trans
+        install_pacman libconfig     # for compton
+        install_pacman xorg-xprop    # for compton-trans
+        install_pacman xorg-xwininfo # for compton-trans
         install_aur compton
         if has_installed compton 'compton config'; then
             install_link "$dir/.config/compton.conf" "$HOME/.config/compton.conf"
