@@ -2,7 +2,7 @@
     "basic":
     {
         "wheel_threshold": 1,
-        "zoom_delta": 0.08,
+        "zoom_delta": 0.1,
         "enlarge": 0,
         "extensions": ["jpg", "jpeg", "jfif", "gif", "png", "tga", "webm"],
         "default_volume": 1,
