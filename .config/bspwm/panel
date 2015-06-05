@@ -129,6 +129,7 @@ class Renderer(object):
 
 class MyRenderer(object):
     def __init__(self, data):
+        self.current_margin = 0
         self.renderer = Renderer()
         self.data = data
 
@@ -140,23 +141,27 @@ class MyRenderer(object):
 
     def print_text(self, text):
         self.renderer.print(text)
+        self.current_margin = 0
 
-    def print_space(self, number, force=False):
-        if force or not re.match('.*[\s\u00a0\u2000-\u200b](%{[^}]*})*$', self.renderer.text):
-            self.print_text('\u2004' * number) #number/3 em space
+    def ensure_margin(self, margin): #margin = 1/3 em space
+        if margin > self.current_margin:
+            with self.renderer.temporary():
+                self.renderer.font = 2
+                self.renderer.print('\u2004' * (margin - self.current_margin))
+            self.current_margin = margin
 
     def print_seconds(self, seconds):
         seconds = math.floor(float(seconds))
         self.print_text('%02d:%02d' % (seconds // 60, seconds % 60))
 
-    def print_icon(self, text):
+    def print_icon(self, text, margin=3):
         with self.renderer.temporary():
             self.renderer.font = 2
-            self.print_space(2, force=True)
+            self.ensure_margin(margin)
             self.print_text(text)
-            self.print_space(2, force=True)
+            self.ensure_margin(margin)
 
-    def print_progressbar(self, number, width=15):
+    def render_progressbar(self, number, width=15):
         filled = int(number * width / 100.)
         with self.renderer.temporary():
             self.renderer.font = 3
@@ -165,13 +170,13 @@ class MyRenderer(object):
             self.renderer.font_color = inactive_progressbar_color
             self.print_text('\u2588' * (width - filled))
 
-    def print_workspaces(self, monitor):
+    def render_workspaces(self, monitor):
         with self.renderer.temporary(), \
              self.renderer.clickable(5, 'bspc monitor -f %s;bspc desktop -f prev' % monitor.name), \
              self.renderer.clickable(4, 'bspc monitor -f %s;bspc desktop -f next' % monitor.name):
             self.renderer.background_color = workspaces_background
             self.renderer.font = 4
-            self.print_space(1, force=True)
+            self.ensure_margin(2)
             for workspace in monitor.workspaces:
                 with self.renderer.clickable(1, 'bspc monitor -f %s;bspc desktop -f %s' % (monitor.name, workspace.name)):
                     if workspace.focused:
@@ -182,10 +187,11 @@ class MyRenderer(object):
                         self.print_text('\u25a1')
                     else:
                         self.print_text('\u25a0')
-                self.print_space(1)
-            self.print_space(1, force=True)
+                self.ensure_margin(1)
+            self.ensure_margin(2)
+            self.print_text('') #hack - trigger margin reset due to background change
 
-    def print_mpd_status(self):
+    def render_mpd_status(self):
         if not self.data.mpd_status:
             return
 
@@ -198,64 +204,62 @@ class MyRenderer(object):
             with self.renderer.clickable(4, 'mpc prev'), \
                  self.renderer.clickable(5, 'mpc next'):
                 if 'artist' in self.data.current_song:
-                    self.print_space(3)
                     self.print_text(self.data.current_song['artist'])
                     self.print_text(' - ')
                     self.print_text(self.data.current_song['title'])
                 else:
                     self.print_text('Stopped')
-
-            self.print_space(2)
-
+            self.ensure_margin(2)
             if 'elapsed' in self.data.mpd_status:
                 self.print_seconds(self.data.mpd_status['elapsed'])
                 self.print_text('/')
                 self.print_seconds(self.data.current_song['time'])
-                self.print_space(2)
 
-        with self.renderer.clickable(1, 'mpc random'):
-            with self.renderer.temporary():
-                if 'random' not in self.data.mpd_status or self.data.mpd_status['random'] != '1':
-                    self.renderer.font_color = inactive_text_color
-                self.print_icon('\uf074')
+        with self.renderer.clickable(1, 'mpc random'), \
+             self.renderer.temporary():
+            if 'random' not in self.data.mpd_status or self.data.mpd_status['random'] != '1':
+                self.renderer.font_color = inactive_text_color
+            self.print_icon('\uf074')
 
-    def print_cpu_usage(self):
+    def render_cpu_usage(self):
         with self.renderer.clickable(1, 'run-or-raise -n htop -p "urxvt -e htop"'):
-            self.print_icon('\uf085')
-            self.print_progressbar(self.data.cpu)
+            self.print_icon('\uf085', margin=2)
+            self.render_progressbar(self.data.cpu)
 
-    def print_volume(self):
+    def render_volume(self):
         with self.renderer.clickable(1, 'run-or-raise -n alsamixer -p "urxvt -e alsamixer"'):
-            self.print_icon('\uf028')
-            self.print_progressbar(self.data.volume)
+            self.print_icon('\uf028', margin=2)
+            self.render_progressbar(self.data.volume)
 
-    def print_date(self):
-        self.print_space(2)
+    def render_date(self):
+        self.ensure_margin(3)
         self.print_text(datetime.strftime(self.data.time, '%a, %b %d'))
 
-    def print_clock(self):
-        self.print_space(2)
+    def render_clock(self):
+        self.ensure_margin(2)
         self.renderer.background_color = clock_background_color
         self.renderer.font_color = clock_text_color
-        self.print_space(2, force=True)
         self.print_text(datetime.strftime(self.data.time, '%H:%M:%S'))
+        self.ensure_margin(2)
 
     def render(self):
         self.renderer.clear()
         for monitor_number, monitor in enumerate(self.data.monitors):
+            self.current_margin = 0
             self.renderer.current_monitor = monitor_number
             self.renderer.background_color = default_background_color
             self.renderer.font_color = default_font_color
+
             self.renderer.alignment = Renderer.ALIGN_LEFT
-            self.print_workspaces(monitor)
-            self.renderer.alignment = Renderer.ALIGN_CENTER
-            self.print_mpd_status()
+            self.render_workspaces(monitor)
+            self.render_mpd_status()
+
             self.renderer.alignment = Renderer.ALIGN_RIGHT
-            self.print_cpu_usage()
-            self.print_volume()
-            self.print_date()
-            self.print_clock()
-            self.print_space(2)
+            self.render_cpu_usage()
+            self.render_volume()
+            self.render_date()
+            self.render_clock()
+
             self.renderer.background_color = default_background_color
 
         line = (self.renderer.text + "\n").encode('utf8')
