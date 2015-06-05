@@ -150,20 +150,9 @@ function install_link_or_cp {
     install_pacman python
     install_pacman python-pip
 
-#i3
-    if [[ "$uname" =~ linux ]]; then
-        install_pacman feh
-        install_aur xcb-util-cursor-git
-        install_aur i3-gaps-next-git
-        if has_installed i3 'i3 config'; then
-            install_link "$dir/ext/i3-floater/i3-floater" "$dir/bin/ext/i3-floater"
-            install_link "$dir/.config/i3" "$HOME/.config/i3"
-            install_link "$dir/.config/i3status" "$HOME/.config/i3status"
-        fi
-    fi
-
 #bspwm
     if [[ "$uname" =~ linux ]]; then
+        install_pacman feh
         install_aur bspwm-git
         install_aur sxhkd-git
         install_aur lemonbar-xft-git
