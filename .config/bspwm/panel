@@ -10,17 +10,22 @@ import mpd
 import math
 
 fonts = [
-    ['DejaVu Sans:size=9', -1],
-    ['Font Awesome:pixelsize=14', -1],
-    ['DejaVu Sans:pixelsize=12', -2],
+    ['terminesspowerline:size=8', -1],
+    ['Font Awesome:pixelsize=14', 0],
+    ['DejaVu Sans:pixelsize=11', -1],
     ['DejaVu Sans:pixelsize=12', -1],
 ]
-inactive_progressbar_color = '#707070'
-workspaces_background = '#4a4a4a'
-active_workspace_color = '#bbcccc'
-inactive_workspace_color = '#667777'
-default_background_color = 'black'
-default_font_color = '#dddddd'
+height                     = 19
+default_background_color   = '#c0000000'
+default_font_color         = '#dddddd'
+inactive_text_color        = '#666666'
+active_progressbar_color   = '#d0bbbbbb'
+inactive_progressbar_color = '#d0888888'
+workspaces_background      = '#333333'
+active_workspace_color     = '#dddddd'
+inactive_workspace_color   = '#888888'
+clock_background_color     = '#333333'
+clock_text_color           = 'white'
 
 class Data(object):
     def __init__(self):
@@ -127,7 +132,7 @@ class MyRenderer(object):
         self.renderer = Renderer()
         self.data = data
 
-        command = ['/home/rr-/src/lemonbar-xft/lemonbar', '-gx20']
+        command = ['/home/rr-/src/lemonbar-xft/lemonbar', '-gx' + str(height)]
         for font in fonts:
             command += ['-f', font[0], '-o', str(font[1])]
         sh_process = Popen('sh', stdin=PIPE)
@@ -137,7 +142,7 @@ class MyRenderer(object):
         self.renderer.print(text)
 
     def print_space(self, number, force=False):
-        if force or not re.match('.*[\s\u2000-\u200b](%{[^}]*})*$', self.renderer.text):
+        if force or not re.match('.*[\s\u00a0\u2000-\u200b](%{[^}]*})*$', self.renderer.text):
             self.print_text('\u2004' * number) #number/3 em space
 
     def print_seconds(self, seconds):
@@ -147,14 +152,15 @@ class MyRenderer(object):
     def print_icon(self, text):
         with self.renderer.temporary():
             self.renderer.font = 2
-            self.print_space(2)
+            self.print_space(2, force=True)
             self.print_text(text)
-            self.print_space(2)
+            self.print_space(2, force=True)
 
-    def print_progressbar(self, number, width = 10):
+    def print_progressbar(self, number, width=15):
         filled = int(number * width / 100.)
         with self.renderer.temporary():
             self.renderer.font = 3
+            self.renderer.font_color = active_progressbar_color
             self.print_text('\u2588' * filled)
             self.renderer.font_color = inactive_progressbar_color
             self.print_text('\u2588' * (width - filled))
@@ -200,10 +206,10 @@ class MyRenderer(object):
                 self.print_seconds(self.data.mpd_status['elapsed'])
                 self.print_text('/')
                 self.print_seconds(self.data.current_song['time'])
-            self.print_space(3)
+                self.print_space(2)
             with self.renderer.temporary():
                 if 'random' not in self.data.mpd_status or self.data.mpd_status['random'] != '1':
-                    self.renderer.font_color = inactive_progressbar_color
+                    self.renderer.font_color = inactive_text_color
                 self.print_icon('\uf074')
 
     def print_cpu_usage(self):
@@ -219,8 +225,10 @@ class MyRenderer(object):
         self.print_text(datetime.strftime(self.data.time, '%a, %b %d'))
 
     def print_clock(self):
-        self.renderer.font_color = 'white'
         self.print_space(2)
+        self.renderer.background_color = clock_background_color
+        self.renderer.font_color = clock_text_color
+        self.print_space(2, force=True)
         self.print_text(datetime.strftime(self.data.time, '%H:%M:%S'))
 
     def render(self):
@@ -239,7 +247,7 @@ class MyRenderer(object):
             self.print_date()
             self.print_clock()
             self.print_space(2)
-            self.renderer.background_color = 'black'
+            self.renderer.background_color = default_background_color
 
         line = (self.renderer.text + "\n").encode('utf8')
         self.lemonbar_process.stdin.write(line)
