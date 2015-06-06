@@ -155,15 +155,16 @@ class WallpaperChanger(object):
 def main():
     wc = WallpaperChanger()
 
-    parser = argparse.ArgumentParser(description='Wallpaper utility')
+    fmt = lambda prog: argparse.HelpFormatter(prog, max_help_position=40, width=80)
+    parser = argparse.ArgumentParser(description='Wallpaper utility', formatter_class=fmt)
     subparsers = parser.add_subparsers(help='chooses the subcommand')
 
-    parser_set = subparsers.add_parser('set', help='sets a wallpaper')
+    parser_set = subparsers.add_parser('set', help='sets a wallpaper', formatter_class=fmt)
     parser_set.add_argument('-p', '--preview', action='store_true', help='previews the changes without applying them')
-    parser_set.add_argument('-s', '--scale', type=float, default=1, help='scales image by given factor')
+    parser_set.add_argument('-s', '--scale', metavar='r', type=float, default=1, help='scales image by given factor')
     parser_set.add_argument('-f', '--fit', action='store_true', help='fits the image within monitor work area')
     parser_set.add_argument('-c', '--cover', action='store_true', help='makes the image cover whole monitor work area')
-    parser_set.add_argument('-b', '--background', metavar='color', default='#000000', help='selects background color')
+    parser_set.add_argument('-b', '--background', metavar='c', default='#000000', help='selects background color')
     parser_set.add_argument('-t', '--translate', type=float, nargs=2, metavar=('x', 'y'), default=(0.5, 0.5), help='places the image at given position')
     parser_set.add_argument('-g', '--gap', type=int, nargs=2, metavar=('w', 'h'), default=(0, 0), help='keeps "border" around work area')
     parser_set.add_argument('--crop', type=float, nargs=4, metavar=('x1', 'y1', 'x2', 'y2'), default=(0, 0, 1, 1), help='selects crop area')
