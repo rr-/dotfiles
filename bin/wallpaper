@@ -80,11 +80,12 @@ class WallpaperChanger(object):
         parser = argparse.ArgumentParser(description='Sets a wallpaper.')
         parser.add_argument('-p', '--preview', action='store_true', help='previews the changes without applying them.')
         parser.add_argument('-s', '--scale', choices=['fit', 'cover', 'none'], help='selects wallpaper scale method.')
+        parser.add_argument('-c', '--color', default='#000000', help='selects background color.')
         parser.add_argument('path', nargs=1, help='selects input path.')
         result = parser.parse_args(args)
         result.path = result.path[0]
 
-        target_img = Image.new('RGB', monitor_size)
+        target_img = Image.new('RGB', monitor_size, result.color)
 
         if os.path.exists(result.path):
             source_img = Image.open(result.path)
