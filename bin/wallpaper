@@ -1,11 +1,12 @@
 #!/usr/bin/python3
 from PIL import Image, ImageDraw, ImageFont, ImageFilter, ImageOps
-import hashlib
 import argparse
+import hashlib
 import os
 import shutil
 import subprocess
 import sys
+import tempfile
 import time
 
 def get_monitors():
@@ -104,8 +105,9 @@ class WallpaperChanger(object):
     def get_path(self, number):
         return os.path.expanduser('~/.wallpaper%d' % number)
 
-    def get_temp_path(self, number=0):
-        return os.path.expanduser('~/.wallpaper%d-tmp' % number)
+    def get_temp_path(self, text='tmp'):
+        hash = hashlib.md5(str(text).encode('utf-8')).hexdigest()
+        return os.path.join(tempfile.gettempdir(), 'wallpaper-' + hash + '.tmp')
 
     def set(self, args):
         gaps = [args.gap[i] for i in (3, 0, 1, 2)] #u r d l --> l u r d
@@ -116,7 +118,7 @@ class WallpaperChanger(object):
         target_img = Image.new('RGB', monitor_size, args.background)
 
         if args.path.startswith('http'):
-            source_path = '/tmp/' + hashlib.md5(args.path.encode('utf-8')).hexdigest()
+            source_path = self.get_temp_path(args.path)
             if not os.path.exists(source_path):
                 download(args.path, source_path)
         else:
