@@ -1,5 +1,7 @@
 #!/usr/bin/python3
 from PIL import Image, ImageDraw, ImageFont, ImageFilter, ImageOps
+import hashlib
+import urllib.request
 import argparse
 import os
 import shutil
@@ -44,6 +46,26 @@ def get_monitors():
 
     return infos
 
+def download(url, path):
+    u = urllib.request.urlopen(url)
+    meta = u.info()
+    file_size = int(meta.get('Content-Length'))
+    print("Downloading %s, size = %s..." % (path, file_size))
+
+    file_size_dl = 0
+    block_sz = 8192
+    with open(path, 'wb') as f:
+        while True:
+            buffer = u.read(block_sz)
+            if not buffer:
+                break
+
+            file_size_dl += len(buffer)
+            f.write(buffer)
+            status = r"%10d  [%3.2f%%]" % (file_size_dl, file_size_dl * 100. / file_size)
+            status = status + chr(8)*(len(status)+1)
+            print(status)
+
 def cover_or_fit(img, size_dst, quality, cover=False):
     ratio_src = img.size[0] / img.size[1]
     ratio_dst = size_dst[0] / size_dst[1]
@@ -81,9 +103,16 @@ class WallpaperChanger(object):
 
         target_img = Image.new('RGB', monitor_size, args.background)
 
-        if not os.path.exists(args.path):
-            raise RuntimeError(args.path + ' does not exist')
-        source_img = Image.open(args.path)
+        if args.path.startswith('http'):
+            source_path = '/tmp/' + hashlib.md5(args.path.encode('utf-8')).hexdigest()
+            if not os.path.exists(source_path):
+                download(args.path, source_path)
+        else:
+            source_path = args.path
+        if not os.path.exists(source_path):
+            raise RuntimeError(source_path + ' does not exist')
+
+        source_img = Image.open(source_path)
         if args.crop:
             source_img = source_img.crop(tuple(int(source_img.size[i%2] * args.crop[i]) for i in (0,1,2,3)))
         source_img = source_img.resize(tuple(int(source_img.size[i] * args.scale) for i in (0,1)))
