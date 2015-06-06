@@ -52,6 +52,9 @@ class WallpaperChanger(object):
     def get_path(self, number):
         return os.path.expanduser('~/.wallpaper%d' % number)
 
+    def get_temp_path(self, number=0):
+        return os.path.expanduser('~/.wallpaper%d-tmp' % number)
+
     def set(self, number, path):
         self.validate_monitor_number(number)
 
@@ -65,10 +68,10 @@ class WallpaperChanger(object):
         self.validate_monitor_number(first)
         self.validate_monitor_number(second)
 
-        tmp_path = self.get_path(999)
-        os.rename(self.get_path(second), tmp_path)
+        temp_path = self.get_temp_path()
+        os.rename(self.get_path(second), temp_path)
         os.rename(self.get_path(first), self.get_path(second))
-        os.rename(tmp_path, self.get_path(first))
+        os.rename(temp_path, self.get_path(first))
         self.refresh()
 
     def identify(self):
@@ -79,7 +82,7 @@ class WallpaperChanger(object):
         paths = {}
         for monitor, info in self.monitors.items():
             path_src = self.get_path(monitor)
-            path_dst = self.get_path(monitor + 900)
+            path_dst = self.get_temp_path(monitor)
             paths[path_src] = path_dst
 
             img = Image.open(path_src)
