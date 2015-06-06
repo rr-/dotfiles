@@ -1,55 +1,153 @@
-#!/bin/bash
-if ! command -v feh &>/dev/null; then
-    echo 1>&2 'feh not found. Aborting.'
-    exit 1
-fi
+#!/usr/bin/python3
+import subprocess
+import os
+import shutil
+import sys
 
-if [ "$1" = swap ]; then
-    mv ~/.wallpaper1 ~/.wallpaper3
-    mv ~/.wallpaper2 ~/.wallpaper1
-    mv ~/.wallpaper3 ~/.wallpaper2
+def get_monitors():
+    import ctypes
+    import ctypes.util
 
-elif [ "$1" = set ]; then
-    if [[ ! "$2" =~ [12] ]]; then
-        echo 'Unknown monitor'
-        exit 1
-    fi
+    def load_library(name):
+        path = ctypes.util.find_library(name)
+        if not path:
+            raise ImportError('Could not load ' + name)
+        return ctypes.cdll.LoadLibrary(path)
 
-    if [ ! -e "$3" ]; then
-        echo 'File "'"$3"'" does not exist'
-        exit 1
-    fi
+    class XineramaScreenInfo(ctypes.Structure):
+        _fields_ = [
+            ('screen_number', ctypes.c_int),
+            ('x', ctypes.c_short),
+            ('y', ctypes.c_short),
+            ('width', ctypes.c_short),
+            ('height', ctypes.c_short),
+        ]
 
-    cp ~/.wallpaper"$2" ~/.wallpaper"$2"~
-    cp "$3" ~/.wallpaper"$2"
+    xlib = load_library('X11')
+    xlib.XOpenDisplay.argtypes = [ctypes.c_char_p]
+    xlib.XOpenDisplay.restype = ctypes.POINTER(ctypes.c_void_p)
+    d = xlib.XOpenDisplay(b'')
+    if not d:
+        raise Exception('Could not open display')
 
-elif [ "$1" = identify ]; then
-    if ! command -v convert &>/dev/null; then
-        echo 1>&2 'imagemagick not found. Aborting.'
-        exit 1
-    fi
+    xinerama = load_library('Xinerama')
+    if not xinerama.XineramaIsActive(d):
+        raise Exception('Xinerama is not active')
 
-    tmp=()
-    for i in {1..2}; do
-        tmp[$i]=/tmp/tmp$i.jpg
-        [ ! -f ~/.wallpaper$i ] && continue
-        convert \( ~/.wallpaper$i -resize 1920x1080 -crop 1920x1080+0+0 \) \( \
-            -size 500x500 xc:black \
-            -gravity center \
-            -font DejaVu-Sans \
-            -fill white \
-            -pointsize 400 \
-            -annotate 0,0 "$i" \
-            -trim \
-            \) -compose exclusion -composite "${tmp[$i]}"
-    done
-    feh --bg-fill "${tmp[1]}" "${tmp[2]}" 2>/dev/null
-    sleep 1
-    rm -f "${tmp[1]}" "${tmp[2]}"
+    number = ctypes.c_int()
+    xinerama.XineramaQueryScreens.restype = ctypes.POINTER(XineramaScreenInfo)
+    infos = xinerama.XineramaQueryScreens(d, ctypes.byref(number))
+    infos = ctypes.cast(infos, ctypes.POINTER(XineramaScreenInfo * number.value)).contents
 
-elif [ "$1" != '' ]; then
-    echo 'Unknown command "'"$1"'"'
-    exit 1
-fi
+    return infos
 
-feh --bg-fill "$HOME/.wallpaper1" "$HOME/.wallpaper2" 2>/dev/null
+class WallpaperChanger(object):
+    def __init__(self):
+        self.monitors = dict((i + 1, m) for i, m in enumerate(get_monitors()))
+
+    def validate_monitor_number(self, number):
+        if number not in self.monitors:
+            raise RuntimeError('Monitor number out of range')
+
+    def get_path(self, number):
+        return os.path.expanduser('~/.wallpaper%d' % number)
+
+    def set(self, number, path):
+        self.validate_monitor_number(number)
+
+        shutil.copy(path, self.get_path(number))
+        self.refresh()
+
+    def swap(self, first=1, second=2):
+        if first == second:
+            return
+
+        self.validate_monitor_number(first)
+        self.validate_monitor_number(second)
+
+        tmp_path = self.get_path(999)
+        os.rename(self.get_path(second), tmp_path)
+        os.rename(self.get_path(first), self.get_path(second))
+        os.rename(tmp_path, self.get_path(first))
+        self.refresh()
+
+    def identify(self):
+        from PIL import Image, ImageDraw, ImageFont, ImageFilter, ImageChops
+        import time
+
+        font = ImageFont.truetype('arial.ttf', 200, encoding='unic')
+        paths = {}
+        for monitor, info in self.monitors.items():
+            path_src = self.get_path(monitor)
+            path_dst = self.get_path(monitor + 900)
+            paths[path_src] = path_dst
+
+            img = Image.open(path_src)
+            size_dst = (info.width, info.height)
+            ratio_src = img.size[0] / img.size[1]
+            ratio_dst = size_dst[0] / size_dst[1]
+
+            if ratio_dst > ratio_src:
+                img = img.resize((size_dst[0], int(size_dst[0] // ratio_src)), Image.NEAREST)
+                box = (0, (img.size[1] - size_dst[1]) // 2, img.size[0], (img.size[1] + size_dst[1]) // 2)
+            else:
+                img = img.resize((int(size_dst[1] * ratio_src), size_dst[1]), Image.NEAREST)
+                box = ((img.size[0] - size_dst[0]) // 2, 0, (img.size[0] + size_dst[0]) // 2, img.size[1])
+            img = img.crop(box)
+
+            text = str(monitor)
+
+            text_img = Image.new('RGBA', (400, 400), (0, 0, 0, 0))
+            draw = ImageDraw.Draw(text_img)
+            textsize = draw.textsize(text, font=font)
+            position = [(text_img.size[i] - textsize[i]) // 2 for i in (0,1)]
+            draw.text(position, text, font=font, fill='#000000')
+
+            blurred_text_img = text_img.filter(ImageFilter.BLUR)
+            ImageDraw.Draw(blurred_text_img).text(position, text, font=font, fill='#ffffff')
+
+            img.paste(blurred_text_img, tuple((img.size[i] - blurred_text_img.size[i]) // 2 for i in (0,1)), blurred_text_img)
+            img.save(path_dst, 'JPEG', quality=100)
+
+        self.render(sorted(paths.values()))
+        time.sleep(1)
+        self.refresh()
+        for path in paths.values():
+            os.unlink(path)
+
+    def render(self, paths):
+        subprocess.Popen(['feh', '--bg-fill'] + list(paths)).wait()
+
+    def refresh(self):
+        self.render([self.get_path(i) for i in self.monitors])
+
+def main():
+    wc = WallpaperChanger()
+    if len(sys.argv) == 1:
+        wc.refresh()
+    else:
+        try:
+            if sys.argv[1] == 'set':
+                which = int(sys.argv[2])
+                path = sys.argv[3]
+                wc.set(which, path)
+            elif sys.argv[1] == 'swap':
+                first = 1
+                second = 2
+                if len(sys.argv) > 2:
+                    first = int(sys.argv[2])
+                if len(sys.argv) > 3:
+                    second = int(sys.argv[3])
+                wc.swap(first, second)
+            elif sys.argv[1] == 'identify':
+                wc.identify()
+            else:
+                raise RuntimeError('Unknown option: ' + sys.argv[1])
+        except IndexError:
+            print('Bad argument', file=sys.stderr)
+
+if __name__ == '__main__':
+    try:
+        main()
+    except Exception as e:
+        print(e)
