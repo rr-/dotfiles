@@ -1,7 +1,6 @@
 #!/usr/bin/python3
 from PIL import Image, ImageDraw, ImageFont, ImageFilter, ImageOps
 import hashlib
-import urllib.request
 import argparse
 import os
 import shutil
@@ -47,7 +46,14 @@ def get_monitors():
     return infos
 
 def download(url, path):
-    u = urllib.request.urlopen(url)
+    import urllib.request
+    import ssl
+
+    ctx = ssl.create_default_context()
+    ctx.check_hostname = False
+    ctx.verify_mode = ssl.CERT_NONE
+
+    u = urllib.request.urlopen(url, context=ctx)
     meta = u.info()
     file_size = int(meta.get('Content-Length'))
     print("Downloading %s, size = %s..." % (path, file_size))
