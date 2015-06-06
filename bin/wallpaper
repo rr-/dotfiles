@@ -1,55 +1,228 @@
-#!/bin/bash
-if ! command -v feh &>/dev/null; then
-    echo 1>&2 'feh not found. Aborting.'
-    exit 1
-fi
+#!/usr/bin/python3
+from PIL import Image, ImageDraw, ImageFont, ImageFilter, ImageOps
+import hashlib
+import urllib.request
+import argparse
+import os
+import shutil
+import subprocess
+import sys
+import time
 
-if [ "$1" = swap ]; then
-    mv ~/.wallpaper1 ~/.wallpaper3
-    mv ~/.wallpaper2 ~/.wallpaper1
-    mv ~/.wallpaper3 ~/.wallpaper2
+def get_monitors():
+    import ctypes
+    import ctypes.util
 
-elif [ "$1" = set ]; then
-    if [[ ! "$2" =~ [12] ]]; then
-        echo 'Unknown monitor'
-        exit 1
-    fi
+    def load_library(name):
+        path = ctypes.util.find_library(name)
+        if not path:
+            raise ImportError('Could not load ' + name)
+        return ctypes.cdll.LoadLibrary(path)
 
-    if [ ! -e "$3" ]; then
-        echo 'File "'"$3"'" does not exist'
-        exit 1
-    fi
+    class XineramaScreenInfo(ctypes.Structure):
+        _fields_ = [
+            ('screen_number', ctypes.c_int),
+            ('x', ctypes.c_short),
+            ('y', ctypes.c_short),
+            ('width', ctypes.c_short),
+            ('height', ctypes.c_short),
+        ]
 
-    cp ~/.wallpaper"$2" ~/.wallpaper"$2"~
-    cp "$3" ~/.wallpaper"$2"
+    xlib = load_library('X11')
+    xlib.XOpenDisplay.argtypes = [ctypes.c_char_p]
+    xlib.XOpenDisplay.restype = ctypes.POINTER(ctypes.c_void_p)
+    d = xlib.XOpenDisplay(b'')
+    if not d:
+        raise Exception('Could not open display')
 
-elif [ "$1" = identify ]; then
-    if ! command -v convert &>/dev/null; then
-        echo 1>&2 'imagemagick not found. Aborting.'
-        exit 1
-    fi
+    xinerama = load_library('Xinerama')
+    if not xinerama.XineramaIsActive(d):
+        raise Exception('Xinerama is not active')
 
-    tmp=()
-    for i in {1..2}; do
-        tmp[$i]=/tmp/tmp$i.jpg
-        [ ! -f ~/.wallpaper$i ] && continue
-        convert \( ~/.wallpaper$i -resize 1920x1080 -crop 1920x1080+0+0 \) \( \
-            -size 500x500 xc:black \
-            -gravity center \
-            -font DejaVu-Sans \
-            -fill white \
-            -pointsize 400 \
-            -annotate 0,0 "$i" \
-            -trim \
-            \) -compose exclusion -composite "${tmp[$i]}"
-    done
-    feh --bg-fill "${tmp[1]}" "${tmp[2]}" 2>/dev/null
-    sleep 1
-    rm -f "${tmp[1]}" "${tmp[2]}"
+    number = ctypes.c_int()
+    xinerama.XineramaQueryScreens.restype = ctypes.POINTER(XineramaScreenInfo)
+    infos = xinerama.XineramaQueryScreens(d, ctypes.byref(number))
+    infos = ctypes.cast(infos, ctypes.POINTER(XineramaScreenInfo * number.value)).contents
 
-elif [ "$1" != '' ]; then
-    echo 'Unknown command "'"$1"'"'
-    exit 1
-fi
+    return infos
 
-feh --bg-fill "$HOME/.wallpaper1" "$HOME/.wallpaper2" 2>/dev/null
+def download(url, path):
+    u = urllib.request.urlopen(url)
+    meta = u.info()
+    file_size = int(meta.get('Content-Length'))
+    print("Downloading %s, size = %s..." % (path, file_size))
+
+    file_size_dl = 0
+    block_sz = 8192
+    with open(path, 'wb') as f:
+        while True:
+            buffer = u.read(block_sz)
+            if not buffer:
+                break
+
+            file_size_dl += len(buffer)
+            f.write(buffer)
+            status = r"%10d  [%3.2f%%]" % (file_size_dl, file_size_dl * 100. / file_size)
+            status = status + chr(8)*(len(status)+1)
+            print(status)
+
+def cover_or_fit(img, size_dst, quality, cover=False):
+    ratio_src = img.size[0] / img.size[1]
+    ratio_dst = size_dst[0] / size_dst[1]
+    if (ratio_dst > ratio_src) == cover:
+        return img.resize((size_dst[0], int(size_dst[0] // ratio_src)), quality)
+    else:
+        return img.resize((int(size_dst[1] * ratio_src), size_dst[1]), quality)
+
+def cover(img, size_dst, quality=Image.ANTIALIAS):
+    return cover_or_fit(img, size_dst, quality, cover=True)
+
+def fit(img, size_dst, quality=Image.ANTIALIAS):
+    return cover_or_fit(img, size_dst, quality, cover=False)
+
+
+class WallpaperChanger(object):
+    def __init__(self):
+        self.monitors = dict((i + 1, m) for i, m in enumerate(get_monitors()))
+
+    def validate_monitor_number(self, number):
+        if number not in self.monitors:
+            raise RuntimeError('Monitor number out of range')
+
+    def get_path(self, number):
+        return os.path.expanduser('~/.wallpaper%d' % number)
+
+    def get_temp_path(self, number=0):
+        return os.path.expanduser('~/.wallpaper%d-tmp' % number)
+
+    def set(self, args):
+        gaps = [args.gap[i] for i in (3, 0, 1, 2)] #u r d l --> l u r d
+        self.validate_monitor_number(args.monitor)
+        monitor_size = (self.monitors[args.monitor].width, self.monitors[args.monitor].height)
+        work_area = tuple(monitor_size[i] - 2 * args.border_size - sum(gaps[2*j+i] for j in (0,1)) for i in (0,1))
+
+        target_img = Image.new('RGB', monitor_size, args.background)
+
+        if args.path.startswith('http'):
+            source_path = '/tmp/' + hashlib.md5(args.path.encode('utf-8')).hexdigest()
+            if not os.path.exists(source_path):
+                download(args.path, source_path)
+        else:
+            source_path = args.path
+        if not os.path.exists(source_path):
+            raise RuntimeError(source_path + ' does not exist')
+
+        source_img = Image.open(source_path)
+        if args.crop:
+            source_img = source_img.crop(tuple(int(source_img.size[i%2] * args.crop[i]) for i in (0,1,2,3)))
+        source_img = source_img.resize(tuple(int(source_img.size[i] * args.scale) for i in (0,1)))
+
+        if args.fit:
+            source_img = fit(source_img, work_area)
+        elif args.cover:
+            source_img = cover(source_img, work_area)
+
+        target_position = tuple(int(gaps[i] + (work_area[i] - source_img.size[i]) * args.translate[i]) for i in (0,1))
+
+        if args.border_size:
+            source_img = ImageOps.expand(source_img, border=args.border_size, fill=args.border_color)
+
+        target_path = (self.get_path(args.monitor), self.get_temp_path())[args.preview]
+        target_img.paste(source_img, target_position)
+        target_img.save(target_path, 'PNG')
+
+        if args.preview:
+            paths = [(self.get_path(m), target_path)[m == args.monitor] for m in self.monitors.keys()]
+            self.render(paths)
+            time.sleep(1)
+        self.refresh()
+
+    def swap(self, args):
+        if args.first_monitor == args.second_monitor:
+            return
+
+        self.validate_monitor_number(args.first_monitor)
+        self.validate_monitor_number(args.second_monitor)
+
+        temp_path = self.get_temp_path()
+        os.rename(self.get_path(args.second_monitor), temp_path)
+        os.rename(self.get_path(args.first_monitor), self.get_path(args.second_monitor))
+        os.rename(temp_path, self.get_path(args.first_monitor))
+        self.refresh()
+
+    def identify(self, args):
+        font = ImageFont.truetype('arial.ttf', 200, encoding='unic')
+        paths = {}
+        for monitor, info in self.monitors.items():
+            path_src = self.get_path(monitor)
+            path_dst = self.get_temp_path(monitor)
+            paths[path_src] = path_dst
+
+            img = Image.open(path_src)
+            text = str(monitor)
+
+            text_img = Image.new('RGBA', (400, 400), (0, 0, 0, 0))
+            draw = ImageDraw.Draw(text_img)
+            textsize = draw.textsize(text, font=font)
+            position = [(text_img.size[i] - textsize[i]) // 2 for i in (0,1)]
+            draw.text(position, text, font=font, fill='#000000')
+
+            blurred_text_img = text_img.filter(ImageFilter.BLUR)
+            ImageDraw.Draw(blurred_text_img).text(position, text, font=font, fill='#ffffff')
+
+            img.paste(blurred_text_img, tuple((img.size[i] - text_img.size[i]) // 2 for i in (0,1)), blurred_text_img)
+            img.save(path_dst, 'JPEG', quality=100)
+
+        self.render(sorted(paths.values()))
+        time.sleep(1)
+        self.refresh()
+        for path in paths.values():
+            os.unlink(path)
+
+    def render(self, paths):
+        subprocess.Popen(['feh', '--bg-fill'] + list(paths)).wait()
+
+    def refresh(self):
+        self.render([self.get_path(i) for i in self.monitors])
+
+def main():
+    wc = WallpaperChanger()
+
+    fmt = lambda prog: argparse.HelpFormatter(prog, max_help_position=40, width=80)
+    parser = argparse.ArgumentParser(description='Wallpaper utility', formatter_class=fmt)
+    subparsers = parser.add_subparsers(help='chooses the subcommand')
+
+    parser_set = subparsers.add_parser('set', help='sets a wallpaper', formatter_class=fmt)
+    parser_set.add_argument('-p', '--preview', action='store_true', help='previews the changes without applying them')
+    parser_set.add_argument('-s', '--scale', type=float, metavar='r', default=1, help='scales image by given factor')
+    parser_set.add_argument('-f', '--fit', action='store_true', help='fits the image within monitor work area')
+    parser_set.add_argument('-c', '--cover', action='store_true', help='makes the image cover whole monitor work area')
+    parser_set.add_argument('-b', '--background', metavar='c', default='#000000', help='selects background color')
+    parser_set.add_argument('-t', '--translate', type=float, nargs=2, metavar=('x', 'y'), default=(0.5, 0.5), help='places the image at given position')
+    parser_set.add_argument('-g', '--gap', type=int, nargs=4, metavar=('u', 'r', 'd', 'l'), default=(0, 0, 0, 0), help='keeps "border" around work area')
+    parser_set.add_argument('-bs', '--border-size', type=int, metavar='s', default=0, help='selects border width')
+    parser_set.add_argument('-bc', '--border-color', metavar='c', default='black', help='selects border size')
+    parser_set.add_argument('--crop', type=float, nargs=4, metavar=('x1', 'y1', 'x2', 'y2'), default=(0, 0, 1, 1), help='selects crop area')
+    parser_set.add_argument('monitor', type=int, help='monitor number')
+    parser_set.add_argument('path', help='input image path')
+    parser_set.set_defaults(func=wc.set)
+
+    parser_identify = subparsers.add_parser('identify', help='identifies monitor numbers')
+    parser_identify.set_defaults(func=wc.identify)
+
+    parser_swap = subparsers.add_parser('swap', help='swaps wallpapers between monitors')
+    parser_swap.add_argument('first_monitor', type=int, nargs='?', default=1, help='first monitor number')
+    parser_swap.add_argument('second_monitor', type=int, nargs='?', default=2, help='second monitor number')
+    parser_swap.set_defaults(func=wc.swap)
+
+    result = parser.parse_args()
+    if 'func' not in result:
+        wc.refresh()
+    else:
+        result.func(result)
+
+if __name__ == '__main__':
+    try:
+        main()
+    except Exception as e:
+        print(e)
