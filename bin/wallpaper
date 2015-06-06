@@ -129,7 +129,7 @@ class WallpaperChanger(object):
         source_img = Image.open(source_path)
         if args.crop:
             source_img = source_img.crop(tuple(int(source_img.size[i%2] * args.crop[i]) for i in (0,1,2,3)))
-        source_img = source_img.resize(tuple(int(source_img.size[i] * args.scale) for i in (0,1)))
+        source_img = source_img.resize(tuple(int(source_img.size[i] * args.scale) for i in (0,1)), Image.ANTIALIAS)
 
         if args.fit:
             source_img = fit(source_img, work_area)
