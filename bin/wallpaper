@@ -55,7 +55,10 @@ def download(url, path):
 
     u = urllib.request.urlopen(url, context=ctx)
     meta = u.info()
-    file_size = int(meta.get('Content-Length'))
+    if meta.get('Content-Length') is not None:
+        file_size = int(meta.get('Content-Length'))
+    else:
+        file_size = None
     print("Downloading %s, size = %s..." % (path, file_size))
 
     file_size_dl = 0
@@ -68,7 +71,10 @@ def download(url, path):
 
             file_size_dl += len(buffer)
             f.write(buffer)
-            status = r"%10d  [%3.2f%%]" % (file_size_dl, file_size_dl * 100. / file_size)
+            if file_size is not None:
+                status = r"%10d  [%3.2f%%]" % (file_size_dl, file_size_dl * 100. / file_size)
+            else:
+                status = r"%10d" % file_size_dl
             status = status + chr(8)*(len(status)+1)
             print(status)
 
