@@ -1,8 +1,11 @@
 #!/usr/bin/python3
-import subprocess
+from PIL import Image, ImageDraw, ImageFont, ImageFilter, ImageChops
+import argparse
 import os
 import shutil
+import subprocess
 import sys
+import time
 
 def get_monitors():
     import ctypes
@@ -55,10 +58,28 @@ class WallpaperChanger(object):
     def get_temp_path(self, number=0):
         return os.path.expanduser('~/.wallpaper%d-tmp' % number)
 
-    def set(self, number, path):
+    def set(self, number, args):
         self.validate_monitor_number(number)
 
-        shutil.copy(path, self.get_path(number))
+        parser = argparse.ArgumentParser(description='Sets a wallpaper.')
+        parser.add_argument('-p', '--preview', action='store_true', help='previews the changes without applying them.')
+        parser.add_argument('path', nargs=1, help='selects input path.')
+        result = parser.parse_args(args)
+        result.path = result.path[0]
+
+        if os.path.exists(result.path):
+            img = Image.open(result.path)
+
+        target_path = self.get_path(number)
+        if result.preview:
+            target_path = self.get_temp_path()
+
+        img.save(target_path, 'PNG')
+
+        if result.preview:
+            paths = [(self.get_path(m), target_path)[m == number] for m in self.monitors.keys()]
+            self.render(paths)
+            time.sleep(1)
         self.refresh()
 
     def swap(self, first=1, second=2):
@@ -75,9 +96,6 @@ class WallpaperChanger(object):
         self.refresh()
 
     def identify(self):
-        from PIL import Image, ImageDraw, ImageFont, ImageFilter, ImageChops
-        import time
-
         font = ImageFont.truetype('arial.ttf', 200, encoding='unic')
         paths = {}
         for monitor, info in self.monitors.items():
@@ -132,8 +150,7 @@ def main():
         try:
             if sys.argv[1] == 'set':
                 which = int(sys.argv[2])
-                path = sys.argv[3]
-                wc.set(which, path)
+                wc.set(which, sys.argv[3:])
             elif sys.argv[1] == 'swap':
                 first = 1
                 second = 2
