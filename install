@@ -198,6 +198,7 @@ function install_link_or_cp {
     if [[ "$uname" =~ linux ]]; then
         install_aur escrotum-git     # to make screenshots
         install_pacman xorg-xsetroot # to fix X cursor
+        install_pacman xorg-xrandr   # to query monitor information
         install_pacman xdotool       # for all sort of things
         install_pacman autocutsel    # synchronize primary and selection clipboards
         install_pacman clipit        # keep clipboard content even after application closes
