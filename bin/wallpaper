@@ -82,6 +82,8 @@ class WallpaperChanger(object):
         if not os.path.exists(args.path):
             raise RuntimeError(args.path + ' does not exist')
         source_img = Image.open(args.path)
+        if args.crop:
+            source_img = source_img.crop(tuple(int(source_img.size[i%2] * args.crop[i]) for i in (0,1,2,3)))
         source_img = source_img.resize(tuple(int(source_img.size[i] * args.scale) for i in (0,1)))
 
         if args.fit:
@@ -161,6 +163,7 @@ def main():
     parser_set.add_argument('-f', '--fit', action='store_true', help='fits the image within monitor work area')
     parser_set.add_argument('-c', '--cover', action='store_true', help='makes the image cover whole monitor work area')
     parser_set.add_argument('-b', '--background', metavar='color', default='#000000', help='selects background color')
+    parser_set.add_argument('--crop', type=float, nargs=4, metavar=('x1', 'y1', 'x2', 'y2'), default=(0, 0, 1, 1), help='selects crop area')
     parser_set.add_argument('monitor', type=int, help='monitor number')
     parser_set.add_argument('path', help='input image path')
     parser_set.set_defaults(func=wc.set)
