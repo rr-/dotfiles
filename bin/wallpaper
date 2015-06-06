@@ -77,7 +77,7 @@ class WallpaperChanger(object):
         gaps = [args.gap[i] for i in (3, 0, 1, 2)] #u r d l --> l u r d
         self.validate_monitor_number(args.monitor)
         monitor_size = (self.monitors[args.monitor].width, self.monitors[args.monitor].height)
-        workarea_size = tuple(monitor_size[i] - 2 * args.border_size - sum(gaps[2*j+i] for j in (0,1)) for i in (0,1))
+        work_area = tuple(monitor_size[i] - 2 * args.border_size - sum(gaps[2*j+i] for j in (0,1)) for i in (0,1))
 
         target_img = Image.new('RGB', monitor_size, args.background)
 
@@ -89,11 +89,11 @@ class WallpaperChanger(object):
         source_img = source_img.resize(tuple(int(source_img.size[i] * args.scale) for i in (0,1)))
 
         if args.fit:
-            source_img = fit(source_img, workarea_size)
+            source_img = fit(source_img, work_area)
         elif args.cover:
-            source_img = cover(source_img, workarea_size)
+            source_img = cover(source_img, work_area)
 
-        target_position = tuple(int(gaps[i] + (workarea_size[i] - source_img.size[i]) * args.translate[i]) for i in (0,1))
+        target_position = tuple(int(gaps[i] + (work_area[i] - source_img.size[i]) * args.translate[i]) for i in (0,1))
 
         if args.border_size:
             source_img = ImageOps.expand(source_img, border=args.border_size, fill=args.border_color)
@@ -141,7 +141,7 @@ class WallpaperChanger(object):
             blurred_text_img = text_img.filter(ImageFilter.BLUR)
             ImageDraw.Draw(blurred_text_img).text(position, text, font=font, fill='#ffffff')
 
-            img.paste(blurred_text_img, tuple((img.size[i] - blurred_text_img.size[i]) // 2 for i in (0,1)), blurred_text_img)
+            img.paste(blurred_text_img, tuple((img.size[i] - text_img.size[i]) // 2 for i in (0,1)), blurred_text_img)
             img.save(path_dst, 'JPEG', quality=100)
 
         self.render(sorted(paths.values()))
@@ -165,7 +165,7 @@ def main():
 
     parser_set = subparsers.add_parser('set', help='sets a wallpaper', formatter_class=fmt)
     parser_set.add_argument('-p', '--preview', action='store_true', help='previews the changes without applying them')
-    parser_set.add_argument('-s', '--scale', metavar='r', type=float, default=1, help='scales image by given factor')
+    parser_set.add_argument('-s', '--scale', type=float, metavar='r', default=1, help='scales image by given factor')
     parser_set.add_argument('-f', '--fit', action='store_true', help='fits the image within monitor work area')
     parser_set.add_argument('-c', '--cover', action='store_true', help='makes the image cover whole monitor work area')
     parser_set.add_argument('-b', '--background', metavar='c', default='#000000', help='selects background color')
@@ -182,8 +182,8 @@ def main():
     parser_identify.set_defaults(func=wc.identify)
 
     parser_swap = subparsers.add_parser('swap', help='swaps wallpapers between monitors')
-    parser_swap.add_argument('first_monitor', nargs='?', type=int, default=1, help='first monitor number')
-    parser_swap.add_argument('second_monitor', nargs='?', type=int, default=2, help='second monitor number')
+    parser_swap.add_argument('first_monitor', type=int, nargs='?', default=1, help='first monitor number')
+    parser_swap.add_argument('second_monitor', type=int, nargs='?', default=2, help='second monitor number')
     parser_swap.set_defaults(func=wc.swap)
 
     result = parser.parse_args()
