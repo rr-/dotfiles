@@ -44,6 +44,25 @@ def get_monitors():
 
     return infos
 
+def cover_or_fit(img, size_dst, quality, cover=False):
+    ratio_src = img.size[0] / img.size[1]
+    ratio_dst = size_dst[0] / size_dst[1]
+
+    if (ratio_dst > ratio_src) == cover:
+        img = img.resize((size_dst[0], int(size_dst[0] // ratio_src)), quality)
+        box = (0, (img.size[1] - size_dst[1]) // 2, img.size[0], (img.size[1] + size_dst[1]) // 2)
+    else:
+        img = img.resize((int(size_dst[1] * ratio_src), size_dst[1]), quality)
+        box = ((img.size[0] - size_dst[0]) // 2, 0, (img.size[0] + size_dst[0]) // 2, img.size[1])
+    return img.crop(box)
+
+def cover(img, size_dst, quality=Image.ANTIALIAS):
+    return cover_or_fit(img, size_dst, quality, cover=True)
+
+def fit(img, size_dst, quality=Image.ANTIALIAS):
+    return cover_or_fit(img, size_dst, quality, cover=False)
+
+
 class WallpaperChanger(object):
     def __init__(self):
         self.monitors = dict((i + 1, m) for i, m in enumerate(get_monitors()))
@@ -63,12 +82,20 @@ class WallpaperChanger(object):
 
         parser = argparse.ArgumentParser(description='Sets a wallpaper.')
         parser.add_argument('-p', '--preview', action='store_true', help='previews the changes without applying them.')
+        parser.add_argument('-s', '--scale', choices=['fit', 'cover', 'none'], help='selects wallpaper scale method.')
         parser.add_argument('path', nargs=1, help='selects input path.')
         result = parser.parse_args(args)
         result.path = result.path[0]
 
         if os.path.exists(result.path):
             img = Image.open(result.path)
+        else:
+            raise RuntimeError(result.path + ' does not exist')
+
+        if result.scale == 'fit' or result.scale == None:
+            img = fit(img, (self.monitors[number].width, self.monitors[number].height))
+        elif result.scale == 'cover':
+            img = cover(img, (self.monitors[number].width, self.monitors[number].height))
 
         target_path = self.get_path(number)
         if result.preview:
@@ -104,18 +131,6 @@ class WallpaperChanger(object):
             paths[path_src] = path_dst
 
             img = Image.open(path_src)
-            size_dst = (info.width, info.height)
-            ratio_src = img.size[0] / img.size[1]
-            ratio_dst = size_dst[0] / size_dst[1]
-
-            if ratio_dst > ratio_src:
-                img = img.resize((size_dst[0], int(size_dst[0] // ratio_src)), Image.NEAREST)
-                box = (0, (img.size[1] - size_dst[1]) // 2, img.size[0], (img.size[1] + size_dst[1]) // 2)
-            else:
-                img = img.resize((int(size_dst[1] * ratio_src), size_dst[1]), Image.NEAREST)
-                box = ((img.size[0] - size_dst[0]) // 2, 0, (img.size[0] + size_dst[0]) // 2, img.size[1])
-            img = img.crop(box)
-
             text = str(monitor)
 
             text_img = Image.new('RGBA', (400, 400), (0, 0, 0, 0))
