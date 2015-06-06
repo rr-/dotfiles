@@ -77,24 +77,21 @@ class WallpaperChanger(object):
         self.validate_monitor_number(args.monitor)
         monitor_size = (self.monitors[args.monitor].width, self.monitors[args.monitor].height)
 
-        target_img = Image.new('RGB', monitor_size, args.color)
+        target_img = Image.new('RGB', monitor_size, args.background)
 
-        if os.path.exists(args.path):
-            source_img = Image.open(args.path)
-        else:
+        if not os.path.exists(args.path):
             raise RuntimeError(args.path + ' does not exist')
+        source_img = Image.open(args.path)
+        source_img = source_img.resize(tuple(int(source_img.size[i] * args.scale) for i in (0,1)))
 
-        if args.scale == 'fit' or args.scale == None:
+        if args.fit:
             source_img = fit(source_img, monitor_size)
-        elif args.scale == 'cover':
+        elif args.cover:
             source_img = cover(source_img, monitor_size)
 
         target_position = tuple((monitor_size[i] - source_img.size[i]) // 2 for i in (0,1))
 
-        target_path = self.get_path(args.monitor)
-        if args.preview:
-            target_path = self.get_temp_path()
-
+        target_path = (self.get_path(args.monitor), self.get_temp_path())[args.preview]
         target_img.paste(source_img, target_position)
         target_img.save(target_path, 'PNG')
 
@@ -160,8 +157,10 @@ def main():
 
     parser_set = subparsers.add_parser('set', help='sets a wallpaper')
     parser_set.add_argument('-p', '--preview', action='store_true', help='previews the changes without applying them')
-    parser_set.add_argument('-s', '--scale', choices=['fit', 'cover', 'none'], help='selects wallpaper scale method')
-    parser_set.add_argument('-c', '--color', default='#000000', help='selects background color')
+    parser_set.add_argument('-s', '--scale', type=float, default=1, help='scales image by given factor')
+    parser_set.add_argument('-f', '--fit', action='store_true', help='fits the image within monitor work area')
+    parser_set.add_argument('-c', '--cover', action='store_true', help='makes the image cover whole monitor work area')
+    parser_set.add_argument('-b', '--background', metavar='color', default='#000000', help='selects background color')
     parser_set.add_argument('monitor', type=int, help='monitor number')
     parser_set.add_argument('path', help='input image path')
     parser_set.set_defaults(func=wc.set)
@@ -170,8 +169,8 @@ def main():
     parser_identify.set_defaults(func=wc.identify)
 
     parser_swap = subparsers.add_parser('swap', help='swaps wallpapers between monitors')
-    parser_swap.add_argument('first_monitor', nargs='?', type=int, help='first monitor number', default=1)
-    parser_swap.add_argument('second_monitor', nargs='?', type=int, help='second monitor number', default=2)
+    parser_swap.add_argument('first_monitor', nargs='?', type=int, default=1, help='first monitor number')
+    parser_swap.add_argument('second_monitor', nargs='?', type=int, default=2, help='second monitor number')
     parser_swap.set_defaults(func=wc.swap)
 
     result = parser.parse_args()
