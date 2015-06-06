@@ -47,14 +47,10 @@ def get_monitors():
 def cover_or_fit(img, size_dst, quality, cover=False):
     ratio_src = img.size[0] / img.size[1]
     ratio_dst = size_dst[0] / size_dst[1]
-
     if (ratio_dst > ratio_src) == cover:
-        img = img.resize((size_dst[0], int(size_dst[0] // ratio_src)), quality)
-        box = (0, (img.size[1] - size_dst[1]) // 2, img.size[0], (img.size[1] + size_dst[1]) // 2)
+        return img.resize((size_dst[0], int(size_dst[0] // ratio_src)), quality)
     else:
-        img = img.resize((int(size_dst[1] * ratio_src), size_dst[1]), quality)
-        box = ((img.size[0] - size_dst[0]) // 2, 0, (img.size[0] + size_dst[0]) // 2, img.size[1])
-    return img.crop(box)
+        return img.resize((int(size_dst[1] * ratio_src), size_dst[1]), quality)
 
 def cover(img, size_dst, quality=Image.ANTIALIAS):
     return cover_or_fit(img, size_dst, quality, cover=True)
@@ -79,6 +75,7 @@ class WallpaperChanger(object):
 
     def set(self, number, args):
         self.validate_monitor_number(number)
+        monitor_size = (self.monitors[number].width, self.monitors[number].height)
 
         parser = argparse.ArgumentParser(description='Sets a wallpaper.')
         parser.add_argument('-p', '--preview', action='store_true', help='previews the changes without applying them.')
@@ -87,21 +84,26 @@ class WallpaperChanger(object):
         result = parser.parse_args(args)
         result.path = result.path[0]
 
+        target_img = Image.new('RGB', monitor_size)
+
         if os.path.exists(result.path):
-            img = Image.open(result.path)
+            source_img = Image.open(result.path)
         else:
             raise RuntimeError(result.path + ' does not exist')
 
         if result.scale == 'fit' or result.scale == None:
-            img = fit(img, (self.monitors[number].width, self.monitors[number].height))
+            source_img = fit(source_img, monitor_size)
         elif result.scale == 'cover':
-            img = cover(img, (self.monitors[number].width, self.monitors[number].height))
+            source_img = cover(source_img, monitor_size)
+
+        target_position = tuple((monitor_size[i] - source_img.size[i]) // 2 for i in (0,1))
 
         target_path = self.get_path(number)
         if result.preview:
             target_path = self.get_temp_path()
 
-        img.save(target_path, 'PNG')
+        target_img.paste(source_img, target_position)
+        target_img.save(target_path, 'PNG')
 
         if result.preview:
             paths = [(self.get_path(m), target_path)[m == number] for m in self.monitors.keys()]
