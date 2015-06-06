@@ -73,59 +73,51 @@ class WallpaperChanger(object):
     def get_temp_path(self, number=0):
         return os.path.expanduser('~/.wallpaper%d-tmp' % number)
 
-    def set(self, number, args):
-        self.validate_monitor_number(number)
-        monitor_size = (self.monitors[number].width, self.monitors[number].height)
+    def set(self, args):
+        self.validate_monitor_number(args.monitor)
+        monitor_size = (self.monitors[args.monitor].width, self.monitors[args.monitor].height)
 
-        parser = argparse.ArgumentParser(description='Sets a wallpaper.')
-        parser.add_argument('-p', '--preview', action='store_true', help='previews the changes without applying them.')
-        parser.add_argument('-s', '--scale', choices=['fit', 'cover', 'none'], help='selects wallpaper scale method.')
-        parser.add_argument('-c', '--color', default='#000000', help='selects background color.')
-        parser.add_argument('path', nargs=1, help='selects input path.')
-        result = parser.parse_args(args)
-        result.path = result.path[0]
+        target_img = Image.new('RGB', monitor_size, args.color)
 
-        target_img = Image.new('RGB', monitor_size, result.color)
-
-        if os.path.exists(result.path):
-            source_img = Image.open(result.path)
+        if os.path.exists(args.path):
+            source_img = Image.open(args.path)
         else:
-            raise RuntimeError(result.path + ' does not exist')
+            raise RuntimeError(args.path + ' does not exist')
 
-        if result.scale == 'fit' or result.scale == None:
+        if args.scale == 'fit' or args.scale == None:
             source_img = fit(source_img, monitor_size)
-        elif result.scale == 'cover':
+        elif args.scale == 'cover':
             source_img = cover(source_img, monitor_size)
 
         target_position = tuple((monitor_size[i] - source_img.size[i]) // 2 for i in (0,1))
 
-        target_path = self.get_path(number)
-        if result.preview:
+        target_path = self.get_path(args.monitor)
+        if args.preview:
             target_path = self.get_temp_path()
 
         target_img.paste(source_img, target_position)
         target_img.save(target_path, 'PNG')
 
-        if result.preview:
-            paths = [(self.get_path(m), target_path)[m == number] for m in self.monitors.keys()]
+        if args.preview:
+            paths = [(self.get_path(m), target_path)[m == args.monitor] for m in self.monitors.keys()]
             self.render(paths)
             time.sleep(1)
         self.refresh()
 
-    def swap(self, first=1, second=2):
-        if first == second:
+    def swap(self, args):
+        if args.first_monitor == args.second_monitor:
             return
 
-        self.validate_monitor_number(first)
-        self.validate_monitor_number(second)
+        self.validate_monitor_number(args.first_monitor)
+        self.validate_monitor_number(args.second_monitor)
 
         temp_path = self.get_temp_path()
-        os.rename(self.get_path(second), temp_path)
-        os.rename(self.get_path(first), self.get_path(second))
-        os.rename(temp_path, self.get_path(first))
+        os.rename(self.get_path(args.second_monitor), temp_path)
+        os.rename(self.get_path(args.first_monitor), self.get_path(args.second_monitor))
+        os.rename(temp_path, self.get_path(args.first_monitor))
         self.refresh()
 
-    def identify(self):
+    def identify(self, args):
         font = ImageFont.truetype('arial.ttf', 200, encoding='unic')
         paths = {}
         for monitor, info in self.monitors.items():
@@ -162,27 +154,31 @@ class WallpaperChanger(object):
 
 def main():
     wc = WallpaperChanger()
-    if len(sys.argv) == 1:
+
+    parser = argparse.ArgumentParser(description='Wallpaper utility')
+    subparsers = parser.add_subparsers(help='chooses the subcommand')
+
+    parser_set = subparsers.add_parser('set', help='sets a wallpaper')
+    parser_set.add_argument('-p', '--preview', action='store_true', help='previews the changes without applying them')
+    parser_set.add_argument('-s', '--scale', choices=['fit', 'cover', 'none'], help='selects wallpaper scale method')
+    parser_set.add_argument('-c', '--color', default='#000000', help='selects background color')
+    parser_set.add_argument('monitor', type=int, help='monitor number')
+    parser_set.add_argument('path', help='input image path')
+    parser_set.set_defaults(func=wc.set)
+
+    parser_identify = subparsers.add_parser('identify', help='identifies monitor numbers')
+    parser_identify.set_defaults(func=wc.identify)
+
+    parser_swap = subparsers.add_parser('swap', help='swaps wallpapers between monitors')
+    parser_swap.add_argument('first_monitor', nargs='?', type=int, help='first monitor number', default=1)
+    parser_swap.add_argument('second_monitor', nargs='?', type=int, help='second monitor number', default=2)
+    parser_swap.set_defaults(func=wc.swap)
+
+    result = parser.parse_args()
+    if 'func' not in result:
         wc.refresh()
     else:
-        try:
-            if sys.argv[1] == 'set':
-                which = int(sys.argv[2])
-                wc.set(which, sys.argv[3:])
-            elif sys.argv[1] == 'swap':
-                first = 1
-                second = 2
-                if len(sys.argv) > 2:
-                    first = int(sys.argv[2])
-                if len(sys.argv) > 3:
-                    second = int(sys.argv[3])
-                wc.swap(first, second)
-            elif sys.argv[1] == 'identify':
-                wc.identify()
-            else:
-                raise RuntimeError('Unknown option: ' + sys.argv[1])
-        except IndexError:
-            print('Bad argument', file=sys.stderr)
+        result.func(result)
 
 if __name__ == '__main__':
     try:
