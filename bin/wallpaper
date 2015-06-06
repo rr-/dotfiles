@@ -1,5 +1,5 @@
 #!/usr/bin/python3
-from PIL import Image, ImageDraw, ImageFont, ImageFilter, ImageChops
+from PIL import Image, ImageDraw, ImageFont, ImageFilter, ImageOps
 import argparse
 import os
 import shutil
@@ -76,7 +76,7 @@ class WallpaperChanger(object):
     def set(self, args):
         self.validate_monitor_number(args.monitor)
         monitor_size = (self.monitors[args.monitor].width, self.monitors[args.monitor].height)
-        workarea_size = tuple(monitor_size[i] - 2 * args.gap[i] for i in (0,1))
+        workarea_size = tuple(monitor_size[i] - 2 * args.border_size - 2 * args.gap[i] for i in (0,1))
 
         target_img = Image.new('RGB', monitor_size, args.background)
 
@@ -93,6 +93,9 @@ class WallpaperChanger(object):
             source_img = cover(source_img, workarea_size)
 
         target_position = tuple(int(args.gap[i] + (workarea_size[i] - source_img.size[i]) * args.translate[i]) for i in (0,1))
+
+        if args.border_size:
+            source_img = ImageOps.expand(source_img, border=args.border_size, fill=args.border_color)
 
         target_path = (self.get_path(args.monitor), self.get_temp_path())[args.preview]
         target_img.paste(source_img, target_position)
@@ -167,6 +170,8 @@ def main():
     parser_set.add_argument('-b', '--background', metavar='c', default='#000000', help='selects background color')
     parser_set.add_argument('-t', '--translate', type=float, nargs=2, metavar=('x', 'y'), default=(0.5, 0.5), help='places the image at given position')
     parser_set.add_argument('-g', '--gap', type=int, nargs=2, metavar=('w', 'h'), default=(0, 0), help='keeps "border" around work area')
+    parser_set.add_argument('-bs', '--border-size', type=int, metavar='s', default=0, help='selects border width')
+    parser_set.add_argument('-bc', '--border-color', metavar='c', default='black', help='selects border size')
     parser_set.add_argument('--crop', type=float, nargs=4, metavar=('x1', 'y1', 'x2', 'y2'), default=(0, 0, 1, 1), help='selects crop area')
     parser_set.add_argument('monitor', type=int, help='monitor number')
     parser_set.add_argument('path', help='input image path')
