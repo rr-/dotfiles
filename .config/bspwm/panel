@@ -298,26 +298,37 @@ class MyRenderer(object):
         self.lemonbar_process.stdin.write(line)
         self.lemonbar_process.stdin.flush()
 
+class CpuProvider(object):
+    delay = 0
+    rerender = False
 
-def refresh_cpu(data, render_func):
-    while True:
+    def refresh(self, data):
         data.cpu = psutil.cpu_percent(interval=interval)
 
-def refresh_song(data, render_func):
-    client = mpd.MPDClient()
-    client.connect(host='localhost', port=6600)
-    while True:
-        data.mpd_status = client.status()
-        data.current_song = client.currentsong()
-        time.sleep(interval)
+class MpdProvider(object):
+    delay = interval
+    rerender = False
 
-def refresh_workspaces(data, render_func):
-    bspc_process = Popen(['bspc', 'control', '--subscribe'], stdout=PIPE)
-    while True:
-        line = bspc_process.stdout.readline().decode('utf8').strip()
+    def __init__(self):
+        self.client = mpd.MPDClient()
+        self.client.connect(host='localhost', port=6600)
+
+    def refresh(self, data):
+        data.mpd_status = self.client.status()
+        data.current_song = self.client.currentsong()
+
+class WorkspacesProvider(object):
+    delay = 0
+    rerender = True
+
+    def __init__(self):
+        self.bspc_process = Popen(['bspc', 'control', '--subscribe'], stdout=PIPE)
+
+    def refresh(self, data):
+        line = self.bspc_process.stdout.readline().decode('utf8').strip()
         line = re.sub('^W', '', line)
         if line == '':
-            continue
+            return
 
         data.monitors = []
         current_monitor = None
@@ -345,67 +356,98 @@ def refresh_workspaces(data, render_func):
                     current_monitor.layout = Monitor.LAYOUT_TILED
 
         data.monitors.reverse() #hack...
-        render_func()
 
-def refresh_battery(data, render_func):
-    try:
-        charge_now = glob.glob('/sys/class/power_supply/*/charge_now')[0]
-        charge_max = glob.glob('/sys/class/power_supply/*/charge_full')[0]
-        charge_status = glob.glob('/sys/class/power_supply/*/status')[0]
-        data.battery_present = True
-    except IndexError:
-        data.battery_present = False
-    if data.battery_present:
-        while True:
-            with open(charge_now, 'r') as charge_now_fh, \
-                 open(charge_max, 'r') as charge_max_fh, \
-                 open(charge_status, 'r') as charge_status_fh:
-                now = int(charge_now_fh.read())
-                max = int(charge_max_fh.read())
-                status = charge_status_fh.read().strip().lower()
-                data.battery_discharging = status == 'discharging'
-                data.battery_percent = now * 100.0 / max
-                time.sleep(interval * 3)
+class BatteryProvider(object):
+    delay = interval * 3
+    rerender = False
 
-def refresh_network(data, render_func):
-    try:
-        rx_path = None
-        tx_path = None
-        for interface in glob.glob('/sys/class/net/*'):
-            with open(os.path.join(interface, 'operstate'), 'r') as fh:
-                if fh.read().strip().lower() == 'up':
-                    rx_path = os.path.join(interface, 'statistics', 'rx_bytes')
-                    tx_path = os.path.join(interface, 'statistics', 'tx_bytes')
-                    data.network_enabled = True
-    except:
-        data.network_enabled = False
-    if data.network_enabled:
-        with open(rx_path, 'r') as rx_fh, open(tx_path, 'r') as tx_fh:
-            old_rx_bytes = int(rx_fh.read())
-            old_tx_bytes = int(tx_fh.read())
-        while True:
-            with open(rx_path, 'r') as rx_fh, open(tx_path, 'r') as tx_fh:
-                rx_bytes = int(rx_fh.read())
-                tx_bytes = int(tx_fh.read())
-                data.network_traffic_received = (rx_bytes - old_rx_bytes) / interval
-                data.network_traffic_sent = (tx_bytes - old_tx_bytes) / interval
-                old_rx_bytes = rx_bytes
-                old_tx_bytes = tx_bytes
-            time.sleep(interval)
+    def __init__(self, data):
+        try:
+            self.charge_now = glob.glob('/sys/class/power_supply/*/charge_now')[0]
+            self.charge_max = glob.glob('/sys/class/power_supply/*/charge_full')[0]
+            self.charge_status = glob.glob('/sys/class/power_supply/*/status')[0]
+            data.battery_present = True
+        except IndexError:
+            data.battery_present = False
 
-def refresh_common(data, render_func):
-    while True:
+    def refresh(self, data):
+        if not data.battery_present:
+            return
+        with open(self.charge_now, 'r') as charge_now_fh, \
+             open(self.charge_max, 'r') as charge_max_fh, \
+             open(self.charge_status, 'r') as charge_status_fh:
+            now = int(charge_now_fh.read())
+            max = int(charge_max_fh.read())
+            status = charge_status_fh.read().strip().lower()
+            data.battery_discharging = status == 'discharging'
+            data.battery_percent = now * 100.0 / max
+            time.sleep(interval * 3)
+
+class NetworkUsageProvider(object):
+    delay = interval
+    rerender = False
+
+    def __init__(self, data):
+        try:
+            self.rx_path = None
+            self.tx_path = None
+            for interface in glob.glob('/sys/class/net/*'):
+                with open(os.path.join(interface, 'operstate'), 'r') as fh:
+                    if fh.read().strip().lower() == 'up':
+                        self.rx_path = os.path.join(interface, 'statistics', 'rx_bytes')
+                        self.tx_path = os.path.join(interface, 'statistics', 'tx_bytes')
+                        data.network_enabled = True
+        except:
+            data.network_enabled = False
+
+        if data.network_enabled:
+            with open(self.rx_path, 'r') as rx_fh, open(self.tx_path, 'r') as tx_fh:
+                self.old_rx_bytes = int(rx_fh.read())
+                self.old_tx_bytes = int(tx_fh.read())
+
+    def refresh(self, data):
+        if not data.network_enabled:
+            return
+        with open(self.rx_path, 'r') as rx_fh, open(self.tx_path, 'r') as tx_fh:
+            rx_bytes = int(rx_fh.read())
+            tx_bytes = int(tx_fh.read())
+            data.network_traffic_received = (rx_bytes - self.old_rx_bytes) / interval
+            data.network_traffic_sent = (tx_bytes - self.old_tx_bytes) / interval
+            self.old_rx_bytes = rx_bytes
+            self.old_tx_bytes = tx_bytes
+
+class CommonProvider(object):
+    delay = interval
+    rerender = False
+
+    def refresh(self, data):
         data.time = datetime.now()
         data.volume = alsaaudio.Mixer().getvolume()[0]
-        time.sleep(interval)
+
+def worker(data, provider, render_func):
+    while True:
+        provider.refresh(data)
+        if provider.delay > 0:
+            time.sleep(provider.delay)
+        if provider.rerender:
+            render_func()
 
 def main():
     data = Data()
     renderer = MyRenderer(data)
 
     threads = []
-    for worker in [refresh_cpu, refresh_song, refresh_workspaces, refresh_network, refresh_battery, refresh_common]:
-        thread = threading.Thread(target=worker, args=(data, renderer.render), daemon=True)
+    providers = [
+        CpuProvider(),
+        MpdProvider(),
+        WorkspacesProvider(),
+        NetworkUsageProvider(data),
+        BatteryProvider(data),
+        CommonProvider()
+    ]
+
+    for provider in providers:
+        thread = threading.Thread(target=worker, args=(data, provider, renderer.render), daemon=True)
         threads.append(thread)
         thread.start()
 
