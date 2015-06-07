@@ -210,8 +210,8 @@ class MyRenderer(object):
             else:
                 self.print_icon('\uf04c')
 
-            with self.renderer.clickable(4, 'mpc prev'), \
-                 self.renderer.clickable(5, 'mpc next'):
+            with self.renderer.clickable(5, 'mpc prev'), \
+                 self.renderer.clickable(4, 'mpc next'):
                 if self.data.current_song and 'artist' in self.data.current_song:
                     self.print_text(self.data.current_song['artist'])
                     self.print_text(' - ')
