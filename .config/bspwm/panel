@@ -137,16 +137,25 @@ class Renderer(object):
 
 
 class MyRenderer(object):
-    def __init__(self, data):
+    def __init__(self, data, providers):
         self.current_margin = 0
         self.renderer = Renderer()
+        self.providers = providers
         self.data = data
 
         command = ['lemonbar', '-gx' + str(height)]
         for font in fonts:
             command += ['-f', font[0], '-o', str(font[1])]
-        sh_process = Popen('sh', stdin=PIPE)
-        self.lemonbar_process = Popen(command, stdout=sh_process.stdin, stdin=PIPE)
+        self.lemonbar_process = Popen(command, stdout=PIPE, stdin=PIPE)
+        threading.Thread(target=self.execute_commands, daemon=True).start()
+
+    def execute_commands(self):
+        while True:
+            command = self.lemonbar_process.stdout.readline()
+            Popen(['sh', '-c', command], stdout=PIPE).wait()
+            for provider in self.providers:
+                provider.refresh(self.data)
+            self.render()
 
     def print_text(self, text):
         self.renderer.print(text)
@@ -434,7 +443,6 @@ def worker(data, provider, render_func):
 
 def main():
     data = Data()
-    renderer = MyRenderer(data)
 
     threads = []
     providers = [
@@ -445,6 +453,8 @@ def main():
         BatteryProvider(data),
         CommonProvider()
     ]
+
+    renderer = MyRenderer(data, [p for p in providers if p.delay > 0])
 
     for provider in providers:
         thread = threading.Thread(target=worker, args=(data, provider, renderer.render), daemon=True)
