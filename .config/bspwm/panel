@@ -229,7 +229,7 @@ class MyRenderer(object):
                 else:
                     self.print_text('Stopped')
             self.ensure_margin(2)
-            if 'elapsed' in self.data.mpd_status:
+            if self.data.current_song and 'elapsed' in self.data.mpd_status:
                 self.print_seconds(self.data.mpd_status['elapsed'])
                 self.print_text('/')
                 self.print_seconds(self.data.current_song['time'])
