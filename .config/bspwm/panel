@@ -229,13 +229,13 @@ class MyRenderer(object):
                             self.print_text(self.data.current_song['artist'])
                             self.print_text(' - ')
                         self.print_text(self.data.current_song['title'])
+                    self.ensure_margin(2)
+                    if 'elapsed' in self.data.mpd_status:
+                        self.print_seconds(self.data.mpd_status['elapsed'])
+                        self.print_text('/')
+                        self.print_seconds(self.data.current_song['time'])
                 else:
                     self.print_text('Stopped')
-                self.ensure_margin(2)
-                if self.data.current_song and 'elapsed' in self.data.mpd_status:
-                    self.print_seconds(self.data.mpd_status['elapsed'])
-                    self.print_text('/')
-                    self.print_seconds(self.data.current_song['time'])
 
         with self.renderer.clickable(1, 'mpc random'), \
              self.renderer.temporary():
