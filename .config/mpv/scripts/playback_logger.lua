@@ -33,7 +33,9 @@ function on_time_change(_, new_time)
 end
 
 function playback_finished(event)
-    if last_remaining_time > minimum_remaining_time then
+    if last_remaining_time == null then
+        mp.log('info', 'No information on remaining time, skipping')
+    elseif last_remaining_time > minimum_remaining_time then
         mp.log('info', string.format(
             'Too much remaining time (%.02f > %.02f), skipping',
             last_remaining_time,
