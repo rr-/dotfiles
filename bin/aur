@@ -51,8 +51,8 @@ if pacman -Q "$package" >/dev/null; then
     fi
 fi
 
-wget "$url" -qO- | tar xz || { echo "Package $package not found!"; exit 1; }
-if [ $install -eq 1 ]; then
+wget "$url" -qO- | tar xz 2>/dev/null
+if [ $? -eq 0 ] && [ $install -eq 1 ]; then
     cd "$package"
     makepkg -i
 fi
