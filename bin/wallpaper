@@ -263,7 +263,7 @@ class WallpaperChanger(object):
                             }
                         }
                     }''' + "\n\"@",
-                    ';[Wallpaper.Setter]::SetWallpaper(\'' + full_path + '\')']
+                    '[Wallpaper.Setter]::SetWallpaper(\'' + full_path + '\')']
             run_powershell(ps_cmd)
         else:
             subprocess.Popen(['feh', '--bg-fill'] + list(paths)).wait()
