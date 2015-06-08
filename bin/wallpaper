@@ -223,7 +223,44 @@ class WallpaperChanger(object):
             os.unlink(path)
 
     def render(self, paths):
-        subprocess.Popen(['feh', '--bg-fill'] + list(paths)).wait()
+        if 'cygwin' in sys.platform:
+            import random
+            full_path = 'C:\\windows\\temp\\wallpaper.bmp'
+            total_width = max(m.x + m.width for m in self.monitors.values())
+            total_height = max(m.y + m.height for m in self.monitors.values())
+            full_img = Image.new('RGBA', (total_width, total_height), (0, 0, 0, 0))
+            for i, monitor in enumerate(self.monitors.values()):
+                sub_img = Image.open(paths[i])
+                sub_img = sub_img.resize((monitor.width, monitor.height))
+                full_img.paste(sub_img, (monitor.x, monitor.y))
+            full_img.save(full_path)
+            ps_cmd = [
+                '''Add-Type @"
+                    using System;
+                    using System.Runtime.InteropServices;
+                    using Microsoft.Win32;
+                    namespace Wallpaper {
+                        public class Setter {
+                            public const int SetDesktopWallpaper = 20;
+                            public const int UpdateIniFile = 0x01;
+                            public const int SendWinIniChange = 0x02;
+
+                            [DllImport("user32.dll", SetLastError = true, CharSet = CharSet.Auto)]
+                            private static extern int SystemParametersInfo(int uAction, int uParam, string lpvParam, int fuWinIni);
+
+                            public static void SetWallpaper(string path) {
+                                SystemParametersInfo(SetDesktopWallpaper, 0, path, UpdateIniFile | SendWinIniChange);
+                                RegistryKey key = Registry.CurrentUser.OpenSubKey("Control Panel\\\Desktop", true);
+                                key.SetValue("WallpaperStyle", "1");
+                                key.SetValue("TileWallpaper", "1");
+                                key.Close();
+                            }
+                        }
+                    }''' + "\n\"@",
+                    ';[Wallpaper.Setter]::SetWallpaper(\'' + full_path + '\')']
+            run_powershell(ps_cmd)
+        else:
+            subprocess.Popen(['feh', '--bg-fill'] + list(paths)).wait()
 
     def refresh(self):
         self.render([self.get_path(i) for i in self.monitors])
