@@ -145,33 +145,35 @@ class WallpaperChanger(object):
 
         target_img = Image.new('RGB', monitor_size, args.background)
 
-        if args.path.startswith('http'):
-            source_path = self.get_temp_path(args.path)
+        if args.path is not None:
+            if args.path.startswith('http'):
+                source_path = self.get_temp_path(args.path)
+                if not os.path.exists(source_path):
+                    download(args.path, source_path)
+            else:
+                source_path = args.path
             if not os.path.exists(source_path):
-                download(args.path, source_path)
-        else:
-            source_path = args.path
-        if not os.path.exists(source_path):
-            raise RuntimeError(source_path + ' does not exist')
+                raise RuntimeError(source_path + ' does not exist')
 
-        source_img = Image.open(source_path)
-        if args.crop:
-            source_img = source_img.crop(tuple(int(source_img.size[i%2] * args.crop[i]) for i in (0,1,2,3)))
+            source_img = Image.open(source_path)
+            if args.crop:
+                source_img = source_img.crop(tuple(int(source_img.size[i%2] * args.crop[i]) for i in (0,1,2,3)))
 
-        if args.fit:
-            source_img = fit(source_img, work_area)
-        elif args.cover:
-            source_img = cover(source_img, work_area)
+            if args.fit:
+                source_img = fit(source_img, work_area)
+            elif args.cover:
+                source_img = cover(source_img, work_area)
 
-        source_img = source_img.resize(tuple(int(source_img.size[i] * args.scale) for i in (0,1)), Image.ANTIALIAS)
+            source_img = source_img.resize(tuple(int(source_img.size[i] * args.scale) for i in (0,1)), Image.ANTIALIAS)
 
-        target_position = tuple(int(gaps[i] + (work_area[i] - source_img.size[i]) * args.translate[i]) for i in (0,1))
+            target_position = tuple(int(gaps[i] + (work_area[i] - source_img.size[i]) * args.translate[i]) for i in (0,1))
 
-        if args.border_size:
-            source_img = ImageOps.expand(source_img, border=args.border_size, fill=args.border_color)
+            if args.border_size:
+                source_img = ImageOps.expand(source_img, border=args.border_size, fill=args.border_color)
+
+            target_img.paste(source_img, target_position)
 
         target_path = (self.get_path(args.monitor), self.get_temp_path())[args.preview]
-        target_img.paste(source_img, target_position)
         target_img.save(target_path, 'PNG')
 
         if args.preview:
@@ -288,7 +290,7 @@ def main():
     parser_set.add_argument('-bc', '--border-color', metavar='c', default='black', help='selects border size')
     parser_set.add_argument('--crop', type=float, nargs=4, metavar=('x1', 'y1', 'x2', 'y2'), default=(0, 0, 1, 1), help='selects crop area')
     parser_set.add_argument('monitor', type=int, help='monitor number')
-    parser_set.add_argument('path', help='input image path')
+    parser_set.add_argument('path', nargs='?', help='input image path')
     parser_set.set_defaults(func=wc.set)
 
     parser_identify = subparsers.add_parser('identify', help='identifies monitor numbers')
