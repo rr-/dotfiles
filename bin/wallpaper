@@ -223,7 +223,7 @@ class WallpaperChanger(object):
             img.paste(blurred_text_img, tuple((img.size[i] - text_img.size[i]) // 2 for i in (0,1)), blurred_text_img)
             img.save(path_dst, 'JPEG', quality=100)
 
-        self.render(sorted(paths.values()))
+        self.render(paths.values())
         time.sleep(1)
         self.refresh()
         for path in paths.values():
