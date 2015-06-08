@@ -190,9 +190,10 @@ class WallpaperChanger(object):
         self.validate_monitor_number(args.second_monitor)
 
         temp_path = self.get_temp_path()
-        os.rename(self.get_path(args.second_monitor), temp_path)
+        shutil.copy(self.get_path(args.second_monitor), temp_path)
         os.rename(self.get_path(args.first_monitor), self.get_path(args.second_monitor))
-        os.rename(temp_path, self.get_path(args.first_monitor))
+        shutil.copy(temp_path, self.get_path(args.first_monitor))
+        os.unlink(temp_path)
         self.refresh()
 
     def identify(self, args):
