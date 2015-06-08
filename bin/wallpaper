@@ -194,7 +194,11 @@ class WallpaperChanger(object):
         self.refresh()
 
     def identify(self, args):
-        font = ImageFont.truetype('arial.ttf', 200, encoding='unic')
+        if 'cygwin' in sys.platform:
+            font_path = 'C:\\windows\\fonts\\Arial.ttf'
+        else:
+            font_path = 'arial.ttf'
+        font = ImageFont.truetype(font_path, 200, encoding='unic')
         paths = {}
         for monitor, info in self.monitors.items():
             path_src = self.get_path(monitor)
