@@ -49,18 +49,21 @@ class Monitor(object):
     LAYOUT_TILED = 1
     LAYOUT_MONOCLE = 2
 
-    def __init__(self):
-        self.name = None
-        self.focused = False
-        self.workspaces = []
-        self.layout = None
+    name = None
+    focused = False
+    workspaces = []
+    layout = None
+    x = 0
+    y = 0
+    width = 0
+    height = 0
 
 class Workspace(object):
-    def __init__(self):
-        self.name = None
-        self.focused = False
-        self.free = True
-        self.urgent = False
+    name = None
+    rect = None
+    focused = False
+    free = True
+    urgent = False
 
 
 class Renderer(object):
@@ -287,7 +290,10 @@ class MyRenderer(object):
 
     def render(self):
         self.renderer.clear()
-        for monitor_number, monitor in enumerate(self.data.monitors):
+
+        #lemonbar sorts the monitors by their x coordinate
+        monitors = sorted(self.data.monitors, key=lambda m: m.x)
+        for monitor_number, monitor in enumerate(monitors):
             self.current_margin = 0
             self.renderer.current_monitor = monitor_number
             self.renderer.background_color = default_background_color
@@ -334,8 +340,21 @@ class WorkspacesProvider(object):
     delay = 0
     rerender = True
 
-    def __init__(self):
+    def __init__(self, data):
         self.bspc_process = Popen(['bspc', 'control', '--subscribe'], stdout=PIPE)
+        data.monitors = self.init_monitors()
+
+    def init_monitors(self):
+        proc = Popen(['bspc', 'query', '-T'], stdout=PIPE)
+        lines = proc.stdout.read().decode('utf-8').strip().replace("\r", '').split("\n")
+        mon_defs = [l.split(' ') for l in lines if not l.startswith("\t") and l != '']
+        monitors = []
+        for mon_def in mon_defs:
+            mon = Monitor()
+            mon.name = mon_def[0]
+            mon.width, mon.height, mon.x, mon.y = re.split('[x+]', mon_def[1])
+            monitors.append(mon)
+        return monitors
 
     def refresh(self, data):
         line = self.bspc_process.stdout.readline().decode('utf8').strip()
@@ -343,16 +362,17 @@ class WorkspacesProvider(object):
         if line == '':
             return
 
-        data.monitors = []
-        current_monitor = None
         for item in line.split(':'):
             key, value = item[0], item[1:]
 
             if key in 'mM':
-                current_monitor = Monitor()
-                current_monitor.name = value
+                chosen_monitor = [m for m in data.monitors if m.name == value]
+                if len(chosen_monitor) != 1:
+                    self.init_monitors()
+                    return
+                current_monitor = chosen_monitor[0]
+                current_monitor.workspaces = []
                 current_monitor.focused = key.isupper()
-                data.monitors.append(current_monitor)
 
             elif key in 'oOfFuU':
                 workspace = Workspace()
@@ -367,8 +387,6 @@ class WorkspacesProvider(object):
                     current_monitor.layout = Monitor.LAYOUT_MONOCLE
                 elif value in 'tT':
                     current_monitor.layout = Monitor.LAYOUT_TILED
-
-        data.monitors.reverse() #hack...
 
 class BatteryProvider(object):
     delay = interval * 3
@@ -452,7 +470,7 @@ def main():
     providers = [
         CpuProvider(),
         MpdProvider(),
-        WorkspacesProvider(),
+        WorkspacesProvider(data),
         NetworkUsageProvider(data),
         BatteryProvider(data),
         CommonProvider()
