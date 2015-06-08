@@ -230,7 +230,6 @@ class WallpaperChanger(object):
 
     def render(self, paths):
         if 'cygwin' in sys.platform:
-            import random
             full_path = 'C:\\windows\\temp\\wallpaper.bmp'
             total_width = max(m.x + m.width for m in self.monitors.values())
             total_height = max(m.y + m.height for m in self.monitors.values())
