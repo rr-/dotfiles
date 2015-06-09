@@ -281,6 +281,9 @@ function install_link_or_cp {
 #translator
     install_link "$dir/ext/translator/tl" "$dir/bin/ext/tl"
 
+#background changer
+    install_link "$dir/ext/bk/bk" "$dir/bin/ext/bk"
+
 #thunar
     install_pacman thunar
     if command -v xfconf-query &>/dev/null; then

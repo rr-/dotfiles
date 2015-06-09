@@ -7,3 +7,6 @@
 [submodule "ext/eyecandy"]
 	path = ext/eyecandy
 	url = https://github.com/rr-/eyecandy.git
+[submodule "ext/bk"]
+	path = ext/bk
+	url = https://github.com/rr-/bk.git
