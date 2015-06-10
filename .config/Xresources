@@ -3,6 +3,9 @@ URxvt*boldFont: xft:Literation Mono Powerline:pixelsize=14
 URxvt*allowBoldFonts: false
 URxvt*scrollBar: false
 URxvt*scrollWithBuffer: true
+URxvt*scrollTtyOutput: false
+URxvt*scrollTtyKeypress: true
+URxvt*saveLines: 1000000
 URxvt*keysym.Home: \033[1~
 URxvt*keysym.End: \033[4~
 
