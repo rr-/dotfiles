@@ -41,7 +41,7 @@ cd $DIR
 
 url=https://aur.archlinux.org/packages/${package:0:2}/$package/$package.tar.gz
 
-if pacman -Q "$package" >/dev/null; then
+if pacman -Q "$package" &>/dev/null; then
     if [ $force -ne 1 ]; then
         if [ $quiet -ne 1 ]; then
             echo "Looks like $package is already installed."
