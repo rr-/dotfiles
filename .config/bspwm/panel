@@ -331,11 +331,23 @@ class MpdProvider(object):
 
     def __init__(self):
         self.client = mpd.MPDClient()
-        self.client.connect(host='localhost', port=6600)
+        self.connected = False
 
     def refresh(self, data):
-        data.mpd_status = self.client.status()
-        data.current_song = self.client.currentsong()
+        if self.connected:
+            try:
+                data.mpd_status = self.client.status()
+                data.current_song = self.client.currentsong()
+            except:
+                data.mpd_status = None
+                data.current_song = None
+                self.connected = False
+        else:
+            try:
+                self.client.connect(host='localhost', port=6600)
+                self.connected = True
+            except:
+                self.connected = False
 
 class WorkspacesProvider(object):
     delay = 0
