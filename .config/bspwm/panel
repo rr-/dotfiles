@@ -10,6 +10,7 @@ import time
 import mpd
 import math
 import os
+import logging
 
 fonts = [
     ['terminesspowerline:size=8', -1],
@@ -488,4 +489,8 @@ def main():
         time.sleep(interval)
 
 if __name__ == '__main__':
-    main()
+    logging.basicConfig(level=logging.ERROR, filename='/tmp/panel.log')
+    try:
+        main()
+    except:
+        logging.exception('Exception...')
