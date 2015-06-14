@@ -39,7 +39,6 @@ bspc rule -a Trackma-qt desktop=10 floating=on
 bspc rule -a music_player desktop=10 floating=on
 bspc rule -a qbittorrent desktop=9
 bspc rule -a Steam desktop=8
-bspc rule -a mpv desktop=1
 
 pkill -f bspwm/panel
 nohup $HOME/.config/bspwm/panel </dev/null &>$HOME/.debug/panel &
