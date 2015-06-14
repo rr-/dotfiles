@@ -26,6 +26,7 @@ active_progressbar_color   = '#d0bbbbbb'
 inactive_progressbar_color = '#d0888888'
 workspaces_background      = '#c0333333'
 active_workspace_color     = '#dddddd'
+urgent_workspace_color     = '#00efdf'
 inactive_workspace_color   = '#888888'
 clock_background_color     = '#c0333333'
 clock_text_color           = 'white'
@@ -201,7 +202,9 @@ class MyRenderer(object):
             self.ensure_margin(2)
             for workspace in monitor.workspaces:
                 with self.renderer.clickable(1, 'bspc monitor -f %s;bspc desktop -f %s' % (monitor.name, workspace.name)):
-                    if workspace.focused:
+                    if workspace.urgent:
+                        self.renderer.font_color = urgent_workspace_color
+                    elif workspace.focused:
                         self.renderer.font_color = active_workspace_color
                     else:
                         self.renderer.font_color = inactive_workspace_color
