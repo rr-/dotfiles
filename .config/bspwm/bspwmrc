@@ -41,7 +41,7 @@ bspc rule -a qbittorrent desktop=9
 bspc rule -a Steam desktop=8
 
 pkill -f bspwm/panel
-nohup $HOME/.config/bspwm/panel </dev/null &>$HOME/.debug/panel &
+nohup $HOME/.config/bspwm/panel </dev/null &>/dev/null &
 
 if [ "$(hostname)" = tornado ]; then
     run_if_needed pidgin pidgin
