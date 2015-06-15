@@ -90,7 +90,7 @@ super + {grave,1-9,0}
 
 # focus window in given direction
 super + {h,j,k,l}
-    bspc window -f {left,down,up,right}.local
+    bspc window -f {left,down,up,right}
 
 # swap window with another one in given direction
 super + shift + {h,j,k,l}
