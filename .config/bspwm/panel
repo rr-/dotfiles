@@ -273,7 +273,7 @@ class MyRenderer(object):
             self.render_progressbar(self.data.cpu)
 
     def render_volume(self):
-        with self.renderer.clickable(1, 'run-or-raise -n alsamixer -p "urxvt -e alsamixer"'), \
+        with self.renderer.clickable(1, 'amixer -q set Master toggle'), \
              self.renderer.clickable(5, 'amixer -q set Master 1dB- unmute'), \
              self.renderer.clickable(4, 'amixer -q set Master 1dB+ unmute'):
             self.print_icon('\uf028', margin=2)
