@@ -35,6 +35,7 @@ interval                   = 1
 class Data(object):
     def __init__(self):
         self.cpu = 0
+        self.muted = False
         self.volume = 0
         self.time = datetime.now()
         self.mpd_status = None
@@ -275,7 +276,10 @@ class MyRenderer(object):
     def render_volume(self):
         with self.renderer.clickable(1, 'amixer -q set Master toggle'), \
              self.renderer.clickable(5, 'amixer -q set Master 1dB- unmute'), \
-             self.renderer.clickable(4, 'amixer -q set Master 1dB+ unmute'):
+             self.renderer.clickable(4, 'amixer -q set Master 1dB+ unmute'), \
+             self.renderer.temporary():
+            if self.data.muted:
+                self.renderer.font_color = inactive_text_color
             self.print_icon('\uf028', margin=2)
             self.render_progressbar(self.data.volume)
 
@@ -470,6 +474,7 @@ class CommonProvider(object):
     def refresh(self, data):
         data.time = datetime.now()
         data.volume = alsaaudio.Mixer().getvolume()[0]
+        data.muted = alsaaudio.Mixer().getmute()[0]
 
 def worker(data, provider, render_func):
     while True:
