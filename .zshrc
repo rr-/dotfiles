@@ -98,7 +98,7 @@ alias la="`whence ls`"' -lXA --group-directories-first'
 
 alias plen='tl pl en'
 alias enpl='tl en pl'
-alias rfn='date "+%Y%m%d_%H%M%S"'
+alias rfn='echo -n $(date "+%Y%m%d_%H%M%S")'
 alias isvim='ps ux|grep vim|grep -v grep'
 
 alias dark='term-lightness 0'
