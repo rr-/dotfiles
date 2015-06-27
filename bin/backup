@@ -1,15 +1,14 @@
 #!/bin/bash
-desktop=tornado
-server=burza
-server_addr=sakuya.pl
-user=rr-
-[ "$(hostname)" != "$desktop" ] && echo "Must be run on $desktop" 1>&2 && exit 1
+local_host=tornado
+remote_host=burza
+[ "$(hostname)" != "$local_host" ] && echo "Must be run on $local_host" 1>&2 && exit 1
+local_home="$HOME"
+remote_home="$(ssh -n "$remote_host" "echo $HOME")"
 
 trap "exit" INT
 
-backup_user=backup
-server_backup=( "/home/$user" /home/srv )
-desktop_backup=( $HOME/clutter $HOME/img $HOME/text $HOME/src )
+remote_backup=( "$remote_home" "/home/srv" )
+local_backup=( "$local_home/clutter" "$local_home/img" "$local_home/text" )
 
 function sync {
     rsync \
@@ -22,26 +21,34 @@ function sync {
         "$1" \
         "$2" \
         --exclude "*.vdi" \
-        --exclude "$HOME/img/net/" \
-        --exclude "/home/$user/img/" \
+        --exclude "$local_home/img/net/" \
+        --exclude "$remote_home/src/" \
+        --exclude "$remote_home/img/" \
+        --exclude "$remote_home/dead/" \
+        --exclude "$local_home/.backup/$remote_host/" \
+        --exclude "$remote_home/.backup/$local_host/" \
         --exclude "/home/srv/www/mal-dev/data/" \
         --exclude "/home/srv/www/booru-dev/public_html/data/" \
         --exclude "thumbnails/" \
+        --exclude "mxe/" \
+        --exclude "aur/" \
         --exclude '.git/' \
         --exclude 'node_modules/' \
         --exclude 'vendor/'
 }
 
-for x in ${server_backup[@]}; do
-    echo "$server --> $desktop: $x"
-    target_dir="$HOME/.backup/$server/"
-    [ ! -d "$target_dir" ] && mkdir -p "$target_dir"
-    sync "$user@$server_addr:$x/" "$target_dir"
+for x in ${remote_backup[@]}; do
+    echo "$remote_host --> $local_host: $x"
+    target_dir="$local_home/.backup/$remote_host/"
+    mkdir -p "$target_dir"
+    sync "$remote_host:$x/" "$target_dir"
     echo
 done
 
-for x in ${desktop_backup[@]}; do
-    echo "$desktop --> $server: $x"
-    sync "$x/" "$backup_user@$server_addr:.backup/$desktop/"
+for x in ${local_backup[@]}; do
+    echo "$local_host --> $remote_host: $x"
+    target_dir="$remote_home/.backup/$local_host/"
+    ssh -n "$remote_host" "mkdir -p \"$target_dir\"; chmod 0755 \"$target_dir\""
+    sync "$x/" "$remote_host:$target_dir"
     echo
 done
