@@ -140,9 +140,9 @@ has_installed Xorg && linux_gfx=true || linux_gfx=false
     if $linux_gfx; then
         install_pacman xorg-font-utils
         install_pacman ttf-dejavu
+        install_pacman ttf-symbola
         install_aur ttf-font-awesome
         install_aur ttf-ipa-mona
-        install_aur ttf-symbola
         if [ -d /usr/share/fonts ]; then
             fonts_dir="$HOME/.local/share/fonts"
             [ -d "$fonts_dir" ] || mkdir -p "$fonts_dir"
