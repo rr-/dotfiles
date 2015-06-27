@@ -128,11 +128,13 @@ has_installed Xorg && linux_gfx=true || linux_gfx=false
     if $cygwin; then
         install_cygwin wget
         install_cygwin curl
+        install_cygwin ssh
     elif $linux; then
         install_pacman wget #required for install_aur
         install_pacman curl
         install_pacman openssh
     fi
+    install_link "$dir/.ssh" "$HOME/.ssh"
 
 #fonts
     if $linux_gfx; then
