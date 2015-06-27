@@ -8,7 +8,7 @@ user=rr-
 trap "exit" INT
 
 backup_user=backup
-server_backup=( /home/backup/backup-sql "/home/$user" /home/srv )
+server_backup=( "/home/$user" /home/srv )
 desktop_backup=( $HOME/clutter $HOME/img $HOME/text $HOME/src )
 
 function sync {
@@ -42,6 +42,6 @@ done
 
 for x in ${desktop_backup[@]}; do
     echo "$desktop --> $server: $x"
-    sync "$x/" "$backup_user@$server_addr:/home/backup/$desktop/"
+    sync "$x/" "$backup_user@$server_addr:.backup/$desktop/"
     echo
 done
