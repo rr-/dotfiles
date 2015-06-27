@@ -15,7 +15,6 @@ function die {
 
 function has_installed {
     command -v "$1" &>/dev/null && return 0
-    echo 1>&2 "$1 not installed, $2 ignored"
     return 1
 }
 
@@ -101,16 +100,24 @@ function install_link_or_cp {
     fi
 }
 
+[[ "$uname" =~ cygwin ]] && cygwin=true || cygwin=false
+[[ "$uname" =~ linux ]] && linux=true || linux=false
+has_installed Xorg && linux_gfx=true || linux_gfx=false
+
 #basic stuff
     pushd $dir >/dev/null
     echo 'Updating git submodules...'
     git submodule init
     git submodule update
     popd >/dev/null
+    if $linux; then
+        install_pacman fakeroot # for some packages
+        install_pacman lsof
+    fi
 
 #cygwin
-    if [[ "$uname" =~ cygwin ]]; then
-        if ! command -v apt-cyg &>/dev/null; then
+    if $cygwin; then
+        if ! has_installed apt-cyg; then
             echo Installing apt-cyg...
             lynx -source rawgit.com/transcode-open/apt-cyg/master/apt-cyg > apt-cyg
             install apt-cyg /bin
@@ -118,64 +125,83 @@ function install_link_or_cp {
     fi
 
 #networking
-    install_cygwin wget
-    install_cygwin curl
-    install_pacman wget #required for install_aur
-    install_pacman curl
-    install_pacman openssh
+    if $cygwin; then
+        install_cygwin wget
+        install_cygwin curl
+    elif $linux; then
+        install_pacman wget #required for install_aur
+        install_pacman curl
+        install_pacman openssh
+    fi
 
 #fonts
-    install_pacman ttf-dejavu
-    install_aur ttf-font-awesome
-    install_aur ttf-ipa-mona
-    install_aur ttf-symbola
-    if [ -d /usr/share/fonts ]; then
-        fonts_dir="$HOME/.local/share/fonts"
-        [ -d "$fonts_dir" ] || mkdir -p "$fonts_dir"
-        find "$dir/misc" -iregex '.*\.\(ttf\|otf\|pcf\|bdf\)' | while read -r x; do
-            install_link "$x" "$fonts_dir/$(basename "$x")"
-        done
-        mkfontscale "$fonts_dir"
-        mkfontdir "$fonts_dir"
-        xset +fp "$fonts_dir"
-        xset fp rehash
-    fi
-    if has_installed fc-list 'font config'; then
-        install_link "$dir/.config/fontconfig" "$HOME/.config/fontconfig"
-        fc-cache
+    if $linux_gfx; then
+        install_pacman xorg-font-utils
+        install_pacman ttf-dejavu
+        install_aur ttf-font-awesome
+        install_aur ttf-ipa-mona
+        install_aur ttf-symbola
+        if [ -d /usr/share/fonts ]; then
+            fonts_dir="$HOME/.local/share/fonts"
+            [ -d "$fonts_dir" ] || mkdir -p "$fonts_dir"
+            find "$dir/misc" -iregex '.*\.\(ttf\|otf\|pcf\|bdf\)' | while read -r x; do
+                install_link "$x" "$fonts_dir/$(basename "$x")"
+            done
+            mkfontscale "$fonts_dir"
+            mkfontdir "$fonts_dir"
+            xset +fp "$fonts_dir"
+            xset fp rehash
+        fi
+        if has_installed fc-list; then
+            install_link "$dir/.config/fontconfig" "$HOME/.config/fontconfig"
+            fc-cache
+        fi
     fi
 
 #python
-    install_cygwin python
-    install_cygwin python3
-    install_pacman python
-    install_pacman python-pip
+    if $cygwin; then
+        install_cygwin python
+        install_cygwin python3
+    elif $linux; then
+        install_pacman python
+        install_pacman python-pip
+    fi
 
 #bspwm
-    if [[ "$uname" =~ linux ]]; then
+    if $linux_gfx; then
         install_pacman feh
+        install_pacman xcb-util-keysyms
+        install_pacman xcb-util-wm
         install_aur bspwm-git
         install_aur sxhkd-git
         install_aur lemonbar-xft-git
-        install_pip psutil      #CPU usage
-        install_pip pyalsaaudio #volume
-        install_pip python-mpd2 #mpd interaction
-        if has_installed bspwm 'bspwm config'; then
+        install_pip psutil              # CPU usage
+        install_pip pyalsaaudio         # volume
+        install_pip python-mpd2         # mpd interaction
+        if has_installed bspwm; then
             install_link "$dir/.config/bspwm" "$HOME/.config/bspwm"
             install_link "$dir/.config/sxhkd" "$HOME/.config/sxhkd"
         fi
     fi
 
 #git
-    install_cygwin git
-    install_pacman git
+    if $cygwin; then
+        install_cygwin git
+    elif $pacman; then
+        install_pacman git
+    fi
     install_link "$dir/.gitconfig" "$HOME/.gitconfig"
     install_link "$dir/.gitignore" "$HOME/.gitignore"
 
 #vim
-    install_cygwin vim
-    install_pacman gvim
-    if has_installed vim 'vim config'; then
+    if $cygwin; then
+        install_cygwin vim
+    elif $linux_gfx; then
+        install_pacman gvim
+    else
+        install_pacman vim
+    fi
+    if has_installed vim; then
         create_folder "$HOME/.vim/undo"
         create_folder "$HOME/.vim/backup"
         create_folder "$HOME/.vim/swap"
@@ -187,94 +213,109 @@ function install_link_or_cp {
     fi
 
 #zsh
-    install_cygwin zsh
-    install_pacman zsh
-    if has_installed zsh 'zsh config'; then
+    if $cygwin; then
+        install_cygwin zsh
+    elif $linux; then
+        install_pacman zsh
+    fi
+    if has_installed zsh; then
         install_link "$dir/.zlogin" "$HOME/.zlogin"
         install_link "$dir/.zshrc" "$HOME/.zshrc"
     fi
 
 #x
-    if [[ "$uname" =~ linux ]]; then
-        install_aur escrotum-git     # to make screenshots
-        install_pacman xorg-xsetroot # to fix X cursor
-        install_pacman xorg-xrandr   # to query monitor information
-        install_pacman xdotool       # for all sort of things
-        install_pacman autocutsel    # synchronize primary and selection clipboards
-        install_pacman clipit        # keep clipboard content even after application closes
-        if has_installed Xorg 'x init script'; then
-            install_link "$dir/.xinitrc" "$HOME/.xinitrc"
-        fi
-        install_pacman libconfig     # for compton
-        install_pacman xorg-xprop    # for compton-trans
-        install_pacman xorg-xwininfo # for compton-trans
+    if $linux_gfx; then
+        install_pacman pygtk          # for escrotum
+        install_aur escrotum-git      # to make screenshots
+        install_pacman xorg-xsetroot  # to fix X cursor
+        install_pacman xorg-xrandr    # to query monitor information
+        install_pacman xdotool        # for all sort of things
+        install_pacman autocutsel     # synchronize primary and selection clipboards
+        install_pacman clipit         # keep clipboard content even after application closes
+        install_pacman libconfig      # for compton
+        install_pacman xorg-xprop     # for compton-trans
+        install_pacman xorg-xwininfo  # for compton-trans
         install_aur compton
-        if has_installed compton 'compton config'; then
-            install_link "$dir/.config/compton.conf" "$HOME/.config/compton.conf"
-        fi
+    fi
+    if has_installed Xorg; then
+        install_link "$dir/.xinitrc" "$HOME/.xinitrc"
+    fi
+    if has_installed compton; then
+        install_link "$dir/.config/compton.conf" "$HOME/.config/compton.conf"
     fi
 
 #development
-    install_cygwin make
-    install_cygwin gcc
-    install_cygwin automake
-    install_pacman make
-    install_pacman gcc
-    install_pacman automake
+    if $cygwin; then
+        install_cygwin make
+        install_cygwin gcc
+        install_cygwin automake
+    elif $linux; then
+        install_pacman make
+        install_pacman gcc
+        install_pacman automake
+    fi
 
     #visual studio
-        if has_installed devenv 'visual studio config'; then
+        if has_installed devenv; then
             install_link_or_cp "$dir/.vimrc" "$HOME/.vsvimrc"
         fi
 
 #firefox
-    if has_installed firefox 'vimperator config'; then
+    if has_installed firefox; then
         install_link_or_cp "$dir/.vimperatorrc" "$HOME/.vimperatorrc"
     fi
 
 #terminal emulators
-    install_pacman rxvt-unicode
-    if has_installed urxvt 'urxvt config'; then
+    if $linux_gfx; then
+        install_pacman rxvt-unicode
+    fi
+    if has_installed urxvt; then
         install_link "$dir/.config/Xresources" "$HOME/.config/Xresources"
         install_link "$dir/.config/Xresources-light" "$HOME/.config/Xresources-light"
         install_link "$dir/.config/Xresources-dark" "$HOME/.config/Xresources-dark"
     fi
-    if has_installed mintty 'mintty config'; then
+    if has_installed mintty; then
         install_link "$dir/.inputrc" "$HOME/.inputrc"
         install_link "$dir/.minttyrc-light" "$HOME/.minttyrc"
     fi
 
 #mpv
-    install_pacman mpv
-    if has_installed mpv 'mpv config'; then
+    if $linux_gfx; then
+        install_pacman mpv
+    fi
+    if has_installed mpv; then
         install_link "$dir/.config/mpv" "$HOME/.config/mpv"
     fi
 
 #eyecandy
-    install_link "$dir/ext/eyecandy/eyecandy" "$dir/bin/ext/eyecandy"
-    if has_installed eyecandy 'eyecandy config'; then
+    if $linux_gfx; then
+        install_link "$dir/ext/eyecandy/eyecandy" "$dir/bin/ext/eyecandy"
+    fi
+    if has_installed eyecandy; then
         install_link "$dir/.config/EyeCandy" "$HOME/.config/EyeCandy"
     fi
 
 #music player
-    install_pacman mpd
-    install_pacman mpc
-    if has_installed mpd 'mpd config'; then
+    if $linux_gfx; then
+        install_pacman mpd
+        install_pacman mpc
+    fi
+    if has_installed mpd; then
         install_link "$dir/.config/mpd" "$HOME/.config/mpd"
         create_folder "$HOME/.config/mpd/playlists"
         touch "$HOME/.config/mpd/"{database,log,pid,state,sticker.sql}
     fi
 
 #trackma
-    if [[ "$uname" =~ linux ]]; then
-        install_pacman lsof
+    if $linux_gfx; then
+        install_pacman python2-setuptools
         install_aur trackma-git
     fi
 
 #htop
     install_cygwin htop
     install_pacman htop
-    if has_installed htop 'htop config'; then
+    if has_installed htop; then
         install_link "$dir/.config/htop" "$HOME/.config/htop"
     fi
 
@@ -282,17 +323,21 @@ function install_link_or_cp {
     install_link "$dir/ext/translator/tl" "$dir/bin/ext/tl"
 
 #background changer
-    install_link "$dir/ext/bk/bk" "$dir/bin/ext/bk"
+    if $linux_gfx; then
+        install_link "$dir/ext/bk/bk" "$dir/bin/ext/bk"
+    fi
 
 #thunar
-    install_pacman thunar
-    if command -v xfconf-query &>/dev/null; then
-        #enable full path in thunar window title for scripting
-        xfconf-query --channel thunar --property /misc-full-path-in-title --create --type bool --set true
+    if $linux_gfx; then
+        install_pacman thunar
+        if has_installed xfconf-query; then
+            #enable full path in thunar window title for scripting
+            xfconf-query --channel thunar --property /misc-full-path-in-title --create --type bool --set true
+        fi
     fi
 
 #windows
-    if [[ "$uname" =~ cygwin ]]; then
+    if $cygwin; then
         echo "Hiding dotfiles in $HOME..."
         find "$HOME" -maxdepth 1 -iname '.*' | while read -r x; do
             attrib +h +s $(cygpath -w `dirname "$x"`)/`basename "$x"`
