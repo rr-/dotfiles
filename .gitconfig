@@ -11,6 +11,7 @@
 	excludesfile = ~/.gitignore
 	autocrlf = false
 	eol = lf
+	whitespace = tab-in-indent
 [alias]
 	amen = commit --amend
 	hist = log --pretty=format:\"%h %ad | %s%d [%an]\" --graph --date=short
@@ -18,3 +19,7 @@
 	tool = vimdiff
 [push]
 	default = upstream
+[color "diff"]
+	old = red reverse
+	new = green reverse
+	whitespace = blue reverse
