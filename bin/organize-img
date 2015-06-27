@@ -2,21 +2,20 @@
 remote_root_dir="$HOME/img/"
 dst_root_dir="$HOME/img/net/"
 transit_root_dir="$HOME/img/transit"
-remote_user=rr-
-remote_addr=burza
-local_addr=tornado
+remote_host=burza
+local_host=tornado
 min_width=500
 min_height=500
 min_size=$[$min_width*$min_height]
 
-[ "$(hostname)" != "$local_addr" ] && echo "Must be run on $local_addr" 1>&2 && exit 1
+[ "$(hostname)" != "$local_host" ] && echo "Must be run on $local_host" 1>&2 && exit 1
 
 shopt -s extglob
 shopt -s nocasematch
 trap "exit" INT
 
 #download the images
-rsync --progress --whole-file -a --remove-source-files "$remote_user@$remote_addr:$remote_root_dir" "$transit_root_dir"
+rsync --progress --whole-file -a --remove-source-files "$remote_host:$remote_root_dir" "$transit_root_dir"
 
 #distribute the images
 find "$transit_root_dir" -depth -type d -print0|while read -d '' -r src_folder; do
@@ -59,4 +58,4 @@ done
 
 #remove empty directores
 find "$transit_root_dir" -depth -type d -exec rmdir --ignore-fail-on-non-empty "{}" \;
-ssh "$remote_user@$remote_addr" "bash -c 'find \"$remote_root_dir\" -depth -mindepth 1 -type d -exec rmdir --ignore-fail-on-non-empty \"{}\" \;'"
+ssh "$remote_host" "bash -c 'find \"$remote_root_dir\" -depth -mindepth 1 -type d -exec rmdir --ignore-fail-on-non-empty \"{}\" \;'"
