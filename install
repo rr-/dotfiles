@@ -174,6 +174,7 @@ has_installed Xorg && linux_gfx=true || linux_gfx=false
         install_pacman feh
         install_pacman xcb-util-keysyms
         install_pacman xcb-util-wm
+        install_aur dmenu
         install_aur bspwm-git
         install_aur sxhkd-git
         install_aur lemonbar-xft-git
@@ -234,6 +235,7 @@ has_installed Xorg && linux_gfx=true || linux_gfx=false
         install_pacman xdotool        # for all sort of things
         install_pacman autocutsel     # synchronize primary and selection clipboards
         install_pacman clipit         # keep clipboard content even after application closes
+        install_pacman asciidoc       # for compton
         install_pacman libconfig      # for compton
         install_pacman xorg-xprop     # for compton-trans
         install_pacman xorg-xwininfo  # for compton-trans
@@ -283,6 +285,8 @@ has_installed Xorg && linux_gfx=true || linux_gfx=false
 
 #mpv
     if $linux_gfx; then
+        install_pacman xdg-utils
+        install_pacman python-docutils
         install_aur mpv-git
     fi
     if has_installed mpv; then
@@ -311,6 +315,7 @@ has_installed Xorg && linux_gfx=true || linux_gfx=false
 #trackma
     if $linux_gfx; then
         install_pacman python2-setuptools
+        install_pacman python2-pyqt4
         install_aur trackma-git
     fi
 
