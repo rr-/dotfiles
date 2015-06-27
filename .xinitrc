@@ -28,7 +28,7 @@ comptonflags=( -b )
 if [[ `hostname` == tornado ]]; then
     # nvidia
     comptonflags+=( --backend glx --vsync opengl-swc --paint-on-overlay )
-elif [[ `hostname` == chibi ]]; then
+elif [[ `hostname` == chibi || `hostname` == bus ]]; then
     # amd
     comptonflags+=( --backend xrender --paint-on-overlay --unredir-if-possible )
 fi

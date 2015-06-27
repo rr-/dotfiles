@@ -48,6 +48,6 @@ if [ "$(hostname)" = tornado ]; then
     run_if_needed firefox firefox
     run_if_needed trackma-qt trackma-qt
     run_if_needed qbittorrent qbittorrent
-elif [ "$(hostname)" = chibi ]; then
+elif [ "$(hostname)" = chibi || "$(hostname)" = bus ]; then
     run_if_needed trackma-qt trackma-qt
 fi
