@@ -254,6 +254,8 @@ nnoremap <silent> <C-o> :CtrlPLine<CR>
 noremap <silent> <F4> :let @" = expand("%")<CR>
 "less keystrokes to access easy motion search
 nmap z <Leader><Leader>s
+"save with sudo
+cmap w!! w !sudo tee >/dev/null %
 "trying to be badass
 noremap <Up> <Nop>
 noremap <Down> <Nop>
