@@ -281,7 +281,7 @@ has_installed Xorg && linux_gfx=true || linux_gfx=false
 
 #mpv
     if $linux_gfx; then
-        install_pacman mpv
+        install_aur mpv-git
     fi
     if has_installed mpv; then
         install_link "$dir/.config/mpv" "$HOME/.config/mpv"
