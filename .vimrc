@@ -224,6 +224,8 @@ autocmd FileType zsh      FourSpaces
 autocmd FileType sh       FourSpaces
 autocmd FileType make     Tabs
 autocmd FileType php      FourSpaces
+autocmd FileType js       FourSpaces
+autocmd FileType css      FourSpaces
 
 "----------------------------------------
 " custom keyboard bindings
