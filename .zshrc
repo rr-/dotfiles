@@ -75,7 +75,9 @@ PS1+=$'%{\e[0;37m%}:'                  # :
 PS1+=$'%{\e[0;32m%}%~'                 # path relative to $HOME
 PS1+=$'%(?.%{\e[0;37m%}.%{\e[1;31m%})$ ' # colored $ depending on last exit code
 PS1+=$'%{\e[0m%}'                      # reset colors
-PS1+=$'%{\e]0;%n@%M:%~\007%}'          # add titlebar user@host:~/
+if [ "$TERM" != linux ]; then
+    PS1+=$'%{\e]0;%n@%M:%~\007%}'          # add titlebar user@host:~/
+fi
 
 # command prompt in different color for SSH sessions
 if [ -n "$SSH_CLIENT" ] || [ -n "$SSH_TTY" ]; then
