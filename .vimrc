@@ -47,7 +47,7 @@ endif
 "-----------------------------------------
 set ff=unix ffs=unix,dos      "preferred eol styles
 set enc=utf-8 fenc=utf-8      "preferred character encoding
-set noexpandtab               "don't use spaces instead of tab
+set expandtab                 "use spaces instead of tab
 set tabstop=4                 "spaces that tab counts for
 set softtabstop=4             "spaces that tab counts for in edit mode
 set shiftwidth=4              "spaces for each step of auto-indent
