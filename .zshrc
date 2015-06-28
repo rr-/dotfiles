@@ -114,8 +114,4 @@ fi
 if ! command -v reboot >/dev/null 2>&1; then
     [[ $(uname) =~ cygwin ]] && alias reboot='shutdown /r /t 0 /f' || alias reboot='shutdown -r now'
 fi
-command -v phpunit >/dev/null 2>&1 || alias phpunit='php vendor/phpunit/phpunit/phpunit'
-command -v composer >/dev/null 2>&1 || alias composer='php composer'
-command -v rubocop >/dev/null 2>&1 || alias rubocop='~/.gem/**/gems/rubocop*/bin/rubocop'
-command -v bundle >/dev/null 2>&1 || alias bundle='~/.gem/**/gems/bundle*/bin/bundle'
 [ -e /dev/clipboard ] && alias clip='cat >/dev/clipboard'
