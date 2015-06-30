@@ -1,0 +1,150 @@
+#!/usr/bin/python3
+from queue import Queue
+import argparse
+import os
+import pickle
+import re
+import sys
+import threading
+import urllib.parse
+import urllib.request
+
+try:
+    from bs4 import BeautifulSoup
+except ImportError:
+    print('Please install BeautifulSoup4.', file=sys.stderr)
+    exit(1)
+
+class Item(object):
+    def __init__(self, url):
+        self.url = url
+
+class WorkStatus(object):
+    def __init__(
+        self, parsed=False, download_path=False, urls_added=0, error=None):
+        self.parsed = parsed
+        self.download_path = download_path
+        self.urls_added = urls_added
+        self.error = error
+
+def do_work(response, args, visited, downloaded, queue):
+    mime_type = response.getheader('Content-Type').split(';')[0].lower()
+
+    if mime_type == 'text/html':
+        soup = BeautifulSoup(response.read().decode('utf-8'))
+        child_urls = set()
+        for link in soup.find_all('a', href=True):
+            child_url = urllib.parse.urljoin(response.geturl(), link['href'])
+            child_url = urllib.parse.urldefrag(child_url).url
+            if args.accept.search(child_url) \
+            and not child_url in visited \
+            and not child_url in downloaded:
+                child_urls.add(child_url)
+                visited.add(child_url)
+
+        for child_url in sorted(child_urls):
+            queue.put(Item(child_url))
+            visited.add(child_url)
+        return WorkStatus(parsed=True, urls_added=len(child_urls))
+    else:
+        parsed_url = urllib.parse.urlparse(response.geturl())
+        target_path = os.path.join(
+            args.target,
+            parsed_url.netloc,
+            re.sub(r'^[\/]*', '', parsed_url.path))
+        target_dir = os.path.dirname(target_path)
+        os.makedirs(target_dir, exist_ok=True)
+        with open(target_path, 'wb') as fh:
+            fh.write(response.read())
+        downloaded.add(response.geturl())
+        return WorkStatus(download_path=target_path)
+
+def worker(args, visited, downloaded, queue, lock):
+    while True:
+        item = queue.get()
+
+        try:
+            response = urllib.request.urlopen(item.url)
+            with lock:
+                status = do_work(response, args, visited, downloaded, queue)
+        except Exception as ex:
+            status = WorkStatus(error=str(ex))
+        finally:
+            queue.task_done()
+
+        with lock:
+            messages = []
+            if status.error:
+                messages.append('error: %s' % status.error)
+            if status.download_path:
+                messages.append('saved to %s' % status.download_path)
+            if status.parsed:
+                messages.append('added %d URLs' % status.urls_added)
+            print('%s: %s' % (item.url, '; '.join(messages)))
+
+def parse_args():
+    fmt = lambda prog: argparse.HelpFormatter(
+        prog, max_help_position=40, width=80)
+
+    parser = argparse.ArgumentParser(
+        description='Download images from the Internet', formatter_class=fmt)
+
+    parser.add_argument(
+        '-a', '--accept', metavar='REGEX', default='.*',
+        help='set regex indicating which URLs to crawl')
+
+    parser.add_argument(
+        '-H', '--history', metavar='FILE',
+        help='set path to the history file')
+
+    parser.add_argument(
+        '-t', '--target', metavar='DIR', default='.',
+        help='set base target directory')
+
+    parser.add_argument(
+        '-n', '--num', dest='workers', metavar='NUMBER', type=int, default=1,
+        help='set worker count')
+
+    parser.add_argument(
+        'url', metavar='URL', nargs='+',
+        help='initial URLs to retrieve')
+
+    return parser.parse_args()
+
+def main():
+    args = parse_args()
+    args.accept = re.compile(args.accept)
+
+    downloaded = set()
+    visited = set()
+    if args.history and os.path.exists(args.history):
+        with open(args.history, 'rb') as fh:
+            downloaded = pickle.load(fh)
+        print('Loaded %d URLs from history file' % len(downloaded))
+
+    queue = Queue()
+    lock = threading.Lock()
+
+    for url in args.url:
+        visited.add(url)
+        queue.put(Item(url))
+
+    try:
+        for i in range(args.workers):
+            thread = threading.Thread(
+                target=worker, args=[args, visited, downloaded, queue, lock])
+            thread.daemon = True
+            thread.start()
+
+        queue.join()
+    finally:
+        if args.history:
+            with open(args.history, 'wb') as fh:
+                pickle.dump(downloaded, fh)
+            print('Saved %d URLs to history file' % len(downloaded))
+
+if __name__ == '__main__':
+    try:
+        main()
+    except KeyboardInterrupt:
+        print('Exiting due to user abort')
