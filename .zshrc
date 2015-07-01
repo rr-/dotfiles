@@ -2,6 +2,10 @@ SOURCE=$(readlink ${ZDOTDIR-~}/.zshrc)
 DIR=${SOURCE:h}
 HOST=$(hostname)
 
+if [ -n "$FBTERM" ]; then
+    alias vim='TERM=fbterm vim'
+    alias git='TERM=fbterm git'
+fi
 # environment variables
 export EDITOR=vim                       # for stuff that need interactive editor
 export PATH=$DIR/bin:$DIR/bin/ext:$PATH # PATH for all the goodies in this repo
@@ -75,7 +79,7 @@ PS1+=$'%{\e[0;37m%}:'                  # :
 PS1+=$'%{\e[0;32m%}%~'                 # path relative to $HOME
 PS1+=$'%(?.%{\e[0;37m%}.%{\e[1;31m%})$ ' # colored $ depending on last exit code
 PS1+=$'%{\e[0m%}'                      # reset colors
-if [ "$TERM" != linux ]; then
+if [[ "$TERM" != linux && "$TERM" != fbterm ]]; then
     PS1+=$'%{\e]0;%n@%M:%~\007%}'          # add titlebar user@host:~/
 fi
 

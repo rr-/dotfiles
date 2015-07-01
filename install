@@ -102,6 +102,7 @@ function install_link_or_cp {
 
 [[ "$uname" =~ cygwin ]] && cygwin=true || cygwin=false
 [[ "$uname" =~ linux ]] && linux=true || linux=false
+[[ "$(hostname)" =~ bus ]] && linux_tty=true || linux_tty=false
 has_installed Xorg && linux_gfx=true || linux_gfx=false
 
 #basic stuff
@@ -246,6 +247,13 @@ has_installed Xorg && linux_gfx=true || linux_gfx=false
     fi
     if has_installed compton; then
         install_link "$dir/.config/compton.conf" "$HOME/.config/compton.conf"
+    fi
+
+#fbterm
+    if $linux_tty; then
+        install_pacman fbterm
+        install_pacman fbgrab
+        install_pacman fbv
     fi
 
 #development
