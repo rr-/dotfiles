@@ -6,6 +6,7 @@ import pickle
 import re
 import sys
 import threading
+import time
 import urllib.parse
 
 try:
@@ -23,6 +24,7 @@ except ImportError:
 class Item(object):
     def __init__(self, url):
         self.url = url
+        self.retries = 0
 
 class WorkStatus(object):
     def __init__(
@@ -78,6 +80,10 @@ def worker(number, args, visited, downloaded, queue, lock):
                 status = do_work(response, args, visited, downloaded, queue)
         except Exception as ex:
             status = WorkStatus(error=str(ex))
+            time.sleep(args.retry_wait)
+            item.retries += 1
+            if item.retries < args.retries:
+                queue.put(item)
         finally:
             queue.task_done()
 
@@ -89,6 +95,8 @@ def worker(number, args, visited, downloaded, queue, lock):
                 messages.append('saved to %s' % status.download_path)
             if status.parsed:
                 messages.append('added %d URLs' % status.urls_added)
+            if item.retries > 1:
+                messages.append('retry #%d' % item.retries)
             print('[T%d ~%5d queued] %s: %s' % (
                 number, queue.qsize(), item.url, '; '.join(messages)))
 
@@ -110,6 +118,14 @@ def parse_args():
     parser.add_argument(
         '-t', '--target', metavar='DIR', default='.',
         help='set base target directory')
+
+    parser.add_argument(
+        '-r', '--retries', metavar='NUM', type=int, default=3,
+        help='set retry count for failed downloads')
+
+    parser.add_argument(
+        '--retry_wait', metavar='NUM', type=int, default=3,
+        help='set retry count for failed downloads')
 
     parser.add_argument(
         '-n', '--num', dest='workers', metavar='NUMBER', type=int, default=1,
