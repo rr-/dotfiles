@@ -59,7 +59,7 @@ def do_work(response, args, visited, downloaded, queue):
         downloaded.add(response.geturl())
         return WorkStatus(download_path=target_path)
 
-def worker(args, visited, downloaded, queue, lock):
+def worker(number, args, visited, downloaded, queue, lock):
     while True:
         item = queue.get()
 
@@ -80,7 +80,8 @@ def worker(args, visited, downloaded, queue, lock):
                 messages.append('saved to %s' % status.download_path)
             if status.parsed:
                 messages.append('added %d URLs' % status.urls_added)
-            print('%s: %s' % (item.url, '; '.join(messages)))
+            print('[T%d ~%5d queued] %s: %s' % (
+                number, queue.qsize(), item.url, '; '.join(messages)))
 
 def parse_args():
     fmt = lambda prog: argparse.HelpFormatter(
@@ -132,7 +133,7 @@ def main():
     try:
         for i in range(args.workers):
             thread = threading.Thread(
-                target=worker, args=[args, visited, downloaded, queue, lock])
+                target=worker, args=[i, args, visited, downloaded, queue, lock])
             thread.daemon = True
             thread.start()
 
