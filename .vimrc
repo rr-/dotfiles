@@ -22,6 +22,7 @@ set number                    "enable line numbers
 "set terminal to 256 color
 if $TERM == "xterm"
 \ || $TERM == "xterm-256color"
+\ || $TERM == "fbterm"
 \ || $TERM == "screen"
 \ || $TERM == "screen-256color"
 \ || $TERM == "rxvt-unicode-256color"
