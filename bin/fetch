@@ -36,6 +36,9 @@ def do_work(response, args, visited, downloaded, queue):
     mime_type = response.headers['content-Type'].split(';')[0].lower()
     url = response.url
 
+    if response.status_code != 200:
+        raise RuntimeError('HTTP error %d' % response.status_code)
+
     if mime_type == 'text/html':
         soup = BeautifulSoup(response.text)
         child_urls = set()
