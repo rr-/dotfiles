@@ -7,7 +7,12 @@ import re
 import sys
 import threading
 import urllib.parse
-import urllib.request
+
+try:
+    import requests
+except ImportError:
+    print('Please install requests.', file=sys.stderr)
+    exit(1)
 
 try:
     from bs4 import BeautifulSoup
@@ -28,13 +33,14 @@ class WorkStatus(object):
         self.error = error
 
 def do_work(response, args, visited, downloaded, queue):
-    mime_type = response.getheader('Content-Type').split(';')[0].lower()
+    mime_type = response.headers['content-Type'].split(';')[0].lower()
+    url = response.url
 
     if mime_type == 'text/html':
-        soup = BeautifulSoup(response.read().decode('utf-8'))
+        soup = BeautifulSoup(response.text)
         child_urls = set()
         for link in soup.find_all('a', href=True):
-            child_url = urllib.parse.urljoin(response.geturl(), link['href'])
+            child_url = urllib.parse.urljoin(url, link['href'])
             child_url = urllib.parse.urldefrag(child_url).url
             if args.accept.search(child_url) \
             and not child_url in visited \
@@ -47,7 +53,7 @@ def do_work(response, args, visited, downloaded, queue):
             visited.add(child_url)
         return WorkStatus(parsed=True, urls_added=len(child_urls))
     else:
-        parsed_url = urllib.parse.urlparse(response.geturl())
+        parsed_url = urllib.parse.urlparse(url)
         target_path = os.path.join(
             args.target,
             parsed_url.netloc,
@@ -55,8 +61,8 @@ def do_work(response, args, visited, downloaded, queue):
         target_dir = os.path.dirname(target_path)
         os.makedirs(target_dir, exist_ok=True)
         with open(target_path, 'wb') as fh:
-            fh.write(response.read())
-        downloaded.add(response.geturl())
+            fh.write(response.content)
+        downloaded.add(url)
         return WorkStatus(download_path=target_path)
 
 def worker(number, args, visited, downloaded, queue, lock):
@@ -64,7 +70,7 @@ def worker(number, args, visited, downloaded, queue, lock):
         item = queue.get()
 
         try:
-            response = urllib.request.urlopen(item.url)
+            response = requests.get(item.url)
             with lock:
                 status = do_work(response, args, visited, downloaded, queue)
         except Exception as ex:
