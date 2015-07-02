@@ -1,5 +1,5 @@
-URxvt*font: xft:Literation Mono Powerline:pixelsize=14
-URxvt*boldFont: xft:Literation Mono Powerline:pixelsize=14
+URxvt*font: xft:Literation Mono Powerline:pixelsize=14,xft:Symbola:pixelsize=16
+URxvt*boldFont: xft:Literation Mono Powerline:pixelsize=14,xft:Symbola:pixelsize=16
 URxvt*allowBoldFonts: false
 URxvt*scrollBar: false
 URxvt*scrollWithBuffer: true
