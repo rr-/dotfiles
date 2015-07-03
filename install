@@ -295,6 +295,7 @@ has_installed Xorg && linux_gfx=true || linux_gfx=false
     if $linux_gfx; then
         install_pacman xdg-utils
         install_pacman python-docutils
+        install_pacman luajit #for LUA scripts
         install_aur mpv-git
     fi
     if has_installed mpv; then
