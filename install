@@ -345,7 +345,8 @@ has_installed Xorg && linux_gfx=true || linux_gfx=false
 #thunar
     if $linux_gfx; then
         install_pacman thunar
-        if has_installed xfconf-query; then
+        install_pacman xfconf
+        if [ -n "$DISPLAY" ]; then
             #enable full path in thunar window title for scripting
             xfconf-query --channel thunar --property /misc-full-path-in-title --create --type bool --set true
         fi
