@@ -45,16 +45,16 @@ super + e
 #
 
 # volume up and down
-hyper + {Prior,Next}
+super + {x,X}
     amixer -q set Master 1dB{+,-} unmute
 
-# toggle play
-hyper + Delete
-    mpc toggle
-
 # previous and next track
-hyper + {Home,End}
+super + {c,C}
     mpc {prev,next}
+
+# toggle play
+super + v
+    mpc toggle
 
 # seek backward and forward
 alt + shift + ctrl + {Left,Right}
@@ -69,7 +69,7 @@ alt + shift + ctrl + {Left,Right}
 super + {button5,button4}
     compton-trans -c {-,+}5
 
-super + {z,x}
+super + {z,Z}
     compton-trans -c {-,+}5
 
 # exit bpswm
@@ -81,12 +81,12 @@ super + q
     bspc window -c
 
 # send active window to given another workspace
-super + shift + {grave,1-9,0}
-    bspc window -d {IM,1-9,10}
+super + shift + {grave,1-9,0,minus}
+    bspc window -d {IM,1-9,10,IM}
 
 # focus workspace
-super + {grave,1-9,0}
-    bspc desktop -f {IM,1-9,10}
+super + {grave,1-9,0,minus}
+    bspc desktop -f {IM,1-9,10,IM}
 
 # focus window in given direction
 super + {h,j,k,l}
@@ -113,7 +113,7 @@ super + m
     bspc window -s biggest
 
 # focus window with regard to focus history
-super + {o,i}
+super + {bracketleft,bracketright}
     bspc control --record-history off; \
     bspc window {older,newer} -f; \
     bspc control --record-history on
