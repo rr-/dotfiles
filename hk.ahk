@@ -390,3 +390,12 @@ AppsKey & PgDn::Send {Volume_Down}
 #L::DirectionalFocus("right")
 +#H::SendInput, {LWin down}{LShift down}{Left}{LShift up}{LWin up}
 +#L::SendInput, {LWin down}{LShift down}{Right}{LShift up}{LWin up}
+
+;hhkb win keys
+SC7B::Send {LWin}
+SC7F::Send {RWin}
++`::Delete
+`::Backspace
++\::Send {ASC 126}
+\::`
+Backspace::\
