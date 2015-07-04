@@ -340,7 +340,7 @@ has_installed Xorg && linux_gfx=true || linux_gfx=false
 
 #background changer
     if $linux_gfx; then
-        install_link "$dir/ext/bk/bk" "$dir/bin/ext/bk"
+        install_pip bk
     fi
 
 #thunar
