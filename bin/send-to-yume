@@ -1,0 +1,188 @@
+#!/usr/bin/python3
+import argparse
+import json
+import os
+import readline
+import sys
+
+try:
+    import requests
+except ImportError as e:
+    if e.name is None:
+        raise
+    print('Please install %s.' % e.name)
+    exit(1)
+
+class Booru(object):
+    def __init__(self, url):
+        self.session = requests.Session()
+        self.api_url = url + '/api'
+        self.data_url = url + '/data'
+
+    def get_tags(self):
+        r = self.session.get(self.data_url + '/tags.json', verify=False)
+        sort = lambda item: -item['usages']
+        for word in sorted(json.loads(r.text), key=sort):
+            yield word
+
+    def login(self, user, password):
+        r = self.verify_response(
+            self.session.post(
+                self.api_url + '/login',
+                data={'userNameOrEmail': user, 'password': password},
+                verify=False))
+        auth_token = json.loads(r.text)['token']['name']
+        self.session.headers.update({'x-authorization-token': auth_token})
+
+    def upload_post(self, post_path, tags, safety):
+        with open(post_path, 'rb') as fh:
+            files = {'content': fh}
+            self.verify_response(
+                self.session.post(
+                    self.api_url + '/posts',
+                    files=files,
+                    data={
+                        'contentFileName': os.path.basename(post_path),
+                        'source': '',
+                        'safety': safety,
+                        'anonymous': 0,
+                        'tags': ' '.join(tags)
+                    }))
+
+    def verify_response(self, response):
+        if response.status_code != 200:
+            raise RuntimeError(json.loads(response.text)['error'])
+        return response
+
+class Tagger(object):
+    def __init__(self, tag_data):
+        self.chosen_tags = []
+        self.install_tag_completer()
+        self.tag_dict = dict((tag['name'].lower(), tag) for tag in tag_data)
+        self.all_tags = [tag['name'].lower() for tag in tag_data]
+
+    def install_tag_completer(self):
+        for lib in ['libreadline.so', 'libreadline.dll']:
+            try:
+                import ctypes
+                rl = ctypes.cdll.LoadLibrary(lib)
+                sort = ctypes.c_ulong.in_dll(rl, 'rl_sort_completion_matches')
+                sort.value = 0
+            except:
+                pass
+
+        def completer(text, state):
+            text = text.lower()
+            if len(text) >= 3:
+                options = [tag for tag in self.all_tags if text in tag]
+            else:
+                options = [tag for tag in self.all_tags if tag.startswith(text)]
+            try:
+                return options[state]
+            except IndexError:
+                return None
+
+        readline.set_completer(completer)
+        readline.parse_and_bind('tab: menu-complete')
+        readline.parse_and_bind('set rl_sort_completion_matches 0')
+
+    def print(self):
+        if not self.chosen_tags:
+            print('Current tags: (none)')
+        else:
+            print('Current tags: %s' % ', '.join(self.chosen_tags))
+
+    def remove(self, tag):
+        tag = tag.lower()
+        if tag in self.chosen_tags:
+            self.chosen_tags.remove(tag)
+
+    def add(self, tag):
+        tag = tag.lower()
+        if tag in self.chosen_tags:
+            return
+        self.chosen_tags.append(tag)
+        if tag not in self.tag_dict:
+            print('Warning: new tag')
+        elif 'implications' in self.tag_dict[tag]:
+            for implied_tag in self.tag_dict[tag]['implications']:
+                self.add(implied_tag)
+
+    def add_from_user_input(self):
+        try:
+            while True:
+                tag = input('#' + str(len(self.chosen_tags)) + '> ').strip()
+                if tag == '':
+                    self.print()
+                elif tag.startswith('-'):
+                    self.remove(tag[1:])
+                else:
+                    self.add(tag)
+        except EOFError:
+            print('(EOF)')
+
+    def get(self):
+        return self.chosen_tags
+
+def parse_args():
+    parser = argparse.ArgumentParser(
+        description='Sends post to szurubooru from CLI')
+    parser.add_argument('-c', '--config', metavar='CONFIG_PATH',
+        required=True, help='path to config JSON file')
+    parser.add_argument('-w', '--wait', choices=['always', 'errors', 'never'],
+        default='never', help='wait before exiting on errors')
+    parser.add_argument(metavar='POST_PATH', dest='path',
+        help='path to the post')
+    return parser.parse_args()
+
+def wait_for_user_input():
+    input('Press Enter to continue...')
+
+def main():
+    requests.packages.urllib3.disable_warnings()
+
+    args = parse_args()
+    try:
+        with open(os.path.expanduser(args.config), 'r') as fh:
+            config = json.load(fh)
+
+        if not os.path.exists(args.path):
+            raise RuntimeError('Post file does not exist')
+
+        b = Booru(config['url'])
+        b.login(config['user'], config['password'])
+        tag_data = list(b.get_tags())
+        tag_data.insert(0, {'name': 'unsafe', 'usages': 999999})
+        tag_data.insert(0, {'name': 'sketchy', 'usages': 999999})
+        tag_data.insert(0, {'name': 'safe', 'usages': 999999})
+
+        print('Entering tagging mode.')
+        print('^D to finish,')
+        print('^C to abort')
+
+        t = Tagger(tag_data)
+        t.add_from_user_input()
+        chosen_tags = set(t.get())
+
+        safety = 'safe'
+        for s in ['safe', 'sketchy', 'unsafe']:
+            if s in chosen_tags:
+                safety = s
+                chosen_tags.remove(s)
+
+        print('Tags: %s' % ', '.join(chosen_tags))
+        print('Safety: %s' % safety)
+        b.upload_post(args.path, chosen_tags, safety)
+
+        print('Upload succesful!')
+
+        if args.wait == 'always':
+            wait_for_user_input()
+    except Exception as e:
+        print('Upload unsuccesful...')
+        print(e)
+        if args.wait in ['error', 'errors', 'always']:
+            wait_for_user_input()
+
+if __name__ == '__main__':
+    main()
