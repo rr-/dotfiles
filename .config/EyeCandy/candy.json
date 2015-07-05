@@ -64,6 +64,8 @@
         ["RockerLeftToRight",  ["copy_file", "~/hub/yume/"]],
         ["RockerRightToLeft",  ["copy_file", "~/"]],
 
+        ["Ctrl+E",             ["run_script", ["bspc", "rule", "-a", "urxvt", "-o", "floating=on"]], ["run_script", ["urxvt", "-e", "send-to-yume", "--wait", "errors", "-c", "~/.config/yume.json", "{}"]]],
+
         ["Ctrl+1",             ["run_script", ["wallpaper", "set", "1", "{}"]]],
         ["Ctrl+2",             ["run_script", ["wallpaper", "set", "2", "{}"]]],
 
