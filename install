@@ -304,7 +304,7 @@ has_installed Xorg && linux_gfx=true || linux_gfx=false
 
 #eyecandy
     if $linux_gfx; then
-        install_link "$dir/ext/eyecandy/eyecandy" "$dir/bin/ext/eyecandy"
+        install_pip eyecandy
     fi
     if has_installed eyecandy; then
         install_link "$dir/.config/EyeCandy" "$HOME/.config/EyeCandy"
