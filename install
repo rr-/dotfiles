@@ -198,15 +198,6 @@ has_installed Xorg && linux_gfx=true || linux_gfx=false
         fi
     fi
 
-#git
-    if $cygwin; then
-        install_cygwin git
-    elif $pacman; then
-        install_pacman git
-    fi
-    install_link "$dir/.gitconfig" "$HOME/.gitconfig"
-    install_link "$dir/.gitignore" "$HOME/.gitignore"
-
 #vim
     if $cygwin; then
         install_cygwin vim
@@ -276,11 +267,6 @@ has_installed Xorg && linux_gfx=true || linux_gfx=false
         if has_installed devenv; then
             install_link_or_cp "$dir/.vimrc" "$HOME/.vsvimrc"
         fi
-
-#firefox
-    if has_installed firefox; then
-        install_link_or_cp "$dir/.vimperatorrc" "$HOME/.vimperatorrc"
-    fi
 
 #terminal emulators
     if $linux_gfx; then
