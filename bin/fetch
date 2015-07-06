@@ -35,6 +35,48 @@ def save_history_file(downloaded, path):
             pickle.dump(downloaded, fh)
         print('Saved %d URLs to history file' % len(downloaded))
 
+class Worker(object):
+    number = 0
+
+    def __init__(self):
+        self.number = self.__class__.number
+        self.__class__.number += 1
+
+    def run(self, queue, lock):
+        while True:
+            item = queue.get()
+
+            try:
+                status = self.process(item, queue, lock)
+            except Exception as ex:
+                status = self.on_error(item, ex, queue, lock)
+            finally:
+                queue.task_done()
+
+            with lock:
+                print('[T%d ~%5d queued] %s' % (
+                    self.number,
+                    queue.qsize(),
+                    self.format_status(item, status)))
+
+    def process(self, item, queue, lock):
+        raise NotImplementedError('Override me')
+
+    def on_error(self, item, queue, lock):
+        raise NotImplementedError('Override me')
+
+    def format_status(self, item, status):
+        raise NotImplementedError('Override me')
+
+def run_workers(count, queue, worker_factory):
+    lock = threading.Lock()
+    for i in range(count):
+        worker = worker_factory()
+        thread = threading.Thread(target=worker.run, args=[queue, lock])
+        thread.daemon = True
+        thread.start()
+    queue.join()
+
 class Command(object):
     def run(self, args):
         raise NotImplementedError('Override me')
@@ -78,111 +120,95 @@ class DownloadCommand(Command):
 
     def run(self, args):
         args.accept = re.compile(args.accept)
-
         visited = set()
         downloaded = read_history_file(args.history)
-
         queue = Queue()
-        lock = threading.Lock()
-
         for url in args.url:
             visited.add(url)
             queue.put(DownloadCommand.Item(url))
-
         try:
-            for i in range(args.workers):
-                thread = threading.Thread(
-                    target=__class__.worker,
-                    args=[i, args, visited, downloaded, queue, lock])
-                thread.daemon = True
-                thread.start()
-
-            queue.join()
+            f = lambda: __class__.Worker(args, visited, downloaded)
+            run_workers(args.workers, queue, f)
         finally:
             save_history_file(downloaded, args.history)
 
-    @staticmethod
-    def worker(number, args, visited, downloaded, queue, lock):
-        while True:
-            item = queue.get()
+    class Worker(Worker):
+        def __init__(self, args, visited, downloaded):
+            self.args = args
+            self.visited = visited
+            self.downloaded = downloaded
 
-            try:
-                response = requests.get(item.url)
-                with lock:
-                    status = DownloadCommand.process(
-                        response, args, visited, downloaded, queue)
-            except Exception as ex:
-                status = DownloadCommand.WorkStatus(error=str(ex))
-                time.sleep(args.retry_wait)
-                item.retries += 1
-                if item.retries < args.retries:
-                    queue.put(item)
-            finally:
-                queue.task_done()
-
-            with lock:
-                messages = []
-                if status.error:
-                    messages.append('error: %s' % status.error)
-                if status.download_path:
-                    messages.append('saved to %s' % status.download_path)
-                if status.parsed:
-                    messages.append('added %d URLs' % status.urls_added)
-                if item.retries > 1:
-                    messages.append('retry #%d' % item.retries)
-                print('[T%d ~%5d queued] %s: %s' % (
-                    number, queue.qsize(), item.url, '; '.join(messages)))
-
-    @staticmethod
-    def process(response, args, visited, downloaded, queue):
-        mime_type = response.headers['content-Type'].split(';')[0].lower()
-        url = response.url
-
-        if response.status_code != 200:
-            raise RuntimeError('HTTP error %d' % response.status_code)
-
-        if mime_type == 'text/html':
+        def process_html(self, response, queue):
             soup = BeautifulSoup(response.text)
             child_urls = set()
             for link in soup.find_all('a', href=True):
-                child_url = urllib.parse.urljoin(url, link['href'])
-                child_url = urllib.parse.urldefrag(child_url).url
-                if args.accept.search(child_url) \
-                and not child_url in visited \
-                and not child_url in downloaded:
+                child_url = urllib.parse.urldefrag(
+                    urllib.parse.urljoin(response.url, link['href'])).url
+                if self.args.accept.search(child_url) \
+                and not child_url in self.visited \
+                and not child_url in self.downloaded:
                     child_urls.add(child_url)
-                    visited.add(child_url)
-
+                    self.visited.add(child_url)
             for child_url in sorted(child_urls):
                 queue.put(DownloadCommand.Item(child_url))
-                visited.add(child_url)
-            return DownloadCommand.WorkStatus(
-                parsed=True, urls_added=len(child_urls))
-        else:
-            parsed_url = urllib.parse.urlparse(url)
+                self.visited.add(child_url)
+            return __class__.Status(parsed=True, urls_added=len(child_urls))
+
+        def process_nonhtml(self, response):
+            parsed_url = urllib.parse.urlparse(response.url)
             target_path = os.path.join(
-                args.target,
+                self.args.target,
                 parsed_url.netloc,
                 re.sub(r'^[\/]*', '', parsed_url.path))
             target_dir = os.path.dirname(target_path)
             os.makedirs(target_dir, exist_ok=True)
             with open(target_path, 'wb') as fh:
                 fh.write(response.content)
-            downloaded.add(url)
-            return DownloadCommand.WorkStatus(download_path=target_path)
+            self.downloaded.add(response.url)
+            return __class__.Status(download_path=target_path)
+
+        def process(self, item, queue, lock):
+            response = requests.get(item.url)
+            with lock:
+                if response.status_code != 200:
+                    raise RuntimeError('HTTP error %d' % response.status_code)
+                mime = response.headers['content-type'].split(';')[0].lower()
+                if mime == 'text/html':
+                    return self.process_html(response, queue)
+                else:
+                    return self.process_nonhtml(response)
+
+        def on_error(self, item, ex, queue, lock):
+            time.sleep(self.args.retry_wait)
+            item.retries += 1
+            if item.retries < self.args.retries:
+                queue.put(item)
+            return __class__.Status(error=str(ex))
+
+        def format_status(self, item, status):
+            messages = []
+            if status.error:
+                messages.append('error: %s' % status.error)
+            if status.download_path:
+                messages.append('saved to %s' % status.download_path)
+            if status.parsed:
+                messages.append('added %d URLs' % status.urls_added)
+            if item.retries > 1:
+                messages.append('retry #%d' % item.retries)
+            return '%s: %s' % (item.url, '; '.join(messages))
+
+        class Status(object):
+            def __init__(
+            self, parsed=False, download_path=False, urls_added=0, error=None):
+                self.parsed = parsed
+                self.download_path = download_path
+                self.urls_added = urls_added
+                self.error = error
 
     class Item(object):
         def __init__(self, url):
             self.url = url
             self.retries = 0
-
-    class WorkStatus(object):
-        def __init__(
-            self, parsed=False, download_path=False, urls_added=0, error=None):
-            self.parsed = parsed
-            self.download_path = download_path
-            self.urls_added = urls_added
-            self.error = error
 
 class PruneCommand(Command):
     @staticmethod
@@ -203,46 +229,33 @@ class PruneCommand(Command):
 
     def run(self, args):
         downloaded = read_history_file(args.history)
-
         queue = Queue()
-        lock = threading.Lock()
-
         for url in downloaded:
             queue.put(url)
-
         try:
-            for i in range(args.workers):
-                thread = threading.Thread(
-                    target=__class__.worker,
-                    args=[i, args, downloaded, queue, lock])
-                thread.daemon = True
-                thread.start()
-
-            queue.join()
+            f = lambda: __class__.Worker(downloaded)
+            run_workers(args.workers, queue, f)
         finally:
             save_history_file(downloaded, args.history)
 
-    @staticmethod
-    def worker(number, args, downloaded, queue, lock):
-        while True:
-            url = queue.get()
+    class Worker(Worker):
+        def __init__(self, downloaded):
+            self.downloaded = downloaded
 
-            try:
-                response = requests.head(url.strip())
-                with lock:
-                    if response.status_code == 404:
-                        message = 'pruned (404)'
-                        downloaded.remove(url)
-                    else:
-                        message = 'spared (%d)' % response.status_code
-            except Exception as ex:
-                message = 'error: %s' % str(ex)
-            finally:
-                queue.task_done()
-
+        def process(self, item, queue, lock):
+            response = requests.head(item.strip())
             with lock:
-                print('[T%d ~%5d queued] %s: %s' % (
-                    number, queue.qsize(), url.strip(), message))
+                if response.status_code == 404:
+                    self.downloaded.remove(item)
+                    return 'pruned (404)'
+                else:
+                    return 'spared (%d)' % response.status_code
+
+        def on_error(self, item, ex, queue, lock):
+            return 'error: %s' % str(ex)
+
+        def format_status(self, item, status):
+            return '%s: %s' % (item.strip(), status)
 
 def parse_args():
     fmt = lambda prog: argparse.HelpFormatter(
