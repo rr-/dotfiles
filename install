@@ -68,6 +68,15 @@ function install_aur {
     fi
 }
 
+function install_yaourt {
+    has_installed yaourt "$1" || return
+    if pacman -Q "$1" >/dev/null; then
+        echo "$1 already installed"
+    else
+        yaourt -S "$1"
+    fi
+}
+
 function install_link {
     source=$1
     target=$2
@@ -112,7 +121,6 @@ has_installed Xorg && linux_gfx=true || linux_gfx=false
     git submodule update
     popd >/dev/null
     if $linux; then
-        install_pacman fakeroot # for some packages
         install_pacman lsof
     fi
 
@@ -134,6 +142,8 @@ has_installed Xorg && linux_gfx=true || linux_gfx=false
         install_pacman wget #required for install_aur
         install_pacman curl
         install_pacman openssh
+        install_aur package-query
+        install_aur yaourt
     fi
     install_link "$dir/.ssh" "$HOME/.ssh"
 
@@ -142,8 +152,8 @@ has_installed Xorg && linux_gfx=true || linux_gfx=false
         install_pacman xorg-font-utils
         install_pacman ttf-dejavu
         install_pacman ttf-symbola
-        install_aur ttf-font-awesome
-        install_aur ttf-ipa-mona
+        install_yaourt ttf-font-awesome
+        install_yaourt ttf-ipa-mona
         if [ -d /usr/share/fonts ]; then
             fonts_dir="$HOME/.local/share/fonts"
             [ -d "$fonts_dir" ] || mkdir -p "$fonts_dir"
@@ -175,10 +185,10 @@ has_installed Xorg && linux_gfx=true || linux_gfx=false
         install_pacman feh
         install_pacman xcb-util-keysyms
         install_pacman xcb-util-wm
-        install_aur dmenu
-        install_aur bspwm-git
-        install_aur sxhkd-git
-        install_aur lemonbar-xft-git
+        install_yaourt dmenu
+        install_yaourt bspwm-git
+        install_yaourt sxhkd-git
+        install_yaourt lemonbar-xft-git
         install_pip psutil              # CPU usage
         install_pip pyalsaaudio         # volume
         install_pip python-mpd2         # mpd interaction
@@ -229,18 +239,13 @@ has_installed Xorg && linux_gfx=true || linux_gfx=false
 
 #x
     if $linux_gfx; then
-        install_pacman pygtk          # for escrotum
-        install_aur escrotum-git      # to make screenshots
+        install_yaourt escrotum-git   # to make screenshots
         install_pacman xorg-xsetroot  # to fix X cursor
         install_pacman xorg-xrandr    # to query monitor information
         install_pacman xdotool        # for all sort of things
         install_pacman autocutsel     # synchronize primary and selection clipboards
         install_pacman clipit         # keep clipboard content even after application closes
-        install_pacman asciidoc       # for compton
-        install_pacman libconfig      # for compton
-        install_pacman xorg-xprop     # for compton-trans
-        install_pacman xorg-xwininfo  # for compton-trans
-        install_aur compton
+        install_yaourt compton        # for shadows, transparency and vsync
     fi
     if has_installed Xorg; then
         install_link "$dir/.xinitrc" "$HOME/.xinitrc"
@@ -293,10 +298,8 @@ has_installed Xorg && linux_gfx=true || linux_gfx=false
 
 #mpv
     if $linux_gfx; then
-        install_pacman xdg-utils
-        install_pacman python-docutils
-        install_pacman luajit #for LUA scripts
-        install_aur mpv-git
+        install_pacman luajit #for LUA scripts when compiling manually
+        install_yaourt mpv-git
     fi
     if has_installed mpv; then
         install_link "$dir/.config/mpv" "$HOME/.config/mpv"
@@ -323,9 +326,7 @@ has_installed Xorg && linux_gfx=true || linux_gfx=false
 
 #trackma
     if $linux_gfx; then
-        install_pacman python2-setuptools
-        install_pacman python2-pyqt4
-        install_aur trackma-git
+        install_yaourt trackma-git
     fi
 
 #htop
