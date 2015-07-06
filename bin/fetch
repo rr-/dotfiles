@@ -19,19 +19,26 @@ except ImportError as e:
     print('Please install %s.' % e.name, file=sys.stderr)
     sys.exit(1)
 
-def read_history_file(path):
-    downloaded = set()
-    if path and os.path.exists(path):
-        with open(path, 'rb') as fh:
-            downloaded = pickle.load(fh)
-        print('Loaded %d URLs from history file' % len(downloaded))
-    return downloaded
+class History(set):
+    def __init__(self, path):
+        self.path = path
 
-def save_history_file(downloaded, path):
-    if path:
-        with open(path, 'wb') as fh:
-            pickle.dump(downloaded, fh)
-        print('Saved %d URLs to history file' % len(downloaded))
+    def __enter__(self):
+        self.fh = None
+        if self.path and os.path.exists(self.path):
+            self.fh = open(self.path, 'r+b')
+            self.update(pickle.load(self.fh))
+            print('Loaded %d URLs from history file' % len(self))
+        return self
+
+    def __exit__(self, *args):
+        if self.fh:
+            self.fh.truncate(0)
+            self.fh.seek(0)
+            s = self.copy()
+            pickle.dump(s, self.fh)
+            self.fh.close()
+            print('Saved %d URLs to history file' % len(s))
 
 class PseudoDict(collections.defaultdict):
     __getattr__ = dict.__getitem__
@@ -112,22 +119,19 @@ class DownloadCommand(Command):
     def run(self, args):
         args.accept = re.compile(args.accept)
         visited = set()
-        downloaded = read_history_file(args.history)
-        queue = Queue()
-        for url in args.url:
-            visited.add(url)
-            queue.put(DownloadCommand.Item(url))
-        try:
-            f = lambda: __class__.Worker(args, visited, downloaded)
+        with History(args.history) as history:
+            queue = Queue()
+            for url in args.url:
+                visited.add(url)
+                queue.put(DownloadCommand.Item(url))
+            f = lambda: __class__.Worker(args, visited, history)
             run_workers(args.workers, queue, f)
-        finally:
-            save_history_file(downloaded, args.history)
 
     class Worker(Worker):
-        def __init__(self, args, visited, downloaded):
+        def __init__(self, args, visited, history):
             self.args = args
             self.visited = visited
-            self.downloaded = downloaded
+            self.history = history
 
         def process_html(self, response, queue):
             soup = BeautifulSoup(response.text)
@@ -137,7 +141,7 @@ class DownloadCommand(Command):
                     urllib.parse.urljoin(response.url, link['href'])).url
                 if self.args.accept.search(child_url) \
                 and not child_url in self.visited \
-                and not child_url in self.downloaded:
+                and not child_url in self.history:
                     child_urls.add(child_url)
                     self.visited.add(child_url)
             for child_url in sorted(child_urls):
@@ -155,7 +159,7 @@ class DownloadCommand(Command):
             os.makedirs(target_dir, exist_ok=True)
             with open(target_path, 'wb') as fh:
                 fh.write(response.content)
-            self.downloaded.add(response.url)
+            self.history.add(response.url)
             return PseudoDict(download_path=target_path)
 
         def process(self, item, queue, lock):
@@ -210,25 +214,22 @@ class PruneCommand(Command):
         parser.set_defaults(command=__class__)
 
     def run(self, args):
-        downloaded = read_history_file(args.history)
-        queue = Queue()
-        for url in downloaded:
-            queue.put(url)
-        try:
-            f = lambda: __class__.Worker(downloaded)
+        with History(args.history) as history:
+            queue = Queue()
+            for url in history:
+                queue.put(url)
+            f = lambda: __class__.Worker(history)
             run_workers(args.workers, queue, f)
-        finally:
-            save_history_file(downloaded, args.history)
 
     class Worker(Worker):
-        def __init__(self, downloaded):
-            self.downloaded = downloaded
+        def __init__(self, history):
+            self.history = history
 
         def process(self, item, queue, lock):
             response = requests.head(item.strip())
             with lock:
                 if response.status_code == 404:
-                    self.downloaded.remove(item)
+                    self.history.remove(item)
                     return 'pruned (404)'
                 else:
                     return 'spared (%d)' % response.status_code
