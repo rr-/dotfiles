@@ -16,11 +16,6 @@ xsetroot -cursor_name left_ptr
 
 #set Polish keyboard
 setxkbmap pl
-#set app menu as mod3
-xmodmap -e 'remove Mod4 = Hyper_L'
-xmodmap -e 'add Mod3 = Hyper_L'
-xmodmap -e 'keycode 135 = Menu'
-xmodmap -e 'keysym Menu = Hyper_L'
 
 #enable transparency manager
 #this is also supposed to eliminate problems with tearing.
