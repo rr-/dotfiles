@@ -12,15 +12,12 @@ import urllib.parse
 
 try:
     import requests
-except ImportError:
-    print('Please install requests.', file=sys.stderr)
-    exit(1)
-
-try:
     from bs4 import BeautifulSoup
-except ImportError:
-    print('Please install BeautifulSoup4.', file=sys.stderr)
-    exit(1)
+except ImportError as e:
+    if e.name is None:
+        raise
+    print('Please install %s.' % e.name, file=sys.stderr)
+    sys.exit(1)
 
 def read_history_file(path):
     downloaded = set()
