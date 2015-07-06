@@ -11,6 +11,7 @@ import time
 import urllib.parse
 
 try:
+    import lockfile
     import requests
     from bs4 import BeautifulSoup
 except ImportError as e:
@@ -26,6 +27,8 @@ class History(set):
     def __enter__(self):
         self.fh = None
         if self.path and os.path.exists(self.path):
+            self.lock = lockfile.LockFile(self.path)
+            self.lock.acquire()
             self.fh = open(self.path, 'r+b')
             self.update(pickle.load(self.fh))
             print('Loaded %d URLs from history file' % len(self))
@@ -38,6 +41,7 @@ class History(set):
             s = self.copy()
             pickle.dump(s, self.fh)
             self.fh.close()
+            self.lock.release()
             print('Saved %d URLs to history file' % len(s))
 
 class PseudoDict(collections.defaultdict):
