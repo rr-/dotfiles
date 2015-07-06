@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 from queue import Queue
 import argparse
+import collections
 import os
 import pickle
 import re
@@ -34,6 +35,13 @@ def save_history_file(downloaded, path):
         with open(path, 'wb') as fh:
             pickle.dump(downloaded, fh)
         print('Saved %d URLs to history file' % len(downloaded))
+
+class PseudoDict(collections.defaultdict):
+    __getattr__ = dict.__getitem__
+    __setattr__ = dict.__setitem__
+    def __init__(self, *args, **kwargs):
+        super().__init__(lambda: None)
+        self.update(*args, **kwargs)
 
 class Worker(object):
     number = 0
@@ -152,7 +160,7 @@ class DownloadCommand(Command):
             for child_url in sorted(child_urls):
                 queue.put(DownloadCommand.Item(child_url))
                 self.visited.add(child_url)
-            return __class__.Status(parsed=True, urls_added=len(child_urls))
+            return PseudoDict(parsed=True, urls_added=len(child_urls))
 
         def process_nonhtml(self, response):
             parsed_url = urllib.parse.urlparse(response.url)
@@ -165,7 +173,7 @@ class DownloadCommand(Command):
             with open(target_path, 'wb') as fh:
                 fh.write(response.content)
             self.downloaded.add(response.url)
-            return __class__.Status(download_path=target_path)
+            return PseudoDict(download_path=target_path)
 
         def process(self, item, queue, lock):
             response = requests.get(item.url)
@@ -183,7 +191,7 @@ class DownloadCommand(Command):
             item.retries += 1
             if item.retries < self.args.retries:
                 queue.put(item)
-            return __class__.Status(error=str(ex))
+            return PseudoDict(error=str(ex))
 
         def format_status(self, item, status):
             messages = []
@@ -197,18 +205,9 @@ class DownloadCommand(Command):
                 messages.append('retry #%d' % item.retries)
             return '%s: %s' % (item.url, '; '.join(messages))
 
-        class Status(object):
-            def __init__(
-            self, parsed=False, download_path=False, urls_added=0, error=None):
-                self.parsed = parsed
-                self.download_path = download_path
-                self.urls_added = urls_added
-                self.error = error
-
-    class Item(object):
+    class Item(PseudoDict):
         def __init__(self, url):
-            self.url = url
-            self.retries = 0
+            super().__init__(url=url, retries=0)
 
 class PruneCommand(Command):
     @staticmethod
