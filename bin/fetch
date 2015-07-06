@@ -21,84 +21,228 @@ except ImportError:
     print('Please install BeautifulSoup4.', file=sys.stderr)
     exit(1)
 
-class Item(object):
-    def __init__(self, url):
-        self.url = url
-        self.retries = 0
+def read_history_file(path):
+    downloaded = set()
+    if path and os.path.exists(path):
+        with open(path, 'rb') as fh:
+            downloaded = pickle.load(fh)
+        print('Loaded %d URLs from history file' % len(downloaded))
+    return downloaded
 
-class WorkStatus(object):
-    def __init__(
-        self, parsed=False, download_path=False, urls_added=0, error=None):
-        self.parsed = parsed
-        self.download_path = download_path
-        self.urls_added = urls_added
-        self.error = error
+def save_history_file(downloaded, path):
+    if path:
+        with open(path, 'wb') as fh:
+            pickle.dump(downloaded, fh)
+        print('Saved %d URLs to history file' % len(downloaded))
 
-def do_work(response, args, visited, downloaded, queue):
-    mime_type = response.headers['content-Type'].split(';')[0].lower()
-    url = response.url
+class Command(object):
+    def run(self, args):
+        raise NotImplementedError('Override me')
 
-    if response.status_code != 200:
-        raise RuntimeError('HTTP error %d' % response.status_code)
+class DownloadCommand(Command):
+    @staticmethod
+    def decorate_parser(parent_parser, fmt):
+        for alias in ['download', 'dl']:
+            parser = parent_parser.add_parser(
+                alias, help='download files', formatter_class=fmt)
 
-    if mime_type == 'text/html':
-        soup = BeautifulSoup(response.text)
-        child_urls = set()
-        for link in soup.find_all('a', href=True):
-            child_url = urllib.parse.urljoin(url, link['href'])
-            child_url = urllib.parse.urldefrag(child_url).url
-            if args.accept.search(child_url) \
-            and not child_url in visited \
-            and not child_url in downloaded:
-                child_urls.add(child_url)
-                visited.add(child_url)
+            parser.add_argument(
+                '-a', '--accept', metavar='REGEX', default='.*',
+                help='set regex indicating which URLs to crawl')
 
-        for child_url in sorted(child_urls):
-            queue.put(Item(child_url))
-            visited.add(child_url)
-        return WorkStatus(parsed=True, urls_added=len(child_urls))
-    else:
-        parsed_url = urllib.parse.urlparse(url)
-        target_path = os.path.join(
-            args.target,
-            parsed_url.netloc,
-            re.sub(r'^[\/]*', '', parsed_url.path))
-        target_dir = os.path.dirname(target_path)
-        os.makedirs(target_dir, exist_ok=True)
-        with open(target_path, 'wb') as fh:
-            fh.write(response.content)
-        downloaded.add(url)
-        return WorkStatus(download_path=target_path)
+            parser.add_argument(
+                '-H', '--history', metavar='FILE',
+                help='set path to the history file')
 
-def worker(number, args, visited, downloaded, queue, lock):
-    while True:
-        item = queue.get()
+            parser.add_argument(
+                '-t', '--target', metavar='DIR', default='.',
+                help='set base target directory')
+
+            parser.add_argument(
+                '-r', '--retries', metavar='NUM', type=int, default=3,
+                help='set retry count for failed downloads')
+
+            parser.add_argument(
+                '--retry_wait', metavar='NUM', type=int, default=3,
+                help='set retry count for failed downloads')
+
+            parser.add_argument(
+                '-n', '--num', dest='workers', metavar='NUMBER', type=int,
+                default=1, help='set worker count')
+
+            parser.add_argument(
+                'url', metavar='URL', nargs='+',
+                help='initial URLs to retrieve')
+
+            parser.set_defaults(command=__class__)
+
+    def run(self, args):
+        args.accept = re.compile(args.accept)
+
+        visited = set()
+        downloaded = read_history_file(args.history)
+
+        queue = Queue()
+        lock = threading.Lock()
+
+        for url in args.url:
+            visited.add(url)
+            queue.put(DownloadCommand.Item(url))
 
         try:
-            response = requests.get(item.url)
-            with lock:
-                status = do_work(response, args, visited, downloaded, queue)
-        except Exception as ex:
-            status = WorkStatus(error=str(ex))
-            time.sleep(args.retry_wait)
-            item.retries += 1
-            if item.retries < args.retries:
-                queue.put(item)
-        finally:
-            queue.task_done()
+            for i in range(args.workers):
+                thread = threading.Thread(
+                    target=__class__.worker,
+                    args=[i, args, visited, downloaded, queue, lock])
+                thread.daemon = True
+                thread.start()
 
-        with lock:
-            messages = []
-            if status.error:
-                messages.append('error: %s' % status.error)
-            if status.download_path:
-                messages.append('saved to %s' % status.download_path)
-            if status.parsed:
-                messages.append('added %d URLs' % status.urls_added)
-            if item.retries > 1:
-                messages.append('retry #%d' % item.retries)
-            print('[T%d ~%5d queued] %s: %s' % (
-                number, queue.qsize(), item.url, '; '.join(messages)))
+            queue.join()
+        finally:
+            save_history_file(downloaded, args.history)
+
+    @staticmethod
+    def worker(number, args, visited, downloaded, queue, lock):
+        while True:
+            item = queue.get()
+
+            try:
+                response = requests.get(item.url)
+                with lock:
+                    status = DownloadCommand.process(
+                        response, args, visited, downloaded, queue)
+            except Exception as ex:
+                status = DownloadCommand.WorkStatus(error=str(ex))
+                time.sleep(args.retry_wait)
+                item.retries += 1
+                if item.retries < args.retries:
+                    queue.put(item)
+            finally:
+                queue.task_done()
+
+            with lock:
+                messages = []
+                if status.error:
+                    messages.append('error: %s' % status.error)
+                if status.download_path:
+                    messages.append('saved to %s' % status.download_path)
+                if status.parsed:
+                    messages.append('added %d URLs' % status.urls_added)
+                if item.retries > 1:
+                    messages.append('retry #%d' % item.retries)
+                print('[T%d ~%5d queued] %s: %s' % (
+                    number, queue.qsize(), item.url, '; '.join(messages)))
+
+    @staticmethod
+    def process(response, args, visited, downloaded, queue):
+        mime_type = response.headers['content-Type'].split(';')[0].lower()
+        url = response.url
+
+        if response.status_code != 200:
+            raise RuntimeError('HTTP error %d' % response.status_code)
+
+        if mime_type == 'text/html':
+            soup = BeautifulSoup(response.text)
+            child_urls = set()
+            for link in soup.find_all('a', href=True):
+                child_url = urllib.parse.urljoin(url, link['href'])
+                child_url = urllib.parse.urldefrag(child_url).url
+                if args.accept.search(child_url) \
+                and not child_url in visited \
+                and not child_url in downloaded:
+                    child_urls.add(child_url)
+                    visited.add(child_url)
+
+            for child_url in sorted(child_urls):
+                queue.put(DownloadCommand.Item(child_url))
+                visited.add(child_url)
+            return DownloadCommand.WorkStatus(
+                parsed=True, urls_added=len(child_urls))
+        else:
+            parsed_url = urllib.parse.urlparse(url)
+            target_path = os.path.join(
+                args.target,
+                parsed_url.netloc,
+                re.sub(r'^[\/]*', '', parsed_url.path))
+            target_dir = os.path.dirname(target_path)
+            os.makedirs(target_dir, exist_ok=True)
+            with open(target_path, 'wb') as fh:
+                fh.write(response.content)
+            downloaded.add(url)
+            return DownloadCommand.WorkStatus(download_path=target_path)
+
+    class Item(object):
+        def __init__(self, url):
+            self.url = url
+            self.retries = 0
+
+    class WorkStatus(object):
+        def __init__(
+            self, parsed=False, download_path=False, urls_added=0, error=None):
+            self.parsed = parsed
+            self.download_path = download_path
+            self.urls_added = urls_added
+            self.error = error
+
+class PruneCommand(Command):
+    @staticmethod
+    def decorate_parser(parent_parser, fmt):
+        parser = parent_parser.add_parser(
+            'prune', help='prune old entries in history file',
+            formatter_class=fmt)
+
+        parser.add_argument(
+            '-H', '--history', metavar='FILE',
+            help='set path to the history file')
+
+        parser.add_argument(
+            '-n', '--num', dest='workers', metavar='NUMBER', type=int,
+            default=1, help='set worker count')
+
+        parser.set_defaults(command=__class__)
+
+    def run(self, args):
+        downloaded = read_history_file(args.history)
+
+        queue = Queue()
+        lock = threading.Lock()
+
+        for url in downloaded:
+            queue.put(url)
+
+        try:
+            for i in range(args.workers):
+                thread = threading.Thread(
+                    target=__class__.worker,
+                    args=[i, args, downloaded, queue, lock])
+                thread.daemon = True
+                thread.start()
+
+            queue.join()
+        finally:
+            save_history_file(downloaded, args.history)
+
+    @staticmethod
+    def worker(number, args, downloaded, queue, lock):
+        while True:
+            url = queue.get()
+
+            try:
+                response = requests.head(url.strip())
+                with lock:
+                    if response.status_code == 404:
+                        message = 'pruned (404)'
+                        downloaded.remove(url)
+                    else:
+                        message = 'spared (%d)' % response.status_code
+            except Exception as ex:
+                message = 'error: %s' % str(ex)
+            finally:
+                queue.task_done()
+
+            with lock:
+                print('[T%d ~%5d queued] %s: %s' % (
+                    number, queue.qsize(), url.strip(), message))
 
 def parse_args():
     fmt = lambda prog: argparse.HelpFormatter(
@@ -106,68 +250,15 @@ def parse_args():
 
     parser = argparse.ArgumentParser(
         description='Download images from the Internet', formatter_class=fmt)
-
-    parser.add_argument(
-        '-a', '--accept', metavar='REGEX', default='.*',
-        help='set regex indicating which URLs to crawl')
-
-    parser.add_argument(
-        '-H', '--history', metavar='FILE',
-        help='set path to the history file')
-
-    parser.add_argument(
-        '-t', '--target', metavar='DIR', default='.',
-        help='set base target directory')
-
-    parser.add_argument(
-        '-r', '--retries', metavar='NUM', type=int, default=3,
-        help='set retry count for failed downloads')
-
-    parser.add_argument(
-        '--retry_wait', metavar='NUM', type=int, default=3,
-        help='set retry count for failed downloads')
-
-    parser.add_argument(
-        '-n', '--num', dest='workers', metavar='NUMBER', type=int, default=1,
-        help='set worker count')
-
-    parser.add_argument(
-        'url', metavar='URL', nargs='+',
-        help='initial URLs to retrieve')
-
+    subparsers = parser.add_subparsers(help='choose the command')
+    DownloadCommand.decorate_parser(subparsers, fmt)
+    PruneCommand.decorate_parser(subparsers, fmt)
     return parser.parse_args()
 
 def main():
     args = parse_args()
-    args.accept = re.compile(args.accept)
-
-    downloaded = set()
-    visited = set()
-    if args.history and os.path.exists(args.history):
-        with open(args.history, 'rb') as fh:
-            downloaded = pickle.load(fh)
-        print('Loaded %d URLs from history file' % len(downloaded))
-
-    queue = Queue()
-    lock = threading.Lock()
-
-    for url in args.url:
-        visited.add(url)
-        queue.put(Item(url))
-
-    try:
-        for i in range(args.workers):
-            thread = threading.Thread(
-                target=worker, args=[i, args, visited, downloaded, queue, lock])
-            thread.daemon = True
-            thread.start()
-
-        queue.join()
-    finally:
-        if args.history:
-            with open(args.history, 'wb') as fh:
-                pickle.dump(downloaded, fh)
-            print('Saved %d URLs to history file' % len(downloaded))
+    command = args.command()
+    command.run(args)
 
 if __name__ == '__main__':
     try:
