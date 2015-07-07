@@ -36,11 +36,3 @@ exit 1
 
 #translator
     install_link "$dir/ext/translator/tl" "$dir/bin/ext/tl"
-
-#windows
-    if $cygwin; then
-        echo "Hiding dotfiles in $HOME..."
-        find "$HOME" -maxdepth 1 -iname '.*' | while read -r x; do
-            attrib +h +s $(cygpath -w `dirname "$x"`)/`basename "$x"`
-        done
-    fi

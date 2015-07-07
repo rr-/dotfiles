@@ -1,0 +1,5 @@
+#!/bin/sh
+echo "Hiding dotfiles in $HOME..."
+find "$HOME" -maxdepth 1 -iname '.*' | while read -r x; do
+    attrib +h +s $(cygpath -w `dirname "$x"`)/`basename "$x"`
+done
