@@ -246,19 +246,13 @@ DirectionalFocus(direction)
 ;explorer - activate/run
 #E::FRun("ahk_class CabinetWClass", "Z:\", "Z:\")
 
-;foobar - activate/run
-#If FileExist("C:\program files (x86)\foobar2000\foobar2000.exe")
-	Launch_Media::FRun("ahk_class {97E27FAA-C0B3-4b8e-A693-ED7881E99FC1}", "C:\program files (x86)\foobar2000\foobar2000.exe", "C:\Program Files (x86)\foobar2000")
-
 ;foobar - media shortcuts
-AppsKey::Send {AppsKey}
-+AppsKey::Send +{AppsKey}
-AppsKey & Insert::Send {Launch_Media}
-AppsKey & Home::Send {Media_Prev}
-AppsKey & End::Send {Media_Next}
-AppsKey & Del::Send {Media_Play_Pause}
-AppsKey & PgUp::Send {Volume_Up}
-AppsKey & PgDn::Send {Volume_Down}
+#X::Send {Volume_Up}
++#X::Volume_Down
+#C::Send {Media_Prev}
++#C::Media_Next
+#V::Send {Media_Play_Pause}
++#V::FRun("ahk_class {97E27FAA-C0B3-4b8e-A693-ED7881E99FC1}", "C:\program files (x86)\foobar2000\foobar2000.exe", "C:\Program Files (x86)\foobar2000")
 
 ;im
 #If FileExist(IMPath)
@@ -351,8 +345,8 @@ AppsKey & PgDn::Send {Volume_Down}
 ;transparency
 #WheelUp::AddTransparency(16)
 #WheelDown::AddTransparency(-16)
-#Z::AddTransparency(-25)
-#X::AddTransparency(25)
+#Z::AddTransparency(-12)
++#Z::AddTransparency(12)
 
 ;explorer
 #IfWinActive ahk_class CabinetWClass
