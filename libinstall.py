@@ -30,7 +30,18 @@ class FileInstaller(object):
             print('Removing old symlink...')
             os.unlink(dir)
         if not os.path.exists(dir):
+            print('Creating directory %s...' % dir)
             os.makedirs(dir)
+
+    @staticmethod
+    def create_file(path):
+        dir = os.path.dirname(path)
+        if not os.path.islink(dir):
+            FileInstaller.create_dir(dir)
+        if not os.path.exists(path):
+            print('Creating file %s...' % path)
+            with open(path, 'wb'):
+                pass
 
     @staticmethod
     def copy_file(source, target):
