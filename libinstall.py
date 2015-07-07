@@ -1,11 +1,14 @@
-import shutil
 import os
-import sys
+import re
+import shutil
 import subprocess
+import sys
+import tempfile
 
 def run_silent(p):
     proc = subprocess.Popen(p, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     out, err = proc.communicate()
+    out, err = out.decode('utf8'), err.decode('utf8')
     return (proc.returncode == 0, out, err)
 
 def run_verbose(p):
@@ -91,10 +94,33 @@ class PacmanPackageInstaller(object):
     def install(self, package):
         return run_verbose(['sudo', 'pacman', '-S', package])
 
+class PipPackageInstaller(object):
+    name = 'pip'
+    cache_dir = tempfile.gettempdir()
+
+    def supported(self):
+        return FileInstaller.has_executable('pip') and FileInstaller.has_executable('sudo')
+
+    def is_installed(self, package):
+        return re.search(
+            '^' + re.escape(package) + '($|\s)',
+            run_silent(['pip', 'list'])[1],
+            re.MULTILINE) is not None
+
+    def is_available(self, package):
+        return re.search(
+            '^' + re.escape(package) + '($|\s)',
+            run_silent(['pip', 'search', package, '--cache-dir', self.cache_dir])[1],
+            re.MULTILINE) is not None
+
+    def install(self, package):
+        return run_verbose(['sudo', 'pip', 'install', '--cache-dir', self.cache_dir, package])
+
 class PackageInstaller(object):
     INSTALLERS = {
         CygwinPackageInstaller(),
         PacmanPackageInstaller(),
+        PipPackageInstaller(),
     }
 
     @staticmethod
