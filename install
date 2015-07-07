@@ -26,9 +26,6 @@ function install_aur {
     git submodule init
     git submodule update
     popd >/dev/null
-    if $linux; then
-        install_pacman lsof
-    fi
 
 #cygwin
     if $cygwin; then
@@ -39,19 +36,11 @@ function install_aur {
         fi
     fi
 
-#networking
-    if $cygwin; then
-        install_cygwin wget
-        install_cygwin curl
-        install_cygwin ssh
-    elif $linux; then
-        install_pacman wget #required for install_aur
-        install_pacman curl
-        install_pacman openssh
+#yaourt
+    if $linux; then
         install_aur package-query
         install_aur yaourt
     fi
-    install_link "$dir/.ssh" "$HOME/.ssh"
 
 #python
     if $cygwin; then
@@ -91,34 +80,10 @@ function install_aur {
         install_link "$dir/.zshrc" "$HOME/.zshrc"
     fi
 
-#development
-    if $cygwin; then
-        install_cygwin make
-        install_cygwin gcc
-        install_cygwin automake
-    elif $linux; then
-        install_pacman make
-        install_pacman gcc
-        install_pacman automake
-    fi
-
-    #visual studio
-        if has_installed devenv; then
-            install_link_or_cp "$dir/.vimrc" "$HOME/.vsvimrc"
-        fi
-
 #terminal emulators
     if has_installed mintty; then
         install_link "$dir/.inputrc" "$HOME/.inputrc"
         install_link "$dir/.minttyrc-light" "$HOME/.minttyrc"
-    fi
-
-#eyecandy
-    if $linux_gfx; then
-        install_pip eyecandy
-    fi
-    if has_installed eyecandy; then
-        install_link "$dir/.config/EyeCandy" "$HOME/.config/EyeCandy"
     fi
 
 #music player
@@ -132,18 +97,8 @@ function install_aur {
         touch "$HOME/.config/mpd/"{database,log,pid,state,sticker.sql}
     fi
 
-#trackma
-    if $linux_gfx; then
-        install_yaourt trackma-git
-    fi
-
 #translator
     install_link "$dir/ext/translator/tl" "$dir/bin/ext/tl"
-
-#background changer
-    if $linux_gfx; then
-        install_pip bk
-    fi
 
 #windows
     if $cygwin; then
