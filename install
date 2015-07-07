@@ -18,25 +18,6 @@ exit 1
         install_pacman python-pip
     fi
 
-#vim
-    if $cygwin; then
-        install_cygwin vim
-    elif $linux_gfx; then
-        install_pacman gvim
-    else
-        install_pacman vim
-    fi
-    if has_installed vim; then
-        create_folder "$HOME/.vim/undo"
-        create_folder "$HOME/.vim/backup"
-        create_folder "$HOME/.vim/swap"
-        create_folder "$HOME/.vim/spell"
-        install_link "$dir/.vim/spell/pl.utf-8.add" "$HOME/.vim/spell/pl.utf-8.add"
-        install_link "$dir/.vim/spell/en.utf-8.add" "$HOME/.vim/spell/en.utf-8.add"
-        install_link "$dir/.vim/vundle" "$HOME/.vim/vundle"
-        install_link "$dir/.vimrc" "$HOME/.vimrc"
-    fi
-
 #zsh
     if $cygwin; then
         install_cygwin zsh
