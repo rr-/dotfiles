@@ -18,16 +18,6 @@ exit 1
         install_pacman python-pip
     fi
 
-#zsh
-    if $cygwin; then
-        install_cygwin zsh
-    elif $linux; then
-        install_pacman zsh
-    fi
-    if has_installed zsh; then
-        install_link "$dir/.zshrc" "$HOME/.zshrc"
-    fi
-
 #terminal emulators
     if has_installed mintty; then
         install_link "$dir/.inputrc" "$HOME/.inputrc"
