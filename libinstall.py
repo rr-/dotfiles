@@ -23,8 +23,18 @@ class FileInstaller(object):
 
     @staticmethod
     def copy_file(source, target):
-        print('copy file!')
-        pass
+        source = os.path.abspath(os.path.expanduser(source))
+        target = os.path.expanduser(target)
+        if target.endswith('/') or target.endswith('\\'):
+            target = os.path.join(target, os.path.basename(source))
+
+        if os.path.islink(target):
+            print('Removing old symlink...')
+            os.unlink(target)
+
+        print('Copying %s to %s...' % (source, target))
+        os.makedirs(os.path.dirname(target), exist_ok=True)
+        shutil.copy(source, target)
 
     @staticmethod
     def create_symlink(source, target):
