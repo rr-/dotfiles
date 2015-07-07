@@ -1,5 +1,5 @@
-SOURCE=$(readlink ${ZDOTDIR-~}/.zshrc)
-DIR=${SOURCE:h}
+SOURCE=$(readlink ${(%):-%N})
+DIR=${SOURCE:h:h}
 HOST=$(hostname)
 
 if [ -n "$FBTERM" ]; then
