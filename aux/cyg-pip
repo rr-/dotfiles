@@ -1,0 +1,9 @@
+#!/bin/sh
+
+# installs pip for cygwin.
+
+lynx -source https://bitbucket.org/pypa/setuptools/raw/bootstrap/ez_setup.py >ez_setup
+chmod +x ez_setup
+./ez_setup
+
+easy_install-3.4 pip

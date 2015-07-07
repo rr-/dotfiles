@@ -1,0 +1,33 @@
+#!/bin/sh
+
+# installs apt-cyg for Arch.
+
+function install_aur {
+    url=https://aur.archlinux.org/packages/${1:0:2}/$1/$1.tar.gz
+    if pacman -Q "$1" >/dev/null; then
+        echo "$1 already installed"
+    else
+        pushd /tmp >/dev/null
+        wget "$url" -qO- | tar xz || { echo "Package $1 not found!"; exit 1; }
+        cd "$1"
+        makepkg -i
+        cd /tmp
+        popd >/dev/null
+    fi
+}
+
+if command sudo &>/dev/null; then
+    echo 'Install sudo first.'
+    exit 1
+fi
+
+if command tar &>/dev/null; then
+    sudo pacman -S tar
+fi
+
+if command wget &>/dev/null; then
+    sudo pacman -S wget
+fi
+
+install_aur package-query
+install_aur yaourt
