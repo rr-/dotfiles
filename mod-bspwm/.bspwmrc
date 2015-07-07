@@ -39,6 +39,10 @@ bspc rule -a music_player desktop=10 floating=on
 bspc rule -a qbittorrent desktop=9
 bspc rule -a Steam desktop=8
 
+feh --bg-fill "$HOME/.wallpaper1" "$HOME/.wallpaper2" &
+
+sxhkd &
+
 pkill -f bspwm/panel
 nohup $HOME/.config/bspwm/panel </dev/null &>/dev/null &
 

@@ -33,7 +33,8 @@ clipit -d &
 autocutsel -fork &
 autocutsel -selection PRIMARY -fork &
 
+#TODO: move this to mod-mpd
 mpd ~/.config/mpd/mpd.conf &
-feh --bg-fill "$HOME/.wallpaper1" "$HOME/.wallpaper2" &
-sxhkd &
+
+#TODO: don't hardcode this here
 exec bspwm

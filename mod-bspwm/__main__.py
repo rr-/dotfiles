@@ -16,4 +16,3 @@ PackageInstaller.try_install('python-mpd2', method='pip') # mpd interaction
 FileInstaller.create_symlink(os.path.join(dir, '.sxhkdrc'), '~/.config/sxhkd/sxhkdrc')
 FileInstaller.create_symlink(os.path.join(dir, '.bspwmrc'), '~/.config/bspwm/bspwmrc')
 FileInstaller.create_symlink(os.path.join(dir, 'panel'), '~/.config/bspwm/panel')
-FileInstaller.create_symlink(os.path.join(dir, '.xinitrc'), '~/')
