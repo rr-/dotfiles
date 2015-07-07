@@ -143,12 +143,12 @@ class PipPackageInstaller(object):
         return run_verbose(['sudo', 'pip', 'install', '--cache-dir', self.cache_dir, package])
 
 class PackageInstaller(object):
-    INSTALLERS = {
+    INSTALLERS = [
         CygwinPackageInstaller(),
         PacmanPackageInstaller(),
         YaourtPackageInstaller(),
         PipPackageInstaller(),
-    }
+    ]
 
     @staticmethod
     def try_install(package, method=None):
