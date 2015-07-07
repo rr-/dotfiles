@@ -117,14 +117,6 @@ function install_yaourt {
         fi
 
 #terminal emulators
-    if $linux_gfx; then
-        install_pacman rxvt-unicode
-    fi
-    if has_installed urxvt; then
-        install_link "$dir/.config/Xresources" "$HOME/.config/Xresources"
-        install_link "$dir/.config/Xresources-light" "$HOME/.config/Xresources-light"
-        install_link "$dir/.config/Xresources-dark" "$HOME/.config/Xresources-dark"
-    fi
     if has_installed mintty; then
         install_link "$dir/.inputrc" "$HOME/.inputrc"
         install_link "$dir/.minttyrc-light" "$HOME/.minttyrc"

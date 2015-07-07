@@ -21,7 +21,7 @@ else
     echo -e 'color sorcerer' >>~/.vimrc-background
 fi
 
-# URxvt
+# URxvt and xterm
 [ -h ~/.config/Xresources-theme ] && rm ~/.config/Xresources-theme
 ln -s ~/.config/Xresources-$word ~/.config/Xresources-theme
 if command -v xset &>/dev/null; then
