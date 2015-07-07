@@ -4,7 +4,9 @@ import sys
 import subprocess
 
 def run_silent(p):
-    return subprocess.call(p, stdout=subprocess.PIPE, stderr=subprocess.PIPE) == 0
+    proc = subprocess.Popen(p, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    out, err = proc.communicate()
+    return (proc.returncode == 0, out, err)
 
 def run_verbose(p):
     return subprocess.call(p) == 0
@@ -48,13 +50,13 @@ class CygwinPackageInstaller(object):
         return FileInstaller.has_executable('apt-cyg')
 
     def is_installed(self, package):
-        raise NotImplementedError()
+        return len(run_silent(['apt-cyg', 'list', '^%s$' % package])[1]) > 0
 
     def is_available(self, package):
-        raise NotImplementedError()
+        return len(run_silent(['apt-cyg', 'listall', '^%s$' % package])[1]) > 0
 
     def install(self, package):
-        raise NotImplementedError()
+        return run_verbose(['apt-cyg', 'install', package])
 
 class PacmanPackageInstaller(object):
     name = 'pacman'
@@ -63,10 +65,10 @@ class PacmanPackageInstaller(object):
         return FileInstaller.has_executable('pacman') and FileInstaller.has_executable('sudo')
 
     def is_installed(self, package):
-        return run_silent(['pacman', '-Q', package])
+        return run_silent(['pacman', '-Q', package])[0]
 
     def is_available(self, package):
-        return run_silent(['pacman', '-Ss', package])
+        return run_silent(['pacman', '-Ss', package])[0]
 
     def install(self, package):
         return run_verbose(['sudo', 'pacman', '-S', package])
