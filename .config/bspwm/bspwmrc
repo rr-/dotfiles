@@ -1,4 +1,4 @@
-#! /bin/sh
+#!/bin/sh
 
 desktop_config() {
     bspc config $1 $2
