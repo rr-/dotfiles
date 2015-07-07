@@ -122,15 +122,6 @@ function install_yaourt {
         install_link "$dir/.minttyrc-light" "$HOME/.minttyrc"
     fi
 
-#mpv
-    if $linux_gfx; then
-        install_pacman luajit #for LUA scripts when compiling manually
-        install_yaourt mpv-git
-    fi
-    if has_installed mpv; then
-        install_link "$dir/.config/mpv" "$HOME/.config/mpv"
-    fi
-
 #eyecandy
     if $linux_gfx; then
         install_pip eyecandy
