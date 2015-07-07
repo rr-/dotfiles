@@ -34,7 +34,7 @@ class FileInstaller(object):
             target = os.path.join(target, os.path.basename(source))
 
         if os.path.islink(target):
-            print('Removing old sylink...')
+            print('Removing old symlink...')
             os.unlink(target)
         elif os.path.exists(target):
             raise RuntimeError('Target file %s exists and is not a symlink.' % target)
