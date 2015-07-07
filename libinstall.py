@@ -80,6 +80,13 @@ class PackageInstaller(object):
     }
 
     @staticmethod
+    def try_install(package, method=None):
+        try:
+            PackageInstaller.install(package, method)
+        except Exception as e:
+            print('Error installing %s: %s' % (package, e))
+
+    @staticmethod
     def install(package, method=None):
         if method is None:
             chosen_installers = PackageInstaller.INSTALLERS
