@@ -94,6 +94,21 @@ class PacmanPackageInstaller(object):
     def install(self, package):
         return run_verbose(['sudo', 'pacman', '-S', package])
 
+class YaourtPackageInstaller(object):
+    name = 'yaourt'
+
+    def supported(self):
+        return FileInstaller.has_executable('yaourt') and FileInstaller.has_executable('sudo')
+
+    def is_installed(self, package):
+        return run_silent(['yaourt', '-Q', package])[0]
+
+    def is_available(self, package):
+        return run_silent(['yaourt', '-Ss', package])[0]
+
+    def install(self, package):
+        return run_verbose(['yaourt', '-S', package])
+
 class PipPackageInstaller(object):
     name = 'pip'
     cache_dir = tempfile.gettempdir()
@@ -120,6 +135,7 @@ class PackageInstaller(object):
     INSTALLERS = {
         CygwinPackageInstaller(),
         PacmanPackageInstaller(),
+        YaourtPackageInstaller(),
         PipPackageInstaller(),
     }
 
