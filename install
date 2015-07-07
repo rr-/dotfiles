@@ -86,17 +86,6 @@ function install_aur {
         install_link "$dir/.minttyrc-light" "$HOME/.minttyrc"
     fi
 
-#music player
-    if $linux_gfx; then
-        install_pacman mpd
-        install_pacman mpc
-    fi
-    if has_installed mpd; then
-        install_link "$dir/.config/mpd" "$HOME/.config/mpd"
-        create_folder "$HOME/.config/mpd/playlists"
-        touch "$HOME/.config/mpd/"{database,log,pid,state,sticker.sql}
-    fi
-
 #translator
     install_link "$dir/ext/translator/tl" "$dir/bin/ext/tl"
 
