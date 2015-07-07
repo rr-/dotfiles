@@ -113,7 +113,10 @@ class PackageInstaller(object):
 
         chosen_installers = [i for i in chosen_installers if i.supported()]
         if len(chosen_installers) == 0:
-            raise RuntimeError('No package manager is supported on this system!')
+            if method is None:
+                raise RuntimeError('No package manager is supported on this system!')
+            else:
+                raise RuntimeError('%s is not supported on this system!' % method)
 
         for installer in chosen_installers:
             if installer.is_installed(package):
@@ -123,4 +126,7 @@ class PackageInstaller(object):
                 print('Package %s is available, installing with %s' % (package, installer.name))
                 return installer.install(package)
 
-        raise RuntimeError('No package manager is capable of installing %s' % package)
+        if method is None:
+            raise RuntimeError('No package manager is capable of installing %s' % package)
+        else:
+            raise RuntimeError('%s is not capable of installing %s' % (method, package))
