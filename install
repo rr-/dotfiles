@@ -152,16 +152,6 @@ function install_aur {
         install_pip bk
     fi
 
-#thunar
-    if $linux_gfx; then
-        install_pacman thunar
-        install_pacman xfconf
-        if [ -n "$DISPLAY" ]; then
-            #enable full path in thunar window title for scripting
-            xfconf-query --channel thunar --property /misc-full-path-in-title --create --type bool --set true
-        fi
-    fi
-
 #windows
     if $cygwin; then
         echo "Hiding dotfiles in $HOME..."
