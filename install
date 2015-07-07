@@ -2,45 +2,12 @@
 echo 'Deprecated - this script is going to get removed in a few days.'
 exit 1
 
-function install_aur {
-    url=https://aur.archlinux.org/packages/${1:0:2}/$1/$1.tar.gz
-    has_installed pacman "$1" || return
-    has_installed sudo "$1" || return
-    has_installed wget "$1" || return
-    has_installed tar "$1" || return
-    if pacman -Q "$1" >/dev/null; then
-        echo "$1 already installed"
-    else
-        pushd /tmp >/dev/null
-        wget "$url" -qO- | tar xz || { echo "Package $1 not found!"; exit 1; }
-        cd "$1"
-        makepkg -i
-        cd /tmp
-        popd >/dev/null
-    fi
-}
-
 #basic stuff
     pushd $dir >/dev/null
     echo 'Updating git submodules...'
     git submodule init
     git submodule update
     popd >/dev/null
-
-#cygwin
-    if $cygwin; then
-        if ! has_installed apt-cyg; then
-            echo Installing apt-cyg...
-            lynx -source rawgit.com/transcode-open/apt-cyg/master/apt-cyg > apt-cyg
-            install apt-cyg /bin
-        fi
-    fi
-
-#yaourt
-    if $linux; then
-        install_aur package-query
-        install_aur yaourt
-    fi
 
 #python
     if $cygwin; then
