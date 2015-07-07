@@ -26,6 +26,7 @@ class FileInstaller(object):
 
     @staticmethod
     def create_dir(dir):
+        dir = os.path.abspath(os.path.expanduser(dir))
         if os.path.islink(dir):
             print('Removing old symlink...')
             os.unlink(dir)
@@ -35,6 +36,7 @@ class FileInstaller(object):
 
     @staticmethod
     def create_file(path):
+        path = os.path.abspath(os.path.expanduser(path))
         dir = os.path.dirname(path)
         if not os.path.islink(dir):
             FileInstaller.create_dir(dir)
