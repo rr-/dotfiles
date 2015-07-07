@@ -137,13 +137,6 @@ function install_aur {
         install_yaourt trackma-git
     fi
 
-#htop
-    install_cygwin htop
-    install_pacman htop
-    if has_installed htop; then
-        install_link "$dir/.config/htop" "$HOME/.config/htop"
-    fi
-
 #translator
     install_link "$dir/ext/translator/tl" "$dir/bin/ext/tl"
 
