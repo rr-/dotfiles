@@ -1,0 +1,16 @@
+XTerm*faceName: Literation Mono Powerline:pixelsize=14
+XTerm*faceNameDoublesize: IPAMonaUIGothic
+XTerm*allowBoldFonts: false
+XTerm*scrollBar: false
+XTerm*scrollKey: true
+XTerm*cursorBlink: false
+XTerm*fastScroll:  true
+XTerm*cursorOffTime: 750
+XTerm*cursorOnTime: 750
+
+*vt100.translations: #override \n \
+		Ctrl ~Shift <Key>Tab: string(0x1b) string("[1;5I") \n \
+		Ctrl Shift <Key>Tab: string(0x1b) string("[1;6I") \n \
+		Ctrl <KeyPress> BackSpace: string(0x17) \n \
+		Ctrl <KeyPress> -: smaller-vt-font() \n \
+		Ctrl <KeyPress> =: larger-vt-font() \n
