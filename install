@@ -20,15 +20,6 @@ function install_aur {
     fi
 }
 
-function install_yaourt {
-    has_installed yaourt "$1" || return
-    if pacman -Q "$1" >/dev/null; then
-        echo "$1 already installed"
-    else
-        yaourt -S "$1"
-    fi
-}
-
 #basic stuff
     pushd $dir >/dev/null
     echo 'Updating git submodules...'
