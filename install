@@ -62,30 +62,6 @@ function install_yaourt {
     fi
     install_link "$dir/.ssh" "$HOME/.ssh"
 
-#fonts
-    if $linux_gfx; then
-        install_pacman xorg-font-utils
-        install_pacman ttf-dejavu
-        install_pacman ttf-symbola
-        install_yaourt ttf-font-awesome
-        install_yaourt ttf-ipa-mona
-        if [ -d /usr/share/fonts ]; then
-            fonts_dir="$HOME/.local/share/fonts"
-            [ -d "$fonts_dir" ] || mkdir -p "$fonts_dir"
-            find "$dir/misc" -iregex '.*\.\(ttf\|otf\|pcf\|bdf\)' | while read -r x; do
-                install_link "$x" "$fonts_dir/$(basename "$x")"
-            done
-            mkfontscale "$fonts_dir"
-            mkfontdir "$fonts_dir"
-            xset +fp "$fonts_dir"
-            xset fp rehash
-        fi
-        if has_installed fc-list; then
-            install_link "$dir/.config/fontconfig" "$HOME/.config/fontconfig"
-            fc-cache
-        fi
-    fi
-
 #python
     if $cygwin; then
         install_cygwin python
