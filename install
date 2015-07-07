@@ -18,11 +18,5 @@ exit 1
         install_pacman python-pip
     fi
 
-#terminal emulators
-    if has_installed mintty; then
-        install_link "$dir/.inputrc" "$HOME/.inputrc"
-        install_link "$dir/.minttyrc-light" "$HOME/.minttyrc"
-    fi
-
 #translator
     install_link "$dir/ext/translator/tl" "$dir/bin/ext/tl"
