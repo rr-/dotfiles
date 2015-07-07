@@ -22,6 +22,14 @@ class FileInstaller(object):
         return shutil.which(program) is not None
 
     @staticmethod
+    def create_dir(dir):
+        if os.path.islink(dir):
+            print('Removing old symlink...')
+            os.unlink(dir)
+        if not os.path.exists(dir):
+            os.makedirs(dir)
+
+    @staticmethod
     def copy_file(source, target):
         source = os.path.abspath(os.path.expanduser(source))
         target = os.path.expanduser(target)
@@ -33,7 +41,7 @@ class FileInstaller(object):
             os.unlink(target)
 
         print('Copying %s to %s...' % (source, target))
-        os.makedirs(os.path.dirname(target), exist_ok=True)
+        FileInstaller.create_dir(os.path.dirname(target))
         shutil.copy(source, target)
 
     @staticmethod
@@ -50,7 +58,7 @@ class FileInstaller(object):
             raise RuntimeError('Target file %s exists and is not a symlink.' % target)
 
         print('Linking %s to %s...' % (source, target))
-        os.makedirs(os.path.dirname(target), exist_ok=True)
+        FileInstaller.create_dir(os.path.dirname(target))
         os.symlink(source, target)
 
 class CygwinPackageInstaller(object):
