@@ -3,10 +3,10 @@ import os
 from libinstall import FileInstaller, PackageInstaller
 dir = os.path.dirname(__file__)
 
+PackageInstaller.try_install('python-pyqt4')     # for panel
 PackageInstaller.try_install('dmenu')            # program executor
 PackageInstaller.try_install('bspwm-git')        # window manager
 PackageInstaller.try_install('sxhkd-git')        # hotkey manager
-PackageInstaller.try_install('lemonbar-xft-git') # panel
 PackageInstaller.try_install('feh')              # wallpaper renderer
 
 PackageInstaller.try_install('psutil', method='pip')      # CPU usage
