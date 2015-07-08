@@ -1,516 +1,129 @@
 #!/bin/python3
-from datetime import datetime, timedelta
-from subprocess import Popen, PIPE
-import alsaaudio
-import glob
-import psutil
-import re
+import os, sys
 import threading
 import time
-import mpd
-import math
-import os
-import logging
 
-fonts = [
-    ['terminesspowerline:size=8', -1],
-    ['Font Awesome:pixelsize=14', 0],
-    ['DejaVu Sans:pixelsize=11', -1],
-    ['DejaVu Sans:pixelsize=12', -1],
-]
-height                     = 19
-default_background_color   = '#c0000000'
-default_font_color         = '#dddddd'
-inactive_text_color        = '#888888'
-active_progressbar_color   = '#d0bbbbbb'
-inactive_progressbar_color = '#d0888888'
-workspaces_background      = '#c0333333'
-active_workspace_color     = '#dddddd'
-urgent_workspace_color     = '#00efdf'
-inactive_workspace_color   = '#888888'
-clock_background_color     = '#c0333333'
-clock_text_color           = 'white'
-interval                   = 1
+from widgets.flow_layout import FlowLayout
+from widgets.cpu         import CpuProvider
+from widgets.mpd         import MpdProvider
+from widgets.volume      import VolumeProvider
+from widgets.time        import TimeProvider
+from widgets.net         import NetworkUsageProvider
+from widgets.battery     import BatteryProvider
+from widgets.workspaces  import WorkspacesProvider
 
-class Data(object):
-    def __init__(self):
-        self.cpu = 0
-        self.muted = False
-        self.volume = 0
-        self.time = datetime.now()
-        self.mpd_status = None
-        self.current_song = None
-        self.monitors = []
-        self.battery_present = False
-        self.battery_percent = 0
-        self.battery_discharging = False
-        self.network_enabled = False
-        self.network_traffic_received = 0
-        self.network_traffic_sent = 0
+import signal
+from PyQt4 import QtGui
+from PyQt4 import QtCore
 
-class Monitor(object):
-    LAYOUT_TILED = 1
-    LAYOUT_MONOCLE = 2
+class MainWindow(QtGui.QMainWindow):
+    trigger = QtCore.pyqtSignal(object)
 
-    name = None
-    focused = False
-    workspaces = []
-    layout = None
-    x = 0
-    y = 0
-    width = 0
-    height = 0
+    def __init__(self, monitors):
+        super().__init__()
+        self.setWindowFlags(QtCore.Qt.SplashScreen | QtCore.Qt.WindowStaysOnTopHint)
+        self.resize(sum([int(m.width) for m in monitors]), 0)
+        self.move(0, 0)
+        self.show()
 
-class Workspace(object):
-    name = None
-    rect = None
-    focused = False
-    free = True
-    urgent = False
-
-
-class Renderer(object):
-    ALIGN_LEFT = 'l'
-    ALIGN_CENTER = 'c'
-    ALIGN_RIGHT = 'r'
-
-    def __init__(self):
-        self.__properties = {}
-        self.__setters = {
-            'background_color': (lambda value: '%%{B%s}' % value, 'black'),
-            'font_color':       (lambda value: '%%{F%s}' % value, 'white'),
-            'font':             (lambda value: '%%{T%d}' % value, 1),
-            'current_monitor':  (lambda value: '%%{S%d}' % value, 1),
-            'alignment':        (lambda value: '%%{%s}' % value, self.ALIGN_LEFT),
+        self.setStyleSheet('''
+        QMainWindow {
+            background: #eeeeee;
         }
-        self.clear()
+        [class=left] QWidget {
+            margin: 3px 3px 3px 0;
+            color: #444444;
+            font-size: 12px;
+        }
+        [class=right] QWidget {
+            margin: 3px 0 3px 3px;
+            color: #444444;
+            font-size: 12px;
+        }
+        QWidget[class=workspace] {
+            background: silver;
+            height: 10px;
+            width: 10px;
+            margin: 4px 0 4px 4px;
+            padding: 0;
+            border: 1px solid dimgray;
+            color: transparent;
+        }
+        QWidget[class=workspace][ws_free=True] {
+            width: 10px;
+            height: 10px;
+            background: transparent;
+        }
+        QWidget[class=workspace][ws_focused=True] {
+            background: #40f0f0;
+        }
+        QWidget[class=workspace][ws_urgent=True] {
+            background: #f08040;
+        }
+        ''')
 
-    def __getattr__(self, name):
-        if name in self.__setters:
-            if name in self.__properties:
-                return self.__properties[name]
-            return None
-        return object.__getattribute__(self, name)
+        central_widget = QtGui.QWidget()
+        QtGui.QHBoxLayout(central_widget, margin=0, spacing=0)
+        self.setCentralWidget(central_widget)
 
-    def __setattr__(self, name, value):
-        if name.startswith('_'):
-            return super(Renderer, self).__setattr__(name, value)
-        if not name in self.__setters:
-            raise AttributeError
-        if name not in self.__properties or self.__properties[name] != value:
-            self.print(self.__setters[name][0](value))
-            self.__properties[name] = value
+        self.monitor_widgets = []
+        for i, monitor in enumerate(monitors):
+            monitor.number = i
+        for monitor in sorted(monitors, key=lambda m: m.x):
+            monitor_widget = QtGui.QWidget(size=QtCore.QSize(int(monitor.width), 0))
+            QtGui.QHBoxLayout(monitor_widget, spacing=0, margin=0)
+            subwidgets = []
+            for class_name in ['left', 'right']:
+                subwidget = QtGui.QWidget(size=QtCore.QSize(int(monitor.width) / 2.0, 0))
+                subwidget.setProperty('class', class_name)
+                FlowLayout(subwidget, spacing=0, margin=0, rtl=class_name == 'right')
+                monitor_widget.layout().addWidget(subwidget)
+                subwidgets.append(subwidget)
+            monitor_widget.left_widget, monitor_widget.right_widget = subwidgets
+            central_widget.layout().addWidget(monitor_widget)
+            self.monitor_widgets.append(monitor_widget)
 
-    def clear(self):
-        self._text = ''
-        for k, v in self.__setters.items():
-            self.__setattr__(k, v[1])
+        self.trigger.connect(self.render)
 
-    @property
-    def text(self):
-        return self._text
+    def render(self, renderer):
+        renderer()
 
-    def print(self, text):
-        self._text += text
+    def __len__(self):
+        return len(self.monitor_widgets)
 
-    def temporary(self):
-        return self.Temporary(self)
-
-    def clickable(self, button, command):
-        return self.Clickable(self, button, command)
-
-    class Temporary(object):
-        def __init__(self, renderer):
-            self.renderer = renderer
-        def __enter__(self):
-            self.font = self.renderer.font
-            self.font_color = self.renderer.font_color
-            self.background_color = self.renderer.background_color
-        def __exit__(self, *args):
-            self.renderer.font = self.font
-            self.renderer.font_color = self.font_color
-            self.renderer.background_color = self.background_color
-
-    class Clickable(object):
-        def __init__(self, renderer, button, command):
-            self.renderer = renderer
-            self.button = button
-            self.command = command
-        def __enter__(self):
-            self.renderer.print('%%{A%d:%s:}' % (self.button, self.command.replace(':', '\:')))
-        def __exit__(self, *args):
-            self.renderer.print('%{A}')
-
-
-class MyRenderer(object):
-    def __init__(self, data, providers):
-        self.current_margin = 0
-        self.renderer = Renderer()
-        self.providers = providers
-        self.data = data
-
-        command = ['lemonbar', '-gx' + str(height)]
-        for font in fonts:
-            command += ['-f', font[0], '-o', str(font[1])]
-        self.lemonbar_process = Popen(command, stdout=PIPE, stdin=PIPE)
-        threading.Thread(target=self.execute_commands, daemon=True).start()
-
-    def execute_commands(self):
-        while True:
-            command = self.lemonbar_process.stdout.readline()
-            Popen(['sh', '-c', command], stdout=PIPE).wait()
-            for provider in self.providers:
-                provider.refresh(self.data)
-            self.render()
-
-    def print_text(self, text):
-        self.renderer.print(text)
-        self.current_margin = 0
-
-    def ensure_margin(self, margin): #margin = 1/3 em space
-        if margin > self.current_margin:
-            with self.renderer.temporary():
-                self.renderer.font = 2
-                self.renderer.print('\u2004' * (margin - self.current_margin))
-            self.current_margin = margin
-
-    def print_seconds(self, seconds):
-        seconds = math.floor(float(seconds))
-        self.print_text('%02d:%02d' % (seconds // 60, seconds % 60))
-
-    def print_icon(self, text, margin=3):
-        with self.renderer.temporary():
-            self.renderer.font = 2
-            self.ensure_margin(margin)
-            self.print_text(text)
-            self.ensure_margin(margin)
-
-    def render_progressbar(self, number, width=15):
-        filled = int(number * width / 100.)
-        with self.renderer.temporary():
-            self.renderer.font = 3
-            self.renderer.font_color = active_progressbar_color
-            self.print_text('\u2588' * filled)
-            self.renderer.font_color = inactive_progressbar_color
-            self.print_text('\u2588' * (width - filled))
-
-    def render_workspaces(self, monitor):
-        with self.renderer.temporary(), \
-             self.renderer.clickable(5, 'bspc monitor -f %s;bspc desktop -f prev' % monitor.name), \
-             self.renderer.clickable(4, 'bspc monitor -f %s;bspc desktop -f next' % monitor.name):
-            self.renderer.background_color = workspaces_background
-            self.renderer.font = 4
-            self.ensure_margin(2)
-            for workspace in monitor.workspaces:
-                with self.renderer.clickable(1, 'bspc monitor -f %s;bspc desktop -f %s' % (monitor.name, workspace.name)):
-                    if workspace.urgent:
-                        self.renderer.font_color = urgent_workspace_color
-                    elif workspace.focused:
-                        self.renderer.font_color = active_workspace_color
-                    else:
-                        self.renderer.font_color = inactive_workspace_color
-                    if workspace.free:
-                        self.print_text('\u25a1')
-                    else:
-                        self.print_text('\u25a0')
-                self.ensure_margin(1)
-            self.ensure_margin(2)
-            self.print_text('') #trigger margin reset due to background change
-
-    def render_mpd_status(self):
-        if not self.data.mpd_status:
-            return
-
-        with self.renderer.clickable(1, 'mpc toggle'):
-            if 'state' in self.data.mpd_status and self.data.mpd_status['state'] == 'play':
-                self.print_icon('\uf04b')
-            else:
-                self.print_icon('\uf04c')
-
-            with self.renderer.clickable(5, 'mpc prev'), \
-                 self.renderer.clickable(4, 'mpc next'):
-                if self.data.current_song:
-                    if 'title' not in self.data.current_song or self.data.current_song['title'].strip() == '':
-                        self.print_text(self.data.current_song['file'])
-                    else:
-                        if 'artist' in self.data.current_song:
-                            self.print_text(self.data.current_song['artist'])
-                            self.print_text(' - ')
-                        self.print_text(self.data.current_song['title'])
-                    self.ensure_margin(2)
-                    if 'elapsed' in self.data.mpd_status and 'time' in self.data.current_song:
-                        self.print_seconds(self.data.mpd_status['elapsed'])
-                        self.print_text('/')
-                        self.print_seconds(self.data.current_song['time'])
-                else:
-                    self.print_text('Stopped')
-
-        with self.renderer.clickable(1, 'mpc random'), \
-             self.renderer.temporary():
-            if 'random' not in self.data.mpd_status or self.data.mpd_status['random'] != '1':
-                self.renderer.font_color = inactive_text_color
-            self.print_icon('\uf074')
-
-    def render_traffic(self):
-        if self.data.network_enabled:
-            self.print_icon('\uf019', margin=2)
-            self.print_text('%03.0f' % (self.data.network_traffic_received / 1024.0))
-            self.print_text('K')
-            self.print_icon('\uf093', margin=2)
-            self.print_text('%03.0f' % (self.data.network_traffic_sent / 1024.0))
-            self.print_text('K')
-
-    def render_battery(self):
-        if self.data.battery_present:
-            with self.renderer.temporary():
-                if self.data.battery_discharging:
-                    self.renderer.font_color = inactive_text_color
-                self.print_icon('\uf1e6', margin=2)
-            self.render_progressbar(self.data.battery_percent)
-
-    def render_cpu_usage(self):
-        with self.renderer.clickable(1, 'run-or-raise -n htop -p "urxvt -e htop"'):
-            self.print_icon('\uf085', margin=2)
-            self.render_progressbar(self.data.cpu)
-
-    def render_volume(self):
-        with self.renderer.clickable(1, 'amixer -q set Master toggle'), \
-             self.renderer.clickable(5, 'amixer -q set Master 1dB- unmute'), \
-             self.renderer.clickable(4, 'amixer -q set Master 1dB+ unmute'), \
-             self.renderer.temporary():
-            if self.data.muted:
-                self.renderer.font_color = inactive_text_color
-            self.print_icon('\uf028', margin=2)
-            self.render_progressbar(self.data.volume)
-
-    def render_date(self):
-        self.ensure_margin(3)
-        self.print_text(datetime.strftime(self.data.time, '%a, %b %d'))
-
-    def render_clock(self):
-        self.ensure_margin(2)
-        self.renderer.background_color = clock_background_color
-        self.print_text('')  #trigger margin reset due to background change
-        self.ensure_margin(2)
-        self.renderer.font_color = clock_text_color
-        self.print_text(datetime.strftime(self.data.time, '%H:%M:%S'))
-        self.ensure_margin(2)
-
-    def render(self):
-        self.renderer.clear()
-
-        #lemonbar sorts the monitors by their x coordinate
-        monitors = sorted(self.data.monitors, key=lambda m: m.x)
-        for monitor_number, monitor in enumerate(monitors):
-            self.current_margin = 0
-            self.renderer.current_monitor = monitor_number
-            self.renderer.background_color = default_background_color
-            self.renderer.font_color = default_font_color
-
-            self.renderer.alignment = Renderer.ALIGN_LEFT
-            self.render_workspaces(monitor)
-            self.render_mpd_status()
-
-            self.renderer.alignment = Renderer.ALIGN_RIGHT
-            self.render_traffic()
-            self.render_battery()
-            self.render_cpu_usage()
-            self.render_volume()
-            self.render_date()
-            self.render_clock()
-
-            self.renderer.background_color = default_background_color
-
-        line = (self.renderer.text + "\n").encode('utf8')
-        self.lemonbar_process.stdin.write(line)
-        self.lemonbar_process.stdin.flush()
-
-class CpuProvider(object):
-    delay = 0
-    rerender = False
-
-    def refresh(self, data):
-        data.cpu = psutil.cpu_percent(interval=interval)
-
-class MpdProvider(object):
-    delay = interval
-    rerender = False
-
-    def __init__(self):
-        self.client = mpd.MPDClient()
-        self.connected = False
-
-    def refresh(self, data):
-        if self.connected:
-            try:
-                data.mpd_status = self.client.status()
-                data.current_song = self.client.currentsong()
-            except:
-                data.mpd_status = None
-                data.current_song = None
-                self.connected = False
-        else:
-            try:
-                self.client.connect(host='localhost', port=6600)
-                self.connected = True
-            except:
-                self.connected = False
-
-class WorkspacesProvider(object):
-    delay = 0
-    rerender = True
-
-    def __init__(self, data):
-        self.bspc_process = Popen(['bspc', 'control', '--subscribe'], stdout=PIPE)
-        data.monitors = self.init_monitors()
-
-    def init_monitors(self):
-        proc = Popen(['bspc', 'query', '-T'], stdout=PIPE)
-        lines = proc.stdout.read().decode('utf-8').strip().replace("\r", '').split("\n")
-        mon_defs = [l.split(' ') for l in lines if not l.startswith("\t") and l != '']
-        monitors = []
-        for mon_def in mon_defs:
-            mon = Monitor()
-            mon.name = mon_def[0]
-            mon.width, mon.height, mon.x, mon.y = re.split('[x+]', mon_def[1])
-            monitors.append(mon)
-        return monitors
-
-    def refresh(self, data):
-        line = self.bspc_process.stdout.readline().decode('utf8').strip()
-        line = re.sub('^W', '', line)
-        if line == '':
-            return
-
-        for item in line.split(':'):
-            key, value = item[0], item[1:]
-
-            if key in 'mM':
-                chosen_monitor = [m for m in data.monitors if m.name == value]
-                if len(chosen_monitor) != 1:
-                    self.init_monitors()
-                    return
-                current_monitor = chosen_monitor[0]
-                current_monitor.workspaces = []
-                current_monitor.focused = key.isupper()
-
-            elif key in 'oOfFuU':
-                workspace = Workspace()
-                workspace.name = value
-                workspace.focused = key.isupper()
-                workspace.free = key in 'fF'
-                workspace.urgent = key in 'uU'
-                current_monitor.workspaces.append(workspace)
-
-            elif key in 'lL':
-                if value in 'mM':
-                    current_monitor.layout = Monitor.LAYOUT_MONOCLE
-                elif value in 'tT':
-                    current_monitor.layout = Monitor.LAYOUT_TILED
-
-class BatteryProvider(object):
-    delay = interval * 3
-    rerender = False
-
-    def __init__(self, data):
-        try:
-            self.charge_now = glob.glob('/sys/class/power_supply/*/charge_now')[0]
-            self.charge_max = glob.glob('/sys/class/power_supply/*/charge_full')[0]
-            self.charge_status = glob.glob('/sys/class/power_supply/*/status')[0]
-            data.battery_present = True
-        except IndexError:
-            data.battery_present = False
-
-    def refresh(self, data):
-        if not data.battery_present:
-            return
-        with open(self.charge_now, 'r') as charge_now_fh, \
-             open(self.charge_max, 'r') as charge_max_fh, \
-             open(self.charge_status, 'r') as charge_status_fh:
-            now = int(charge_now_fh.read())
-            max = int(charge_max_fh.read())
-            status = charge_status_fh.read().strip().lower()
-            data.battery_discharging = status == 'discharging'
-            data.battery_percent = now * 100.0 / max
-            time.sleep(interval * 3)
-
-class NetworkUsageProvider(object):
-    delay = interval
-    rerender = False
-
-    def __init__(self, data):
-        try:
-            self.rx_path = None
-            self.tx_path = None
-            for interface in glob.glob('/sys/class/net/*'):
-                with open(os.path.join(interface, 'operstate'), 'r') as fh:
-                    if fh.read().strip().lower() == 'up':
-                        self.rx_path = os.path.join(interface, 'statistics', 'rx_bytes')
-                        self.tx_path = os.path.join(interface, 'statistics', 'tx_bytes')
-                        data.network_enabled = True
-        except:
-            data.network_enabled = False
-
-        if data.network_enabled:
-            with open(self.rx_path, 'r') as rx_fh, open(self.tx_path, 'r') as tx_fh:
-                self.old_rx_bytes = int(rx_fh.read())
-                self.old_tx_bytes = int(tx_fh.read())
-
-    def refresh(self, data):
-        if not data.network_enabled:
-            return
-        with open(self.rx_path, 'r') as rx_fh, open(self.tx_path, 'r') as tx_fh:
-            rx_bytes = int(rx_fh.read())
-            tx_bytes = int(tx_fh.read())
-            data.network_traffic_received = (rx_bytes - self.old_rx_bytes) / interval
-            data.network_traffic_sent = (tx_bytes - self.old_tx_bytes) / interval
-            self.old_rx_bytes = rx_bytes
-            self.old_tx_bytes = tx_bytes
-
-class CommonProvider(object):
-    delay = interval
-    rerender = False
-
-    def refresh(self, data):
-        data.time = datetime.now()
-        data.volume = alsaaudio.Mixer().getvolume()[0]
-        data.muted = alsaaudio.Mixer().getmute()[0]
-
-def worker(data, provider, render_func):
-    while True:
-        provider.refresh(data)
-        if provider.delay > 0:
-            time.sleep(provider.delay)
-        if provider.rerender:
-            render_func()
+    def __getitem__(self, index):
+        return self.monitor_widgets[index]
 
 def main():
-    data = Data()
+    app = QtGui.QApplication([os.fsencode(arg) for arg in sys.argv])
+    monitors = WorkspacesProvider.get_monitors()
+    main_window = MainWindow(monitors)
 
-    threads = []
     providers = [
-        CpuProvider(),
-        MpdProvider(),
-        WorkspacesProvider(data),
-        NetworkUsageProvider(data),
-        BatteryProvider(data),
-        CommonProvider()
+        WorkspacesProvider(main_window),
+        MpdProvider(main_window),
+        NetworkUsageProvider(main_window),
+        BatteryProvider(main_window),
+        CpuProvider(main_window),
+        VolumeProvider(main_window),
+        TimeProvider(main_window)
     ]
 
-    renderer = MyRenderer(data, [p for p in providers if p.delay > 0])
+    def worker(provider, trigger):
+        while True:
+            provider.refresh()
+            if provider.delay > 0:
+                time.sleep(provider.delay)
+            trigger.emit(provider.render)
 
     for provider in providers:
-        thread = threading.Thread(target=worker, args=(data, provider, renderer.render), daemon=True)
-        threads.append(thread)
-        thread.start()
+        t = threading.Thread(
+            target=worker, args=(provider, main_window.trigger), daemon=True)
+        t.start()
 
-    while True:
-        renderer.render()
-        time.sleep(interval)
+
+    signal.signal(signal.SIGINT, signal.SIG_DFL)
+    app.exec_()
 
 if __name__ == '__main__':
-    logging.basicConfig(level=logging.ERROR, filename='/tmp/panel.log')
-    try:
-        main()
-    except:
-        logging.exception('Exception...')
+    main()
