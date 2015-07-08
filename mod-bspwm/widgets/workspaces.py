@@ -95,7 +95,4 @@ class WorkspacesProvider(object):
                 self.widgets[i].ws_widgets[j].setProperty('ws_focused', '%s' % ws.focused)
                 self.widgets[i].ws_widgets[j].setProperty('ws_urgent', '%s' % ws.urgent)
                 self.widgets[i].ws_widgets[j].setProperty('ws_free', '%s' % ws.free)
-        os = self.main_window.styleSheet()
-        self.main_window.setStyleSheet('')
-        self.main_window.setStyleSheet(os)
-
+        self.main_window.reloadStyleSheet()
