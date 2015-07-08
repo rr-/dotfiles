@@ -60,6 +60,14 @@ class MainWindow(QtGui.QMainWindow):
         QWidget[class=workspace][ws_urgent=True] {
             background: #f08040;
         }
+        QWidget[class=icon] {
+            margin: -2px 0 -1px 0;
+            font-size: 18px;
+            padding: 0;
+        }
+        QWidget[active=False] {
+            color: silver;
+        }
         ''')
 
         central_widget = QtGui.QWidget()
@@ -87,6 +95,11 @@ class MainWindow(QtGui.QMainWindow):
 
     def render(self, renderer):
         renderer()
+
+    def reloadStyleSheet(self):
+        old_stylesheet = self.styleSheet()
+        self.setStyleSheet('')
+        self.setStyleSheet(old_stylesheet)
 
     def __len__(self):
         return len(self.monitor_widgets)
