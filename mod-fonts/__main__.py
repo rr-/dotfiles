@@ -16,11 +16,14 @@ if os.path.exists('/usr/share/fonts'):
     for font_path in glob.glob(os.path.join(dir, '*.ttf')):
         FileInstaller.create_symlink(font_path, fonts_dir + '/')
 
-    run_verbose(['mkfontscale', fonts_dir])
-    run_verbose(['mkfontdir', fonts_dir])
-    run_verbose(['xset', '+fp', fonts_dir])
-    run_verbose(['xset', 'fp', 'rehash'])
+    if FileInstaller.has_executable('mkfontscale'):
+        run_verbose(['mkfontscale', fonts_dir])
+    if FileInstaller.has_executable('mkfontdir'):
+        run_verbose(['mkfontdir', fonts_dir])
+    if FileInstaller.has_executable('xset'):
+        run_verbose(['xset', '+fp', fonts_dir])
+        run_verbose(['xset', 'fp', 'rehash'])
 
-if FileInstaller.has_executable('fc-list'):
+if FileInstaller.has_executable('fc-cache'):
     FileInstaller.create_symlink(os.path.join(dir, 'fonts.conf'), '~/.config/fontconfig/')
     run_verbose(['fc-cache'])
