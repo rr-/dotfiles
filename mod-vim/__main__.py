@@ -14,4 +14,4 @@ FileInstaller.create_symlink(os.path.join(dir, 'vundle'), '~/.vim/vundle')
 FileInstaller.create_symlink(os.path.join(dir, '.vimrc'), '~/')
 
 if FileInstaller.has_executable('devenv'):
-    FileInstaller.copy(os.path.join(dir, '.vimrc'), '~/.vsvimrc')
+    FileInstaller.copy_file(os.path.join(dir, '.vimrc'), '~/.vsvimrc')
