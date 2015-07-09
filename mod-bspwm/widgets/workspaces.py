@@ -49,13 +49,22 @@ class WorkspacesProvider(object):
         for i, monitor in enumerate(self.monitors):
             monitor_widget = main_window[i].left_widget
             monitor_widget.ws_widgets = {}
+            monitor_widget.wheelEvent = lambda event, monitor=monitor: self.wheel(event, monitor)
             for j, ws in enumerate(monitor.workspaces):
                 ws_widget = QtGui.QPushButton(ws.name)
                 ws_widget.setProperty('class', 'workspace')
+                ws_widget.mouseReleaseEvent = lambda event, ws=ws: self.click(event, ws)
                 monitor_widget.ws_widgets[j] = ws_widget
                 monitor_widget.layout().addWidget(ws_widget)
             self.widgets[i] = monitor_widget
         self.render()
+
+    def wheel(self, event, monitor):
+        subprocess.call(['bspc', 'monitor', '-f', monitor.name])
+        subprocess.call(['bspc', 'desktop', '-f', ['prev', 'next'][event.delta() > 0]])
+
+    def click(self, event, ws):
+        subprocess.call(['bspc', 'desktop', '-f', ws.name])
 
     def refresh_workspaces(self):
         line = self.bspc_process.stdout.readline().decode('utf8').strip()

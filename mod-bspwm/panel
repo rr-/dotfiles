@@ -32,30 +32,34 @@ class MainWindow(QtGui.QMainWindow):
         }
         [class=left] QWidget {
             margin: 3px 3px 3px 0;
-            color: #444444;
+            color: #666666;
             font-size: 12px;
         }
         [class=right] QWidget {
             margin: 3px 0 3px 3px;
-            color: #444444;
+            color: #666666;
             font-size: 12px;
         }
         QWidget[class=workspace] {
-            background: silver;
+            background: #dddddd;
             height: 10px;
             width: 10px;
             margin: 4px 0 4px 4px;
             padding: 0;
-            border: 1px solid dimgray;
             color: transparent;
+            border: 1px solid #a5a5a5;
         }
         QWidget[class=workspace][ws_free=True] {
-            width: 10px;
-            height: 10px;
+            border: 1px solid #c5c5c5;
             background: transparent;
         }
+        QWidget[class=workspace][ws_free=True][ws_focused=True] {
+            border: 2px solid #00dddd;
+        }
         QWidget[class=workspace][ws_focused=True] {
-            background: #40f0f0;
+            border: 2px solid #00cccc;
+            width: 8px;
+            height: 8px;
         }
         QWidget[class=workspace][ws_urgent=True] {
             background: #f08040;
