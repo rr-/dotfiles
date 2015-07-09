@@ -12,6 +12,15 @@ run_if_needed() {
     fi
 }
 
+if [ "$(hostname)" = tornado ]; then
+    run_if_needed pidgin pidgin
+    run_if_needed firefox firefox
+    run_if_needed trackma-qt trackma-qt
+    run_if_needed qbittorrent qbittorrent
+elif [ "$(hostname)" = chibi || "$(hostname)" = bus ]; then
+    run_if_needed trackma-qt trackma-qt
+fi
+
 desktop_config focused_border_color "#748FA4"
 desktop_config urgent_border_color "#DE3333"
 desktop_config active_border_color "#333333"
@@ -43,16 +52,8 @@ bspc rule -a Steam desktop=8
 
 feh --bg-fill "$HOME/.wallpaper1" "$HOME/.wallpaper2" &
 
+pkill -f sxhkd
 sxhkd &
 
 pkill -f bspwm/panel
 nohup $HOME/.config/bspwm/panel </dev/null &>/dev/null &
-
-if [ "$(hostname)" = tornado ]; then
-    run_if_needed pidgin pidgin
-    run_if_needed firefox firefox
-    run_if_needed trackma-qt trackma-qt
-    run_if_needed qbittorrent qbittorrent
-elif [ "$(hostname)" = chibi || "$(hostname)" = bus ]; then
-    run_if_needed trackma-qt trackma-qt
-fi
