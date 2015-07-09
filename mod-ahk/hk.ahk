@@ -192,7 +192,7 @@ DirectionalFocus(direction)
 	{
 		if (!WinExist("ahk_class mintty_thetty"))
 		{
-			Run, %CygPath%\bin\mintty.exe --title "Terminal" --size "110`,35" --position "%TermX%`,%TermY%" --class "mintty_thetty" --exec /bin/zsh -c 'while /bin/true`; do /bin/zsh -l`; cygstart "%A_AhkPath%" "Z:\src\dotfiles\hide.ahk"`; clear; done', %CygPath%
+			Run, %CygPath%\bin\mintty.exe --title "Terminal" --size "110`,35" --position "%TermX%`,%TermY%" --class "mintty_thetty" --exec /bin/zsh -c 'while /bin/true`; do /bin/zsh -l`; cygstart "%A_AhkPath%" "%A_ScriptDir%\hide.ahk"`; clear; done', %CygPath%
 			WinWait ahk_class mintty_thetty
 		}
 		else
