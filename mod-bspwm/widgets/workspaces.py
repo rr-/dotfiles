@@ -5,36 +5,58 @@ import subprocess
 class Monitor(object):
     LAYOUT_TILED   = 1
     LAYOUT_MONOCLE = 2
-    name       = None
-    focused    = False
-    workspaces = []
-    layout     = None
-    x          = 0
-    y          = 0
-    width      = 0
-    height     = 0
+
+    def __init__(self):
+        self.name       = None
+        self.focused    = False
+        self.workspaces = []
+        self.layout     = None
+        self.x          = 0
+        self.y          = 0
+        self.width      = 0
+        self.height     = 0
 
 class Workspace(object):
-    name    = None
-    rect    = None
-    focused = False
-    free    = True
-    urgent  = False
+    def __init__(self):
+        self.name    = None
+        self.rect    = None
+        self.focused = False
+        self.free    = True
+        self.urgent  = False
 
 class WorkspacesProvider(object):
     delay = 0
+    window_title_provider = None
 
     @staticmethod
     def get_monitors():
         proc = subprocess.Popen(['bspc', 'query', '-T'], stdout=subprocess.PIPE)
         lines = proc.stdout.read().decode('utf-8').strip().replace("\r", '').split("\n")
-        mon_defs = [l.split(' ') for l in lines if not l.startswith("\t") and l != '']
+        lines = [line for line in lines if line != '']
+        current_monitor = None
+        current_workspace = None
         monitors = []
-        for mon_def in mon_defs:
-            mon = Monitor()
-            mon.name = mon_def[0]
-            mon.width, mon.height, mon.x, mon.y = re.split('[x+]', mon_def[1])
-            monitors.append(mon)
+        for line in lines:
+            chunks = line.strip("\t").split(" ")
+            if not line.startswith("\t"):
+                current_monitor = Monitor()
+                current_monitor.original_id = len(monitors)
+                current_monitor.name = chunks[0]
+                current_monitor.width, \
+                current_monitor.height, \
+                current_monitor.x, \
+                current_monitor.y = re.split('[x+]', chunks[1])
+                monitors.append(current_monitor)
+            if line.startswith("\t") and not line.startswith("\t\t"):
+                current_workspace = Workspace()
+                current_workspace.name = chunks[0]
+                current_workspace.focused = '*' in chunks
+                current_monitor.workspaces.append(current_workspace)
+            if line.startswith("\t\t"):
+                current_workspace.free = False
+        monitors.sort(key=lambda m: m.x)
+        for i, m in enumerate(monitors):
+            m.display_id = i
         return monitors
 
     def __init__(self, main_window):
@@ -42,7 +64,7 @@ class WorkspacesProvider(object):
 
         self.bspc_process = subprocess.Popen(
             ['bspc', 'control', '--subscribe'], stdout=subprocess.PIPE)
-        self.monitors = sorted(self.get_monitors(), key=lambda m: m.x)
+        self.monitors = self.get_monitors()
         self.refresh_workspaces()
 
         self.widgets = {}
@@ -78,16 +100,13 @@ class WorkspacesProvider(object):
             if key in 'mM':
                 chosen_monitor = [m for m in self.monitors if m.name == value]
                 current_monitor = chosen_monitor[0]
-                current_monitor.workspaces = []
                 current_monitor.focused = key.isupper()
 
             elif key in 'oOfFuU':
-                workspace = Workspace()
-                workspace.name = value
+                workspace = [w for w in current_monitor.workspaces if w.name == value][0]
                 workspace.focused = key.isupper()
                 workspace.free = key in 'fF'
                 workspace.urgent = key in 'uU'
-                current_monitor.workspaces.append(workspace)
 
             elif key in 'lL':
                 if value in 'mM':
@@ -104,4 +123,7 @@ class WorkspacesProvider(object):
                 self.widgets[i].ws_widgets[j].setProperty('ws_focused', '%s' % ws.focused)
                 self.widgets[i].ws_widgets[j].setProperty('ws_urgent', '%s' % ws.urgent)
                 self.widgets[i].ws_widgets[j].setProperty('ws_free', '%s' % ws.free)
+                if ws.focused and ws.free and WorkspacesProvider.window_title_provider is not None:
+                    WorkspacesProvider.window_title_provider.labels[monitor.display_id].setText('')
+                    WorkspacesProvider.window_title_provider.window_names[monitor.display_id] = ''
         self.main_window.reloadStyleSheet()
