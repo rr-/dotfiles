@@ -7,3 +7,6 @@ chmod +x ez_setup
 ./ez_setup
 
 easy_install-3.4 pip
+
+rm ez_setup
+rm setuptools-*.zip
