@@ -2,19 +2,19 @@
 import os, sys
 import threading
 import time
-
-from widgets.flow_layout import FlowLayout
-from widgets.cpu         import CpuProvider
-from widgets.mpd         import MpdProvider
-from widgets.volume      import VolumeProvider
-from widgets.time        import TimeProvider
-from widgets.net         import NetworkUsageProvider
-from widgets.battery     import BatteryProvider
-from widgets.workspaces  import WorkspacesProvider
-
 import signal
 from PyQt4 import QtGui
 from PyQt4 import QtCore
+
+from widgets.flow_layout  import FlowLayout
+from widgets.workspaces   import WorkspacesProvider
+from widgets.window_title import WindowTitleProvider
+from widgets.time         import TimeProvider
+from widgets.volume       import VolumeProvider
+from widgets.cpu          import CpuProvider
+from widgets.net          import NetworkUsageProvider
+from widgets.battery      import BatteryProvider
+from widgets.mpd          import MpdProvider
 
 class MainWindow(QtGui.QMainWindow):
     trigger = QtCore.pyqtSignal(object)
@@ -72,6 +72,9 @@ class MainWindow(QtGui.QMainWindow):
         QWidget[active=False] {
             color: silver;
         }
+        QWidget[class=wintitle] {
+            margin-left: 8px;
+        }
         ''')
 
         central_widget = QtGui.QWidget()
@@ -79,9 +82,7 @@ class MainWindow(QtGui.QMainWindow):
         self.setCentralWidget(central_widget)
 
         self.monitor_widgets = []
-        for i, monitor in enumerate(monitors):
-            monitor.number = i
-        for monitor in sorted(monitors, key=lambda m: m.x):
+        for monitor in monitors:
             monitor_widget = QtGui.QWidget(size=QtCore.QSize(int(monitor.width), 0))
             QtGui.QHBoxLayout(monitor_widget, spacing=0, margin=0)
             subwidgets = []
@@ -118,6 +119,7 @@ def main():
 
     providers = [
         WorkspacesProvider(main_window),
+        WindowTitleProvider(main_window),
         MpdProvider(main_window),
         NetworkUsageProvider(main_window),
         BatteryProvider(main_window),
@@ -137,7 +139,6 @@ def main():
         t = threading.Thread(
             target=worker, args=(provider, main_window.trigger), daemon=True)
         t.start()
-
 
     signal.signal(signal.SIGINT, signal.SIG_DFL)
     app.exec_()
