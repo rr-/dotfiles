@@ -15,4 +15,4 @@ class TimeProvider(object):
 
     def render(self):
         self.clock_label.setText(datetime.strftime(self.date, '%H:%M:%S'))
-        self.date_label.setText(datetime.strftime(self.date, '%a, %b %d'))
+        self.date_label.setText(datetime.strftime(self.date, '%a, %d %b %Y'))
