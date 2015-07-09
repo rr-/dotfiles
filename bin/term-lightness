@@ -11,7 +11,7 @@ fi
 
 # MinTTY
 [ -h ~/.minttyrc ] && rm ~/.minttyrc
-ln -s $DIR/../.minttyrc-$word ~/.minttyrc
+ln -s ~/.minttyrc-$word ~/.minttyrc
 
 # vim
 echo -e 'set background='$word >~/.vimrc-background
