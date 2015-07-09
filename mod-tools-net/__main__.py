@@ -1,6 +1,6 @@
 #!/bin/python
 import os, sys
-from libinstall import PackageInstaller, FileInstaller
+from libinstall import PackageInstaller, FileInstaller, run_verbose
 dir = os.path.dirname(__file__)
 
 PackageInstaller.try_install('wget')
@@ -11,3 +11,5 @@ else:
     PackageInstaller.try_install('openssh')
 
 FileInstaller.create_symlink(os.path.join(dir, '.ssh'), '~/')
+
+run_verbose(['chmod', '0600', os.path.expanduser('~/.ssh/config')])
