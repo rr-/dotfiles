@@ -126,23 +126,36 @@ class PipPackageInstaller(object):
     name = 'pip'
     cache_dir = tempfile.gettempdir()
 
+    def __init__(self):
+        if 'cygwin' in sys.platform:
+            self.executable = 'pip3'
+            self.use_sudo = False
+        else:
+            self.executable = 'pip'
+            self.use_sudo = True
+
     def supported(self):
-        return FileInstaller.has_executable('pip') and FileInstaller.has_executable('sudo')
+        if self.use_sudo and not FileInstaller.has_executable('sudo'):
+            return False
+        return FileInstaller.has_executable(self.executable)
 
     def is_installed(self, package):
         return re.search(
             '^' + re.escape(package) + '($|\s)',
-            run_silent(['pip', 'list'])[1],
+            run_silent([self.executable, 'list'])[1],
             re.MULTILINE) is not None
 
     def is_available(self, package):
         return re.search(
             '^' + re.escape(package) + '($|\s)',
-            run_silent(['pip', 'search', package, '--cache-dir', self.cache_dir])[1],
+            run_silent([self.executable, 'search', package, '--cache-dir', self.cache_dir])[1],
             re.MULTILINE) is not None
 
     def install(self, package):
-        return run_verbose(['sudo', 'pip', 'install', '--cache-dir', self.cache_dir, package])
+        command = [self.executable, 'install', '--cache-dir', self.cache_dir, package]
+        if self.use_sudo:
+            command = ['sudo'] + command
+        return run_verbose(command)
 
 class PackageInstaller(object):
     INSTALLERS = [
