@@ -50,7 +50,7 @@ super + {x,X}
 
 # previous and next track
 super + {c,C}
-    mpc {prev,next}
+    mpc {next,prev}
 
 # toggle play
 super + v
