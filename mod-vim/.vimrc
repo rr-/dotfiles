@@ -146,7 +146,7 @@ let g:ctrlp_by_filename = 1
 let g:ctrlp_match_window = 'bottom,order:btt,min:1,max:3,results:3'
 "ignored files and directories
 let g:ctrlp_custom_ignore = {}
-let g:ctrlp_custom_ignore.dir  = '\v('
+let g:ctrlp_custom_ignore.dir  = '\v(^|\/)('
 let g:ctrlp_custom_ignore.dir .= '\.hg|\.git|\.bzr'
 let g:ctrlp_custom_ignore.dir .= '|data\/posts|_site|files|thumbs'
 let g:ctrlp_custom_ignore.dir .= '|vendor|node_modules'
