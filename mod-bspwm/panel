@@ -16,13 +16,15 @@ from widgets.net          import NetworkUsageProvider
 from widgets.battery      import BatteryProvider
 from widgets.mpd          import MpdProvider
 
+HEIGHT = 20
+
 class MainWindow(QtGui.QMainWindow):
     trigger = QtCore.pyqtSignal(object)
 
     def __init__(self, monitors):
         super().__init__()
         self.setWindowFlags(QtCore.Qt.SplashScreen | QtCore.Qt.WindowStaysOnTopHint)
-        self.resize(sum([int(m.width) for m in monitors]), 0)
+        self.setFixedSize(sum([int(m.width) for m in monitors]), HEIGHT)
         self.move(0, 0)
         self.show()
 
