@@ -1,6 +1,9 @@
 from PyQt4 import QtGui
+from PyQt4 import QtCore
 import os
 import glob
+
+from .chart import Chart
 
 def read_file(path):
     with open(path, 'r') as fh:
@@ -28,7 +31,8 @@ class NetworkUsageProvider(object):
             self.old_tx_bytes = int(read_file(self.tx_path))
             self.net_in_label = QtGui.QLabel()
             self.net_out_label = QtGui.QLabel()
-            for w in [self.net_in_label, self.net_out_label]:
+            self.chart = Chart(QtCore.QSize(80, main_window.height()))
+            for w in [self.net_in_label, self.net_out_label, self.chart]:
                 main_window[0].right_widget.layout().addWidget(w)
 
     def refresh(self):
@@ -42,5 +46,8 @@ class NetworkUsageProvider(object):
 
     def render(self):
         if self.network_enabled:
-            self.net_in_label.setText('DL: %5.02f KB/s' % (self.net_in / 1024.0))
-            self.net_out_label.setText('UL: %5.02f KB/s' % (self.net_out / 1024.0))
+            self.net_in_label.setText('\u2b07 %.0f KB/s' % (self.net_in / 1024.0))
+            self.net_out_label.setText('\u2b06 %.0f KB/s' % (self.net_out / 1024.0))
+            self.chart.addPoint('#00a000', self.net_in)
+            self.chart.addPoint('#ff0000', self.net_out)
+            self.chart.repaint()
