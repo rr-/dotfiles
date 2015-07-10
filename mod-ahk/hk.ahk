@@ -249,8 +249,8 @@ DirectionalFocus(direction)
 ;foobar - media shortcuts
 #X::Send {Volume_Up}
 +#X::Volume_Down
-#C::Send {Media_Prev}
-+#C::Media_Next
+#C::Send {Media_Next}
++#C::Media_Prev
 #V::Send {Media_Play_Pause}
 +#V::FRun("ahk_class {97E27FAA-C0B3-4b8e-A693-ED7881E99FC1}", "C:\program files (x86)\foobar2000\foobar2000.exe", "C:\Program Files (x86)\foobar2000")
 
