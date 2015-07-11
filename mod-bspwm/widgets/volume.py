@@ -1,6 +1,7 @@
 from PyQt4 import QtGui
 from PyQt4 import QtCore
 import alsaaudio
+import subprocess
 
 class VolumeControl(QtGui.QWidget):
     def __init__(self, size):
@@ -50,6 +51,20 @@ class VolumeProvider(object):
         self.volume_control = VolumeControl(QtCore.QSize(50, main_window.height()))
         main_window[0].right_widget.layout().addWidget(self.label)
         main_window[0].right_widget.layout().addWidget(self.volume_control)
+        for w in [self.label, self.volume_control]:
+            w.mouseReleaseEvent = self.toggle_mute
+            w.wheelEvent = self.change_volume
+
+    def change_volume(self, event):
+        subprocess.call(['amixer', '-q', 'set', 'Master',
+            '1dB%s' % ['-', '+'][event.delta() > 0], 'unmute'])
+        self.refresh()
+        self.render()
+
+    def toggle_mute(self, event):
+        subprocess.call(['amixer', '-q', 'set', 'Master', 'toggle'])
+        self.refresh()
+        self.render()
 
     def refresh(self):
         self.volume = alsaaudio.Mixer().getvolume()[0]
@@ -61,3 +76,4 @@ class VolumeProvider(object):
         else:
             self.label.setText('\U0001f50a')
         self.volume_control.set(self.volume)
+        self.volume_control.repaint()
