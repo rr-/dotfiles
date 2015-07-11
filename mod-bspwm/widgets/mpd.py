@@ -18,6 +18,7 @@ class MpdProvider(object):
 
         self.status_label = QtGui.QLabel()
         self.status_label.setProperty('class', 'icon')
+        self.status_label.setStyleSheet('QWidget { margin-right: -8px }')
         self.song_label = QtGui.QLabel()
         self.random_label = QtGui.QLabel()
         self.random_label.setProperty('class', 'icon')
