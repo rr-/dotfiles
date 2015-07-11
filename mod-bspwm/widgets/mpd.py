@@ -30,9 +30,18 @@ class MpdProvider(object):
         self.status_label.mouseReleaseEvent = self.play_pause_clicked
         self.song_label.mouseReleaseEvent = self.play_pause_clicked
         self.random_label.mouseReleaseEvent = self.random_clicked
+        self.status_label.wheelEvent = self.prev_or_next_track
+        self.song_label.wheelEvent = self.prev_or_next_track
 
     def play_pause_clicked(self, event):
         subprocess.call(['mpc', 'toggle'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        self.refresh()
+        self.render()
+
+    def prev_or_next_track(self, event):
+        subprocess.call(
+            ['mpc', ['prev', 'next'][event.delta() > 0]],
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         self.refresh()
         self.render()
 
