@@ -120,7 +120,7 @@ super + {bracketleft,bracketright}
 
 # reload sxhkd configuration
 alt + F12
-    bash -c '~/.config/bspwm/bspwmrc; pkill -USR1 -x sxhkd'
+    bash -c '~/.config/bspwm/bspwmrc'
 
 # resize/move while holding mod and LMB/RMB
 super + button{1,3}
