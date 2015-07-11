@@ -9,6 +9,8 @@ class TimeProvider(object):
         self.clock_label = QtGui.QLabel()
         for w in [self.date_label, self.clock_label]:
             main_window[0].right_widget.layout().addWidget(w)
+        self.date_label.setStyleSheet('QWidget { margin-left: 12px; margin-right: 0 }')
+        self.clock_label.setStyleSheet('QWidget { margin-left: 0; padding: 0 }')
 
     def refresh(self):
         self.date = datetime.now()
