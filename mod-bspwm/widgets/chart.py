@@ -28,13 +28,17 @@ class Chart(QtGui.QWidget):
             size = self.size()
             ox = 0
             oy = points[-1]
-            for x, y in enumerate(reversed(points[0:-2])):
-                if x_transform(x) <= margin:
-                    points.pop(0)
-                    break
-                qp.drawLine(x_transform(ox), y_transform(oy), x_transform(x), y_transform(y))
+            for x, y in enumerate(reversed(points)):
+                dx = x_transform(x)
+                excess = dx < margin
+                if excess:
+                    dx = margin
+                qp.drawLine(x_transform(ox), y_transform(oy), dx, y_transform(y))
                 ox = x
                 oy = y
+                if excess:
+                    points.pop(0)
+                    break
 
         margin -= 1
         qp.setPen(QtGui.QColor('#444444'))
