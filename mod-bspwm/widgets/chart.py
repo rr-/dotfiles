@@ -1,4 +1,5 @@
 from PyQt4 import QtGui
+from PyQt4 import QtCore
 import collections
 
 class Chart(QtGui.QWidget):
@@ -23,6 +24,12 @@ class Chart(QtGui.QWidget):
 
         qp = QtGui.QPainter()
         qp.begin(self)
+
+        qp.setBrush(QtGui.QBrush(QtGui.QColor('#f5f5f5')))
+        qp.setPen(QtGui.QPen(0))
+        qp.drawRect(margin, margin, self.width() - 1 - 2 * margin, self.height() - 1 - 2 * margin)
+        qp.setBrush(QtGui.QBrush())
+
         for color, points in self.points.items():
             qp.setPen(QtGui.QColor(color))
             size = self.size()
@@ -41,7 +48,7 @@ class Chart(QtGui.QWidget):
                     break
 
         margin -= 1
-        qp.setPen(QtGui.QColor('#444444'))
+        qp.setPen(QtGui.QColor('#999999'))
         qp.drawRect(margin, margin, self.width() - 1 - 2 * margin, self.height() - 1 - 2 * margin)
 
         qp.end()
