@@ -29,14 +29,14 @@ class VolumeControl(QtGui.QWidget):
 
         poly = [points['zero'], points['vol1'], points['vol2']]
         qp.setPen(QtGui.QPen(0))
-        qp.setBrush(QtGui.QColor(0, 0, 0, 0x40))
+        qp.setBrush(QtGui.QColor('#dddddd'))
         qp.drawPolygon(QtGui.QPolygon(poly))
 
         poly = [points['vol1'], points['vol2'], points['max1'], points['max2']]
-        qp.setBrush(QtGui.QColor(0, 0, 0, 0x10))
+        qp.setBrush(QtGui.QColor('#f5f5f5'))
         qp.drawPolygon(QtGui.QPolygon(poly))
 
-        qp.setPen(QtGui.QPen(QtGui.QColor('#444444')))
+        qp.setPen(QtGui.QPen(QtGui.QColor('#999999')))
         poly = [points['zero'], points['max1'], points['max2']]
         qp.setBrush(QtGui.QBrush())
         qp.drawPolygon(QtGui.QPolygon(poly))
