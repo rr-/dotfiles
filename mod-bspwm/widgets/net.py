@@ -34,6 +34,7 @@ class NetworkUsageProvider(object):
             self.chart = Chart(QtCore.QSize(80, main_window.height()))
             for w in [self.net_in_label, self.net_out_label, self.chart]:
                 main_window[0].right_widget.layout().addWidget(w)
+            self.chart.repaint()
 
     def refresh(self):
         if self.network_enabled:
@@ -46,8 +47,8 @@ class NetworkUsageProvider(object):
 
     def render(self):
         if self.network_enabled:
-            self.net_in_label.setText('\u2b07 %.0f KB/s' % (self.net_in / 1024.0))
-            self.net_out_label.setText('\u2b06 %.0f KB/s' % (self.net_out / 1024.0))
+            self.net_in_label.setText('\U0001f847 %.0f KB/s' % (self.net_in / 1024.0))
+            self.net_out_label.setText('\U0001f845 %.0f KB/s' % (self.net_out / 1024.0))
             self.chart.addPoint('#00a000', self.net_in)
             self.chart.addPoint('#ff0000', self.net_out)
             self.chart.repaint()
