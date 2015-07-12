@@ -1,9 +1,6 @@
 [submodule "configs/vundle"]
 	path = mod-vim/vundle
 	url = https://github.com/gmarik/Vundle.vim.git
-[submodule "ext/translator"]
-	path = ext/translator
-	url = https://github.com/rr-/translator.git
 [submodule "ext/bk"]
 	path = ext/bk
 	url = https://github.com/rr-/bk.git
