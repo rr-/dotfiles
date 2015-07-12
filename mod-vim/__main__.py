@@ -3,7 +3,11 @@ import os
 from libinstall import FileInstaller, PackageInstaller
 dir = os.path.dirname(__file__)
 
-PackageInstaller.try_install('vim')
+choices = ['vim', 'gvim'] #gvim supports for X11 clipboard, but has more dependencies
+choice = None
+while choice not in choices:
+    choice = input('Which package to install? (%s) ' % choices).lower()
+PackageInstaller.try_install(choice)
 
 for folder in ['undo', 'backup', 'swap', 'spell']:
     FileInstaller.create_dir('~/.vim/' + folder)
