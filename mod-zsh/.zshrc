@@ -40,6 +40,11 @@ bindkey -e                              # use Emacs keybindings
 stty -ixon                              # reclaim ctrl+q for Vim
 stty stop undef                         # reclaim ctrl+s for Vim
 
+# powerful copying/renaming/linking
+autoload -U zmv
+alias zcp='zmv -C'
+alias zln='zmv -L'
+
 # key bindings for terminal emulator
 if [ "$TERM" =~ rxvt ]; then
     bindkey "\e[3~"   delete-char           # delete
