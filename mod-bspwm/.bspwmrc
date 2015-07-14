@@ -1,5 +1,13 @@
 #!/bin/sh
 
+SOURCE="${BASH_SOURCE[0]}"
+while [ -h "$SOURCE" ]; do
+    DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
+    SOURCE="$(readlink "$SOURCE")"
+    [[ $SOURCE != /* ]] && SOURCE="$DIR/$SOURCE"
+ done
+DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
+
 desktop_config() {
     bspc config $1 $2
     for M in $(bspc query -M); do
@@ -49,6 +57,7 @@ bspc rule -a Trackma-qt desktop=10 floating=on
 bspc rule -a music_player desktop=10 floating=on
 bspc rule -a qbittorrent desktop=9
 bspc rule -a Steam desktop=8
+bspc config external_rules_command "$DIR/rules"
 
 feh --bg-fill "$HOME/.wallpaper1" "$HOME/.wallpaper2" &
 
