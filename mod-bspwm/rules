@@ -1,0 +1,19 @@
+#!/bin/sh
+
+window_id=$1
+window_class=$2
+instance=$3
+title=$(xdotool getwindowname "$window_id")
+
+if [ "$window_class" = Pidgin ] ; then
+    case "$title" in
+        buddy*list|Buddy*List)
+            echo "floating = on"
+            xdotool windowmove "$window_id" 3460 70
+            ;;
+        *)
+            echo "floating = on"
+            xdotool windowmove "$window_id" 2650 70
+            ;;
+    esac
+fi
