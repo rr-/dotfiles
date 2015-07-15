@@ -128,15 +128,6 @@ RandomFileName()
 	return fileName
 }
 
-;calling screen script
-MakeScreen(arguments)
-{
-	baseFileName := "Z:\" . RandomFileName() . ".png"
-	RunWait, % "Z:\software\utilities\scrsh.exe --path " . baseFileName . " " . arguments, "Z:\", Hide
-	SoundPlay, Z:\clutter\sounds\ping.wav
-	return baseFileName
-}
-
 ;focus window in given direction
 DirectionalFocus(direction)
 {
@@ -237,10 +228,6 @@ DirectionalFocus(direction)
 		}
 		return
 	}
-	+PrintScreen::MakeScreen("-g")
-	!PrintScreen::MakeScreen("-r active-window --shift -8,-8,+16,+16 --force-gui")
-	!#PrintScreen::MakeScreen("-r active-monitor")
-	#PrintScreen::MakeScreen("-r all-monitors")
 
 
 ;explorer - activate/run

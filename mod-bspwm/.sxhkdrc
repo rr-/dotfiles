@@ -3,12 +3,8 @@
 #
 
 # dmenu (a program launcher)
-super + {space, r, d}
+super + {r, d}
     dmenu_run
-
-# calculator
-XF86Calculator
-    qalculate
 
 # local terminal
 alt + ctrl + bracketleft
@@ -103,14 +99,6 @@ super + s
 # set current window as fullscreen
 super + f
     bspc window -t fullscreen
-
-# swap current window with last focused window
-super + apostrophe
-    bspc window -s last
-
-# swap current window with the biggest one
-super + m
-    bspc window -s biggest
 
 # focus window with regard to focus history
 super + {bracketleft,bracketright}
