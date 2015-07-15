@@ -62,9 +62,21 @@ alt + shift + ctrl + {Left,Right}
 # window manager
 #
 
+# widen/shrink current window
+super + w
+    bspc window -e left -50
+    bspc window -e right +50
+    bspc window -e down +50
+    bspc window -e up -50
+super + W
+    bspc window -e left +50
+    bspc window -e right -50
+    bspc window -e down -50
+    bspc window -e up +50
+
+# transparency
 super + {button5,button4}
     compton-trans -c {-,+}5
-
 super + {z,Z}
     compton-trans -c {-,+}5
 
