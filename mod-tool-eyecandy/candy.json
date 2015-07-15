@@ -17,6 +17,8 @@
         ["Page down",          ["next_file"]],
         ["Ctrl+Page up",       ["prev_file", 50]],
         ["Ctrl+Page down",     ["next_file", 50]],
+        ["K",                  ["prev_file"]],
+        ["J",                  ["next_file"]],
         ["WheelUp",            ["prev_file"]],
         ["WheelDown",          ["next_file"]],
         ["Home",               ["first_file"]],
