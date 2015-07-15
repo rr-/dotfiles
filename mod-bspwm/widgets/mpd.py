@@ -99,6 +99,6 @@ class MpdProvider(object):
             self.random_label.setProperty('active', '%s' % random)
             self.main_window.reloadStyleSheet()
 
-    def format_seconds(self):
+    def format_seconds(self, seconds):
         seconds = math.floor(float(seconds))
         return '%02d:%02d' % (seconds // 60, seconds % 60)
