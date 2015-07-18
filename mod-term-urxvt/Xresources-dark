@@ -1,6 +1,6 @@
-*.background: #000000
+*.background: #444444
 *.foreground: #f5f2df
-*.color0:     #000000
+*.color0:     #444444
 *.color1:     #eb4f0c
 *.color2:     #97bf5f
 *.color3:     #cccc3d
