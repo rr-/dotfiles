@@ -130,5 +130,11 @@ super + button{1,3}
 super + @button{1,3}
     bspc pointer -u
 
+# screenshots
+super + i
+    bash -c 'shot -i --output ~/'
+super + shift + i
+    bash -c 'shot -w -i --output ~/'
+
 ~button1
     bspc pointer -g focus
