@@ -358,5 +358,9 @@ DirectionalFocus(direction)
 +#C::Media_Prev
 #V::Send {Media_Play_Pause}
 
+;screenshots
++#I::Run, shot -w -i --output=Z:/
+#I::Run, shot -i --output=Z:/
+
 ;reload autohotkey
 !F12::Reload
