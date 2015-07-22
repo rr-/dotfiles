@@ -123,7 +123,26 @@ fi
 if ! command -v reboot >/dev/null 2>&1; then
     [[ $(uname) =~ cygwin ]] && alias reboot='shutdown /r /t 0 /f' || alias reboot='shutdown -r now'
 fi
-[ -e /dev/clipboard ] && alias clip='cat >/dev/clipboard'
+
+# portable clipboard
+clip() {
+    # cygwin
+    if [ -e /dev/clipboard ]; then
+        if [ "$1" == -o ]; then
+            cat /dev/clipboard
+        else
+            cat >/dev/clipboard
+        fi
+    fi
+    # X
+    if command -v xclip &>/dev/null; then
+        if [ "$1" == -o ]; then
+            xclip -sel p -o
+        else
+            xclip -sel p
+        fi
+    fi
+}
 
 # colorful manpages
 man() {
