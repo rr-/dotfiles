@@ -24,7 +24,7 @@ def collect_files_from_dir(dir):
 def collect_files(args):
     for arg in args:
         if not os.path.exists(arg):
-            print('File does not exist: %s' % arg)
+            print('File does not exist: %s' % arg, file=sys.stderr)
             continue
         if os.path.isfile(arg):
             yield collect_single_file(arg)
@@ -34,7 +34,7 @@ def collect_files(args):
 
 def send(src_paths):
     if not src_paths:
-        print('Nothing to send.')
+        print('Nothing to send.', file=sys.stderr)
         return
 
     tar_stream = io.BytesIO()
@@ -70,7 +70,7 @@ def send(src_paths):
     for url in urls:
         print(url)
     if err:
-        print(err.decode('utf8'))
+        print(err.decode('utf8'), file=sys.stderr)
         sys.exit(1)
 
 def main():
