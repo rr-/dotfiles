@@ -62,7 +62,7 @@ class Tagger(object):
         self.all_tags = [tag['name'].lower() for tag in tag_data]
 
     def install_tag_completer(self):
-        for lib in ['libreadline.so', 'libreadline.dll']:
+        for lib in ['libreadline.so', 'libreadline.dll', 'cygreadline7.dll']:
             try:
                 import ctypes
                 rl = ctypes.cdll.LoadLibrary(lib)
