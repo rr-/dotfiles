@@ -128,7 +128,7 @@ def parse_args():
     parser = argparse.ArgumentParser(
         description='Sends post to szurubooru from CLI')
     parser.add_argument('-c', '--config', metavar='CONFIG_PATH',
-        required=True, help='path to config JSON file')
+        help='path to config JSON file', default='~/.config/booru.json')
     parser.add_argument('-w', '--wait', choices=['always', 'errors', 'never'],
         default='never', help='wait before exiting on errors')
     parser.add_argument(metavar='POST_PATH', dest='path',
@@ -138,16 +138,36 @@ def parse_args():
 def wait_for_user_input():
     input('Press Enter to continue...')
 
+def load_config(path):
+    config = {}
+    if path:
+        path = os.path.expanduser(path)
+        if not os.path.exists(path):
+            print('Warning: %s does not exist' % path, file=sys.stderr)
+        else:
+            with open(path, 'r') as fh:
+                config = json.load(fh)
+    return config
+
+def fill_config(config):
+    if 'url' not in config:
+        config['url'] = input('Booru URL: ')
+    if 'user' not in config:
+        config['user'] = input('User: ')
+    if 'password' not in config:
+        from getpass import getpass
+        config['password'] = getpass('Password: ')
+
 def main():
     requests.packages.urllib3.disable_warnings()
 
     args = parse_args()
     try:
-        with open(os.path.expanduser(args.config), 'r') as fh:
-            config = json.load(fh)
-
         if not os.path.exists(args.path):
             raise RuntimeError('Post file does not exist')
+
+        config = load_config(args.config)
+        fill_config(config)
 
         b = Booru(config['url'])
         b.login(config['user'], config['password'])
