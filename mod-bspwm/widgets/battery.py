@@ -30,4 +30,3 @@ class BatteryProvider(object):
     def render(self):
         if self.battery_present:
             self.label.setText('Battery: %5.02f%% (%s)', self.percentage, self.status)
-
