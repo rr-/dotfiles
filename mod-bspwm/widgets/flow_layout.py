@@ -72,4 +72,3 @@ class FlowLayout(QtGui.QLayout):
         if not self.itemList:
             return 0
         return max([item.sizeHint().height() for item in self.itemList])
-
