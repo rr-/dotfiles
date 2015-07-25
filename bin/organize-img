@@ -54,6 +54,7 @@ find "$transit_root_dir" -depth -type d -print0|while read -d '' -r src_folder; 
 
         mv "$src_file" "$dst_file" && echo 'ok'
     done
+    distribute-files "$dst_folder" --fill-last -v
 done
 
 #remove empty directores
