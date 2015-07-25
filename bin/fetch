@@ -20,6 +20,15 @@ except ImportError as e:
     print('Please install %s.' % e.name, file=sys.stderr)
     sys.exit(1)
 
+
+class PseudoDict(collections.defaultdict):
+    __getattr__ = dict.__getitem__
+    __setattr__ = dict.__setitem__
+    def __init__(self, *args, **kwargs):
+        super().__init__(lambda: None)
+        self.update(*args, **kwargs)
+
+
 class History(set):
     def __init__(self, path):
         self.path = path
@@ -44,44 +53,39 @@ class History(set):
             self.lock.release()
             print('Saved %d URLs to history file' % len(s))
 
-class PseudoDict(collections.defaultdict):
-    __getattr__ = dict.__getitem__
-    __setattr__ = dict.__setitem__
-    def __init__(self, *args, **kwargs):
-        super().__init__(lambda: None)
-        self.update(*args, **kwargs)
 
 class Worker(object):
     num = 0
-
     def __init__(self):
         self.num = self.__class__.num
         self.__class__.num += 1
 
-    def run(self, queue, lock):
-        while True:
-            item = queue.get()
-            try:
-                status = self.process(item, queue, lock)
-            except Exception as ex:
-                status = self.on_error(item, ex, queue, lock)
-            finally:
-                queue.task_done()
-            with lock:
-                print('[T%d ~%5d queued] %s' % (
-                    self.num, queue.qsize(), self.format_status(item, status)))
 
-def run_workers(count, queue, worker_factory):
-    lock = threading.Lock()
-    for i in range(count):
-        worker = worker_factory()
-        thread = threading.Thread(target=worker.run, args=[queue, lock])
-        thread.daemon = True
-        thread.start()
-    queue.join()
+class QueueWorker(Worker):
+    def __init__(self, queue, lock):
+        super().__init__()
+        self.queue = queue
+        self.lock = lock
+
+    def run(self):
+        while True:
+            item = self.queue.get()
+            try:
+                status = self.process(item)
+            except Exception as ex:
+                status = self.on_error(item, ex)
+            finally:
+                self.queue.task_done()
+            self._print(self.format_status(item, status))
+
+    def _print(self, text):
+        with self.lock:
+            print('[T%d ~%5d queued] %s' % (self.num, self.queue.qsize(), text))
+
 
 class Command(object):
     pass
+
 
 class DownloadCommand(Command):
     @staticmethod
@@ -128,32 +132,50 @@ class DownloadCommand(Command):
             for url in args.url:
                 visited.add(url)
                 queue.put(DownloadCommand.Item(url))
-            f = lambda: __class__.Worker(args, visited, history)
-            run_workers(args.workers, queue, f)
+            lock = threading.Lock()
+            for i in range(args.workers):
+                worker = __class__.Worker(queue, lock, args, visited, history)
+                thread = threading.Thread(target=worker.run)
+                thread.daemon = True
+                thread.start()
+            queue.join()
 
-    class Worker(Worker):
-        def __init__(self, args, visited, history):
+    class Worker(QueueWorker):
+        def __init__(self, queue, lock, args, visited, history):
+            super().__init__(queue, lock)
             self.args = args
             self.visited = visited
             self.history = history
 
-        def process_html(self, response, queue):
+        def process(self, item):
+            response = requests.get(item.url)
+            if response.status_code != 200:
+                raise RuntimeError('HTTP error %d' % response.status_code)
+            mime = response.headers['content-type'].split(';')[0].lower()
+            if mime == 'text/html':
+                return self._process_html(response)
+            else:
+                return self._process_nonhtml(response)
+
+        def _process_html(self, response):
             soup = BeautifulSoup(response.text)
             child_urls = set()
             for link in soup.find_all('a', href=True):
                 child_url = urllib.parse.urldefrag(
                     urllib.parse.urljoin(response.url, link['href'])).url
-                if self.args.accept.search(child_url) \
-                and not child_url in self.visited \
-                and not child_url in self.history:
-                    child_urls.add(child_url)
+                with self.lock:
+                    if self.args.accept.search(child_url) \
+                    and not child_url in self.visited \
+                    and not child_url in self.history:
+                        child_urls.add(child_url)
+                        self.visited.add(child_url)
+            with self.lock:
+                for child_url in sorted(child_urls):
+                    self.queue.put(DownloadCommand.Item(child_url))
                     self.visited.add(child_url)
-            for child_url in sorted(child_urls):
-                queue.put(DownloadCommand.Item(child_url))
-                self.visited.add(child_url)
             return PseudoDict(parsed=True, urls_added=len(child_urls))
 
-        def process_nonhtml(self, response):
+        def _process_nonhtml(self, response):
             parsed_url = urllib.parse.urlparse(response.url)
             target_path = os.path.join(
                 self.args.target,
@@ -163,25 +185,15 @@ class DownloadCommand(Command):
             os.makedirs(target_dir, exist_ok=True)
             with open(target_path, 'wb') as fh:
                 fh.write(response.content)
-            self.history.add(response.url)
+            with self.lock:
+                self.history.add(response.url)
             return PseudoDict(download_path=target_path)
 
-        def process(self, item, queue, lock):
-            response = requests.get(item.url)
-            with lock:
-                if response.status_code != 200:
-                    raise RuntimeError('HTTP error %d' % response.status_code)
-                mime = response.headers['content-type'].split(';')[0].lower()
-                if mime == 'text/html':
-                    return self.process_html(response, queue)
-                else:
-                    return self.process_nonhtml(response)
-
-        def on_error(self, item, ex, queue, lock):
+        def on_error(self, item, ex):
             time.sleep(self.args.retry_wait)
             item.retries += 1
             if item.retries < self.args.retries:
-                queue.put(item)
+                self.queue.put(item)
             return PseudoDict(error=str(ex))
 
         def format_status(self, item, status):
@@ -199,6 +211,7 @@ class DownloadCommand(Command):
     class Item(PseudoDict):
         def __init__(self, url):
             super().__init__(url=url, retries=0)
+
 
 class PruneCommand(Command):
     @staticmethod
@@ -222,27 +235,33 @@ class PruneCommand(Command):
             queue = Queue()
             for url in history:
                 queue.put(url)
-            f = lambda: __class__.Worker(history)
-            run_workers(args.workers, queue, f)
+            lock = threading.Lock()
+            for i in range(args.workers):
+                worker = __class__.Worker(queue, lock, history)
+                thread = threading.Thread(target=worker.run)
+                thread.daemon = True
+                thread.start()
+            queue.join()
 
-    class Worker(Worker):
-        def __init__(self, history):
+    class Worker(QueueWorker):
+        def __init__(self, queue, lock, history):
+            super().__init__(queue, lock)
             self.history = history
 
-        def process(self, item, queue, lock):
+        def process(self, item):
             response = requests.head(item.strip())
-            with lock:
-                if response.status_code == 404:
+            if response.status_code == 404:
+                with self.lock:
                     self.history.remove(item)
-                    return 'pruned (404)'
-                else:
-                    return 'spared (%d)' % response.status_code
+                return 'pruned (404)'
+            return 'spared (%d)' % response.status_code
 
-        def on_error(self, item, ex, queue, lock):
+        def on_error(self, item, ex):
             return 'error: %s' % str(ex)
 
         def format_status(self, item, status):
             return '%s: %s' % (item.strip(), status)
+
 
 def parse_args():
     fmt = lambda prog: argparse.HelpFormatter(
