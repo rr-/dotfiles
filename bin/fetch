@@ -28,7 +28,7 @@ class History(set):
         self.fh = None
         if self.path and os.path.exists(self.path):
             self.lock = lockfile.LockFile(self.path)
-            self.lock.acquire()
+            self.lock.acquire(timeout=-1)
             self.fh = open(self.path, 'r+b')
             self.update(pickle.load(self.fh))
             print('Loaded %d URLs from history file' % len(self))
