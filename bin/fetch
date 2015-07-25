@@ -1,5 +1,5 @@
 #!/usr/bin/python3
-from queue import Queue
+from queue import Queue, LifoQueue
 import argparse
 import collections
 import os
@@ -124,7 +124,7 @@ class DownloadCommand(Command):
         args.accept = re.compile(args.accept)
         visited = set()
         with History(args.history) as history:
-            queue = Queue()
+            queue = LifoQueue()
             for url in args.url:
                 visited.add(url)
                 queue.put(DownloadCommand.Item(url))
