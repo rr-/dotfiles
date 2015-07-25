@@ -1,0 +1,117 @@
+#!/bin/python3
+import argparse
+import shutil
+import collections
+import os, sys
+
+STYLE_FIRST = 0
+STYLE_LAST = 1
+STYLE_CREATE = 2
+
+def parse_args():
+    parser = argparse.ArgumentParser(
+        description='Distribute files in given directory to subdirectories.')
+
+    parser.add_argument('-m', '--max', metavar='MAX', type=int, default=1000,
+        help='set upper limit how many files a directory should contain')
+
+    parser.add_argument('base_dir', metavar='DIR',
+        help='directory to organize')
+
+    group = parser.add_mutually_exclusive_group()
+    group.set_defaults(style=STYLE_LAST, verbosity = 0)
+    group.add_argument(
+        '--fill-first', action='store_const', dest='style', const=STYLE_FIRST,
+        help='try to fill first directory available')
+    group.add_argument(
+        '--fill-last', action='store_const', dest='style', const=STYLE_LAST,
+        help='try to fill last directory available (default)')
+    group.add_argument(
+        '--create', action='store_const', dest='style', const=STYLE_CREATE,
+        help='always create new directories')
+
+    parser.add_argument(
+        '--dry-run', action='store_true',
+        help='don\'t do anything (simulation)')
+
+    parser.set_defaults(verbosity = 0)
+    parser.add_argument(
+        '-v', '--verbose', action='store_const', dest='verbosity', const=1,
+        help='print directory operations')
+    parser.add_argument(
+        '--very-verbose', action='store_const', dest='verbosity', const=2,
+        help='print file movement operations')
+    parser.add_argument(
+        '--silent', action='store_const', dest='verbosity', const=0,
+        help='print only errors')
+
+    return parser.parse_args()
+
+def next_dir_number(dir_map, style, max_file_count):
+    next_dir_number = max(list(dir_map.keys()) + [0]) + 1
+
+    if style == STYLE_FIRST:
+        if next_dir_number != len(dir_map):
+            for i in range(1, next_dir_number):
+                if i not in dir_map:
+                    return i, max_file_count
+
+        for dir, file_count in dir_map.items():
+            if file_count < max_file_count:
+                return dir, max_file_count - file_count
+
+    elif style == STYLE_LAST:
+        for dir, file_count in reversed(list(dir_map.items())):
+            if file_count < max_file_count:
+                return dir, max_file_count - file_count
+            break #it's late and I'm tired
+
+    elif style == STYLE_CREATE:
+        pass
+
+    else:
+        raise AssertionError()
+
+    return next_dir_number, max_file_count
+
+def main():
+    args = parse_args()
+
+    if not os.path.exists(args.base_dir):
+        print('Directory does not exist: %s' % args.base_dir, file=sys.stderr)
+        sys.exit(1)
+
+    _, dirs, files = next(os.walk(args.base_dir))
+    files = sorted(files)
+
+    numeric_dirs = [dir for dir in dirs if dir.isdigit()]
+    numeric_dirs = sorted(numeric_dirs)
+    dir_gen = ((int(dir), len(os.listdir(os.path.join(args.base_dir, dir))))
+        for dir in numeric_dirs)
+    dir_map = collections.OrderedDict(dir_gen)
+
+    while files:
+        dir_number, avail_files = next_dir_number(dir_map, args.style, args.max)
+        dir = '%d' % dir_number
+        files_to_move = files[0:avail_files]
+
+        target_path = os.path.join(args.base_dir, dir)
+        if args.verbosity > 0:
+            print('Using directory %s to distribute %d files' % (
+                target_path, len(files_to_move)))
+        if not args.dry_run:
+            os.makedirs(target_path, exist_ok=True)
+
+        for file in files_to_move:
+            source_path = os.path.join(args.base_dir, file)
+            target_path = os.path.join(args.base_dir, dir, file)
+            if args.verbosity > 1:
+                print('Moving', source_path, 'to', target_path)
+            if not args.dry_run:
+                shutil.move(source_path, target_path)
+
+        files = files[avail_files:]
+        dir_map[dir_number] = args.max
+
+if __name__ == '__main__':
+    main()
