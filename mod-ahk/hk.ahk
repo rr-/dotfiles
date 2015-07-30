@@ -293,11 +293,6 @@ AddTransparency(delta)
     WinClose
     return
 
-;run program
-#D::
-    SendInput, {LWin down}r{LWin up}
-    return
-
 ;fullscreen
 #F::
     WinGet MX, MinMax, A
