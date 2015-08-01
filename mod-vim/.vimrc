@@ -119,7 +119,7 @@ command! TwoSpaces set et sts=2 ts=2 sw=2
 command! FourSpaces set et sts=4 ts=4 sw=4
 command! Tabs set noet sts=4 ts=4 sw=4
 "create working dirs for current file
-command! CreateDirs execute ':silent !mkdir -p %:h' | write
+command! CreateDirs execute ':silent !mkdir -p %:h' | write | redraw!
 "copy text file with hard wraps (e.g. Markdown) as one line
 function! CopyWithoutHardWrapping()
   let old_tw=&textwidth
