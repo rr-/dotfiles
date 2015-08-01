@@ -1,9 +1,9 @@
 #!/usr/bin/python3
 import argparse
 import json
-import os
+import os, sys
+import re
 import readline
-import sys
 
 try:
     import requests
@@ -49,17 +49,32 @@ class Booru(object):
                         'tags': ' '.join(tags)
                     }))
 
+    def update_post(self, post_id, new_tags, last_edit_time):
+        self.verify_response(
+            self.session.post(
+                self.api_url + '/posts/' + str(post_id),
+                data={
+                    'tags': ' '.join(new_tags),
+                    'seenEditTime': last_edit_time,
+                }))
+
+    def get_post(self, post_id):
+        r = self.verify_response(
+            self.session.get(
+                self.api_url + '/posts/' + str(post_id)))
+        return json.loads(r.text)
+
     def verify_response(self, response):
         if response.status_code != 200:
             raise RuntimeError(json.loads(response.text)['error'])
         return response
 
 class Tagger(object):
-    def __init__(self, tag_data):
+    def __init__(self, tagger_settings):
         self.chosen_tags = []
         self.install_tag_completer()
-        self.tag_dict = dict((tag['name'].lower(), tag) for tag in tag_data)
-        self.all_tags = [tag['name'].lower() for tag in tag_data]
+        self.tag_dict = {tag['name'].lower(): tag for tag in tagger_settings}
+        self.all_tags = [tag['name'].lower() for tag in tagger_settings]
 
     def install_tag_completer(self):
         for lib in ['libreadline.so', 'libreadline.dll', 'cygreadline7.dll']:
@@ -135,8 +150,8 @@ def parse_args():
         help='path to the post')
     return parser.parse_args()
 
-def wait_for_user_input():
-    input('Press Enter to continue...')
+def wait_for_user_input(message='Press Enter to continue...'):
+    input(message)
 
 def load_config(path):
     config = {}
@@ -158,43 +173,73 @@ def fill_config(config):
         from getpass import getpass
         config['password'] = getpass('Password: ')
 
+def update_tags(b, tagger_settings, post_id, chosen_tags):
+    post = b.get_post(post_id)
+
+    tmp_tagger = Tagger(tagger_settings)
+    for tag in post['tags']:
+        tmp_tagger.add(tag['name'])
+    existing_tags = set(tmp_tagger.get())
+    new_tags = set([t for t in chosen_tags if t not in existing_tags])
+
+    if not new_tags:
+        print('No new tags.')
+    else:
+        print('Existing tags: %s' % ', '.join(existing_tags))
+        print('New tags: %s' % ', '.join(new_tags))
+        wait_for_user_input('Press Enter to add new tags, Ctrl+C to exit...')
+        b.update_post(post_id, new_tags | existing_tags, post['lastEditTime'])
+        print('Tags merge successful!')
+
+def upload(b, tagger_settings, args):
+    if not os.path.exists(args.path):
+        raise RuntimeError('Post file does not exist')
+
+    print('Entering tagging mode.')
+    print('^D to finish,')
+    print('^C to abort')
+
+    tagger = Tagger(tagger_settings)
+    tagger.add_from_user_input()
+
+    safety = 'safe'
+    for s in ['safe', 'sketchy', 'unsafe']:
+        if s in tagger.get():
+            safety = s
+            tagger.remove(s)
+
+    chosen_tags = set(tagger.get())
+
+    print('Tags: %s' % ', '.join(chosen_tags))
+    print('Safety: %s' % safety)
+
+    try:
+        b.upload_post(args.path, chosen_tags, safety)
+        print('Upload succesful!')
+    except Exception as e:
+        if 'duplicate' not in str(e).lower():
+            raise
+        print(e)
+        post_id = int(re.search('([0-9]+)', str(e)).group(0))
+        update_tags(b, tagger_settings, post_id, chosen_tags)
+
 def main():
     requests.packages.urllib3.disable_warnings()
 
     args = parse_args()
     try:
-        if not os.path.exists(args.path):
-            raise RuntimeError('Post file does not exist')
-
         config = load_config(args.config)
         fill_config(config)
 
         b = Booru(config['url'])
         b.login(config['user'], config['password'])
-        tag_data = list(b.get_tags())
-        tag_data.insert(0, {'name': 'unsafe', 'usages': 999999})
-        tag_data.insert(0, {'name': 'sketchy', 'usages': 999999})
-        tag_data.insert(0, {'name': 'safe', 'usages': 999999})
 
-        print('Entering tagging mode.')
-        print('^D to finish,')
-        print('^C to abort')
+        tagger_settings = list(b.get_tags())
+        tagger_settings.insert(0, {'name': 'unsafe', 'usages': 999999})
+        tagger_settings.insert(0, {'name': 'sketchy', 'usages': 999999})
+        tagger_settings.insert(0, {'name': 'safe', 'usages': 999999})
 
-        t = Tagger(tag_data)
-        t.add_from_user_input()
-        chosen_tags = set(t.get())
-
-        safety = 'safe'
-        for s in ['safe', 'sketchy', 'unsafe']:
-            if s in chosen_tags:
-                safety = s
-                chosen_tags.remove(s)
-
-        print('Tags: %s' % ', '.join(chosen_tags))
-        print('Safety: %s' % safety)
-        b.upload_post(args.path, chosen_tags, safety)
-
-        print('Upload succesful!')
+        upload(b, tagger_settings, args)
 
         if args.wait == 'always':
             wait_for_user_input()
