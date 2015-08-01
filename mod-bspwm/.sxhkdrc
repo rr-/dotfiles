@@ -52,6 +52,9 @@ super + {c,C}
 super + v
     mpc toggle
 
+super + V
+    zsh -i -l -c 'mpc|head -n1|clip'
+
 # seek backward and forward
 alt + shift + ctrl + {Left,Right}
     mpc seek {-,+}10
