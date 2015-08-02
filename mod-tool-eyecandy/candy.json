@@ -4,7 +4,7 @@
         "wheel_threshold": 1,
         "zoom_delta": 0.1,
         "enlarge": 0,
-        "extensions": ["jpg", "jpeg", "jfif", "gif", "png", "tga", "webm"],
+        "extensions": ["jpg", "jpeg", "jfif", "gif", "png", "tga", "webm", "bmp"],
         "default_volume": 1,
         "sort_style": "natural_case_insensitive"
     },
