@@ -62,7 +62,7 @@ class Booru(object):
         r = self.verify_response(
             self.session.get(
                 self.api_url + '/posts/' + str(post_id)))
-        return json.loads(r.text)
+        return json.loads(r.text)['post']
 
     def verify_response(self, response):
         if response.status_code != 200:
