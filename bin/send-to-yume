@@ -55,7 +55,7 @@ class Booru(object):
                 self.api_url + '/posts/' + str(post_id),
                 data={
                     'tags': ' '.join(new_tags),
-                    'seenEditTime': last_edit_time,
+                    'lastEditTime': last_edit_time,
                 }))
 
     def get_post(self, post_id):
