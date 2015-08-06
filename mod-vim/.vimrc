@@ -104,7 +104,10 @@ highlight SpecialKey ctermbg=NONE ctermfg=187
 highlight ExtraWhitespace ctermbg=red guibg=red
 "fix ColorColumn on dark backgrounds
 if &background == 'dark'
-  highlight ColorColumn ctermbg=52
+  highlight ColorColumn ctermbg=233
+else
+  highlight Normal ctermbg=NONE
+  highlight ColorColumn ctermbg=255
 end
 "show white characters
 set list listchars=tab:→\ ,trail:·
@@ -165,7 +168,11 @@ let g:ctrlp_custom_ignore.file .= ')$'
 " config airline
 "----------------------------------------
 "because of white background
-let g:airline_theme = 'bubblegum'
+if &background == 'dark'
+  let g:airline_theme = 'ubaryd'
+else
+  let g:airline_theme = 'sol'
+endif
 "allow use of special characters that are supplied by terminal font
 let g:airline_powerline_fonts = 1
 "enable tabs
