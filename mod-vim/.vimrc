@@ -266,7 +266,7 @@ noremap <silent> <F4> :let @" = expand("%")<CR>
 nmap z <Leader><Leader>s
 "save with sudo
 cmap w!! w !sudo tee >/dev/null %
-"trying to be badass
+"arrows are not needed in hhkb :^)
 noremap <Up> <Nop>
 noremap <Down> <Nop>
 noremap <Left> <Nop>
