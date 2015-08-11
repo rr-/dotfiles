@@ -275,6 +275,8 @@ inoremap <Up> <Nop>
 inoremap <Down> <Nop>
 inoremap <Left> <Nop>
 inoremap <Right> <Nop>
+"disable stupid manual pages
+nnoremap <silent> <S-K> <nop>
 
   "----------------------------------------
   " ctrl+k/j = move line up/down
