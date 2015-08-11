@@ -137,8 +137,8 @@ command! CopyWithoutHardWrapping call CopyWithoutHardWrapping()
 "----------------------------------------
 " config Ctrl+P
 "----------------------------------------
-"disable CWD bullshit
-let g:ctrlp_working_path_mode = 0
+"try to open Ctrl+P in a directory containing common VCS directories
+let g:ctrlp_working_path_mode = 'rc'
 "enable matching files such as .htaccess
 let g:ctrlp_dotfiles = 1
 "show selected element at the top
