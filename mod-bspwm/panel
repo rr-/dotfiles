@@ -6,6 +6,9 @@ import signal
 from PyQt4 import QtGui
 from PyQt4 import QtCore
 
+__builtins__.BOTTOM_BORDER = 0
+__builtins__.HEIGHT = 20 + BOTTOM_BORDER
+
 from widgets.flow_layout  import FlowLayout
 from widgets.workspaces   import WorkspacesProvider
 from widgets.window_title import WindowTitleProvider
@@ -15,8 +18,6 @@ from widgets.cpu          import CpuProvider
 from widgets.net          import NetworkUsageProvider
 from widgets.battery      import BatteryProvider
 from widgets.mpd          import MpdProvider
-
-HEIGHT = 20
 
 class MainWindow(QtGui.QMainWindow):
     trigger = QtCore.pyqtSignal(object)
@@ -31,6 +32,7 @@ class MainWindow(QtGui.QMainWindow):
         self.setStyleSheet('''
         QMainWindow {
             background: #eeeeee;
+            border-bottom: ''' + str(BOTTOM_BORDER) + '''px solid #bbb;
         }
         [class=left] QWidget {
             margin: 3px 3px 3px 0;

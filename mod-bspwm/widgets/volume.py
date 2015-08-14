@@ -14,17 +14,20 @@ class VolumeControl(QtGui.QWidget):
         self.value = value
 
     def paintEvent(self, e):
+        width = self.width()
+        height = self.height() - BOTTOM_BORDER
+
         qp = QtGui.QPainter()
         qp.begin(self)
         qp.setRenderHint(QtGui.QPainter.HighQualityAntialiasing)
 
         margin = 3
         points = {
-            'zero': QtCore.QPoint(0, self.height() - 1 - margin),
-            'vol1': QtCore.QPoint(self.value * self.width() / self.max, self.height() - 1 - margin),
-            'vol2': QtCore.QPoint(self.value * self.width() / self.max, self.height() - 1 - margin - self.value * (self.height() - 1 - 2 * margin) / self.max),
-            'max1': QtCore.QPoint(self.width() - 1, margin),
-            'max2': QtCore.QPoint(self.width() - 1, self.height() - 1 - margin),
+            'zero': QtCore.QPoint(0, height - 1 - margin),
+            'vol1': QtCore.QPoint(self.value * width / self.max, height - 1 - margin),
+            'vol2': QtCore.QPoint(self.value * width / self.max, height - 1 - margin - self.value * (height - 1 - 2 * margin) / self.max),
+            'max1': QtCore.QPoint(width - 1, margin),
+            'max2': QtCore.QPoint(width - 1, height - 1 - margin),
         }
 
         poly = [points['zero'], points['vol1'], points['vol2']]

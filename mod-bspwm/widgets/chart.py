@@ -12,6 +12,9 @@ class Chart(QtGui.QWidget):
         self.points[color].append(y)
 
     def paintEvent(self, e):
+        width = self.width()
+        height = self.height() - BOTTOM_BORDER
+
         if not self.points:
             return
         highest = max(p for points in self.points.values() for p in points)
@@ -19,15 +22,15 @@ class Chart(QtGui.QWidget):
             return
 
         margin = 3
-        x_transform = lambda x: margin + self.width() - 1 - 2 * margin - 2 * x
-        y_transform = lambda y: margin + self.height() - 1 - 2 * margin - y * (size.height() - 1 - 2 * margin) / highest
+        x_transform = lambda x: margin + width - 1 - 2 * margin - 2 * x
+        y_transform = lambda y: margin + height - 1 - 2 * margin - y * (height - 1 - 2 * margin) / highest
 
         qp = QtGui.QPainter()
         qp.begin(self)
 
         qp.setBrush(QtGui.QBrush(QtGui.QColor('#f5f5f5')))
         qp.setPen(QtGui.QPen(0))
-        qp.drawRect(margin, margin, self.width() - 1 - 2 * margin, self.height() - 1 - 2 * margin)
+        qp.drawRect(margin, margin, width - 1 - 2 * margin, height - 1 - 2 * margin)
         qp.setBrush(QtGui.QBrush())
 
         for color, points in self.points.items():
@@ -49,6 +52,6 @@ class Chart(QtGui.QWidget):
 
         margin -= 1
         qp.setPen(QtGui.QColor('#999999'))
-        qp.drawRect(margin, margin, self.width() - 1 - 2 * margin, self.height() - 1 - 2 * margin)
+        qp.drawRect(margin, margin, width - 1 - 2 * margin, height - 1 - 2 * margin)
 
         qp.end()
