@@ -29,10 +29,10 @@ elif [ "$(hostname)" = chibi || "$(hostname)" = bus ]; then
     run_if_needed trackma-qt trackma-qt
 fi
 
-desktop_config focused_border_color "#748FA4"
-desktop_config urgent_border_color "#DE3333"
-desktop_config active_border_color "#333333"
-desktop_config normal_border_color "#333333"
+desktop_config focused_border_color "#20aaba"
+desktop_config urgent_border_color "#de3333"
+desktop_config active_border_color "#cccccc"
+desktop_config normal_border_color "#cccccc"
 
 desktop_config top_padding 19
 desktop_config border_width 3
