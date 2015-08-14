@@ -54,7 +54,6 @@ else
     bspc monitor -d 1 2 3 4 5 6 7 8 9 10 IM
 fi
 
-#TODO: position pidgin floating window
 bspc rule -a Buddy desktop=IM
 bspc rule -a Pidgin desktop=IM floating=on
 bspc rule -a Trackma-qt desktop=10 floating=on
