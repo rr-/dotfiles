@@ -36,7 +36,11 @@ desktop_config normal_border_color "#333333"
 
 desktop_config top_padding 19
 desktop_config border_width 3
-desktop_config window_gap 12
+if [ "$(hostname)" = tornado ]; then
+    desktop_config window_gap 29
+else
+    desktop_config window_gap 12
+fi
 desktop_config split_ratio             0.50
 desktop_config borderless_monocle      true
 desktop_config gapless_monocle         true
