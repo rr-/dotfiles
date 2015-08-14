@@ -9,6 +9,7 @@ URxvt*saveLines: 1000000
 URxvt*keysym.Home: \033[1~
 URxvt*keysym.End: \033[4~
 
+URxvt.internalBorder: 2
 URxvt.keysym.C-Tab: \033[1;5I
 URxvt.keysym.Control-Shift-ISO_Left_Tab: \033[1;6I
 URxvt*iso14755: False
