@@ -10,6 +10,7 @@ Plugin 'Lokaltog/vim-easymotion'   "move to any character!
 Plugin 'bling/vim-airline'         "riced status bar
 Plugin 'Yggdroot/indentLine'       "vertical bars showing indent level
 Plugin 'flazz/vim-colorschemes'    "color schemes!
+Plugin 'octol/vim-cpp-enhanced-highlight'
 call vundle#end()
 
 "-------------------------------------------------
