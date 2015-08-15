@@ -21,6 +21,8 @@ function sync {
         "$1" \
         "$2" \
         --exclude "*.vdi" \
+        --exclude "$local_home/clutter/games/" \
+        --exclude "$local_home/clutter/software/" \
         --exclude "$local_home/img/net/" \
         --exclude "$remote_home/src/" \
         --exclude "$remote_home/img/" \
