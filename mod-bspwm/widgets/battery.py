@@ -1,5 +1,6 @@
 from PyQt4 import QtGui
 import glob
+import time
 
 def read_file(path):
     with open(path, 'r') as fh:
@@ -29,4 +30,4 @@ class BatteryProvider(object):
 
     def render(self):
         if self.battery_present:
-            self.label.setText('Battery: %5.02f%% (%s)', self.percentage, self.status)
+            self.label.setText('Battery: %5.02f%% (%s)' % (self.percentage, self.status))
