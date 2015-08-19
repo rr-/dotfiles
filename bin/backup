@@ -32,6 +32,7 @@ function sync {
         --exclude "/home/srv/www/mal-dev/data/" \
         --exclude "/home/srv/www/booru-dev/public_html/data/" \
         --exclude "thumbnails/" \
+        --exclude "remote/" \
         --exclude "mxe/" \
         --exclude "aur/" \
         --exclude '.git/' \
