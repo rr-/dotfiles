@@ -5,7 +5,6 @@ call vundle#begin()
 Plugin 'gmarik/Vundle.vim'         "better plugin manager
 Plugin 'kien/ctrlp.vim'            "open files using fuzzy matching
 Plugin 'scrooloose/nerdtree'       "file explorer sidebar
-Plugin 'jistr/vim-nerdtree-tabs'   "better NERDtree integration with tabs
 Plugin 'Lokaltog/vim-easymotion'   "move to any character!
 Plugin 'bling/vim-airline'         "riced status bar
 Plugin 'Yggdroot/indentLine'       "vertical bars showing indent level
@@ -195,8 +194,8 @@ let g:nerdtree_tabs_smart_startup_focus = 2
 "don't display these kinds of files
 let NERDTreeIgnore=['\.pyc$', '\.pyo$', '\.obj$', '\.o$']
 "f2 = disable NERDtree
-autocmd VimEnter * imap <F2> <esc>:NERDTreeTabsToggle<CR>
-autocmd VimEnter * nmap <F2> :NERDTreeTabsToggle<CR>
+autocmd VimEnter * imap <F2> <esc>:NERDTreeToggle<CR>
+autocmd VimEnter * nmap <F2> :NERDTreeToggle<CR>
 "f3 = find current file in nerdtree
 autocmd VimEnter * imap <F3> <esc>:NERDTreeFind<CR>
 autocmd VimEnter * nmap <F3> :NERDTreeFind<CR>
