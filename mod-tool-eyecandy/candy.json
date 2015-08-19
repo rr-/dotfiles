@@ -6,7 +6,8 @@
         "enlarge": 0,
         "extensions": ["jpg", "jpeg", "jfif", "gif", "png", "tga", "webm", "bmp"],
         "default_volume": 1,
-        "sort_style": "natural_case_insensitive"
+        "sort_style": "natural_case_insensitive",
+        "keep_zoom": 0
     },
 
     "shortcuts":
@@ -45,6 +46,8 @@
         ["Ctrl+Up",            ["pan", 0, -100]],
         ["Ctrl+Down",          ["pan", 0, 100]],
 
+        ["Z",                  ["set_zoom", "4"], ["unsmooth"], ["keep_zoom"]],
+        ["Shift+Z",            ["set_zoom", "1"], ["smooth"], ["unkeep_zoom"]],
         ["S",                  ["toggle_smooth"]],
         ["B",                  ["toggle_status"]],
         ["P",                  ["play_pause"]],
