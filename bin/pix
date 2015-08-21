@@ -1,0 +1,258 @@
+#!/usr/bin/python3
+import os, sys
+from PyQt4 import QtCore
+from PyQt4 import QtGui
+from PyQt4 import Qt
+
+class PixelFormats(object):
+    RGB888    = 'RGB (8-8-8)'
+    RGB565    = 'RGB (5-6-5)'
+    RGBA8888  = 'RGBA (8-8-8-8)'
+    RGBA8888i = 'RGBA (8-8-8-8, invert alpha)'
+    RGBA8888x = 'RGBA (8-8-8-8, ignore alpha)'
+    RGBA5658  = 'RGBA (5-6-5-8)'
+    RGBA5658i = 'RGBA (5-6-5-8, invert alpha)'
+    #RGBA4444 = 'RGBA (4-4-4-4)'
+    RGBA5658  = 'RGBA (5-6-5-8)'
+    BGR888    = 'BGR (8-8-8)'
+    BGR565    = 'BGR (5-6-5)'
+    BGRA8888  = 'BGRA (8-8-8-8)'
+    BGRA8888i = 'BGRA (8-8-8-8, invert alpha)'
+    BGRA8888x = 'BGRA (8-8-8-8, ignore alpha)'
+    BGRA5658  = 'BGRA (5-6-5-8)'
+    BGRA5658i = 'BGRA (5-6-5-8, invert alpha)'
+    #BGRA4444 = 'BGRA (4-4-4-4)'
+    BGRA5658  = 'BGRA (5-6-5-8)'
+    GRAY8 = 'Grayscale (8)'
+
+class DrawParameters(object):
+    def __init__(self, source_path):
+        self.format = PixelFormats.BGRA8888x
+        self.width = 800
+        self.height = 600
+        self.address = 0
+        self.source = open(source_path, 'rb')
+        self.source.seek(0, os.SEEK_END)
+        self.max_address = self.source.tell()
+        self.source.seek(0, os.SEEK_SET)
+
+    def __setattr__(self, k, v):
+        super().__setattr__(k, v)
+        if hasattr(self, 'draw_cb'):
+            self.draw_cb()
+
+    def getShownByteCount(self):
+        bytes = Drawer.FORMAT_MAP[self.format][0]
+        return self.width * self.height * bytes
+
+class Drawer(object):
+    FORMAT_MAP = \
+    {
+        PixelFormats.RGB888:    (3, QtGui.QImage.Format_RGB888,   True,  False),
+        PixelFormats.RGB565:    (2, QtGui.QImage.Format_RGB16,    True,  False),
+        PixelFormats.RGBA8888:  (4, QtGui.QImage.Format_ARGB32,   True,  False),
+        PixelFormats.RGBA8888i: (4, QtGui.QImage.Format_ARGB32,   True,  True),
+        PixelFormats.RGBA8888x: (4, QtGui.QImage.Format_RGB32,    True,  False),
+        PixelFormats.RGBA5658:  (3, QtGui.QImage.Format_RGB16,    True,  False),
+        PixelFormats.RGBA5658i: (3, QtGui.QImage.Format_RGB16,    True,  True),
+        PixelFormats.BGR888:    (3, QtGui.QImage.Format_RGB888,   False, False),
+        PixelFormats.BGR565:    (2, QtGui.QImage.Format_RGB16,    False, False),
+        PixelFormats.BGRA8888:  (4, QtGui.QImage.Format_ARGB32,   False, False),
+        PixelFormats.BGRA8888i: (4, QtGui.QImage.Format_ARGB32,   False, True),
+        PixelFormats.BGRA8888x: (4, QtGui.QImage.Format_RGB32,    False, False),
+        PixelFormats.BGRA5658:  (3, QtGui.QImage.Format_RGB16,    False, False),
+        PixelFormats.BGRA5658i: (3, QtGui.QImage.Format_RGB16,    False, True),
+        PixelFormats.GRAY8:     (1, QtGui.QImage.Format_Indexed8, False, False),
+    }
+
+    def __init__(self, parameters):
+        self.parameters = parameters
+
+    def getPixmap(self):
+        if self.parameters.format not in self.FORMAT_MAP:
+            raise NotImplementedError()
+
+        span, qt_format, swap_rgb, invert_alpha = \
+            self.FORMAT_MAP[self.parameters.format]
+
+        byte_count = self.parameters.width * self.parameters.height * span
+        self.parameters.source.seek(self.parameters.address)
+        bytes = self.parameters.source.read(byte_count)
+        bytes += b"\x00" * (byte_count - len(bytes))
+        assert(bytes is not None)
+        assert(len(bytes) == byte_count)
+
+        image = QtGui.QImage(
+            bytes,
+            self.parameters.width,
+            self.parameters.height,
+            self.parameters.width * span,
+            qt_format)
+        assert(len(bytes) == image.byteCount())
+
+        if swap_rgb:
+            image = image.rgbSwapped()
+        if invert_alpha:
+            image.invertPixels(QtGui.QImage.InvertRgba)
+            image.invertPixels(QtGui.QImage.InvertRgb)
+
+        #creating pixmap crashes on RGB32?
+        if qt_format == QtGui.QImage.Format_RGB32:
+            image = image.convertToFormat(QtGui.QImage.Format_RGB888)
+
+        pixmap = QtGui.QPixmap()
+        pixmap.convertFromImage(image)
+        return pixmap
+
+class MainWindow(QtGui.QMainWindow):
+    def __init__(self, source):
+        super().__init__()
+        self.parameters = DrawParameters(source)
+        self.populateForm()
+        self.parameters.draw_cb = self.draw
+        self.draw()
+
+    def populateForm(self):
+        layout = QtGui.QVBoxLayout()
+
+        toolbar = QtGui.QHBoxLayout()
+        self.addFormatBox(toolbar)
+        self.addSizeBoxes(toolbar)
+        toolbar.addStretch()
+        self.addAddressLabel(toolbar)
+        self.addGotoButton(toolbar)
+        self.addRedrawButton(toolbar)
+        self.addSaveButton(toolbar)
+
+        self.addShortcuts()
+
+        self.image_label = QtGui.QLabel(self)
+        self.image_label.setAlignment(QtCore.Qt.AlignCenter)
+        scroll_area = QtGui.QScrollArea(self)
+        scroll_area.setWidget(self.image_label)
+        scroll_area.setWidgetResizable(True)
+        layout.addLayout(toolbar)
+        layout.addWidget(scroll_area)
+
+        central_widget = QtGui.QWidget(self)
+        central_widget.setLayout(layout)
+        self.setCentralWidget(central_widget)
+
+    def addShortcuts(self):
+        QtGui.QShortcut(QtGui.QKeySequence('Q'), self, self.close)
+        QtGui.QShortcut(QtGui.QKeySequence('G'), self, self.changeAddress)
+        QtGui.QShortcut(QtGui.QKeySequence('H'), self, self.resizeLeft)
+        QtGui.QShortcut(QtGui.QKeySequence('J'), self, self.resizeDown)
+        QtGui.QShortcut(QtGui.QKeySequence('K'), self, self.resizeUp)
+        QtGui.QShortcut(QtGui.QKeySequence('L'), self, self.resizeRight)
+        QtGui.QShortcut(QtGui.QKeySequence('Ctrl+left'), self, self.goLeft)
+        QtGui.QShortcut(QtGui.QKeySequence('Ctrl+right'), self, self.goRight)
+
+    def addFormatBox(self, layout):
+        self.format_box = QtGui.QComboBox()
+        formats = [attr
+            for attr in dir(PixelFormats())
+            if not callable(attr) and not attr.startswith("__")]
+        for format in formats:
+            text = getattr(PixelFormats, format)
+            self.format_box.addItem(text, text)
+        self.format_box.currentIndexChanged.connect(self.formatChanged)
+        layout.addWidget(self.format_box)
+
+    def addSizeBoxes(self, layout):
+        self.width_box = QtGui.QSpinBox()
+        self.width_box.setMinimum(1)
+        self.width_box.setMaximum(2000)
+        self.width_box.valueChanged.connect(self.widthChanged)
+        layout.addWidget(self.width_box)
+        layout.addWidget(QtGui.QLabel('x'))
+        self.height_box = QtGui.QSpinBox()
+        self.height_box.setMinimum(1)
+        self.height_box.setMaximum(2000)
+        self.height_box.valueChanged.connect(self.heightChanged)
+        layout.addWidget(self.height_box)
+
+    def addGotoButton(self, layout):
+        goto_button = QtGui.QPushButton('&Go to... [G]')
+        goto_button.setDefault(True)
+        goto_button.clicked.connect(self.changeAddress)
+        layout.addWidget(goto_button)
+
+    def addAddressLabel(self, layout):
+        address_label1 = QtGui.QLabel('Address:')
+        address_label2 = QtGui.QLabel('...')
+        layout.addWidget(address_label1)
+        layout.addWidget(address_label2)
+        self.address_label = address_label2
+
+    def addSaveButton(self, layout):
+        save_button = QtGui.QPushButton('&Save...')
+        save_button.clicked.connect(self.save)
+        layout.addWidget(save_button)
+
+    def addRedrawButton(self, layout):
+        redraw_button = QtGui.QPushButton('&Redraw')
+        redraw_button.clicked.connect(self.draw)
+        layout.addWidget(redraw_button)
+
+
+    def widthChanged(self, newWidth):
+        self.parameters.width = newWidth
+        self.draw()
+
+    def heightChanged(self, newHeight):
+        self.parameters.height = newHeight
+        self.draw()
+
+    def formatChanged(self, newFormatIndex):
+        self.parameters.format = \
+            self.format_box.itemData(self.format_box.currentIndex())
+        self.draw()
+
+
+    def changeAddress(self):
+        text, ok = QtGui.QInputDialog.getText(
+            self, 'Input Dialog', 'Please enter an hexadecimal address:')
+        if ok:
+            self.parameters.address = int(text, 16)
+
+    def resizeLeft(self):
+        self.parameters.width = max(self.parameters.width - 1, 1)
+
+    def resizeRight(self):
+        self.parameters.width = max(self.parameters.width + 1, 1)
+
+    def resizeUp(self):
+        self.parameters.height = max(self.parameters.height - 1, 1)
+
+    def resizeDown(self):
+        self.parameters.height = max(self.parameters.height + 1, 1)
+
+    def goLeft(self):
+        self.parameters.address = max(
+            self.parameters.address - self.parameters.getShownByteCount(), 0)
+
+    def goRight(self):
+        self.parameters.address = min(
+            self.parameters.address + self.parameters.getShownByteCount(),
+            self.parameters.max_address)
+
+    def save(self):
+        path = AskFile(1, '*.png', 'Save the image as...')
+        if path is not None:
+            self.image_label.pixmap().save(path, 'PNG')
+
+    def draw(self):
+        self.address_label.setText('%08x' % self.parameters.address)
+        self.width_box.setValue(self.parameters.width)
+        self.height_box.setValue(self.parameters.height)
+        self.format_box.setCurrentIndex(
+            self.format_box.findData(self.parameters.format))
+        pixmap = Drawer(self.parameters).getPixmap()
+        self.image_label.setPixmap(pixmap)
+
+if __name__ == '__main__':
+    app = QtGui.QApplication(sys.argv)
+    win = MainWindow(sys.argv[1])
+    win.show()
+    app.exec_()
