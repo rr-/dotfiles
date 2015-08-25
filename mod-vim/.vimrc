@@ -146,7 +146,7 @@ let g:ctrlp_match_window_bottom = 1
 "show list top->bottom
 let g:ctrlp_match_window_reversed = 1
 let g:ctrlp_by_filename = 1
-let g:ctrlp_match_window = 'bottom,order:btt,min:1,max:3,results:3'
+let g:ctrlp_match_window = 'bottom,order:btt,min:1,max:10,results:10'
 "ignored files and directories
 let g:ctrlp_custom_ignore = {}
 let g:ctrlp_custom_ignore.dir  = '\v(^|\/)('
