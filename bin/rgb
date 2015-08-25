@@ -1,8 +1,9 @@
 #!/usr/bin/python3
-import os, sys
+from PyQt4 import Qt
 from PyQt4 import QtCore
 from PyQt4 import QtGui
-from PyQt4 import Qt
+import argparse
+import os, sys
 
 class PixelFormats(object):
     RGB888    = 'RGB (8-8-8)'
@@ -23,7 +24,7 @@ class PixelFormats(object):
     BGRA5658i = 'BGRA (5-6-5-8, invert alpha)'
     #BGRA4444 = 'BGRA (4-4-4-4)'
     BGRA5658  = 'BGRA (5-6-5-8)'
-    GRAY8 = 'Grayscale (8)'
+    GRAY8     = 'Grayscale (8)'
 
 class DrawParameters(object):
     def __init__(self, source_path):
@@ -105,9 +106,9 @@ class Drawer(object):
         return pixmap
 
 class MainWindow(QtGui.QMainWindow):
-    def __init__(self, source):
+    def __init__(self, args):
         super().__init__()
-        self.parameters = DrawParameters(source)
+        self.parameters = DrawParameters(args.file)
         self.populateForm()
         self.parameters.draw_cb = self.draw
         self.draw()
@@ -251,8 +252,20 @@ class MainWindow(QtGui.QMainWindow):
         pixmap = Drawer(self.parameters).getPixmap()
         self.image_label.setPixmap(pixmap)
 
-if __name__ == '__main__':
+def parse_args():
+    parser = argparse.ArgumentParser(
+        description='Preview given file as raw pixels.')
+
+    parser.add_argument('file', metavar='FILE', help='file to view')
+
+    return parser.parse_args()
+
+def main():
+    args = parse_args()
     app = QtGui.QApplication(sys.argv)
-    win = MainWindow(sys.argv[1])
+    win = MainWindow(args)
     win.show()
     app.exec_()
+
+if __name__ == '__main__':
+    main()
