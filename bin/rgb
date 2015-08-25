@@ -272,8 +272,9 @@ class MainWindow(QtGui.QMainWindow):
         self.parameters.address += self.parameters.getShownByteCount()
 
     def save(self):
-        path = AskFile(1, '*.png', 'Save the image as...')
-        if path is not None:
+        path = QtGui.QFileDialog.getSaveFileName(
+            self, 'Save the image as...', None, '*.png')
+        if path:
             self.image_label.pixmap().save(path, 'PNG')
 
     def draw(self):
