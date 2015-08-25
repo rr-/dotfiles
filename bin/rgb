@@ -37,15 +37,31 @@ class PixelFormats(object):
         return getattr(PixelFormats, text)
 
 class DrawParameters(object):
-    def __init__(self, source_path, format):
+    def __init__(self, source_path, format, width, height):
         self.format = format
-        self.width = 800
-        self.height = 600
+        self.width = width
+        self.height = height
         self.address = 0
         self.source = open(source_path, 'rb')
         self.source.seek(0, os.SEEK_END)
         self.max_address = self.source.tell()
         self.source.seek(0, os.SEEK_SET)
+
+    @property
+    def width(self):
+        return self._width
+
+    @width.setter
+    def width(self, v):
+        self._width = max(1, v)
+
+    @property
+    def height(self):
+        return self._height
+
+    @height.setter
+    def height(self, v):
+        self._height = max(1, v)
 
     def __setattr__(self, k, v):
         super().__setattr__(k, v)
@@ -119,7 +135,10 @@ class MainWindow(QtGui.QMainWindow):
     def __init__(self, args):
         super().__init__()
         self.parameters = DrawParameters(
-            args.file, PixelFormats.from_short_name(args.format))
+            args.file,
+            PixelFormats.from_short_name(args.format),
+            args.width,
+            args.height)
         self.populateForm()
         self.parameters.draw_cb = self.draw
         self.draw()
@@ -225,16 +244,16 @@ class MainWindow(QtGui.QMainWindow):
             self.parameters.address = int(text, 16)
 
     def resizeLeft(self):
-        self.parameters.width = max(self.parameters.width - 1, 1)
+        self.parameters.width -= 1
 
     def resizeRight(self):
-        self.parameters.width = max(self.parameters.width + 1, 1)
+        self.parameters.width += 1
 
     def resizeUp(self):
-        self.parameters.height = max(self.parameters.height - 1, 1)
+        self.parameters.height -= 1
 
     def resizeDown(self):
-        self.parameters.height = max(self.parameters.height + 1, 1)
+        self.parameters.height += 1
 
     def goLeft(self):
         self.parameters.address = max(
@@ -267,6 +286,10 @@ def parse_args():
     parser.add_argument(
         '-f', '--format', metavar='FORMAT',
         choices=PixelFormats.get_short_names(), default='BGRA8888x')
+    parser.add_argument(
+        '--width', metavar='NUM', type=int, default=800)
+    parser.add_argument(
+        '--height', metavar='NUM', type=int, default=600)
 
     return parser.parse_args()
 
