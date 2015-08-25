@@ -263,7 +263,7 @@ nnoremap <silent> <C-o> :CtrlPLine<CR>
 "f4 = copy current path to buffer
 noremap <silent> <F4> :let @" = expand("%")<CR>
 "less keystrokes to access easy motion search
-nmap z <Leader><Leader>s
+nmap -z <Leader><Leader>s
 "save with sudo
 cmap w!! w !sudo tee >/dev/null %
 "arrows are not needed in hhkb :^)
