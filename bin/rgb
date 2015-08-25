@@ -75,7 +75,8 @@ class DrawParameters(object):
         if hasattr(self, 'draw_cb'):
             self.draw_cb()
 
-    def getShownByteCount(self):
+    @property
+    def shown_bytes(self):
         bytes = Drawer.FORMAT_MAP[self.format][0]
         return self.width * self.height * bytes
 
@@ -264,10 +265,10 @@ class MainWindow(QtGui.QMainWindow):
         self.parameters.height += 1
 
     def goLeft(self):
-        self.parameters.address -= self.parameters.getShownByteCount()
+        self.parameters.address -= self.parameters.shown_bytes
 
     def goRight(self):
-        self.parameters.address += self.parameters.getShownByteCount()
+        self.parameters.address += self.parameters.shown_bytes
 
     def save(self):
         path = QtGui.QFileDialog.getSaveFileName(
