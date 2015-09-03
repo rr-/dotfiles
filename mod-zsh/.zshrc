@@ -26,6 +26,7 @@ setopt rcquotes                         # fix fucking escape quoting
 setopt correct                          # enable [nyae] correction
 setopt auto_cd                          # "cd /usr/" becomes "/usr/"
 setopt nocasematch                      # regex should work case-insensitive
+setopt magic_equal_subst                # enable path autocompletion after =
 WORDCHARS='*?_-.[]~=&;!#$%^(){}<>'      # what kill-word should delete
 
 # history
