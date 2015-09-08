@@ -16,4 +16,6 @@ if [ "$window_class" = Pidgin ] ; then
             xdotool windowmove "$window_id" 1990 90
             ;;
     esac
+elif [ "$title" = send-to-yume ]; then
+    compton-trans -c 70 -w "$window_id"
 fi
