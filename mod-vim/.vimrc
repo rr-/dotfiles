@@ -263,9 +263,6 @@ map <buffer> <silent> j gj
 "ctrl+tab, ctrl+shift+tab = move to next/prev tab
 nmap <Esc>[1;5I gt<CR>
 nmap <Esc>[1;6I gT<CR>
-"fix ctrl+up/down for URxvt
-map <Esc>Oa <C-up>
-map <Esc>Ob <C-down>
 "ctrl+t = open new tab
 imap <silent> <C-t> <Esc>:tabnew<CR>
 nmap <silent> <C-t> :tabnew<CR>
