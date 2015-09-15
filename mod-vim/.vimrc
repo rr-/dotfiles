@@ -2,14 +2,15 @@ set nocompatible
 filetype off
 set rtp+=~/.vim/vundle/
 call vundle#begin()
-Plugin 'gmarik/Vundle.vim'         "better plugin manager
-Plugin 'kien/ctrlp.vim'            "open files using fuzzy matching
-Plugin 'scrooloose/nerdtree'       "file explorer sidebar
-Plugin 'Lokaltog/vim-easymotion'   "move to any character!
-Plugin 'bling/vim-airline'         "riced status bar
-Plugin 'Yggdroot/indentLine'       "vertical bars showing indent level
-Plugin 'flazz/vim-colorschemes'    "color schemes!
-Plugin 'octol/vim-cpp-enhanced-highlight'
+Plugin 'gmarik/Vundle.vim'                "better plugin manager
+Plugin 'kien/ctrlp.vim'                   "open files using fuzzy matching
+Plugin 'scrooloose/nerdtree'              "file explorer sidebar
+Plugin 'Lokaltog/vim-easymotion'          "move to any character!
+Plugin 'bling/vim-airline'                "riced status bar
+Plugin 'Yggdroot/indentLine'              "vertical bars showing indent level
+Plugin 'flazz/vim-colorschemes'           "color schemes!
+Plugin 'maxbrunsfeld/vim-yankstack'       "enhanced yank/paste stack
+Plugin 'octol/vim-cpp-enhanced-highlight' "improved C++11 highlighting
 call vundle#end()
 
 "-------------------------------------------------
@@ -282,6 +283,9 @@ nmap <silent> <C-o> :CtrlPLine<CR>
 map <silent> <F4> :let @" = expand("%")<CR>
 "make motion search easier to access
 nmap <leader>z <leader><leader>s
+"access to recent yank/paste stack
+nmap <leader>p <Plug>yankstack_substitute_older_paste
+nmap <leader>P <Plug>yankstack_substitute_newer_paste
 "save with sudo
 cmap w!! w !sudo tee >/dev/null %
 "arrows are not needed in hhkb :^)
