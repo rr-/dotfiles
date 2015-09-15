@@ -271,14 +271,14 @@ imap <silent> <C-s> <Esc>:update<CR>
 nmap <silent> <C-s> :<C-u>update<CR>
 "ctrl+z = open shell
 nmap <silent> <C-z> :sh<CR>
-"ctrl+q = exit
+"ctrl+q = close window
 imap <silent> <C-q> <Esc>:q<CR>
 nmap <silent> <C-q> :q<CR>
 "ctrl+o = open Ctrl+P prompt
 nmap <silent> <C-o> :CtrlPLine<CR>
-"f4 = copy current path to buffer
+"f4 = copy current file path to system clipboard
 map <silent> <F4> :let @" = expand("%")<CR>
-"less keystrokes to access easy motion search
+"make motion search easier to access
 nmap -z <Leader><Leader>s
 "save with sudo
 cmap w!! w !sudo tee >/dev/null %
