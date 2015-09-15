@@ -258,44 +258,44 @@ autocmd FileType css      FourSpaces
 " custom keyboard bindings
 "----------------------------------------
 "movement over visual lines, not physical lines
-noremap <buffer> <silent> k gk
-noremap <buffer> <silent> j gj
+map <buffer> <silent> k gk
+map <buffer> <silent> j gj
 "ctrl+tab, ctrl+shift+tab = move to next/prev tab
-nnoremap <Esc>[1;5I gt<CR>
-nnoremap <Esc>[1;6I gT<CR>
+nmap <Esc>[1;5I gt<CR>
+nmap <Esc>[1;6I gT<CR>
 "fix ctrl+up/down for URxvt
 map <Esc>Oa <C-up>
 map <Esc>Ob <C-down>
 "ctrl+t = open new tab
-inoremap <silent> <C-t> <Esc>:tabnew<CR>
-nnoremap <silent> <C-t> :tabnew<CR>
+imap <silent> <C-t> <Esc>:tabnew<CR>
+nmap <silent> <C-t> :tabnew<CR>
 "ctrl+s = save
-inoremap <silent> <C-s> <Esc>:update<CR>
-nnoremap <silent> <C-s> :<C-u>update<CR>
+imap <silent> <C-s> <Esc>:update<CR>
+nmap <silent> <C-s> :<C-u>update<CR>
 "ctrl+z = open shell
-nnoremap <silent> <C-z> :sh<CR>
+nmap <silent> <C-z> :sh<CR>
 "ctrl+q = exit
-inoremap <silent> <C-q> <Esc>:q<CR>
-nnoremap <silent> <C-q> :q<CR>
+imap <silent> <C-q> <Esc>:q<CR>
+nmap <silent> <C-q> :q<CR>
 "ctrl+o = open Ctrl+P prompt
-nnoremap <silent> <C-o> :CtrlPLine<CR>
+nmap <silent> <C-o> :CtrlPLine<CR>
 "f4 = copy current path to buffer
-noremap <silent> <F4> :let @" = expand("%")<CR>
+map <silent> <F4> :let @" = expand("%")<CR>
 "less keystrokes to access easy motion search
 nmap -z <Leader><Leader>s
 "save with sudo
 cmap w!! w !sudo tee >/dev/null %
 "arrows are not needed in hhkb :^)
-noremap <Up> <Nop>
-noremap <Down> <Nop>
-noremap <Left> <Nop>
-noremap <Right> <Nop>
-inoremap <Up> <Nop>
-inoremap <Down> <Nop>
-inoremap <Left> <Nop>
-inoremap <Right> <Nop>
+map <Up> <Nop>
+map <Down> <Nop>
+map <Left> <Nop>
+map <Right> <Nop>
+imap <Up> <Nop>
+imap <Down> <Nop>
+imap <Left> <Nop>
+imap <Right> <Nop>
 "disable stupid manual pages
-nnoremap <silent> <S-K> <nop>
+nmap <silent> <S-K> <nop>
 
   "----------------------------------------
   " ctrl+k/j = move line up/down
