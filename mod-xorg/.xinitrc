@@ -36,6 +36,7 @@ compton "${comptonflags[@]}"
 clipit -d &
 autocutsel -fork &
 autocutsel -selection PRIMARY -fork &
+ibus-daemon &
 
 #TODO: move this to mod-mpd
 mpd ~/.config/mpd/mpd.conf &
