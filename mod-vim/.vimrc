@@ -257,6 +257,8 @@ autocmd FileType css      FourSpaces
 "----------------------------------------
 " custom keyboard bindings
 "----------------------------------------
+"set the leader key to -
+let mapleader = "-"
 "movement over visual lines, not physical lines
 map <buffer> <silent> k gk
 map <buffer> <silent> j gj
@@ -279,7 +281,7 @@ nmap <silent> <C-o> :CtrlPLine<CR>
 "f4 = copy current file path to system clipboard
 map <silent> <F4> :let @" = expand("%")<CR>
 "make motion search easier to access
-nmap -z <Leader><Leader>s
+nmap <leader>z <leader><leader>s
 "save with sudo
 cmap w!! w !sudo tee >/dev/null %
 "arrows are not needed in hhkb :^)
