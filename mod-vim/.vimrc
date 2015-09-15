@@ -47,7 +47,7 @@ endif
 " whitespace settings
 "-----------------------------------------
 set enc=utf-8                 "character encoding of gui
-set fencs=utf-8,cp932        "preferred character encodings
+set fencs=utf-8,cp932         "preferred character encodings
 set ff=unix ffs=unix,dos      "preferred eol styles
 set expandtab                 "use spaces instead of tab
 set tabstop=4                 "spaces that tab counts for
