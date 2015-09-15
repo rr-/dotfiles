@@ -8,6 +8,8 @@ URxvt*scrollTtyKeypress: true
 URxvt*saveLines: 1000000
 URxvt*keysym.Home: \033[1~
 URxvt*keysym.End: \033[4~
+URxvt*inputMethod: ibus
+URxvt*preeditType: ibus
 
 URxvt.internalBorder: 2
 URxvt.keysym.C-Tab: \033[1;5I
