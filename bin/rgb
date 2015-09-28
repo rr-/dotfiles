@@ -5,6 +5,13 @@ from PyQt4 import QtGui
 import argparse
 import os, sys
 
+try:
+    import numpy
+    has_numpy = True
+except ImportError:
+    print('Brightness adjustment will be slow without numpy', file=sys.stderr)
+    has_numpy = False
+
 class PixelFormats(object):
     RGB888    = 'RGB (8-8-8)'
     RGB565    = 'RGB (5-6-5)'
@@ -60,6 +67,14 @@ class FileReader(object):
         return self._max_address
 
 class RendererParams(object):
+    @property
+    def brightness(self):
+        return self._brightness
+
+    @brightness.setter
+    def brightness(self, v):
+        self._brightness = min(100, max(0, v))
+
     @property
     def width(self):
         return self._width
@@ -133,14 +148,34 @@ class Renderer(object):
         stride = params.width * channels
         data_size = params.height * stride
         data = reader.get_padded_bytes(params.address, data_size)
+        assert data is not None
+        assert len(data) == data_size
+
         if params.flip:
             output = b''
             for y in range(params.height):
                 y2 = params.height - 1 - y
                 output += data[y2 * stride:(y2 + 1) * stride]
             data = output
-        assert data is not None
-        assert len(data) == data_size
+
+        if params.brightness != 50.0:
+            #param   multiplier
+            #0       0 = 2^(-8)
+            #50      1 = 2^0
+            #100     256 = 2^8
+            multiplier = 2 ** ((params.brightness - 50) / (50 / 8))
+            if has_numpy:
+                arr = numpy.fromstring(data, dtype=numpy.uint8)
+                arr = arr.astype(dtype=numpy.float)
+                arr *= multiplier
+                arr = arr.clip(0, 255)
+                arr = arr.astype(dtype=numpy.uint8)
+                data = arr.tobytes()
+            else:
+                output = bytearray(len(data))
+                for i in range(len(data)):
+                    output[i] = int(output[i] * multiplier) & 0xFF
+                data = output
 
         image = QtGui.QImage(
             data,
@@ -179,6 +214,7 @@ class MainWindow(QtGui.QMainWindow):
         self.addFormatBox(toolbar)
         self.addSizeBoxes(toolbar)
         self.addFlipCheckbox(toolbar)
+        self.addBrightnessBox(toolbar)
         toolbar.addStretch()
         self.addAddressLabel(toolbar)
         self.addGotoButton(toolbar)
@@ -223,6 +259,14 @@ class MainWindow(QtGui.QMainWindow):
         self.flip_checkbox.setText('Flip vertically')
         layout.addWidget(self.flip_checkbox)
 
+    def addBrightnessBox(self, layout):
+        layout.addWidget(QtGui.QLabel('Brightness:'))
+        self.brightness_box = QtGui.QDoubleSpinBox()
+        self.brightness_box.setMinimum(0.0)
+        self.brightness_box.setMaximum(100.0)
+        self.brightness_box.valueChanged.connect(self.brightnessChanged)
+        layout.addWidget(self.brightness_box)
+
     def addSizeBoxes(self, layout):
         self.width_box = QtGui.QSpinBox()
         self.width_box.setMinimum(1)
@@ -262,6 +306,9 @@ class MainWindow(QtGui.QMainWindow):
 
     def flipChanged(self, state):
         self.params.flip = state == Qt.Qt.Checked
+
+    def brightnessChanged(self, value):
+        self.params.brightness = value
 
     def widthChanged(self, newWidth):
         self.params.width = newWidth
@@ -313,6 +360,7 @@ class MainWindow(QtGui.QMainWindow):
         self.address_label.setText('%08x' % self.params.address)
         self.flip_checkbox.setCheckState(
             Qt.Qt.Checked if self.params.flip else Qt.Qt.Unchecked)
+        self.brightness_box.setValue(self.params.brightness)
         self.width_box.setValue(self.params.width)
         self.height_box.setValue(self.params.height)
         self.format_box.setCurrentIndex(
@@ -350,7 +398,11 @@ def parse_args():
 
     parser.add_argument('file', metavar='FILE', help='file to view')
     parser.add_argument(
-        '--flip', type=bool, default=False, help='flip the preview vertically')
+        '--flip', default=False, action='store_true',
+        help='flip the preview vertically')
+    parser.add_argument(
+        '--brightness', metavar='MULTIPLIER', default=50.0, type=float,
+        help='sets brightness adjustment')
     parser.add_argument(
         '-f', '--format', metavar='FORMAT',
         choices=PixelFormats.get_short_names(), default='BGRA8888x',
@@ -376,6 +428,7 @@ def main():
     params.height = args.height
     params.address = args.address
     params.flip = args.flip
+    params.brightness = args.brightness
 
     app = QtGui.QApplication(sys.argv)
     win = MainWindow(params)
