@@ -34,19 +34,32 @@ class PixelFormats(object):
     def from_short_name(text):
         return getattr(PixelFormats, text)
 
-class DrawParameters(object):
-    def __init__(self, source_path, format, width, height, address, flip):
+class Reader(object):
+    @property
+    def max_address(self):
+        raise NotImplementedError()
+
+    def get_padded_bytes(self, address, size):
+        raise NotImplementedError()
+
+class FileReader(object):
+    def __init__(self, source_path):
         self.source = open(source_path, 'rb')
         self.source.seek(0, os.SEEK_END)
         self._max_address = self.source.tell()
         self.source.seek(0, os.SEEK_SET)
 
-        self.flip = flip
-        self.format = format
-        self.width = width
-        self.height = height
-        self.address = address
+    def get_padded_bytes(self, address, size):
+        self.source.seek(address)
+        data = self.source.read(size)
+        data += b'\x00' * (size - len(data))
+        return data
 
+    @property
+    def max_address(self):
+        return self._max_address
+
+class RendererParams(object):
     @property
     def width(self):
         return self._width
@@ -69,7 +82,7 @@ class DrawParameters(object):
 
     @address.setter
     def address(self, v):
-        self._address = max(0, min(self._max_address, v))
+        self._address = max(0, min(self.reader.max_address, v))
 
     def __setattr__(self, k, v):
         old_v = getattr(self, k) if hasattr(self, k) else None
@@ -81,10 +94,10 @@ class DrawParameters(object):
 
     @property
     def shown_bytes(self):
-        bytes = Drawer.FORMAT_MAP[self.format][0]
+        bytes = Renderer.FORMAT_MAP[self.format][0]
         return self.width * self.height * bytes
 
-class Drawer(object):
+class Renderer(object):
     FORMAT_MAP = \
     {
         PixelFormats.RGB888:    (3, QtGui.QImage.Format_RGB888,   True,  False),
@@ -104,25 +117,26 @@ class Drawer(object):
         PixelFormats.GRAY8:     (1, QtGui.QImage.Format_Indexed8, False, False),
     }
 
-    def __init__(self, parameters):
-        self.parameters = parameters
+    def __init__(self, params):
+        self.params = params
 
     def getPixmap(self):
-        if self.parameters.format not in self.FORMAT_MAP:
+        params = self.params
+        reader = self.params.reader
+
+        if params.format not in self.FORMAT_MAP:
             raise NotImplementedError()
 
         channels, qt_format, swap_rgb, invert_alpha = \
-            self.FORMAT_MAP[self.parameters.format]
+            self.FORMAT_MAP[params.format]
 
-        stride = self.parameters.width * channels
-        data_size = self.parameters.height * stride
-        self.parameters.source.seek(self.parameters.address)
-        data = self.parameters.source.read(data_size)
-        data += b'\x00' * (data_size - len(data))
-        if self.parameters.flip:
+        stride = params.width * channels
+        data_size = params.height * stride
+        data = reader.get_padded_bytes(params.address, data_size)
+        if params.flip:
             output = b''
-            for y in range(self.parameters.height):
-                y2 = self.parameters.height - 1 - y
+            for y in range(params.height):
+                y2 = params.height - 1 - y
                 output += data[y2 * stride:(y2 + 1) * stride]
             data = output
         assert data is not None
@@ -130,9 +144,9 @@ class Drawer(object):
 
         image = QtGui.QImage(
             data,
-            self.parameters.width,
-            self.parameters.height,
-            self.parameters.width * channels,
+            params.width,
+            params.height,
+            params.width * channels,
             qt_format)
         assert len(data) == image.byteCount()
 
@@ -151,17 +165,11 @@ class Drawer(object):
         return pixmap
 
 class MainWindow(QtGui.QMainWindow):
-    def __init__(self, args):
+    def __init__(self, params):
         super().__init__()
-        self.parameters = DrawParameters(
-            args.file,
-            PixelFormats.from_short_name(args.format),
-            args.width,
-            args.height,
-            args.address,
-            args.flip)
+        self.params = params
         self.populateForm()
-        self.parameters.draw_cb = self.draw
+        self.params.draw_cb = self.draw
         self.draw()
 
     def populateForm(self):
@@ -253,16 +261,16 @@ class MainWindow(QtGui.QMainWindow):
 
 
     def flipChanged(self, state):
-        self.parameters.flip = state == Qt.Qt.Checked
+        self.params.flip = state == Qt.Qt.Checked
 
     def widthChanged(self, newWidth):
-        self.parameters.width = newWidth
+        self.params.width = newWidth
 
     def heightChanged(self, newHeight):
-        self.parameters.height = newHeight
+        self.params.height = newHeight
 
     def formatChanged(self, newFormatIndex):
-        self.parameters.format = \
+        self.params.format = \
             self.format_box.itemData(self.format_box.currentIndex())
 
 
@@ -270,28 +278,28 @@ class MainWindow(QtGui.QMainWindow):
         text, ok = QtGui.QInputDialog.getText(
             self, 'Input Dialog', 'Please enter an hexadecimal address:')
         if ok:
-            self.parameters.address = int(text, 16)
+            self.params.address = int(text, 16)
 
     def resizeLeft(self):
-        self.parameters.width -= 1
+        self.params.width -= 1
 
     def resizeRight(self):
-        self.parameters.width += 1
+        self.params.width += 1
 
     def resizeUp(self):
-        self.parameters.height -= 1
+        self.params.height -= 1
 
     def resizeDown(self):
-        self.parameters.height += 1
+        self.params.height += 1
 
     def flip(self):
-        self.parameters.flip = not self.parameters.flip
+        self.params.flip = not self.params.flip
 
     def goLeft(self):
-        self.parameters.address -= self.parameters.shown_bytes
+        self.params.address -= self.params.shown_bytes
 
     def goRight(self):
-        self.parameters.address += self.parameters.shown_bytes
+        self.params.address += self.params.shown_bytes
 
     def save(self):
         path = QtGui.QFileDialog.getSaveFileName(
@@ -300,20 +308,20 @@ class MainWindow(QtGui.QMainWindow):
             self.image_label.pixmap().save(path, 'PNG')
 
     def draw(self):
-        self.parameters.draw_cb = None
+        self.params.draw_cb = None
 
-        self.address_label.setText('%08x' % self.parameters.address)
+        self.address_label.setText('%08x' % self.params.address)
         self.flip_checkbox.setCheckState(
-            Qt.Qt.Checked if self.parameters.flip else Qt.Qt.Unchecked)
-        self.width_box.setValue(self.parameters.width)
-        self.height_box.setValue(self.parameters.height)
+            Qt.Qt.Checked if self.params.flip else Qt.Qt.Unchecked)
+        self.width_box.setValue(self.params.width)
+        self.height_box.setValue(self.params.height)
         self.format_box.setCurrentIndex(
-            self.format_box.findData(self.parameters.format))
+            self.format_box.findData(self.params.format))
 
-        pixmap = Drawer(self.parameters).getPixmap()
+        pixmap = Renderer(self.params).getPixmap()
         self.image_label.setPixmap(pixmap)
 
-        self.parameters.draw_cb = self.draw
+        self.params.draw_cb = self.draw
 
 def parse_args():
     class CustomHelpFormatter(argparse.HelpFormatter):
@@ -361,8 +369,16 @@ def parse_args():
 
 def main():
     args = parse_args()
+    params = RendererParams()
+    params.reader = FileReader(args.file)
+    params.format = PixelFormats.from_short_name(args.format)
+    params.width = args.width
+    params.height = args.height
+    params.address = args.address
+    params.flip = args.flip
+
     app = QtGui.QApplication(sys.argv)
-    win = MainWindow(args)
+    win = MainWindow(params)
     win.show()
     app.exec_()
 
