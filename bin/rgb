@@ -71,8 +71,11 @@ class DrawParameters(object):
         self._address = max(0, min(self._max_address, v))
 
     def __setattr__(self, k, v):
+        old_v = getattr(self, k) if hasattr(self, k) else None
         super().__setattr__(k, v)
-        if hasattr(self, 'draw_cb'):
+        if k.startswith('_') or k == 'draw_cb' or old_v == v:
+            return
+        if hasattr(self, 'draw_cb') and self.draw_cb:
             self.draw_cb()
 
     @property
@@ -234,16 +237,13 @@ class MainWindow(QtGui.QMainWindow):
 
     def widthChanged(self, newWidth):
         self.parameters.width = newWidth
-        self.draw()
 
     def heightChanged(self, newHeight):
         self.parameters.height = newHeight
-        self.draw()
 
     def formatChanged(self, newFormatIndex):
         self.parameters.format = \
             self.format_box.itemData(self.format_box.currentIndex())
-        self.draw()
 
 
     def changeAddress(self):
@@ -277,13 +277,18 @@ class MainWindow(QtGui.QMainWindow):
             self.image_label.pixmap().save(path, 'PNG')
 
     def draw(self):
+        self.parameters.draw_cb = None
+
         self.address_label.setText('%08x' % self.parameters.address)
         self.width_box.setValue(self.parameters.width)
         self.height_box.setValue(self.parameters.height)
         self.format_box.setCurrentIndex(
             self.format_box.findData(self.parameters.format))
+
         pixmap = Drawer(self.parameters).getPixmap()
         self.image_label.setPixmap(pixmap)
+
+        self.parameters.draw_cb = self.draw
 
 def parse_args():
     class CustomHelpFormatter(argparse.HelpFormatter):
