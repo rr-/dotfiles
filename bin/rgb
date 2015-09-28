@@ -210,16 +210,19 @@ class MainWindow(QtGui.QMainWindow):
     def populateForm(self):
         layout = QtGui.QVBoxLayout()
 
-        toolbar = QtGui.QHBoxLayout()
-        self.addFormatBox(toolbar)
-        self.addSizeBoxes(toolbar)
-        self.addFlipCheckbox(toolbar)
-        self.addBrightnessBox(toolbar)
-        toolbar.addStretch()
-        self.addAddressLabel(toolbar)
-        self.addGotoButton(toolbar)
-        self.addRedrawButton(toolbar)
-        self.addSaveButton(toolbar)
+        upper_toolbar = QtGui.QHBoxLayout()
+        self.addFormatBox(upper_toolbar)
+        self.addSizeBoxes(upper_toolbar)
+        upper_toolbar.addStretch()
+        self.addFlipCheckbox(upper_toolbar)
+        self.addBrightnessBox(upper_toolbar)
+
+        lower_toolbar = QtGui.QHBoxLayout()
+        self.addAddressLabel(lower_toolbar)
+        lower_toolbar.addStretch()
+        self.addGotoButton(lower_toolbar)
+        self.addRedrawButton(lower_toolbar)
+        self.addSaveButton(lower_toolbar)
 
         self.addShortcuts()
 
@@ -228,8 +231,9 @@ class MainWindow(QtGui.QMainWindow):
         scroll_area = QtGui.QScrollArea(self)
         scroll_area.setWidget(self.image_label)
         scroll_area.setWidgetResizable(True)
-        layout.addLayout(toolbar)
+        layout.addLayout(upper_toolbar)
         layout.addWidget(scroll_area)
+        layout.addLayout(lower_toolbar)
 
         central_widget = QtGui.QWidget(self)
         central_widget.setLayout(layout)
