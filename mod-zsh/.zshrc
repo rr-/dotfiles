@@ -107,6 +107,7 @@ fi
 alias ls="`whence ls`"' -vhF1 --group-directories-first'
 alias ll="`whence ls`"' -lX --group-directories-first'
 alias la="`whence ls`"' -lXA --group-directories-first'
+alias lc="`whence ls`"' -lXC --group-directories-first'
 
 alias plen='tl pl en'
 alias enpl='tl en pl'
