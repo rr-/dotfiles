@@ -67,5 +67,16 @@ feh --bg-fill "$HOME/.wallpaper1" "$HOME/.wallpaper2" &
 pkill -f sxhkd
 sxhkd &
 
+# fix Java GUI rendering - found in baskerville's dotfiles
+IRONIC_WM_NAME="LG3D"
+NET_WIN=$(xprop -root _NET_SUPPORTING_WM_CHECK | awk -F "# " '{print $2}')
+if [[ "$NET_WIN" == 0x* ]]; then
+    xprop -id "$NET_WIN" -remove _NET_WM_NAME
+    xprop -id "$NET_WIN" -f _NET_WM_NAME 8s -set _NET_WM_NAME "$IRONIC_WM_NAME"
+else
+    xprop -root -remove _NET_WM_NAME
+    xprop -root -f _NET_WM_NAME 8s -set _NET_WM_NAME "$IRONIC_WM_NAME"
+fi
+
 pkill -f bspwm/panel
 nohup $HOME/.config/bspwm/panel </dev/null &>/dev/null &
