@@ -6,6 +6,8 @@ lynx -source https://bitbucket.org/pypa/setuptools/raw/bootstrap/ez_setup.py >ez
 chmod +x ez_setup
 ./ez_setup
 
+apt-cyg install python-setuptools
+apt-cyg install python3-setuptools
 easy_install-3.4 pip
 
 rm ez_setup
