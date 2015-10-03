@@ -264,8 +264,8 @@ let mapleader = "-"
 map <buffer> <silent> k gk
 map <buffer> <silent> j gj
 "ctrl+tab, ctrl+shift+tab = move to next/prev tab
-nmap <Esc>[1;5I gt<CR>
-nmap <Esc>[1;6I gT<CR>
+nmap <Esc>[1;5I gt
+nmap <Esc>[1;6I gT
 "ctrl+t = open new tab
 imap <silent> <C-t> <Esc>:tabnew<CR>
 nmap <silent> <C-t> :tabnew<CR>
