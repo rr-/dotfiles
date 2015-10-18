@@ -123,8 +123,6 @@ autocmd BufWinEnter * match ExtraWhitespace /\v\s+$|\t+ ([^*]|$)| \t+/
 command! TwoSpaces set et sts=2 ts=2 sw=2
 command! FourSpaces set et sts=4 ts=4 sw=4
 command! Tabs set noet sts=4 ts=4 sw=4
-"create working dirs for current file
-command! CreateDirs execute ':silent !mkdir -p %:h' | write | redraw!
 "copy text file with hard wraps (e.g. Markdown) as one line
 function! CopyWithoutHardWrapping()
   let old_tw=&textwidth
@@ -279,8 +277,6 @@ imap <silent> <C-q> <Esc>:q<CR>
 nmap <silent> <C-q> :q<CR>
 "ctrl+o = open Ctrl+P prompt
 nmap <silent> <C-o> :CtrlPLine<CR>
-"f4 = copy current file path to system clipboard
-map <silent> <F4> :let @" = expand("%")<CR>
 "make motion search easier to access
 nmap <leader>z <leader><leader>s
 "access to recent yank/paste stack
@@ -288,15 +284,6 @@ nmap <leader>p <Plug>yankstack_substitute_older_paste
 nmap <leader>P <Plug>yankstack_substitute_newer_paste
 "save with sudo
 cmap w!! w !sudo tee >/dev/null %
-"arrows are not needed in hhkb :^)
-map <Up> <Nop>
-map <Down> <Nop>
-map <Left> <Nop>
-map <Right> <Nop>
-imap <Up> <Nop>
-imap <Down> <Nop>
-imap <Left> <Nop>
-imap <Right> <Nop>
 "disable stupid manual pages
 nmap <silent> <S-K> <nop>
 
