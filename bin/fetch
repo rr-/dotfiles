@@ -175,7 +175,7 @@ class DownloadCommand(Command):
                 return self._process_nonhtml(response)
 
         def _process_html(self, response):
-            soup = BeautifulSoup(response.text)
+            soup = BeautifulSoup(response.text, 'html.parser')
             child_urls = set()
             for link in soup.find_all('a', href=True):
                 child_url = urllib.parse.urldefrag(
