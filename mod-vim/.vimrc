@@ -234,6 +234,9 @@ autocmd FileType text,markdown setlocal spell textwidth=79
 "enable spellcheck and double gutter in git commit messages
 autocmd FileType gitcommit setlocal spell textwidth=72 colorcolumn=50,72
 
+"disable usual sanity checkers for help, which is usually read-only
+autocmd FileType help setlocal nospell | highlight clear ExtraWhitespace
+
 "disable syntax for certain files
 autocmd FileType text,xml,json setlocal syntax=
 
