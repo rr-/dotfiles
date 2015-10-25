@@ -32,7 +32,7 @@ alt + ctrl + shift + n
 
 # file manager
 super + e
-    thunar
+    run-or-raise -cn vifm -p 'urxvt -name vifm -e zsh -i -l -c vifm'
 
 
 
