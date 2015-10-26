@@ -113,7 +113,7 @@ super + s
 
 # set current window as fullscreen
 super + f
-    bspc window -t fullscreen
+    bash -c '~/.config/bspwm/toggle-fullscreen'
 
 # focus window with regard to focus history
 super + {bracketleft,bracketright}

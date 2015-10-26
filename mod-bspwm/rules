@@ -8,14 +8,15 @@ title=$(xdotool getwindowname "$window_id")
 if [ "$window_class" = Pidgin ] ; then
     case "$title" in
         buddy*list|Buddy*List)
-            echo "floating = on"
+            echo 'floating=on'
             xdotool windowmove "$window_id" 3440 90
             ;;
         *)
-            echo "floating = on"
+            echo 'floating=on'
             xdotool windowmove "$window_id" 1990 90
             ;;
     esac
 elif [ "$title" = send-to-yume ]; then
+    echo 'layer=above'
     compton-trans -c 70 -w "$window_id"
 fi
