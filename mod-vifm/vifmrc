@@ -100,7 +100,7 @@ filextype *.bmp,*.jpg,*.jpeg,*.png,*.gif eyecandy %f 2>/dev/null &
 fileviewer *.bmp,*.jpg,*.jpeg,*.png,*.gif convert -identify %f -verbose /dev/null
 
 " Rich text documents
-filextype *.pdf okular %c %i &
+filextype *.pdf evince %c %i &
 fileviewer *.pdf pdftotext -nopgbrk %c -
 filextype *.odt,*.doc,*.docx,*.xls,*.xlsx,*.odp,*.pptx libreoffice %f &
 fileviewer *.doc catdoc %c
