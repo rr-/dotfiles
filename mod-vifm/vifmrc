@@ -30,8 +30,8 @@ set norunexec
 " prefer KB, MB over KiB, MiB
 set noiec
 
-" join the light side!
-colorscheme light
+" active color scheme
+colorscheme current
 
 set timefmt=%Y-%m-%d\ %H:%M
 
