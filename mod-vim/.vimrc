@@ -106,7 +106,7 @@ highlight SpecialKey ctermbg=NONE ctermfg=187
 highlight ExtraWhitespace ctermbg=red guibg=red
 "fix ColorColumn on dark backgrounds
 if &background == 'dark'
-  highlight ColorColumn ctermbg=233
+  highlight ColorColumn ctermbg=235
 else
   highlight Normal ctermbg=NONE
   highlight ColorColumn ctermbg=255
