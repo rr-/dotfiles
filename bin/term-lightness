@@ -21,6 +21,10 @@ else
     echo -e 'color sorcerer' >>~/.vimrc-background
 fi
 
+# vifm
+[ -h ~/.config/vifm/colors/current ] && rm ~/.config/vifm/colors/current
+ln -s ~/.config/vifm/colors/"$word".vifm ~/.config/vifm/colors/current
+
 # URxvt and xterm
 [ -h ~/.config/Xresources-theme ] && rm ~/.config/Xresources-theme
 ln -s ~/.config/Xresources-$word ~/.config/Xresources-theme
