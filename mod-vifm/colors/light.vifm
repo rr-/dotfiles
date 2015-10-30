@@ -18,12 +18,12 @@ highlight Executable cterm=bold ctermfg=red ctermbg=default
 highlight Selected cterm=bold ctermfg=200 ctermbg=default
 
 highlight CurrLine cterm=bold ctermfg=255 ctermbg=27
-highlight TopLine cterm=none ctermfg=236 ctermbg=255
-highlight TopLineSel cterm=bold ctermfg=236 ctermbg=255
+highlight TopLine cterm=none ctermfg=236 ctermbg=254
+highlight TopLineSel cterm=bold ctermfg=236 ctermbg=254
 
-highlight StatusLine cterm=bold ctermfg=236 ctermbg=255
-highlight WildMenu cterm=underline,reverse ctermfg=236 ctermbg=255
+highlight StatusLine cterm=bold ctermfg=236 ctermbg=254
+highlight WildMenu cterm=underline,reverse ctermfg=236 ctermbg=254
 highlight CmdLine cterm=none ctermfg=236 ctermbg=default
 
 highlight ErrorMsg cterm=none ctermfg=red ctermbg=default
-highlight Border cterm=none ctermfg=236 ctermbg=255
+highlight Border cterm=none ctermfg=236 ctermbg=254

@@ -51,7 +51,7 @@ set scrolloff=4
 " don't do too many requests to slow file systems
 set slowfs=curlftpfs
 " set custom status line look
-set statusline="  %t%= %A %10u:%-7g %15s %20d  "
+set statusline=" %t%= %A %10u:%-7g %15s %20d  "
 
 " ------------------------------------------------------------------------------
 " predefined marks (navigate to these with `[letter])
