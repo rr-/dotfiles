@@ -1,6 +1,6 @@
 #!/bin/sh
 bspc query -T | grep '[f-][d-][F][u-][l-][s-][i-][p-]' &>/dev/null
-xdo below -t "$(xdo id -pid $(pidof bspwm))" "$(xdo id -n panel)"
+xdo above -t "$(xdo id -N Bspwm -n root | sort | head -n 1)" $(xdo id -n panel)
 if [ "$?" == '0' ]; then
     bspc window -t fullscreen -l normal
 else
