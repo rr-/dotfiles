@@ -1,12 +1,12 @@
-from PyQt4 import QtGui
-from PyQt4 import QtCore
+from PyQt5 import QtWidgets
+from PyQt5 import QtCore
 
-class FlowLayout(QtGui.QLayout):
+class FlowLayout(QtWidgets.QLayout):
     def __init__(self, parent=None, margin=0, spacing=-1, rtl=False):
         super().__init__(parent)
         self.rtl = rtl
         if parent is not None:
-            self.setMargin(margin)
+            self.setContentsMargins(*[margin]*4)
         self.setSpacing(spacing)
         self.itemList = []
 
@@ -51,7 +51,8 @@ class FlowLayout(QtGui.QLayout):
         size = QtCore.QSize()
         for item in self.itemList:
             size = size.expandedTo(item.minimumSize())
-        size += QtCore.QSize(2 * self.margin(), 2 * self.margin())
+        left, top, right, bottom = self.getContentsMargins()
+        size += QtCore.QSize(left + right, top + bottom)
         return size
 
     def doLayout(self, rect, testOnly):

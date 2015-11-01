@@ -1,8 +1,8 @@
-from PyQt4 import QtGui
-from PyQt4 import QtCore
+from PyQt5 import QtGui
+from PyQt5 import QtWidgets
 import collections
 
-class Chart(QtGui.QWidget):
+class Chart(QtWidgets.QWidget):
     def __init__(self, size):
         super().__init__()
         self.setMinimumSize(size)
