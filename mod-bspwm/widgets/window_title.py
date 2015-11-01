@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta
-from PyQt4 import QtGui
+from PyQt5 import QtWidgets
 import Xlib
 import Xlib.display
 
@@ -13,7 +13,7 @@ class WindowTitleProvider(object):
         self.labels = []
         self.window_names = []
         for i in range(len(main_window)):
-            label = QtGui.QLabel()
+            label = QtWidgets.QLabel()
             label.setProperty('class', 'wintitle')
             main_window[i].left_widget.layout().addWidget(label)
             self.labels.append(label)
@@ -75,6 +75,8 @@ class WindowTitleProvider(object):
         if result is None:
             return None
         desktop_id = result.value[0]
+        if desktop_id > len(self.desktop_to_monitor):
+            return None
         return self.desktop_to_monitor[desktop_id]
 
     def reset_title_for_window(self, window):
@@ -85,7 +87,11 @@ class WindowTitleProvider(object):
     def update_title_for_window(self, window):
         monitor_id = self.get_monitor_id_for_window(window)
         if monitor_id is not None:
-            result = window.get_full_property(self.NET_WM_NAME, 0)
+            try:
+                result = window.get_full_property(self.NET_WM_NAME, 0)
+            except Xlib.error.BadWindow:
+                result = None
+
             if result:
                 self.window_names[monitor_id] = result.value
             else:
@@ -94,5 +100,8 @@ class WindowTitleProvider(object):
     def render(self):
         if self.changed:
             for i, label in enumerate(self.labels):
-                label.setText(self.window_names[i] or '')
+                window_name = self.window_names[i]
+                if isinstance(window_name, bytes):
+                    window_name = window_name.decode('utf8')
+                label.setText(window_name or '')
             self.changed = False
