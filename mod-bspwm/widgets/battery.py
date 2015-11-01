@@ -1,4 +1,4 @@
-from PyQt4 import QtGui
+from PyQt5 import QtWidgets
 import glob
 import time
 
@@ -15,7 +15,7 @@ class BatteryProvider(object):
             self.charge_max = glob.glob('/sys/class/power_supply/*/charge_full')[0]
             self.charge_status = glob.glob('/sys/class/power_supply/*/status')[0]
             self.battery_present = True
-            self.label = QtGui.QLabel()
+            self.label = QtWidgets.QLabel()
             main_window[0].right_widget.layout().addWidget(self.label)
         except IndexError:
             self.battery_present = False

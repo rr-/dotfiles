@@ -1,12 +1,12 @@
 from datetime import datetime, timedelta
-from PyQt4 import QtGui
+from PyQt5 import QtWidgets
 
 class TimeProvider(object):
     delay = 1
 
     def __init__(self, main_window):
-        self.date_label = QtGui.QLabel()
-        self.clock_label = QtGui.QLabel()
+        self.date_label = QtWidgets.QLabel()
+        self.clock_label = QtWidgets.QLabel()
         for w in [self.date_label, self.clock_label]:
             main_window[0].right_widget.layout().addWidget(w)
         self.date_label.setStyleSheet('QWidget { margin-left: 12px; margin-right: 0 }')

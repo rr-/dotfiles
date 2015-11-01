@@ -1,5 +1,5 @@
-from PyQt4 import QtGui
-from PyQt4 import QtCore
+from PyQt5 import QtWidgets
+from PyQt5 import QtCore
 import os
 import glob
 
@@ -29,8 +29,8 @@ class NetworkUsageProvider(object):
         if self.network_enabled:
             self.old_rx_bytes = int(read_file(self.rx_path))
             self.old_tx_bytes = int(read_file(self.tx_path))
-            self.net_in_label = QtGui.QLabel()
-            self.net_out_label = QtGui.QLabel()
+            self.net_in_label = QtWidgets.QLabel()
+            self.net_out_label = QtWidgets.QLabel()
             self.chart = Chart(QtCore.QSize(80, main_window.height()))
             for w in [self.net_in_label, self.net_out_label, self.chart]:
                 main_window[0].right_widget.layout().addWidget(w)
