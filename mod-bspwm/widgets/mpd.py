@@ -1,7 +1,7 @@
 import math
 import mpd
 import subprocess
-from PyQt4 import QtGui
+from PyQt5 import QtWidgets
 
 class MpdProvider(object):
     delay = 1
@@ -16,11 +16,11 @@ class MpdProvider(object):
         self.connected = False
         self.mpd_status = None
 
-        self.status_label = QtGui.QLabel()
+        self.status_label = QtWidgets.QLabel()
         self.status_label.setProperty('class', 'icon')
         self.status_label.setStyleSheet('QWidget { margin-right: -8px }')
-        self.song_label = QtGui.QLabel()
-        self.random_label = QtGui.QLabel()
+        self.song_label = QtWidgets.QLabel()
+        self.random_label = QtWidgets.QLabel()
         self.random_label.setProperty('class', 'icon')
         self.random_label.setText('\U0001F500')
 
@@ -40,7 +40,7 @@ class MpdProvider(object):
 
     def prev_or_next_track(self, event):
         subprocess.call(
-            ['mpc', ['prev', 'next'][event.delta() > 0]],
+            ['mpc', ['prev', 'next'][event.angleDelta().y() > 0]],
             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         self.refresh()
         self.render()
