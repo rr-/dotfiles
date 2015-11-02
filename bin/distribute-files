@@ -10,10 +10,15 @@ STYLE_CREATE = 2
 
 def parse_args():
     parser = argparse.ArgumentParser(
-        description='Distribute files in given directory to subdirectories.')
+        description='Distribute files in given directory to subdirectories.\n\n'
+            + 'Subdirectories have numeric names starting at 1. Names are '
+            + '*not* padded with 0 to avoid the need to rename existing '
+            + 'subdirectories whenever the digit count changes. Only files are '
+            + 'distributed - all directories are ignored.')
 
     parser.add_argument('-m', '--max', metavar='MAX', type=int, default=1000,
-        help='set upper limit how many files a directory should contain')
+        help=('set upper limit how many files a subdirectory should contain'
+            + ' (default: 1000)'))
 
     parser.add_argument('base_dir', metavar='DIR',
         help='directory to organize')
@@ -21,14 +26,17 @@ def parse_args():
     group = parser.add_mutually_exclusive_group()
     group.set_defaults(style=STYLE_LAST, verbosity = 0)
     group.add_argument(
-        '--fill-first', action='store_const', dest='style', const=STYLE_FIRST,
-        help='try to fill first directory available')
-    group.add_argument(
         '--fill-last', action='store_const', dest='style', const=STYLE_LAST,
-        help='try to fill last directory available (default)')
+        help='try to fill last subdirectory available (default)')
     group.add_argument(
-        '--create', action='store_const', dest='style', const=STYLE_CREATE,
-        help='always create new directories')
+        '--fill-first', action='store_const', dest='style', const=STYLE_FIRST,
+        help='try to fill first subdirectory available '
+            + '(will recreate missing subdirectories starting at 1)')
+    group.add_argument(
+        '--always-create',
+        action='store_const', dest='style', const=STYLE_CREATE,
+        help='don\'t fill existing subdirectories '
+            + '(will create new subdirectory after the last one available)')
 
     parser.add_argument(
         '--dry-run', action='store_true',
@@ -37,10 +45,10 @@ def parse_args():
     parser.set_defaults(verbosity = 0)
     parser.add_argument(
         '-v', '--verbose', action='store_const', dest='verbosity', const=1,
-        help='print directory operations')
+        help='print basic movement statistics')
     parser.add_argument(
         '--very-verbose', action='store_const', dest='verbosity', const=2,
-        help='print file movement operations')
+        help='print every single movement operation')
     parser.add_argument(
         '--silent', action='store_const', dest='verbosity', const=0,
         help='print only errors')
@@ -61,10 +69,11 @@ def next_dir_number(dir_map, style, max_file_count):
                 return dir, max_file_count - file_count
 
     elif style == STYLE_LAST:
+        # this shouldn't be a loop, but it's late and I'm tired, and this works
         for dir, file_count in reversed(list(dir_map.items())):
             if file_count < max_file_count:
                 return dir, max_file_count - file_count
-            break #it's late and I'm tired
+            break
 
     elif style == STYLE_CREATE:
         pass
