@@ -160,8 +160,28 @@ OnClipboardChange:
         return
     }
 
-;explorer - activate/run
-#E::FRun("ahk_class CabinetWClass", "Z:\", "Z:\")
+    ;vifm - activate/run
+    #E::
+    {
+        IfWinExist, ahk_class Vifm
+        {
+            WinShow
+            WinActivate
+        }
+        else
+        {
+            Run, %CygPath%\bin\mintty.exe --window max --class "Vifm" --exec /bin/zsh -l -i -c vifm, %CygPath%/bin
+            WinWait, ahk_class Vifm
+        }
+        return
+    }
+
+    ;vifm - just run
+    +#E::
+    {
+        Run, %CygPath%\bin\mintty.exe --window max --class "Vifm" --exec /bin/zsh -l -i -c vifm, %CygPath%/bin
+        return
+    }
 
 ;im
 #If FileExist(IMPath)
