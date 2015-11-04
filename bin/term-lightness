@@ -10,8 +10,10 @@ else
 fi
 
 # MinTTY
-[ -h ~/.minttyrc ] && rm ~/.minttyrc
-ln -s ~/.minttyrc-$word ~/.minttyrc
+if [ -h ~/.minttyrc ]; then
+    rm ~/.minttyrc
+    ln -s ~/.minttyrc-$word ~/.minttyrc
+fi
 
 # vim
 echo -e 'set background='$word >~/.vimrc-background
@@ -26,10 +28,12 @@ fi
 ln -s ~/.config/vifm/colors/"$word".vifm ~/.config/vifm/colors/current
 
 # URxvt and xterm
-[ -h ~/.config/Xresources-theme ] && rm ~/.config/Xresources-theme
-ln -s ~/.config/Xresources-$word ~/.config/Xresources-theme
-if command -v xset &>/dev/null; then
-    if xset q &>/dev/null; then
-        xrdb -override ~/.config/Xresources-theme
+if [ -h ~/.config/Xresources-theme ]; then
+    rm ~/.config/Xresources-theme
+    ln -s ~/.config/Xresources-$word ~/.config/Xresources-theme
+    if command -v xset &>/dev/null; then
+        if xset q &>/dev/null; then
+            xrdb -override ~/.config/Xresources-theme
+        fi
     fi
 fi
