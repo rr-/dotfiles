@@ -3,7 +3,7 @@
 # installs apt-cyg for Arch.
 
 function install_aur {
-    url=https://aur.archlinux.org/packages/${1:0:2}/$1/$1.tar.gz
+    url=https://aur.archlinux.org/cgit/aur.git/snapshot/$1.tar.gz
     if pacman -Q "$1" >/dev/null; then
         echo "$1 already installed"
     else
@@ -16,17 +16,44 @@ function install_aur {
     fi
 }
 
-if command sudo &>/dev/null; then
+if ! command -v sudo &>/dev/null; then
     echo 'Install sudo first.'
     exit 1
 fi
 
-if command tar &>/dev/null; then
+if ! command -v tar &>/dev/null; then
+    echo 'Installing tar (to unpack yaourt)...'
     sudo pacman -S tar
 fi
 
-if command wget &>/dev/null; then
+if ! command -v wget &>/dev/null; then
+    echo 'Installing wget (to download yaourt)...'
     sudo pacman -S wget
+fi
+
+if ! command -v gcc &>/dev/null; then
+    echo 'Installing gcc (to compile everything)...'
+    sudo pacman -S gcc
+fi
+
+if ! command -v make &>/dev/null; then
+    echo 'Installing make (to compile everything)...'
+    sudo pacman -S make
+fi
+
+if ! pacman -Q fakeroot; then
+    echo 'Installing fakeroot (for building package-query)...'
+    sudo pacman -S fakeroot
+fi
+
+if ! pacman -Q yajl; then
+    echo 'Installing yajl (for package-query)...'
+    sudo pacman -S yajl
+fi
+
+if ! command -v strip &>/dev/null; then
+    echo 'Installing strip (for yaourt)...'
+    sudo pacman -S binutils
 fi
 
 install_aur package-query
