@@ -28,8 +28,10 @@ fi
 ln -s ~/.config/vifm/colors/"$word".vifm ~/.config/vifm/colors/current
 
 # URxvt and xterm
-if [ -h ~/.config/Xresources-theme ]; then
-    rm ~/.config/Xresources-theme
+if [ -h ~/.config/Xresources ]; then
+    if [ -h ~/.config/Xresources-theme ]; then
+        rm ~/.config/Xresources-theme
+    fi
     ln -s ~/.config/Xresources-$word ~/.config/Xresources-theme
     if command -v xset &>/dev/null; then
         if xset q &>/dev/null; then
