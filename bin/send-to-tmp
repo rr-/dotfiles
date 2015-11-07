@@ -56,7 +56,7 @@ def send(src_paths):
     for src_path, target_name in src_paths:
         dst_path = os.path.join(base_dir, target_name)
         tar.add(src_path, arcname=target_name)
-        commands.append('chmod 0644 %s' % dst_path)
+        commands.append('chmod 0644 %s' % shlex.quote(dst_path))
         urls.append(base_url + target_name.replace('\\', '/'))
 
     cmdline = ['ssh', remote_host, ';'.join(commands)]
