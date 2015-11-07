@@ -4,6 +4,7 @@ from libinstall import FileInstaller, PackageInstaller
 dir = os.path.dirname(__file__)
 
 PackageInstaller.try_install('xorg')          # the server itself
+PackageInstaller.try_install('xclip')         # for clip to work
 PackageInstaller.try_install('xorg-xinit')    # for startx
 PackageInstaller.try_install('xorg-xsetroot') # to fix the mouse cursor
 PackageInstaller.try_install('xorg-xrandr')   # to query monitor information
