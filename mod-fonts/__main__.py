@@ -7,7 +7,7 @@ PackageInstaller.try_install('xorg-font-utils')
 PackageInstaller.try_install('ttf-dejavu')
 PackageInstaller.try_install('ttf-symbola')
 PackageInstaller.try_install('ttf-font-awesome')
-PackageInstaller.try_install('ttf-ipa-mona')
+PackageInstaller.try_install('ttf-monapo')
 
 if os.path.exists('/usr/share/fonts'):
     fonts_dir = os.path.expanduser('~/.local/share/fonts')
