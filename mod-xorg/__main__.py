@@ -3,9 +3,6 @@ import os
 from libinstall import FileInstaller, PackageInstaller
 dir = os.path.dirname(__file__)
 
-#TODO: rewrite this to my own screenshot solution
-PackageInstaller.try_install('escrotum-git')  # to make screenshots
-
 PackageInstaller.try_install('xorg-xsetroot') # to fix the mouse cursor
 PackageInstaller.try_install('xorg-xrandr')   # to query monitor information
 PackageInstaller.try_install('xdotool')       # for all sort of things
