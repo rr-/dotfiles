@@ -24,10 +24,10 @@ setxkbmap pl
 #enable transparency manager
 #this is also supposed to eliminate problems with tearing.
 comptonflags=( -b )
-if [[ `hostname` == tornado ]]; then
+if lspci | grep -i nvidia &>/dev/null; then
     # nvidia
     comptonflags+=( --backend glx --vsync opengl-swc --paint-on-overlay )
-elif [[ `hostname` == chibi || `hostname` == bus ]]; then
+else
     # amd
     comptonflags+=( --backend xrender --paint-on-overlay --unredir-if-possible )
 fi
