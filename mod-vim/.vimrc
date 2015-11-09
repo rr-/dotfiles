@@ -280,6 +280,9 @@ imap <silent> <C-q> <Esc>:q<CR>
 nmap <silent> <C-q> :q<CR>
 "ctrl+o = open Ctrl+P prompt
 nmap <silent> <C-o> :CtrlPLine<CR>
+"ctrl+w ctrl+m = open new file vertically
+nmap <silent> <C-w><C-m> :vne<CR>
+nmap <silent> <C-w>m :vne<CR>
 "make motion search easier to access
 nmap <leader>z <leader><leader>s
 "access to recent yank/paste stack
