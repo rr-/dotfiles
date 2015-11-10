@@ -15,6 +15,7 @@ class MpdProvider(object):
         self.client = mpd.MPDClient()
         self.connected = False
         self.mpd_status = None
+        self.current_song = None
 
         self.status_label = QtWidgets.QLabel()
         self.status_label.setProperty('class', 'icon')
