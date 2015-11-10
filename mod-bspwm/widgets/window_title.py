@@ -75,7 +75,7 @@ class WindowTitleProvider(object):
         if result is None:
             return None
         desktop_id = result.value[0]
-        if desktop_id > len(self.desktop_to_monitor):
+        if desktop_id >= len(self.desktop_to_monitor):
             return None
         return self.desktop_to_monitor[desktop_id]
 
