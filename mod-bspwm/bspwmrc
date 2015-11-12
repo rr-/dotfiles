@@ -23,11 +23,9 @@ run_if_needed() {
 if [ "$(hostname)" = tornado ]; then
     run_if_needed pidgin pidgin
     run_if_needed firefox firefox
-    run_if_needed trackma-qt trackma-qt
     run_if_needed qbittorrent qbittorrent
-elif [ "$(hostname)" = chibi || "$(hostname)" = bus ]; then
-    run_if_needed trackma-qt trackma-qt
 fi
+run_if_needed trackma-qt trackma-qt
 
 desktop_config focused_border_color "#20aaba"
 desktop_config urgent_border_color "#de3333"
