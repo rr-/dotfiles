@@ -56,6 +56,8 @@ class WindowTitleProvider(object):
             self.changed = True
 
     def attach_event_handler(self, window):
+        if not window:
+            return
         window.change_attributes(event_mask=Xlib.X.FocusChangeMask | Xlib.X.PropertyChangeMask)
 
     def update_title_for_all_windows(self, root_window=None):
@@ -65,14 +67,15 @@ class WindowTitleProvider(object):
     def get_active_window(self):
         window_id = self.root.get_full_property(
             self.NET_ACTIVE_WINDOW, Xlib.X.AnyPropertyType).value[0]
-        return self.disp.create_resource_object('window', window_id)
+        if window_id:
+            return self.disp.create_resource_object('window', window_id)
+        return None
 
     def get_monitor_id_for_window(self, window):
-        try:
-            result = window.get_full_property(self.NET_WM_DESKTOP, 0)
-        except Xlib.error.BadWindow:
-            return None
-        if result is None:
+        if not window:
+            return
+        result = window.get_full_property(self.NET_WM_DESKTOP, 0)
+        if not result:
             return None
         desktop_id = result.value[0]
         if desktop_id >= len(self.desktop_to_monitor):
@@ -80,18 +83,18 @@ class WindowTitleProvider(object):
         return self.desktop_to_monitor[desktop_id]
 
     def reset_title_for_window(self, window):
+        if not window:
+            return
         monitor_id = self.get_monitor_id_for_window(window)
         if monitor_id is not None:
             self.window_names[monitor_id] = ''
 
     def update_title_for_window(self, window):
+        if not window:
+            return
         monitor_id = self.get_monitor_id_for_window(window)
         if monitor_id is not None:
-            try:
-                result = window.get_full_property(self.NET_WM_NAME, 0)
-            except Xlib.error.BadWindow:
-                result = None
-
+            result = window.get_full_property(self.NET_WM_NAME, 0)
             if result:
                 self.window_names[monitor_id] = result.value
             else:
