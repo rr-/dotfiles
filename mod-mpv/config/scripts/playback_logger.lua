@@ -1,6 +1,14 @@
 mputils = require 'mp.utils'
 require 'os'
 
+-- configuration
+minimum_watched_percentage = 80
+minimum_duration = 300 -- five minutes
+ignore_online_streams = true
+remote_host = 'burza'
+remote_log_path = '/srv/www/tmp.sakuya.pl/public_html/mal/watched.lst'
+
+
 -- from shell.lua, by Peter Odding
 local function escape(...)
     local command = type(...) == 'table' and ... or { ... }
@@ -24,57 +32,69 @@ function run(t)
     return trim(mputils.subprocess(t).stdout)
 end
 
-function on_path_change(_, new_path)
-    last_file_path = new_path
-end
-
-function on_time_change(_, new_time)
-    last_remaining_time = new_time
-end
-
 function playback_finished(event)
-    if last_remaining_time == null then
-        mp.log('info', 'No information on remaining time, skipping')
-    elseif last_remaining_time > minimum_remaining_time then
-        mp.log('info', string.format(
-            'Too much remaining time (%.02f > %.02f), skipping',
-            last_remaining_time,
-            minimum_remaining_time))
-    else
-        json = mputils.format_json({
-            date=os.date('%c'),
-            host=hostname,
-            path=last_file_path
-        })
+    path = mp.get_property('path')
+    watched_percentage = mp.get_property_number('percent-pos')
+    duration = mp.get_property_number('duration')
+    hostname = run({args={'hostname'}, cancellable=false})
 
-        json = run({
-            args={
-                'sh',
-                '-c',
-                'echo ' .. escape(json) .. '|' ..
-                'python -c "import json,sys;print(json.dumps(json.load(sys.stdin),sort_keys=True))"'},
-            cancellable=false})
-
-        mp.log('info', 'Sending JSON: ' .. json)
-        output = run({
-            args={
-                'ssh',
-                remote_host,
-                'echo',
-                escape(json),
-                '>>',
-                escape(remote_log_path)},
-            cancellable=false})
+    if duration == null then
+        mp.log('warn', 'No information on duration, skipping')
+        return
     end
+
+    if watched_percentage == null then
+        mp.log('warn', 'No information on % watched, skipping')
+        return
+    end
+
+    if ignore_online_streams and string.match(path, 'https?:') then
+        mp.log('info', 'Online stream detected, skipping')
+        return
+    end
+
+    if watched_percentage < minimum_watched_percentage then
+        mp.log('info', string.format(
+            'Watched too little (%.02f%% < %.02f%%), skipping',
+            watched_percentage,
+            minimum_watched_percentage))
+        return
+    end
+
+    if duration < minimum_duration then
+        mp.log('info', string.format(
+            'File is too short (%.02fs < %.02fs), skipping',
+            duration,
+            minimum_duration))
+        return
+    end
+
+    json = mputils.format_json({
+        date=os.date('%c'),
+        host=hostname,
+        path=path
+    })
+
+    json = run({
+        args={
+            'sh',
+            '-c',
+            'echo ' .. escape(json) .. '|' ..
+            'python -c "import json,sys;print(json.dumps(json.load(sys.stdin),sort_keys=True))"'},
+        cancellable=false})
+
+    mp.log('info', 'Sending JSON: ' .. json)
+    output = run({
+        args={
+            'ssh',
+            remote_host,
+            'echo',
+            escape(json),
+            '>>',
+            escape(remote_log_path)},
+        cancellable=false})
 end
 
 ----------
 
-minimum_remaining_time = 120 --seconds
-remote_host = 'burza'
-remote_log_path = '/srv/www/tmp.sakuya.pl/public_html/mal/watched.lst'
-hostname = run({args={'hostname'}, cancellable=false})
-
-mp.observe_property('path', 'string', on_path_change)
-mp.observe_property('time-remaining', 'native', on_time_change)
-mp.register_event('end-file', playback_finished)
+mp.add_hook('on_unload', 50, playback_finished)
