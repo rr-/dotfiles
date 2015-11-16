@@ -103,17 +103,17 @@ set undodir=~/.vim/undo//          "set path to undo data file
 set wildignorecase            "case-insensitive filename completion in commands
 "list of files to ignore
 set wildignore+=.hg,.git,.bzr
-set wildignore+=data/posts,_site,files,thumbs
 set wildignore+=vendor,node_modules,build
-set wildignore+=*.exe,*.dll,*.so
-set wildignore+=*.o
-set wildignore+=*.pyc
+set wildignore+=*.o,*.obj
+set wildignore+=*.pyc,*.pyo
 set wildignore+=*.swp
-set wildignore+=*.svn-base,*.stackdump
-set wildignore+=*.tar,*.zip,*.7z,*.gz
-set wildignore+=*.jpg,*.jpeg,*.gif,*.png,*.tga,*.bmp
-set wildignore+=*.pdf,*.doc,*.xls
-set wildignore+=*.wav,*.ogg,*.mp3,*.mp4,*.avi,*.mkv,*.ttf
+set wildignore+=*.stackdump
+"set wildignore+=data/posts,_site,files,thumbs
+"set wildignore+=*.exe,*.dll,*.so
+"set wildignore+=*.tar,*.zip,*.7z,*.gz
+"set wildignore+=*.jpg,*.jpeg,*.gif,*.png,*.tga,*.bmp
+"set wildignore+=*.pdf,*.doc,*.xls
+"set wildignore+=*.wav,*.ogg,*.mp3,*.mp4,*.avi,*.mkv,*.ttf
 
 "----------------------------------------
 " highlight bad whitespace
@@ -213,8 +213,6 @@ let g:nerdtree_tabs_open_on_console_startup = 0
 let g:nerdtree_tabs_focus_on_files = 1
 "don't focus nerdtree on parameterless startup
 let g:nerdtree_tabs_smart_startup_focus = 2
-"don't display these kinds of files
-let NERDTreeIgnore=['\.pyc$', '\.pyo$', '\.obj$', '\.o$']
 "f2 = disable NERDtree
 autocmd VimEnter * imap <F2> <esc>:NERDTreeToggle<CR>
 autocmd VimEnter * nmap <F2> :NERDTreeToggle<CR>
