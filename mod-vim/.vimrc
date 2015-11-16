@@ -64,7 +64,6 @@ filetype on                   "enable setting options based on file
 "----------------------------------------
 set bs=indent,eol,start       "allow backspacing over indent, eol and ?
 set virtualedit=onemore       "allow moving cursor up to EOL+1 character
-set wildignorecase            "case-insensitive filename completion in commands
 set splitbelow splitright     "change placement when splitting a buffer
 set shell=/bin/zsh            "when opening shell, use zsh
 set mouse=a                   "enable mouse support
@@ -96,6 +95,24 @@ set backupdir=~/.vim/backup//      "set path to file backups
 set backup                         "enable backups
 set directory=~/.vim/swap//        "set path to swap files (.*.swp)
 set undodir=~/.vim/undo//          "set path to undo data file
+
+"------------------------------------------
+" ignore settings in command-t and commands
+"------------------------------------------
+set wildignorecase            "case-insensitive filename completion in commands
+"list of files to ignore
+set wildignore+=.hg,.git,.bzr
+set wildignore+=data/posts,_site,files,thumbs
+set wildignore+=vendor,node_modules,build
+set wildignore+=*.exe,*.dll,*.so
+set wildignore+=*.o
+set wildignore+=*.pyc
+set wildignore+=*.swp
+set wildignore+=*.svn-base,*.stackdump
+set wildignore+=*.tar,*.zip,*.7z,*.gz
+set wildignore+=*.jpg,*.jpeg,*.gif,*.png,*.tga,*.bmp
+set wildignore+=*.pdf,*.doc,*.xls
+set wildignore+=*.wav,*.ogg,*.mp3,*.mp4,*.avi,*.mkv,*.ttf
 
 "----------------------------------------
 " highlight bad whitespace
@@ -155,32 +172,12 @@ command! Bdi :call DeleteInactiveBufs()
 "----------------------------------------
 " config Ctrl+P
 "----------------------------------------
-"try to open Ctrl+P in a directory containing common VCS directories
-let g:ctrlp_working_path_mode = 'rc'
-"enable matching files such as .htaccess
-let g:ctrlp_dotfiles = 1
-"show selected element at the top
-let g:ctrlp_match_window_bottom = 1
-"show list top->bottom
-let g:ctrlp_match_window_reversed = 1
-let g:ctrlp_by_filename = 1
+let g:ctrlp_working_path_mode = 'rc'    "enable VCS dir discovery and traversal
+let g:ctrlp_dotfiles = 1                "enable matching files such as .htaccess
+let g:ctrlp_match_window_bottom = 1     "show selected element at the top
+let g:ctrlp_match_window_reversed = 1   "show list top->bottom
+let g:ctrlp_by_filename = 1             "fuzzy match only file names
 let g:ctrlp_match_window = 'bottom,order:btt,min:1,max:10,results:10'
-"ignored files and directories
-let g:ctrlp_custom_ignore = {}
-let g:ctrlp_custom_ignore.dir  = '\v(^|\/)('
-let g:ctrlp_custom_ignore.dir .= '\.hg|\.git|\.bzr'
-let g:ctrlp_custom_ignore.dir .= '|data\/posts|_site|files|thumbs'
-let g:ctrlp_custom_ignore.dir .= '|vendor|node_modules'
-let g:ctrlp_custom_ignore.dir .= ')($|\/)'
-let g:ctrlp_custom_ignore.file  = '\v'
-let g:ctrlp_custom_ignore.file .= '\~$'
-let g:ctrlp_custom_ignore.file .= '|\.('
-let g:ctrlp_custom_ignore.file .= 'o|exe|dll|so|o|swp|pyc|svn-base|stackdump'
-let g:ctrlp_custom_ignore.file .= '|tar|zip|7z|gz'
-let g:ctrlp_custom_ignore.file .= '|jpg|jpeg|gif|png|tga|bmp'
-let g:ctrlp_custom_ignore.file .= '|pdf|doc|xls'
-let g:ctrlp_custom_ignore.file .= '|wav|ogg|mp3|mp4|avi|mkv|ttf'
-let g:ctrlp_custom_ignore.file .= ')$'
 
 "----------------------------------------
 " config airline
