@@ -4,6 +4,7 @@ set rtp+=~/.vim/vundle/
 call vundle#begin()
 Plugin 'gmarik/Vundle.vim'                "better plugin manager
 Plugin 'kien/ctrlp.vim'                   "open files using fuzzy matching
+Plugin 'wincent/command-t'                "better fuzz but has more dependencies
 Plugin 'scrooloose/nerdtree'              "file explorer sidebar
 Plugin 'Lokaltog/vim-easymotion'          "move to any character!
 Plugin 'bling/vim-airline'                "riced status bar
@@ -151,7 +152,7 @@ function! CopyWithoutHardWrapping()
 endfunction
 command! CopyWithoutHardWrapping call CopyWithoutHardWrapping()
 
-"close all inactive buffers (tabs + ctrl+p + splitscreen ftw)
+"close all inactive buffers (tabs > buffers for me, deal with it!)
 function! DeleteInactiveBufs()
   let tablist = []
   for i in range(tabpagenr('$'))
@@ -170,14 +171,20 @@ endfunction
 command! Bdi :call DeleteInactiveBufs()
 
 "----------------------------------------
-" config Ctrl+P
+" config ctrl+p
 "----------------------------------------
 let g:ctrlp_working_path_mode = 'rc'    "enable VCS dir discovery and traversal
 let g:ctrlp_dotfiles = 1                "enable matching files such as .htaccess
 let g:ctrlp_match_window_bottom = 1     "show selected element at the top
 let g:ctrlp_match_window_reversed = 1   "show list top->bottom
-let g:ctrlp_by_filename = 1             "fuzzy match only file names
+let g:ctrlp_by_filename = 1             "fuzzy match considers only file names
 let g:ctrlp_match_window = 'bottom,order:btt,min:1,max:10,results:10'
+
+"----------------------------------------
+" config command-t
+"----------------------------------------
+let g:CommandTMaxHeight = 30            "limit window height to this many lines
+let g:CommandTMatchWindowReverse = 1    "show matches near the bottom
 
 "----------------------------------------
 " config airline
