@@ -296,6 +296,25 @@ cmap w!! w !sudo tee >/dev/null %
 nmap <silent> <S-K> <nop>
 
   "----------------------------------------
+  " emulate libreadline
+  "----------------------------------------
+  " make meta key work (this might be need to be specialized for other terms)
+  " urxvt (disabled because overriding <Esc>b works against the user)
+  " execute "set <M-b>=\eb"
+  " execute "set <M-f>=\ef"
+
+  cnoremap <C-a> <Home>
+  cnoremap <C-e> <End>
+  "not using the ones below because they override original C-f, which seems to
+  "do the trick better (it lets you enter normal mode from within command mode)
+  "cnoremap <C-p> <Up>
+  "cnoremap <C-n> <Down>
+  "cnoremap <C-b> <Left>
+  "cnoremap <C-f> <Right>
+  "cnoremap <M-b> <S-Left>
+  "cnoremap <M-f> <S-Right>
+
+  "----------------------------------------
   " ctrl+k/j = move line up/down
   "----------------------------------------
   function! MoveLineUp()
