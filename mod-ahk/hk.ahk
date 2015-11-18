@@ -17,6 +17,8 @@ global CygPath
 CygPath = C:\Program Files (x86)\cygwin
 IfNotExist %CygPath%
     CygPath = C:\Cygwin
+IfNotExist %CygPath%
+    CygPath = C:\Cygwin64
 
 ;detect browser
 global BrowserPath
