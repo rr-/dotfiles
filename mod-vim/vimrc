@@ -285,8 +285,6 @@ nmap <silent> <C-z> :sh<CR>
 "ctrl+q = close window
 imap <silent> <C-q> <Esc>:q<CR>
 nmap <silent> <C-q> :q<CR>
-"ctrl+o = open Ctrl+P prompt
-nmap <silent> <C-o> :CtrlPLine<CR>
 "ctrl+w ctrl+m = open new file vertically
 nmap <silent> <C-w><C-m> :vne<CR>
 nmap <silent> <C-w>m :vne<CR>
