@@ -106,7 +106,7 @@ set wildignore+=.hg,.git,.bzr
 set wildignore+=vendor,node_modules,build
 set wildignore+=*.o,*.obj
 set wildignore+=*.pyc,*.pyo
-set wildignore+=*.swp
+set wildignore+=*.swp,*.spl
 set wildignore+=*.stackdump
 "set wildignore+=data/posts,_site,files,thumbs
 "set wildignore+=*.exe,*.dll,*.so
@@ -258,6 +258,10 @@ autocmd FileType make     Tabs
 autocmd FileType php      FourSpaces
 autocmd FileType js       FourSpaces
 autocmd FileType css      FourSpaces
+
+"automatically sort word lists and generate spell files
+autocmd BufWritePre */spell/*.add %sort i
+autocmd BufWritePost */spell/*.add silent mkspell! %
 
 "----------------------------------------
 " custom keyboard bindings
