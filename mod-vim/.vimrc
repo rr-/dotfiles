@@ -185,6 +185,7 @@ let g:ctrlp_match_window = 'bottom,order:btt,min:1,max:10,results:10'
 "----------------------------------------
 let g:CommandTMaxHeight = 30            "limit window height to this many lines
 let g:CommandTMatchWindowReverse = 1    "show matches near the bottom
+let g:CommandTWildIgnore = &wildignore . ",**/posts/*"
 
 "----------------------------------------
 " config airline
