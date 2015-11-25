@@ -14,8 +14,8 @@ PackageInstaller.try_install('clipit')        # keep clipboard content even afte
 PackageInstaller.try_install('pkg-config')    # for compton
 PackageInstaller.try_install('compton')       # for shadows, transparency and vsync
 
-FileInstaller.create_symlink(os.path.join(dir, '.xinitrc'), '~/')
+FileInstaller.create_symlink(os.path.join(dir, 'xinitrc'), '~/.xinitrc')
 FileInstaller.create_symlink(os.path.join(dir, 'compton.conf'), '~/.config/compton.conf')
 
 if FileInstaller.has_executable('zsh'):
-    FileInstaller.create_symlink(os.path.join(dir, '.zlogin'), '~/')
+    FileInstaller.create_symlink(os.path.join(dir, 'zlogin'), '~/.zlogin')
