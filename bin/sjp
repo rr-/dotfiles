@@ -1,29 +1,66 @@
-#!/usr/bin/ruby -w
-require 'rubygems'
-require 'nokogiri'
-require 'net/http'
+#!/usr/bin/python3
+import sys
+import urllib.request
+import urllib.parse
+import re
+import textwrap
 
-def render_to_ascii(node)
-  blocks = %w(p div address)
-  swaps  = { 'br' => "\n", 'hr' => "\n#{'-' * 70}\n" }
-  dup = node.dup
+def get_first(l):
+    return (l or [None])[0]
 
-  dup.xpath('.//text()').each { |t| t.content = t.text.gsub(/\s+/, ' ') }
-  dup.css(swaps.keys.join(',')).each { |n| n.replace(swaps[n.name]) }
-  dup.css(blocks.join(',')).each { |n| n.after("\n\n") }
-  dup.text
-end
+def print_word_def(word):
+    url = 'http://sjp.pl/' + urllib.parse.quote(word)
+    content = urllib.request.urlopen(url).read().decode('utf8')
 
-def get(word)
-  url = 'http://sjp.pl/' + URI.encode_www_form_component(word)
-  content = Net::HTTP.get_response(URI(URI.parse(url))).body
-  doc = Nokogiri::HTML(content)
-  nodes = doc.xpath('//p[contains(@style, "5em")]')
-  if nodes.empty?
-    puts 'Nothing found'
-  else
-    nodes.each { |node| puts render_to_ascii(node) }
-  end
-end
+    sections = re.findall(
+        '<h1[^>]*>([^<]*)<\/h1>(.*?)(?=<h[1-3])',
+        content,
+        re.MULTILINE | re.DOTALL)
 
-ARGV.each { |arg| get(arg) }
+    for section_id, section in enumerate(sections):
+        section_name, section_content = section
+
+        section_item_content = re.findall(
+            '<p[^>]*\.5em[^>]*>(.*?)<\/p>',
+            section_content,
+            re.MULTILINE | re.DOTALL)
+
+        section_hint = get_first(re.findall(
+            '<a [^>]*class="lc"[^>]*>(?:<span.*?\/span>)?(.*?)<\/a>',
+            section_content))
+
+        if section_hint and section_hint != section_name:
+            print('{0} ({1})'.format(section_name, section_hint))
+        else:
+            print('{0}'.format(section_name))
+
+        if not section_item_content:
+            continue
+        if len(section_item_content) > 1:
+            raise RuntimeError('Not implemented')
+        section_items = re.findall(
+            '(?:[0-9]+\.\s*)?(.+?);?(?:<br\s*/?>|$)',
+            section_item_content[0])
+
+        if not section_items:
+            raise RuntimeError('No lines returned!')
+
+        if len(section_items) == 1:
+            print('\n'.join(textwrap.wrap(section_items[0])))
+        else:
+            for section_item_id, section_item in enumerate(section_items):
+                wrapped_lines = textwrap.wrap(
+                    section_item,
+                    initial_indent='{0}. '.format(section_item_id + 1),
+                    subsequent_indent='   ')
+                print('\n'.join(wrapped_lines))
+
+        if section_id + 1 < len(sections):
+            print('')
+
+def main():
+    for arg in sys.argv[1:]:
+        print_word_def(arg)
+
+if __name__ == '__main__':
+    main()
