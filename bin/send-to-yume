@@ -7,11 +7,17 @@ import readline
 
 try:
     import requests
+    import colorama
 except ImportError as e:
     if e.name is None:
         raise
     print('Please install %s.' % e.name)
     exit(1)
+
+def colored(str, color):
+    color_code = getattr(colorama.Fore, color.upper())
+    reset_code = colorama.Style.RESET_ALL
+    return color_code + str + reset_code
 
 class Booru(object):
     def __init__(self, url):
@@ -118,9 +124,10 @@ class Tagger(object):
             return
         self.chosen_tags.append(tag)
         if tag not in self.tag_dict:
-            print('Warning: new tag')
+            print(colored('Warning: new tag', 'red'))
         elif 'implications' in self.tag_dict[tag]:
             for implied_tag in self.tag_dict[tag]['implications']:
+                print(colored('+ ' + implied_tag, 'green'))
                 self.add(implied_tag)
 
     def add_from_user_input(self):
@@ -133,6 +140,9 @@ class Tagger(object):
                     self.remove(tag[1:])
                 else:
                     self.add(tag)
+                    if tag in self.tag_dict and 'suggestions' in self.tag_dict[tag]:
+                        for suggested_tag in self.tag_dict[tag]['suggestions']:
+                            print(colored(': ' + suggested_tag, 'yellow'))
         except EOFError:
             print('(EOF)')
 
@@ -224,6 +234,7 @@ def upload(b, tagger_settings, args):
         update_tags(b, tagger_settings, post_id, chosen_tags)
 
 def main():
+    colorama.init()
     requests.packages.urllib3.disable_warnings()
 
     args = parse_args()
