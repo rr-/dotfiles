@@ -19,7 +19,72 @@ def colored(str, color):
     reset_code = colorama.Style.RESET_ALL
     return color_code + str + reset_code
 
-class Booru(object):
+class istr(str):
+    def __init__(self, *args):
+        self._lowered = str.lower(self)
+    def __repr__(self):
+        return '%s(%s)' % (type(self).__name__, str.__repr__(self))
+    def __hash__(self):
+        return hash(self._lowered)
+    def lower(self):
+        return self._lowered
+def _make_case_insensitive(name):
+    original_method = getattr(str, name)
+    def x(self, other, *args):
+        try:
+            other = other.lower()
+        except (TypeError, AttributeError, ValueError):
+            pass
+        return original_method(self._lowered, other, *args)
+    setattr(istr, name, x)
+for name in 'eq ne lt le gt ge contains'.split():
+    _make_case_insensitive('__%s__' % name)
+for name in 'count endswith find index rfind rindex startswith'.split():
+    _make_case_insensitive(name)
+del _make_case_insensitive
+
+
+
+class Tag(object):
+    def __init__(self, name=None, usages=0, suggestions=[], implications=[]):
+        self.name = name
+        self.usages = usages
+        self.implications = implications
+        self.suggestions = suggestions
+
+    @staticmethod
+    def from_api_response(r):
+        tag = Tag(name=istr(r['name']), usages=r['usages'])
+        if 'implications' in r:
+            tag.implications = [istr(t) for t in r['implications']]
+        if 'suggestions' in r:
+            tag.suggestions = [
+                istr(t) for t in r['suggestions']]
+        return tag
+
+class Post(object):
+    def __init__(
+            self,
+            id=None,
+            tags=None,
+            last_edit_time=None,
+            safety='safe',
+            content_file_name=None):
+        self.id = id
+        self.tags = tags
+        self.safety = safety
+        self.content_file_name = content_file_name
+        self.last_edit_time = last_edit_time
+
+    @staticmethod
+    def from_api_response(r):
+        return Post(
+            id=r['id'],
+            tags=[Tag.from_api_response(t) for t in r['tags']],
+            safety=r['safety'],
+            last_edit_time=r['lastEditTime'])
+
+class BooruApi(object):
     def __init__(self, url):
         self.session = requests.Session()
         self.api_url = url + '/api'
@@ -27,12 +92,11 @@ class Booru(object):
 
     def get_tags(self):
         r = self.session.get(self.data_url + '/tags.json', verify=False)
-        sort = lambda item: -item['usages']
-        for word in sorted(json.loads(r.text), key=sort):
-            yield word
+        tags = [Tag.from_api_response(t) for t in json.loads(r.text)]
+        return sorted(tags, key=lambda tag: -tag.usages)
 
     def login(self, user, password):
-        r = self.verify_response(
+        r = self._verify_response(
             self.session.post(
                 self.api_url + '/login',
                 data={'userNameOrEmail': user, 'password': password},
@@ -40,47 +104,50 @@ class Booru(object):
         auth_token = json.loads(r.text)['token']['name']
         self.session.headers.update({'x-authorization-token': auth_token})
 
-    def upload_post(self, post_path, tags, safety):
-        with open(post_path, 'rb') as fh:
+    def upload_post(self, post, content_path):
+        with open(content_path, 'rb') as fh:
             files = {'content': fh}
-            self.verify_response(
+            self._verify_response(
                 self.session.post(
                     self.api_url + '/posts',
                     files=files,
                     data={
-                        'contentFileName': os.path.basename(post_path),
+                        'contentFileName': post.content_file_name,
                         'source': '',
-                        'safety': safety,
+                        'safety': post.safety,
                         'anonymous': 0,
-                        'tags': ' '.join(tags)
+                        'tags': ' '.join(t.name for t in post.tags)
                     }))
 
-    def update_post(self, post_id, new_tags, last_edit_time):
-        self.verify_response(
+    def update_post(self, post):
+        self._verify_response(
             self.session.post(
-                self.api_url + '/posts/' + str(post_id),
+                self.api_url + '/posts/' + str(post.id),
                 data={
-                    'tags': ' '.join(new_tags),
-                    'lastEditTime': last_edit_time,
+                    'safety': post.safety,
+                    'tags': ' '.join(t.name for t in post.tags),
+                    'lastEditTime': post.last_edit_time,
                 }))
 
     def get_post(self, post_id):
-        r = self.verify_response(
+        r = self._verify_response(
             self.session.get(
                 self.api_url + '/posts/' + str(post_id)))
-        return json.loads(r.text)['post']
+        return Post.from_api_response(json.loads(r.text)['post'])
 
-    def verify_response(self, response):
+    def _verify_response(self, response):
         if response.status_code != 200:
             raise RuntimeError(json.loads(response.text)['error'])
         return response
+
+
 
 class Tagger(object):
     def __init__(self, tagger_settings):
         self.chosen_tags = []
         self.install_tag_completer()
-        self.tag_dict = {tag['name'].lower(): tag for tag in tagger_settings}
-        self.all_tags = [tag['name'].lower() for tag in tagger_settings]
+        self.tag_dict = {tag.name: tag for tag in tagger_settings}
+        self.all_tags = [tag.name for tag in tagger_settings]
 
     def install_tag_completer(self):
         for lib in ['libreadline.so', 'libreadline.dll', 'cygreadline7.dll']:
@@ -93,7 +160,6 @@ class Tagger(object):
                 pass
 
         def completer(text, state):
-            text = text.lower()
             if len(text) >= 3:
                 options = [tag for tag in self.all_tags if text in tag]
             else:
@@ -113,41 +179,46 @@ class Tagger(object):
         else:
             print('Current tags: %s' % ', '.join(self.chosen_tags))
 
-    def remove(self, tag):
-        tag = tag.lower()
-        if tag in self.chosen_tags:
-            self.chosen_tags.remove(tag)
+    def tagged(self, word):
+        return word in self.chosen_tags
+
+    def remove(self, word):
+        if word in self.chosen_tags:
+            self.chosen_tags.remove(word)
 
     def add(self, tag):
-        tag = tag.lower()
         if tag in self.chosen_tags:
             return
         self.chosen_tags.append(tag)
         if tag not in self.tag_dict:
             print(colored('Warning: new tag', 'red'))
-        elif 'implications' in self.tag_dict[tag]:
-            for implied_tag in self.tag_dict[tag]['implications']:
+        else:
+            for implied_tag in self.tag_dict[tag].implications:
                 print(colored('+ ' + implied_tag, 'green'))
                 self.add(implied_tag)
 
     def add_from_user_input(self):
         try:
             while True:
-                tag = input('#' + str(len(self.chosen_tags)) + '> ').strip()
-                if tag == '':
+                line = input('#' + str(len(self.chosen_tags)) + '> ').strip()
+                if line == '':
                     self.print()
-                elif tag.startswith('-'):
-                    self.remove(tag[1:])
+                elif line.startswith('-'):
+                    tag = istr(line[1:])
+                    self.remove(tag)
                 else:
+                    tag = istr(line)
                     self.add(tag)
-                    if tag in self.tag_dict and 'suggestions' in self.tag_dict[tag]:
-                        for suggested_tag in self.tag_dict[tag]['suggestions']:
+                    if tag in self.tag_dict:
+                        for suggested_tag in self.tag_dict[tag].suggestions:
                             print(colored(': ' + suggested_tag, 'yellow'))
         except EOFError:
             print('(EOF)')
 
     def get(self):
-        return self.chosen_tags
+        return [Tag(name=word) for word in self.chosen_tags]
+
+
 
 def parse_args():
     parser = argparse.ArgumentParser(
@@ -183,22 +254,24 @@ def fill_config(config):
         from getpass import getpass
         config['password'] = getpass('Password: ')
 
-def update_tags(b, tagger_settings, post_id, chosen_tags):
+def update_tags(b, post_id, chosen_tags):
     post = b.get_post(post_id)
+    existing_tags = post.tags
 
-    tmp_tagger = Tagger(tagger_settings)
-    for tag in post['tags']:
-        tmp_tagger.add(tag['name'])
-    existing_tags = set(tmp_tagger.get())
-    new_tags = set([t for t in chosen_tags if t not in existing_tags])
+    new_tags = {t.name: t for t in chosen_tags}
+    for tag in existing_tags:
+        if tag.name in new_tags:
+            del new_tags[tag.name]
+    new_tags = list(new_tags.values())
 
     if not new_tags:
         print('No new tags.')
     else:
-        print('Existing tags: %s' % ', '.join(existing_tags))
-        print('New tags: %s' % ', '.join(new_tags))
+        print('Existing tags: %s' % ', '.join(t.name for t in existing_tags))
+        print('New tags: %s' % ', '.join(t.name for t in new_tags))
+        post.tags = existing_tags + new_tags
         wait_for_user_input('Press Enter to add new tags, Ctrl+C to exit...')
-        b.update_post(post_id, new_tags | existing_tags, post['lastEditTime'])
+        b.update_post(post)
         print('Tags merge successful!')
 
 def upload(b, tagger_settings, args):
@@ -214,24 +287,29 @@ def upload(b, tagger_settings, args):
 
     safety = 'safe'
     for s in ['safe', 'sketchy', 'unsafe']:
-        if s in tagger.get():
+        if tagger.tagged(s):
             safety = s
             tagger.remove(s)
 
     chosen_tags = set(tagger.get())
 
-    print('Tags: %s' % ', '.join(chosen_tags))
+    print('Tags: %s' % ', '.join([tag.name for tag in chosen_tags]))
     print('Safety: %s' % safety)
 
+    post = Post(
+        safety=safety,
+        tags=set(tagger.get()),
+        content_file_name=os.path.basename(args.path))
+
     try:
-        b.upload_post(args.path, chosen_tags, safety)
+        b.upload_post(post, args.path)
         print('Upload succesful!')
     except Exception as e:
         if 'duplicate' not in str(e).lower():
             raise
         print(e)
         post_id = int(re.search('([0-9]+)', str(e)).group(0))
-        update_tags(b, tagger_settings, post_id, chosen_tags)
+        update_tags(b, post_id, chosen_tags)
 
 def main():
     colorama.init()
@@ -242,13 +320,13 @@ def main():
         config = load_config(args.config)
         fill_config(config)
 
-        b = Booru(config['url'])
+        b = BooruApi(config['url'])
         b.login(config['user'], config['password'])
 
         tagger_settings = list(b.get_tags())
-        tagger_settings.insert(0, {'name': 'unsafe', 'usages': 999999})
-        tagger_settings.insert(0, {'name': 'sketchy', 'usages': 999999})
-        tagger_settings.insert(0, {'name': 'safe', 'usages': 999999})
+        tagger_settings.insert(0, Tag(name='unsafe', usages=999999))
+        tagger_settings.insert(0, Tag(name='sketchy', usages=999999))
+        tagger_settings.insert(0, Tag(name='safe', usages=999999))
 
         upload(b, tagger_settings, args)
 
