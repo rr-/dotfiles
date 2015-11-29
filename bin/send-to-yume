@@ -1,8 +1,7 @@
 #!/usr/bin/python3
 import argparse
-import json
-import os, sys
-import re
+import re, json
+import os, sys, copy
 import readline
 
 try:
@@ -14,10 +13,12 @@ except ImportError as e:
     print('Please install %s.' % e.name)
     exit(1)
 
-def colored(str, color):
-    color_code = getattr(colorama.Fore, color.upper())
+def colored(what, color):
+    color_code = getattr(colorama.Fore, color.upper().replace('LIGHT', '').strip('_'))
+    if 'light' in color.lower():
+        color_code += colorama.Style.BRIGHT
     reset_code = colorama.Style.RESET_ALL
-    return color_code + str + reset_code
+    return color_code + str(what) + reset_code
 
 class istr(str):
     def __init__(self, *args):
@@ -58,8 +59,7 @@ class Tag(object):
         if 'implications' in r:
             tag.implications = [istr(t) for t in r['implications']]
         if 'suggestions' in r:
-            tag.suggestions = [
-                istr(t) for t in r['suggestions']]
+            tag.suggestions = [istr(t) for t in r['suggestions']]
         return tag
 
 class Post(object):
@@ -94,6 +94,12 @@ class BooruApi(object):
         r = self.session.get(self.data_url + '/tags.json', verify=False)
         tags = [Tag.from_api_response(t) for t in json.loads(r.text)]
         return sorted(tags, key=lambda tag: -tag.usages)
+
+    def get_tag_siblings(self, word):
+        r = self._verify_response(
+            self.session.get(
+                self.api_url + '/tags/' + str(word) + '/siblings'))
+        return [Tag.from_api_response(t) for t in json.loads(r.text)['tags']]
 
     def login(self, user, password):
         r = self._verify_response(
@@ -143,27 +149,41 @@ class BooruApi(object):
 
 
 class Tagger(object):
-    def __init__(self, tagger_settings):
+    def __init__(self, tagger_settings, booru_api):
         self.chosen_tags = []
         self.install_tag_completer()
         self.tag_dict = {tag.name: tag for tag in tagger_settings}
         self.all_tags = [tag.name for tag in tagger_settings]
+        self.booru_api = booru_api
 
     def install_tag_completer(self):
+        self.rl_completion_append_character = None
+        self.rl_completion_suppress_append = None
+
         for lib in ['libreadline.so', 'libreadline.dll', 'cygreadline7.dll']:
             try:
                 import ctypes
                 rl = ctypes.cdll.LoadLibrary(lib)
-                sort = ctypes.c_ulong.in_dll(rl, 'rl_sort_completion_matches')
-                sort.value = 0
+                ctypes.c_ulong.in_dll(
+                    rl, 'rl_sort_completion_matches').value = 0
+                self.rl_completion_append_character = ctypes.c_char.in_dll(
+                    rl, 'rl_completion_append_character')
+                self.rl_completion_suppress_append = ctypes.c_int.in_dll(
+                    rl, 'rl_completion_suppress_append')
             except:
                 pass
 
         def completer(text, state):
+            if self.rl_completion_append_character is not None:
+                self.rl_completion_append_character.value = ord(' ')
+            if self.rl_completion_suppress_append is not None:
+                self.rl_completion_suppress_append.value = 0
+
             if len(text) >= 3:
                 options = [tag for tag in self.all_tags if text in tag]
             else:
                 options = [tag for tag in self.all_tags if tag.startswith(text)]
+
             try:
                 return options[state]
             except IndexError:
@@ -171,13 +191,11 @@ class Tagger(object):
 
         readline.set_completer(completer)
         readline.parse_and_bind('tab: menu-complete')
-        readline.parse_and_bind('set rl_sort_completion_matches 0')
 
     def print(self):
-        if not self.chosen_tags:
-            print('Current tags: (none)')
-        else:
-            print('Current tags: %s' % ', '.join(self.chosen_tags))
+        for word in self.chosen_tags:
+            color = 'light_cyan' if word in self.tag_dict else 'light_red'
+            print(colored('+ %s' % word, color))
 
     def tagged(self, word):
         return word in self.chosen_tags
@@ -191,7 +209,7 @@ class Tagger(object):
             return
         self.chosen_tags.append(tag)
         if tag not in self.tag_dict:
-            print(colored('Warning: new tag', 'red'))
+            print(colored('Warning: new tag', 'light_red'))
         else:
             for implied_tag in self.tag_dict[tag].implications:
                 print(colored('+ ' + implied_tag, 'green'))
@@ -203,17 +221,54 @@ class Tagger(object):
                 line = input('#' + str(len(self.chosen_tags)) + '> ').strip()
                 if line == '':
                     self.print()
-                elif line.startswith('-'):
-                    tag = istr(line[1:])
-                    self.remove(tag)
-                else:
-                    tag = istr(line)
-                    self.add(tag)
+                    continue
+
+                previous_tags = copy.deepcopy(self.chosen_tags)
+                for word in set(line.split(' ')):
+                    self._handle_input_word(word)
+                new_tags = [
+                    word
+                    for word in self.chosen_tags
+                    if word not in previous_tags]
+
+                suggestions = set()
+                for tag in new_tags:
                     if tag in self.tag_dict:
                         for suggested_tag in self.tag_dict[tag].suggestions:
-                            print(colored(': ' + suggested_tag, 'yellow'))
+                            if suggested_tag not in self.chosen_tags:
+                                suggestions.add(suggested_tag)
+                for suggested_tag in suggestions:
+                    print(colored('? ' + suggested_tag, 'yellow'))
+
         except EOFError:
             print('(EOF)')
+
+    def _handle_input_word(self, word):
+        if word.startswith('-'):
+            tag = istr(word[1:])
+            if tag:
+                self.remove(tag)
+            else:
+                if self.chosen_tags:
+                    self.remove(self.chosen_tags[-1])
+                else:
+                    print(colored('No tags to remove', 'yellow'))
+        elif word.startswith('??'):
+            tag = istr(word[2:])
+            for sibling_tag in self.booru_api.get_tag_siblings(tag)[0:20]:
+                print(colored('? %s' % sibling_tag.name, 'yellow'))
+        elif word.startswith('?'):
+            tag = istr(word[1:])
+            if tag not in self.tag_dict:
+                print(colored('No such tag', 'yellow'))
+                return
+            for implied_tag in self.tag_dict[tag].implications:
+                print(colored('? %s' % implied_tag, 'green'))
+            for suggested_tag in self.tag_dict[tag].suggestions:
+                print(colored('? %s' % suggested_tag, 'yellow'))
+        else:
+            tag = istr(word)
+            self.add(tag)
 
     def get(self):
         return [Tag(name=word) for word in self.chosen_tags]
@@ -239,7 +294,7 @@ def load_config(path):
     if path:
         path = os.path.expanduser(path)
         if not os.path.exists(path):
-            print('Warning: %s does not exist' % path, file=sys.stderr)
+            warn('%s does not exist' % path)
         else:
             with open(path, 'r') as fh:
                 config = json.load(fh)
@@ -254,8 +309,8 @@ def fill_config(config):
         from getpass import getpass
         config['password'] = getpass('Password: ')
 
-def update_tags(b, post_id, chosen_tags):
-    post = b.get_post(post_id)
+def update_tags(booru_api, post_id, chosen_tags):
+    post = booru_api.get_post(post_id)
     existing_tags = post.tags
 
     new_tags = {t.name: t for t in chosen_tags}
@@ -266,23 +321,24 @@ def update_tags(b, post_id, chosen_tags):
 
     if not new_tags:
         print('No new tags.')
-    else:
-        print('Existing tags: %s' % ', '.join(t.name for t in existing_tags))
-        print('New tags: %s' % ', '.join(t.name for t in new_tags))
-        post.tags = existing_tags + new_tags
-        wait_for_user_input('Press Enter to add new tags, Ctrl+C to exit...')
-        b.update_post(post)
-        print('Tags merge successful!')
+        return
+    print('Existing tags: %s' % ', '.join(t.name for t in existing_tags))
+    print('New tags: %s' % colored(
+        ', '.join(t.name for t in new_tags), 'light_green'))
+    post.tags = existing_tags + new_tags
+    wait_for_user_input('Press Enter to add new tags, Ctrl+C to exit...')
+    booru_api.update_post(post)
+    print(colored('Tags merge successful!', 'green'))
 
-def upload(b, tagger_settings, args):
+def upload(booru_api, tagger_settings, args):
     if not os.path.exists(args.path):
         raise RuntimeError('Post file does not exist')
 
-    print('Entering tagging mode.')
-    print('^D to finish,')
-    print('^C to abort')
+    print('Entering tagging mode.', end=' ')
+    print('^D to finish,', end=' ')
+    print('^C to abort.')
 
-    tagger = Tagger(tagger_settings)
+    tagger = Tagger(tagger_settings, booru_api)
     tagger.add_from_user_input()
 
     safety = 'safe'
@@ -290,26 +346,26 @@ def upload(b, tagger_settings, args):
         if tagger.tagged(s):
             safety = s
             tagger.remove(s)
-
     chosen_tags = set(tagger.get())
 
-    print('Tags: %s' % ', '.join([tag.name for tag in chosen_tags]))
-    print('Safety: %s' % safety)
+    print(colored(
+        'Tags: %s' % ', '.join([tag.name for tag in chosen_tags]),
+        'light_blue'))
+    print(colored('Safety: %s' % safety, 'light_blue'))
 
     post = Post(
         safety=safety,
         tags=set(tagger.get()),
         content_file_name=os.path.basename(args.path))
-
     try:
-        b.upload_post(post, args.path)
-        print('Upload succesful!')
+        booru_api.upload_post(post, args.path)
+        print(colored('Upload succesful!', 'green'))
     except Exception as e:
         if 'duplicate' not in str(e).lower():
             raise
-        print(e)
+        print(colored(e, 'light_red'))
         post_id = int(re.search('([0-9]+)', str(e)).group(0))
-        update_tags(b, post_id, chosen_tags)
+        update_tags(booru_api, post_id, chosen_tags)
 
 def main():
     colorama.init()
@@ -320,21 +376,21 @@ def main():
         config = load_config(args.config)
         fill_config(config)
 
-        b = BooruApi(config['url'])
-        b.login(config['user'], config['password'])
+        booru_api = BooruApi(config['url'])
+        booru_api.login(config['user'], config['password'])
 
-        tagger_settings = list(b.get_tags())
+        tagger_settings = list(booru_api.get_tags())
         tagger_settings.insert(0, Tag(name='unsafe', usages=999999))
         tagger_settings.insert(0, Tag(name='sketchy', usages=999999))
         tagger_settings.insert(0, Tag(name='safe', usages=999999))
 
-        upload(b, tagger_settings, args)
+        upload(booru_api, tagger_settings, args)
 
         if args.wait == 'always':
             wait_for_user_input()
     except Exception as e:
-        print('Upload unsuccesful...')
-        print(e)
+        print(colored('Upload unsuccesful...', 'light_red'))
+        print(colored(e, 'light_red'))
         if args.wait in ['error', 'errors', 'always']:
             wait_for_user_input()
 
