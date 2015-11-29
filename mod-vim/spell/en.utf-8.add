@@ -24,7 +24,9 @@ fullscreen
 GitHub
 Github
 grayscale
+hardcode
 hardcoded
+inlines
 MinGW
 MinGW-w64
 mpv
@@ -34,11 +36,14 @@ namespaces
 OpenSSL
 plaintext
 plugin
+plugins
 POSIX
 precompiled
 progressbar
 realtime
+refactor
 refactored
+refactors
 screenshot
 screenshots
 seekable
