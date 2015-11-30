@@ -212,8 +212,9 @@ class Tagger(object):
             print(colored('Warning: new tag', 'light_red'))
         else:
             for implied_tag in self.tag_dict[tag].implications:
-                print(colored('+ ' + implied_tag, 'green'))
-                self.add(implied_tag)
+                if implied_tag not in self.chosen_tags:
+                    print(colored('+ ' + implied_tag, 'green'))
+                    self.add(implied_tag)
 
     def add_from_user_input(self):
         try:
