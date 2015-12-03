@@ -175,3 +175,12 @@ nnoremap -C :!gvim --remote-tab-silent $MYVIFMRC &<cr>
 nnoremap -w :set wrap!<cr>
 
 nnoremap <c-q> :q<cr>
+
+" Clipboard integration
+" full path to selected file
+nnoremap yp :!echo -n %"c:p:gs!\!/! %i | clip<cr>
+" name of selected file
+nnoremap yf :!echo -n %"c:gs!\!/! %i | clip<cr>
+nnoremap yn :!echo -n %"c:gs!\!/! %i | clip<cr>
+" full path to selected file's directory
+nnoremap yd :!echo -n %"d:gs!\!/! %i | clip<cr>
