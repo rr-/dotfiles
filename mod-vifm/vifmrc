@@ -68,6 +68,7 @@ command! diff vim -d %f %F
 command! zip zip -r %f.zip %f
 command! vgrep vim "+grep %a"
 command! reload :write | restart
+command! extract for x in %"f; do 7z x -o"${${x##*/}%%.*}" "$x"; done
 
 " ------------------------------------------------------------------------------
 " how to open and preview certain file types
