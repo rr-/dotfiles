@@ -1,27 +1,27 @@
 [user]
-	name = rr-
-	email = rr-@sakuya.pl
+    name = rr-
+    email = rr-@sakuya.pl
 [github]
-	user = rr-
+    user = rr-
 [branch]
-	autosetuprebase = always
+    autosetuprebase = always
 [color]
-	diff = always
+    diff = always
 [core]
-	excludesfile = ~/.gitignore
-	autocrlf = false
-	eol = lf
-	whitespace = tab-in-indent
+    excludesfile = ~/.gitignore
+    autocrlf = false
+    eol = lf
+    whitespace = tab-in-indent
 [alias]
-	amen = commit --amend
-	df = diff --color --color-words --abbrev
-	sw = show --color --color-words --abbrev
-	hist = log --pretty=format:\"%Cred%h%Creset %ad %Cblue%<(50,trunc)%s%Creset [%an <%ae>]%d\" --graph --date=short
+    amen = commit --amend
+    df = diff --color --color-words --abbrev
+    sw = show --color --color-words --abbrev
+    hist = log --pretty=format:\"%Cred%h%Creset %ad %Cblue%<(50,trunc)%s%Creset [%an <%ae>]%d\" --graph --date=short
 [diff]
-	tool = vimdiff
+    tool = vimdiff
 [push]
-	default = upstream
+    default = upstream
 [color "diff"]
-	old = red reverse
-	new = green reverse
-	whitespace = blue reverse
+    old = red reverse
+    new = green reverse
+    whitespace = blue reverse
