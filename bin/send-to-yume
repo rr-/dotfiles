@@ -303,7 +303,7 @@ def load_config(path):
     if path:
         path = os.path.expanduser(path)
         if not os.path.exists(path):
-            warn('%s does not exist' % path)
+            print(colored('Warning: %s does not exist' % path, 'yellow'))
         else:
             with open(path, 'r') as fh:
                 config = json.load(fh)
