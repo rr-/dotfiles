@@ -3,6 +3,7 @@ import argparse
 import re, json
 import os, sys, copy
 import readline
+import traceback
 
 try:
     import requests
@@ -84,6 +85,19 @@ class Post(object):
             safety=r['safety'],
             last_edit_time=r['lastEditTime'])
 
+class BooruApiError(RuntimeError):
+    def __init__(self, text, trace):
+        self.text = text
+        self.trace = trace
+
+    @staticmethod
+    def from_api_response(raw_response):
+        try:
+            r = json.loads(raw_respons)
+            return BooruApiError(text=r['error'], trace=r['stacktrace'])
+        except:
+            return BooruApiError(text=raw_response, trace=None)
+
 class BooruApi(object):
     def __init__(self, url):
         self.session = requests.Session()
@@ -143,7 +157,7 @@ class BooruApi(object):
 
     def _verify_response(self, response):
         if response.status_code != 200:
-            raise RuntimeError(json.loads(response.text)['error'])
+            raise BooruApiError.from_api_response(response.text)
         return response
 
 
@@ -369,11 +383,11 @@ def upload(booru_api, tagger_settings, args):
     try:
         booru_api.upload_post(post, args.path)
         print(colored('Upload succesful!', 'green'))
-    except Exception as e:
-        if 'duplicate' not in str(e).lower():
+    except BooruApiError as e:
+        if 'duplicate' not in e.text.lower():
             raise
         print(colored(e, 'light_red'))
-        post_id = int(re.search('([0-9]+)', str(e)).group(0))
+        post_id = int(re.search('([0-9]+)', e.text).group(0))
         update_tags(booru_api, post_id, chosen_tags)
 
 def main():
@@ -397,9 +411,17 @@ def main():
 
         if args.wait == 'always':
             wait_for_user_input()
+    except BooruApiError as e:
+        print(colored('API error...', 'light_red'))
+        print(colored(e.text, 'light_red'))
+        if e.trace:
+            print(colored(e.trace, 'light_red'))
+        if args.wait in ['error', 'errors', 'always']:
+            wait_for_user_input()
     except Exception as e:
-        print(colored('Upload unsuccesful...', 'light_red'))
+        print(colored('Error...', 'light_red'))
         print(colored(e, 'light_red'))
+        traceback.print_exc()
         if args.wait in ['error', 'errors', 'always']:
             wait_for_user_input()
 
