@@ -52,6 +52,7 @@
         ["S",                  ["toggle_smooth"]],
         ["B",                  ["toggle_status"]],
         ["P",                  ["play_pause"]],
+        ["G",                  ["toggle_slideshow"]],
         ["F5",                 ["reload"]],
         ["Ctrl+R",             ["remove_dead"], ["reload"]],
         ["Ctrl+C",             ["copy_file_path", 1]],
