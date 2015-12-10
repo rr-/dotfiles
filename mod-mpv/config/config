@@ -1,6 +1,8 @@
 vo=opengl-hq
 fullscreen
 
+script-opts=osc-layout=slimbox
+
 audio-channels=2
 alang=jpn,jp,jap,Japanese,en,eng,English
 slang=en,eng,English,pl,pol,Polish
