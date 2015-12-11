@@ -47,6 +47,7 @@
         ["Ctrl+Up",            ["pan", 0, -100]],
         ["Ctrl+Down",          ["pan", 0, 100]],
 
+        ["F",                  ["toggle_fullscreen"]],
         ["Z",                  ["set_zoom", "4"], ["unsmooth"], ["keep_zoom"]],
         ["Shift+Z",            ["set_zoom", "1"], ["smooth"], ["unkeep_zoom"]],
         ["S",                  ["toggle_smooth"]],
