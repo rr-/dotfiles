@@ -30,6 +30,9 @@ set norunexec
 " prefer KB, MB over KiB, MiB
 set noiec
 
+" use syscalls, which enables progress tracking for big file operations
+set syscalls
+
 " active color scheme
 colorscheme current
 
