@@ -97,6 +97,7 @@ def main():
     numeric_dirs = sorted(numeric_dirs)
     dir_gen = ((int(dir), len(os.listdir(os.path.join(args.base_dir, dir))))
         for dir in numeric_dirs)
+    dir_gen = sorted(dir_gen, key=lambda dir: int(dir[0]))
     dir_map = collections.OrderedDict(dir_gen)
 
     while files:
