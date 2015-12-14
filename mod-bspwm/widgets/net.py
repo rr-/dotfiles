@@ -47,8 +47,8 @@ class NetworkUsageProvider(object):
 
     def render(self):
         if self.network_enabled:
-            self.net_in_label.setText('\U0001f847 %.0f KB/s' % (self.net_in / 1024.0))
-            self.net_out_label.setText('\U0001f845 %.0f KB/s' % (self.net_out / 1024.0))
-            self.chart.addPoint('#00a000', self.net_in)
-            self.chart.addPoint('#ff0000', self.net_out)
+            self.net_in_label.setText('\U0001f847 %03.0f KB/s' % (self.net_in / 1024.0))
+            self.net_out_label.setText('\U0001f845 %03.0f KB/s' % (self.net_out / 1024.0))
+            self.chart.addPoint('#0b0', self.net_in)
+            self.chart.addPoint('#f00', self.net_out)
             self.chart.repaint()

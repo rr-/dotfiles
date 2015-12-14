@@ -5,9 +5,10 @@ import time
 import signal
 from PyQt5 import QtWidgets
 from PyQt5 import QtCore
+from PyQt5 import QtGui
 
 __builtins__.BOTTOM_BORDER = 0
-__builtins__.HEIGHT = 20 + BOTTOM_BORDER
+__builtins__.HEIGHT = 19 + BOTTOM_BORDER
 
 from widgets.flow_layout  import FlowLayout
 from widgets.workspaces   import WorkspacesProvider
@@ -29,44 +30,56 @@ class MainWindow(QtWidgets.QMainWindow):
         self.move(0, 0)
         self.show()
 
+        #font = QtWidgets.QApplication.font()
+        #font.setStyleStrategy(QtGui.QFont.NoAntialias)
+        #QtWidgets.QApplication.setFont(font)
+
         self.setStyleSheet('''
         QMainWindow {
-            background: #eeeeee;
+            background: #000;
             border-bottom: ''' + str(BOTTOM_BORDER) + '''px solid #bbb;
         }
+        QWidget {
+            color: #ddd;
+            font-family: 'DejaVu Sans';
+            font-weight: 500;
+            font-size: 13px;
+        }
         [class=left] QWidget {
-            margin: 3px 3px 3px 0;
-            color: #666666;
-            font-size: 12px;
+            margin: 1px 3px 3px 0;
         }
         [class=right] QWidget {
-            margin: 3px 0 3px 3px;
-            color: #666666;
-            font-size: 12px;
+            margin: 1px 0 3px 3px;
         }
         QWidget[class=workspace] {
-            background: #dddddd;
+            background: #111;
             height: 10px;
             width: 10px;
-            margin: 4px 0 4px 4px;
+            margin: 3px 0 4px 4px;
             padding: 0;
             color: transparent;
-            border: 1px solid #a5a5a5;
+            border: 1px solid #888;
         }
-        QWidget[class=workspace][ws_free=True] {
-            border: 1px solid #c5c5c5;
-            background: #f2f2f2;
+        QWidget[class=workspace][ws_free=False] {
+            background: #aaa;
+            border: 1px solid #888;
         }
-        QWidget[class=workspace][ws_free=True][ws_focused=True] {
-            border: 2px solid #00dddd;
+        QWidget[class=workspace][ws_focused=True][ws_free=True] {
+            border: 2px solid #0cc;
+            width: 8px;
+            height: 8px;
         }
-        QWidget[class=workspace][ws_focused=True] {
-            border: 2px solid #00cccc;
+        QWidget[class=workspace][ws_focused=True][ws_free=False] {
+            border: 2px solid #0ee;
+            background: #0aa;
             width: 8px;
             height: 8px;
         }
         QWidget[class=workspace][ws_urgent=True] {
-            background: #f08040;
+            background: #dd4000;
+            border: 2px solid #ffa000;
+            width: 8px;
+            height: 8px;
         }
         QWidget[class=icon] {
             margin-top: -2px;
@@ -74,7 +87,7 @@ class MainWindow(QtWidgets.QMainWindow):
             font-size: 18px;
         }
         QWidget[active=False] {
-            color: silver;
+            color: gray;
         }
         QWidget[class=wintitle] {
             margin-left: 8px;

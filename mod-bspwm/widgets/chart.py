@@ -28,9 +28,9 @@ class Chart(QtWidgets.QWidget):
         qp = QtGui.QPainter()
         qp.begin(self)
 
-        qp.setBrush(QtGui.QBrush(QtGui.QColor('#f5f5f5')))
+        qp.setBrush(QtGui.QBrush(QtGui.QColor('#333')))
         qp.setPen(QtGui.QPen(0))
-        qp.drawRect(margin, margin, width - 1 - 2 * margin, height - 1 - 2 * margin)
+        qp.drawRect(margin, margin, width - 2 * margin, height - 2 * margin)
         qp.setBrush(QtGui.QBrush())
 
         for color, points in self.points.items():
@@ -50,8 +50,7 @@ class Chart(QtWidgets.QWidget):
                     points.pop(0)
                     break
 
-        margin -= 1
-        qp.setPen(QtGui.QColor('#999999'))
-        qp.drawRect(margin, margin, width - 1 - 2 * margin, height - 1 - 2 * margin)
+        qp.setPen(QtGui.QColor('#777'))
+        qp.drawRect(margin - 1, margin - 1, width - 1 - 2 * (margin - 1), height - 1 - 2 * (margin - 1))
 
         qp.end()

@@ -20,27 +20,28 @@ class VolumeControl(QtWidgets.QWidget):
 
         qp = QtGui.QPainter()
         qp.begin(self)
-        qp.setRenderHint(QtGui.QPainter.HighQualityAntialiasing)
+        qp.setRenderHint(QtGui.QPainter.Antialiasing)
 
-        margin = 3
+        left_margin = 3
+        vert_margin = 3
         points = {
-            'zero': QtCore.QPoint(0, height - 1 - margin),
-            'vol1': QtCore.QPoint(self.value * width / self.max, height - 1 - margin),
-            'vol2': QtCore.QPoint(self.value * width / self.max, height - 1 - margin - self.value * (height - 1 - 2 * margin) / self.max),
-            'max1': QtCore.QPoint(width - 1, margin),
-            'max2': QtCore.QPoint(width - 1, height - 1 - margin),
+            'zero': QtCore.QPoint(left_margin, height - 1 - vert_margin),
+            'vol1': QtCore.QPoint(left_margin + self.value * (width - left_margin) / self.max, height - 1 - vert_margin),
+            'vol2': QtCore.QPoint(left_margin + self.value * (width - left_margin) / self.max, height - 1 - vert_margin - self.value * (height - 1 - 2 * vert_margin) / self.max),
+            'max1': QtCore.QPoint(width - 1, vert_margin),
+            'max2': QtCore.QPoint(width - 1, height - 1 - vert_margin),
         }
 
         poly = [points['zero'], points['vol1'], points['vol2']]
         qp.setPen(QtGui.QPen(0))
-        qp.setBrush(QtGui.QColor('#dddddd'))
+        qp.setBrush(QtGui.QColor('#888'))
         qp.drawPolygon(QtGui.QPolygon(poly))
 
         poly = [points['vol1'], points['vol2'], points['max1'], points['max2']]
-        qp.setBrush(QtGui.QColor('#f5f5f5'))
+        qp.setBrush(QtGui.QColor('#333'))
         qp.drawPolygon(QtGui.QPolygon(poly))
 
-        qp.setPen(QtGui.QPen(QtGui.QColor('#999999')))
+        qp.setPen(QtGui.QPen(QtGui.QColor('#777')))
         poly = [points['zero'], points['max1'], points['max2']]
         qp.setBrush(QtGui.QBrush())
         qp.drawPolygon(QtGui.QPolygon(poly))

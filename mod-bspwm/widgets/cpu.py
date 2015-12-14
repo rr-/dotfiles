@@ -17,6 +17,6 @@ class CpuProvider(object):
         self.percentage = psutil.cpu_percent(interval=1)
 
     def render(self):
-        self.label.setText('CPU %.1f%%' % (self.percentage))
-        self.chart.addPoint('#ff0000', self.percentage)
+        self.label.setText('CPU %05.1f%%' % (self.percentage))
+        self.chart.addPoint('#f00', self.percentage)
         self.chart.repaint()
