@@ -50,7 +50,7 @@ class Chart(QtWidgets.QWidget):
                     points.pop(0)
                     break
 
-        qp.setPen(QtGui.QColor('#777'))
+        qp.setPen(QtGui.QColor('#808080'))
         qp.drawRect(margin - 1, margin - 1, width - 1 - 2 * (margin - 1), height - 1 - 2 * (margin - 1))
 
         qp.end()
