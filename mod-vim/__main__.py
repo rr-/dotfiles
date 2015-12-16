@@ -9,6 +9,7 @@ choice = None
 while choice not in choices:
     choice = input('Which package to install? (%s) ' % choices).lower()
 PackageInstaller.try_install(choice)
+PackageInstaller.try_install('vim-command-t')
 
 for folder in ['undo', 'backup', 'swap', 'spell']:
     FileInstaller.create_dir('~/.vim/' + folder)
