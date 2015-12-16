@@ -58,11 +58,11 @@ class MainWindow(QtWidgets.QMainWindow):
             margin: 3px 0 4px 4px;
             padding: 0;
             color: transparent;
-            border: 1px solid #888;
+            border: 1px solid #808080;
         }
         QWidget[class=workspace][ws_free=False] {
-            background: #aaa;
-            border: 1px solid #888;
+            background: #999;
+            border: 1px solid #808080;
         }
         QWidget[class=workspace][ws_focused=True][ws_free=True] {
             border: 2px solid #0cc;
