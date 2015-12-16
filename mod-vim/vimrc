@@ -297,10 +297,12 @@ nmap <silent> <S-K> <nop>
   "----------------------------------------
   let g:ctrlp_map = '<nop>'
   function! PortableFuzzyOpen()
-    if has('ruby')
+    if exists(':CommandT') && has('ruby')
       execute ':CommandT'
-    else
+    elseif exists(':CtrlP')
       execute ':CtrlP'
+    else
+      echo 'Both CtrlP and CommandT are missing!'
     endif
   endfunction
   nnoremap <Leader>t :call PortableFuzzyOpen()<CR>
