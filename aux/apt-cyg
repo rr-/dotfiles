@@ -2,8 +2,8 @@
 
 # installs apt-cyg for cygwin.
 
-lynx -source rawgit.com/transcode-open/apt-cyg/master/apt-cyg >/tmp/apt-cyg
-install /tmp/apt-cyg /bin
+git clone https://github.com/kou1okada/apt-cyg /usr/local/share/apt-cyg
+ln -s /usr/local/share/apt-cyg/apt-cyg /usr/local/bin/apt-cyg
 
-/bin/apt-cyg update -m 'http://mirrors.kernel.org/sources.redhat.com/cygwin/'
-/bin/apt-cyg update -m 'http://mirrors.kernel.org/sources.redhat.com/cygwinports/'
+/usr/local/bin/apt-cyg update -m 'http://mirrors.kernel.org/sources.redhat.com/cygwin/'
+/usr/local/bin/apt-cyg update -m 'http://mirrors.kernel.org/sources.redhat.com/cygwinports/'
