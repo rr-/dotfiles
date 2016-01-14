@@ -107,6 +107,7 @@ set wildignore+=*.o,*.obj
 set wildignore+=*.pyc,*.pyo
 set wildignore+=*.swp,*.spl
 set wildignore+=*.stackdump
+set wildignore+=*~.*
 set wildignorecase            "case-insensitive filename completion in commands
 
 "----------------------------------------
