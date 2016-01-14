@@ -91,7 +91,7 @@ filetype *.html,*.htm links, lynx
 filetype *.torrent qbittorrent %f &
 
 " 7z and 7z archives
-fileviewer *.7z,*.zip,*.rar 7z l %c
+fileviewer *.7z,*.zip,*.rar,*.iso,*.mdf 7z l %c
 
 " Images
 filextype *.bmp,*.jpg,*.jpeg,*.png,*.gif eyecandy %f 2>/dev/null &
