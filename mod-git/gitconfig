@@ -18,7 +18,7 @@
     sw = show --color --color-words --abbrev
     hist = log --pretty=format:\"%Cred%h%Creset %ad %Cblue%<(50,trunc)%s%Creset [%an <%ae>]%d\" --graph --date=short
 [diff]
-    tool = vimdiff
+    tool = meld
 [push]
     default = upstream
 [color "diff"]
