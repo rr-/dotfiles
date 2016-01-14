@@ -11,6 +11,11 @@ if ! command -v ffmpeg &>/dev/null; then
 fi
 
 in="$1"
-out="$(echo $1|sed 's/gif/webm/i')"
+
+if [ -z "$2" ]; then
+    out="$(echo $1|sed 's/gif/webm/i')"
+else
+    out="$2"
+fi
 
 ffmpeg -i "$in" -c:v libvpx -crf 12 -b:v 500K "$out"
