@@ -21,7 +21,6 @@ run_if_needed() {
 }
 
 if [ "$(hostname)" = tornado ]; then
-    run_if_needed pidgin pidgin
     run_if_needed firefox firefox
     run_if_needed qbittorrent qbittorrent
 fi
@@ -53,7 +52,7 @@ else
 fi
 
 bspc rule -a Buddy desktop=IM
-bspc rule -a Pidgin desktop=IM floating=on
+bspc rule -a remote_irc desktop=IM
 bspc rule -a Trackma-qt desktop=10 floating=on
 bspc rule -a music_player desktop=10 floating=on
 bspc rule -a qbittorrent desktop=9
