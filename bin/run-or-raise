@@ -39,6 +39,5 @@ echo $match
 window=$(xdotool search --$type "$match" | head -1)
 if [ -z "$window" ]; then
     eval "$program" &
-else
-    xdotool search --$type "$match" windowactivate
 fi
+xdotool search --sync --$type "$match" windowactivate

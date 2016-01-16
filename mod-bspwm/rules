@@ -16,6 +16,8 @@ if [ "$window_class" = Pidgin ] ; then
             xdotool windowmove "$window_id" 1990 90
             ;;
     esac
+elif [ "$instance" = remote_irc ] ; then
+    xdotool windowmove "$window_id" 1990 90 windowsize "$window_id" 800 455
 elif [ "$title" = send-to-yume ]; then
     echo 'layer=above'
     compton-trans -c 70 -w "$window_id"
