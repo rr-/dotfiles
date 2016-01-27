@@ -3,6 +3,7 @@ require 'fileutils'
 require 'net/http'
 require 'open-uri'
 require 'rexml/document'
+require 'json'
 
 class UrlList
   attr_reader :downloaded_urls
@@ -75,6 +76,23 @@ class Downloader
     @stats = DownloadStats.new
     @url_list = url_list
     @force = force
+    @cookies = ''
+  end
+
+  def login(user, pass)
+    response = Net::HTTP.post_form(
+      URI.parse('http://gelbooru.com/index.php?page=account&s=login&code=00'),
+      {
+        'user' => user,
+        'pass' => pass,
+        'submit' => 'Log in'
+      })
+    all_cookies = response.get_fields('set-cookie')
+    cookies_array = Array.new
+    all_cookies.each { | cookie |
+      cookies_array.push(cookie.split('; ')[0])
+    }
+    @cookies = cookies_array.join('; ')
   end
 
   def target_path(post_id, url)
@@ -113,8 +131,11 @@ class Downloader
       + '&limit=' + @limit.to_s \
       + '&tags=' + URI.encode_www_form_component(tags) \
       + '&pid=' + page.to_s
+    uri = URI.parse(url)
 
-    xml_data = Net::HTTP.get_response(URI.parse(url)).body
+    request = Net::HTTP::Get.new(uri.request_uri)
+    request['Cookie'] = @cookies
+    xml_data = Net::HTTP.new(uri.host).request(request).body
     doc = REXML::Document.new(xml_data)
     doc.elements.each('posts/post') { |e| e }
   end
@@ -149,7 +170,9 @@ tags = ARGV.select { |a| !a[/^--/] }.join(' ')
 base_folder = File.expand_path('~/img/net/gelbooru/' + tags.gsub(/[\\\/:*?"<>|]/, '_'))
 FileUtils.mkdir_p(base_folder)
 
+config = JSON.parse(File.read(File.expand_path('~/.config/gelbooru.json')))
 force = ARGV.include?('--force')
 url_list = UrlList.new
 downloader = Downloader.new(base_folder, url_list, force)
+downloader.login(config['user'], config['pass'])
 downloader.run(tags)
