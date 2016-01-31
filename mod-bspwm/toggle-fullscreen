@@ -1,8 +1,0 @@
-#!/bin/sh
-bspc query -T | grep '[f-][d-][F][u-][l-][s-][i-][p-]' &>/dev/null
-xdo above -t "$(xdo id -N Bspwm -n root | sort | head -n 1)" $(xdo id -n panel)
-if [ "$?" == '0' ]; then
-    bspc node -t ~fullscreen -l normal
-else
-    bspc node -t ~fullscreen -l above
-fi
