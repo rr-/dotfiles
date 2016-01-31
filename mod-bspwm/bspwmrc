@@ -53,8 +53,8 @@ fi
 
 bspc rule -a Buddy desktop=IM
 bspc rule -a remote_irc desktop=IM
-bspc rule -a Trackma-qt desktop=10 floating=on
-bspc rule -a music_player desktop=10 floating=on
+bspc rule -a Trackma-qt desktop=10 state=floating
+bspc rule -a music_player desktop=10 state=floating
 bspc rule -a qbittorrent desktop=9
 bspc rule -a Steam desktop=8
 bspc config external_rules_command "$DIR/rules"

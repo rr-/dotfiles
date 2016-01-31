@@ -1,5 +1,4 @@
 #!/bin/sh
-
 window_id=$1
 window_class=$2
 instance=$3
@@ -8,17 +7,18 @@ title=$(xdotool getwindowname "$window_id")
 if [ "$window_class" = Pidgin ] ; then
     case "$title" in
         buddy*list|Buddy*List)
-            echo 'floating=on'
+            echo 'state=floating'
             xdotool windowmove "$window_id" 3440 90
             ;;
         *)
-            echo 'floating=on'
+            echo 'state=floating'
             xdotool windowmove "$window_id" 1990 90
             ;;
     esac
 elif [ "$instance" = remote_irc ] ; then
+    echo desktop=IM
     xdotool windowmove "$window_id" 1990 90 windowsize "$window_id" 800 455
 elif [ "$title" = send-to-yume ]; then
-    echo 'layer=above'
+    echo 'state=floating layer=above'
     compton-trans -c 70 -w "$window_id"
 fi
