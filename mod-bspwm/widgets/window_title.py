@@ -17,7 +17,7 @@ class WindowTitleProvider(object):
             label.setProperty('class', 'wintitle')
             main_window[i].left_widget.layout().addWidget(label)
             self.labels.append(label)
-        self.desktop_id_to_window_name = defaultdict(str)
+        self.desktop_id_to_window_title = defaultdict(str)
 
         self.disp = Xlib.display.Display()
         self.root = self.disp.screen().root
@@ -40,7 +40,7 @@ class WindowTitleProvider(object):
             self.update_titles(self.root)
 
     def update_titles(self, root_window):
-        desktop_id_to_window_name = defaultdict(str)
+        desktop_id_to_window_title = defaultdict(str)
         windows = [root_window]
         while windows:
             window = windows.pop()
@@ -52,21 +52,23 @@ class WindowTitleProvider(object):
                 if desktop_id is not None:
                     result = window.get_full_property(self.NET_WM_NAME, 0)
                     window_title = result.value if result else ''
-                    if desktop_id not in desktop_id_to_window_name:
-                        desktop_id_to_window_name[desktop_id] = window_title
+                    if isinstance(window_title, bytes):
+                        window_title = window_title.decode('utf8')
+                    if desktop_id not in desktop_id_to_window_title:
+                        desktop_id_to_window_title[desktop_id] = window_title
 
                 for child in window.query_tree().children:
                     windows.append(child)
             except Xlib.error.BadWindow:
                 pass
 
-        if self.desktop_id_to_window_name != desktop_id_to_window_name:
-            self.desktop_id_to_window_name = desktop_id_to_window_name
+        if self.desktop_id_to_window_title != desktop_id_to_window_title:
+            self.desktop_id_to_window_title = desktop_id_to_window_title
 
     def render(self):
         for i, monitor in enumerate(self.updater.monitors):
             focused_desktops = [ws for ws in monitor.workspaces if ws.focused]
             if not focused_desktops:
                 continue
-            focused_desktop_name = focused_desktops[0].original_id
-            self.labels[i].setText(self.desktop_id_to_window_name[focused_desktop_name] or '')
+            focused_desktop_title = focused_desktops[0].original_id
+            self.labels[i].setText(self.desktop_id_to_window_title[focused_desktop_title] or '')
