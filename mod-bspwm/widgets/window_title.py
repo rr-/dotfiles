@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 from PyQt5 import QtWidgets
+from collections import defaultdict
 import Xlib
 import Xlib.display
 
@@ -8,103 +9,66 @@ from .workspaces import WorkspacesProvider
 class WindowTitleProvider(object):
     delay = 0
 
-    def __init__(self, main_window):
+    def __init__(self, main_window, workspaces_updater):
+        self.updater = workspaces_updater
         self.changed = False
         self.labels = []
-        self.window_names = []
         for i in range(len(main_window)):
             label = QtWidgets.QLabel()
             label.setProperty('class', 'wintitle')
             main_window[i].left_widget.layout().addWidget(label)
             self.labels.append(label)
-            self.window_names.append(None)
-
-        WorkspacesProvider.window_title_provider = self
+        self.desktop_id_to_window_name = defaultdict(str)
 
         self.disp = Xlib.display.Display()
         self.root = self.disp.screen().root
         self.NET_WM_NAME = self.disp.intern_atom('_NET_WM_NAME')
         self.NET_WM_DESKTOP = self.disp.intern_atom('_NET_WM_DESKTOP')
-        self.NET_ACTIVE_WINDOW = self.disp.intern_atom('_NET_ACTIVE_WINDOW')
 
-        self.desktop_to_monitor = {}
-        monitors = WorkspacesProvider.get_monitors()
-        for i, m in enumerate(sorted(monitors, key=lambda m:m.original_id)):
+        self.desktop_id_to_monitor = {}
+        for i, m in enumerate(sorted(self.updater.monitors, key=lambda m:m.original_id)):
             for ws in m.workspaces:
-                self.desktop_to_monitor[len(self.desktop_to_monitor)] = m.display_id
+                self.desktop_id_to_monitor[len(self.desktop_id_to_monitor)] = m.display_id
 
-        for window in self.root.query_tree().children:
-            self.attach_event_handler(window)
-        self.attach_event_handler(self.root)
-
-        self.update_title_for_all_windows()
+        self.update_titles(self.root)
 
     def refresh(self):
         event = self.disp.next_event()
         type = getattr(event, 'type', None)
         atom = getattr(event, 'atom', None)
 
-        #transient_for = window.get_wm_transient_for()
-        #attrs = window.get_attributes()
-        #if attrs.map_state != Xlib.X.IsViewable:
-        #    return
+        if atom == self.NET_WM_NAME or type in [Xlib.X.FocusIn, Xlib.X.FocusOut]:
+            self.update_titles(self.root)
 
-        if atom == self.NET_WM_NAME or type == Xlib.X.FocusOut or type == Xlib.X.FocusIn:
-            window = self.get_active_window()
-            self.update_title_for_window(window)
-            self.attach_event_handler(window)
+    def update_titles(self, root_window):
+        desktop_id_to_window_name = defaultdict(str)
+        windows = [root_window]
+        while windows:
+            window = windows.pop()
+
+            window.change_attributes(event_mask=Xlib.X.FocusChangeMask | Xlib.X.PropertyChangeMask)
+
+            result = window.get_full_property(self.NET_WM_DESKTOP, 0)
+            desktop_id = result.value[0] if result else None
+            if desktop_id is not None:
+                result = window.get_full_property(self.NET_WM_NAME, 0)
+                window_title = result.value if result else ''
+                if desktop_id not in desktop_id_to_window_name:
+                    desktop_id_to_window_name[desktop_id] = window_title
+
+            for child in window.query_tree().children:
+                windows.append(child)
+        if self.desktop_id_to_window_name != desktop_id_to_window_name:
+            self.desktop_id_to_window_name = desktop_id_to_window_name
             self.changed = True
 
-    def attach_event_handler(self, window):
-        if not window:
-            return
-        window.change_attributes(event_mask=Xlib.X.FocusChangeMask | Xlib.X.PropertyChangeMask)
-
-    def update_title_for_all_windows(self, root_window=None):
-        for window in self.root.query_tree().children:
-            self.update_title_for_window(window)
-
-    def get_active_window(self):
-        window_id = self.root.get_full_property(
-            self.NET_ACTIVE_WINDOW, Xlib.X.AnyPropertyType).value[0]
-        if window_id:
-            return self.disp.create_resource_object('window', window_id)
-        return None
-
-    def get_monitor_id_for_window(self, window):
-        if not window:
-            return
-        result = window.get_full_property(self.NET_WM_DESKTOP, 0)
-        if not result:
-            return None
-        desktop_id = result.value[0]
-        if desktop_id >= len(self.desktop_to_monitor):
-            return None
-        return self.desktop_to_monitor[desktop_id]
-
-    def reset_title_for_window(self, window):
-        if not window:
-            return
-        monitor_id = self.get_monitor_id_for_window(window)
-        if monitor_id is not None:
-            self.window_names[monitor_id] = ''
-
-    def update_title_for_window(self, window):
-        if not window:
-            return
-        monitor_id = self.get_monitor_id_for_window(window)
-        if monitor_id is not None:
-            result = window.get_full_property(self.NET_WM_NAME, 0)
-            if result:
-                self.window_names[monitor_id] = result.value
-            else:
-                self.window_names[monitor_id] = ''
-
     def render(self):
-        if self.changed:
-            for i, label in enumerate(self.labels):
-                window_name = self.window_names[i]
-                if isinstance(window_name, bytes):
-                    window_name = window_name.decode('utf8')
-                label.setText(window_name or '')
-            self.changed = False
+        if not self.changed:
+            return
+        for i, monitor in enumerate(self.updater.monitors):
+            focused_desktops = [ws for ws in monitor.workspaces if ws.focused]
+            if not focused_desktops:
+                continue
+            focused_desktop_name = focused_desktops[0].original_id
+            self.labels[i].setText(self.desktop_id_to_window_name[focused_desktop_name] or '')
+        self.changed = False
