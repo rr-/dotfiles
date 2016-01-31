@@ -24,20 +24,22 @@ class Workspace(object):
         self.free    = True
         self.urgent  = False
 
-class WorkspacesProvider(object):
-    delay = 0
+class WorkspacesUpdater(object):
     monitor_names = None
 
-    @staticmethod
-    def get_monitors():
-        if WorkspacesProvider.monitor_names is None:
-            WorkspacesProvider.monitor_names = (
+    def __init__(self):
+        self.update()
+
+    def update(self):
+        if WorkspacesUpdater.monitor_names is None:
+            WorkspacesUpdater.monitor_names = (
                 [l for l in run(['bspc', 'query', '-M']).splitlines() if l])
-        monitors = []
-        for monitor_name in WorkspacesProvider.monitor_names:
+        self.monitors = []
+        workspace_id = 0
+        for monitor_name in WorkspacesUpdater.monitor_names:
             monitor_spec = json.loads(run(['bspc', 'query', '-T', '-m', monitor_name]))
             monitor = Monitor()
-            monitor.original_id = len(monitors)
+            monitor.original_id = len(self.monitors)
             monitor.name = monitor_name
             monitor.width = int(monitor_spec['rectangle']['width'])
             monitor.height = int(monitor_spec['rectangle']['height'])
@@ -49,6 +51,8 @@ class WorkspacesProvider(object):
                 workspace.focused = workspace.name == monitor_spec['focusedDesktopName']
                 workspace.free = desktop_spec['root'] is None
                 workspace.urgent = False
+                workspace.original_id = workspace_id
+                workspace_id += 1
                 children = [desktop_spec['root']]
                 while children:
                     child = children.pop()
@@ -60,22 +64,23 @@ class WorkspacesProvider(object):
                         if bool(child['client']['urgent']):
                             workspace.urgent = True
                 monitor.workspaces.append(workspace)
-            monitors.append(monitor)
-        monitors.sort(key=lambda m: m.x)
-        for i, m in enumerate(monitors):
+            self.monitors.append(monitor)
+        self.monitors.sort(key=lambda m: m.x)
+        for i, m in enumerate(self.monitors):
             m.display_id = i
-        return monitors
 
-    def __init__(self, main_window):
+class WorkspacesProvider(object):
+    delay = 0
+
+    def __init__(self, main_window, workspaces_updater):
         self.main_window = main_window
+        self.updater = workspaces_updater
 
         self.bspc_process = subprocess.Popen(
             ['bspc', 'subscribe'], stdout=subprocess.PIPE)
-        self.monitors = self.get_monitors()
-        self.refresh_workspaces()
 
         self.widgets = {}
-        for i, monitor in enumerate(self.monitors):
+        for i, monitor in enumerate(self.updater.monitors):
             monitor_widget = main_window[i].left_widget
             monitor_widget.ws_widgets = {}
             monitor_widget.wheelEvent = lambda event, monitor=monitor: self.wheel(event, monitor)
@@ -95,20 +100,14 @@ class WorkspacesProvider(object):
     def click(self, event, ws):
         subprocess.call(['bspc', 'desktop', '-f', ws.name])
 
-    def refresh_workspaces(self):
-        line = self.bspc_process.stdout.readline().decode('utf8').strip()
-        self.monitors = self.get_monitors()
-
     def refresh(self):
-        self.refresh_workspaces()
+        line = self.bspc_process.stdout.readline().decode('utf8').strip()
+        self.updater.update()
 
     def render(self):
-        for i, monitor in enumerate(self.monitors):
+        for i, monitor in enumerate(self.updater.monitors):
             for j, ws in enumerate(monitor.workspaces):
                 self.widgets[i].ws_widgets[j].setProperty('ws_focused', '%s' % ws.focused)
                 self.widgets[i].ws_widgets[j].setProperty('ws_urgent', '%s' % ws.urgent)
                 self.widgets[i].ws_widgets[j].setProperty('ws_free', '%s' % ws.free)
-                if ws.focused and ws.free and WorkspacesProvider.window_title_provider is not None:
-                    WorkspacesProvider.window_title_provider.labels[monitor.display_id].setText('')
-                    WorkspacesProvider.window_title_provider.window_names[monitor.display_id] = ''
         self.main_window.reloadStyleSheet()
