@@ -11,7 +11,6 @@ class WindowTitleProvider(object):
 
     def __init__(self, main_window, workspaces_updater):
         self.updater = workspaces_updater
-        self.changed = False
         self.labels = []
         for i in range(len(main_window)):
             label = QtWidgets.QLabel()
@@ -45,30 +44,29 @@ class WindowTitleProvider(object):
         windows = [root_window]
         while windows:
             window = windows.pop()
+            try:
+                window.change_attributes(event_mask=Xlib.X.FocusChangeMask | Xlib.X.PropertyChangeMask)
 
-            window.change_attributes(event_mask=Xlib.X.FocusChangeMask | Xlib.X.PropertyChangeMask)
+                result = window.get_full_property(self.NET_WM_DESKTOP, 0)
+                desktop_id = result.value[0] if result else None
+                if desktop_id is not None:
+                    result = window.get_full_property(self.NET_WM_NAME, 0)
+                    window_title = result.value if result else ''
+                    if desktop_id not in desktop_id_to_window_name:
+                        desktop_id_to_window_name[desktop_id] = window_title
 
-            result = window.get_full_property(self.NET_WM_DESKTOP, 0)
-            desktop_id = result.value[0] if result else None
-            if desktop_id is not None:
-                result = window.get_full_property(self.NET_WM_NAME, 0)
-                window_title = result.value if result else ''
-                if desktop_id not in desktop_id_to_window_name:
-                    desktop_id_to_window_name[desktop_id] = window_title
+                for child in window.query_tree().children:
+                    windows.append(child)
+            except Xlib.error.BadWindow:
+                pass
 
-            for child in window.query_tree().children:
-                windows.append(child)
         if self.desktop_id_to_window_name != desktop_id_to_window_name:
             self.desktop_id_to_window_name = desktop_id_to_window_name
-            self.changed = True
 
     def render(self):
-        if not self.changed:
-            return
         for i, monitor in enumerate(self.updater.monitors):
             focused_desktops = [ws for ws in monitor.workspaces if ws.focused]
             if not focused_desktops:
                 continue
             focused_desktop_name = focused_desktops[0].original_id
             self.labels[i].setText(self.desktop_id_to_window_name[focused_desktop_name] or '')
-        self.changed = False
