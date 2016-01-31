@@ -1,5 +1,6 @@
 from PyQt5 import QtWidgets
 import re
+import json
 import subprocess
 
 class Monitor(object):
@@ -30,30 +31,26 @@ class WorkspacesProvider(object):
 
     @staticmethod
     def get_monitors():
-        proc = subprocess.Popen(['bspc', 'query', '-T'], stdout=subprocess.PIPE)
-        lines = proc.stdout.read().decode('utf-8').strip().replace("\r", '').split("\n")
-        lines = [line for line in lines if line != '']
-        current_monitor = None
-        current_workspace = None
+        proc = subprocess.Popen(['bspc', 'query', '-M'], stdout=subprocess.PIPE)
+        monitor_names = [l for l in proc.stdout.read().decode('utf8').splitlines() if l]
         monitors = []
-        for line in lines:
-            chunks = line.strip("\t").split(" ")
-            if not line.startswith("\t"):
-                current_monitor = Monitor()
-                current_monitor.original_id = len(monitors)
-                current_monitor.name = chunks[0]
-                current_monitor.width, \
-                current_monitor.height, \
-                current_monitor.x, \
-                current_monitor.y = re.split('[x+]', chunks[1])
-                monitors.append(current_monitor)
-            if line.startswith("\t") and not line.startswith("\t\t"):
-                current_workspace = Workspace()
-                current_workspace.name = chunks[0]
-                current_workspace.focused = '*' in chunks
-                current_monitor.workspaces.append(current_workspace)
-            if line.startswith("\t\t"):
-                current_workspace.free = False
+        for monitor_name in monitor_names:
+            proc = subprocess.Popen(['bspc', 'query', '-T', '-m', monitor_name], stdout=subprocess.PIPE)
+            monitor_spec = json.loads(proc.stdout.read().decode('utf8'))
+            monitor = Monitor()
+            monitor.original_id = len(monitors)
+            monitor.name = monitor_name
+            monitor.width = int(monitor_spec['rectangle']['width'])
+            monitor.height = int(monitor_spec['rectangle']['height'])
+            monitor.x = int(monitor_spec['rectangle']['x'])
+            monitor.y = int(monitor_spec['rectangle']['y'])
+            for desktop_spec in monitor_spec['desktops']:
+                workspace = Workspace()
+                workspace.name = desktop_spec['name']
+                workspace.focused = workspace.name == monitor_spec['focusedDesktopName']
+                workspace.free = desktop_spec['root'] is not None
+                monitor.workspaces.append(workspace)
+            monitors.append(monitor)
         monitors.sort(key=lambda m: m.x)
         for i, m in enumerate(monitors):
             m.display_id = i
@@ -63,7 +60,7 @@ class WorkspacesProvider(object):
         self.main_window = main_window
 
         self.bspc_process = subprocess.Popen(
-            ['bspc', 'control', '--subscribe'], stdout=subprocess.PIPE)
+            ['bspc', 'subscribe'], stdout=subprocess.PIPE)
         self.monitors = self.get_monitors()
         self.refresh_workspaces()
 
