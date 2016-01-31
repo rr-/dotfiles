@@ -3,19 +3,18 @@ import re
 import json
 import subprocess
 
-class Monitor(object):
-    LAYOUT_TILED   = 1
-    LAYOUT_MONOCLE = 2
+def run(process):
+    proc = subprocess.Popen(process, stdout=subprocess.PIPE)
+    return proc.stdout.read().decode('utf8')
 
+class Monitor(object):
     def __init__(self):
-        self.name       = None
-        self.focused    = False
-        self.workspaces = []
-        self.layout     = None
-        self.x          = 0
-        self.y          = 0
-        self.width      = 0
-        self.height     = 0
+        self.name         = None
+        self.workspaces   = []
+        self.x            = 0
+        self.y            = 0
+        self.width        = 0
+        self.height       = 0
 
 class Workspace(object):
     def __init__(self):
@@ -27,16 +26,16 @@ class Workspace(object):
 
 class WorkspacesProvider(object):
     delay = 0
-    window_title_provider = None
+    monitor_names = None
 
     @staticmethod
     def get_monitors():
-        proc = subprocess.Popen(['bspc', 'query', '-M'], stdout=subprocess.PIPE)
-        monitor_names = [l for l in proc.stdout.read().decode('utf8').splitlines() if l]
+        if WorkspacesProvider.monitor_names is None:
+            WorkspacesProvider.monitor_names = (
+                [l for l in run(['bspc', 'query', '-M']).splitlines() if l])
         monitors = []
-        for monitor_name in monitor_names:
-            proc = subprocess.Popen(['bspc', 'query', '-T', '-m', monitor_name], stdout=subprocess.PIPE)
-            monitor_spec = json.loads(proc.stdout.read().decode('utf8'))
+        for monitor_name in WorkspacesProvider.monitor_names:
+            monitor_spec = json.loads(run(['bspc', 'query', '-T', '-m', monitor_name]))
             monitor = Monitor()
             monitor.original_id = len(monitors)
             monitor.name = monitor_name
@@ -48,7 +47,18 @@ class WorkspacesProvider(object):
                 workspace = Workspace()
                 workspace.name = desktop_spec['name']
                 workspace.focused = workspace.name == monitor_spec['focusedDesktopName']
-                workspace.free = desktop_spec['root'] is not None
+                workspace.free = desktop_spec['root'] is None
+                workspace.urgent = False
+                children = [desktop_spec['root']]
+                while children:
+                    child = children.pop()
+                    if child is None:
+                        continue
+                    children.append(child['firstChild'])
+                    children.append(child['secondChild'])
+                    if child['client']:
+                        if bool(child['client']['urgent']):
+                            workspace.urgent = True
                 monitor.workspaces.append(workspace)
             monitors.append(monitor)
         monitors.sort(key=lambda m: m.x)
@@ -87,29 +97,7 @@ class WorkspacesProvider(object):
 
     def refresh_workspaces(self):
         line = self.bspc_process.stdout.readline().decode('utf8').strip()
-        line = re.sub('^W', '', line)
-        if line == '':
-            return
-
-        for item in line.split(':'):
-            key, value = item[0], item[1:]
-
-            if key in 'mM':
-                chosen_monitor = [m for m in self.monitors if m.name == value]
-                current_monitor = chosen_monitor[0]
-                current_monitor.focused = key.isupper()
-
-            elif key in 'oOfFuU':
-                workspace = [w for w in current_monitor.workspaces if w.name == value][0]
-                workspace.focused = key.isupper()
-                workspace.free = key in 'fF'
-                workspace.urgent = key in 'uU'
-
-            elif key in 'lL':
-                if value in 'mM':
-                    current_monitor.layout = Monitor.LAYOUT_MONOCLE
-                elif value in 'tT':
-                    current_monitor.layout = Monitor.LAYOUT_TILED
+        self.monitors = self.get_monitors()
 
     def refresh(self):
         self.refresh_workspaces()
