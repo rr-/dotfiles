@@ -67,15 +67,9 @@ alt + shift + ctrl + {Left,Right}
 
 # widen/shrink current window
 super + w
-    bspc window -e left -50
-    bspc window -e right +50
-    bspc window -e down +50
-    bspc window -e up -50
+    bspc node {@west -r -50,@south -r +50, @north -r -50, @east -r +50}
 super + W
-    bspc window -e left +50
-    bspc window -e right -50
-    bspc window -e down -50
-    bspc window -e up +50
+    bspc node {@west -r +50,@south -r -50, @north -r +50, @east -r -50}
 
 # transparency
 super + {button5,button4}
@@ -89,11 +83,11 @@ super + shift + q
 
 # close active window
 super + q
-    bspc window -c
+    bspc node -c
 
 # send active window to given another workspace
 super + shift + {grave,1-9,0,minus}
-    bspc window -d {IM,1-9,10,IM}
+    bspc node -d {IM,1-9,10,IM}
 
 # focus workspace
 super + {grave,1-9,0,minus}
@@ -101,15 +95,15 @@ super + {grave,1-9,0,minus}
 
 # focus window in given direction
 super + {h,j,k,l}
-    bspc window -f {left,down,up,right}
+    bspc node -f {west,south,north,east}
 
 # swap window with another one in given direction
 super + shift + {h,j,k,l}
-    bspc window -s {left,down,up,right}.local
+    bspc node -s {west,south,north,east}.local
 
 # set current window as floating
 super + s
-    bspc window -t floating
+    bspc node -t \~floating
 
 # set current window as fullscreen
 super + f
@@ -118,7 +112,7 @@ super + f
 # focus window with regard to focus history
 super + {bracketleft,bracketright}
     bspc control --record-history off; \
-    bspc window {older,newer} -f; \
+    bspc node {older,newer} -f; \
     bspc control --record-history on
 
 # reload sxhkd configuration
