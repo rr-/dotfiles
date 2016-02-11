@@ -19,6 +19,7 @@ autoload -Uz compinit                   # initialize autocompletion engine
 compinit                                # initialize autocompletion engine (2)
 zstyle ':completion:*' matcher-list 'm:{a-zA-Z}={A-Za-z}' # case insensitive
 setopt NO_NOMATCH                       # if extended glob fails, run cmd as-is
+setopt NO_CASE_GLOB                     # ignore case in glob searches
 
 # miscellaneous
 unsetopt beep                           # disable beep on errors
