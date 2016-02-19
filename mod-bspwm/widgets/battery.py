@@ -11,8 +11,8 @@ class BatteryProvider(object):
 
     def __init__(self, main_window):
         try:
-            self.charge_now = glob.glob('/sys/class/power_supply/*/charge_now')[0]
-            self.charge_max = glob.glob('/sys/class/power_supply/*/charge_full')[0]
+            self.charge_now = glob.glob('/sys/class/power_supply/*/energy_now')[0]
+            self.charge_max = glob.glob('/sys/class/power_supply/*/energy_full')[0]
             self.charge_status = glob.glob('/sys/class/power_supply/*/status')[0]
             self.battery_present = True
             self.label = QtWidgets.QLabel()
