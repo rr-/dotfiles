@@ -1,47 +1,131 @@
-#!/bin/bash
-[[ -z "$@" ]] && { echo "No files selected" 1>&2; exit 1; }
+#!/bin/python3
+import os, sys, subprocess, tempfile
+import argparse
+import colorama
+import concurrent.futures
+import hashlib
+import requests
 
-for dep in 7z md5sum; do
-    if ! command -v $dep &>/dev/null; then
-        echo 1>&2 "$dep not found. Aborting."
-        exit 1
-    fi
-done
+def print_warning(arg):
+    print(colorama.Fore.YELLOW + arg, file=sys.stderr)
 
-lang=$(echo "$1"|tr '[:lower:]' '[:upper:]'); shift
-[[ "$lang" != "PL" && "$lang" != "EN" ]] && { echo "Wrong language $lang" 1>&2; exit 1; }
-for file in "$@"; do
-    echo "Processing $file..."
+def print_error(arg):
+    print(colorama.Fore.RED + arg, file=sys.stderr)
 
-    [ -f "$file" ] || { echo "Error reading file" 1>&2; exit 1; }
-    md5=`head "$file" -c 10485760|md5sum -b -|cut -f 1 -d ' '`
-    add=(0 13 16 11 5)
-    mul=(2 2 5 4 3)
-    idx=(14 3 6 8 2)
+def print_success(arg):
+    print(colorama.Fore.GREEN + arg)
+
+def parse_args():
+    parser = argparse.ArgumentParser(
+        description='Get movie subtitles using napiprojekt.pl database')
+
+    parser.add_argument(
+        metavar='FILE',
+        dest='paths',
+        nargs='+',
+        help='file to download subtitles for')
+
+    parser.add_argument(
+        '--lang',
+        metavar='LANG',
+        help='language to download subtitles in',
+        default='pl',
+        choices=('pl', 'en'))
+
+    parser.add_argument(
+        '-f',
+        '--force',
+        action='store_true',
+        help='overwrite existing subtitles')
+
+    return parser.parse_args()
+
+def flat_walk(top):
+    for path, dirs, filenames in os.walk(top):
+        for filename in filenames:
+            yield os.path.join(path, filename)
+
+def collect_paths(paths):
+    movie_extensions = 'avi,mpg,mkv'.split(',')
+    for path in paths:
+        if not os.path.exists(path):
+            print_warning('Warning: %s does not exist' % path)
+            continue
+        if os.path.isdir(path):
+            for child_path in flat_walk(path):
+                extension = os.path.splitext(child_path)[1].lower().lstrip('.')
+                if extension in movie_extensions:
+                    yield child_path
+        else:
+            yield path
+
+def get_md5(path):
+    with open(path, 'rb') as fh:
+        m = hashlib.md5()
+        m.update(fh.read(1024 * 1024 * 10))
+        return m.hexdigest()
+
+def get_checksum(md5):
     checksum=''
-    for i in {0..4}; do
-        a=${add[@]:$i:1}
-        m=${mul[@]:$i:1}
-        x=${idx[@]:$i:1}
-        t=$(( $a + $((0x${md5:$x:1})) ))
-        v=$((0x${md5:$t:2}))
-        checksum+=$(printf '%x' $(( $v * $m )) | tail -c 1 )
-    done
+    add = (0, 13, 16, 11, 5)
+    mul = (2, 2, 5, 4, 3)
+    idx = (14, 3, 6, 8, 2)
+    for i in range(5):
+        a=add[i]
+        m=mul[i]
+        x=idx[i]
+        t = a + int(md5[x], 16)
+        v = int(md5[t:t+2], 16)
+        checksum += '%x' % ((v * m) % 16)
+    return checksum
 
-    url="http://napiprojekt.pl/unit_napisy/dl.php?l=$lang&f=$md5&t=$checksum&v=other&kolejka=false&nick=&pass=&napios=posix"
-    tmpfile="$(mktemp)"
-    wget "$url" -qO "$tmpfile"
+def process_path(movie_path, lang, force):
+    subs_path = os.path.splitext(movie_path)[0] + '.sub'
+    if os.path.exists(subs_path) and not force:
+        print_warning('%r has subs, ignoring' % movie_path)
+        return
 
-    if [[ "$(head "$tmpfile" -c 3)" == "NPc" ]]; then
-        echo "Subtitles not found." 1>&2
-    else
-        outfile="${file%.*}.sub"
-        napipass="iBlm8NTigvru0Jr0"
-        #assert it unpacks just one file named in $md5.* fashion
-        7z x -y -p"$napipass" "$tmpfile" >/dev/null 2>/dev/null && cp "$md5".* "$outfile"
-        [[ $? -eq 0 ]] && echo "Subtitles stored OK." || echo "Error extracting." 1>&2
-        rm "$md5".*
-    fi
+    md5 = get_md5(movie_path)
+    checksum = get_checksum(md5)
+    password = 'iBlm8NTigvru0Jr0'
 
-    rm "$tmpfile"
-done
+    url=('http://napiprojekt.pl/unit_napisy/dl.php'
+        + '?l={lang}'
+        + '&f={md5}'
+        + '&t={checksum}'
+        + '&v=other'
+        + '&kolejka=false'
+        + '&nick='
+        + '&pass='
+        + '&napios=posix').format(lang=lang.upper(), md5=md5, checksum=checksum)
+
+    try:
+        response = requests.get(url, timeout=3)
+        if response.text[0:2] == b'NPc':
+            raise RuntimeError('Subtitles not found.')
+        with tempfile.NamedTemporaryFile(suffix='.7z') as arc_file:
+            arc_file.write(response.content)
+            cmd = ['7z', 'x', '-so', '-p' + password, arc_file.name]
+            proc = subprocess.Popen(
+                cmd,
+                stderr=subprocess.STDOUT,
+                stdout=subprocess.PIPE,
+                stdin=subprocess.PIPE)
+            output = proc.communicate(response.content)[0]
+            with open(subs_path, 'wb') as sub_file:
+                sub_file.write(output)
+                print_success('%r saved' % movie_path)
+    except Exception as ex:
+        print_error('%r error: %s' % (movie_path, ex))
+
+def main():
+    colorama.init()
+
+    args = parse_args()
+    paths = collect_paths(args.paths)
+    with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
+        for path in paths:
+            executor.submit(process_path, path, args.lang, args.force)
+
+if __name__ == '__main__':
+    main()
