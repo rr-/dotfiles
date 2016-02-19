@@ -103,9 +103,11 @@ def process_path(movie_path, lang, force):
         response = requests.get(url, timeout=3)
         if response.content[0:3] == b'NPc':
             raise RuntimeError('Subtitles not found.')
-        with tempfile.NamedTemporaryFile(suffix='.7z') as arc_file:
+        with tempfile.NamedTemporaryFile(suffix='.7z', delete=False) as arc_file:
             arc_file.write(response.content)
-            cmd = ['7z', 'x', '-so', '-p' + password, arc_file.name]
+            arc_path = arc_file.name
+        try:
+            cmd = ['7z', 'x', '-so', '-p' + password, arc_path]
             proc = subprocess.Popen(
                 cmd,
                 stderr=subprocess.PIPE,
@@ -115,6 +117,9 @@ def process_path(movie_path, lang, force):
             with open(subs_path, 'wb') as sub_file:
                 sub_file.write(output)
                 print_success('%r saved' % movie_path)
+        finally:
+            if os.path.exists(arc_path):
+                os.unlink(arc_path)
     except Exception as ex:
         print_error('%r error: %s' % (movie_path, ex))
 
