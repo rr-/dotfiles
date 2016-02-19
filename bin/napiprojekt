@@ -101,7 +101,7 @@ def process_path(movie_path, lang, force):
 
     try:
         response = requests.get(url, timeout=3)
-        if response.text[0:2] == b'NPc':
+        if response.content[0:3] == b'NPc':
             raise RuntimeError('Subtitles not found.')
         with tempfile.NamedTemporaryFile(suffix='.7z') as arc_file:
             arc_file.write(response.content)
