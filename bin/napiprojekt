@@ -108,7 +108,7 @@ def process_path(movie_path, lang, force):
             cmd = ['7z', 'x', '-so', '-p' + password, arc_file.name]
             proc = subprocess.Popen(
                 cmd,
-                stderr=subprocess.STDOUT,
+                stderr=subprocess.PIPE,
                 stdout=subprocess.PIPE,
                 stdin=subprocess.PIPE)
             output = proc.communicate(response.content)[0]
