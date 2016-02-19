@@ -46,7 +46,7 @@ def flat_walk(top):
             yield os.path.join(path, filename)
 
 def collect_paths(paths):
-    movie_extensions = 'avi,mpg,mkv'.split(',')
+    movie_extensions = 'avi,mp4,mpg,mkv'.split(',')
     for path in paths:
         if not os.path.exists(path):
             print_warning('Warning: %s does not exist' % path)
