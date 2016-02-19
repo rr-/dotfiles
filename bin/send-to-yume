@@ -14,6 +14,10 @@ except ImportError as e:
     print('Please install %s.' % e.name)
     exit(1)
 
+def make_unique(input):
+    output = set()
+    return [x for x in input if not (x in output or output.add(x))]
+
 def colored(what, color):
     color_code = getattr(colorama.Fore, color.upper().replace('LIGHT', '').strip('_'))
     if 'light' in color.lower():
@@ -234,7 +238,7 @@ class Tagger(object):
                     continue
 
                 previous_tags = copy.deepcopy(self.chosen_tags)
-                for word in set(line.split(' ')):
+                for word in make_unique(line.split(' ')):
                     self._handle_input_word(word)
                 new_tags = [
                     word
@@ -242,8 +246,8 @@ class Tagger(object):
                     if word not in previous_tags]
 
                 stack = copy.deepcopy(new_tags)
-                implications = set()
-                suggestions = set()
+                implications = []
+                suggestions = []
                 while stack:
                     word = stack.pop()
                     if word not in self.tag_dict:
@@ -251,12 +255,14 @@ class Tagger(object):
                     tag = self.tag_dict[word]
                     for implication in tag.implications:
                         if implication not in self.chosen_tags:
-                            implications.add(implication)
+                            implications.append(implication)
                             stack.append(implication)
                     for suggestion in tag.suggestions:
                         if suggestion not in self.chosen_tags:
-                            suggestions.add(suggestion)
-                suggestions -= implications
+                            suggestions.append(suggestion)
+                implications = make_unique(implications)
+                suggestions = make_unique(suggestions)
+                suggestions = [x for x in suggestions if x not in implications]
                 for implication in implications:
                     print(colored('+ ' + implication, 'green'))
                     self.add(implication)
@@ -378,7 +384,7 @@ def upload(booru_api, tagger_settings, args):
 
     post = Post(
         safety=safety,
-        tags=set(tagger.get()),
+        tags=chosen_tags,
         content_file_name=os.path.basename(args.path))
     try:
         booru_api.upload_post(post, args.path)
