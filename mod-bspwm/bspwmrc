@@ -5,13 +5,27 @@ while [ -h "$SOURCE" ]; do
     DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
     SOURCE="$(readlink "$SOURCE")"
     [[ $SOURCE != /* ]] && SOURCE="$DIR/$SOURCE"
- done
+done
 DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
 
-desktop_config() {
+if [ "$(hostname)" = tornado ]; then
+    bspc monitor HDMI-0 -d 1 2
+    bspc monitor DVI-I-1 -d 3 4 5 6 7 8 9 10 IM
+else
+    bspc monitor -d 1 2 3 4 5 6 7 8 9 10 IM
+fi
+
+global_config() {
     bspc config $1 $2
+}
+monitor_config() {
     for M in $(bspc query -M); do
         bspc config -m $M $1 $2
+    done
+}
+desktop_config() {
+    for D in $(bspc query -D); do
+        bspc config -d $D $1 $2
     done
 }
 run_if_needed() {
@@ -20,36 +34,22 @@ run_if_needed() {
     fi
 }
 
-if [ "$(hostname)" = tornado ]; then
-    run_if_needed firefox firefox
-    run_if_needed qbittorrent qbittorrent
-fi
-run_if_needed trackma-qt trackma-qt
+global_config focused_border_color "#00d0ee"
+global_config urgent_border_color "#de3333"
+global_config active_border_color "#bbbbbb"
+global_config normal_border_color "#bbbbbb"
 
-desktop_config focused_border_color "#20aaba"
-desktop_config urgent_border_color "#de3333"
-desktop_config active_border_color "#cccccc"
-desktop_config normal_border_color "#cccccc"
-
-desktop_config top_padding 19
-desktop_config border_width 3
-if [ "$(hostname)" = tornado ]; then
-    desktop_config window_gap 29
-else
-    desktop_config window_gap 12
-fi
-desktop_config split_ratio             0.50
-desktop_config borderless_monocle      true
-desktop_config gapless_monocle         true
-desktop_config focus_by_distance       true
-desktop_config focus_follows_pointer   true
-
-if [ "$(hostname)" = tornado ]; then
-    bspc monitor HDMI-0 -d 1 2
-    bspc monitor DVI-I-1 -d 3 4 5 6 7 8 9 10 IM
-else
-    bspc monitor -d 1 2 3 4 5 6 7 8 9 10 IM
-fi
+monitor_config top_padding 44
+monitor_config left_padding 25
+monitor_config bottom_padding 25
+monitor_config right_padding 25
+desktop_config border_width 4
+desktop_config window_gap 0
+global_config split_ratio             0.5
+global_config borderless_monocle      true
+global_config gapless_monocle         true
+global_config focus_by_distance       true
+global_config focus_follows_pointer   true
 
 bspc rule -a Buddy desktop=IM
 bspc rule -a remote_irc desktop=IM
@@ -74,6 +74,11 @@ else
     xprop -root -remove _NET_WM_NAME
     xprop -root -f _NET_WM_NAME 8s -set _NET_WM_NAME "$IRONIC_WM_NAME"
 fi
+
+if [ "$(hostname)" = tornado ]; then
+    run_if_needed firefox firefox
+fi
+run_if_needed trackma-qt trackma-qt
 
 pkill -f bspwm/panel
 nohup $HOME/.config/bspwm/panel </dev/null &>/dev/null &
