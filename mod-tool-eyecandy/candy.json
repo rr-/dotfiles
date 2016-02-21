@@ -68,6 +68,7 @@
         ["Alt+Left",           ["run_script", ["convert", "{}", "-rotate", "-90", "bmp:{}"]], ["reload"]],
         ["Alt+Right",          ["run_script", ["convert", "{}", "-rotate", "90", "bmp:{}"]], ["reload"]],
         ["0",                  ["volume_up", 0.05]],
+        ["h",                  ["run_script", ["helper-eyecandy-select", "{}"]], ["close"]],
         ["Return",             ["run_script", ["helper-eyecandy-select", "{}"]], ["close"]],
         ["[",                  ["copy_file", "~/hub/yume/"]],
         ["]",                  ["copy_file", "~/"]],
