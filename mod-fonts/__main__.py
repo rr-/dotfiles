@@ -4,6 +4,7 @@ from libinstall import FileInstaller, PackageInstaller, run_verbose
 dir = os.path.dirname(__file__)
 
 PackageInstaller.try_install('xorg-font-utils')
+PackageInstaller.try_install('otf-ipafont')
 PackageInstaller.try_install('ttf-dejavu')
 PackageInstaller.try_install('ttf-symbola')
 PackageInstaller.try_install('ttf-font-awesome')
