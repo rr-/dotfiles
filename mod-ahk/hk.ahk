@@ -250,20 +250,29 @@ OnClipboardChange:
     LAlt UP::Send {Escape}
 #IfWinActive
 
-;maximize active window
-!M::
+;close active window
+#Q::
     ActiveHwnd := WinExist("A")
-    PostMessage 0x112, 0xf030 ;WM_SYSCOMMAND, SC_MAXIMIZE
+    WinClose
+    return
+
+;fullscreen
+#F::
+    WinGet MX, MinMax, A
+    if MX
+        WinRestore A
+    else
+        WinMaximize A
     return
 
 ;restore active window
-!R::
+#S::
     ActiveHwnd := WinExist("A")
     PostMessage 0x112, 0xf120 ;WM_SYSCOMMAND, SC_RESTORE
     return
 
 ;minimize active window
-!W::
+#W::
     if WinActive("WTW$")
     {
         WinHide
@@ -280,7 +289,7 @@ OnClipboardChange:
     return
 
 ;set active window as always on top
-!A::WinSet, AlwaysOnTop, Toggle, A
+#A::WinSet, AlwaysOnTop, Toggle, A
 
 ;transparency
 AddTransparency(delta)
@@ -308,21 +317,6 @@ AddTransparency(delta)
 #WheelDown::AddTransparency(-12)
 #Z::AddTransparency(-12)
 +#Z::AddTransparency(12)
-
-;close active window
-#Q::
-    ActiveHwnd := WinExist("A")
-    WinClose
-    return
-
-;fullscreen
-#F::
-    WinGet MX, MinMax, A
-    if MX
-        WinRestore A
-    else
-        WinMaximize A
-    return
 
 ;directional focus
 DirectionalFocus(direction)
