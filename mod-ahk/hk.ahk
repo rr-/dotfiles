@@ -71,19 +71,6 @@ FRun(window, path, folder)
     return
 }
 
-;create random file name
-RandomFileName()
-{
-    FormatTime, fileName,, yyyyMMdd_HHmmss_
-    characters := "abcdefghijklmnopqrstuvwxyz"
-    Loop 3
-    {
-        Random, rand, 1, strlen(characters)
-        fileName := fileName . substr(characters, rand, 1)
-    }
-    return fileName
-}
-
 return
 
 ;replace stuff in clipboard when it changes
@@ -228,21 +215,6 @@ OnClipboardChange:
                 Run, %BrowserPath%
         }
         return
-
-;windows powershell / cmd functionalities
-#IfWinActive ahk_class ConsoleWindowClass
-    +Insert::SendInput {Raw}%clipboard% ;paste on shift+insert
-    +PgUp::SendInput ! {Up}{Up}{Up}{Right}{Up}{Up}{Enter}{PgUp}{Enter} ;scroll on shift+page up
-    +PgDn::SendInput ! {Up}{Up}{Up}{Right}{Up}{Up}{Enter}{PgDn}{Enter} ;scroll on shift+page down
-#IfWinActive
-
-;explorer
-#IfWinActive ahk_class CabinetWClass
-    ;new folder
-    ^n::
-        SendInput {Up}{Ctrl Down}{Space}{Ctrl Up}{AppsKey}{Up}{Up}{Right}{Enter}
-        return
-#IfWinActive
 
 ;adobe products
 #IfWinActive ahk_group adobe
