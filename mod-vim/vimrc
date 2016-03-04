@@ -206,6 +206,8 @@ let g:airline#extensions#tabline#enabled = 1
 let g:airline#extensions#tabline#show_buffers = 0
 "show tab number near tab for easy navigation with :![number]gt
 let g:airline#extensions#tabline#tab_nr_type = 1
+"don't show splits
+let g:airline#extensions#tabline#show_splits = 0
 
 "----------------------------------------
 " config NERDtree
