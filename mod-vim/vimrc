@@ -13,6 +13,7 @@ Plugin 'Yggdroot/indentLine'              "vertical bars showing indent level
 Plugin 'flazz/vim-colorschemes'           "color schemes!
 Plugin 'maxbrunsfeld/vim-yankstack'       "enhanced yank/paste stack
 Plugin 'octol/vim-cpp-enhanced-highlight' "improved C++11 highlighting
+Plugin 'embear/vim-localvimrc'            "local vimrc
 call vundle#end()
 
 "-------------------------------------------------
@@ -165,6 +166,11 @@ function! DeleteInactiveBufs()
   echomsg nWipeouts . ' buffer(s) wiped out'
 endfunction
 command! Bdi :call DeleteInactiveBufs()
+
+"----------------------------------------
+" config localvimrc
+"----------------------------------------
+let g:localvimrc_persistent = 1         "remember decisions to load given lvimrc
 
 "----------------------------------------
 " config ctrl+p
