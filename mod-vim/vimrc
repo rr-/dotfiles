@@ -299,6 +299,9 @@ nnoremap <leader>P <Plug>yankstack_substitute_newer_paste
 cnoremap w!! w !sudo tee >/dev/null %
 "disable stupid manual pages
 nnoremap <silent> <S-K> <nop>
+"easier formatting of paragraphs
+vnoremap Q gq
+nnoremap Q gqap
 
   "----------------------------------------
   " interchange command-t and ctrl-p
