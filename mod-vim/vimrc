@@ -217,11 +217,11 @@ let g:nerdtree_tabs_focus_on_files = 1
 "don't focus nerdtree on parameterless startup
 let g:nerdtree_tabs_smart_startup_focus = 2
 "f2 = disable NERDtree
-autocmd VimEnter * imap <F2> <esc>:NERDTreeToggle<CR>
-autocmd VimEnter * nmap <F2> :NERDTreeToggle<CR>
+autocmd VimEnter * inoremap <F2> <esc>:NERDTreeToggle<CR>
+autocmd VimEnter * nnoremap <F2> :NERDTreeToggle<CR>
 "f3 = find current file in nerdtree
-autocmd VimEnter * imap <F3> <esc>:NERDTreeFind<CR>
-autocmd VimEnter * nmap <F3> :NERDTreeFind<CR>
+autocmd VimEnter * inoremap <F3> <esc>:NERDTreeFind<CR>
+autocmd VimEnter * nnoremap <F3> :NERDTreeFind<CR>
 
 "----------------------------------------
 " file-type specific settings
@@ -274,31 +274,31 @@ let mapleader = "-"
 map <buffer> <silent> k gk
 map <buffer> <silent> j gj
 "ctrl+tab, ctrl+shift+tab = move to next/prev tab
-nmap <Esc>[1;5I gt
-nmap <Esc>[1;6I gT
+nnoremap <Esc>[1;5I gt
+nnoremap <Esc>[1;6I gT
 "ctrl+t = open new tab
-imap <silent> <C-t> <Esc>:tabnew<CR>
-nmap <silent> <C-t> :tabnew<CR>
+inoremap <silent> <C-t> <Esc>:tabnew<CR>
+nnoremap <silent> <C-t> :tabnew<CR>
 "ctrl+s = save
-imap <silent> <C-s> <Esc>:update<CR>
-nmap <silent> <C-s> :<C-u>update<CR>
+inoremap <silent> <C-s> <Esc>:update<CR>
+nnoremap <silent> <C-s> :<C-u>update<CR>
 "ctrl+z = open shell
-nmap <silent> <C-z> :sh<CR>
+nnoremap <silent> <C-z> :sh<CR>
 "ctrl+q = close window
-imap <silent> <C-q> <Esc>:q<CR>
-nmap <silent> <C-q> :q<CR>
+inoremap <silent> <C-q> <Esc>:q<CR>
+nnoremap <silent> <C-q> :q<CR>
 "ctrl+w ctrl+m = open new file vertically
-nmap <silent> <C-w><C-m> :vne<CR>
-nmap <silent> <C-w>m :vne<CR>
+nnoremap <silent> <C-w><C-m> :vne<CR>
+nnoremap <silent> <C-w>m :vne<CR>
 "make motion search easier to access
-nmap <leader>z <leader><leader>s
+nnoremap <leader>z <leader><leader>s
 "access to recent yank/paste stack
-nmap <leader>p <Plug>yankstack_substitute_older_paste
-nmap <leader>P <Plug>yankstack_substitute_newer_paste
+nnoremap <leader>p <Plug>yankstack_substitute_older_paste
+nnoremap <leader>P <Plug>yankstack_substitute_newer_paste
 "save with sudo
-cmap w!! w !sudo tee >/dev/null %
+cnoremap w!! w !sudo tee >/dev/null %
 "disable stupid manual pages
-nmap <silent> <S-K> <nop>
+nnoremap <silent> <S-K> <nop>
 
   "----------------------------------------
   " interchange command-t and ctrl-p
