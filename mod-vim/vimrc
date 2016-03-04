@@ -7,7 +7,8 @@ Plugin 'wincent/command-t'                "open files using fuzzy matching
 Plugin 'kien/ctrlp.vim'                   "fallback alternative for command-t
 Plugin 'scrooloose/nerdtree'              "file explorer sidebar
 Plugin 'Lokaltog/vim-easymotion'          "move to any character!
-Plugin 'bling/vim-airline'                "riced status bar
+Plugin 'vim-airline/vim-airline'          "riced status bar
+Plugin 'vim-airline/vim-airline-themes'   "riced status bar - themes
 Plugin 'Yggdroot/indentLine'              "vertical bars showing indent level
 Plugin 'flazz/vim-colorschemes'           "color schemes!
 Plugin 'maxbrunsfeld/vim-yankstack'       "enhanced yank/paste stack
