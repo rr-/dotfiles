@@ -39,10 +39,16 @@ global_config urgent_border_color "#de3333"
 global_config active_border_color "#bbbbbb"
 global_config normal_border_color "#bbbbbb"
 
-monitor_config top_padding 44
-monitor_config left_padding 25
-monitor_config bottom_padding 25
-monitor_config right_padding 25
+monitor_config top_padding 19
+monitor_config right_padding 0
+monitor_config bottom_padding 0
+monitor_config left_padding 0
+
+desktop_config top_padding 25
+desktop_config right_padding 25
+desktop_config bottom_padding 25
+desktop_config left_padding 25
+
 desktop_config border_width 4
 desktop_config window_gap 0
 global_config split_ratio             0.5
