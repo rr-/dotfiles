@@ -109,6 +109,10 @@ super + s
 super + f
     bash -c '~/.config/bspwm/toggle-state fullscreen'
 
+# toggle desktop padding for active monitor
+super + shift + f
+    bash -c '~/.config/bspwm/toggle-desktop-padding'
+
 # focus window with regard to focus history
 super + {bracketleft,bracketright}
     bspc control --record-history off; \

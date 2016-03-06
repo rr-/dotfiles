@@ -20,5 +20,6 @@ PackageInstaller.try_install('python3-xlib', method='pip') # window titles
 FileInstaller.create_symlink(os.path.join(dir, 'sxhkdrc'), '~/.config/sxhkd/sxhkdrc')
 FileInstaller.create_symlink(os.path.join(dir, 'bspwmrc'), '~/.config/bspwm/bspwmrc')
 FileInstaller.create_symlink(os.path.join(dir, 'toggle-state'), '~/.config/bspwm/toggle-state')
+FileInstaller.create_symlink(os.path.join(dir, 'toggle-desktop-padding'), '~/.config/bspwm/toggle-desktop-padding')
 FileInstaller.create_symlink(os.path.join(dir, 'rules'), '~/.config/bspwm/rules')
 FileInstaller.create_symlink(os.path.join(dir, 'panel'), '~/.config/bspwm/panel')
