@@ -8,10 +8,10 @@ directions = {TOP: 'top', RIGHT: 'right', BOTTOM: 'bottom', LEFT: 'left'}
 
 bspc = local['bspc']
 
-monitor = bspc(['query', '-M', '-n']).strip()
+monitor = bspc(['query', '-D', '-n']).strip()
 paddings = {}
 for dir, name in directions.items():
-    paddings[dir] = int(bspc(['config', '-m', monitor, '%s_padding' % name]))
+    paddings[dir] = int(bspc(['config', '-d', monitor, '%s_padding' % name]))
 
 panel_sizes = {
     TOP:    paddings[TOP]    - paddings[LEFT],
@@ -28,4 +28,4 @@ target_paddings = {
 
 for dir, padding in target_paddings.items():
     name = directions[dir]
-    bspc(['config', '-m', monitor, '%s_padding' % name, padding])
+    bspc(['config', '-d', monitor, '%s_padding' % name, padding])
