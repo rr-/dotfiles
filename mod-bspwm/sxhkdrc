@@ -135,7 +135,9 @@ super + @button{1,3}
 super + i
     bash -c 'shot -i --output ~/'
 super + shift + i
-    bash -c 'shot -w -i --output ~/'
+    bash -c 'shot -W -i --output ~/'
+super + alt + i
+    bash -c 'shot -M -i --output ~/'
 
 ~button1
     bspc pointer -g focus
