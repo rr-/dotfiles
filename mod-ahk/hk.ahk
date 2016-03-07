@@ -221,6 +221,14 @@ OnClipboardChange:
     ~LAlt::return
     LAlt UP::Send {Escape}
 #IfWinActive
+#IfWinActive ahk_class illustrator
++wheelup::
+    send {Ctrl Down}{=}{Ctrl Up}
+    return
++wheeldown::
+    send {Ctrl Down}-{Ctrl Up}
+    return
+#IfWinActive
 
 ;close active window
 #Q::
