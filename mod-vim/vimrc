@@ -293,10 +293,10 @@ nnoremap <silent> <C-q> :q<CR>
 nnoremap <silent> <C-w><C-m> :vne<CR>
 nnoremap <silent> <C-w>m :vne<CR>
 "make motion search easier to access
-nnoremap <leader>z <leader><leader>s
+nmap <leader>z <Plug>(easymotion-s)
 "access to recent yank/paste stack
-nnoremap <leader>p <Plug>yankstack_substitute_older_paste
-nnoremap <leader>P <Plug>yankstack_substitute_newer_paste
+nmap <leader>p <Plug>yankstack_substitute_older_paste
+nmap <leader>P <Plug>yankstack_substitute_newer_paste
 "save with sudo
 cnoremap w!! w !sudo tee >/dev/null %
 "disable stupid manual pages
