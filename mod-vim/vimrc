@@ -254,6 +254,7 @@ autocmd FileType markdown FourSpaces
 autocmd FileType c        FourSpaces
 autocmd FileType cpp      FourSpaces
 autocmd FileType python   FourSpaces
+autocmd FileType lua      FourSpaces
 autocmd FileType ruby     TwoSpaces
 autocmd FileType vim      TwoSpaces
 autocmd FileType zsh      FourSpaces
