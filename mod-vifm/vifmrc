@@ -94,7 +94,7 @@ filetype *.torrent qbittorrent %f &
 fileviewer *.7z,*.zip,*.rar,*.iso,*.mdf 7z l %c
 
 " Images
-filextype *.bmp,*.jpg,*.jpeg,*.png,*.gif eyecandy %f 2>/dev/null &
+filextype *.bmp,*.jpg,*.jpeg,*.png,*.gif mpi %d --select=%f 2>/dev/null &
 fileviewer *.bmp,*.jpg,*.jpeg,*.png,*.gif convert -identify %f -verbose /dev/null
 
 " Rich text documents
