@@ -1,7 +1,10 @@
-vo=opengl-hq
+#vim syntax=config
+
 fullscreen
 
+vo=opengl-hq
 script-opts=osc-layout=slimbox
+stop-screensaver=yes
 
 audio-channels=2
 alang=jpn,jp,jap,Japanese,en,eng,English
@@ -13,6 +16,23 @@ softvol-max=300
 screenshot-format=jpg
 screenshot-template=~/shot-%f-%P
 
-stop-screensaver=yes
-
-framedrop=decoder+vo
+[images]
+fullscreen=no
+script-opts=osc-showwindowed=no,osc-showfullscreen=no
+script=~~/images/slideshow.lua,~~/images/statusbar.lua,~~/images/fancy_zoom.lua,~~/images/playlist_mgr.lua
+input-conf=~~/images/input.conf
+no-input-default-bindings
+no-load-scripts
+msg-level=all=warn
+native-keyrepeat
+loop-file=yes
+osd-align-x=right
+osd-align-y=bottom
+osd-margin-x=5
+osd-margin-y=5
+osd-border-size=2
+osd-border-color='#aa000000'
+osd-blur=2
+osd-font='InputMono Light'
+osd-font-size=16
+sws-scaler=point
