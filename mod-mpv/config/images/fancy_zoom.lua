@@ -2,6 +2,8 @@ local rotation = 0
 local rendering = false
 local user_fiddled = false
 
+math.sign = math.sign or function(x) return x<0 and -1 or x>0 and 1 or 0 end
+
 function get(property)
     return mp.get_property(property)
 end
@@ -27,12 +29,12 @@ end
 
 function get_real_scale()
     local video = {
-        width  = mp.get_property('video-params/dw'),
-        height = mp.get_property('video-params/dh'),
+        width  = get('video-params/dw'),
+        height = get('video-params/dh'),
     }
     local window = {
-        width  = mp.get_property('osd-width'),
-        height = mp.get_property('osd-height'),
+        width  = get('osd-width'),
+        height = get('osd-height'),
     }
     if video.width == nil or window.width == nil then return nil end
     video.width  = tonumber(video.width)
@@ -52,12 +54,40 @@ function reset_other_settings()
     set('video-aspect', 0)
 end
 
+function correct_pan_for_dimension(dimension, delta)
+    value = tonumber(get('video-pan-' .. dimension))
+    if dimension == 'x' then
+        window_size = tonumber(get('osd-width'))
+        video_size = tonumber(get('video-params/dw'))
+    else
+        window_size = tonumber(get('osd-height'))
+        video_size = tonumber(get('video-params/dh'))
+    end
+    window_scale = get_real_scale()
+    zoom_scale = tonumber(get('video-zoom')) + 1
+
+    -- what a bunch of crap
+    actual_canvas_size = video_size * window_scale * zoom_scale
+    if actual_canvas_size < window_size then
+        set('video-pan-' .. dimension, 0)
+    elseif (1 - math.abs(value) * 2) * actual_canvas_size < window_size then
+        value = math.sign(value) * (-(window_size / actual_canvas_size - 1) / 2)
+        set('video-pan-' .. dimension, value)
+    end
+end
+
+function correct_pan()
+    correct_pan_for_dimension('x', 0)
+    correct_pan_for_dimension('y', 0)
+end
+
 function scale_original()
     local window_scale = get_real_scale()
     if window_scale == nil then return end
     local target_scale = (1 / window_scale) - 1
     reset_other_settings()
     set('video-zoom', target_scale)
+    correct_pan()
 end
 
 function scale_arbitrary(multiplier)
@@ -66,11 +96,13 @@ function scale_arbitrary(multiplier)
     local target_scale = ((1 / window_scale * multiplier) - 1)
     reset_other_settings()
     set('video-zoom', target_scale)
+    correct_pan()
 end
 
 function scale_to_window()
     reset_other_settings()
     set('video-zoom', 0)
+    correct_pan()
 end
 
 function fit_to_window()
@@ -109,9 +141,9 @@ mp.register_event('video-reconfig', window_size_changed)
 mp.register_script_message('fit-to-window', function() fit_to_window(); user_fiddled = true; end)
 mp.register_script_message('fit-original',  function() scale_original(); user_fiddled = true; end)
 mp.register_script_message('set-zoom',      function(v) scale_arbitrary(v); user_fiddled = true; end)
-mp.register_script_message('zoom-out',      function(d) add('video-zoom', -d); user_fiddled = true; end)
-mp.register_script_message('zoom-in',       function(d) add('video-zoom', d); user_fiddled = true; end)
-mp.register_script_message('pan-x',         function(d) add('video-pan-x', d); user_fiddled = true; end)
-mp.register_script_message('pan-y',         function(d) add('video-pan-y', d); user_fiddled = true; end)
-mp.register_script_message('aspect',        function(d) add('video-aspect', d); user_fiddled = true; end)
+mp.register_script_message('zoom-out',      function(d) add('video-zoom', -d); correct_pan(); user_fiddled = true; end)
+mp.register_script_message('zoom-in',       function(d) add('video-zoom', d); correct_pan(); user_fiddled = true; end)
+mp.register_script_message('pan-x',         function(d) add('video-pan-x', d); correct_pan(); user_fiddled = true; end)
+mp.register_script_message('pan-y',         function(d) add('video-pan-y', d); correct_pan(); user_fiddled = true; end)
+mp.register_script_message('aspect',        function(d) add('video-aspect', d); correct_pan(); user_fiddled = true; end)
 mp.register_script_message('rotate',        function(d) add_rotation(d); user_fiddled = true; end)
