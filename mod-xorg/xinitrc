@@ -23,7 +23,7 @@ setxkbmap pl
 
 #enable transparency manager
 #this is also supposed to eliminate problems with tearing.
-comptonflags=( -b )
+comptonflags=( )
 if lspci | grep -i nvidia &>/dev/null; then
     # nvidia
     comptonflags+=( --backend glx --vsync opengl-swc --paint-on-overlay )
@@ -31,7 +31,7 @@ else
     # amd
     comptonflags+=( --backend xrender --paint-on-overlay --unredir-if-possible )
 fi
-compton "${comptonflags[@]}"
+compton "${comptonflags[@]}" & # -b broke on pacman -Syu at 2016-03-14
 
 clipit -d &
 autocutsel -fork &
