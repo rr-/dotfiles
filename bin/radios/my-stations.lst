@@ -1,5 +1,6 @@
 http://stream.clubrenoize.com:9001/                       ;re:noize
-http://vaporfm.com/vaporfm.m3u                            ;vaporfm
+https://plaza.one/ogg                                     ;Nightwave Plaza
+http://radio.ivan.moe/icecast/vpr-playlist?420            ;Virtual Plaza Radio
 http://www.revivalkult.de/radio/winamp.pls                ;Revival kult
 http://www.happyhardcore.com/livestreams/hardcore.pls     ;HappyHardcore.com
 
