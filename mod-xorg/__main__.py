@@ -13,6 +13,7 @@ PackageInstaller.try_install('autocutsel')    # synchronize primary and selectio
 PackageInstaller.try_install('clipit')        # keep clipboard content even after application closes
 PackageInstaller.try_install('pkg-config')    # for compton
 PackageInstaller.try_install('compton')       # for shadows, transparency and vsync
+PackageInstaller.try_install('shot-git')      # for screenshots
 
 FileInstaller.create_symlink(os.path.join(dir, 'xinitrc'), '~/.xinitrc')
 FileInstaller.create_symlink(os.path.join(dir, 'compton.conf'), '~/.config/compton.conf')
