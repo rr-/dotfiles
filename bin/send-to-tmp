@@ -1,24 +1,28 @@
 #!/usr/bin/python3
-import os, sys
+
+''' Sends files to tmp.sakuya.pl via SSH and outputs copyable links. '''
+
+import os
+import sys
 import shlex
 import tarfile
 import subprocess
 import io
 
-base_dir = '/srv/www/tmp.sakuya.pl/public_html/f/'
-base_url = 'http://tmp.sakuya.pl/f/'
-remote_host = 'burza'
+BASE_DIR = '/srv/www/tmp.sakuya.pl/public_html/f/'
+BASE_URL = 'http://tmp.sakuya.pl/f/'
+REMOTE_HOST = 'burza'
 
 def collect_single_file(arg):
     target_name = os.path.basename(arg)
     return (arg, target_name)
 
-def collect_files_from_dir(dir):
-    for root, dirnames, filenames in os.walk(dir):
+def collect_files_from_dir(top):
+    for root, _, filenames in os.walk(top):
         for filename in filenames:
             path = os.path.join(root, filename)
-            target_name = os.path.relpath(path, dir)
-            target_name = os.path.join(os.path.basename(dir), target_name)
+            target_name = os.path.relpath(path, top)
+            target_name = os.path.join(os.path.basename(top), target_name)
             yield (path, target_name)
 
 def collect_files(args):
@@ -29,8 +33,8 @@ def collect_files(args):
         if os.path.isfile(arg):
             yield collect_single_file(arg)
         elif os.path.isdir(arg):
-            for f in collect_files_from_dir(arg):
-                yield f
+            for name in collect_files_from_dir(arg):
+                yield name
 
 def send(src_paths):
     if not src_paths:
@@ -45,28 +49,28 @@ def send(src_paths):
 
     dirs = set()
     for src_path, target_name in src_paths:
-        dirs.add(os.path.dirname(os.path.join(base_dir, target_name)))
+        dirs.add(os.path.dirname(os.path.join(BASE_DIR, target_name)))
 
-    for dir in dirs:
-        commands.append('mkdir -p %s' % shlex.quote(dir))
-        commands.append('chmod 0755 %s' % shlex.quote(dir))
+    for dir_name in dirs:
+        commands.append('mkdir -p %s' % shlex.quote(dir_name))
+        commands.append('chmod 0755 %s' % shlex.quote(dir_name))
 
-    commands.append('tar x -C %s' % shlex.quote(base_dir))
+    commands.append('tar x -C %s' % shlex.quote(BASE_DIR))
 
     for src_path, target_name in src_paths:
-        dst_path = os.path.join(base_dir, target_name)
+        dst_path = os.path.join(BASE_DIR, target_name)
         tar.add(src_path, arcname=target_name)
         commands.append('chmod 0644 %s' % shlex.quote(dst_path))
-        urls.append(base_url + target_name.replace('\\', '/'))
+        urls.append(BASE_URL + target_name.replace('\\', '/'))
 
-    cmdline = ['ssh', remote_host, ';'.join(commands)]
+    cmdline = ['ssh', REMOTE_HOST, ';'.join(commands)]
 
     proc = subprocess.Popen(
         cmdline,
         stdin=subprocess.PIPE,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE)
-    out, err = proc.communicate(input=tar_stream.getvalue())
+    _, err = proc.communicate(input=tar_stream.getvalue())
     for url in urls:
         print(url)
     if err:

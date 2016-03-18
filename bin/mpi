@@ -1,75 +1,85 @@
 #!/bin/python3
-from plumbum import local, FG
-import argparse
-import os, re
-import tempfile
 
-managed_extensions = [
+''' MPI - MPV-based image browser. '''
+
+import argparse
+import os
+import re
+import tempfile
+from plumbum import local, FG
+
+MANAGED_EXTENSIONS = [
     'jpg', 'jpeg', 'jfif', 'gif', 'png', 'tga', 'bmp',
     'webm', 'mkv', 'mp4']
 
+def parse_args():
+    ''' Read the user arguments. '''
 
-# read the user arguments
-parser = argparse.ArgumentParser(description='Run mpv as image viewer')
-parser.add_argument(
-    '-s', '--select', dest='selected_path',
-    help='Which file to preselect')
-parser.add_argument(
-    metavar='PATH', nargs='*', dest='paths',
-    help='path to the image or a directory', default=None)
-args = parser.parse_args()
+    parser = argparse.ArgumentParser(description='Run mpv as image viewer')
+    parser.add_argument(
+        '-s', '--select', dest='selected_path',
+        help='Which file to preselect')
+    parser.add_argument(
+        metavar='PATH', nargs='*', dest='paths',
+        help='path to the image or a directory', default=None)
+    args = parser.parse_args()
 
-# decorate the user arguments
-if args.selected_path:
-    args.selected_path = os.path.abspath(args.selected_path)
-if not args.paths:
-    if args.selected_path is not None:
-        args.paths = [os.path.dirname(args.selected_path)]
+    # decorate the user arguments
+    if args.selected_path:
+        args.selected_path = os.path.abspath(args.selected_path)
+    if not args.paths:
+        if args.selected_path is not None:
+            args.paths = [os.path.dirname(args.selected_path)]
+        else:
+            args.paths = ['.']
+    args.paths = [os.path.abspath(path) for path in args.paths]
+
+    return args
+
+
+def main():
+    args = parse_args()
+
+    # compose the playlist
+    playlist = []
+    for path in args.paths:
+        if os.path.isdir(path):
+            for entry in os.scandir(path):
+                if not entry.is_file:
+                    continue
+                ext = os.path.splitext(entry.path)[1].lstrip('.').lower()
+                if ext in MANAGED_EXTENSIONS:
+                    playlist.append(entry.path)
+        elif os.path.isfile(path):
+            playlist.append(path)
+    if args.selected_path:
+        playlist.append(args.selected_path)
+
+    # remove the duplicates from the playlist
+    playlist = list(set(playlist))
+
+    # sort the playlist, get selection position
+    convert = lambda text: int(text) if text.isdigit() else text.lower()
+    playlist.sort(
+        key=lambda key: [convert(c) for c in re.split('([0-9]+)', key)])
+    if args.selected_path:
+        playlist_pos = playlist.index(args.selected_path)
     else:
-        args.paths = ['.']
-args.paths = [os.path.abspath(path) for path in args.paths]
+        playlist_pos = 0
 
+    # write the playlist
+    with tempfile.NamedTemporaryFile(delete=False, mode='wb') as handle:
+        handle.write('\n'.join(playlist).encode('utf-8'))
+        handle.close()
 
-# compose the playlist
-playlist = []
-for path in args.paths:
-    if os.path.isdir(path):
-        for entry in os.scandir(path):
-            if not entry.is_file:
-                continue
-            ext = os.path.splitext(entry.path)[1].lstrip('.').lower()
-            if ext in managed_extensions:
-                playlist.append(entry.path)
-    elif os.path.isfile(path):
-        playlist.append(path)
-if args.selected_path:
-    playlist.append(args.selected_path)
+        try:
+            # run mpv
+            _ = local['mpv'][
+                '--profile=images',
+                '--playlist=%s' % handle.name,
+                '--playlist-pos=%d' % playlist_pos] & FG()
+        finally:
+            os.unlink(handle.name)
 
-
-# remove the duplicates from the playlist
-playlist = list(set(playlist))
-
-
-# sort the playlist, get selection position
-convert = lambda text: int(text) if text.isdigit() else text.lower()
-playlist.sort(key=lambda key: [convert(c) for c in re.split('([0-9]+)', key)])
-if args.selected_path:
-    playlist_pos = playlist.index(args.selected_path)
-else:
-    playlist_pos = 0
-
-
-# write the playlist
-with tempfile.NamedTemporaryFile(delete=False, mode='wb') as f:
-    f.write('\n'.join(playlist).encode('utf-8'))
-    f.close()
-
-    try:
-        # run mpv
-        mpv = local['mpv']
-        mpv[
-            '--profile=images',
-            '--playlist=%s' % f.name,
-            '--playlist-pos=%d' % playlist_pos] & FG()
-    finally:
-        os.unlink(f.name)
+if __name__ == '__main__':
+    main()
