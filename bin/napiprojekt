@@ -1,21 +1,43 @@
 #!/bin/python3
-import os, sys, subprocess, tempfile
+
+''' Downloads movie subtitles from Napiprojekt database. '''
+
 import argparse
-import colorama
 import concurrent.futures
 import hashlib
+import os
+import subprocess
+import sys
+import tempfile
+import colorama
 import requests
 
+PASSWORD = 'iBlm8NTigvru0Jr0'
+URL_TEMPLATE = (
+    'http://napiprojekt.pl/unit_napisy/dl.php'
+    + '?l={lang}'
+    + '&f={md5}'
+    + '&t={checksum}'
+    + '&v=other'
+    + '&kolejka=false'
+    + '&nick='
+    + '&pass='
+    + '&napios=posix')
+
 def print_warning(arg):
+    ''' Prints a warning message in yellow color. '''
     print(colorama.Fore.YELLOW + arg, file=sys.stderr)
 
 def print_error(arg):
+    ''' Prints an error message in red color. '''
     print(colorama.Fore.RED + arg, file=sys.stderr)
 
 def print_success(arg):
+    ''' Prints a message in green color. '''
     print(colorama.Fore.GREEN + arg)
 
 def parse_args():
+    ''' Parses arguments supplied by the user. '''
     parser = argparse.ArgumentParser(
         description='Get movie subtitles using napiprojekt.pl database')
 
@@ -41,11 +63,13 @@ def parse_args():
     return parser.parse_args()
 
 def flat_walk(top):
-    for path, dirs, filenames in os.walk(top):
+    ''' Returns recursive list of files contained inside the directory. '''
+    for path, _, filenames in os.walk(top):
         for filename in filenames:
             yield os.path.join(path, filename)
 
 def collect_paths(paths):
+    ''' Returns list of paths to movie files basing on arbitrary paths. '''
     movie_extensions = 'avi,mp4,mpg,mkv'.split(',')
     for path in paths:
         if not os.path.exists(path):
@@ -60,26 +84,29 @@ def collect_paths(paths):
             yield path
 
 def get_md5(path):
-    with open(path, 'rb') as fh:
-        m = hashlib.md5()
-        m.update(fh.read(1024 * 1024 * 10))
-        return m.hexdigest()
+    ''' Gets the MD5 of the first 10 megabytes. '''
+    with open(path, 'rb') as handle:
+        md5 = hashlib.md5()
+        md5.update(handle.read(1024 * 1024 * 10))
+        return md5.hexdigest()
 
 def get_checksum(md5):
-    checksum=''
+    ''' Gets the checksum for Napiprojekt basing on the file's MD5. '''
+    checksum = ''
     add = (0, 13, 16, 11, 5)
     mul = (2, 2, 5, 4, 3)
     idx = (14, 3, 6, 8, 2)
     for i in range(5):
-        a=add[i]
-        m=mul[i]
-        x=idx[i]
-        t = a + int(md5[x], 16)
-        v = int(md5[t:t+2], 16)
-        checksum += '%x' % ((v * m) % 16)
+        index = int(md5[idx[i]], 16) + add[i]
+        value = int(md5[index:index+2], 16) * mul[i]
+        checksum += '%x' % (value % 16)
     return checksum
 
 def process_path(movie_path, lang, force):
+    '''
+    Stores subtitles for a single movie path.
+    If the target subtitles already exist, bails out, unless force=True.
+    '''
     subs_path = os.path.splitext(movie_path)[0] + '.sub'
     if os.path.exists(subs_path) and not force:
         print_warning('%r has subs, ignoring' % movie_path)
@@ -87,41 +114,30 @@ def process_path(movie_path, lang, force):
 
     md5 = get_md5(movie_path)
     checksum = get_checksum(md5)
-    password = 'iBlm8NTigvru0Jr0'
+    url = URL_TEMPLATE.format(lang=lang.upper(), md5=md5, checksum=checksum)
 
-    url=('http://napiprojekt.pl/unit_napisy/dl.php'
-        + '?l={lang}'
-        + '&f={md5}'
-        + '&t={checksum}'
-        + '&v=other'
-        + '&kolejka=false'
-        + '&nick='
-        + '&pass='
-        + '&napios=posix').format(lang=lang.upper(), md5=md5, checksum=checksum)
+    response = requests.get(url, timeout=3)
+    if response.content[0:3] == b'NPc':
+        print_error('%r error: subtitles not found.' % (movie_path))
+        return
 
+    with tempfile.NamedTemporaryFile(suffix='.7z', delete=False) as arc_file:
+        arc_file.write(response.content)
+        arc_path = arc_file.name
     try:
-        response = requests.get(url, timeout=3)
-        if response.content[0:3] == b'NPc':
-            raise RuntimeError('Subtitles not found.')
-        with tempfile.NamedTemporaryFile(suffix='.7z', delete=False) as arc_file:
-            arc_file.write(response.content)
-            arc_path = arc_file.name
-        try:
-            cmd = ['7z', 'x', '-so', '-p' + password, arc_path]
-            proc = subprocess.Popen(
-                cmd,
-                stderr=subprocess.PIPE,
-                stdout=subprocess.PIPE,
-                stdin=subprocess.PIPE)
-            output = proc.communicate(response.content)[0]
-            with open(subs_path, 'wb') as sub_file:
-                sub_file.write(output)
-                print_success('%r saved' % movie_path)
-        finally:
-            if os.path.exists(arc_path):
-                os.unlink(arc_path)
-    except Exception as ex:
-        print_error('%r error: %s' % (movie_path, ex))
+        cmd = ['7z', 'x', '-so', '-p' + PASSWORD, arc_path]
+        proc = subprocess.Popen(
+            cmd,
+            stderr=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stdin=subprocess.PIPE)
+        output = proc.communicate(response.content)[0]
+        with open(subs_path, 'wb') as sub_file:
+            sub_file.write(output)
+            print_success('%r saved' % movie_path)
+    finally:
+        if os.path.exists(arc_path):
+            os.unlink(arc_path)
 
 def main():
     colorama.init()
