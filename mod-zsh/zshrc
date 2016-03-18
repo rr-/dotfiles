@@ -139,3 +139,7 @@ man() {
     LESS='-j 8' \
     man "$@"
 }
+
+if [ -f "$HOME/.lzshrc" ]; then
+    . "$HOME/.lzshrc"
+fi
