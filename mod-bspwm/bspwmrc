@@ -29,8 +29,9 @@ desktop_config() {
     done
 }
 run_if_needed() {
-    if ! xdotool search --name "$1" &>/dev/null; then
-        nohup "$2" </dev/null &>/dev/null &
+    name=$1; shift
+    if ! xdotool search --name "$name"; then
+        nohup $@ </dev/null &>/dev/null &
     fi
 }
 
@@ -59,7 +60,6 @@ global_config focus_follows_pointer   true
 
 bspc rule -a Buddy desktop=IM
 bspc rule -a remote_irc desktop=IM
-bspc rule -a Trackma-qt desktop=10 state=floating
 bspc rule -a music_player desktop=10 state=floating
 bspc rule -a qbittorrent desktop=9
 bspc rule -a Steam desktop=8
@@ -84,7 +84,8 @@ fi
 if [ "$(hostname)" = tornado ]; then
     run_if_needed firefox firefox
 fi
-run_if_needed trackma-qt trackma-qt
+run_if_needed trackma urxvt -name 'trackma' -e zsh -i -l -c 'trackma-curses'
+
 
 pkill -f bspwm/panel
 nohup $HOME/.config/bspwm/panel </dev/null &>/dev/null &
