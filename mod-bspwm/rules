@@ -21,4 +21,7 @@ elif [ "$instance" = remote_irc ] ; then
 elif [ "$title" = send-to-yume ]; then
     echo 'state=floating layer=above'
     compton-trans -c 70 -w "$window_id"
+elif [ "$instance" = trackma ]; then
+    echo desktop=10
+    echo 'state=floating layer=above'
 fi
