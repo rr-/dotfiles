@@ -1,0 +1,99 @@
+#!/bin/python3
+
+''' Plays the stations in txt/radio-stations.txt using mpv. '''
+
+import os
+import re
+import urwid
+from plumbum import local
+
+class Player(object):
+    def __init__(self):
+        self._mpv = local['mpv']
+        self._mpv_instance = None
+
+    def play(self, url):
+        self._mpv_instance = self._mpv.popen(['--no-terminal', '-vo=null', url])
+
+    def stop(self):
+        if self._mpv_instance:
+            self._mpv_instance.terminate()
+
+class SelectableText(urwid.Edit):
+    def valid_char(self, char):
+        return False
+
+class RadioListBox(urwid.ListBox):
+    def __init__(self, player, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._player = player
+        self._playing_idx = None
+
+    def keypress(self, pos, key):
+        if key == 'k':
+            return super().keypress(pos, 'up')
+        if key == 'j':
+            return super().keypress(pos, 'down')
+        if key == 'enter':
+            self.toggle_play_focused()
+            return None
+        return super().keypress(pos, key)
+
+    def toggle_play_focused(self):
+        if self._playing_idx is not None:
+            playing_widget = self.body[self._playing_idx]
+            playing_widget.set_attr_map({None: ''})
+            playing_widget.set_focus_map({None: 'focus'})
+
+        self._player.stop()
+        focused_widget, focus_idx = self.get_focus()
+        if self._playing_idx == focus_idx:
+            self._playing_idx = None
+        else:
+            focused_widget.set_attr_map({None: 'active'})
+            focused_widget.set_focus_map({None: 'active_focus'})
+            self._player.play(focused_widget._original_widget.get_text())
+            self._playing_idx = focus_idx
+
+class MainWindow(urwid.Frame):
+    def __init__(self, player, stations):
+        urwid.Frame.__init__(
+            self,
+            urwid.Frame(self._make_station_list(player, stations), urwid.Text('Radio stations')))
+
+    def keypress(self, pos, key):
+        if key == 'q' or key == 'esc' or key == 'ctrl q':
+            raise urwid.ExitMainLoop()
+        return super().keypress(pos, key)
+
+    def _make_station_list(self, player, stations):
+        body = []
+        for url in stations:
+            button = SelectableText(url)
+            body.append(urwid.AttrMap(button, None, focus_map='focus'))
+        return RadioListBox(player, urwid.SimpleFocusListWalker(body))
+
+def collect_stations():
+    dir_to_self = os.path.dirname(__file__)
+    txt_path = os.path.join(dir_to_self, os.pardir, 'txt', 'radio-stations.txt')
+    lines = [line for line in open(txt_path, 'r')]
+    lines = [re.sub('#.*', '', line) for line in lines]
+    lines = [line.strip() for line in lines]
+    lines = [line for line in lines if line]
+    return lines
+
+def main():
+    player = Player()
+    stations = collect_stations()
+
+    urwid.MainLoop(
+        MainWindow(player, stations),
+        palette=[
+            ('focus', 'light green', ''),
+            ('active', '', 'light green'),
+            ('active_focus', 'default', 'light green'),
+            ('header', 'standout', '')
+        ]).run()
+
+if __name__ == '__main__':
+    main()
