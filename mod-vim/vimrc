@@ -47,6 +47,16 @@ if exists('+colorcolumn')
   set colorcolumn=80
 endif
 
+"gui specific options
+if has('gui_running')
+  colorscheme winter
+  set guioptions-=m             "remove menu bar
+  set guioptions-=T             "remove toolbar
+  set guioptions-=r             "remove right-hand scroll bar
+  set guioptions-=L             "remove left-hand scroll bar
+  set guifont=Liberation\ Mono\ 9
+endif
+
 "-----------------------------------------
 " whitespace settings
 "-----------------------------------------
@@ -118,13 +128,13 @@ set wildignorecase            "case-insensitive filename completion in commands
 "highlight color for bad whitespace
 highlight SpecialKey ctermbg=NONE ctermfg=187
 "highlight trailing white space
-highlight ExtraWhitespace ctermbg=red guibg=red
+highlight ExtraWhitespace ctermbg=red guibg=#ddaaaa
 "fix ColorColumn on dark backgrounds
 if &background == 'dark'
   highlight ColorColumn ctermbg=235
 else
   highlight Normal ctermbg=NONE
-  highlight ColorColumn ctermbg=255
+  highlight ColorColumn ctermbg=255 guibg=#ddaaaa
 end
 "show white characters
 set list listchars=tab:→\ ,trail:·
@@ -315,6 +325,8 @@ map <buffer> <silent> j gj
 "ctrl+tab, ctrl+shift+tab = move to next/prev tab
 nnoremap <Esc>[1;5I gt
 nnoremap <Esc>[1;6I gT
+nnoremap <C-Tab> gt
+nnoremap <C-S-Tab> gT
 "ctrl+t = open new tab
 inoremap <silent> <C-t> <Esc>:tabnew<CR>
 nnoremap <silent> <C-t> :tabnew<CR>
