@@ -9,7 +9,7 @@ fi
 # environment variables
 export EDITOR=vim                       # for stuff that need interactive editor
 export PATH=$DIR/bin:$PATH              # PATH for all the goodies in this repo
-export PATH=/usr/local/bin:$PATH        # prefer manually compiled libaries
+export PATH=/usr/local/bin:$PATH        # prefer manually compiled libraries
 
 # autocomplete
 autoload -Uz compinit                   # initialize autocompletion engine
@@ -48,7 +48,7 @@ alias zln='zmv -L'
 if [ "$TERM" =~ rxvt ]; then
     bindkey "\e[3~"   delete-char           # delete
     bindkey '\e[1~'   beginning-of-line     # home and ctrl+home
-    bindkey '\e[4~'   end-of-line           # end adn ctrl+end
+    bindkey '\e[4~'   end-of-line           # end and ctrl+end
     bindkey '^H'      backward-kill-word    # ctrl+backspace
     bindkey "^[3^"    kill-word             # ctrl+delete
     bindkey '\eOd'    backward-word         # ctrl+left
