@@ -114,7 +114,7 @@ set undodir=~/.vim/undo//          "set path to undo data file
 "------------------------------------------
 "list of files to ignore
 set wildignore+=.hg,.git,.bzr
-set wildignore+=vendor,node_modules,build
+set wildignore+=vendor,node_modules,python_modules,build
 set wildignore+=*.o,*.obj
 set wildignore+=*.pyc,*.pyo,__pycache__
 set wildignore+=*.swp,*.spl
