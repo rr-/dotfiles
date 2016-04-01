@@ -65,8 +65,6 @@ bspc rule -a qbittorrent desktop=9
 bspc rule -a Steam desktop=8
 bspc config external_rules_command "$DIR/rules"
 
-feh --bg-fill "$HOME/.wallpaper1" "$HOME/.wallpaper2" &
-
 pkill -f sxhkd
 sxhkd &
 
@@ -89,3 +87,4 @@ run_if_needed trackma urxvt -name 'trackma' -e zsh -i -l -c 'trackma-curses'
 
 pkill -f bspwm/panel
 nohup $HOME/.config/bspwm/panel </dev/null &>/dev/null &
+$HOME/src/dotfiles/bin/lightness 1

@@ -15,27 +15,38 @@ if [ -h ~/.minttyrc ]; then
     ln -s ~/.minttyrc-$word ~/.minttyrc
 fi
 
-# vim
-echo -e 'set background='$word >~/.vimrc-background
-if [[ $use_light -eq 1 ]]; then
-    echo -e 'color hemisu' >>~/.vimrc-background
-else
-    echo -e 'color sorcerer' >>~/.vimrc-background
+# wallpaper
+if command -v hsetroot &>/dev/null; then
+    if [[ $use_light -eq 1 ]]; then
+        hsetroot -solid '#bbddee'
+    else
+        hsetroot -solid '#333333'
+    fi
 fi
+
+# bspwm decoration
+if [[ $use_light -eq 1 ]]; then
+    bspc config normal_border_color "#bbbbbb"
+    bspc config active_border_color "#bbbbbb"
+    bspc config focused_border_color "#00d0ee"
+else
+    bspc config normal_border_color "#555555"
+    bspc config active_border_color "#555555"
+    bspc config focused_border_color "#00a0a0"
+fi
+
+# vim
+echo -e 'let g:lightness="'$word'"' >~/.vimrc-background
 
 # vifm
 [ -h ~/.config/vifm/colors/current ] && rm ~/.config/vifm/colors/current
 ln -s ~/.config/vifm/colors/"$word".vifm ~/.config/vifm/colors/current
 
 # URxvt and xterm
-if [ -h ~/.config/Xresources ]; then
+if command -v xrdb &>/dev/null; then
     if [ -h ~/.config/Xresources-theme ]; then
         rm ~/.config/Xresources-theme
     fi
     ln -s ~/.config/Xresources-$word ~/.config/Xresources-theme
-    if command -v xset &>/dev/null; then
-        if xset q &>/dev/null; then
-            xrdb -override ~/.config/Xresources-theme
-        fi
-    fi
+    xrdb -override ~/.config/Xresources-theme
 fi

@@ -38,8 +38,14 @@ let background_file=$HOME."/.vimrc-background"
 if filereadable(background_file)
   exec 'so ' . background_file
 else
+  let g:lightness = 'light'
+endi
+if lightness ==? 'light'
   colorscheme hemisu
   set background=light
+else
+  colorscheme sorcerer
+  set background=dark
 endif
 
 "set gutter width to 80 characters
