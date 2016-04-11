@@ -25,14 +25,16 @@ if command -v hsetroot &>/dev/null; then
 fi
 
 # bspwm decoration
-if [[ $use_light -eq 1 ]]; then
-    bspc config normal_border_color "#bbbbbb"
-    bspc config active_border_color "#bbbbbb"
-    bspc config focused_border_color "#00d0ee"
-else
-    bspc config normal_border_color "#555555"
-    bspc config active_border_color "#555555"
-    bspc config focused_border_color "#00a0a0"
+if command -v bspc &>/dev/null; then
+    if [[ $use_light -eq 1 ]]; then
+        bspc config normal_border_color "#bbbbbb"
+        bspc config active_border_color "#bbbbbb"
+        bspc config focused_border_color "#00d0ee"
+    else
+        bspc config normal_border_color "#555555"
+        bspc config active_border_color "#555555"
+        bspc config focused_border_color "#00a0a0"
+    fi
 fi
 
 # vim
@@ -48,5 +50,5 @@ if command -v xrdb &>/dev/null; then
         rm ~/.config/Xresources-theme
     fi
     ln -s ~/.config/Xresources-$word ~/.config/Xresources-theme
-    xrdb -override ~/.config/Xresources-theme
+    xrdb -override ~/.config/Xresources-theme 2>/dev/null
 fi
