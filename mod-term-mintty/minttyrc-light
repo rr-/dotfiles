@@ -23,3 +23,6 @@ SwitchShortcuts=no
 Font=InputMono Light
 FontHeight=9
 ScrollMod=shift
+BellType=0
+BellFlash=no
+BellTaskbar=yes
