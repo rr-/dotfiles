@@ -91,7 +91,7 @@ set noincsearch               "disable "live" search
 set hlsearch                  "highlight searches
 set ignorecase                "ignore case in searches
 set smartcase                 " ...unless they contain uppercase chars
-set scrolloff=10              "keep at least 10 lines below and above cursor
+set scrolloff=5               "keep at least x lines below and above cursor
 set nojoinspaces              "don't put double spaces when using auto wrapping
 set fillchars=vert:\│         "better vertical fill character
 
