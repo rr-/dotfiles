@@ -14,6 +14,7 @@ Plugin 'flazz/vim-colorschemes'           "color schemes!
 Plugin 'maxbrunsfeld/vim-yankstack'       "enhanced yank/paste stack
 Plugin 'octol/vim-cpp-enhanced-highlight' "improved C++11 highlighting
 Plugin 'embear/vim-localvimrc'            "local vimrc
+Plugin 'wavded/vim-stylus'                "stylus (css framework) highlighting
 call vundle#end()
 
 "-------------------------------------------------
