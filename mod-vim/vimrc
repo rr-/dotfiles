@@ -277,6 +277,8 @@ autocmd VimEnter * nnoremap <F2> :NERDTreeToggle<CR>
 "f3 = find current file in nerdtree
 autocmd VimEnter * inoremap <F3> <esc>:NERDTreeFind<CR>
 autocmd VimEnter * nnoremap <F3> :NERDTreeFind<CR>
+"explicitly disable some things in NERDTree - seems like wildignore glitches
+let NERDTreeIgnore=['__pycache__','vendor','node_modules','python_modules','build']
 
 "----------------------------------------
 " file-type specific settings
