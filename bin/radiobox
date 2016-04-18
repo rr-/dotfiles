@@ -2,6 +2,7 @@
 
 ''' Plays the stations in txt/radio-stations.txt using mpv. '''
 
+import signal
 import os
 import re
 import urwid
@@ -13,11 +14,18 @@ class Player(object):
         self._mpv_instance = None
 
     def play(self, url):
-        self._mpv_instance = self._mpv.popen(['--no-terminal', '-vo=null', url])
+        self._mpv_instance = self._mpv.popen(
+            ['--no-terminal', '-vo=null', url],
+            shell=False,
+            preexec_fn=os.setsid)
 
     def stop(self):
         if self._mpv_instance:
-            self._mpv_instance.terminate()
+            try:
+                os.killpg(os.getpgid(self._mpv_instance.pid), signal.SIGTERM)
+            except os.ProcessLookupError:
+                pass
+            self._mpv_instance = None
 
 class SelectableText(urwid.Edit):
     def valid_char(self, char):
@@ -57,21 +65,25 @@ class RadioListBox(urwid.ListBox):
 
 class MainWindow(urwid.Frame):
     def __init__(self, player, stations):
+        self._player = player
         urwid.Frame.__init__(
             self,
-            urwid.Frame(self._make_station_list(player, stations), urwid.Text('Radio stations')))
+            urwid.Frame(
+                self._make_station_list(stations),
+                urwid.Text('Radio stations')))
 
     def keypress(self, pos, key):
         if key == 'q' or key == 'esc' or key == 'ctrl q':
+            self._player.stop()
             raise urwid.ExitMainLoop()
         return super().keypress(pos, key)
 
-    def _make_station_list(self, player, stations):
+    def _make_station_list(self, stations):
         body = []
         for url in stations:
             button = SelectableText(url)
             body.append(urwid.AttrMap(button, None, focus_map='focus'))
-        return RadioListBox(player, urwid.SimpleFocusListWalker(body))
+        return RadioListBox(self._player, urwid.SimpleFocusListWalker(body))
 
 def collect_stations():
     dir_to_self = os.path.dirname(__file__)
