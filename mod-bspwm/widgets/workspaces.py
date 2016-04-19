@@ -47,8 +47,9 @@ class WorkspacesUpdater(object):
             monitor.y = int(monitor_spec['rectangle']['y'])
             for desktop_spec in monitor_spec['desktops']:
                 workspace = Workspace()
+                workspace.id = desktop_spec['id']
                 workspace.name = desktop_spec['name']
-                workspace.focused = workspace.name == monitor_spec['focusedDesktopName']
+                workspace.focused = workspace.id == monitor_spec['focusedDesktopId']
                 workspace.free = desktop_spec['root'] is None
                 workspace.urgent = False
                 workspace.original_id = workspace_id
