@@ -355,6 +355,3 @@ DirectionalFocus(direction)
 
 ;reload autohotkey
 !F12::Reload
-
-;prevent pressing win key from opening start menu (can use right win key)
-~LWin Up:: Return
