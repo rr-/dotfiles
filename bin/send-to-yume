@@ -286,7 +286,7 @@ class Tagger(object):
                     continue
 
                 previous_tags = copy.deepcopy(self.chosen_tags)
-                for word in make_unique(line.split(' ')):
+                for word in make_unique(re.split('\s+', line)):
                     self._handle_input_word(word)
                 new_tags = [
                     word
