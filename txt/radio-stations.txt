@@ -7,9 +7,6 @@ http://www.revivalkult.de/radio/winamp.pls                # Revival kult
 http://www.happyhardcore.com/livestreams/hardcore.pls     # HappyHardcore.com
 
 http://www.post-rock.ro/pls/postrockmusic.pls             # post-rock.ro
-http://farpastpost.com/radiowinamp                        # farpastpost - Post Rock
-http://tosfm.serveblog.net:8000/listen.pls                # tosfm.serveblog.net - Post Rock
-http://voxsc1.somafm.com:8900/listen.pls                  # somafm - Rock?
 
 http://diforfree.org/pls/di_00sclubhits_hi.m3u
 http://diforfree.org/pls/di_ambient_hi.m3u
