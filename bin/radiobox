@@ -68,9 +68,7 @@ class MainWindow(urwid.Frame):
         self._player = player
         urwid.Frame.__init__(
             self,
-            urwid.Frame(
-                self._make_station_list(stations),
-                urwid.Text('Radio stations')))
+            self._make_station_list(stations))
 
     def keypress(self, pos, key):
         if key == 'q' or key == 'esc' or key == 'ctrl q':
