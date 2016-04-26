@@ -23,7 +23,7 @@ class Player(object):
         if self._mpv_instance:
             try:
                 os.killpg(os.getpgid(self._mpv_instance.pid), signal.SIGTERM)
-            except os.ProcessLookupError:
+            except ProcessLookupError:
                 pass
             self._mpv_instance = None
 
