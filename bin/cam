@@ -1,0 +1,38 @@
+#!/bin/python3
+import os
+import argparse
+import re
+from plumbum import local, FG
+
+def parse_args():
+    parser = argparse.ArgumentParser(description='Capture selected window')
+    parser.add_argument(
+        metavar='PATH', nargs='?', dest='output_path',
+        help='where to save the output stream', default=os.path.expanduser('~/output.webm'))
+    return parser.parse_args()
+
+def get_integer(result, prefix_pattern):
+    return int(re.search(prefix_pattern + '.*?(\d+)', result, re.I).group(1))
+
+def main(args):
+    result = local['xwininfo']()
+    x = get_integer(result, 'absolute.*x')
+    y = get_integer(result, 'absolute.*y')
+    width = get_integer(result, 'width')
+    height = get_integer(result, 'height')
+    border = get_integer(result, 'border')
+
+    width += 2 * border
+    height += 2 * border
+
+    local['ffmpeg'][
+        '-video_size', '{width}x{height}'.format(width=width, height=height),
+        '-framerate', '25',
+        '-f', 'x11grab',
+        '-i', ':0.0+{x},{y}'.format(x=x, y=y),
+        '-c:v', 'libvpx-vp9',
+        '-lossless', '1',
+        args.output_path] & FG()
+
+if __name__ == '__main__':
+    main(parse_args())
