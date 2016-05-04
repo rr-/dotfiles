@@ -1,0 +1,2 @@
+#!/bin/sh
+ibus-daemon -drR --xim
