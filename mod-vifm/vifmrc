@@ -136,8 +136,8 @@ nnoremap gb :file &<cr>l
 
 " Mappings for faster renaming
 nnoremap I cw<c-a>
-nnoremap cc cw<c-u>
-nnoremap A cw<c-w>
+nnoremap C cw<c-u>
+nnoremap A cw
 
 " Open console in current directory
 nnoremap -t :!urxvt &<cr>
