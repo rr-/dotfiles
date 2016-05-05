@@ -1,5 +1,8 @@
 " vim: filetype=vifm syntax=vim
 
+" don't confirm file removals
+set confirm=permdelete
+
 " the command to start vi
 set vicmd=vim
 
