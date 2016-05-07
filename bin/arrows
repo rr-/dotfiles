@@ -4,7 +4,7 @@
 import sys
 from plumbum import local
 
-if len(sys.argv) == 1 or not sys.argv[1]:
+if len(sys.argv) == 1 or int(sys.argv[1]):
     print('Enabling')
     xmodmap = local['xmodmap']
     xmodmap(['-e', 'keycode 33 = Up'])
