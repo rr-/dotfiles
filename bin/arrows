@@ -1,0 +1,17 @@
+#!/bin/python3
+# for gaming on HHKB
+
+import sys
+from plumbum import local
+
+if len(sys.argv) == 1 or not sys.argv[1]:
+    print('Enabling')
+    xmodmap = local['xmodmap']
+    xmodmap(['-e', 'keycode 33 = Up'])
+    xmodmap(['-e', 'keycode 46 = Left'])
+    xmodmap(['-e', 'keycode 47 = Down'])
+    xmodmap(['-e', 'keycode 48 = Right'])
+else:
+    print('Disabling')
+    setxkbmap = local['setxkbmap']
+    setxkbmap(['-layout', 'pl'])
