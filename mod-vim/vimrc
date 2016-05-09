@@ -121,7 +121,6 @@ set undodir=~/.vim/undo//          "set path to undo data file
 "------------------------------------------
 "list of files to ignore
 set wildignore+=.hg,.git,.bzr
-set wildignore+=vendor,node_modules/,python_modules/,build/
 set wildignore+=*.o,*.obj
 set wildignore+=*.pyc,*.pyo,__pycache__
 set wildignore+=*.swp,*.spl
@@ -228,7 +227,7 @@ let g:localvimrc_persistent = 1         "remember decisions to load given lvimrc
 "----------------------------------------
 " config ctrl+p
 "----------------------------------------
-let g:ctrlp_working_path_mode = 'c'    "enable VCS dir discovery and traversal
+let g:ctrlp_working_path_mode = 'c'     "disable VCS dir discovery and traversal
 let g:ctrlp_dotfiles = 1                "enable matching files such as .htaccess
 let g:ctrlp_match_window_bottom = 1     "show selected element at the top
 let g:ctrlp_match_window_reversed = 1   "show list top->bottom
@@ -240,7 +239,7 @@ let g:ctrlp_match_window = 'bottom,order:btt,min:1,max:30,results:30'
 "----------------------------------------
 let g:CommandTMaxHeight = 30            "limit window height to this many lines
 let g:CommandTMatchWindowReverse = 1    "show matches near the bottom
-let g:CommandTWildIgnore = &wildignore . ",**/data/posts/*,**/data/thumbnails/*"
+let g:CommandTWildIgnore = &wildignore . ",**/data/posts/*,**/data/thumbnails/*,**/node_modules/*,**/python_modules/*,**/build/*"
 
 "----------------------------------------
 " config airline
@@ -278,7 +277,7 @@ autocmd VimEnter * nnoremap <F2> :NERDTreeToggle<CR>
 autocmd VimEnter * inoremap <F3> <esc>:NERDTreeFind<CR>
 autocmd VimEnter * nnoremap <F3> :NERDTreeFind<CR>
 "explicitly disable some things in NERDTree - seems like wildignore glitches
-let NERDTreeIgnore=['__pycache__','vendor','node_modules','python_modules','build/']
+let NERDTreeIgnore=['__pycache__','vendor','build/']
 
 "----------------------------------------
 " file-type specific settings
