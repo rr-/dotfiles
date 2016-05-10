@@ -36,7 +36,7 @@ compton "${comptonflags[@]}" & # -b broke on pacman -Syu at 2016-03-14
 clipit -d &
 autocutsel -fork &
 autocutsel -selection PRIMARY -fork &
-ibus-daemon --xim &
+~/.config/ibus/start
 
 #TODO: move this to mod-mpd
 mpd ~/.config/mpd/mpd.conf &
