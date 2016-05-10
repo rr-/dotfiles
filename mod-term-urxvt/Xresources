@@ -9,7 +9,7 @@ URxvt.saveLines: 100000
 URxvt.keysym.Home: \033[1~
 URxvt.keysym.End: \033[4~
 URxvt.inputMethod: ibus
-URxvt.preeditType: ibus
+URxvt.preeditType: OverTheSpot
 
 URxvt.internalBorder: 2
 URxvt.keysym.C-Tab: \033[1;5I
