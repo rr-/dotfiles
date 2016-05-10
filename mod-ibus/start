@@ -1,4 +1,3 @@
 #!/bin/sh
-export XDG_CONFIG_HOME=$HOME/.config/ibus
 killall ibus-daemon
 ibus-daemon -drR --xim
