@@ -10,10 +10,23 @@ import urllib.request
 import urllib.parse
 import re
 import textwrap
+from bs4 import BeautifulSoup
 
 def get_first(input_list):
     ''' Gets the first element from a list, or None if the list is empty. '''
     return (input_list or [None])[0]
+
+def text_with_newlines(elem):
+    text = ''
+    try:
+        for e in elem.recursiveChildGenerator():
+            if isinstance(e, str):
+                text += e.strip()
+            elif e.name == 'br':
+                text += '\n'
+    except AttributeError:
+        return str(elem)
+    return text
 
 def print_word_def(word):
     ''' Prints a word. '''
@@ -21,51 +34,28 @@ def print_word_def(word):
     url = 'http://sjp.pl/' + urllib.parse.quote(word)
     content = urllib.request.urlopen(url).read().decode('utf8')
 
-    sections = re.findall(
-        r'<h1[^>]*>([^<]*)<\/h1>(.*?)(?=<h[1-3])',
-        content,
-        re.MULTILINE | re.DOTALL)
+    # fix broken HTML so that BS doesn't choke
+    content = re.sub('<th', '<td', content)
+    content = re.sub('</th', '</td', content)
+    content = re.sub('</h3>', '</p>', content) # sic
 
-    for section_id, section in enumerate(sections):
-        section_name, section_content = section
-
-        section_item_content = re.findall(
-            r'<p[^>]*\.5em[^>]*>(.*?)<\/p>',
-            section_content,
-            re.MULTILINE | re.DOTALL)
-
-        section_hint = get_first(re.findall(
-            r'<a [^>]*class="lc"[^>]*>(?:<span.*?\/span>)?(.*?)<\/a>',
-            section_content))
-
-        if section_hint and section_hint != section_name:
-            print('{0} ({1})'.format(section_name, section_hint))
-        else:
-            print('{0}'.format(section_name))
-
-        if not section_item_content:
-            continue
-        if len(section_item_content) > 1:
-            raise RuntimeError('Not implemented')
-        section_items = re.findall(
-            r'(?:[0-9]+\.\s*)?(.+?);?(?:<br\s*/?>|$)',
-            section_item_content[0])
-
-        if not section_items:
-            raise RuntimeError('No lines returned!')
-
-        if len(section_items) == 1:
-            print('\n'.join(textwrap.wrap(section_items[0])))
-        else:
-            for section_item_id, section_item in enumerate(section_items):
-                wrapped_lines = textwrap.wrap(
-                    section_item,
-                    initial_indent='{0}. '.format(section_item_id + 1),
-                    subsequent_indent='   ')
-                print('\n'.join(wrapped_lines))
-
-        if section_id + 1 < len(sections):
-            print('')
+    soup = BeautifulSoup(content, 'html.parser')
+    for header in soup.find_all('h1'):
+        print(header.text)
+        node = header.next_sibling
+        while node is not None:
+            if node.name != 'div':
+                text = text_with_newlines(node).strip()
+                text = re.sub(r'\n\s+', '\n', text)
+                if text and 'dopuszczalne w grach' not in text and text != header.text:
+                    print(text)
+            node = node.next_sibling
+            if not node \
+                    or node.name == 'hr' \
+                    or node.name == 'h1' \
+                    or getattr(node, 'text', '').lower().startswith('komentarze:'):
+                break
+        print()
 
 def main():
     for arg in sys.argv[1:]:
