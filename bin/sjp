@@ -34,11 +34,6 @@ def print_word_def(word):
     url = 'http://sjp.pl/' + urllib.parse.quote(word)
     content = urllib.request.urlopen(url).read().decode('utf8')
 
-    # fix broken HTML so that BS doesn't choke
-    content = re.sub('<th', '<td', content)
-    content = re.sub('</th', '</td', content)
-    content = re.sub('</h3>', '</p>', content) # sic
-
     soup = BeautifulSoup(content, 'html.parser')
     for header in soup.find_all('h1'):
         print(header.text)
