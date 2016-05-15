@@ -31,6 +31,7 @@ def main(args):
         '-f', 'x11grab',
         '-i', ':0.0+{x},{y}'.format(x=x, y=y),
         '-c:v', 'libvpx-vp9',
+        '-y',
         #'-lossless', '1',
         args.output_path] & FG()
 
