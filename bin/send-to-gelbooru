@@ -1,0 +1,96 @@
+#!/bin/python3
+import os
+import sys
+import argparse
+import re
+import json
+import urllib
+import requests
+from bs4 import BeautifulSoup
+
+class DuplicateImageError(RuntimeError):
+    def __init__(self, duplicate_url):
+        super().__init__('Image already uploaded: %s' % duplicate_url)
+
+SAFETY_MAP = {
+    'safe': 's',
+    'sketchy': 'q',
+    'questionable': 'q',
+    'unsafe': 'e',
+    'explicit': 'e',
+    'q': 'q',
+    'e': 'e',
+}
+
+def parse_args():
+    parser = argparse.ArgumentParser(
+        description='Sends post to gelbooru from CLI')
+    parser.add_argument(
+        '-c', '--config', metavar='CONFIG_PATH',
+        help='path to config JSON file', default='~/.config/gelbooru.json')
+    parser.add_argument(
+        '-s', '--safety', choices=SAFETY_MAP.keys(),
+        required=True, help='safety')
+    parser.add_argument(
+        '--source', default='', help='source')
+    parser.add_argument(
+        '--title', default='', help='title')
+    parser.add_argument(
+        '-t', '--tags', required=True, help='list of space separated tags')
+    parser.add_argument(
+        metavar='POST_PATH', dest='path',
+        help='path to the post')
+    return parser.parse_args()
+
+def login(session, user, password):
+    response = session.post(
+        'http://gelbooru.com/index.php?page=account&s=login&code=00',
+        data={
+            'user': user,
+            'pass': password,
+            'submit': 'Log in',
+        })
+    return response.cookies
+
+def upload(session, args):
+    with open(args.path, 'rb') as handle:
+        request = {
+            'tags': ' '.join(args.tags),
+            'title': args.title,
+            'source': args.source,
+            'rating': SAFETY_MAP[args.safety],
+            'submit': 'Upload',
+        }
+        response = session.post(
+            'http://gelbooru.com/index.php?page=post&s=add',
+            files={'upload': handle},
+            data=request)
+
+        soup = BeautifulSoup(response.text, 'html.parser')
+        content_div = soup.find('div', {'id': 'content'})
+        text = content_div.text.lower()
+        if 'image added' in text:
+            return
+        elif 'already exists' in text:
+            raise DuplicateImageError(
+                urllib.parse.urljoin(
+                    'http://gelbooru.com', content_div.find('a')['href']))
+        else:
+            print(response.text, file=sys.stderr)
+            raise NotImplementedError('Unknown response from the server')
+
+def main():
+    args = parse_args()
+    with open(os.path.expanduser(args.config), 'r') as handle:
+        config = json.load(handle)
+    args.tags = re.split(r'\s+', args.tags)
+    session = requests.Session()
+    try:
+        login(session, config['user'], config['pass'])
+        upload(session, args)
+    except Exception as e:
+        print(e, file=sys.stderr)
+        sys.exit(1)
+
+if __name__ == '__main__':
+    main()
