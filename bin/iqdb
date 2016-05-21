@@ -1,0 +1,53 @@
+#!/bin/python3
+import os
+import sys
+import argparse
+import requests
+from colorama import Fore, Style
+from bs4 import BeautifulSoup
+
+def parse_args():
+    parser = argparse.ArgumentParser(description='Searches for image via IQDB')
+    parser.add_argument(
+        metavar='POST_PATH', dest='path', help='path to the image')
+    return parser.parse_args()
+
+def search(args):
+    with open(args.path, 'rb') as handle:
+        response = requests.post(
+            'http://iqdb.org/',
+            files={'file': handle},
+            data={
+                'service': list(range(100)), # all services, present and future
+            })
+
+        soup = BeautifulSoup(response.text, 'html.parser')
+        links = []
+        if 'no relevant matches' in response.text.lower():
+            print(Fore.RED + 'No direct matches' + Style.RESET_ALL)
+        #print(response.text)
+
+        for i, parent in enumerate(['#pages', '#more1']):
+            links = []
+            for a_element in soup.select('%s td a' % parent):
+                link = a_element['href']
+                if link.startswith('//'):
+                    link = 'http:' + link
+                links.append(link)
+
+            if i:
+                print('-' * 10)
+
+            for link in sorted(list(set(links))):
+                print(link)
+
+def main():
+    args = parse_args()
+    try:
+        search(args)
+    except Exception as e:
+        print(e, file=sys.stderr)
+        sys.exit(1)
+
+if __name__ == '__main__':
+    main()
