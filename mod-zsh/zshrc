@@ -6,10 +6,14 @@ if [ -n "$FBTERM" ]; then
     alias vim='TERM=fbterm vim'
     alias git='TERM=fbterm git'
 fi
+
 # environment variables
 export EDITOR=vim                       # for stuff that need interactive editor
-export PATH=$DIR/bin:$PATH              # PATH for all the goodies in this repo
-export PATH=/usr/local/bin:$PATH        # prefer manually compiled libraries
+
+# path
+path+=/usr/local/bin                    # prefer manually compiled libraries
+path+=($DIR/bin/*)                      # PATH for all the goodies in this repo
+export PATH                             # make the above work
 
 # autocomplete
 autoload -Uz compinit                   # initialize autocompletion engine
