@@ -57,6 +57,9 @@ if [ "$TERM" =~ rxvt ]; then
     bindkey "^[3^"    kill-word             # ctrl+delete
     bindkey '\eOd'    backward-word         # ctrl+left
     bindkey '\eOc'    forward-word          # ctrl+right
+
+    bindkey '\e[1;5I' 'beep'                # disable ctrl+tab
+    bindkey '\e[1;6I' 'beep'                # disable ctrl+shift+tab
 else
     bindkey "\e[3~"   delete-char           # delete
     bindkey '\eOH'    beginning-of-line     # home
@@ -67,6 +70,9 @@ else
     bindkey "\e[3;5~" kill-word             # ctrl+delete
     bindkey ';5D'     backward-word         # ctrl+left
     bindkey ';5C'     forward-word          # ctrl+right
+
+    bindkey '\e[1;5I' 'beep'                # disable ctrl+tab
+    bindkey '\e[1;6I' 'beep'                # disable ctrl+shift+tab
 fi
 
     # necessary for the above to work
