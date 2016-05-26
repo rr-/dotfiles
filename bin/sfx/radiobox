@@ -85,7 +85,8 @@ class MainWindow(urwid.Frame):
 
 def collect_stations():
     dir_to_self = os.path.dirname(__file__)
-    txt_path = os.path.join(dir_to_self, os.pardir, 'txt', 'radio-stations.txt')
+    txt_path = os.path.join(
+        dir_to_self, os.pardir, os.pardir, 'txt', 'radio-stations.txt')
     lines = [line for line in open(txt_path, 'r')]
     lines = [re.sub('#.*', '', line) for line in lines]
     lines = [line.strip() for line in lines]
