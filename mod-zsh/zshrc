@@ -111,10 +111,15 @@ alias ll="`whence ls`"' -lX --group-directories-first'
 alias la="`whence ls`"' -lXA --group-directories-first'
 alias lc="`whence ls`"' -lXC --group-directories-first'
 
-alias plen='trans -s pl -t en'
-alias enpl='trans -s en -t pl'
-alias enja='trans -s en -t ja'
-alias jaen='trans -s ja -t en'
+tl() {
+    source="$1"; shift
+    target="$1"; shift
+    trans -s "$source" -t "$target" "$@"
+}
+alias plen='tl pl en'
+alias enpl='tl en pl'
+alias enja='tl en ja'
+alias jaen='tl ja en'
 alias rfn='echo -n $(date "+%Y%m%d_%H%M%S")'
 alias isvim='ps ux|grep vim|grep -v grep'
 alias sum='paste -s -d+|bc'
