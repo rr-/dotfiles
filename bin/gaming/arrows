@@ -1,17 +1,51 @@
 #!/bin/python3
 # for gaming on HHKB
 
+import os
 import sys
 from plumbum import local
 
-if len(sys.argv) == 1 or int(sys.argv[1]):
+def print_usage():
+    print('Usage: {0} on|off'.format(os.path.basename(sys.argv[0])))
+
+if len(sys.argv) != 2:
+    print_usage()
+    sys.exit(1)
+
+mode = sys.argv[1].lower()
+
+if mode in ('1', 'on', 'enable'):
     print('Enabling')
-    xmodmap = local['xmodmap']
-    xmodmap(['-e', 'keycode 33 = Up'])
-    xmodmap(['-e', 'keycode 46 = Left'])
-    xmodmap(['-e', 'keycode 47 = Down'])
-    xmodmap(['-e', 'keycode 48 = Right'])
-else:
+    if sys.platform == 'cygwin':
+        cygstart = local['cygstart']
+        cygstart([os.path.join(
+            os.path.dirname(__file__),
+            os.pardir,
+            os.pardir,
+            'mod-ahk',
+            'arrows.ahk')])
+    else:
+        xmodmap = local['xmodmap']
+        xmodmap(['-e', 'keycode 33 = Up'])
+        xmodmap(['-e', 'keycode 46 = Left'])
+        xmodmap(['-e', 'keycode 47 = Down'])
+        xmodmap(['-e', 'keycode 48 = Right'])
+elif mode in('0', 'off', 'disable'):
     print('Disabling')
-    setxkbmap = local['setxkbmap']
-    setxkbmap(['-layout', 'pl'])
+    if sys.platform == 'cygwin':
+        import csv
+        tasklist = local['tasklist']
+        taskkill = local['taskkill']
+        output = tasklist([
+            '/fi', 'imagename eq autohotkey.exe', '/v', '/fo', 'csv', '/nh'])
+        tasks = [row for row in csv.reader(output.splitlines())]
+        task = next((task for task in tasks if 'arrows' in task[-1]), None)
+        if task:
+            pid = task[1]
+            taskkill(['/pid', pid])
+    else:
+        setxkbmap = local['setxkbmap']
+        setxkbmap(['-layout', 'pl'])
+else:
+    print_usage()
+    sys.exit(1)
