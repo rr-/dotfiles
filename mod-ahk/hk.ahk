@@ -355,3 +355,11 @@ DirectionalFocus(direction)
 
 ;reload autohotkey
 !F12::Reload
+
+;toggle arrows
+~ScrollLock::
+    Sleep, 300
+    if GetKeyState("ScrollLock", "T")
+       Run, %CygPath%\bin\zsh.exe -i -l -c 'arrows 1', , Hide
+    else
+        Run, %CygPath%\bin\zsh.exe -i -l -c 'arrows 0', , Hide
