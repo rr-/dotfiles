@@ -14,7 +14,7 @@ function search_iqdb()
 
     mp_utils.subprocess({args = {
         'sed',
-        '-i', 's#</head>#<base href="https://iqdb.org">$0#',
+        '-i', 's#</head>#<base href="https://iqdb.org"></head>#',
         name}
     })
 
