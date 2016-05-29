@@ -15,7 +15,7 @@ def parse_args():
 def search(args):
     with open(args.path, 'rb') as handle:
         response = requests.post(
-            'http://iqdb.org/',
+            'https://iqdb.org/',
             files={'file': handle},
             data={
                 'service': list(range(100)), # all services, present and future
