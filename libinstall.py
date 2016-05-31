@@ -173,7 +173,33 @@ class PackageInstaller(object):
             print('Error installing %s: %s' % (package, e))
 
     @staticmethod
+    def is_installed(package, method=None):
+        chosen_installers = PackageInstaller._choose_installers(method)
+        for installer in chosen_installers:
+            if installer.is_installed(package):
+                return True
+        return False
+
+    @staticmethod
     def install(package, method=None):
+        if PackageInstaller.is_installed(package, method):
+            print('Package %s is already installed.' % package)
+            return True
+
+        chosen_installers = PackageInstaller._choose_installers(method)
+
+        for installer in chosen_installers:
+            if installer.is_available(package):
+                print('Package %s is available, installing with %s' % (package, installer.name))
+                return installer.install(package)
+
+        if method is None:
+            raise RuntimeError('No package manager is capable of installing %s' % package)
+        else:
+            raise RuntimeError('%s is not capable of installing %s' % (method, package))
+
+    @staticmethod
+    def _choose_installers(method):
         if method is None:
             chosen_installers = PackageInstaller.INSTALLERS
         else:
@@ -185,16 +211,4 @@ class PackageInstaller(object):
                 raise RuntimeError('No package manager is supported on this system!')
             else:
                 raise RuntimeError('%s is not supported on this system!' % method)
-
-        for installer in chosen_installers:
-            if installer.is_installed(package):
-                print('Package %s is already installed.' % package)
-                return True
-            elif installer.is_available(package):
-                print('Package %s is available, installing with %s' % (package, installer.name))
-                return installer.install(package)
-
-        if method is None:
-            raise RuntimeError('No package manager is capable of installing %s' % package)
-        else:
-            raise RuntimeError('%s is not capable of installing %s' % (method, package))
+        return chosen_installers
