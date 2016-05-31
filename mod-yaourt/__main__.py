@@ -2,6 +2,7 @@ from libinstall import run_verbose, run_silent, FileInstaller, PackageInstaller
 import os
 import tarfile
 import urllib.request
+dir = os.path.dirname(__file__)
 
 def install_aur(package):
     if PackageInstaller.is_installed(package):
@@ -28,3 +29,4 @@ PackageInstaller.install('binutils')  # for yaourt
 
 install_aur('package-query')
 install_aur('yaourt')
+FileInstaller.create_symlink(os.path.join(dir, 'yaourtrc'), '~/.yaourtrc')
