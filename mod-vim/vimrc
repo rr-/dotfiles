@@ -153,16 +153,6 @@ autocmd BufWinEnter * match ExtraWhitespace /\v\s+$|\t+ ([^*]|$)| \t+/
 command! TwoSpaces set et sts=2 ts=2 sw=2
 command! FourSpaces set et sts=4 ts=4 sw=4
 command! Tabs set noet sts=4 ts=4 sw=4
-"copy text file with hard wraps (e.g. Markdown) as one line
-function! CopyWithoutHardWrapping()
-  let old_tw=&textwidth
-  :set tw=10000
-  silent! normal gg gqG
-  silent! normal gg "*yG
-  let &textwidth=old_tw
-  undo
-endfunction
-command! CopyWithoutHardWrapping call CopyWithoutHardWrapping()
 
 "close all inactive buffers (tabs > buffers for me, deal with it!)
 function! DeleteInactiveBufs()
