@@ -12,7 +12,7 @@ export EDITOR=vim                       # for stuff that need interactive editor
 
 # path
 path=(/usr/local/bin $path)             # prefer manually compiled libraries
-path=($DIR/bin/* $path)                 # PATH for all the goodies in this repo
+[ -d $DIR/bin ] && path=($DIR/bin/* $path) # PATH for all the goodies in this repo
 export PATH                             # make the above work
 
 # autocomplete
