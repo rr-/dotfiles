@@ -11,7 +11,6 @@ Plugin 'vim-airline/vim-airline'          "riced status bar
 Plugin 'vim-airline/vim-airline-themes'   "riced status bar - themes
 Plugin 'Yggdroot/indentLine'              "vertical bars showing indent level
 Plugin 'flazz/vim-colorschemes'           "color schemes!
-Plugin 'maxbrunsfeld/vim-yankstack'       "enhanced yank/paste stack
 Plugin 'octol/vim-cpp-enhanced-highlight' "improved C++11 highlighting
 Plugin 'embear/vim-localvimrc'            "local vimrc
 Plugin 'wavded/vim-stylus'                "stylus (css framework) highlighting
@@ -351,9 +350,6 @@ nnoremap <silent> <C-w><C-m> :vne<CR>
 nnoremap <silent> <C-w>m :vne<CR>
 "make motion search easier to access
 nmap <leader>z <Plug>(easymotion-s)
-"access to recent yank/paste stack
-nmap <leader>p <Plug>yankstack_substitute_older_paste
-nmap <leader>P <Plug>yankstack_substitute_newer_paste
 "save with sudo
 cnoremap w!! w !sudo tee >/dev/null %
 "disable stupid manual pages
