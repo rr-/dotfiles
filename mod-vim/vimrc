@@ -14,6 +14,7 @@ Plugin 'flazz/vim-colorschemes'           "color schemes!
 Plugin 'octol/vim-cpp-enhanced-highlight' "improved C++11 highlighting
 Plugin 'embear/vim-localvimrc'            "local vimrc
 Plugin 'wavded/vim-stylus'                "stylus (css framework) highlighting
+Plugin 'ntpeters/vim-better-whitespace'   "hilight and strip trailing whitespace
 Plugin 'tpope/vim-rsi'                    "readline shortcuts in command mode
 call vundle#end()
 
@@ -136,8 +137,6 @@ set wildignorecase            "case-insensitive filename completion in commands
 "----------------------------------------
 "highlight color for bad whitespace
 highlight SpecialKey ctermbg=NONE ctermfg=187
-"highlight trailing white space
-highlight ExtraWhitespace ctermbg=red guibg=#ddaaaa
 "fix ColorColumn on dark backgrounds
 if &background == 'dark'
   highlight ColorColumn ctermbg=235
@@ -147,8 +146,6 @@ else
 end
 "show white characters
 set list listchars=tab:→\ ,trail:·
-"match trailing spaces and spaces before a tab
-autocmd BufWinEnter * match ExtraWhitespace /\v\s+$|\t+ ([^*]|$)| \t+/
 
 "----------------------------------------
 " custom commands
@@ -256,7 +253,7 @@ let NERDTreeIgnore=['__pycache__','vendor','build/']
 autocmd BufRead,BufNewFile *.lst set filetype=text
 
 "strip trailing whitespace for common source code
-autocmd FileType c,cc,cxx,cpp,h,hpp,java,php,python,ruby,vim autocmd BufWritePre <buffer> :%s/\s\+$//e
+autocmd FileType c,cc,cxx,cpp,h,hpp,java,php,python,ruby,vim autocmd BufWritePre <buffer> :StripWhitespace
 
 "enable spellcheck and hard wrapping for text files
 autocmd FileType text,markdown setlocal spell textwidth=79
