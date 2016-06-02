@@ -329,8 +329,18 @@ nnoremap Q gqap
       echo 'Both CtrlP and CommandT are missing!'
     endif
   endfunction
+  function! PortableFuzzyOpenMRU()
+    if exists(':CommandT') && has('ruby')
+      execute ':CommandTMRU'
+    elseif exists(':CtrlPMRU')
+      execute ':CtrlPMRU'
+    else
+      echo 'Both CtrlP and CommandT are missing!'
+    endif
+  endfunction
   nnoremap <Leader>t :call PortableFuzzyOpen()<CR>
   nnoremap <C-p> :call PortableFuzzyOpen()<CR>
+  nnoremap <C-m> :call PortableFuzzyOpenMRU()<CR>
 
   "----------------------------------------
   " ctrl+k/j = move line up/down
