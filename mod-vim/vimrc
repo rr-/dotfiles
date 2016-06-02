@@ -158,24 +158,6 @@ command! TwoSpaces set et sts=2 ts=2 sw=2
 command! FourSpaces set et sts=4 ts=4 sw=4
 command! Tabs set noet sts=4 ts=4 sw=4
 
-"close all inactive buffers (tabs > buffers for me, deal with it!)
-function! DeleteInactiveBufs()
-  let tablist = []
-  for i in range(tabpagenr('$'))
-    call extend(tablist, tabpagebuflist(i + 1))
-  endfor
-
-  let nWipeouts = 0
-  for i in range(1, bufnr('$'))
-    if bufexists(i) && !getbufvar(i,"&mod") && index(tablist, i) == -1
-      silent exec 'bwipeout' i
-      let nWipeouts = nWipeouts + 1
-    endif
-  endfor
-  echomsg nWipeouts . ' buffer(s) wiped out'
-endfunction
-command! Bdi :call DeleteInactiveBufs()
-
 "decimal ↔ hexadecimal conversions
 command! -nargs=? -range Dec2hex call s:Dec2hex(<line1>, <line2>, '<args>')
 function! s:Dec2hex(line1, line2, arg) range
