@@ -89,19 +89,19 @@ OnClipboardChange:
     ;cygwin - activate/run
     #Enter::
     {
-        Run, %CygPath%\bin\mintty.exe --title "Terminal" --size "110`,35" --position "%TermX%`,%TermY%" --class "mintty_thetty" --exec /bin/zsh -l, %CygPath%
+        Run, %CygPath%\bin\mintty.exe --title "Terminal" --size "110`,35" --position "%TermX%`,%TermY%" --class "mintty_thetty" --exec /bin/zsh -i -l, %CygPath%
         return
     }
     +^![::
     {
-        Run, %CygPath%\bin\mintty.exe --title "Terminal" --size "110`,35" --position "%TermX%`,%TermY%" --class "mintty_thetty" --exec /bin/zsh -l, %CygPath%
+        Run, %CygPath%\bin\mintty.exe --title "Terminal" --size "110`,35" --position "%TermX%`,%TermY%" --class "mintty_thetty" --exec /bin/zsh -i -l, %CygPath%
         return
     }
     ^![::
     {
         if (!WinExist("ahk_class mintty_thetty"))
         {
-            Run, %CygPath%\bin\mintty.exe --title "Terminal" --size "110`,35" --position "%TermX%`,%TermY%" --class "mintty_thetty" --exec /bin/zsh -c 'while /bin/true`; do /bin/zsh -l`; cygstart "%A_AhkPath%" "%A_ScriptDir%\hide.ahk"`; clear; done', %CygPath%
+            Run, %CygPath%\bin\mintty.exe --title "Terminal" --size "110`,35" --position "%TermX%`,%TermY%" --class "mintty_thetty" --exec /bin/zsh -i -l, %CygPath%
             WinWait ahk_class mintty_thetty
         }
         else
