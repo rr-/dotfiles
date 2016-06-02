@@ -15,6 +15,7 @@ Plugin 'octol/vim-cpp-enhanced-highlight' "improved C++11 highlighting
 Plugin 'embear/vim-localvimrc'            "local vimrc
 Plugin 'ntpeters/vim-better-whitespace'   "hilight and strip trailing whitespace
 Plugin 'tpope/vim-rsi'                    "readline shortcuts in command mode
+Plugin 'airblade/vim-gitgutter'           "show changed lines in git on margin
 call vundle#end()
 
 "-------------------------------------------------
@@ -215,6 +216,12 @@ let g:airline#extensions#tabline#show_buffers = 0
 let g:airline#extensions#tabline#tab_nr_type = 1
 "don't show splits
 let g:airline#extensions#tabline#show_splits = 0
+
+"----------------------------------------
+" config gitgutter
+"----------------------------------------
+let g:gitgutter_sign_column_always = 1
+set updatetime=250
 
 "----------------------------------------
 " config NERDtree
