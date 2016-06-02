@@ -13,7 +13,6 @@ Plugin 'Yggdroot/indentLine'              "vertical bars showing indent level
 Plugin 'flazz/vim-colorschemes'           "color schemes!
 Plugin 'octol/vim-cpp-enhanced-highlight' "improved C++11 highlighting
 Plugin 'embear/vim-localvimrc'            "local vimrc
-Plugin 'wavded/vim-stylus'                "stylus (css framework) highlighting
 Plugin 'ntpeters/vim-better-whitespace'   "hilight and strip trailing whitespace
 Plugin 'tpope/vim-rsi'                    "readline shortcuts in command mode
 call vundle#end()
