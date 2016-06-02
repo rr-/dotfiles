@@ -25,13 +25,7 @@ set synmaxcol=256             "highlight up to X columns (binary files)
 set number                    "enable line numbers
 
 "color scheme
-let background_file=$HOME."/.vimrc-background"
-if filereadable(background_file)
-  exec 'so ' . background_file
-else
-  let g:lightness = 'light'
-endi
-if lightness ==? 'light'
+if $LIGHTNESS ==? 'light'     "$LIGHTNESS exported by zshrc
   colorscheme hemisu
   set background=light
 else

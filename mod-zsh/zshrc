@@ -7,6 +7,8 @@ if [ -n "$FBTERM" ]; then
     alias git='TERM=fbterm git'
 fi
 
+[ -e ~/.lightness ] && source ~/.lightness
+
 # environment variables
 export EDITOR=vim                       # for stuff that need interactive editor
 
