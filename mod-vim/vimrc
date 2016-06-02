@@ -239,12 +239,6 @@ let g:airline#extensions#tabline#show_splits = 0
 "----------------------------------------
 " config NERDtree
 "----------------------------------------
-"disable on console startup
-let g:nerdtree_tabs_open_on_console_startup = 0
-"always focus on files
-let g:nerdtree_tabs_focus_on_files = 1
-"don't focus nerdtree on parameterless startup
-let g:nerdtree_tabs_smart_startup_focus = 2
 "f2 = disable NERDtree
 autocmd VimEnter * inoremap <F2> <esc>:NERDTreeToggle<CR>
 autocmd VimEnter * nnoremap <F2> :NERDTreeToggle<CR>
