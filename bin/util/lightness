@@ -37,8 +37,8 @@ if command -v bspc &>/dev/null; then
     fi
 fi
 
-# vim
-echo -e 'let g:lightness="'$word'"' >~/.vimrc-background
+# zsh
+echo -e 'export LIGHTNESS='$word >~/.lightness
 
 # vifm
 [ -h ~/.config/vifm/colors/current ] && rm ~/.config/vifm/colors/current
