@@ -118,7 +118,6 @@ alias ls="`whence ls`"' -vhF1 --group-directories-first'
 alias ll="`whence ls`"' -lX --group-directories-first'
 alias la="`whence ls`"' -lXA --group-directories-first'
 alias lc="`whence ls`"' -lXC --group-directories-first'
-
 tl() {
     source="$1"; shift
     target="$1"; shift
@@ -128,10 +127,7 @@ alias plen='tl pl en'
 alias enpl='tl en pl'
 alias enja='tl en ja'
 alias jaen='tl ja en'
-alias rfn='echo -n $(date "+%Y%m%d_%H%M%S")'
 alias isvim='ps ux|grep vim|grep -v grep'
-alias sum='paste -s -d+|bc'
-
 alias dark='lightness 0'
 alias light='lightness 1'
 
