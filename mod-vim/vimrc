@@ -115,6 +115,9 @@ set backupdir=~/.vim/backup//      "set path to file backups
 set backup                         "enable backups
 set directory=~/.vim/swap//        "set path to swap files (.*.swp)
 set undodir=~/.vim/undo//          "set path to undo data file
+set undofile
+set undolevels=1000
+set undoreload=10000
 
 "------------------------------------------
 " ignore files in commands and plugins
