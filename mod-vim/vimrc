@@ -176,6 +176,13 @@ function! s:Hex2dec(line1, line2, arg) range
 endfunction
 
 "----------------------------------------
+" config rsi
+"----------------------------------------
+"fix problems with certain escape codes at expense of losing a bit of
+"shortcuts
+let g:rsi_no_meta = 1
+
+"----------------------------------------
 " config localvimrc
 "----------------------------------------
 let g:localvimrc_persistent = 1         "remember decisions to load given lvimrc
