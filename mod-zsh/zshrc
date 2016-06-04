@@ -7,11 +7,6 @@ if [ -n "$FBTERM" ]; then
     alias git='TERM=fbterm git'
 fi
 
-[ -e ~/.lightness ] && source ~/.lightness
-
-# environment variables
-export EDITOR=vim                       # for stuff that need interactive editor
-
 # path
 path=(/usr/local/bin $path)             # prefer manually compiled libraries
 [ -d $DIR/bin ] && path=($DIR/bin/* $path) # PATH for all the goodies in this repo
@@ -127,7 +122,7 @@ alias plen='tl pl en'
 alias enpl='tl en pl'
 alias enja='tl en ja'
 alias jaen='tl ja en'
-alias isvim='ps ux|grep vim|grep -v grep'
+alias isvim='ps ux|grep vim|grep -v grep' # also works for nvim
 alias dark='lightness 0'
 alias light='lightness 1'
 
@@ -152,6 +147,8 @@ man() {
     man "$@"
 }
 
-if [ -f "$HOME/.lzshrc" ]; then
-    . "$HOME/.lzshrc"
-fi
+export FZF_DEFAULT_OPTS=--inline-info
+
+[ -d ~/.config/zsh ] && for x in ~/.config/zsh/*; do . "$x"; done
+
+[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
