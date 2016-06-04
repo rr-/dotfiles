@@ -79,6 +79,7 @@ set shiftwidth=4              "spaces for each step of auto-indent
 set autoindent                "auto indentation
 set wrapscan                  "search again from top if no matches
 set nowrap                    "don't wrap long lines
+set formatoptions-=c          "auto comment continuation works against me
 filetype plugin indent off    "auto indentation works against me
 
 "----------------------------------------
