@@ -78,7 +78,8 @@ set ignorecase                "ignore case in searches
 set smartcase                 " ...unless they contain uppercase chars
 set scrolloff=5               "keep at least x lines below and above cursor
 set nojoinspaces              "don't put double spaces when using auto wrapping
-set fillchars=vert:\│         "better vertical fill character
+set fillchars=vert:\│         "better character for vertical window splits
+set hidden                    "don't purge undo history when changing buffers
 
 "----------------------------------------
 " miscellaneous
@@ -215,14 +216,6 @@ else
 endif
 "allow use of special characters that are supplied by terminal font
 let g:airline_powerline_fonts = 1
-"enable tabs
-let g:airline#extensions#tabline#enabled = 1
-"don't show buffers in the tabline - show tabs instead
-let g:airline#extensions#tabline#show_buffers = 0
-"show tab number near tab for easy navigation with :![number]gt
-let g:airline#extensions#tabline#tab_nr_type = 1
-"don't show splits
-let g:airline#extensions#tabline#show_splits = 0
 
 "----------------------------------------
 " config gitgutter
@@ -258,9 +251,6 @@ autocmd FileType text,markdown setlocal spell textwidth=79
 "enable spellcheck and double gutter in git commit messages
 autocmd FileType gitcommit setlocal spell textwidth=72 colorcolumn=50,72
 
-"disable usual sanity checkers for help, which is usually read-only
-autocmd FileType help setlocal nospell | highlight clear ExtraWhitespace
-
 "disable syntax for certain files
 autocmd FileType text,xml,json setlocal syntax=
 
@@ -293,14 +283,6 @@ let mapleader = "-"
 "movement over visual lines, not physical lines
 map <buffer> <silent> k gk
 map <buffer> <silent> j gj
-"ctrl+tab, ctrl+shift+tab = move to next/prev tab
-nnoremap <Esc>[1;5I gt
-nnoremap <Esc>[1;6I gT
-nnoremap <C-Tab> gt
-nnoremap <C-S-Tab> gT
-"ctrl+t = open new tab
-inoremap <silent> <C-t> <Esc>:tabnew<CR>
-nnoremap <silent> <C-t> :tabnew<CR>
 "ctrl+s = save
 inoremap <silent> <C-s> <Esc>:update<CR>
 nnoremap <silent> <C-s> :<C-u>update<CR>
