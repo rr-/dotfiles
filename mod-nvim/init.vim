@@ -163,7 +163,8 @@ let g:localvimrc_persistent = 1         "remember decisions to load given lvimrc
 "----------------------------------------
 " config vim-move
 "----------------------------------------
-let g:move_key_modifier = 'C'
+let g:move_key_modifier = 'C'           "c-j and c-k rather than default binding
+let g:move_auto_indent = 0              "disable indentation aids
 
 "----------------------------------------
 " config airline
