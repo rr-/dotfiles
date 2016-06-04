@@ -156,13 +156,6 @@ command! FourSpaces set et sts=4 ts=4 sw=4
 command! Tabs set noet sts=4 ts=4 sw=4
 
 "----------------------------------------
-" config rsi
-"----------------------------------------
-"fix problems with certain escape codes at expense of losing a bit of
-"shortcuts
-let g:rsi_no_meta = 1
-
-"----------------------------------------
 " config localvimrc
 "----------------------------------------
 let g:localvimrc_persistent = 1         "remember decisions to load given lvimrc
