@@ -4,6 +4,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+from urllib.request import urlretrieve
 
 def run_silent(p):
     proc = subprocess.Popen(p, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -15,6 +16,14 @@ def run_verbose(p):
     return subprocess.call(p) == 0
 
 class FileInstaller(object):
+    @staticmethod
+    def download(url, path):
+        path = os.path.expanduser(path)
+        if os.path.isdir(path):
+            path = os.path.join(path, os.path.basename(url))
+        print('Downloading %s into %s...' % (url, path))
+        urlretrieve(url, path)
+
     @staticmethod
     def confirm_executable(program):
         if not FileInstaller.has_executable(program):
@@ -35,15 +44,16 @@ class FileInstaller(object):
             os.makedirs(dir)
 
     @staticmethod
-    def create_file(path):
+    def create_file(path, content=None, overwrite=False):
         path = os.path.abspath(os.path.expanduser(path))
         dir = os.path.dirname(path)
         if not os.path.islink(dir):
             FileInstaller.create_dir(dir)
-        if not os.path.exists(path):
+        if overwrite or not os.path.exists(path):
             print('Creating file %s...' % path)
-            with open(path, 'wb'):
-                pass
+            with open(path, 'w') as handle:
+                if content:
+                    handle.write(content)
 
     @staticmethod
     def copy_file(source, target):

@@ -38,7 +38,8 @@ if command -v bspc &>/dev/null; then
 fi
 
 # zsh
-echo -e 'export LIGHTNESS='$word >~/.lightness
+echo -e 'export LIGHTNESS='$word >~/.config/zsh/lightness.sh
+echo -e 'export FZF_DEFAULT_OPTS="$FZF_DEFAULT_OPTS --color='$word'"' >>~/.config/zsh/lightness.sh
 
 # vifm
 [ -h ~/.config/vifm/colors/current ] && rm ~/.config/vifm/colors/current

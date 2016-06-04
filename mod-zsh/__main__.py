@@ -5,3 +5,4 @@ dir = os.path.dirname(__file__)
 
 PackageInstaller.try_install('zsh')
 FileInstaller.create_symlink(os.path.join(dir, 'zshrc'), '~/.zshrc')
+FileInstaller.create_dir('~/.config/zsh')

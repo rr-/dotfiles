@@ -27,6 +27,7 @@ grayscale
 hardcode
 hardcoded
 inlines
+JSON
 MinGW
 MinGW-w64
 mpv
@@ -52,6 +53,5 @@ uninitialize
 unmap
 unpause
 unseekable
-JSON
-wildcards
 wildcard
+wildcards
