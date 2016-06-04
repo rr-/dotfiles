@@ -79,7 +79,7 @@ set shiftwidth=4              "spaces for each step of auto-indent
 set autoindent                "auto indentation
 set wrapscan                  "search again from top if no matches
 set nowrap                    "don't wrap long lines
-filetype on                   "enable setting options based on file
+filetype plugin indent off    "auto indentation works against me
 
 "----------------------------------------
 " editor behavior
