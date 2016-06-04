@@ -17,12 +17,13 @@ def run_verbose(p):
 
 class FileInstaller(object):
     @staticmethod
-    def download(url, path):
+    def download(url, path, overwrite=False):
         path = os.path.expanduser(path)
         if os.path.isdir(path):
             path = os.path.join(path, os.path.basename(url))
-        print('Downloading %s into %s...' % (url, path))
-        urlretrieve(url, path)
+        if overwrite or not os.path.exists(path):
+            print('Downloading %s into %s...' % (url, path))
+            urlretrieve(url, path)
 
     @staticmethod
     def confirm_executable(program):
