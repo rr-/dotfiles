@@ -2,6 +2,12 @@
 "- basic settings
 "-------------------------------------------------
 
+if has('nvim')
+  let s:dir='nvim'
+else
+  let s:dir='vim'
+endif
+
 syntax on                     "enable syntax highlighting
 set synmaxcol=256             "highlight up to X columns (binary files)
 set number                    "enable line numbers
@@ -54,18 +60,20 @@ set modeline                  "allow files to embed file-specific vim settings
 set modelines=5               " ...within X lines at the top of that file
 set nospell                   "spell checker is off by default
 set spelllang=en_us,pl        "spell checker languages
-set spellfile=~/.config/nvim/spell/en.utf-8.add,~/.config/nvim/spell/pl.utf-8.add
+let &spellfile=
+  \$HOME.'/.config/'.s:dir.'/spell/en.utf-8.add,'.
+  \$HOME.'/.config/'.s:dir.'/spell/pl.utf-8.add'
 
 "storage
 "double slash prevents file name collision, by using full file paths
-set viminfo+=n~/.config/nvim/viminfo  "set path to last session data storage
-set backupdir=~/.config/nvim/backup// "set path to file backups
-set backup                            "enable backups
-set directory=~/.config/nvim/swap//   "set path to swap files (.*.swp)
-set undodir=~/.config/nvim/undo//     "set path to undo data file
-set undofile
-set undolevels=1000
-set undoreload=10000
+set backup            "enable backups
+set undofile          "enable persistent undo
+set undolevels=1000   "store this many undo levels
+set undoreload=10000  "don't wipe undo after reloading file up to 10k lines long
+let &viminfo=$HOME.'/.config/'.s:dir.'/viminfo'    "path to session storage
+let &backupdir=$HOME.'/.config/'.s:dir.'/backup//' "path to file backups
+let &directory=$HOME.'/.config/'.s:dir.'/swap//'   "path to swap files (.*.swp)
+let &undodir=$HOME.'/.config/'.s:dir.'/undo//'     "path to undo data
 
 "ignore files in commands and plugins
 set wildignore+=.hg,.git,.bzr
