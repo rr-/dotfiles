@@ -1,6 +1,5 @@
 import os
 import tempfile
-import logs
 import util
 
 def install_autohotkey():
@@ -18,7 +17,7 @@ def install_autohotkey():
 
 install_autohotkey()
 
-script_path = util.expand_path('#/hk.ahk')
+script_path = util.expand_path('./hk.ahk')
 if util.has_executable('cygpath'):
     script_path = util.run_silent(['cygpath', '-w', script_path])[1].strip()
 

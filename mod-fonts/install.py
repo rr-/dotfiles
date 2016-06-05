@@ -1,5 +1,4 @@
 import os
-import logs
 import packages
 import util
 
@@ -14,7 +13,7 @@ if os.path.exists('/usr/share/fonts'):
     fonts_dir = '~/.local/share/fonts/'
 
     util.create_dir(fonts_dir)
-    for font_path in util.find('#/*.ttf'):
+    for font_path in util.find('./*.ttf'):
         util.create_symlink(font_path, fonts_dir)
 
     if util.has_executable('mkfontscale'):
@@ -26,5 +25,5 @@ if os.path.exists('/usr/share/fonts'):
         util.run_verbose(['xset', 'fp', 'rehash'])
 
 if util.has_executable('fc-cache'):
-    util.create_symlink('#/fonts.conf', '~/.config/fontconfig/')
+    util.create_symlink('./fonts.conf', '~/.config/fontconfig/')
     util.run_verbose(['fc-cache'])

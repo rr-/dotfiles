@@ -1,9 +1,8 @@
 import os
 import logging
 import tarfile
-import util
-import logs
 import packages
+import util
 
 logger = logging.getLogger(__name__)
 
@@ -32,4 +31,4 @@ packages.install('binutils')  # for yaourt
 
 install_aur('package-query')
 install_aur('yaourt')
-util.create_symlink('#/yaourtrc', '~/.yaourtrc')
+util.create_symlink('./yaourtrc', '~/.yaourtrc')

@@ -1,4 +1,3 @@
-import logs
 import packages
 
 packages.try_install('make')
