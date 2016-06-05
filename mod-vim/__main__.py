@@ -23,6 +23,3 @@ FileInstaller.create_file('~/.config/zsh/editor.sh', 'export EDITOR=vim', overwr
 for fn in os.listdir(spell_dir):
     if 'add' in fn and not 'spl' in fn:
         run_verbose(['vim', '-c', 'mkspell! ' + os.path.join(spell_dir, fn) + '|quit'])
-
-if FileInstaller.has_executable('devenv'):
-    FileInstaller.copy_file(os.path.join(dir, 'vimrc'), '~/.vsvimrc')

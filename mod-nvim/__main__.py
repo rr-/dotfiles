@@ -24,6 +24,3 @@ for fn in os.listdir(spell_dir):
     if 'add' in fn and not 'spl' in fn:
         commands.append('mkspell! ' + os.path.join(spell_dir, fn))
 run_verbose(['nvim'] + sum([['-c', cmd] for cmd in commands], []))
-
-if FileInstaller.has_executable('devenv'):
-    FileInstaller.copy_file(os.path.join(dir, 'vimrc'), '~/.vsvimrc')
