@@ -1,25 +1,25 @@
-#!/usr/bin/env python3
-import os
-from libinstall import FileInstaller, PackageInstaller
-dir = os.path.dirname(__file__)
+import logs
+import packages
+import util
 
-PackageInstaller.try_install('libxkbcommon-x11') # fix qt5
-PackageInstaller.try_install('python-pyqt5')     # for panel
-PackageInstaller.try_install('dmenu')            # program executor
-PackageInstaller.try_install('bspwm-git')        # window manager
-PackageInstaller.try_install('sxhkd-git')        # hotkey manager
-PackageInstaller.try_install('xdo-git')          # like xdotool, but different
-PackageInstaller.try_install('feh')              # wallpaper renderer
+packages.try_install('libxkbcommon-x11') # fix qt5
+packages.try_install('python-pyqt5')     # for panel
+packages.try_install('dmenu')            # program executor
+if not util.has_executable('bspwm'):
+    packages.try_install('bspwm-git')    # window manager
+packages.try_install('sxhkd-git')        # hotkey manager
+packages.try_install('xdo-git')          # like xdotool, but different
+packages.try_install('feh')              # wallpaper renderer
 
-PackageInstaller.try_install('python-pip')                 # need PIP
-PackageInstaller.try_install('psutil', method='pip')       # CPU usage
-PackageInstaller.try_install('pyalsaaudio', method='pip')  # system volume
-PackageInstaller.try_install('python-mpd2', method='pip')  # mpd interaction
-PackageInstaller.try_install('python3-xlib', method='pip') # window titles
+packages.try_install('python-pip')                 # need PIP
+packages.try_install('psutil', method='pip')       # CPU usage
+packages.try_install('pyalsaaudio', method='pip')  # system volume
+packages.try_install('python-mpd2', method='pip')  # mpd interaction
+packages.try_install('python3-xlib', method='pip') # window titles
 
-FileInstaller.create_symlink(os.path.join(dir, 'sxhkdrc'), '~/.config/sxhkd/sxhkdrc')
-FileInstaller.create_symlink(os.path.join(dir, 'bspwmrc'), '~/.config/bspwm/bspwmrc')
-FileInstaller.create_symlink(os.path.join(dir, 'toggle-state'), '~/.config/bspwm/toggle-state')
-FileInstaller.create_symlink(os.path.join(dir, 'toggle-desktop-padding'), '~/.config/bspwm/toggle-desktop-padding')
-FileInstaller.create_symlink(os.path.join(dir, 'rules'), '~/.config/bspwm/rules')
-FileInstaller.create_symlink(os.path.join(dir, 'panel'), '~/.config/bspwm/panel')
+util.create_symlink('#/sxhkdrc', '~/.config/sxhkd/sxhkdrc')
+util.create_symlink('#/bspwmrc', '~/.config/bspwm/bspwmrc')
+util.create_symlink('#/toggle-state', '~/.config/bspwm/toggle-state')
+util.create_symlink('#/toggle-desktop-padding', '~/.config/bspwm/toggle-desktop-padding')
+util.create_symlink('#/rules', '~/.config/bspwm/rules')
+util.create_symlink('#/panel', '~/.config/bspwm/panel')

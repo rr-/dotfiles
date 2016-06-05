@@ -1,7 +1,7 @@
-#!/bin/python
-from libinstall import PackageInstaller, FileInstaller
+import logs
+import packages
 
-PackageInstaller.try_install('make')
-PackageInstaller.try_install('gcc')
-PackageInstaller.try_install('automake')
-PackageInstaller.try_install('lsof')
+packages.try_install('make')
+packages.try_install('gcc')
+packages.try_install('automake')
+packages.try_install('lsof')

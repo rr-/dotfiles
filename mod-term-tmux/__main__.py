@@ -1,7 +1,6 @@
-#!/usr/bin/python
-import os
-from libinstall import FileInstaller, PackageInstaller
-dir = os.path.dirname(__file__)
+import logs
+import packages
+import util
 
-PackageInstaller.try_install('tmux')
-FileInstaller.create_symlink(os.path.join(dir, 'tmux.conf'), '~/.tmux.conf')
+packages.try_install('tmux')
+util.create_symlink('#/tmux.conf', '~/.tmux.conf')

@@ -1,11 +1,10 @@
-#!/bin/python
-import os
-from libinstall import FileInstaller, PackageInstaller
-dir = os.path.dirname(__file__)
+import logs
+import packages
+import util
 
-PackageInstaller.try_install('fbterm')
-PackageInstaller.try_install('fbgrab')
-PackageInstaller.try_install('fbv')
+packages.try_install('fbterm')
+packages.try_install('fbgrab')
+packages.try_install('fbv')
 
-if FileInstaller.has_executable('zsh'):
-    FileInstaller.create_symlink(os.path.join(dir, 'zlogin'), '~/.zlogin')
+if util.has_executable('zsh'):
+    util.create_symlink('#/zlogin', '~/.zlogin')

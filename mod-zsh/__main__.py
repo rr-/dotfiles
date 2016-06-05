@@ -1,8 +1,7 @@
-#!/bin/python
-import os
-from libinstall import FileInstaller, PackageInstaller
-dir = os.path.dirname(__file__)
+import logs
+import util
+import packages
 
-PackageInstaller.try_install('zsh')
-FileInstaller.create_symlink(os.path.join(dir, 'zshrc'), '~/.zshrc')
-FileInstaller.create_dir('~/.config/zsh')
+packages.try_install('zsh')
+util.create_symlink('#/zshrc', '~/.zshrc')
+util.create_dir('~/.config/zsh')

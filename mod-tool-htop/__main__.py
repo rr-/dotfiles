@@ -1,7 +1,6 @@
-#!/bin/python
-import os
-from libinstall import PackageInstaller, FileInstaller
-dir = os.path.dirname(__file__)
+import logs
+import packages
+import util
 
-PackageInstaller.try_install('htop')
-FileInstaller.create_symlink(os.path.join(dir, 'htoprc'), '~/.config/htop/htoprc')
+packages.try_install('htop')
+util.create_symlink('#/htoprc', '~/.config/htop/htoprc')

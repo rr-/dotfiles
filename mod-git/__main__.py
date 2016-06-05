@@ -1,8 +1,7 @@
-#!/bin/sh
-import os
-from libinstall import FileInstaller, PackageInstaller
-dir = os.path.dirname(__file__)
+import logs
+import packages
+import util
 
-PackageInstaller.try_install('git')
-FileInstaller.create_symlink(os.path.join(dir, 'gitconfig'), '~/.gitconfig')
-FileInstaller.create_symlink(os.path.join(dir, 'gitignore'), '~/.gitignore')
+packages.try_install('git')
+util.create_symlink('#/gitconfig', '~/.gitconfig')
+util.create_symlink('#/gitignore', '~/.gitignore')

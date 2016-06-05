@@ -1,4 +1,4 @@
-#!/bin/python
-from libinstall import PackageInstaller
+import logs
+import packages
 
-PackageInstaller.try_install('trackma-git')
+packages.try_install('trackma-git')

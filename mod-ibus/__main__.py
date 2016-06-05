@@ -1,10 +1,8 @@
-#!/usr/bin/env python3
-import os
-from libinstall import FileInstaller, PackageInstaller
-dir = os.path.dirname(__file__)
+import logs
+import packages
+import util
 
-PackageInstaller.try_install('ibus')
-PackageInstaller.try_install('ibus-anthy')
-
-FileInstaller.create_symlink(os.path.join(dir, 'start'), '~/.config/ibus/start')
-FileInstaller.create_symlink(os.path.join(dir, 'setup'), '~/.config/ibus/setup')
+packages.try_install('ibus')
+packages.try_install('ibus-anthy')
+util.create_symlink('#/start', '~/.config/ibus/start')
+util.create_symlink('#/setup', '~/.config/ibus/setup')
