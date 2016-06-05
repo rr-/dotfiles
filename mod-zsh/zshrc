@@ -147,7 +147,7 @@ man() {
     man "$@"
 }
 
-[ -d ~/.config/zsh ] && for x in ~/.config/zsh/*.sh; do . "$x"; done
+[ -d ~/.config/zsh ] && for x in ~/.config/zsh/*.sh; do source "$x"; done &>/dev/null
 
 # config fzf
 if [ -f ~/.fzf.zsh ]; then
