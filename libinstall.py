@@ -17,6 +17,11 @@ def run_verbose(*args, **kwargs):
 
 class FileInstaller(object):
     @staticmethod
+    def glob(path):
+        import glob
+        return glob.glob(path)
+
+    @staticmethod
     def download(url, path, overwrite=False):
         path = os.path.expanduser(path)
         if os.path.isdir(path):

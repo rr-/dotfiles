@@ -10,10 +10,11 @@ PackageInstaller.try_install('vim-fzf')
 for folder in ['undo', 'backup', 'swap', 'spell', 'autoload']:
     FileInstaller.create_dir('~/.config/nvim/' + folder)
 
+for path in FileInstaller.glob(os.path.join(dir, '*.vim')):
+    FileInstaller.create_symlink(path, '~/.config/nvim/')
 FileInstaller.create_symlink(os.path.join(dir, '../mod-vim/spell/pl.utf-8.add'), spell_dir)
 FileInstaller.create_symlink(os.path.join(dir, '../mod-vim/spell/en.utf-8.add'), spell_dir)
 FileInstaller.create_symlink(os.path.join(dir, 'vim-plug/plug.vim'), '~/.config/nvim/autoload/plug.vim')
-FileInstaller.create_symlink(os.path.join(dir, 'init.vim'), '~/.config/nvim/init.vim')
 FileInstaller.download('ftp://ftp.vim.org/pub/vim/runtime/spell/en.utf-8.spl', '~/.config/nvim/spell/')
 FileInstaller.download('ftp://ftp.vim.org/pub/vim/runtime/spell/pl.utf-8.spl', '~/.config/nvim/spell/')
 FileInstaller.create_file('~/.config/zsh/editor.sh', 'export EDITOR=vim;alias vim=nvim', overwrite=True)
