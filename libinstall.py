@@ -26,6 +26,7 @@ class FileInstaller(object):
         path = os.path.expanduser(path)
         if os.path.isdir(path):
             path = os.path.join(path, os.path.basename(url))
+        FileInstaller.create_dir(os.path.dirname(path))
         if overwrite or not os.path.exists(path):
             print('Downloading %s into %s...' % (url, path))
             urlretrieve(url, path)

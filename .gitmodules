@@ -1,9 +1,3 @@
-[submodule "configs/vundle"]
-	path = mod-vim/vundle
-	url = https://github.com/gmarik/Vundle.vim.git
 [submodule "ext/bk"]
 	path = ext/bk
 	url = https://github.com/rr-/bk.git
-[submodule "mod-nvim/vim-plug"]
-	path = mod-nvim/vim-plug
-	url = https://github.com/junegunn/vim-plug
