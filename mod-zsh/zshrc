@@ -29,11 +29,11 @@ setopt magic_equal_subst                # enable path autocompletion after =
 WORDCHARS='*?_-.[]~=&;!#$%^(){}<>'      # what kill-word should delete
 
 # history
-HISTFILE=~/.histfile                    # set path to history file
-HISTSIZE=1000                           # how many entries in history
-SAVEHIST=1000                           # how many entries in history (2)
+export HISTFILE=~/.config/zsh/history   # set path to history file
+export HISTSIZE=10000                   # how many entries in history (memory)
+export SAVEHIST=10000                   # how many entries in history (hdd)
 setopt appendhistory                    # append lines (for concurrent sessions)
-setopt histignoredups                   # don't put duplicates in history
+setopt HIST_IGNORE_ALL_DUPS             # ignore even interleaved duplicates
 
 # basic key bindings
 bindkey -e                              # use Emacs keybindings
@@ -149,6 +149,6 @@ man() {
 
 export FZF_DEFAULT_OPTS=--inline-info
 
-[ -d ~/.config/zsh ] && for x in ~/.config/zsh/*; do . "$x"; done
+[ -d ~/.config/zsh ] && for x in ~/.config/zsh/*.sh; do . "$x"; done
 
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
