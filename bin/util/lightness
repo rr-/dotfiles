@@ -16,7 +16,10 @@ if [ -h ~/.minttyrc ]; then
 fi
 
 # wallpaper
-feh --bg-fill ~/.wallpaper1-$word
+if command -v feh &>/dev/null; then
+    feh --bg-fill ~/.wallpaper1-$word
+fi
+
 # bspwm decoration
 if command -v bspc &>/dev/null; then
     if [[ $use_light -eq 1 ]]; then
