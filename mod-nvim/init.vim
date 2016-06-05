@@ -17,9 +17,9 @@ Plug 'rr-/vim-hexdec'                   "convert hex to dec and vice versa
 Plug 'junegunn/vim-easy-align'          "replace :column ...
 call plug#end()
 
-runtime theme.vim
 runtime editor.vim
 runtime indent.vim
 runtime plugins.vim
 runtime keyboard.vim
 runtime filetypes.vim
+runtime theme.vim
