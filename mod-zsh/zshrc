@@ -123,8 +123,8 @@ alias enpl='tl en pl'
 alias enja='tl en ja'
 alias jaen='tl ja en'
 alias isvim='ps ux|grep vim|grep -v grep' # also works for nvim
-alias dark='lightness 0'
-alias light='lightness 1'
+alias dark='lightness dark'
+alias light='lightness light'
 
 # legacy aliases
 command -v hd >/dev/null 2>&1 || alias hd='od -Ax -t x1'
