@@ -5,8 +5,8 @@ spell_dir = '~/.config/nvim/spell/'
 packages.try_install('neovim-git')
 packages.try_install('fzf')
 
-for dir in ['undo', 'backup', 'swap', 'spell']:
-    util.create_dir('~/.config/nvim/' + dir)
+for name in ['undo', 'backup', 'swap', 'spell']:
+    util.create_dir('~/.config/nvim/' + name)
 
 for path in util.find('./*.vim'):
     util.create_symlink(path, '~/.config/nvim/')

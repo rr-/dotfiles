@@ -1,8 +1,9 @@
+import subprocess
+import alsaaudio
 from PyQt5 import QtGui
 from PyQt5 import QtWidgets
 from PyQt5 import QtCore
-import alsaaudio
-import subprocess
+import settings
 
 class VolumeControl(QtWidgets.QWidget):
     def __init__(self, size):
@@ -16,7 +17,7 @@ class VolumeControl(QtWidgets.QWidget):
 
     def paintEvent(self, e):
         width = self.width()
-        height = self.height() - BOTTOM_BORDER
+        height = self.height() - settings.BOTTOM_BORDER
 
         qp = QtGui.QPainter()
         qp.begin(self)
@@ -26,8 +27,12 @@ class VolumeControl(QtWidgets.QWidget):
         vert_margin = 3
         points = {
             'zero': QtCore.QPoint(left_margin, height - 1 - vert_margin),
-            'vol1': QtCore.QPoint(left_margin + self.value * (width - left_margin) / self.max, height - 1 - vert_margin),
-            'vol2': QtCore.QPoint(left_margin + self.value * (width - left_margin) / self.max, height - 1 - vert_margin - self.value * (height - 1 - 2 * vert_margin) / self.max),
+            'vol1': QtCore.QPoint(
+                left_margin + self.value * (width - left_margin) / self.max,
+                height - 1 - vert_margin),
+            'vol2': QtCore.QPoint(
+                left_margin + self.value * (width - left_margin) / self.max,
+                height - 1 - vert_margin - self.value * (height - 1 - 2 * vert_margin) / self.max),
             'max1': QtCore.QPoint(width - 1, vert_margin),
             'max2': QtCore.QPoint(width - 1, height - 1 - vert_margin),
         }
@@ -52,17 +57,21 @@ class VolumeProvider(object):
     delay = 1
 
     def __init__(self, main_window):
-        self.label = QtWidgets.QLabel()
-        self.volume_control = VolumeControl(QtCore.QSize(50, main_window.height()))
-        main_window[0].right_widget.layout().addWidget(self.label)
-        main_window[0].right_widget.layout().addWidget(self.volume_control)
-        for w in [self.label, self.volume_control]:
+        self.volume = None
+        self.muted = False
+        self._label = QtWidgets.QLabel()
+        self._volume_control = VolumeControl(QtCore.QSize(50, main_window.height()))
+        main_window[0].right_widget.layout().addWidget(self._label)
+        main_window[0].right_widget.layout().addWidget(self._volume_control)
+        for w in [self._label, self._volume_control]:
             w.mouseReleaseEvent = self.toggle_mute
             w.wheelEvent = self.change_volume
 
     def change_volume(self, event):
-        subprocess.call(['amixer', '-q', 'set', 'Master',
-            '1dB%s' % ['-', '+'][event.angleDelta().y() > 0], 'unmute'])
+        subprocess.call([
+            'amixer', '-q', 'set', 'Master',
+            '1dB%s' % ['-', '+'][event.angleDelta().y() > 0],
+            'unmute'])
         self.refresh()
         self.render()
 
@@ -77,8 +86,8 @@ class VolumeProvider(object):
 
     def render(self):
         if self.muted:
-            self.label.setText('\U0001f507')
+            self._label.setText('\U0001f507')
         else:
-            self.label.setText('\U0001f50a')
-        self.volume_control.set(self.volume)
-        self.volume_control.repaint()
+            self._label.setText('\U0001f50a')
+        self._volume_control.set(self.volume)
+        self._volume_control.repaint()

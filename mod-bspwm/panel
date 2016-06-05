@@ -7,9 +7,7 @@ from PyQt5 import QtWidgets
 from PyQt5 import QtCore
 from PyQt5 import QtGui
 
-__builtins__.BOTTOM_BORDER = 0
-__builtins__.HEIGHT = 19 + BOTTOM_BORDER
-
+import settings
 from widgets.flow_layout  import FlowLayout
 from widgets.workspaces   import WorkspacesProvider, WorkspacesUpdater
 from widgets.window_title import WindowTitleProvider
@@ -18,7 +16,7 @@ from widgets.volume       import VolumeProvider
 from widgets.cpu          import CpuProvider
 from widgets.net          import NetworkUsageProvider
 from widgets.battery      import BatteryProvider
-from widgets.mpd          import MpdProvider
+from widgets.music        import MpdProvider
 
 class MainWindow(QtWidgets.QMainWindow):
     trigger = QtCore.pyqtSignal(object)
@@ -26,7 +24,7 @@ class MainWindow(QtWidgets.QMainWindow):
     def __init__(self, monitors):
         super().__init__()
         self.setWindowFlags(QtCore.Qt.SplashScreen | QtCore.Qt.WindowStaysOnTopHint | QtCore.Qt.X11BypassWindowManagerHint)
-        self.setFixedSize(sum([int(m.width) for m in monitors]), HEIGHT)
+        self.setFixedSize(sum([int(m.width) for m in monitors]), settings.HEIGHT)
         self.move(0, 0)
         self.show()
 
@@ -37,7 +35,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.setStyleSheet('''
         QMainWindow {
             background: #000;
-            border-bottom: ''' + str(BOTTOM_BORDER) + '''px solid #bbb;
+            border-bottom: ''' + str(settings.BOTTOM_BORDER) + '''px solid #bbb;
         }
         QWidget {
             color: #ddd;

@@ -1,5 +1,4 @@
 import os
-import re
 import shutil
 import subprocess
 import logging
@@ -22,7 +21,7 @@ def has_executable(program):
 
 def assert_has_executable(program):
     if not has_executable(program):
-        raise RuntimeError('%s not installed, cannot proceed' % program)
+        raise RuntimeError('%s not installed, cannot proceed', program)
 
 def expand_path(path, source=None):
     is_dir = path.endswith('/') or path.endswith('\\')
@@ -46,32 +45,32 @@ def download(url, path, overwrite=False):
         path = os.path.join(path, os.path.basename(url))
     create_dir(os.path.dirname(path))
     if overwrite or not os.path.exists(path):
-        logger.info('Downloading %r into %r...' % (url, path))
+        logger.info('Downloading %r into %r...', url, path)
         urllib.request.urlretrieve(url, path)
 
 def create_file(path, content=None, overwrite=False):
     path = expand_path(path)
-    dir = os.path.dirname(path)
-    if not os.path.islink(dir):
-        create_dir(dir)
+    dir_path = os.path.dirname(path)
+    if not os.path.islink(dir_path):
+        create_dir(dir_path)
     if overwrite or not os.path.exists(path):
-        logger.info('Creating file %r...' % path)
+        logger.info('Creating file %r...', path)
         with open(path, 'w') as handle:
             if content:
                 handle.write(content)
 
-def create_dir(dir):
-    dir = expand_path(dir)
-    _remove_symlink(dir)
-    if not os.path.exists(dir):
-        logger.info('Creating directory %r...' % dir)
-        os.makedirs(dir)
+def create_dir(path):
+    path = expand_path(path)
+    _remove_symlink(path)
+    if not os.path.exists(path):
+        logger.info('Creating directory %r...', path)
+        os.makedirs(path)
 
 def copy_file(source, target):
     source = expand_path(source)
     target = expand_path(target, source)
     _remove_symlink(target)
-    logger.info('Copying %r to %r...' % (source, target))
+    logger.info('Copying %r to %r...', source, target)
     create_dir(os.path.dirname(target))
     shutil.copy(source, target)
 
@@ -80,12 +79,12 @@ def create_symlink(source, target):
     target = expand_path(target, source)
     _remove_symlink(target)
     if os.path.exists(target):
-        raise RuntimeError('Target file %r exists and is not a symlink.' % target)
-    logger.info('Linking %r to %r...' % (source, target))
+        raise RuntimeError('Target file %r exists and is not a symlink.', target)
+    logger.info('Linking %r to %r...', source, target)
     create_dir(os.path.dirname(target))
     os.symlink(source, target)
 
 def _remove_symlink(path):
     if os.path.islink(path):
-        logger.info('Removing old symlink %r...' % path)
+        logger.info('Removing old symlink %r...', path)
         os.unlink(path)

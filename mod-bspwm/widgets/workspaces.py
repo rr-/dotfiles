@@ -1,7 +1,6 @@
-from PyQt5 import QtWidgets
-import re
 import json
 import subprocess
+from PyQt5 import QtWidgets
 
 def run(process):
     proc = subprocess.Popen(process, stdout=subprocess.PIPE)
@@ -9,20 +8,22 @@ def run(process):
 
 class Monitor(object):
     def __init__(self):
-        self.name         = None
-        self.workspaces   = []
-        self.x            = 0
-        self.y            = 0
-        self.width        = 0
-        self.height       = 0
+        self.original_id = None
+        self.name = None
+        self.workspaces = []
+        self.x = 0
+        self.y = 0
+        self.width = 0
+        self.height = 0
 
 class Workspace(object):
     def __init__(self):
-        self.name    = None
-        self.rect    = None
+        self.original_id = None
+        self.name = None
+        self.rect = None
         self.focused = False
-        self.free    = True
-        self.urgent  = False
+        self.free = True
+        self.urgent = False
 
 class WorkspacesUpdater(object):
     monitor_names = None
@@ -47,9 +48,8 @@ class WorkspacesUpdater(object):
             monitor.y = int(monitor_spec['rectangle']['y'])
             for desktop_spec in monitor_spec['desktops']:
                 workspace = Workspace()
-                workspace.id = desktop_spec['id']
                 workspace.name = desktop_spec['name']
-                workspace.focused = workspace.id == monitor_spec['focusedDesktopId']
+                workspace.focused = desktop_spec['id'] == monitor_spec['focusedDesktopId']
                 workspace.free = desktop_spec['root'] is None
                 workspace.urgent = False
                 workspace.original_id = workspace_id
@@ -74,14 +74,14 @@ class WorkspacesProvider(object):
     delay = 0
 
     def __init__(self, main_window, workspaces_updater):
-        self.main_window = main_window
-        self.updater = workspaces_updater
+        self._main_window = main_window
+        self._updater = workspaces_updater
 
-        self.bspc_process = subprocess.Popen(
+        self._bspc_process = subprocess.Popen(
             ['bspc', 'subscribe'], stdout=subprocess.PIPE)
 
-        self.widgets = {}
-        for i, monitor in enumerate(self.updater.monitors):
+        self._widgets = {}
+        for i, monitor in enumerate(self._updater.monitors):
             monitor_widget = main_window[i].left_widget
             monitor_widget.ws_widgets = {}
             monitor_widget.wheelEvent = lambda event, monitor=monitor: self.wheel(event, monitor)
@@ -91,7 +91,7 @@ class WorkspacesProvider(object):
                 ws_widget.mouseReleaseEvent = lambda event, ws=ws: self.click(event, ws)
                 monitor_widget.ws_widgets[j] = ws_widget
                 monitor_widget.layout().addWidget(ws_widget)
-            self.widgets[i] = monitor_widget
+            self._widgets[i] = monitor_widget
         self.render()
 
     def wheel(self, event, monitor):
@@ -102,13 +102,13 @@ class WorkspacesProvider(object):
         subprocess.call(['bspc', 'desktop', '-f', ws.name])
 
     def refresh(self):
-        line = self.bspc_process.stdout.readline().decode('utf8').strip()
-        self.updater.update()
+        line = self._bspc_process.stdout.readline().decode('utf8').strip()
+        self._updater.update()
 
     def render(self):
-        for i, monitor in enumerate(self.updater.monitors):
+        for i, monitor in enumerate(self._updater.monitors):
             for j, ws in enumerate(monitor.workspaces):
-                self.widgets[i].ws_widgets[j].setProperty('ws_focused', '%s' % ws.focused)
-                self.widgets[i].ws_widgets[j].setProperty('ws_urgent', '%s' % ws.urgent)
-                self.widgets[i].ws_widgets[j].setProperty('ws_free', '%s' % ws.free)
-        self.main_window.reloadStyleSheet()
+                self._widgets[i].ws_widgets[j].setProperty('ws_focused', '%s' % ws.focused)
+                self._widgets[i].ws_widgets[j].setProperty('ws_urgent', '%s' % ws.urgent)
+                self._widgets[i].ws_widgets[j].setProperty('ws_free', '%s' % ws.free)
+        self._main_window.reloadStyleSheet()
