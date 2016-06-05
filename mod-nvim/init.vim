@@ -15,6 +15,7 @@ Plug 'tpope/vim-rsi'                    "readline shortcuts in command mode
 Plug 'airblade/vim-gitgutter'           "show changed lines in git on margin
 Plug 'matze/vim-move'                   "move lines up/down with c-k/c-j
 Plug 'rr-/vim-hexdec'                   "convert hex to dec and vice versa
+Plug 'junegunn/vim-easy-align'          "replace :column ...
 call plug#end()
 
 "-------------------------------------------------
@@ -177,6 +178,14 @@ else
 endif
 "allow use of special characters that are supplied by terminal font
 let g:airline_powerline_fonts = 1
+
+"----------------------------------------
+" config vim-easy-align
+"----------------------------------------
+"tart interactive EasyAlign in visual mode (e.g. vipga)
+xmap ga <Plug>(EasyAlign)
+"start interactive EasyAlign for a motion/text object (e.g. gaip)
+nmap ga <Plug>(EasyAlign)
 
 "----------------------------------------
 " config gitgutter
