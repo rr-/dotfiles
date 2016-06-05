@@ -151,7 +151,7 @@ man() {
 
 # config fzf
 if [ -f ~/.fzf.zsh ]; then
-    export FZF_DEFAULT_OPTS=--inline-info
+    export FZF_DEFAULT_OPTS="$FZF_DEFAULT_OPTS --inline-info"
     source ~/.fzf.zsh
     bindkey '\C-t' transpose-chars
     bindkey '\C-o' fzf-file-widget
