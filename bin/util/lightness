@@ -16,14 +16,7 @@ if [ -h ~/.minttyrc ]; then
 fi
 
 # wallpaper
-if command -v hsetroot &>/dev/null; then
-    if [[ $use_light -eq 1 ]]; then
-        hsetroot -solid '#bbddee'
-    else
-        hsetroot -solid '#333333'
-    fi
-fi
-
+feh --bg-fill ~/.wallpaper1-$word
 # bspwm decoration
 if command -v bspc &>/dev/null; then
     if [[ $use_light -eq 1 ]]; then
