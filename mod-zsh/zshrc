@@ -147,8 +147,12 @@ man() {
     man "$@"
 }
 
-export FZF_DEFAULT_OPTS=--inline-info
-
 [ -d ~/.config/zsh ] && for x in ~/.config/zsh/*.sh; do . "$x"; done
 
-[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
+# config fzf
+if [ -f ~/.fzf.zsh ]; then
+    export FZF_DEFAULT_OPTS=--inline-info
+    source ~/.fzf.zsh
+    bindkey '\C-t' transpose-chars
+    bindkey '\C-o' fzf-file-widget
+fi
