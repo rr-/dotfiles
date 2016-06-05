@@ -1,6 +1,5 @@
-import logs
-import util
 import packages
+import util
 
 spell_dir = '~/.config/vim/spell/'
 
@@ -14,10 +13,10 @@ packages.try_install('fzf')
 for dir in ['undo', 'backup', 'swap', 'spell', 'autoload']:
     util.create_dir('~/.config/vim/' + dir)
 
-for path in util.find('#/../mod-nvim/*.vim'):
+for path in util.find('./../mod-nvim/*.vim'):
     util.create_symlink(path, '~/.config/vim/')
-util.create_symlink('#/../mod-nvim/spell/pl.utf-8.add', spell_dir)
-util.create_symlink('#/../mod-nvim/spell/en.utf-8.add', spell_dir)
+util.create_symlink('./../mod-nvim/spell/pl.utf-8.add', spell_dir)
+util.create_symlink('./../mod-nvim/spell/en.utf-8.add', spell_dir)
 util.download('ftp://ftp.vim.org/pub/vim/runtime/spell/en.utf-8.spl', '~/.config/vim/spell/')
 util.download('ftp://ftp.vim.org/pub/vim/runtime/spell/pl.utf-8.spl', '~/.config/vim/spell/')
 util.download('https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim', '~/.config/vim/autoload/plug.vim')

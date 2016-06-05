@@ -1,0 +1,31 @@
+#!/usr/bin/env python
+import logging
+import os
+import sys
+import util
+import argparse
+
+def setup_logger():
+    root = logging.getLogger()
+    root.setLevel(logging.DEBUG)
+
+    ch = logging.StreamHandler(sys.stdout)
+    ch.setLevel(logging.DEBUG)
+    formatter = logging.Formatter('[%(asctime)s/%(name)s] %(message)s')
+    ch.setFormatter(formatter)
+    root.addHandler(ch)
+
+def parse_args():
+    parser = argparse.ArgumentParser(description='Install modules')
+    parser.add_argument(
+        'module', help='directory to install')
+    return parser.parse_args()
+
+def main():
+    setup_logger()
+    args = parse_args()
+    os.chdir(args.module)
+    __import__(args.module + '.install')
+
+if __name__ == '__main__':
+    main()

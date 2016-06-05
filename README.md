@@ -11,20 +11,16 @@ custom goodies are located in the `bin/` directory.
 #### Module installation
 
 The repository is divided into modules. All of modules can be installed with
-Python 3 like this:
+`./install` like this:
 
 ```console
-python -m mod-X
+./install mod-zsh
+./install mod-vim
 ```
 
-for example,
-
-```console
-python -m mod-zsh
-python -m mod-vim
-```
-
-will install zsh and vim configuration using symlinks.
+`./install` is a Python 3 script that manipulates CWD and set ups logging, and
+is otherwise equivalent to `python3 -m mod-x.install`. Most things are
+installed using symbolic links.
 
 The installation scripts also try to install relevant packages using various
 package managers, e.g. `mod-zsh` will try downloading only `zsh`, while

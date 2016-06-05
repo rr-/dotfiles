@@ -5,10 +5,8 @@ import subprocess
 import logging
 import glob
 import urllib.request
-import __main__
 
 logger = logging.getLogger(__name__)
-dir = os.path.dirname(__main__.__file__)
 
 def run_silent(*args, **kwargs):
     proc = subprocess.Popen(*args, **kwargs, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -26,8 +24,12 @@ def assert_has_executable(program):
     if not has_executable(program):
         raise RuntimeError('%s not installed, cannot proceed' % program)
 
-def expand_path(path):
-    return os.path.expanduser(re.sub('^#', dir, path))
+def expand_path(path, source=None):
+    is_dir = path.endswith('/') or path.endswith('\\')
+    target = os.path.abspath(os.path.expanduser(path))
+    if is_dir and source:
+        target = os.path.join(target, os.path.basename(source))
+    return target
 
 def abs_path(path):
     return os.path.abspath(expand_path(path))
@@ -67,9 +69,7 @@ def create_dir(dir):
 
 def copy_file(source, target):
     source = expand_path(source)
-    target = expand_path(target)
-    if target.endswith('/') or target.endswith('\\'):
-        target = os.path.join(target, os.path.basename(source))
+    target = expand_path(target, source)
     _remove_symlink(target)
     logger.info('Copying %r to %r...' % (source, target))
     create_dir(os.path.dirname(target))
@@ -77,9 +77,7 @@ def copy_file(source, target):
 
 def create_symlink(source, target):
     source = expand_path(source)
-    target = expand_path(target)
-    if target.endswith('/') or target.endswith('\\'):
-        target = os.path.join(target, os.path.basename(source))
+    target = expand_path(target, source)
     _remove_symlink(target)
     if os.path.exists(target):
         raise RuntimeError('Target file %r exists and is not a symlink.' % target)

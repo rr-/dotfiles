@@ -1,6 +1,5 @@
-import logs
-import util
 import packages
+import util
 
 packages.try_install('xorg')          # the server itself
 packages.try_install('xclip')         # for clip to work
@@ -14,8 +13,8 @@ packages.try_install('pkg-config')    # for compton
 packages.try_install('compton')       # for shadows, transparency and vsync
 packages.try_install('shot-git')      # for screenshots
 
-util.create_symlink('#/xinitrc', '~/.xinitrc')
-util.create_symlink('#/compton.conf', '~/.config/compton.conf')
+util.create_symlink('./xinitrc', '~/.xinitrc')
+util.create_symlink('./compton.conf', '~/.config/compton.conf')
 
 if util.has_executable('zsh'):
-    util.create_symlink('#/zlogin', '~/.zlogin')
+    util.create_symlink('./zlogin', '~/.zlogin')
