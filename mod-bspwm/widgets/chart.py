@@ -1,6 +1,7 @@
+import collections
 from PyQt5 import QtGui
 from PyQt5 import QtWidgets
-import collections
+import settings
 
 class Chart(QtWidgets.QWidget):
     def __init__(self, size):
@@ -13,7 +14,7 @@ class Chart(QtWidgets.QWidget):
 
     def paintEvent(self, e):
         width = self.width()
-        height = self.height() - BOTTOM_BORDER
+        height = self.height() - settings.BOTTOM_BORDER
 
         if not self.points:
             return
@@ -22,8 +23,18 @@ class Chart(QtWidgets.QWidget):
             return
 
         margin = 3
-        x_transform = lambda x: margin + width - 1 - 2 * margin - 2 * x
-        y_transform = lambda y: margin + height - 1 - 2 * margin - y * (height - 1 - 2 * margin) / highest
+
+        x_transform = lambda x: \
+            margin \
+            + width - 1 \
+            - 2 * margin \
+            - 2 * x
+
+        y_transform = lambda y: \
+            margin \
+            + height - 1 \
+            - 2 * margin \
+            - y * (height - 1 - 2 * margin) / highest
 
         qp = QtGui.QPainter()
         qp.begin(self)

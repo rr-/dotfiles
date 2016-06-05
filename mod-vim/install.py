@@ -10,8 +10,8 @@ while choice not in choices:
 packages.try_install(choice)
 packages.try_install('fzf')
 
-for dir in ['undo', 'backup', 'swap', 'spell', 'autoload']:
-    util.create_dir('~/.config/vim/' + dir)
+for name in ['undo', 'backup', 'swap', 'spell', 'autoload']:
+    util.create_dir('~/.config/vim/' + name)
 
 for path in util.find('./../mod-nvim/*.vim'):
     util.create_symlink(path, '~/.config/vim/')

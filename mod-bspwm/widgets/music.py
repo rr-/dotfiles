@@ -1,6 +1,6 @@
 import math
-import mpd
 import subprocess
+import mpd
 from PyQt5 import QtWidgets
 
 class MpdProvider(object):

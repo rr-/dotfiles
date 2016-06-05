@@ -23,7 +23,7 @@ if util.has_executable('cygpath'):
 
 util.run_silent([
     'reg',
-    'add', 'HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Run',
+    'add', r'HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Run',
     '/v', 'AutoHotkey',
     '/t', 'REG_SZ',
     '/f',

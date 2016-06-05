@@ -17,7 +17,7 @@ def install_aur(package):
     tar = tarfile.open('tmp.tar')
     tar.extractall()
     os.chdir(os.path.join('/tmp', package))
-    run_verbose(['makepkg', '-i'])
+    util.run_verbose(['makepkg', '-i'])
     os.chdir(old_dir)
 
 packages.install('sudo')

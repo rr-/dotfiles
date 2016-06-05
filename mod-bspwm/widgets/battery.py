@@ -1,33 +1,35 @@
-from PyQt5 import QtWidgets
 import glob
 import time
+from PyQt5 import QtWidgets
 
 def read_file(path):
-    with open(path, 'r') as fh:
-        return fh.read().strip()
+    with open(path, 'r') as handle:
+        return handle.read().strip()
 
 class BatteryProvider(object):
     delay = 3
 
     def __init__(self, main_window):
+        self.percentage = None
+        self.status = None
         try:
-            self.charge_now = glob.glob('/sys/class/power_supply/*/energy_now')[0]
-            self.charge_max = glob.glob('/sys/class/power_supply/*/energy_full')[0]
-            self.charge_status = glob.glob('/sys/class/power_supply/*/status')[0]
+            self._charge_now = glob.glob('/sys/class/power_supply/*/energy_now')[0]
+            self._charge_max = glob.glob('/sys/class/power_supply/*/energy_full')[0]
+            self._charge_status = glob.glob('/sys/class/power_supply/*/status')[0]
+            self._label = QtWidgets.QLabel()
+            main_window[0].right_widget.layout().addWidget(self._label)
             self.battery_present = True
-            self.label = QtWidgets.QLabel()
-            main_window[0].right_widget.layout().addWidget(self.label)
         except IndexError:
             self.battery_present = False
 
     def refresh(self):
         if self.battery_present:
-            now = int(read_file(self.charge_now))
-            max = int(read_file(self.charge_max))
-            self.status = read_file(self.charge_status).lower()
-            self.percentage = now * 100.0 / max
+            current_value = int(read_file(self._charge_now))
+            max_value = int(read_file(self._charge_max))
+            self.status = read_file(self._charge_status).lower()
+            self.percentage = current_value * 100.0 / max_value
             time.sleep(3)
 
     def render(self):
         if self.battery_present:
-            self.label.setText('Battery: %5.02f%% (%s)' % (self.percentage, self.status))
+            self._label.setText('Battery: %5.02f%% (%s)' % (self.percentage, self.status))

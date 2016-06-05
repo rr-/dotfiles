@@ -74,13 +74,13 @@ class PipPackageInstaller(object):
 
     def has_installed(self, package):
         return re.search(
-            '^' + re.escape(package) + '($|\s)',
+            '^' + re.escape(package) + r'($|\s)',
             util.run_silent([self.executable, 'list'])[1],
             re.MULTILINE) is not None
 
     def is_available(self, package):
         return re.search(
-            '^' + re.escape(package) + '($|\s)',
+            '^' + re.escape(package) + r'($|\s)',
             util.run_silent([self.executable, 'search', package, '--cache-dir', self.cache_dir])[1],
             re.MULTILINE) is not None
 
@@ -101,7 +101,7 @@ def try_install(package, method=None):
     try:
         install(package, method)
     except Exception as ex:
-        logger.info('Error installing %s: %s' % (package, ex))
+        logger.info('Error installing %s: %s', package, ex)
 
 def has_installed(package, method=None):
     chosen_installers = _choose_installers(method)
@@ -112,17 +112,17 @@ def has_installed(package, method=None):
 
 def install(package, method=None):
     if has_installed(package, method):
-        logger.info('Package %s is already installed.' % package)
+        logger.info('Package %s is already installed.', package)
         return True
     chosen_installers = _choose_installers(method)
     for installer in chosen_installers:
         if installer.is_available(package):
-            logger.info('Package %s is available, installing with %s' % (package, installer.name))
+            logger.info('Package %s is available, installing with %s', package, installer.name)
             return installer.install(package)
     if method is None:
-        raise RuntimeError('No package manager is capable of installing %s' % package)
+        raise RuntimeError('No package manager is capable of installing %s', package)
     else:
-        raise RuntimeError('%s is not capable of installing %s' % (method, package))
+        raise RuntimeError('%s is not capable of installing %s', method, package)
 
 def _choose_installers(method):
     if method is None:
@@ -134,5 +134,5 @@ def _choose_installers(method):
         if method is None:
             raise RuntimeError('No package manager is supported on this system!')
         else:
-            raise RuntimeError('%s is not supported on this system!' % method)
+            raise RuntimeError('%s is not supported on this system!', method)
     return chosen_installers
