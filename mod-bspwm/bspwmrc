@@ -86,5 +86,8 @@ run_if_needed trackma urxvt -name 'trackma' -e zsh -i -l -c 'trackma-curses'
 
 
 pkill -f bspwm/panel
-nohup $HOME/.config/bspwm/panel </dev/null &>/dev/null &
-$HOME/src/dotfiles/bin/lightness 1
+nohup ~/.config/bspwm/panel </dev/null &>/dev/null &
+if [ -e ~/.config/zsh/lightness.sh ]; then
+    . ~/.config/zsh/lightness.sh
+    ~/src/dotfiles/bin/util/lightness $LIGHTNESS
+fi
