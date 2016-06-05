@@ -17,7 +17,12 @@ fi
 
 # wallpaper
 if command -v feh &>/dev/null; then
-    feh --bg-fill ~/.wallpaper1-$word
+    cli='feh '
+    monitor_count=$(xrandr -q|grep ' connected'|wc -l)
+    for i in `seq 1 $monitor_count`; do
+        cli="$cli --bg-fill ~/.wallpaper-$word-$i"
+    done
+    eval "$cli"
 fi
 
 # bspwm decoration
