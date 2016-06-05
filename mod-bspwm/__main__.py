@@ -9,7 +9,7 @@ PackageInstaller.try_install('dmenu')            # program executor
 PackageInstaller.try_install('bspwm-git')        # window manager
 PackageInstaller.try_install('sxhkd-git')        # hotkey manager
 PackageInstaller.try_install('xdo-git')          # like xdotool, but different
-PackageInstaller.try_install('hsetroot')         # wallpaper renderer
+PackageInstaller.try_install('feh')              # wallpaper renderer
 
 PackageInstaller.try_install('python-pip')                 # need PIP
 PackageInstaller.try_install('psutil', method='pip')       # CPU usage
