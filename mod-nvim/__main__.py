@@ -18,9 +18,11 @@ FileInstaller.download('ftp://ftp.vim.org/pub/vim/runtime/spell/en.utf-8.spl', '
 FileInstaller.download('ftp://ftp.vim.org/pub/vim/runtime/spell/pl.utf-8.spl', '~/.config/nvim/spell/')
 FileInstaller.create_file('~/.config/zsh/editor.sh', 'export EDITOR=vim;alias vim=nvim', overwrite=True)
 
+commands = ['PlugInstall']
 for fn in os.listdir(spell_dir):
     if 'add' in fn and not 'spl' in fn:
-        run_verbose(['nvim', '-c', 'mkspell! ' + os.path.join(spell_dir, fn) + '|quit'])
+        commands.append('mkspell! ' + os.path.join(spell_dir, fn))
+run_verbose(['nvim'] + sum([['-c', cmd] for cmd in commands], []))
 
 if FileInstaller.has_executable('devenv'):
     FileInstaller.copy_file(os.path.join(dir, 'vimrc'), '~/.vsvimrc')
