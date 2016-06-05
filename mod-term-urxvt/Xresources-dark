@@ -16,3 +16,6 @@
 *.color13:    #d900ff
 *.color14:    #66fff2
 *.color15:    #ffffff
+
+URxvt.depth: 32
+URxvt.background: rgba:0000/0000/0000/B000
