@@ -1,12 +1,11 @@
 #!/bin/bash
 
-use_light=$1
+word=$1
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-if [[ $use_light -eq 1 ]]; then
-    word=light
-else
-    word=dark
+if [[ $word != light && $word != dark ]]; then
+    echo "Usage: $0 light|dark"
+    exit 1
 fi
 
 # MinTTY
@@ -27,7 +26,7 @@ fi
 
 # bspwm decoration
 if command -v bspc &>/dev/null; then
-    if [[ $use_light -eq 1 ]]; then
+    if [[ $word == light ]]; then
         bspc config normal_border_color "#bbbbbb"
         bspc config active_border_color "#bbbbbb"
         bspc config focused_border_color "#00d0ee"
