@@ -6,14 +6,14 @@ import sys
 import tempfile
 from urllib.request import urlretrieve
 
-def run_silent(p):
-    proc = subprocess.Popen(p, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+def run_silent(*args, **kwargs):
+    proc = subprocess.Popen(*args, **kwargs, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     out, err = proc.communicate()
     out, err = out.decode('utf8'), err.decode('utf8')
     return (proc.returncode == 0, out, err)
 
-def run_verbose(p):
-    return subprocess.call(p) == 0
+def run_verbose(*args, **kwargs):
+    return subprocess.run(*args, **kwargs) == 0
 
 class FileInstaller(object):
     @staticmethod

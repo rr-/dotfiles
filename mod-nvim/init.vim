@@ -1,4 +1,3 @@
-filetype off
 call plug#begin()
 Plug 'junegunn/fzf', { 'dir': '~/.fzf', 'do': './install --all' }
 Plug 'junegunn/fzf.vim'                 "open files using fuzzy matching
@@ -26,22 +25,22 @@ set number                    "enable line numbers
 set nofoldenable              "disable folding
 
 "fix fast hitting escape + <key> being interpreted as escape sequence
-if ! has('gui_running')
-    set ttimeoutlen=10
-    augroup FastEscape
-        autocmd!
-        au InsertEnter * set timeoutlen=0
-        au InsertLeave * set timeoutlen=1000
-    augroup END
+if !has('gui_running')
+  set ttimeoutlen=10
+  augroup FastEscape
+    autocmd!
+    au InsertEnter * set timeoutlen=0
+    au InsertLeave * set timeoutlen=1000
+  augroup END
 endif
 
 "color scheme
 if $LIGHTNESS ==? 'light'     "$LIGHTNESS exported by zshrc
   set background=light
-  colorscheme hemisu
+  silent! colorscheme hemisu
 else
   set background=dark
-  colorscheme sorcerer
+  silent! colorscheme sorcerer
 endif
 
 let g:fzf_nvim_statusline = 0
