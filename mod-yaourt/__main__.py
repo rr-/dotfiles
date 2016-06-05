@@ -1,32 +1,35 @@
-from libinstall import run_verbose, run_silent, FileInstaller, PackageInstaller
 import os
+import logging
 import tarfile
-import urllib.request
-dir = os.path.dirname(__file__)
+import util
+import logs
+import packages
+
+logger = logging.getLogger(__name__)
 
 def install_aur(package):
-    if PackageInstaller.is_installed(package):
-        print(package, 'already installed')
+    if packages.has_installed(package):
+        logger.info('%s already installed', package)
         return
     old_dir = os.getcwd()
     os.chdir('/tmp')
     url = 'https://aur.archlinux.org/cgit/aur.git/snapshot/{0}.tar.gz'.format(package)
-    urllib.request.urlretrieve(url, 'tmp.tar')
+    util.download(url, '/tmp/tmp.tar')
     tar = tarfile.open('tmp.tar')
     tar.extractall()
     os.chdir(os.path.join('/tmp', package))
     run_verbose(['makepkg', '-i'])
     os.chdir(old_dir)
 
-PackageInstaller.install('sudo')
-PackageInstaller.install('tar')
-PackageInstaller.install('wget')
-PackageInstaller.install('gcc')       # to compile everything
-PackageInstaller.install('make')      # to compile everything
-PackageInstaller.install('fakeroot')  # for package-query
-PackageInstaller.install('yajl')      # for package-query
-PackageInstaller.install('binutils')  # for yaourt
+packages.install('sudo')
+packages.install('tar')
+packages.install('wget')
+packages.install('gcc')       # to compile everything
+packages.install('make')      # to compile everything
+packages.install('fakeroot')  # for package-query
+packages.install('yajl')      # for package-query
+packages.install('binutils')  # for yaourt
 
 install_aur('package-query')
 install_aur('yaourt')
-FileInstaller.create_symlink(os.path.join(dir, 'yaourtrc'), '~/.yaourtrc')
+util.create_symlink('#/yaourtrc', '~/.yaourtrc')

@@ -1,9 +1,7 @@
-#!/bin/python
-import os
-from libinstall import FileInstaller, PackageInstaller
-dir = os.path.dirname(__file__)
+import logs
+import util
 
-FileInstaller.create_symlink(os.path.join(dir, 'inputrc'), '~/.inputrc')
-FileInstaller.create_symlink(os.path.join(dir, 'minttyrc-dark'), '~/.minttyrc-dark')
-FileInstaller.create_symlink(os.path.join(dir, 'minttyrc-light'), '~/.minttyrc-light')
-FileInstaller.create_symlink(os.path.join(dir, 'minttyrc-light'), '~/.minttyrc')
+util.create_symlink('#/inputrc'), '~/.inputrc')
+util.create_symlink('#/minttyrc-dark'), '~/.minttyrc-dark')
+util.create_symlink('#/minttyrc-light'), '~/.minttyrc-light')
+util.create_symlink('#/minttyrc-light'), '~/.minttyrc')

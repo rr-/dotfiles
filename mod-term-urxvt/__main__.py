@@ -1,10 +1,9 @@
-#!/usr/bin/python
-import os
-from libinstall import FileInstaller, PackageInstaller
-dir = os.path.dirname(__file__)
+import logs
+import packages
+import util
 
-PackageInstaller.try_install('rxvt-unicode')
-FileInstaller.create_symlink(os.path.join(dir, 'ext'), '~/.urxvt/ext')
-FileInstaller.create_symlink(os.path.join(dir, 'Xresources'), '~/.config/Xresources')
-FileInstaller.create_symlink(os.path.join(dir, 'Xresources-light'), '~/.config/Xresources-light')
-FileInstaller.create_symlink(os.path.join(dir, 'Xresources-dark'), '~/.config/Xresources-dark')
+packages.try_install('rxvt-unicode')
+util.create_symlink('#/ext', '~/.urxvt/ext')
+util.create_symlink('#/Xresources', '~/.config/Xresources')
+util.create_symlink('#/Xresources-light', '~/.config/Xresources-light')
+util.create_symlink('#/Xresources-dark', '~/.config/Xresources-dark')

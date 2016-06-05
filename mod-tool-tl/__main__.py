@@ -1,4 +1,4 @@
-#!/bin/python
-from libinstall import PackageInstaller
+import logs
+import packages
 
-PackageInstaller.try_install('trans')
+packages.try_install('translate-shell-git')

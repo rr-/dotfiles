@@ -1,30 +1,30 @@
-#!/bin/python
-import os, glob
-from libinstall import FileInstaller, PackageInstaller, run_verbose
-dir = os.path.dirname(__file__)
+import os
+import logs
+import packages
+import util
 
-PackageInstaller.try_install('xorg-font-utils')
-PackageInstaller.try_install('otf-ipafont')
-PackageInstaller.try_install('ttf-dejavu')
-PackageInstaller.try_install('ttf-symbola')
-PackageInstaller.try_install('ttf-font-awesome')
-PackageInstaller.try_install('ttf-monapo')
+packages.try_install('xorg-font-utils')
+packages.try_install('otf-ipafont')
+packages.try_install('ttf-dejavu')
+packages.try_install('ttf-symbola')
+packages.try_install('ttf-font-awesome')
+packages.try_install('ttf-monapo')
 
 if os.path.exists('/usr/share/fonts'):
-    fonts_dir = os.path.expanduser('~/.local/share/fonts')
+    fonts_dir = '~/.local/share/fonts/'
 
-    FileInstaller.create_dir(fonts_dir)
-    for font_path in glob.glob(os.path.join(dir, '*.ttf')):
-        FileInstaller.create_symlink(font_path, fonts_dir + '/')
+    util.create_dir(fonts_dir)
+    for font_path in util.find('#/*.ttf'):
+        util.create_symlink(font_path, fonts_dir)
 
-    if FileInstaller.has_executable('mkfontscale'):
-        run_verbose(['mkfontscale', fonts_dir])
-    if FileInstaller.has_executable('mkfontdir'):
-        run_verbose(['mkfontdir', fonts_dir])
-    if FileInstaller.has_executable('xset'):
-        run_verbose(['xset', '+fp', fonts_dir])
-        run_verbose(['xset', 'fp', 'rehash'])
+    if util.has_executable('mkfontscale'):
+        util.run_verbose(['mkfontscale', util.expand_path(fonts_dir)])
+    if util.has_executable('mkfontdir'):
+        util.run_verbose(['mkfontdir', util.expand_path(fonts_dir)])
+    if util.has_executable('xset'):
+        util.run_verbose(['xset', '+fp', util.expand_path(fonts_dir)])
+        util.run_verbose(['xset', 'fp', 'rehash'])
 
-if FileInstaller.has_executable('fc-cache'):
-    FileInstaller.create_symlink(os.path.join(dir, 'fonts.conf'), '~/.config/fontconfig/')
-    run_verbose(['fc-cache'])
+if util.has_executable('fc-cache'):
+    util.create_symlink('#/fonts.conf', '~/.config/fontconfig/')
+    util.run_verbose(['fc-cache'])
