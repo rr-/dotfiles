@@ -8,13 +8,13 @@ import urllib.request
 logger = logging.getLogger(__name__)
 
 def run_silent(*args, **kwargs):
-    proc = subprocess.Popen(*args, **kwargs, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    proc = subprocess.Popen(stdout=subprocess.PIPE, stderr=subprocess.PIPE, *args, **kwargs)
     out, err = proc.communicate()
     out, err = out.decode('utf8'), err.decode('utf8')
     return (proc.returncode == 0, out, err)
 
 def run_verbose(*args, **kwargs):
-    return subprocess.run(*args, **kwargs) == 0
+    return subprocess.call(*args, **kwargs) == 0
 
 def has_executable(program):
     return shutil.which(program) is not None
