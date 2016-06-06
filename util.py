@@ -10,7 +10,10 @@ logger = logging.getLogger(__name__)
 def run_silent(*args, **kwargs):
     proc = subprocess.Popen(stdout=subprocess.PIPE, stderr=subprocess.PIPE, *args, **kwargs)
     out, err = proc.communicate()
-    out, err = out.decode('utf8'), err.decode('utf8')
+    try:
+        out, err = out.decode('utf8'), err.decode('utf8')
+    except UnicodeDecodeError:
+        pass
     return (proc.returncode == 0, out, err)
 
 def run_verbose(*args, **kwargs):
