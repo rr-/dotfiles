@@ -11,7 +11,11 @@ map <buffer> <silent> j gj
 inoremap <silent> <C-s> <Esc>:update<CR>
 nnoremap <silent> <C-s> :<C-u>update<CR>
 "ctrl+z = open shell
-nnoremap <silent> <C-z> :te<CR>
+if has('nvim')
+  nnoremap <silent> <C-z> :te<CR>
+else
+  nnoremap <silent> <C-z> :sh<CR>
+endif
 "ctrl+q = close window
 inoremap <silent> <C-q> <Esc>:q<CR>
 nnoremap <silent> <C-q> :q<CR>
