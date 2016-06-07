@@ -1,0 +1,3 @@
+--exclude=node_modules
+--exclude=python_modules
+--exclude=build
