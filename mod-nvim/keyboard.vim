@@ -44,5 +44,7 @@ nnoremap <F2> :NERDTreeToggle<CR>
 inoremap <F3> <esc>:NERDTreeFind<CR>
 nnoremap <F3> :NERDTreeFind<CR>
 "EasyAlign
-nnoremap ga <Plug>(EasyAlign) "normal mode (e.g. gaip)
-xnoremap ga <Plug>(EasyAlign) "visual mode (e.g. vipga)
+  "normal mode (e.g. gaip)
+  nmap ga <Plug>(EasyAlign)
+  "visual mode (e.g. vipga)
+  xmap ga <Plug>(EasyAlign)
