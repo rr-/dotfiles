@@ -17,7 +17,7 @@ screenshot-format=jpg
 screenshot-template=~/shot-%f-%P
 
 [images]
-fullscreen=no
+fullscreen=yes
 script-opts=osc-showwindowed=no,osc-showfullscreen=no
 script=~~/images/slideshow.lua,~~/images/statusbar.lua,~~/images/fancy_zoom.lua,~~/images/playlist_mgr.lua,~~/images/iqdb.lua
 input-conf=~~/images/input.conf
