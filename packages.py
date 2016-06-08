@@ -100,8 +100,10 @@ INSTALLERS = [
 def try_install(package, method=None):
     try:
         install(package, method)
+        return True
     except Exception as ex:
         logger.info('Error installing %s: %s', package, ex)
+        return False
 
 def has_installed(package, method=None):
     chosen_installers = _choose_installers(method)
