@@ -33,6 +33,7 @@ vnoremap <silent> <S-K> <nop>
 vnoremap Q gq
 nnoremap Q gqap
 "fuzzy file finder
+nnoremap <C-e> :Ag<CR>
 nnoremap <C-p> :Files<CR>
 nnoremap <C-m> :Buffers<CR>
 "toggle NERDtree
