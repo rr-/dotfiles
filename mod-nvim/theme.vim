@@ -3,13 +3,22 @@
 "----------------------------------------
 
 "basic vim
-if $LIGHTNESS ==? 'light'     "$LIGHTNESS exported by zshrc
-  set background=light
-  silent! colorscheme hemisu
+if has('nvim')
+  set termguicolors
+  if $LIGHTNESS ==? 'light'     "$LIGHTNESS exported by zshrc
+    let theme='PaperColor'
+  else
+    let theme='Tomorrow-Night'
+  endif
 else
-  set background=dark
-  silent! colorscheme sorcerer
+  if $LIGHTNESS ==? 'light'     "$LIGHTNESS exported by zshrc
+    let theme='hemisu'
+  else
+    let theme='sorcerer'
+  endif
 endif
+let &background=$LIGHTNESS
+silent! execute 'colorscheme '.theme
 
 "fix ColorColumn on dark backgrounds
 if &background == 'dark'
