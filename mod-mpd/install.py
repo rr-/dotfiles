@@ -1,7 +1,8 @@
 import packages
 import util
 
-packages.try_install('mpd')
+if not packages.try_install('mpd-light'):
+    packages.try_install('mpd')
 packages.try_install('mpc')
 
 util.create_symlink('./config', '~/.config/mpd')
