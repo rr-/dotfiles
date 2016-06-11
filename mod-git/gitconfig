@@ -25,7 +25,7 @@
                 echo "Nothing staged"; \
                 return; \
             fi; \
-            hash=`git log --pretty=\"format:%h %<(50,trunc)%s%d\"|fzf --no-sort|cut -f1 -d' '`; \
+            hash=`git log --pretty=\"format:%h %<(50,trunc)%s%d\" @{u}..|fzf --no-sort|cut -f1 -d' '`; \
             message=`git log -n 1 --pretty=format:%s $hash`; \
             git commit -m \"fixup! $message\"; \
             if (( $anything_unstaged )); then \
