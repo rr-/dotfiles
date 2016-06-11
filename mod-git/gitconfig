@@ -21,26 +21,26 @@
     sq = "!f() { \
             git diff --cached --exit-code &>/dev/null; anything_staged=$?; \
             git diff --exit-code &>/dev/null; anything_unstaged=$?; \
-            if (( ! $anything_staged )); then \
+            if [ "$anything_staged" == 0 ]; then \
                 echo "Nothing staged"; \
                 return; \
             fi; \
             hash=`git log --pretty=\"format:%h %<(50,trunc)%s%d\" @{u}..|fzf --no-sort|cut -f1 -d' '`; \
             message=`git log -n 1 --pretty=format:%s $hash`; \
             git commit -m \"fixup! $message\"; \
-            if (( $anything_unstaged )); then \
+            if [ "$anything_unstaged" == 1 ]; then \
                 git commit -a -m temporary; \
                 staged_hash=`git rev-parse HEAD`; \
                 git reset --hard HEAD^; \
             fi; \
             if ! git rebase -i --autosquash; then \
                 echo "Rebase failed, you\\'re on your own. Good luck."; \
-                if (( $anything_unstaged )); then \
+                if [ "$anything_unstaged" == 1 ]; then \
                     echo "Remember to cherry-pick $staged_hash to recover unstaged changes."; \
                 fi; \
                 return; \
             fi; \
-            if (( $anything_unstaged )); then \
+            if [ "$anything_unstaged" == 1 ]; then \
                 git cherry-pick $staged_hash; \
                 git reset HEAD^; \
             fi; \
