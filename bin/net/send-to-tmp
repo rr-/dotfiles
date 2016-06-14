@@ -6,6 +6,7 @@ import os
 import sys
 import shlex
 import tarfile
+import urllib.parse
 import subprocess
 import io
 
@@ -61,7 +62,8 @@ def send(src_paths):
         dst_path = os.path.join(BASE_DIR, target_name)
         tar.add(src_path, arcname=target_name)
         commands.append('chmod 0644 %s' % shlex.quote(dst_path))
-        urls.append(BASE_URL + target_name.replace('\\', '/'))
+        urls.append(BASE_URL + urllib.parse.quote(
+            target_name.replace('\\', '/')))
 
     cmdline = ['ssh', REMOTE_HOST, ';'.join(commands)]
 
