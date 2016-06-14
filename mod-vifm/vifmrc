@@ -4,7 +4,7 @@
 set confirm=permdelete
 
 " the command to start vi
-set vicmd=vim
+set vicmd=nvim
 
 " vifm tells not to change this, so I leave it
 set trash
@@ -70,9 +70,9 @@ mark h ~/
 " ------------------------------------------------------------------------------
 " custom commands
 command! df df -h %m 2> /dev/null
-command! diff vim -d %f %F
+command! diff nvim -d %f %F
 command! zip zip -r %f.zip %f
-command! vgrep vim "+grep %a"
+command! vgrep nvim "+grep %a"
 command! reload :write | restart
 command! extract for x in %"f; do 7z x -o"${${x##*/}%%.*}" "$x"; done
 
