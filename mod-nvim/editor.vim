@@ -64,6 +64,11 @@ let &spellfile=
   \$HOME.'/.config/'.s:dir.'/spell/en.utf-8.add,'.
   \$HOME.'/.config/'.s:dir.'/spell/pl.utf-8.add'
 
+"folds
+set foldopen-=block           "{ and } skips over folds
+set foldmethod=indent         "fold basing on indent (to be used with zM / zR)
+set foldnestmax=2             "don't fold too deep
+
 "storage
 "double slash prevents file name collision, by using full file paths
 set backup            "enable backups
