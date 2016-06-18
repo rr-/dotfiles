@@ -44,6 +44,8 @@ nnoremap <F2> :NERDTreeToggle<CR>
 "locate current file in NERDtree
 inoremap <F3> <esc>:NERDTreeFind<CR>
 nnoremap <F3> :NERDTreeFind<CR>
+"toggle folds
+nnoremap <space> za
 "EasyAlign
   "normal mode (e.g. gaip)
   nmap ga <Plug>(EasyAlign)
