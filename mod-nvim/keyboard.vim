@@ -51,3 +51,16 @@ nnoremap <space> za
   nmap ga <Plug>(EasyAlign)
   "visual mode (e.g. vipga)
   xmap ga <Plug>(EasyAlign)
+
+"readline emulation
+"(rsi.vim breaks a lot of things and caused me big frustration)
+cnoremap <C-a> <Home>
+cnoremap <C-e> <End>
+cnoremap <C-b> <Left>
+cnoremap <C-f> <Right>
+cnoremap <C-p> <Up>
+cnoremap <C-n> <Down>
+cnoremap <C-d> <Del>
+cnoremap <C-k> <C-\>e getcmdpos() == 1 ? '' : getcmdline()[:getcmdpos()-2]<CR>
+cnoremap <M-b> <S-Left>
+cnoremap <M-f> <S-Right>
