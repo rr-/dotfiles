@@ -16,6 +16,7 @@ Plug 'matze/vim-move'                   "move lines up/down with c-k/c-j
 Plug 'rr-/vim-hexdec'                   "convert hex to dec and vice versa
 Plug 'junegunn/vim-easy-align'          "replace :column ...
 Plug 'bronson/vim-visual-star-search'   "enable * and # in visual mode
+Plug 'duggiefresh/vim-easydir'          "create directories on save
 call plug#end()
 
 runtime editor.vim
