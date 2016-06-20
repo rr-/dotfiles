@@ -15,6 +15,7 @@ set nofoldenable              "disable folding
 
 "fix fast hitting escape + <key> being interpreted as escape sequence
 if !has('gui_running')
+  set ttimeout
   set ttimeoutlen=10
   augroup FastEscape
     autocmd!
