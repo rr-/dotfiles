@@ -51,6 +51,10 @@ def download(url, path, overwrite=False):
         logger.info('Downloading %r into %r...', url, path)
         urllib.request.urlretrieve(url, path)
 
+def exists(path):
+    path = expand_path(path)
+    return os.path.exists(path)
+
 def create_file(path, content=None, overwrite=False):
     path = expand_path(path)
     dir_path = os.path.dirname(path)
