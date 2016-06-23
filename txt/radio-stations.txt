@@ -1,105 +1,103 @@
-# vim:set nospell syntax=config:
+re:noize                       | http://stream.clubrenoize.com:9001/
+vapor plaza.one                | https://plaza.one/ogg
+vapor virtual plaza radio      | http://radio.ivan.moe/icecast/vpr-playlist?420
+revival kult                   | http://www.revivalkult.de/radio/winamp.pls
+happyhardcore.com              | http://www.happyhardcore.com/livestreams/hardcore.pls
 
-http://stream.clubrenoize.com:9001/                       # re:noize
-https://plaza.one/ogg                                     # Nightwave Plaza
-http://radio.ivan.moe/icecast/vpr-playlist?420            # Virtual Plaza Radio
-http://www.revivalkult.de/radio/winamp.pls                # Revival kult
-http://www.happyhardcore.com/livestreams/hardcore.pls     # HappyHardcore.com
+Post rock music                | http://www.post-rock.ro/pls/postrockmusic.pls
 
-http://www.post-rock.ro/pls/postrockmusic.pls             # post-rock.ro
-
-http://diforfree.org/pls/di_00sclubhits_hi.m3u
-http://diforfree.org/pls/di_ambient_hi.m3u
-http://diforfree.org/pls/di_bassnjackinhouse_hi.m3u
-http://diforfree.org/pls/di_bassline_hi.m3u
-http://diforfree.org/pls/di_bigbeat_hi.m3u
-http://diforfree.org/pls/di_bigroomhouse_hi.m3u
-http://diforfree.org/pls/di_breaks_hi.m3u
-http://diforfree.org/pls/di_chillntropicalhouse_hi.m3u
-http://diforfree.org/pls/di_chillhop_hi.m3u
-http://diforfree.org/pls/di_chillout_hi.m3u
-http://diforfree.org/pls/di_chilloutdreams_hi.m3u
-http://diforfree.org/pls/di_chillstep_hi.m3u
-http://diforfree.org/pls/di_classiceurodance_hi.m3u
-http://diforfree.org/pls/di_classiceurodisco_hi.m3u
-http://diforfree.org/pls/di_classictrance_hi.m3u
-http://diforfree.org/pls/di_classicvocaltrance_hi.m3u
-http://diforfree.org/pls/di_clubdubstep_hi.m3u
-http://diforfree.org/pls/di_club_hi.m3u
-http://diforfree.org/pls/di_darkdnb_hi.m3u
-http://diforfree.org/pls/di_deephouse_hi.m3u
-http://diforfree.org/pls/di_deepnudisco_hi.m3u
-http://diforfree.org/pls/di_deeptech_hi.m3u
-http://diforfree.org/pls/di_discohouse_hi.m3u
-http://diforfree.org/pls/di_djmixes_hi.m3u
-http://diforfree.org/pls/di_downtempolounge_hi.m3u
-http://diforfree.org/pls/di_drumandbass_hi.m3u
-http://diforfree.org/pls/di_dub_hi.m3u
-http://diforfree.org/pls/di_dubtechno_hi.m3u
-http://diforfree.org/pls/di_dubstep_hi.m3u
-http://diforfree.org/pls/di_eclectronica_hi.m3u
-http://diforfree.org/pls/di_electrohouse_hi.m3u
-http://diforfree.org/pls/di_electroswing_hi.m3u
-http://diforfree.org/pls/di_electropop_hi.m3u
-http://diforfree.org/pls/di_epictrance_hi.m3u
-http://diforfree.org/pls/di_eurodance_hi.m3u
-http://diforfree.org/pls/di_funkyhouse_hi.m3u
-http://diforfree.org/pls/di_futuregarage_hi.m3u
-http://diforfree.org/pls/di_futuresynthpop_hi.m3u
-http://diforfree.org/pls/di_gabber_hi.m3u
-http://diforfree.org/pls/di_goapsy_hi.m3u
-http://diforfree.org/pls/di_handsup_hi.m3u
-http://diforfree.org/pls/di_harddance_hi.m3u
-http://diforfree.org/pls/di_hardtechno_hi.m3u
-http://diforfree.org/pls/di_hardcore_hi.m3u
-http://diforfree.org/pls/di_hardstyle_hi.m3u
-http://diforfree.org/pls/di_house_hi.m3u
-http://diforfree.org/pls/di_indiedance_hi.m3u
-http://diforfree.org/pls/di_jazzhouse_hi.m3u
-http://diforfree.org/pls/di_jungle_hi.m3u
-http://diforfree.org/pls/di_latinhouse_hi.m3u
-http://diforfree.org/pls/di_liquiddnb_hi.m3u
-http://diforfree.org/pls/di_liquiddubstep_hi.m3u
-http://diforfree.org/pls/di_liquidtrap_hi.m3u
-http://diforfree.org/pls/di_lounge_hi.m3u
-http://diforfree.org/pls/di_mainstage_hi.m3u
-http://diforfree.org/pls/di_melodicprogressive_hi.m3u
-http://diforfree.org/pls/di_minimal_hi.m3u
-http://diforfree.org/pls/di_nightcore_hi.m3u
-http://diforfree.org/pls/di_nudisco_hi.m3u
-http://diforfree.org/pls/di_oldschoolacid_hi.m3u
-http://diforfree.org/pls/di_oldschoolhouse_hi.m3u
-http://diforfree.org/pls/di_oldschoolrave_hi.m3u
-http://diforfree.org/pls/di_classicelectronica_hi.m3u
-http://diforfree.org/pls/di_progressive_hi.m3u
-http://diforfree.org/pls/di_progressivepsy_hi.m3u
-http://diforfree.org/pls/di_psybient_hi.m3u
-http://diforfree.org/pls/di_psychill_hi.m3u
-http://diforfree.org/pls/di_russianclubhits_hi.m3u
-http://diforfree.org/pls/di_soulfulhouse_hi.m3u
-http://diforfree.org/pls/di_spacemusic_hi.m3u
-http://diforfree.org/pls/di_techhouse_hi.m3u
-http://diforfree.org/pls/di_techno_hi.m3u
-http://diforfree.org/pls/di_trance_hi.m3u
-http://diforfree.org/pls/di_trap_hi.m3u
-http://diforfree.org/pls/di_tribalhouse_hi.m3u
-http://diforfree.org/pls/di_umfradio_hi.m3u
-http://diforfree.org/pls/di_undergroundtechno_hi.m3u
-http://diforfree.org/pls/di_vocalchillout_hi.m3u
-http://diforfree.org/pls/di_vocallounge_hi.m3u
-http://diforfree.org/pls/di_vocaltrance_hi.m3u
-http://diforfree.org/pls/radiotunes_80srock_hi.m3u
-http://diforfree.org/pls/radiotunes_altrock_hi.m3u
-http://diforfree.org/pls/radiotunes_classicrock_hi.m3u
-http://diforfree.org/pls/radiotunes_hardrock_hi.m3u
-http://diforfree.org/pls/radiotunes_metal_hi.m3u
-http://diforfree.org/pls/radiotunes_modernrock_hi.m3u
-http://diforfree.org/pls/radiotunes_newage_hi.m3u
-http://diforfree.org/pls/radiotunes_vocalnewage_hi.m3u
-http://diforfree.org/pls/jazzradio_mellowsmoothjazz_hi.m3u
-http://diforfree.org/pls/jazzradio_pianojazz_hi.m3u
-http://diforfree.org/pls/jazzradio_sinatrastyle_hi.m3u
-http://diforfree.org/pls/jazzradio_smoothjazz_hi.m3u
-http://diforfree.org/pls/jazzradio_smoothjazz247_hi.m3u
-http://diforfree.org/pls/jazzradio_smoothuptempo_hi.m3u
-http://diforfree.org/pls/rockradio_90srock_hi.m3u
+DI 00s club hits               | http://diforfree.org/pls/di_00sclubhits_hi.m3u
+DI ambient                     | http://diforfree.org/pls/di_ambient_hi.m3u
+DI bass n jack in house        | http://diforfree.org/pls/di_bassnjackinhouse_hi.m3u
+DI bassline                    | http://diforfree.org/pls/di_bassline_hi.m3u
+DI big beat                    | http://diforfree.org/pls/di_bigbeat_hi.m3u
+DI big room house              | http://diforfree.org/pls/di_bigroomhouse_hi.m3u
+DI breaks                      | http://diforfree.org/pls/di_breaks_hi.m3u
+DI chill n tropical house      | http://diforfree.org/pls/di_chillntropicalhouse_hi.m3u
+DI chillhop                    | http://diforfree.org/pls/di_chillhop_hi.m3u
+DI chillout                    | http://diforfree.org/pls/di_chillout_hi.m3u
+DI chillout dreams             | http://diforfree.org/pls/di_chilloutdreams_hi.m3u
+DI chillstep                   | http://diforfree.org/pls/di_chillstep_hi.m3u
+DI classic euro dance          | http://diforfree.org/pls/di_classiceurodance_hi.m3u
+DI classic euro disco          | http://diforfree.org/pls/di_classiceurodisco_hi.m3u
+DI classic trance              | http://diforfree.org/pls/di_classictrance_hi.m3u
+DI classic vocal trance        | http://diforfree.org/pls/di_classicvocaltrance_hi.m3u
+DI club dubstep                | http://diforfree.org/pls/di_clubdubstep_hi.m3u
+DI club                        | http://diforfree.org/pls/di_club_hi.m3u
+DI dark drum n bass            | http://diforfree.org/pls/di_darkdnb_hi.m3u
+DI deep house                  | http://diforfree.org/pls/di_deephouse_hi.m3u
+DI deep nu disco               | http://diforfree.org/pls/di_deepnudisco_hi.m3u
+DI deep tech                   | http://diforfree.org/pls/di_deeptech_hi.m3u
+DI disco house                 | http://diforfree.org/pls/di_discohouse_hi.m3u
+DI dj mixes                    | http://diforfree.org/pls/di_djmixes_hi.m3u
+DI downtempo lounge            | http://diforfree.org/pls/di_downtempolounge_hi.m3u
+DI drum n bass                 | http://diforfree.org/pls/di_drumandbass_hi.m3u
+DI dub                         | http://diforfree.org/pls/di_dub_hi.m3u
+DI dub techno                  | http://diforfree.org/pls/di_dubtechno_hi.m3u
+DI dubstep                     | http://diforfree.org/pls/di_dubstep_hi.m3u
+DI eclectronica                | http://diforfree.org/pls/di_eclectronica_hi.m3u
+DI electro house               | http://diforfree.org/pls/di_electrohouse_hi.m3u
+DI electro swing               | http://diforfree.org/pls/di_electroswing_hi.m3u
+DI electro pop                 | http://diforfree.org/pls/di_electropop_hi.m3u
+DI epic trance                 | http://diforfree.org/pls/di_epictrance_hi.m3u
+DI euro dance                  | http://diforfree.org/pls/di_eurodance_hi.m3u
+DI funky house                 | http://diforfree.org/pls/di_funkyhouse_hi.m3u
+DI future garage               | http://diforfree.org/pls/di_futuregarage_hi.m3u
+DI future synthpop             | http://diforfree.org/pls/di_futuresynthpop_hi.m3u
+DI gabber                      | http://diforfree.org/pls/di_gabber_hi.m3u
+DI goa-psy                     | http://diforfree.org/pls/di_goapsy_hi.m3u
+DI hands up                    | http://diforfree.org/pls/di_handsup_hi.m3u
+DI hard dance                  | http://diforfree.org/pls/di_harddance_hi.m3u
+DI hard techno                 | http://diforfree.org/pls/di_hardtechno_hi.m3u
+DI hardcore                    | http://diforfree.org/pls/di_hardcore_hi.m3u
+DI hardstyle                   | http://diforfree.org/pls/di_hardstyle_hi.m3u
+DI house                       | http://diforfree.org/pls/di_house_hi.m3u
+DI indie dance                 | http://diforfree.org/pls/di_indiedance_hi.m3u
+DI jazz house                  | http://diforfree.org/pls/di_jazzhouse_hi.m3u
+DI jungle                      | http://diforfree.org/pls/di_jungle_hi.m3u
+DI latin house                 | http://diforfree.org/pls/di_latinhouse_hi.m3u
+DI liquid dnb                  | http://diforfree.org/pls/di_liquiddnb_hi.m3u
+DI liquid dubstep              | http://diforfree.org/pls/di_liquiddubstep_hi.m3u
+DI liquid trap                 | http://diforfree.org/pls/di_liquidtrap_hi.m3u
+DI lounge                      | http://diforfree.org/pls/di_lounge_hi.m3u
+DI mainstage                   | http://diforfree.org/pls/di_mainstage_hi.m3u
+DI melodic progressive         | http://diforfree.org/pls/di_melodicprogressive_hi.m3u
+DI minimal                     | http://diforfree.org/pls/di_minimal_hi.m3u
+DI nightcore                   | http://diforfree.org/pls/di_nightcore_hi.m3u
+DI nu disco                    | http://diforfree.org/pls/di_nudisco_hi.m3u
+DI oldschool acid              | http://diforfree.org/pls/di_oldschoolacid_hi.m3u
+DI oldschool house             | http://diforfree.org/pls/di_oldschoolhouse_hi.m3u
+DI oldschool rave              | http://diforfree.org/pls/di_oldschoolrave_hi.m3u
+DI classic electronica         | http://diforfree.org/pls/di_classicelectronica_hi.m3u
+DI progressive                 | http://diforfree.org/pls/di_progressive_hi.m3u
+DI progressive psy             | http://diforfree.org/pls/di_progressivepsy_hi.m3u
+DI psybient                    | http://diforfree.org/pls/di_psybient_hi.m3u
+DI psychill                    | http://diforfree.org/pls/di_psychill_hi.m3u
+DI russian club hits           | http://diforfree.org/pls/di_russianclubhits_hi.m3u
+DI soulful house               | http://diforfree.org/pls/di_soulfulhouse_hi.m3u
+DI space music                 | http://diforfree.org/pls/di_spacemusic_hi.m3u
+DI tech house                  | http://diforfree.org/pls/di_techhouse_hi.m3u
+DI techno                      | http://diforfree.org/pls/di_techno_hi.m3u
+DI trance                      | http://diforfree.org/pls/di_trance_hi.m3u
+DI trap                        | http://diforfree.org/pls/di_trap_hi.m3u
+DI tribal house                | http://diforfree.org/pls/di_tribalhouse_hi.m3u
+DI umf radio                   | http://diforfree.org/pls/di_umfradio_hi.m3u
+DI underground techno          | http://diforfree.org/pls/di_undergroundtechno_hi.m3u
+DI vocal chillout              | http://diforfree.org/pls/di_vocalchillout_hi.m3u
+DI vocal lounge                | http://diforfree.org/pls/di_vocallounge_hi.m3u
+DI vocal trance                | http://diforfree.org/pls/di_vocaltrance_hi.m3u
+radio tunes 80s rock           | http://diforfree.org/pls/radiotunes_80srock_hi.m3u
+radio tunes alt rock           | http://diforfree.org/pls/radiotunes_altrock_hi.m3u
+radio tunes classic rock       | http://diforfree.org/pls/radiotunes_classicrock_hi.m3u
+radio tunes hard rock          | http://diforfree.org/pls/radiotunes_hardrock_hi.m3u
+radio tunes metal              | http://diforfree.org/pls/radiotunes_metal_hi.m3u
+radio tunes modern rock        | http://diforfree.org/pls/radiotunes_modernrock_hi.m3u
+radio tunes new age            | http://diforfree.org/pls/radiotunes_newage_hi.m3u
+radio tunes vocal new age      | http://diforfree.org/pls/radiotunes_vocalnewage_hi.m3u
+radio tunes mellow smooth jazz | http://diforfree.org/pls/jazzradio_mellowsmoothjazz_hi.m3u
+radio tunes piano jazz         | http://diforfree.org/pls/jazzradio_pianojazz_hi.m3u
+radio tunes sinatra style      | http://diforfree.org/pls/jazzradio_sinatrastyle_hi.m3u
+radio tunes smooth jazz        | http://diforfree.org/pls/jazzradio_smoothjazz_hi.m3u
+radio tunes smooth jazz 247    | http://diforfree.org/pls/jazzradio_smoothjazz247_hi.m3u
+radio tunes smooth uptempo     | http://diforfree.org/pls/jazzradio_smoothuptempo_hi.m3u
+radio tunes 90s rock           | http://diforfree.org/pls/rockradio_90srock_hi.m3u
