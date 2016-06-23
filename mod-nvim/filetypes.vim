@@ -21,3 +21,6 @@ au FileType text,xml,json setlocal syntax=
 "automatically sort word lists and generate spell files
 au BufWritePre */spell/*.add %sort i
 au BufWritePost */spell/*.add silent mkspell! %
+
+"disable spellcheck in urls
+au FileType text,markdown syn match UrlNoSpell "\w\+:\/\/[^[:space:]]\+" contains=@NoSpell
