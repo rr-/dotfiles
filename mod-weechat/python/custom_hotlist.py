@@ -55,11 +55,13 @@ def hotlist_item_cb(data, item, window):
 
         ptr_hotlist = w.hdata_move(hdata_hotlist, ptr_hotlist, 1)
 
-    result = ''
+    items = []
     for number, priority in sorted(priorities.items()):
-        result += w.color(COLORS[priority]) + ' %s ' % titles[number]
-    result += w.color('reset')
-    return result
+        items.append('%s %s %s' % (
+            w.color(COLORS[priority]),
+            titles[number],
+            w.color('reset')))
+    return ' '.join(items)
 
 def hotlist_hook_cb(data, signal, signal_data):
     w.bar_item_update('custom_hotlist')
