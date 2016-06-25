@@ -24,9 +24,9 @@ silent! execute 'colorscheme '.theme
 if &background == 'dark'
   highlight ColorColumn ctermbg=235
 else
-  highlight Normal ctermbg=NONE
   highlight ColorColumn ctermbg=255
 end
+highlight Normal guibg=NONE
 
 "airline color scheme
 if &background == 'dark'
