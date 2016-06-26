@@ -1,26 +1,23 @@
-#!/bin/sh
+#!/bin/bash
 window_id=$1
 window_class=$2
 instance=$3
 title=$(xdotool getwindowname "$window_id")
 
-if [ "$window_class" = Pidgin ] ; then
-    case "$title" in
-        buddy*list|Buddy*List)
-            echo 'state=floating'
-            xdotool windowmove "$window_id" 3440 90
-            ;;
-        *)
-            echo 'state=floating'
-            xdotool windowmove "$window_id" 1990 90
-            ;;
-    esac
-elif [ "$instance" = remote_irc ] ; then
+if [ "$instance" = remote_irc ] ; then
     echo desktop=IM
     xdotool windowmove "$window_id" 1990 90 windowsize "$window_id" 800 455
 elif [ "$title" = send-to-yume ]; then
+    compton-trans -c 50 -w "$window_id"
+    width=$(xdotool getwindowgeometry --shell "$window_id" | head -4 | tail -1 | sed 's/[^0-9]*//')
+    height=$(xdotool getwindowgeometry --shell "$window_id" | head -5 | tail -1 | sed 's/[^0-9]*//')
+    newWidth=1000
+    newHeight=750
+    x=$(((width-newWidth)/2))
+    y=$(((height-newHeight)/2))
+    xdotool windowsize "$window_id" $newWidth $newHeight
+    xdotool windowmove "$window_id" --relative -- $x $y
     echo 'state=floating layer=above'
-    compton-trans -c 70 -w "$window_id"
 elif [ "$instance" = trackma ]; then
     echo desktop=10
     echo 'state=floating layer=above'

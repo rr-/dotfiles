@@ -1,500 +1,86 @@
 #!/usr/bin/python3
 
-''' Sends files to yume.pl. '''
+''' Sends files to yume.pl via its API and outputs copyable links. '''
 
-import argparse
-import re
-import json
 import os
 import sys
-import copy
-import readline
-import traceback
+import json
+import argparse
+import requests
+from dotfiles import config
 
-try:
-    import requests
-    import colorama
-except ImportError as ex:
-    if ex.name is None:
-        raise
-    print('Please install %s.' % ex.name)
-    sys.exit(1)
+config_key = config['send-to-yume']
 
-def make_unique(input_list):
-    ''' Makes input list unique, while preserving element order. '''
-    output = set()
-    return [x for x in input_list if not (x in output or output.add(x))]
+API_URL = config_key.get('api-url', 'https://yume.pl/api/')
+BASE_URL = config_key.get('base-url', 'https://yume.pl/#/post/')
+USER_NAME = config_key['user']
+PASSWORD = config_key['password']
 
-def colored(what, color):
-    ''' Prints the text in the color of choice. '''
-    color_code = getattr(
-        colorama.Fore, color.upper().replace('LIGHT', '').strip('_'))
-    if 'light' in color.lower():
-        color_code += colorama.Style.BRIGHT
-    reset_code = colorama.Style.RESET_ALL
-    return color_code + str(what) + reset_code
-
-class istr(str):
-    ''' A string that behaves case insensitively. '''
-    def __init__(self, *_):
-        super().__init__()
-        self._lowered = str.lower(self)
-    def __repr__(self):
-        return '%s(%s)' % (type(self).__name__, str.__repr__(self))
-    def __hash__(self):
-        return hash(self._lowered)
-    def lower(self):
-        return self._lowered
-    @staticmethod
-    def init():
-        def _make_case_insensitive(name):
-            original_method = getattr(str, name)
-            def func(self, other, *args):
-                try:
-                    other = other.lower()
-                except (TypeError, AttributeError, ValueError):
-                    pass
-                return original_method(self._lowered, other, *args)
-            setattr(istr, name, func)
-        for name in 'eq ne lt le gt ge contains'.split():
-            _make_case_insensitive('__%s__' % name)
-        for name in 'count endswith find index rfind rindex startswith'.split():
-            _make_case_insensitive(name)
-        del _make_case_insensitive
-istr.init()
-
-
-class Tag(object):
-    ''' One tag '''
-    def __init__(self, name=None, usages=0):
-        self.name = name
-        self.usages = usages
-        self.implications = []
-        self.suggestions = []
-
-    @staticmethod
-    def from_api_response(response):
-        ''' Creates the tag from an API response. '''
-        tag = Tag(name=istr(response['name']), usages=response['usages'])
-        if 'implications' in response:
-            tag.implications = [istr(t) for t in response['implications']]
-        if 'suggestions' in response:
-            tag.suggestions = [istr(t) for t in response['suggestions']]
-        return tag
-
-class Post(object):
-    ''' One post '''
-    def __init__(self):
-        self.id = None
-        self.tags = None
-        self.safety = 'safe'
-        self.content_file_name = None
-        self.last_edit_time = None
-
-    @staticmethod
-    def from_api_response(response):
-        ''' Creates the post from an API response. '''
-        post = Post()
-        post.id = response['id']
-        post.tags = [Tag.from_api_response(t) for t in response['tags']]
-        post.safety = response['safety']
-        post.last_edit_time = response['lastEditTime']
-        return post
-
-class BooruApiError(RuntimeError):
-    ''' An API error '''
-    def __init__(self, text, trace):
-        super().__init__()
-        self.text = text
-        self.trace = trace
-
-    @staticmethod
-    def from_api_response(raw_response):
-        ''' Creates the error from an API response. '''
-        try:
-            response = json.loads(raw_respons)
-            return BooruApiError(
-                text=response['error'],
-                trace=respone['stacktrace'])
-        except:
-            return BooruApiError(text=raw_response, trace=None)
-
-class BooruApi(object):
-    ''' The szurubooru API facade '''
-    def __init__(self, url):
-        self.session = requests.Session()
-        self.api_url = url + '/api'
-        self.data_url = url + '/data'
-
-    def get_tags(self):
-        ''' Retrives list of all tags sorted by their usages. '''
-        response = self.session.get(self.data_url + '/tags.json', verify=False)
-        tags = [Tag.from_api_response(t) for t in json.loads(response.text)]
-        return sorted(tags, key=lambda tag: -tag.usages)
-
-    def get_tag_siblings(self, word):
-        ''' Retrieves list of sibling tags for a given tag. '''
-        response = BooruApi._verify_response(
-            self.session.get(
-                self.api_url + '/tags/' + str(word) + '/siblings'))
-        return [
-            Tag.from_api_response(t) for t in json.loads(response.text)['tags']]
-
-    def login(self, user, password):
-        ''' Authenticates to the API using provided credentials. '''
-        response = BooruApi._verify_response(
-            self.session.post(
-                self.api_url + '/login',
-                data={'userNameOrEmail': user, 'password': password},
-                verify=False))
-        auth_token = json.loads(response.text)['token']['name']
-        self.session.headers.update({'x-authorization-token': auth_token})
-
-    def upload_post(self, post, content_path):
-        ''' Uploads a post. '''
-        with open(content_path, 'rb') as handle:
-            files = {'content': handle}
-            BooruApi._verify_response(
-                self.session.post(
-                    self.api_url + '/posts',
-                    files=files,
-                    data={
-                        'contentFileName': post.content_file_name,
-                        'source': '',
-                        'safety': post.safety,
-                        'anonymous': 0,
-                        'tags': ' '.join(t.name for t in post.tags)
-                    }))
-
-    def update_post(self, post):
-        ''' Updates existing post. '''
-        BooruApi._verify_response(
-            self.session.post(
-                self.api_url + '/posts/' + str(post.id),
-                data={
-                    'safety': post.safety,
-                    'tags': ' '.join(t.name for t in post.tags),
-                    'lastEditTime': post.last_edit_time,
-                }))
-
-    def get_post(self, post_id):
-        ''' Retrieves a post by its ID. '''
-        response = BooruApi._verify_response(
-            self.session.get(
-                self.api_url + '/posts/' + str(post_id)))
-        return Post.from_api_response(json.loads(response.text)['post'])
-
-    @staticmethod
-    def _verify_response(response):
-        ''' Throws an error if the response didn't met expectations. '''
-        if response.status_code != 200:
-            raise BooruApiError.from_api_response(response.text)
-        return response
-
-
-
-class Tagger(object):
-    ''' Interactive, readline-based tagging REPL. '''
-    def __init__(self, tagger_settings, booru_api):
-        self.chosen_tags = []
-        self.install_tag_completer()
-        self.tag_dict = {tag.name: tag for tag in tagger_settings}
-        self.all_tags = [tag.name for tag in tagger_settings]
-        self.booru_api = booru_api
-
-    def install_tag_completer(self):
-        '''
-        Tinkers with readline to provide good tagging experience. Namely, it
-        tries to simulate the autocomplete logic found in web upload form.
-        '''
-        self.rl_completion_append_character = None
-        self.rl_completion_suppress_append = None
-
-        for lib in ['libreadline.so', 'libreadline.dll', 'cygreadline7.dll']:
-            try:
-                import ctypes
-                libreadline = ctypes.cdll.LoadLibrary(lib)
-                ctypes.c_ulong.in_dll(
-                    libreadline, 'rl_sort_completion_matches').value = 0
-                self.rl_completion_append_character = ctypes.c_char.in_dll(
-                    libreadline, 'rl_completion_append_character')
-                self.rl_completion_suppress_append = ctypes.c_int.in_dll(
-                    libreadline, 'rl_completion_suppress_append')
-            except:
-                pass
-
-        def completer(text, state):
-            if self.rl_completion_append_character is not None:
-                self.rl_completion_append_character.value = ord(' ')
-            if self.rl_completion_suppress_append is not None:
-                self.rl_completion_suppress_append.value = 0
-
-            if len(text) >= 3:
-                options = [tag for tag in self.all_tags if text in tag]
-            else:
-                options = [tag for tag in self.all_tags if tag.startswith(text)]
-
-            try:
-                return options[state]
-            except IndexError:
-                return None
-
-        readline.set_completer(completer)
-        readline.parse_and_bind('tab: menu-complete')
-
-    def print(self):
-        ''' Prints colored list of tags to standard output. '''
-        for word in self.chosen_tags:
-            color = 'light_cyan' if word in self.tag_dict else 'light_red'
-            print(colored('+ %s' % word, color))
-
-    def tagged(self, word):
-        ''' Returns whether the tag list already contains given tag. '''
-        return word in self.chosen_tags
-
-    def remove(self, word):
-        ''' Removes the tag from the list. '''
-        if word in self.chosen_tags:
-            self.chosen_tags.remove(word)
-
-    def add(self, tag):
-        '''
-        Adds a tag to the list.
-        Doesn't add suggestions or implications.
-        '''
-        if tag in self.chosen_tags:
-            return
-        self.chosen_tags.append(tag)
-        if tag not in self.tag_dict:
-            print(colored('Warning: new tag', 'light_red'))
-
-    def add_from_user_input(self):
-        '''
-        Asks the user to provide the tag. When the user finishes typing, for:
-            tag - add tag to the list.
-            -tag - remove tag from the list.
-            ?tag - show suggestions and implications for the tag.
-            ??tag - show siblings for the tag.
-        Also recursively adds implications and prints suggestions to the
-        standard output for any newly added tags.
-        '''
-        try:
-            while True:
-                line = input('#' + str(len(self.chosen_tags)) + '> ').strip()
-                if line == '':
-                    self.print()
-                    continue
-
-                previous_tags = copy.deepcopy(self.chosen_tags)
-                for word in make_unique(re.split('\s+', line)):
-                    self._handle_input_word(word)
-                new_tags = [
-                    word
-                    for word in self.chosen_tags
-                    if word not in previous_tags]
-
-                stack = copy.deepcopy(new_tags)
-                implications = []
-                suggestions = []
-                while stack:
-                    word = stack.pop()
-                    if word not in self.tag_dict:
-                        continue
-                    tag = self.tag_dict[word]
-                    for implication in tag.implications:
-                        if implication not in self.chosen_tags:
-                            implications.append(implication)
-                            stack.append(implication)
-                    for suggestion in tag.suggestions:
-                        if suggestion not in self.chosen_tags:
-                            suggestions.append(suggestion)
-                implications = make_unique(implications)
-                suggestions = make_unique(suggestions)
-                suggestions = [x for x in suggestions if x not in implications]
-                for implication in implications:
-                    print(colored('+ ' + implication, 'green'))
-                    self.add(implication)
-                for suggestion in suggestions:
-                    print(colored('? ' + suggestion, 'yellow'))
-
-        except EOFError:
-            print('(EOF)')
-
-    def _handle_input_word(self, word):
-        '''
-        The callback executed when the user finishes typing text.
-        '''
-        if word.startswith('-'):
-            tag = istr(word[1:])
-            if tag:
-                self.remove(tag)
-            else:
-                if self.chosen_tags:
-                    self.remove(self.chosen_tags[-1])
-                else:
-                    print(colored('No tags to remove', 'yellow'))
-        elif word.startswith('??'):
-            tag = istr(word[2:])
-            for sibling_tag in self.booru_api.get_tag_siblings(tag)[0:20]:
-                print(colored('? %s' % sibling_tag.name, 'yellow'))
-        elif word.startswith('?'):
-            tag = istr(word[1:])
-            if tag not in self.tag_dict:
-                print(colored('No such tag', 'yellow'))
-                return
-            for implied_tag in self.tag_dict[tag].implications:
-                print(colored('? %s' % implied_tag, 'green'))
-            for suggested_tag in self.tag_dict[tag].suggestions:
-                print(colored('? %s' % suggested_tag, 'yellow'))
-        else:
-            tag = istr(word)
-            self.add(tag)
-
-    def get(self):
-        ''' Retrieves the list of the tags. '''
-        return [Tag(name=word) for word in self.chosen_tags]
-
-
+SAFETY_MAP = {
+    'safe': 'safe',
+    'sketchy': 'sketchy',
+    'questionable': 'sketchy',
+    'unsafe': 'unsafe',
+    'explicit': 'unsafe',
+    'q': 'sketchy',
+    'e': 'unsafe',
+}
 
 def parse_args():
-    ''' Parses the CLI arguments. '''
     parser = argparse.ArgumentParser(
-        description='Sends post to szurubooru from CLI')
+        description='Sends post to gelbooru from CLI')
     parser.add_argument(
-        '-c', '--config', metavar='CONFIG_PATH',
-        help='path to config JSON file', default='~/.config/booru.json')
+        '-s', '--safety', choices=SAFETY_MAP.keys(),
+        required=False, default='safe', help='safety')
     parser.add_argument(
-        '-w', '--wait', choices=['always', 'errors', 'never'],
-        default='never', help='wait before exiting on errors')
+        '--source', default='', help='source')
+    parser.add_argument(
+        '-t', '--tags', required=False, default='tagme',
+        help='list of space separated tags')
     parser.add_argument(
         metavar='POST_PATH', dest='path',
         help='path to the post')
     return parser.parse_args()
 
-def wait_for_user_input(message='Press Enter to continue...'):
-    ''' Waits till the user presses enter. '''
-    input(message)
+def send(args):
+    if not args.path:
+        print('Nothing to send.', file=sys.stderr)
+        return False
 
-def load_config(path):
-    '''
-    Loads JSON configuration from path.
-    If the path doesn't exist, prints an error.
-    '''
-    config = {}
-    if path:
-        path = os.path.expanduser(path)
-        if not os.path.exists(path):
-            print(colored('Warning: %s does not exist' % path, 'yellow'))
-        else:
-            with open(path, 'r') as handle:
-                config = json.load(handle)
-    return config
+    session = requests.Session()
+    response = session.post(
+        API_URL + 'login',
+        data={'userNameOrEmail': USER_NAME, 'password': PASSWORD})
+    auth_token = json.loads(response.text)['token']['name']
+    session.headers.update({'x-authorization-token': auth_token})
 
-def fill_config(config):
-    '''
-    Fills the gaps within config (for example, if it doesn't exist) by asking
-    the user to provide credentials etc. interactively.
-    '''
-    if 'url' not in config:
-        config['url'] = input('Booru URL: ')
-    if 'user' not in config:
-        config['user'] = input('User: ')
-    if 'password' not in config:
-        from getpass import getpass
-        config['password'] = getpass('Password: ')
-
-def update_tags(booru_api, post_id, chosen_tags):
-    post = booru_api.get_post(post_id)
-    existing_tags = post.tags
-
-    new_tags = {t.name: t for t in chosen_tags}
-    for tag in existing_tags:
-        if tag.name in new_tags:
-            del new_tags[tag.name]
-    new_tags = list(new_tags.values())
-
-    if not new_tags:
-        print('No new tags.')
-        return
-    print('Existing tags: %s' % ', '.join(t.name for t in existing_tags))
-    print('New tags: %s' % colored(
-        ', '.join(t.name for t in new_tags), 'light_green'))
-    post.tags = existing_tags + new_tags
-    wait_for_user_input('Press Enter to add new tags, Ctrl+C to exit...')
-    booru_api.update_post(post)
-    print(colored('Tags merge successful!', 'green'))
-
-def upload(booru_api, tagger_settings, args):
-    if not os.path.exists(args.path):
-        raise RuntimeError('Post file does not exist')
-
-    print('Entering tagging mode.', end=' ')
-    print('^D to finish,', end=' ')
-    print('^C to abort.')
-
-    tagger = Tagger(tagger_settings, booru_api)
-    tagger.add_from_user_input()
-
-    chosen_safety = 'safe'
-    for safety in ['safe', 'sketchy', 'unsafe']:
-        if tagger.tagged(safety):
-            chosen_safety = safety
-            tagger.remove(safety)
-    chosen_tags = set(tagger.get())
-
-    print(colored(
-        'Tags: %s' % ', '.join([tag.name for tag in chosen_tags]),
-        'light_blue'))
-    print(colored('Safety: %s' % chosen_safety, 'light_blue'))
-
-    post = Post()
-    post.safety = chosen_safety
-    post.tags = chosen_tags
-    post.content_file_name = os.path.basename(args.path)
-    try:
-        booru_api.upload_post(post, args.path)
-        print(colored('Upload succesful!', 'green'))
-    except BooruApiError as ex:
-        if 'duplicate' not in ex.text.lower():
-            raise
-        print(colored(ex, 'light_red'))
-        post_id = int(re.search('([0-9]+)', ex.text).group(0))
-        update_tags(booru_api, post_id, chosen_tags)
+    with open(args.path, 'rb') as handle:
+        response = session.post(
+            API_URL + '/posts',
+            files={'content': handle},
+            data={
+                'contentFileName': os.path.basename(args.path),
+                'source': args.source,
+                'safety': SAFETY_MAP[args.safety],
+                'anonymous': 0,
+                'tags': args.tags,
+            })
+        try:
+            decoded = json.loads(response.text)
+            if response.status_code == 200:
+                print(BASE_URL + str(decoded['post']['id']))
+            else:
+                print('Error: %s' % decoded['error'], file=sys.stderr)
+                return False
+        except json.decoder.JSONDecodeError:
+            print('Fatal error: %s' % response.text, file=sys.stderr)
+            return False
+    return True
 
 def main():
-    colorama.init()
-    requests.packages.urllib3.disable_warnings()
-
     args = parse_args()
-    try:
-        config = load_config(args.config)
-        fill_config(config)
-
-        booru_api = BooruApi(config['url'])
-        booru_api.login(config['user'], config['password'])
-
-        tagger_settings = list(booru_api.get_tags())
-        tagger_settings.insert(0, Tag(name='unsafe', usages=999999))
-        tagger_settings.insert(0, Tag(name='sketchy', usages=999999))
-        tagger_settings.insert(0, Tag(name='safe', usages=999999))
-
-        upload(booru_api, tagger_settings, args)
-
-        if args.wait == 'always':
-            wait_for_user_input()
-    except BooruApiError as ex:
-        print(colored('API error...', 'light_red'))
-        print(colored(ex.text, 'light_red'))
-        if ex.trace:
-            print(colored(ex.trace, 'light_red'))
-        if args.wait in ['error', 'errors', 'always']:
-            wait_for_user_input()
-    except Exception as ex:
-        print(colored('Error...', 'light_red'))
-        print(colored(ex, 'light_red'))
-        traceback.print_exc()
-        if args.wait in ['error', 'errors', 'always']:
-            wait_for_user_input()
+    if not send(args):
+        sys.exit(1)
 
 if __name__ == '__main__':
     main()

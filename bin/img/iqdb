@@ -1,53 +1,64 @@
 #!/bin/python3
+from dotfiles import iqdb
+import colorama
 import os
 import sys
 import argparse
-import requests
-from colorama import Fore, Style
-from bs4 import BeautifulSoup
 
-def parse_args():
+def _parse_args():
     parser = argparse.ArgumentParser(description='Searches for image via IQDB')
     parser.add_argument(
         metavar='POST_PATH', dest='path', help='path to the image')
     return parser.parse_args()
 
-def search(args):
-    with open(args.path, 'rb') as handle:
-        response = requests.post(
-            'https://iqdb.org/',
-            files={'file': handle},
-            data={
-                'service': list(range(100)), # all services, present and future
-            })
+def _print_header(text):
+    margin = (40 - len(text)) // 2
+    print('-' * margin, text, '-' * margin)
 
-        soup = BeautifulSoup(response.text, 'html.parser')
-        links = []
-        if 'no relevant matches' in response.text.lower():
-            print(Fore.RED + 'No direct matches' + Style.RESET_ALL)
-        #print(response.text)
+def _print_results(results, input_area):
+    for result in sorted(results, key=lambda _: _.url):
+        print('[', end='')
 
-        for i, parent in enumerate(['#pages', '#more1']):
-            links = []
-            for a_element in soup.select('%s td a' % parent):
-                link = a_element['href']
-                if link.startswith('//'):
-                    link = 'http:' + link
-                links.append(link)
+        if result.similarity >= 0.95:
+            color = colorama.Fore.GREEN + colorama.Style.BRIGHT
+        elif result.similarity >= 0.85:
+            color = colorama.Fore.YELLOW
+        else:
+            color = colorama.Fore.RED + colorama.Style.BRIGHT
+        print((color + '%3.0f%%') % (result.similarity * 100), end='')
 
-            if i:
-                print('-' * 10)
+        print(', ', end='')
 
-            for link in sorted(list(set(links))):
-                print(link)
+        result_area = result.width * result.height
+        if result_area > input_area and result.similarity >= 0.85:
+            color = colorama.Fore.GREEN + colorama.Style.BRIGHT
+        else:
+            color = colorama.Style.RESET_ALL
+        print((color + '%5dx%-5d') % (result.width, result.height), end='')
+
+        print('] %s' % result.url)
 
 def main():
-    args = parse_args()
-    try:
-        search(args)
-    except Exception as e:
-        print(e, file=sys.stderr)
-        sys.exit(1)
+    args = _parse_args()
+    results = iqdb.search(args.path)
+
+    input_area =  results.input_width * results.input_height
+    main_results = [_ for _ in results if _.main]
+    extra_results = [_ for _ in results if not _.main]
+
+    if not main_results:
+        print(colorama.Fore.RED + 'No direct matches')
+        return
+
+    print('Input: %dx%d' % (results.input_width, results.input_height))
+    print()
+    _print_header('Main results')
+    _print_results(main_results, input_area)
+    if extra_results:
+        print()
+        _print_header('Additional results')
+        _print_results(extra_results, input_area)
 
 if __name__ == '__main__':
+    colorama.init(autoreset=True)
     main()
