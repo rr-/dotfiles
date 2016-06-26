@@ -98,7 +98,7 @@ super + {grave,1-9,0,minus}
 # focus window in given direction
 super + {h,j,k,l}
     DIR={west,south,north,east}; \
-    bspc node -f $DIR || bspc monitor -f $DIR
+    bspc node -f $DIR || ( bspc monitor -f $DIR; bspc node -f @/1.floating )
 
 # swap window with another one in given direction
 super + shift + {h,j,k,l}

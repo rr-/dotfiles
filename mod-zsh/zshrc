@@ -9,8 +9,16 @@ fi
 
 # path
 path=(/usr/local/bin $path)             # prefer manually compiled libraries
-[ -d $DIR/bin ] && path=($DIR/bin/* $path) # PATH for all the goodies in this repo
-export PATH                             # make the above work
+if [ -d $DIR/bin ]; then                # PATH for all the goodies in this repo
+    path=($DIR/bin/* $path)
+fi
+export PATH                             # export modified var for subprocesses
+
+typeset -T PYTHONPATH pythonpath :      # turn PYTHONPATH into zsh list
+if [ -d $DIR/lib ]; then                # shared libraries for Python scripts
+    pythonpath=($DIR/lib/)
+fi
+export PYTHONPATH                       # export modified var for subprocesses
 
 # autocomplete
 autoload -Uz compinit                   # initialize autocompletion engine
