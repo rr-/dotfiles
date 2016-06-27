@@ -84,7 +84,7 @@ class WorkspacesProvider(object):
         for i, monitor in enumerate(self._updater.monitors):
             monitor_widget = main_window[i].left_widget
             monitor_widget.ws_widgets = {}
-            monitor_widget.wheelEvent = lambda event, monitor=monitor: self.wheel(event, monitor)
+            monitor_widget.wheelEvent = lambda event, monitor_index=i: self.wheel(event, monitor_index)
             for j, ws in enumerate(monitor.workspaces):
                 ws_widget = QtWidgets.QPushButton(ws.name)
                 ws_widget.setProperty('class', 'workspace')
@@ -94,9 +94,21 @@ class WorkspacesProvider(object):
             self._widgets[i] = monitor_widget
         self.render()
 
-    def wheel(self, event, monitor):
-        subprocess.call(['bspc', 'monitor', '-f', monitor.name])
-        subprocess.call(['bspc', 'desktop', '-f', ['prev', 'next'][event.angleDelta().y() > 0]])
+    def wheel(self, event, monitor_index):
+        focused_monitor = self._updater.monitors[monitor_index]
+        focused_index = None
+        for i, workspace in enumerate(focused_monitor.workspaces):
+            if workspace.focused:
+                focused_index = i
+                break
+        if focused_index is None:
+            return
+
+        focused_index += 1 if event.angleDelta().y() > 0 else -1
+        focused_index %= len(focused_monitor.workspaces)
+        subprocess.call([
+            'bspc', 'desktop', '-f', '%s' % (
+                focused_monitor.workspaces[focused_index].name)])
 
     def click(self, event, ws):
         subprocess.call(['bspc', 'desktop', '-f', ws.name])
