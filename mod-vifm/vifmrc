@@ -145,6 +145,10 @@ nnoremap -t :!urxvt &<cr>
 " Toggle wrap setting on ,w key
 nnoremap -w :set wrap!<cr>
 
+" Copy file to the other pane
+nnoremap -c :copy!<cr>
+vnoremap -c :copy!<cr>
+
 nnoremap <c-q> :q<cr>
 
 " Clipboard integration
