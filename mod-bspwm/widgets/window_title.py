@@ -1,5 +1,5 @@
 from collections import defaultdict
-from PyQt5 import QtWidgets
+from PyQt5 import QtWidgets, QtGui, QtCore
 import Xlib
 import Xlib.display
 
@@ -14,6 +14,8 @@ class WindowTitleProvider(object):
             label.setProperty('class', 'wintitle')
             main_window[i].left_widget.layout().addWidget(label)
             self._labels.append(label)
+            self._max_width = main_window[i].left_widget.width() * 0.8
+        self._font_metrics = QtGui.QFontMetrics(self._labels[0].font())
         self._desktop_id_to_window_title = defaultdict(str)
 
         self._disp = Xlib.display.Display()
@@ -44,7 +46,10 @@ class WindowTitleProvider(object):
                 continue
             focused_desktop_title = focused_desktops[0].original_id
             self._labels[i].setText(
-                self._desktop_id_to_window_title[focused_desktop_title] or '')
+                self._font_metrics.elidedText(
+                    self._desktop_id_to_window_title[focused_desktop_title] or '',
+                    QtCore.Qt.ElideRight,
+                    self._max_width))
 
     def _update_titles(self, root_window):
         desktop_id_to_window_title = defaultdict(str)
