@@ -45,10 +45,10 @@ monitor_config right_padding 0
 monitor_config bottom_padding 0
 monitor_config left_padding 0
 
-desktop_config top_padding 25
-desktop_config right_padding 25
-desktop_config bottom_padding 25
-desktop_config left_padding 25
+desktop_config top_padding 0
+desktop_config right_padding 0
+desktop_config bottom_padding 0
+desktop_config left_padding 0
 
 desktop_config border_width 4
 desktop_config window_gap 0
