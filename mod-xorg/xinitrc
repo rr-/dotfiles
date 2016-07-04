@@ -26,7 +26,7 @@ setxkbmap pl
 comptonflags=( )
 if lspci | grep -i nvidia &>/dev/null; then
     # nvidia
-    comptonflags+=( --backend glx --vsync opengl-swc --paint-on-overlay )
+    comptonflags+=( --backend glx --vsync opengl --paint-on-overlay )
 else
     # amd
     comptonflags+=( --backend xrender --paint-on-overlay --unredir-if-possible )
