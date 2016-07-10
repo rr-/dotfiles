@@ -36,14 +36,15 @@ nnoremap Q gqap
 nnoremap <C-e> :Ag<CR>
 nnoremap <C-p> :Files<CR>
 nnoremap <C-m> :Buffers<CR>
-"toggle NERDtree
-"au VimEnter * inoremap <F2> <esc>:NERDTreeToggle<CR>
-"au VimEnter * nnoremap <F2> :NERDTreeToggle<CR>
-inoremap <F2> <esc>:NERDTreeToggle<CR>
-nnoremap <F2> :NERDTreeToggle<CR>
-"locate current file in NERDtree
-inoremap <F3> <esc>:NERDTreeFind<CR>
-nnoremap <F3> :NERDTreeFind<CR>
+"toggle .h .cpp
+nnoremap <F4> :e %:p:s,.h$,.X123X,:s,.cc$,.h,:s,.X123X$,.cc,<CR>
+"NERDTree
+  "toggle NERDtree
+  inoremap <F2> <esc>:NERDTreeToggle<CR>
+  nnoremap <F2> :NERDTreeToggle<CR>
+  "locate current file in NERDtree
+  inoremap <F3> <esc>:NERDTreeFind<CR>
+  nnoremap <F3> :NERDTreeFind<CR>
 "EasyAlign
   "normal mode (e.g. gaip)
   nmap ga <Plug>(EasyAlign)
