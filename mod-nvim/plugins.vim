@@ -22,7 +22,3 @@ let g:move_auto_indent = 0              "disable indentation aids
 "gitgutter
 let g:gitgutter_sign_column_always = 1  "don't 'jump' between buffers
 set updatetime=250                      "be more responsive
-
-"NERDtree
-"explicitly disable some things in NERDTree - seems like wildignore glitches
-let NERDTreeIgnore=['__pycache__','vendor','build/']

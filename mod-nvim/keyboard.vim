@@ -38,13 +38,9 @@ nnoremap <C-p> :Files<CR>
 nnoremap <C-m> :Buffers<CR>
 "toggle .h .cpp
 nnoremap <F4> :e %:p:s,.h$,.X123X,:s,.cc$,.h,:s,.X123X$,.cc,<CR>
-"NERDTree
-  "toggle NERDtree
-  inoremap <F2> <esc>:NERDTreeToggle<CR>
-  nnoremap <F2> :NERDTreeToggle<CR>
-  "locate current file in NERDtree
-  inoremap <F3> <esc>:NERDTreeFind<CR>
-  nnoremap <F3> :NERDTreeFind<CR>
+"file explorer
+  inoremap <F3> <esc>:execute "Explore <bar> call search('" . expand('%:t') . "') <bar> normal! zz"<CR>
+  nnoremap <F3> :execute "Explore <bar> call search('" . expand('%:t') . "') <bar> normal! zz"<CR>
 "EasyAlign
   "normal mode (e.g. gaip)
   nmap ga <Plug>(EasyAlign)
