@@ -23,7 +23,9 @@ export PYTHONPATH                       # export modified var for subprocesses
 # autocomplete
 autoload -Uz compinit                   # initialize autocompletion engine
 compinit -i                             # initialize autocompletion engine (2)
-zstyle ':completion:*' matcher-list 'm:{a-zA-Z}={A-Za-z}' # case insensitive
+zstyle ':completion:*' matcher-list \
+    'm:{a-zA-Z}={A-Za-z}'              `# case insensitive` \
+    '+l:|=* r:|=*'                      # recursive
 setopt NO_NOMATCH                       # if extended glob fails, run cmd as-is
 setopt NO_CASE_GLOB                     # ignore case in glob searches
 
