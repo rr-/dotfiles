@@ -18,6 +18,9 @@ elif [ "$title" = send-to-yume ]; then
     xdotool windowsize "$window_id" $newWidth $newHeight
     xdotool windowmove "$window_id" --relative -- $x $y
     echo 'state=floating layer=above'
+elif [[ "$instance" =~ Diablo.* ]]; then
+    bspc config -n "$window_id" border_width 0
+    echo border=off
 elif [ "$instance" = trackma ]; then
     echo desktop=10
     echo 'state=floating layer=above'
