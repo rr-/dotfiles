@@ -45,10 +45,12 @@ export SAVEHIST=10000                   # how many entries in history (hdd)
 setopt appendhistory                    # append lines (for concurrent sessions)
 setopt HIST_IGNORE_ALL_DUPS             # ignore even interleaved duplicates
 
-# basic key bindings
-bindkey -e                              # use Emacs keybindings
-stty -ixon                              # reclaim ctrl+q for Vim
-stty stop undef                         # reclaim ctrl+s for Vim
+# basic key bindings for interactive shells
+if [[ $- == *i* ]]; then
+    bindkey -e                              # use Emacs keybindings
+    stty -ixon                              # reclaim ctrl+q for Vim
+    stty stop undef                         # reclaim ctrl+s for Vim
+fi
 
 # powerful copying/renaming/linking
 autoload -U zmv
