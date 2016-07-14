@@ -6,6 +6,7 @@ import os
 import sys
 import re
 import json
+import yaml
 import argparse
 import requests
 from bs4 import BeautifulSoup
@@ -16,7 +17,7 @@ from dotfiles import logging
 logger = logging.getLogger(__name__)
 config_key = config['pull-tags']
 
-HISTORY_PATH   = os.path.expanduser('~/.config/yume-autotagger.json')
+HISTORY_PATH   = os.path.expanduser('~/.config/yume-autotagger.yml')
 YUME_URL       = config_key.get('url', 'https://yume.pl/')
 YUME_USER_NAME = config_key['user']
 YUME_PASSWORD  = config_key['password']
@@ -233,11 +234,13 @@ class TaggingHistory():
     def _load(self):
         if os.path.exists(HISTORY_PATH):
             with open(HISTORY_PATH, 'r') as handle:
-                self._history = json.load(handle)
+                self._history = yaml.load(handle)
 
     def _save(self):
+        self._history['tagged'].sort()
+        self._history['untagged'].sort()
         with open(HISTORY_PATH, 'w') as handle:
-            json.dump(self._history, handle)
+            yaml.dump(self._history, handle)
 
 def get_last_post_id(session, history):
     response = session.get(YUME_URL + 'api/posts')
