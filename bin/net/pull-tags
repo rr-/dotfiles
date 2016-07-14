@@ -218,7 +218,7 @@ def pull_tags(session, post_id):
 
 class TaggingHistory():
     def __init__(self):
-        self._history = {'tagged': [], 'untagged': []}
+        self._history = {'tagged': [], 'untagged': [], 'unknown': []}
         self._load()
 
     def mark_as_tagged(self, post_id):
@@ -230,7 +230,9 @@ class TaggingHistory():
         self._save()
 
     def get_processed_post_ids(self):
-        return self._history['tagged'] + self._history['untagged']
+        return self._history['tagged'] \
+            + self._history['untagged'] \
+            + self._history.get('unknown', [])
 
     def get_tagged_post_ids(self):
         return self._history['tagged']
@@ -244,8 +246,8 @@ class TaggingHistory():
                 self._history = yaml.load(handle)
 
     def _save(self):
-        self._history['tagged'].sort()
-        self._history['untagged'].sort()
+        for key in ['tagged', 'untagged', 'unknown']:
+            self._history[key] = sorted(list(set(self._history[key])))
         with open(HISTORY_PATH, 'w') as handle:
             yaml.dump(self._history, handle)
 
