@@ -146,7 +146,14 @@ def pull_tags(session, post_id):
     external_tags = collect_external_tags(session, post_url)
 
     for external_tag in external_tags:
-        if external_tag.name in config_key['banned']:
+        banned = external_tag.name in config_key['banned']:
+        if not banned:
+            for banned_regex in config_key['banned_regex']:
+                if re.match(banned_regex, external_tag.name, re.I):
+                    banned = True
+                    break
+
+        if banned:
             logger.warn('Ignored tag %r', external_tag.name)
             continue
 
