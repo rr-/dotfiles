@@ -290,13 +290,13 @@ def main():
         logger.info('Getting post %d...', post_id)
         try:
             local_succeded = pull_tags(session, post_id)
+            history.mark_as_tagged(post_id)
+        except ConnectionError as ex:
+            logger.error(str(ex))
+            local_succeded = False
         except Exception as ex:
             logger.error(str(ex))
             local_succeded = False
-
-        if local_succeded:
-            history.mark_as_tagged(post_id)
-        else:
             history.mark_as_untagged(post_id)
 
         all_succeeded = all_succeeded and local_succeded
