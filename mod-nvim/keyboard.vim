@@ -59,3 +59,7 @@ cnoremap <C-d> <Del>
 cnoremap <C-k> <C-\>e getcmdpos() == 1 ? '' : getcmdline()[:getcmdpos()-2]<CR>
 cnoremap <M-b> <S-Left>
 cnoremap <M-f> <S-Right>
+
+if has("digraphs")
+  digraph .. 8230 " …
+endif
