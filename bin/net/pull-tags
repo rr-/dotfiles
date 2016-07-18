@@ -21,6 +21,9 @@ YUME_URL       = config_key.get('url', 'https://yume.pl/')
 YUME_USER_NAME = config_key['user']
 YUME_PASSWORD  = config_key['password']
 
+def sanitize_tag(name):
+    return re.sub(r'[<>/]', '_', name)
+
 def capitalize(name):
     return re.sub(r'(^|[_()])([a-z])', lambda m: m.group(0).upper(), name)
 
@@ -163,6 +166,14 @@ def pull_tags(session, post_id):
                 external_tag.name,
                 config_key['translations'][external_tag.name])
             external_tag.name = config_key['translations'][external_tag.name]
+
+        sanitized_name = sanitize_tag(external_tag.name)
+        if sanitized_name != external_tag.name:
+            external_tag.name = sanitized_name
+            logger.info(
+                'Sanitized %r -> %r',
+                external_tag.name,
+                sanitized_name)
 
         if target_tags.has(external_tag):
             continue
