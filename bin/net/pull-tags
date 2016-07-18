@@ -94,6 +94,9 @@ def parse_args():
     parser.add_argument(
         '--force', action='store_true',
         help='Pull tags for already processed posts (used with POST_ID)')
+    parser.add_argument(
+        '--untagged', action='store_true',
+        help='Pull tags only for posts that were not yet tagged (used with POST_ID)')
     return parser.parse_args()
 
 def collect_external_tags(session, post_url):
@@ -293,8 +296,14 @@ def main():
 
     all_succeeded = True
     processed_post_ids = list(history.get_processed_post_ids())
+    tagged_post_ids = list(history.get_tagged_post_ids())
     for post_id in post_ids:
-        if post_id in processed_post_ids and not args.force:
+        should_process = \
+            post_id not in processed_post_ids \
+            or args.force \
+            or (post_id not in tagged_post_ids and args.untagged)
+
+        if not should_process:
             logger.info('Skipping post %d - already processed', post_id)
             continue
 
