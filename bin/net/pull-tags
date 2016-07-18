@@ -59,7 +59,6 @@ class TagList():
         return 'TagList(%r)' % self._tags
 
 def get_tags_from_gelbooru(session, url):
-    raise NotImplementedError()
     if 'gelbooru' not in url:
         raise ValueError('Not a valid Gelbooru URL')
     response = session.get(url)
