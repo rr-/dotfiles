@@ -28,7 +28,7 @@ SAFETY_MAP = {
 
 def parse_args():
     parser = argparse.ArgumentParser(
-        description='Sends post to gelbooru from CLI')
+        description='Sends post to yume.pl from CLI')
     parser.add_argument(
         '-s', '--safety', choices=SAFETY_MAP.keys(),
         required=False, default='safe', help='safety')
