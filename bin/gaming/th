@@ -40,9 +40,9 @@ def main(args):
         print(ex, file=sys.stderr)
         sys.exit(1)
     os.chdir(dir)
-    local['arrows'](['1'])
+    local['arrows'](['on'])
     local['wine']([exe])
-    local['arrows'](['0'])
+    local['arrows'](['off'])
 
 if __name__ == '__main__':
     main(parse_args())

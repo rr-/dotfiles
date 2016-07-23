@@ -3,18 +3,15 @@
 
 import os
 import sys
+import argparse
 from plumbum import local
 
-def print_usage():
-    print('Usage: {0} on|off'.format(os.path.basename(sys.argv[0])))
+def _parse_args():
+    parser = argparse.ArgumentParser(description='Toggles arrow layout on HHKB')
+    parser.add_argument('mode', choices=('on', 'off'))
+    return parser.parse_args()
 
-if len(sys.argv) != 2:
-    print_usage()
-    sys.exit(1)
-
-mode = sys.argv[1].lower()
-
-if mode in ('1', 'on', 'enable'):
+def enable():
     print('Enabling')
     if sys.platform == 'cygwin':
         cygstart = local['cygstart']
@@ -30,7 +27,8 @@ if mode in ('1', 'on', 'enable'):
         xmodmap(['-e', 'keycode 46 = Left'])
         xmodmap(['-e', 'keycode 47 = Down'])
         xmodmap(['-e', 'keycode 48 = Right'])
-elif mode in('0', 'off', 'disable'):
+
+def disable():
     print('Disabling')
     if sys.platform == 'cygwin':
         import csv
@@ -46,6 +44,14 @@ elif mode in('0', 'off', 'disable'):
     else:
         setxkbmap = local['setxkbmap']
         setxkbmap(['-layout', 'pl'])
-else:
-    print_usage()
-    sys.exit(1)
+
+def main():
+    args = _parse_args()
+
+    if args.mode == 'on':
+        enable()
+    elif args.mode == 'off':
+        disable()
+
+if __name__ == '__main__':
+    main()
