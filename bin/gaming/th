@@ -13,7 +13,7 @@ def parse_args():
     return parser.parse_args()
 
 def get_game_dir(num):
-    pattern = r'^TH{0}\s.*$'.format(num)
+    pattern = r'^TH0*{0}\s.*$'.format(num)
     all_dirs = os.listdir(TH_ROOT_DIR)
     filtered_dirs = [dir for dir in all_dirs if re.match(pattern, dir)]
     if not filtered_dirs:
