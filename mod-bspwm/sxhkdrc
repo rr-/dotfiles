@@ -122,6 +122,9 @@ super + {bracketleft,bracketright}
     bspc node {older,newer} -f; \
     bspc control --record-history on
 
+Scroll_Lock
+    zsh -i -l -c 'arrows toggle' >/tmp/tmp
+
 # reload sxhkd configuration
 alt + F12
     bash -c '~/.config/bspwm/bspwmrc'
