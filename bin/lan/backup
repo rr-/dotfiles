@@ -26,6 +26,8 @@ function sync {
         --exclude "$local_home/img/net/" \
         --exclude "$remote_home/src/" \
         --exclude "$remote_home/img/" \
+        --exclude "$remote_home/dl/" \
+        --exclude "$remote_home/ul/" \
         --exclude "$remote_home/dead/" \
         --exclude "$local_home/.backup/$remote_host/" \
         --exclude "$remote_home/.backup/$local_host/" \
