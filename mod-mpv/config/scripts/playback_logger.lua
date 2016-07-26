@@ -7,7 +7,7 @@ minimum_duration = 300 -- five minutes
 ignore_online_streams = true
 remote_host = 'burza'
 remote_log_path = '/srv/www/tmp.sakuya.pl/public_html/mal/watched.lst'
-
+allowed_extensions = {'mpv', 'mp4', 'avi', 'm4v', 'mov', 'flv', 'mpeg', 'mpg', 'wmv', 'ogv', 'webm', 'rm'}
 
 -- from shell.lua, by Peter Odding
 local function escape(...)
@@ -24,6 +24,19 @@ local function escape(...)
     return table.concat(command, ' ')
 end
 
+function table.contains(table, element)
+    for _, value in pairs(table) do
+        if value == element then
+            return true
+        end
+    end
+    return false
+end
+
+function get_file_extension(path)
+    return path:match("^.+%.(.+)$")
+end
+
 function trim(path)
     return string.match(path, '^%s*(.-)%s*$')
 end
@@ -37,6 +50,12 @@ function playback_finished(event)
     watched_percentage = mp.get_property_number('percent-pos')
     duration = mp.get_property_number('duration')
     hostname = run({args={'hostname'}, cancellable=false})
+    extension = get_file_extension(path)
+
+    if not table.contains(allowed_extensions, extension) then
+        mp.log('warn', 'Extension doesn\'t match allowed files, skipping')
+        return
+    end
 
     if duration == null then
         mp.log('warn', 'No information on duration, skipping')
