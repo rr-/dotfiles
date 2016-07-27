@@ -145,5 +145,9 @@ super + shift + i
 super + alt + i
     bash -c 'shot -M -i --output ~/'
 
+super + o
+  {smartsplit ; bspc node -i,\
+  for i in $(bspc query -N -n .leaf.!window.local); do bspc node $i -k; done}
+
 ~button1
     bspc pointer -g focus
