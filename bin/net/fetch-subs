@@ -26,11 +26,11 @@ URL_TEMPLATE = (
 
 def print_warning(arg):
     ''' Prints a warning message in yellow color. '''
-    print(colorama.Fore.YELLOW + arg, file=sys.stderr)
+    print(colorama.Fore.YELLOW + str(arg), file=sys.stderr)
 
 def print_error(arg):
     ''' Prints an error message in red color. '''
-    print(colorama.Fore.RED + arg, file=sys.stderr)
+    print(colorama.Fore.RED + str(arg), file=sys.stderr)
 
 def print_success(arg):
     ''' Prints a message in green color. '''
@@ -135,6 +135,8 @@ def process_path(movie_path, lang, force):
         with open(subs_path, 'wb') as sub_file:
             sub_file.write(output)
             print_success('%r saved' % movie_path)
+    except Exception as e:
+        print_error(e)
     finally:
         if os.path.exists(arc_path):
             os.unlink(arc_path)
