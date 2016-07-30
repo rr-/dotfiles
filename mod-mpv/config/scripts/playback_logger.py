@@ -57,7 +57,7 @@ def main():
         line = json.dumps({
             'date': datetime.now().isoformat(),
             'host': socket.gethostname(),
-            'path': args.path,
+            'path': os.path.abspath(args.path),
         })
 
         print('Sending JSON: ' + line)
