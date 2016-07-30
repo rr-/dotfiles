@@ -66,7 +66,7 @@ def main():
                 'ssh',
                 REMOTE_HOST,
                 'echo',
-                shlex.quote(line),
+                shlex.quote(line).encode('utf-8').decode('unicode-escape'),
                 '>>',
                 shlex.quote(REMOTE_LOG_PATH),
             ],
