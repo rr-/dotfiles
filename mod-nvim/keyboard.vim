@@ -62,4 +62,5 @@ cnoremap <M-f> <S-Right>
 
 if has("digraphs")
   digraph .. 8230 " …
+  digraph xx 215 " ×
 endif
