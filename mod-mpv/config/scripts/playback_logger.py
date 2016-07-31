@@ -14,7 +14,7 @@ MINIMUM_DURATION = 300 # five minutes
 IGNORE_ONLINE_STREAMS = True
 REMOTE_HOST = 'burza'
 REMOTE_LOG_PATH = '/srv/www/tmp.sakuya.pl/public_html/mal/watched.lst'
-ALLOWED_EXTENSIONS = ['mpv', 'mp4', 'avi', 'm4v', 'mov', 'flv', 'mpeg', 'mpg', 'wmv', 'ogv', 'webm', 'rm']
+ALLOWED_EXTENSIONS = ['mkv', 'mp4', 'avi', 'm4v', 'mov', 'flv', 'mpeg', 'mpg', 'wmv', 'ogv', 'webm', 'rm']
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Send playback log')
