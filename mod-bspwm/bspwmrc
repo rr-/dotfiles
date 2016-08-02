@@ -1,5 +1,4 @@
 #!/bin/sh
-
 SOURCE="${BASH_SOURCE[0]}"
 while [ -h "$SOURCE" ]; do
     DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
@@ -79,11 +78,7 @@ else
     xprop -root -f _NET_WM_NAME 8s -set _NET_WM_NAME "$IRONIC_WM_NAME"
 fi
 
-if [ "$(hostname)" = tornado ]; then
-    run_if_needed firefox firefox
-fi
 run_if_needed trackma urxvt -name 'trackma' -e zsh -i -l -c 'trackma-curses'
-
 
 pkill -f bspwm/panel
 nohup ~/.config/bspwm/panel </dev/null &>/dev/null &
