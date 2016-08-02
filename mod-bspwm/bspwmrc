@@ -57,9 +57,7 @@ global_config gapless_monocle         true
 global_config focus_by_distance       true
 global_config focus_follows_pointer   true
 
-bspc rule -a Buddy desktop=IM
 bspc rule -a remote_irc desktop=IM
-bspc rule -a music_player desktop=10 state=floating
 bspc rule -a qbittorrent desktop=9
 bspc rule -a Steam desktop=8
 bspc config external_rules_command "$DIR/rules"
