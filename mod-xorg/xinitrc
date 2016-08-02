@@ -36,10 +36,7 @@ compton "${comptonflags[@]}" & # -b broke on pacman -Syu at 2016-03-14
 clipit -d &
 autocutsel -fork &
 autocutsel -selection PRIMARY -fork &
-~/.config/ibus/start
 
-#TODO: move this to mod-mpd
-mpd ~/.config/mpd/mpd.conf &
-
-#TODO: don't hardcode this here
-exec bspwm
+[ -d ~/.config/x ] && for x in ~/.config/x/*.sh; do
+    [ -x "$x" ] && . "$x"
+done
