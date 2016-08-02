@@ -1,3 +1,4 @@
 #!/bin/sh
+dconf load /desktop/ibus/<~/.config/ibus/config.ini
 killall ibus-daemon
 ibus-daemon -drR --xim
