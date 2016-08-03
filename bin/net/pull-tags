@@ -171,11 +171,11 @@ def pull_tags(session, post_id):
 
         sanitized_name = sanitize_tag(external_tag.name)
         if sanitized_name != external_tag.name:
-            external_tag.name = sanitized_name
             logger.info(
                 'Sanitized %r -> %r',
                 external_tag.name,
                 sanitized_name)
+            external_tag.name = sanitized_name
 
         if target_tags.has(external_tag):
             continue
