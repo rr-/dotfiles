@@ -41,6 +41,7 @@ set ff=unix ffs=unix,dos      "preferred eol styles
 set wrapscan                  "search again from top if no matches
 set nowrap                    "don't wrap long lines
 set formatoptions-=c          "auto comment continuation works against me
+set formatoptions-=j          "make :join not remove nonwhitespace
 
 "editor behavior
 set virtualedit=onemore       "allow moving cursor up to EOL+1 character
