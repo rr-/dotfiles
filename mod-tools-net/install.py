@@ -9,5 +9,5 @@ if 'cygwin' in sys.platform:
 else:
     packages.try_install('openssh')
 
-util.create_symlink('./.ssh', '~/')
+util.create_symlink('./ssh', '~/.ssh')
 util.run_verbose(['chmod', '0600', util.abs_path('~/.ssh/config')])
