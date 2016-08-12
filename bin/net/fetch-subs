@@ -55,7 +55,7 @@ class MdvdSubtitleReader(SubtitleReader):
         for line in lines:
             match = self._regex.match(line)
             if match:
-                time_start = [int(match.group(1)) / float(fps)]
+                time_start = int(match.group(1)) / float(fps)
                 if match.group(2):
                     time_end = int(match.group(2)) / float(fps)
                 else:
