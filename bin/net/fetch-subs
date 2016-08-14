@@ -316,6 +316,8 @@ def process_path(parser, movie_path, lang, force, debug):
 
     try:
         output = get_raw_subtitles(movie_path, lang)
+        if not output:
+            return
         fps = get_fps(movie_path)
         lines = output.decode('cp1250').split('\n')
         subtitles = parser.parse(lines, fps)
