@@ -75,6 +75,7 @@ command! zip zip -r %f.zip %f
 command! vgrep nvim "+grep %a"
 command! reload :write | restart
 command! extract for x in %"f; do 7z x -o"${${x##*/}%%.*}" "$x"; done
+command! extracth for x in %"f; do 7z x -o. "$x"; done
 command! packs for x in %"f; do 7z a "${x##*/}.7z" "$x"; done
 command! packz for x in %"f; do 7z a "${x##*/}.zip" "$x"; done
 command! ln ln -s %d/%f %D
