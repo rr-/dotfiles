@@ -69,30 +69,24 @@ end
 
 function scale_original()
     local window_scale = get_real_scale()
-    if window_scale == nil then return end
+    if window_scale == nil then
+        return
+    end
     local target_scale = (1 / window_scale) - 1
     mp.set_property_number('video-zoom', target_scale)
 end
 
 function scale_arbitrary(multiplier)
     local window_scale = get_real_scale()
-    if window_scale == nil then return end
+    if window_scale == nil then
+        return
+    end
     local target_scale = ((1 / window_scale * multiplier) - 1)
     mp.set_property_number('video-zoom', target_scale)
 end
 
 function scale_to_window()
     mp.set_property_number('video-zoom', 0)
-end
-
-function fit_to_window()
-    local window_scale = get_real_scale()
-    if window_scale == nil then return end
-    if window_scale > 1 then
-        scale_original()
-    else
-        scale_to_window()
-    end
 end
 
 function reset_pan()
@@ -115,9 +109,7 @@ function file_changed()
 end
 
 function window_size_changed()
-    if not user_fiddled then
-        fit_to_window()
-    end
+    scale_to_window()
 end
 
 mp.register_event('end-file', file_changed)
