@@ -6,6 +6,7 @@ import os
 import sys
 import json
 import argparse
+from tempfile import TemporaryFile
 import requests
 from dotfiles import config
 
@@ -54,10 +55,13 @@ def send(args):
     auth_token = json.loads(response.text)['token']['name']
     session.headers.update({'x-authorization-token': auth_token})
 
-    with open(args.path, 'rb') as handle:
+    with open(args.path, 'rb') as handle, \
+            TemporaryFile() as copied_handle:
+        copied_handle.write(handle.read())
+        copied_handle.seek(0)
         response = session.post(
             API_URL + '/posts',
-            files={'content': handle},
+            files={'content': copied_handle},
             data={
                 'contentFileName': os.path.basename(args.path),
                 'source': args.source,
