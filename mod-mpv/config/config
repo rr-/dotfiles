@@ -18,7 +18,7 @@ screenshot-template=~/shot-%f-%P
 [images]
 fullscreen=yes
 script-opts=osc-showwindowed=no,osc-showfullscreen=no
-script=~~/images/slideshow.lua,~~/images/statusbar.lua,~~/images/fancy_zoom.lua,~~/images/playlist_mgr.lua,~~/images/iqdb.lua
+script=~~/images/slideshow.lua,~~/images/statusbar.lua,~~/images/reset_zoom.lua,~~/images/playlist_mgr.lua,~~/images/iqdb.lua
 input-conf=~~/images/input.conf
 no-input-default-bindings
 no-load-scripts
