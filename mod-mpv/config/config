@@ -5,6 +5,7 @@ fullscreen
 vo=opengl-hq,direct3d
 script-opts=osc-layout=slimbox
 stop-screensaver=yes
+image-display-duration=inf
 
 audio-channels=2
 alang=jpn,jp,jap,Japanese,en,eng,English
