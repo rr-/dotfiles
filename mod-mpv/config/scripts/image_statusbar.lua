@@ -1,4 +1,4 @@
-local on = true
+local on = mp.get_opt('images-statusbar') == 'yes'
 
 function update_statusbar()
     if on == true then
