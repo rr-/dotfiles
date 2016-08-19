@@ -19,10 +19,8 @@ screenshot-template=~/shot-%f-%P
 [images]
 fullscreen=yes
 script-opts=osc-showwindowed=no,osc-showfullscreen=no
-script=~~/images/slideshow.lua,~~/images/statusbar.lua,~~/images/reset_zoom.lua,~~/images/playlist_mgr.lua,~~/images/iqdb.lua,~~/images/rotater.lua
 input-conf=~~/images/input.conf
 no-input-default-bindings
-no-load-scripts
 msg-level=all=warn
 native-keyrepeat
 loop-file=yes
