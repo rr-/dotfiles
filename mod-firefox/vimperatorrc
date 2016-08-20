@@ -17,9 +17,6 @@ set complete=sl
 "disable everything but tabs
 set gui=none,tabs
 
-"don't enter insert mode automatically
-set focuscontent
-
 "use only 12345 to constructs hints
 set hintchars=12345
 
