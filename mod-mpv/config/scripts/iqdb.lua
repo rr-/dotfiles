@@ -1,8 +1,8 @@
 local mp_utils = require('mp.utils')
 
 function search_iqdb()
-    name = os.tmpname()
-    handle = io.open(name, 'w')
+    local name = os.tmpname()
+    local handle = io.open(name, 'w')
 
     mp.osd_message('Downloading results from IQDB...')
     mp_utils.subprocess({args = {
@@ -18,8 +18,7 @@ function search_iqdb()
         name}
     })
 
-    mp_utils.subprocess({args = {
-        'firefox', name}})
+    mp_utils.subprocess({args = {'firefox', name}})
 end
 
 mp.register_script_message('search-iqdb', search_iqdb)

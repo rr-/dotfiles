@@ -1,5 +1,5 @@
 function rotate(number)
-    rotation = mp.get_property_number('video-rotate')
+    local rotation = mp.get_property_number('video-rotate')
     rotation = rotation + number
     rotation = rotation + 360
     rotation = rotation % 360
