@@ -1,4 +1,4 @@
-mputils = require 'mp.utils'
+local mp_utils = require 'mp.utils'
 require 'os'
 
 function trim(path)
@@ -6,14 +6,14 @@ function trim(path)
 end
 
 function run(t)
-    return trim(mputils.subprocess(t).stdout)
+    return trim(mp_utils.subprocess(t).stdout)
 end
 
 function playback_finished(event)
-    reply = run({
+    local reply = run({
         args={
             'python3',
-            mputils.join_path(os.getenv('HOME'), '.config/mpv/scripts/playback_logger.py'),
+            mp_utils.join_path(os.getenv('HOME'), '.config/mpv/scripts/playback_logger.py'),
             '--percent', mp.get_property_number('percent-pos') or 0.0,
             '--duration', mp.get_property_number('duration') or 0.0,
             '--path', mp.get_property('path'),
