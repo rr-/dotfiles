@@ -4,7 +4,9 @@
 set confirm=permdelete
 
 " the command to start vi
-set vicmd=nvim
+if executable('nvim')
+    set vicmd=nvim
+endif
 
 " vifm tells not to change this, so I leave it
 set trash
