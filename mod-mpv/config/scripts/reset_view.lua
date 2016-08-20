@@ -1,4 +1,4 @@
-local on = mp.get_opt('reset-zoom') == 'yes'
+local on = mp.get_opt('reset-view') == 'yes'
 
 function file_changed()
     if on == true then
