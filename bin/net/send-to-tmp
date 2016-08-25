@@ -10,7 +10,7 @@ import urllib.parse
 import subprocess
 import io
 
-BASE_DIR = '/srv/www/tmp.sakuya.pl/public_html/f/'
+BASE_DIR = '/srv/www/tmp.sakuya.pl/f/'
 BASE_URL = 'https://tmp.sakuya.pl/f/'
 REMOTE_HOST = 'burza'
 
