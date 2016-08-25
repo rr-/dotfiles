@@ -1,0 +1,456 @@
+#!/bin/python3
+
+import os
+import sys
+import re
+import string
+import urwid
+import argparse
+from dotfiles.tag_list import TagList
+
+
+class AbortInterrupt(KeyboardInterrupt):
+    pass
+
+
+class ConfirmInterrupt(KeyboardInterrupt):
+    pass
+
+
+def _clamp(number, min_value, max_value):
+    return max(min_value, min(max_value, number))
+
+
+def _get_fuzzy_matches(user_input, dictionary):
+    if not user_input:
+        return []
+    suggestions = []
+    pattern = '.*?'.join(user_input)
+    regex = re.compile(pattern, re.I)
+    for word, usages in dictionary.items():
+        match = regex.search(word)
+        if match:
+            suggestions.append((-usages, word))
+    return [x for _, x in sorted(suggestions)]
+
+
+class ReadlineEdit(urwid.Text):
+    WORD_REGEX = r'^(?u)[\w*?_\-.\[\]~=/&;!#$%^(){}<>]$'
+    signals = ['change']
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._edit_pos = 0
+
+    @property
+    def edit_pos(self):
+        return self._edit_pos
+
+    @edit_pos.setter
+    def edit_pos(self, pos):
+        self._edit_pos = pos
+        self._invalidate()
+
+    @property
+    def text(self):
+        return self.get_text()[0]
+
+    @text.setter
+    def text(self, text):
+        self.set_text(text)
+        self.edit_pos = _clamp(self.edit_pos, 0, len(text))
+        urwid.signals.emit_signal(self, 'change', self, text)
+
+    def render(self, size, focus=False):
+        (maxcol,) = size
+        canv = urwid.Text.render(self, (maxcol,))
+        if focus:
+            canv = urwid.CompositeCanvas(canv)
+            canv.cursor = (min(self._edit_pos, maxcol - 1), 0)
+        return canv
+
+    def selectable(self):
+        return True
+
+    def keypress(self, size, key):
+        keymap = {
+            'ctrl b':         self._backward_char,
+            'ctrl f':         self._forward_char,
+            'left':           self._backward_char,
+            'right':          self._forward_char,
+            'ctrl a':         self._move_beginning_of_line,
+            'ctrl e':         self._move_end_of_line,
+            'home':           self._move_beginning_of_line,
+            'end':            self._move_end_of_line,
+            'meta b':         self._backward_word,
+            'meta f':         self._forward_word,
+            'shift left':     self._backward_word,
+            'shift right':    self._forward_word,
+
+            'ctrl h':         self._delete_backward_char,
+            'backspace':      self._delete_backward_char,
+            'ctrl d':         self._delete_forward_char,
+            'delete':         self._delete_forward_char,
+            'ctrl u':         self._kill_whole_line,
+            'ctrl w':         self._backward_kill_word,
+            'meta backspace': self._backward_kill_word,
+            'meta d':         self._kill_word,
+        }
+        if key in keymap:
+            keymap[key]()
+            return None
+        elif key in string.printable:
+            self._insert_char_at_cusor(key)
+            return None
+        return key
+
+    def _insert_char_at_cusor(self, key):
+        if key == ' ':
+            key = '_'
+        self.text = self.text[0:self.edit_pos] \
+            + key \
+            + self.text[self.edit_pos:]
+        self.edit_pos += 1
+
+    def _backward_char(self):
+        if self.edit_pos > 0:
+            self.edit_pos -= 1
+
+    def _forward_char(self):
+        if self.edit_pos < len(self.text):
+            self.edit_pos += 1
+
+    def _backward_word(self):
+        while self.edit_pos > 0 \
+                and re.match(r'\s', self.text[self.edit_pos - 1]):
+            self.edit_pos -= 1
+        while self.edit_pos > 0 \
+                and re.match(self.WORD_REGEX, self.text[self.edit_pos - 1]):
+            self.edit_pos -= 1
+
+    def _forward_word(self):
+        while self.edit_pos < len(self.text) \
+                and re.match(r'\s', self.text[self.edit_pos]):
+            self.edit_pos += 1
+        while self.edit_pos < len(self.text) \
+                and re.match(self.WORD_REGEX, self.text[self.edit_pos]):
+            self.edit_pos += 1
+
+    def _delete_backward_char(self):
+        if self.edit_pos > 0:
+            self.text = \
+                self.text[0:self.edit_pos-1] + self.text[self.edit_pos:]
+
+    def _delete_forward_char(self):
+        if self.edit_pos < len(self.text):
+            self.text = \
+                self.text[0:self.edit_pos] + self.text[self.edit_pos+1:]
+
+    def _kill_whole_line(self):
+        self.text = ''
+        self.edit_pos = 0
+
+    def _backward_kill_word(self):
+        x = self.edit_pos
+        while x > 0 and re.match(r'\s', self.text[x - 1]):
+            x -= 1
+        while x > 0 and re.match(self.WORD_REGEX, self.text[x - 1]):
+            x -= 1
+        self.text = self.text[0:x] + self.text[self.edit_pos:]
+        self.edit_pos = x
+
+    def _kill_word(self):
+        x = self.edit_pos
+        while x < len(self.text) and re.match(r'\s', self.text[x]):
+            x += 1
+        while x < len(self.text) and re.match(self.WORD_REGEX, self.text[x]):
+            x += 1
+        self.text = self.text[0:self.edit_pos] + self.text[x:]
+
+    def _move_beginning_of_line(self):
+        self.edit_pos = 0
+
+    def _move_end_of_line(self):
+        self.edit_pos = len(self.text)
+
+
+class ChosenTagsListBox(urwid.ListBox):
+    def __init__(self, chosen_tags, upstream_tags):
+        super().__init__(urwid.SimpleListWalker([]))
+        self._chosen_tags = chosen_tags
+        self._upstream_tags_lower_names = \
+            [name.lower() for name in upstream_tags.keys()]
+        self.update()
+
+    def selectable(self):
+        return True
+
+    def keypress(self, size, key):
+        keymap = {
+            'j':         self._select_prev,
+            'k':         self._select_next,
+            'ctrl j':    self._select_prev,
+            'ctrl k':    self._select_next,
+            'ctrl n':    self._select_prev,
+            'ctrl p':    self._select_next,
+            'down':      self._select_prev,
+            'up':        self._select_next,
+            'tab':       self._select_prev,
+            'shift tab': self._select_next,
+            'd':         self._delete_selected,
+            'delete':    self._delete_selected,
+        }
+        if key in keymap:
+            keymap[key]()
+            return None
+        return key
+
+    def update(self):
+        self.body.clear()
+        for tag in sorted(self._chosen_tags.get()):
+            is_new = tag.lower() not in self._upstream_tags_lower_names
+            self.body.append(
+                urwid.AttrWrap(
+                    urwid.Text(tag, wrap=urwid.CLIP),
+                    'new-tag' if is_new else 'tag',
+                    'focused-new-tag' if is_new else 'focused-tag'))
+        self._invalidate()
+
+    def _select_next(self):
+        if self.body.focus > 0:
+            self.body.focus -= 1
+            self._invalidate()
+
+    def _select_prev(self):
+        if self.body.focus + 1 < len(self.body):
+            self.body.focus += 1
+            self._invalidate()
+
+    def _delete_selected(self):
+        self._chosen_tags.remove(self.body.get_focus()[0].text)
+        self.update()
+        self._invalidate()
+
+
+class FuzzyInput(urwid.Widget):
+    signals = ['accept']
+
+    def __init__(self, upstream_tags):
+        self._upstream_tags = upstream_tags
+        self._focused_match = -1
+        self._matches = []
+        self._input_box = ReadlineEdit('', wrap=urwid.CLIP)
+        urwid.signals.connect_signal(
+            self._input_box, 'change', self._on_text_change)
+        self._update_matches()
+
+    def selectable(self):
+        return True
+
+    def keypress(self, size, key):
+        keymap = {
+            'enter':     self._accept,
+            'ctrl j':    self._select_prev,
+            'ctrl k':    self._select_next,
+            'ctrl n':    self._select_prev,
+            'ctrl p':    self._select_next,
+            'down':      self._select_prev,
+            'up':        self._select_next,
+            'tab':       self._select_prev,
+            'shift tab': self._select_next,
+        }
+        if key in keymap:
+            keymap[key](size)
+            return None
+        return self._input_box.keypress(size, key)
+
+    def render(self, size, focus=False):
+        maxcol, maxrow = size
+        canvases = [(self._input_box.render((maxcol,)), 0, focus)]
+        for i in range(maxrow - 1):
+            text = self._matches[i] if i < len(self._matches) else ' '
+            if len(text) > maxcol:
+                text = text[0:maxcol-3] + '...'
+            class_name = 'match'
+            if self._focused_match == i:
+                class_name = 'focused-' + class_name
+            canvases.append(
+                (urwid.TextCanvas(
+                    [text.encode()],
+                    attr=[[(class_name, len(text))]],
+                    maxcol=maxcol),
+                i + 1,
+                focus))
+        canvas = urwid.CanvasCombine(canvases)
+        if focus:
+            canvas.cursor = (min(self._input_box._edit_pos, maxcol), 0)
+        return canvas
+
+    def _accept(self, size):
+        text = self._input_box.text
+        self._input_box.text = ''
+        self._update_matches()
+        self._focused_match = -1
+        urwid.signals.emit_signal(self, 'accept', self, text)
+        self._invalidate()
+
+    def _select_next(self, size):
+        if self._focused_match > 0:
+            self._focused_match -= 1
+            self._on_results_focus_change()
+            self._invalidate()
+
+    def _select_prev(self, size):
+        if self._focused_match + 1 < min(len(self._matches), size[1] - 1):
+            self._focused_match += 1
+            self._on_results_focus_change()
+            self._invalidate()
+
+    def _on_text_change(self, *args, **kwargs):
+        self._update_matches()
+
+    def _on_results_focus_change(self, *args, **kwargs):
+        urwid.signals.disconnect_signal(
+            self._input_box, 'change', self._on_text_change)
+        self._input_box.text = self._matches[self._focused_match]
+        self._input_box.edit_pos = len(self._input_box.text)
+        urwid.signals.connect_signal(
+            self._input_box, 'change', self._on_text_change)
+
+    def _update_matches(self):
+        self._matches = _get_fuzzy_matches(
+            self._input_box.text, self._upstream_tags)
+        self._focused_match = \
+            _clamp(self._focused_match, -1, len(self._matches) - 1)
+
+
+class UrwidTagger():
+    def __init__(self, chosen_tags, upstream_tags):
+        del(urwid.command_map['left'])
+        del(urwid.command_map['down'])
+        del(urwid.command_map['up'])
+        del(urwid.command_map['right'])
+        self._chosen_tags = chosen_tags
+
+        self._fuzzy_input = FuzzyInput(upstream_tags)
+        self._choices_box = ChosenTagsListBox(chosen_tags, upstream_tags)
+        urwid.connect_signal(
+            self._fuzzy_input, 'accept', self._on_tag_accept)
+
+        self._columns = urwid.Columns([
+            urwid.LineBox(self._fuzzy_input, title='Input'),
+            urwid.LineBox(self._choices_box, title='Chosen tags')])
+        self._columns.set_focus(0)
+        self._loop = urwid.MainLoop(
+            self._columns, unhandled_input=self._keypress)
+        self._loop.screen.set_terminal_properties(256)
+        self._loop.screen.register_palette_entry(
+            'focused-match', 'light green', 'default')
+        self._loop.screen.register_palette_entry(
+            'new-tag', 'light red', 'default',
+            background_high='#FF0')
+        self._loop.screen.register_palette_entry(
+            'focused-tag', 'black', 'white',
+            background_high='#DDD')
+        self._loop.screen.register_palette_entry(
+            'focused-new-tag', 'light red', 'white',
+            background_high='#DD8')
+
+    def add_from_user_input(self):
+        try:
+            self._loop.run()
+        except ConfirmInterrupt as _:
+            return True
+        except AbortInterrupt as _:
+            return False
+        except KeyboardInterrupt as _:
+            return False
+
+    def _keypress(self, key):
+        keymap = {
+            'ctrl c': self._abort,
+            'ctrl q': self._confirm,
+            'ctrl x': self._toggle_focus,
+        }
+        if key in keymap:
+            keymap[key]()
+
+    def _abort(self):
+        raise AbortInterrupt()
+
+    def _confirm(self):
+        raise ConfirmInterrupt()
+
+    def _toggle_focus(self):
+        if self._columns.get_focus_column() == 0:
+            self._columns.set_focus_column(1)
+        else:
+            self._columns.set_focus_column(0)
+        self._columns._invalidate()
+
+    def _on_tag_accept(self, _widget, text):
+        self._chosen_tags.add(text)
+        self._choices_box.update()
+
+
+def _open_tty():
+    saved_stdin = os.dup(sys.stdin.fileno())
+    saved_stdout = os.dup(sys.stdout.fileno())
+    os.close(sys.stdin.fileno())
+    os.close(sys.stdout.fileno())
+    sys.stdin = open('/dev/tty', 'r')
+    sys.stdout = open('/dev/tty', 'w')
+    return saved_stdin, saved_stdout
+
+
+def _restore_stdio(saved_stdin, saved_stdout):
+    os.close(sys.stdin.fileno())
+    os.close(sys.stdout.fileno())
+    os.dup(saved_stdin)
+    os.dup(saved_stdout)
+
+
+def _get_upstream_tags(cache_patch):
+    cache_path = os.path.expanduser(cache_patch)
+    result = {}
+    if not os.path.exists(cache_path):
+        return result
+    with open(cache_path) as handle:
+        for line in handle:
+            word, usages = line.strip().split('\t')
+            usages = int(usages)
+            result[word] = usages
+    return result
+
+
+def parse_args():
+    parser = argparse.ArgumentParser(
+        description='Interactively choose tags')
+    parser.add_argument(
+        '-c', '--cache-path',
+        default='~/.cache/tagger.txt', help='default cache patch')
+    parser.add_argument(
+        '-t', '--tags', help='list of initial tags')
+    return parser.parse_args()
+
+
+def main():
+    args = parse_args()
+    saved_fds = _open_tty()
+    chosen_tags = TagList()
+    chosen_tags.add_all(re.split(r'\s+', args.tags or ''))
+    upstream_tags = _get_upstream_tags(args.cache_path)
+    tagger = UrwidTagger(chosen_tags, upstream_tags)
+    result = False
+    try:
+        result = tagger.add_from_user_input()
+    finally:
+        _restore_stdio(*saved_fds)
+    if result:
+        print('\n'.join(chosen_tags.get()))
+    else:
+        sys.exit(1)
+
+
+if __name__ == '__main__':
+    main()
