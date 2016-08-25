@@ -6,6 +6,7 @@ import re
 import json
 import urllib
 import requests
+import subprocess
 from bs4 import BeautifulSoup
 
 class DuplicateImageError(RuntimeError):
@@ -35,8 +36,12 @@ def parse_args():
         '--source', default='', help='source')
     parser.add_argument(
         '--title', default='', help='title')
-    parser.add_argument(
-        '-t', '--tags', required=True, help='list of space separated tags')
+    group = parser.add_mutually_exclusive_group(required=True)
+    group.add_argument(
+        '-T', '--tag-cmd',
+        nargs='?', const='tagger', help='external command to tags')
+    group.add_argument(
+        '-t', '--tags', help='list of space separated tags')
     parser.add_argument(
         metavar='POST_PATH', dest='path',
         help='path to the post')
@@ -83,7 +88,22 @@ def main():
     args = parse_args()
     with open(os.path.expanduser(args.config), 'r') as handle:
         config = json.load(handle)
-    args.tags = re.split(r'\s+', args.tags)
+
+    assert args.tags or args.tag_cmd
+    if args.tags:
+        args.tags = re.split(r'\s+', args.tags)
+    elif args.tag_cmd:
+        process = subprocess.Popen(args.tag_cmd, stdout=subprocess.PIPE)
+        try:
+            out, _ = process.communicate()
+            args.tags = re.split(r'\s+', out.decode())
+        except KeyboardInterrupt as _ex:
+            args.tags = []
+    args.tags = [tag for tag in args.tags if tag]
+    if not args.tags:
+        print('No tags chosen', file=sys.stderr)
+        sys.exit(1)
+
     session = requests.Session()
     try:
         login(session, config['user'], config['pass'])

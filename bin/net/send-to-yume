@@ -2,10 +2,12 @@
 
 ''' Sends files to yume.pl via its API and outputs copyable links. '''
 
+import re
 import os
 import sys
 import json
 import argparse
+import subprocess
 from tempfile import TemporaryFile
 import requests
 from dotfiles import config
@@ -35,9 +37,12 @@ def parse_args():
         required=False, default='safe', help='safety')
     parser.add_argument(
         '--source', default='', help='source')
-    parser.add_argument(
-        '-t', '--tags', required=False, default='tagme',
-        help='list of space separated tags')
+    group = parser.add_mutually_exclusive_group(required=True)
+    group.add_argument(
+        '-T', '--tag-cmd',
+        nargs='?', const='tagger', help='external command to tags')
+    group.add_argument(
+        '-t', '--tags', help='list of space separated tags')
     parser.add_argument(
         metavar='POST_PATH', dest='path',
         help='path to the post')
@@ -67,7 +72,7 @@ def send(args):
                 'source': args.source,
                 'safety': SAFETY_MAP[args.safety],
                 'anonymous': 0,
-                'tags': args.tags,
+                'tags': ' '.join(args.tags),
             })
         try:
             decoded = json.loads(response.text)
@@ -83,6 +88,22 @@ def send(args):
 
 def main():
     args = parse_args()
+
+    assert args.tags or args.tag_cmd
+    if args.tags:
+        args.tags = re.split(r'\s+', args.tags)
+    elif args.tag_cmd:
+        process = subprocess.Popen(args.tag_cmd, stdout=subprocess.PIPE)
+        try:
+            out, _ = process.communicate()
+            args.tags = re.split(r'\s+', out.decode())
+        except KeyboardInterrupt as _ex:
+            args.tags = []
+    args.tags = [tag for tag in args.tags if tag]
+    if not args.tags:
+        print('No tags chosen', file=sys.stderr)
+        sys.exit(1)
+
     if not send(args):
         sys.exit(1)
 
