@@ -26,8 +26,12 @@ SAFETY_MAP = {
     'questionable': 'sketchy',
     'unsafe': 'unsafe',
     'explicit': 'unsafe',
-    'q': 'sketchy',
-    'e': 'unsafe',
+    's': 's',
+    'q': 'q',
+    'e': 'e',
+    '1': 'safe',
+    '2': 'sketchy',
+    '3': 'unsafe',
 }
 
 

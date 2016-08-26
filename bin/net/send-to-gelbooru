@@ -19,8 +19,12 @@ SAFETY_MAP = {
     'questionable': 'q',
     'unsafe': 'e',
     'explicit': 'e',
+    's': 's',
     'q': 'q',
     'e': 'e',
+    '1': 's',
+    '2': 'q',
+    '3': 'e',
 }
 
 def parse_args():
