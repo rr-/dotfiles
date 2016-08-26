@@ -138,6 +138,9 @@ alias jaen='tl ja en'
 alias isvim='ps ux|grep vim|grep -v grep' # also works for nvim
 alias dark='lightness dark'
 alias light='lightness light'
+alias yum=send-to-yume
+alias gel=send-to-gelbooru
+alias tmp=send-to-tmp
 
 # legacy aliases
 command -v hd >/dev/null 2>&1 || alias hd='od -Ax -t x1'
