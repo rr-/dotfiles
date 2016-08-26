@@ -1,0 +1,19 @@
+#!/bin/sh
+
+if [ -z "$1" ]; then
+    echo 'No database specified' 1>&2
+    exit 1
+else
+    dbname="$1"
+fi
+
+if ! command -v pg_dump &>/dev/null; then
+    echo 1>&2 'pg_dump not found. Aborting.'
+    exit 1
+fi
+
+day_of_week=$(date +'%A'|tr '[[:upper:]]' '[[:lower:]]')
+path=~/.backup/sql/"$dbname"/"$day_of_week".sql
+mkdir -p "$(dirname "$path")"
+
+pg_dump -U postgres -d "$dbname" >"$path"
