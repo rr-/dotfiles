@@ -40,12 +40,13 @@ def parse_args():
         '--source', default='', help='source')
     parser.add_argument(
         '--title', default='', help='title')
-    group = parser.add_mutually_exclusive_group(required=True)
+    group = parser.add_mutually_exclusive_group()
     group.add_argument(
         '-T', '--tag-cmd',
-        nargs='?', const='tagger', help='external command to tags')
+        help='external command to tags')
     group.add_argument(
         '-t', '--tags', help='list of space separated tags')
+    parser.set_defaults(tag_cmd='tagger')
     parser.add_argument(
         metavar='POST_PATH', dest='path',
         help='path to the post')
