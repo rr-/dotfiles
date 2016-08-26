@@ -15,7 +15,6 @@ from dotfiles import config
 config_key = config['send-to-yume']
 
 API_URL = config_key.get('api-url', 'https://yume.pl/api/')
-BASE_URL = config_key.get('base-url', 'https://yume.pl/#/post/')
 USER_NAME = config_key['user']
 PASSWORD = config_key['password']
 
@@ -54,32 +53,34 @@ def send(args):
         return False
 
     session = requests.Session()
-    response = session.post(
-        API_URL + 'login',
-        data={'userNameOrEmail': USER_NAME, 'password': PASSWORD})
-    auth_token = json.loads(response.text)['token']['name']
-    session.headers.update({'x-authorization-token': auth_token})
+    session.headers['Accept'] = 'application/json'
+    session.auth = requests.auth.HTTPBasicAuth(USER_NAME, PASSWORD)
+    response = session.get(API_URL + '/user/' + USER_NAME + '?bump-login')
+    if response.status_code != 200:
+        print('Error logging in: %s' % response.text)
+        return False
 
-    with open(args.path, 'rb') as handle, \
-            TemporaryFile() as copied_handle:
+    with open(args.path, 'rb') as handle, TemporaryFile() as copied_handle:
         copied_handle.write(handle.read())
         copied_handle.seek(0)
         response = session.post(
             API_URL + '/posts',
-            files={'content': copied_handle},
-            data={
-                'contentFileName': os.path.basename(args.path),
-                'source': args.source,
-                'safety': SAFETY_MAP[args.safety],
-                'anonymous': 0,
-                'tags': ' '.join(args.tags),
+            files={
+                'content': copied_handle,
+                'metadata': json.dumps({
+                    'source': args.source,
+                    'safety': SAFETY_MAP[args.safety],
+                    'anonymous': False,
+                    'tags': args.tags,
+                }),
             })
         try:
             decoded = json.loads(response.text)
+            print(decoded)
             if response.status_code == 200:
-                print(BASE_URL + str(decoded['post']['id']))
+                print(str(decoded['contentUrl']))
             else:
-                print('Error: %s' % decoded['error'], file=sys.stderr)
+                print('Error: %s' % decoded['description'], file=sys.stderr)
                 return False
         except json.decoder.JSONDecodeError:
             print('Fatal error: %s' % response.text, file=sys.stderr)
