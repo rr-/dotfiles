@@ -2,22 +2,24 @@
 
 ''' Sends files to yume.pl via its API and outputs copyable links. '''
 
-import re
-import os
-import sys
-import json
 import argparse
+import hashlib
+import json
+import os
+import re
 import subprocess
+import sys
 from tempfile import TemporaryFile
 import requests
 from dotfiles import config
+from dotfiles.tag_list import TagList
+
 
 config_key = config['send-to-yume']
 
 API_URL = config_key.get('api-url', 'https://yume.pl/api/')
 USER_NAME = config_key['user']
 PASSWORD = config_key['password']
-
 SAFETY_MAP = {
     'safe': 'safe',
     'sketchy': 'sketchy',
@@ -27,6 +29,37 @@ SAFETY_MAP = {
     'q': 'sketchy',
     'e': 'unsafe',
 }
+
+
+class NoContentError(RuntimeError):
+    pass
+
+
+class LoginError(RuntimeError):
+    pass
+
+
+class SearchError(RuntimeError):
+    pass
+
+
+class PostRetrievalError(RuntimeError):
+    pass
+
+
+class PostUpdateError(RuntimeError):
+    pass
+
+
+class PostUploadError(RuntimeError):
+    pass
+
+
+class DuplicatePostUploadError(RuntimeError):
+    def __init__(self, post_id):
+        super().__init__('Duplicate post')
+        self.post_id = post_id
+
 
 def parse_args():
     parser = argparse.ArgumentParser(
@@ -47,66 +80,132 @@ def parse_args():
         help='path to the post')
     return parser.parse_args()
 
-def send(args):
-    if not args.path:
-        print('Nothing to send.', file=sys.stderr)
-        return False
 
+def create_session():
     session = requests.Session()
     session.headers['Accept'] = 'application/json'
     session.auth = requests.auth.HTTPBasicAuth(USER_NAME, PASSWORD)
     response = session.get(API_URL + '/user/' + USER_NAME + '?bump-login')
     if response.status_code != 200:
-        print('Error logging in: %s' % response.text)
+        raise LoginError(response.text)
         return False
+    return session
 
-    with open(args.path, 'rb') as handle, TemporaryFile() as copied_handle:
-        copied_handle.write(handle.read())
-        copied_handle.seek(0)
+
+def get_post(session, post_id):
+    response = session.get(API_URL + '/post/' + str(post_id))
+    decoded = json.loads(response.text)
+    if response.status_code == 200:
+        return decoded
+    raise PostRetrievalError(decoded['description'])
+
+
+def upload_post(session, content, source, safety, tags):
+    with TemporaryFile() as handle:
+        handle.write(content)
+        handle.seek(0)
         response = session.post(
             API_URL + '/posts',
             files={
-                'content': copied_handle,
+                'content': handle,
                 'metadata': json.dumps({
-                    'source': args.source,
-                    'safety': SAFETY_MAP[args.safety],
+                    'source': source,
+                    'safety': SAFETY_MAP[safety],
                     'anonymous': False,
-                    'tags': args.tags,
+                    'tags': tags,
                 }),
             })
-        try:
-            decoded = json.loads(response.text)
-            print(decoded)
-            if response.status_code == 200:
-                print(str(decoded['contentUrl']))
-            else:
-                print('Error: %s' % decoded['description'], file=sys.stderr)
-                return False
-        except json.decoder.JSONDecodeError:
-            print('Fatal error: %s' % response.text, file=sys.stderr)
-            return False
-    return True
+        decoded = json.loads(response.text)
+        if response.status_code == 200:
+            return decoded
+        if 'already uploaded' in decoded['description']:
+            post_id = re.search('\d+', decoded['description']).group(0)
+            raise DuplicatePostUploadError(post_id)
+        raise PostUploadError(decoded['description'])
+
+
+def get_file_content(args):
+    if not args.path:
+        raise NoContentError()
+    with open(args.path, 'rb') as handle:
+        return handle.read()
+
+
+def get_sha1_checksum(content):
+    sha1 = hashlib.sha1()
+    sha1.update(content)
+    return sha1.hexdigest()
+
+
+def search_post_by_checksum(session, checksum):
+    response = session.get(
+        API_URL + '/posts?query=content-checksum:' + checksum)
+    decoded = json.loads(response.text)
+    if response.status_code == 200:
+        if len(decoded['results']):
+            return decoded['results'][0]
+        return None
+    raise SearchError(decoded['description'])
+
+
+def collect_tags(args, initial_tags):
+    assert args.tags or args.tag_cmd
+    ret = TagList()
+    ret.add_all(initial_tags)
+    if args.tags:
+        ret.add_all(re.split(r'\s+', args.tags))
+    elif args.tag_cmd:
+        process = subprocess.Popen(
+            [args.tag_cmd, '--tags', ' '.join(ret.get())],
+            stdout=subprocess.PIPE)
+        out, _ = process.communicate()
+        ret.add_all(re.split(r'\s+', out.decode()))
+    return ret
+
+
+def update_post_tags(session, post_id, post_version, tags):
+    response = session.put(
+        API_URL + '/post/' + str(post_id),
+        data=json.dumps({
+            'version': post_version,
+            'tags': tags,
+        }))
+    decoded = json.loads(response.text)
+    if response.status_code == 200:
+        return decoded
+    raise PostUpdateError(decoded['description'])
+
 
 def main():
     args = parse_args()
 
-    assert args.tags or args.tag_cmd
-    if args.tags:
-        args.tags = re.split(r'\s+', args.tags)
-    elif args.tag_cmd:
-        process = subprocess.Popen(args.tag_cmd, stdout=subprocess.PIPE)
-        try:
-            out, _ = process.communicate()
-            args.tags = re.split(r'\s+', out.decode())
-        except KeyboardInterrupt as _ex:
-            args.tags = []
-    args.tags = [tag for tag in args.tags if tag]
-    if not args.tags:
-        print('No tags chosen', file=sys.stderr)
-        sys.exit(1)
-
-    if not send(args):
-        sys.exit(1)
+    try:
+        session = create_session()
+        content = get_file_content(args)
+        checksum = get_sha1_checksum(content)
+        post = search_post_by_checksum(session, checksum)
+        if post:
+            tags = collect_tags(args, post['tags'])
+            update_post_tags(session, post['id'], post['version'], tags.get())
+        else:
+            tags = collect_tags(args, [])
+            post = upload_post(
+                session, content, args.source, args.safety, tags.get())
+        print(post['contentUrl'])
+        sys.exit(0)
+    except KeyboardInterrupt:
+        print('Cancelled.', file=sys.stderr)
+    except PostUpdateError as ex:
+        print('Error updating post: %s' % str(ex), file=sys.stderr)
+    except PostUploadError as ex:
+        print('Error uploading post: %s' % str(ex), file=sys.stderr)
+    except LoginError as ex:
+        print('Error logging in: %s' % str(ex), file=sys.stderr)
+    except NoContentError:
+        print('Error: nothing to send.', file=sys.stderr)
+    except json.decoder.JSONDecodeError as ex:
+        print('Error decoding JSON: %s' % str(ex.doc), file=sys.stderr)
+    sys.exit(1)
 
 if __name__ == '__main__':
     main()
