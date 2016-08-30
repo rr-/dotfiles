@@ -14,6 +14,11 @@ import requests
 from dotfiles import config
 from dotfiles.tag_list import TagList
 
+try:
+    JSONDecodeError = json.decoder.JSONDecodeError
+except:
+    JSONDecodeError = ValueError
+
 
 config_key = config['send-to-yume']
 
@@ -208,7 +213,7 @@ def main():
         print('Error logging in: %s' % str(ex), file=sys.stderr)
     except NoContentError:
         print('Error: nothing to send.', file=sys.stderr)
-    except json.decoder.JSONDecodeError as ex:
+    except JSONDecodeError as ex:
         print('Error decoding JSON: %s' % str(ex.doc), file=sys.stderr)
     sys.exit(1)
 
