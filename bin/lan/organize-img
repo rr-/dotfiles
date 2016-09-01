@@ -1,7 +1,7 @@
 #!/bin/bash
-remote_root_dir="$HOME/img/"
+remote_root_dir="$HOME/hub/img/"
 dst_root_dir="$HOME/img/net/"
-transit_root_dir="$HOME/img/transit"
+transit_root_dir="$HOME/hub/img/"
 remote_host=burza
 local_host=tornado
 min_width=500
