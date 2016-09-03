@@ -1,9 +1,11 @@
 #!/bin/python3
-from dotfiles import iqdb
-import colorama
-import os
-import sys
 import argparse
+from dotfiles import iqdb
+from dotfiles import logging
+
+
+logger = logging.getLogger(__name__)
+
 
 def _parse_args():
     parser = argparse.ArgumentParser(description='Searches for image via IQDB')
@@ -11,54 +13,47 @@ def _parse_args():
         metavar='POST_PATH', dest='path', help='path to the image')
     return parser.parse_args()
 
-def _print_header(text):
-    margin = (40 - len(text)) // 2
-    print('-' * margin, text, '-' * margin)
 
-def _print_results(results, input_area):
+def _output_header(text):
+    margin = (40 - len(text)) // 2
+    line = '-' * margin
+    logger.info('%s %s %s', line, text, line)
+
+
+def _output_results(results):
     for result in sorted(results, key=lambda _: _.url):
-        print('[', end='')
+        text = '[%3.0f%%, %5dx%-5d] %s' % (
+            result.similarity * 100, result.width, result.height, result.url)
 
         if result.similarity >= 0.95:
-            color = colorama.Fore.GREEN + colorama.Style.BRIGHT
+            logger.success(text)
         elif result.similarity >= 0.85:
-            color = colorama.Fore.YELLOW
+            logger.warning(text)
         else:
-            color = colorama.Fore.RED + colorama.Style.BRIGHT
-        print((color + '%3.0f%%') % (result.similarity * 100), end='')
+            logger.error(text)
 
-        print(', ', end='')
-
-        result_area = result.width * result.height
-        if result_area > input_area and result.similarity >= 0.85:
-            color = colorama.Fore.GREEN + colorama.Style.BRIGHT
-        else:
-            color = colorama.Style.RESET_ALL
-        print((color + '%5dx%-5d') % (result.width, result.height), end='')
-
-        print('] %s' % result.url)
 
 def main():
     args = _parse_args()
     results = iqdb.search(args.path)
 
-    input_area =  results.input_width * results.input_height
     main_results = [_ for _ in results if _.main]
     extra_results = [_ for _ in results if not _.main]
 
     if not main_results:
-        print(colorama.Fore.RED + 'No direct matches')
+        logger.error('No direct matches')
         return
 
-    print('Input: %dx%d' % (results.input_width, results.input_height))
-    print()
-    _print_header('Main results')
-    _print_results(main_results, input_area)
+    logger.info('Input: %dx%d', results.input_width, results.input_height)
+    logger.info('')
+    _output_header('Main results')
+    _output_results(main_results)
     if extra_results:
-        print()
-        _print_header('Additional results')
-        _print_results(extra_results, input_area)
+        logger.info('')
+        _output_header('Additional results')
+        _output_results(extra_results)
+
 
 if __name__ == '__main__':
-    colorama.init(autoreset=True)
+    logging.getLogger('requests').setLevel(logging.WARNING)
     main()
