@@ -16,8 +16,9 @@ NO_MATCH_FOUND = 2
 
 def _parse_args():
     parser = argparse.ArgumentParser(description='Searches for image via IQDB')
+    parser.add_argument('path', help='path to the image')
     parser.add_argument(
-        metavar='POST_PATH', dest='path', help='path to the image')
+        '-f', '--filter', help='filter the results by URL', default='')
     return parser.parse_args()
 
 
@@ -43,6 +44,9 @@ def _output_results(results):
 def main():
     args = _parse_args()
     results = iqdb.search(args.path)
+    for result in reversed(results):
+        if filter not in result.url:
+            results.remove(result)
 
     main_results = [_ for _ in results if _.main]
     extra_results = [_ for _ in results if not _.main]
