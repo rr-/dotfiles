@@ -9,6 +9,19 @@ import urwid
 from dotfiles.tag_list import TagList
 
 
+class LocalTag():
+    SOURCE_INITIAL = 0
+    SOURCE_USER_INPUT = 1
+    SOURCE_IMPLICATION = 2
+
+    def __init__(self, name, source):
+        self.name = name
+        self.source = source
+
+    def __str__(self):
+        return self.name
+
+
 class ReferenceTag():
     def __init__(self, name, importance, implications):
         self.name = name
@@ -217,13 +230,18 @@ class ChosenTagsListBox(urwid.ListBox):
 
     def update(self):
         self.body.clear()
-        for tag in sorted(self._chosen_tags):
-            is_new = tag.lower() not in self._reference_tags
+        for tag in sorted(self._chosen_tags, key=lambda tag: tag.name):
+            if tag.source == LocalTag.SOURCE_IMPLICATION:
+                class_name = 'implied-tag'
+            elif str(tag).lower() not in self._reference_tags:
+                class_name = 'new-tag'
+            else:
+                class_name = 'tag'
             self.body.append(
                 urwid.AttrWrap(
-                    urwid.Text(tag, wrap=urwid.CLIP),
-                    'new-tag' if is_new else 'tag',
-                    'focused-new-tag' if is_new else 'focused-tag'))
+                    urwid.Text(str(tag), wrap=urwid.CLIP),
+                    class_name,
+                    'focused-' + class_name))
         self._invalidate()
 
     def _select_next(self):
@@ -361,11 +379,12 @@ class UrwidTagger():
             'new-tag', 'light red', 'default',
             background_high='#FF0')
         self._loop.screen.register_palette_entry(
-            'focused-tag', 'black', 'white',
-            background_high='#DDD')
-        self._loop.screen.register_palette_entry(
-            'focused-new-tag', 'light red', 'white',
-            background_high='#DD8')
+            'implied-tag', 'light green', 'default',
+            background_high='#DFD')
+        for class_name in ['tag', 'new-tag', 'implied-tag']:
+            self._loop.screen.register_palette_entry(
+                'focused-' + class_name, 'black', 'white',
+                background_high='#000', foreground_high='#FFF')
 
     def add_from_user_input(self):
         try:
@@ -399,10 +418,11 @@ class UrwidTagger():
             self._columns.set_focus(0)
 
     def _on_tag_accept(self, _widget, text):
-        self._chosen_tags.add(text)
+        self._chosen_tags.add(LocalTag(text, LocalTag.SOURCE_USER_INPUT))
         if text in self._reference_tags:
             for implication in self._reference_tags[text].implications:
-                self._chosen_tags.add(implication)
+                self._chosen_tags.add(
+                    LocalTag(implication, LocalTag.SOURCE_IMPLICATION))
         self._choices_box.update()
 
 
@@ -453,7 +473,9 @@ def main():
     args = parse_args()
     saved_fds = _open_tty()
     chosen_tags = TagList()
-    chosen_tags.add_all(re.split(r'\s+', args.tags or ''))
+    chosen_tags.add_all(
+        LocalTag(x, LocalTag.SOURCE_INITIAL)
+        for x in re.split(r'\s+', args.tags or ''))
     reference_tags = _get_reference_tags(args.reference_tags_path)
     tagger = UrwidTagger(chosen_tags, reference_tags)
     result = False
@@ -462,7 +484,7 @@ def main():
     finally:
         _restore_stdio(*saved_fds)
     if result:
-        print('\n'.join(chosen_tags))
+        print('\n'.join(tag.name for tag in chosen_tags))
     else:
         sys.exit(1)
 
