@@ -132,7 +132,7 @@ def collect_tags(args):
         ret.add_all(re.split(r'\s+', args.tags))
     elif args.tag_cmd:
         process = subprocess.Popen(
-            [args.tag_cmd, '--tags', ' '.join(ret.get())],
+            [args.tag_cmd, '--tags', ' '.join(ret)],
             stdout=subprocess.PIPE)
         out, _ = process.communicate()
         ret.add_all(re.split(r'\s+', out.decode()))
@@ -150,11 +150,11 @@ def main():
         content = get_file_content(args)
         tags = collect_tags(args)
         print('Tags:')
-        print('\n'.join(tags.get()))
+        print('\n'.join(tags))
 
         session = create_session(config['user'], config['pass'])
         upload(
-            session, content, args.source, args.title, args.safety, tags.get())
+            session, content, args.source, args.title, args.safety, tags)
         print('Uploaded.')
         sys.exit(0)
 

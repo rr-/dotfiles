@@ -1,32 +1,33 @@
 class TagList():
     def __init__(self):
         self._chosen_tags = []
-
-    def is_tagged(self, word):
-        return word.lower() in [tag.lower() for tag in self._chosen_tags]
+        self._index = set()
 
     def add(self, tag):
-        tag = tag.strip()
-        if not tag:
-            return
-        if self.is_tagged(tag):
+        if not str(tag).strip() or tag in self:
             return
         self._chosen_tags.append(tag)
+        self._index.add(str(tag).lower())
 
     def add_all(self, collection):
         for tag in collection:
             self.add(tag)
 
-    def remove(self, word):
+    def remove(self, tag):
         self._chosen_tags = [
-            tag for tag in self._chosen_tags if tag.lower() != word.lower()]
+            t for t in self._chosen_tags \
+                if str(t).lower() != str(tag).lower()]
+        self._index.remove(str(tag).lower())
 
     def remove_all(self, collection):
         for tag in collection:
             self.remove(tag)
 
-    def get(self):
-        return self._chosen_tags
+    def __iter__(self):
+        return self._chosen_tags.__iter__()
 
     def __len__(self):
         return len(self._chosen_tags)
+
+    def __contains__(self, word):
+        return str(word).lower() in self._index
