@@ -10,9 +10,10 @@ from dotfiles.tag_list import TagList
 
 
 class ReferenceTag():
-    def __init__(self, name, importance):
+    def __init__(self, name, importance, implications):
         self.name = name
         self.importance = importance
+        self.implications = implications
 
     def __str__(self):
         return self.name
@@ -340,6 +341,7 @@ class UrwidTagger():
         del urwid.command_map['up']
         del urwid.command_map['right']
         self._chosen_tags = chosen_tags
+        self._reference_tags = reference_tags
 
         self._fuzzy_input = FuzzyInput(reference_tags)
         self._choices_box = ChosenTagsListBox(chosen_tags, reference_tags)
@@ -398,6 +400,9 @@ class UrwidTagger():
 
     def _on_tag_accept(self, _widget, text):
         self._chosen_tags.add(text)
+        if text in self._reference_tags:
+            for implication in self._reference_tags[text].implications:
+                self._chosen_tags.add(implication)
         self._choices_box.update()
 
 
@@ -428,7 +433,8 @@ def _get_reference_tags(cache_patch):
             for alias in tag['names']:
                 reference_tags.add(ReferenceTag(
                     name=alias,
-                    importance=tag['usages']))
+                    importance=tag['usages'],
+                    implications=tag.get('implications', [])))
     return reference_tags
 
 
