@@ -42,7 +42,7 @@ WORDCHARS='*?_-.[]~=&;!#$%^(){}<>'      # what kill-word should delete
 export HISTFILE=~/.config/zsh/history   # set path to history file
 export HISTSIZE=10000                   # how many entries in history (memory)
 export SAVEHIST=10000                   # how many entries in history (hdd)
-export HISTORY_IGNORE='(send-to-*)'     # don't remember certain commands
+export HISTORY_IGNORE='(yum|tmp|gel)'   # don't remember certain commands
 setopt appendhistory                    # append lines (for concurrent sessions)
 setopt HIST_IGNORE_ALL_DUPS             # ignore even interleaved duplicates
 
@@ -138,9 +138,9 @@ alias jaen='tl ja en'
 alias isvim='ps ux|grep vim|grep -v grep' # also works for nvim
 alias dark='lightness dark'
 alias light='lightness light'
-alias yum=send-to-yume
-alias gel=send-to-gelbooru
-alias tmp=send-to-tmp
+alias yum=ul-yume
+alias gel=ul-gelbooru
+alias tmp=ul-tmp
 
 # legacy aliases
 command -v hd >/dev/null 2>&1 || alias hd='od -Ax -t x1'
