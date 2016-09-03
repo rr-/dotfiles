@@ -2,13 +2,12 @@
 
 ''' Sends files to yume.pl via its API and outputs copyable links. '''
 
+import sys
+import re
 import argparse
 import hashlib
 import json
-import os
-import re
 import subprocess
-import sys
 from tempfile import TemporaryFile
 import requests
 from dotfiles import config
@@ -66,7 +65,7 @@ class PostUploadError(RuntimeError):
 
 class DuplicatePostUploadError(RuntimeError):
     def __init__(self, post_id):
-        super().__init__('Duplicate post')
+        super().__init__('Image already uploaded')
         self.post_id = post_id
 
 
@@ -98,7 +97,6 @@ def create_session():
     response = session.get(API_URL + '/user/' + USER_NAME + '?bump-login')
     if response.status_code != 200:
         raise LoginError(response.text)
-        return False
     return session
 
 
@@ -129,7 +127,7 @@ def upload_post(session, content, source, safety, tags):
         if response.status_code == 200:
             return decoded
         if 'already uploaded' in decoded['description']:
-            post_id = re.search('\d+', decoded['description']).group(0)
+            post_id = re.search(r'\d+', decoded['description']).group(0)
             raise DuplicatePostUploadError(post_id)
         raise PostUploadError(decoded['description'])
 
@@ -194,15 +192,19 @@ def main():
         content = get_file_content(args)
         checksum = get_sha1_checksum(content)
         post = search_post_by_checksum(session, checksum)
+        tags = collect_tags(args, post['tags'] if post else [])
+        print('Tags:')
+        print('\n'.join(tags.get()))
+
         if post:
-            tags = collect_tags(args, post['tags'])
             update_post_tags(session, post['id'], post['version'], tags.get())
         else:
-            tags = collect_tags(args, [])
             post = upload_post(
                 session, content, args.source, args.safety, tags.get())
-        print(post['contentUrl'])
+        print('Uploaded.')
+        print('Address: ' + post['contentUrl'])
         sys.exit(0)
+
     except KeyboardInterrupt:
         print('Cancelled.', file=sys.stderr)
     except PostUpdateError as ex:

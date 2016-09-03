@@ -27,3 +27,6 @@ class TagList():
 
     def get(self):
         return self._chosen_tags
+
+    def __len__(self):
+        return len(self._chosen_tags)
