@@ -4,6 +4,7 @@ import sys
 import re
 import string
 import argparse
+import json
 import urwid
 from dotfiles.tag_list import TagList
 
@@ -423,10 +424,11 @@ def _get_reference_tags(cache_patch):
     if not os.path.exists(cache_path):
         return reference_tags
     with open(cache_path) as handle:
-        for line in handle:
-            name, importance = line.strip().split('\t')
-            importance = int(importance)
-            reference_tags.add(ReferenceTag(name, importance))
+        for tag in json.load(handle)['tags']:
+            for alias in tag['names']:
+                reference_tags.add(ReferenceTag(
+                    name=alias,
+                    importance=tag['usages']))
     return reference_tags
 
 
@@ -435,7 +437,7 @@ def parse_args():
         description='Interactively choose tags')
     parser.add_argument(
         '-r', '--reference-tags', dest='reference_tags_path',
-        default='~/.config/tagger.txt', help='path to reference tags')
+        default='~/.config/tagger.json', help='path to reference tags')
     parser.add_argument(
         '-t', '--tags', help='list of initial tags')
     return parser.parse_args()
