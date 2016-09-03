@@ -1,5 +1,4 @@
 #!/bin/python3
-
 import os
 import sys
 import re
@@ -7,6 +6,15 @@ import string
 import argparse
 import urwid
 from dotfiles.tag_list import TagList
+
+
+class ReferenceTag():
+    def __init__(self, name, importance):
+        self.name = name
+        self.importance = importance
+
+    def __str__(self):
+        return self.name
 
 
 class AbortInterrupt(KeyboardInterrupt):
@@ -21,16 +29,16 @@ def _clamp(number, min_value, max_value):
     return max(min_value, min(max_value, number))
 
 
-def _get_fuzzy_matches(user_input, dictionary):
+def _get_fuzzy_matches(user_input, reference_tags):
     if not user_input:
         return []
     suggestions = []
     pattern = '.*?'.join(re.escape(chunk) for chunk in list(user_input))
     regex = re.compile(pattern, re.I)
-    for word, usages in dictionary.items():
-        match = regex.search(word)
+    for reference_tag in reference_tags:
+        match = regex.search(reference_tag.name)
         if match:
-            suggestions.append((-usages, word))
+            suggestions.append((-reference_tag.importance, reference_tag.name))
     return [x for _, x in sorted(suggestions)]
 
 
@@ -176,11 +184,10 @@ class ReadlineEdit(urwid.Text):
 
 
 class ChosenTagsListBox(urwid.ListBox):
-    def __init__(self, chosen_tags, upstream_tags):
+    def __init__(self, chosen_tags, reference_tags):
         super().__init__(urwid.SimpleListWalker([]))
         self._chosen_tags = chosen_tags
-        self._upstream_tags_lower_names = \
-            [name.lower() for name in upstream_tags.keys()]
+        self._reference_tags = reference_tags
         self.update()
 
     def selectable(self):
@@ -209,7 +216,7 @@ class ChosenTagsListBox(urwid.ListBox):
     def update(self):
         self.body.clear()
         for tag in sorted(self._chosen_tags):
-            is_new = tag.lower() not in self._upstream_tags_lower_names
+            is_new = tag.lower() not in self._reference_tags
             self.body.append(
                 urwid.AttrWrap(
                     urwid.Text(tag, wrap=urwid.CLIP),
@@ -236,8 +243,8 @@ class ChosenTagsListBox(urwid.ListBox):
 class FuzzyInput(urwid.Widget):
     signals = ['accept']
 
-    def __init__(self, upstream_tags):
-        self._upstream_tags = upstream_tags
+    def __init__(self, reference_tags):
+        self._reference_tags = reference_tags
         self._focused_match = -1
         self._matches = []
         self._input_box = ReadlineEdit('', wrap=urwid.CLIP)
@@ -320,21 +327,21 @@ class FuzzyInput(urwid.Widget):
 
     def _update_matches(self):
         self._matches = _get_fuzzy_matches(
-            self._input_box.text, self._upstream_tags)
+            self._input_box.text, self._reference_tags)
         self._focused_match = \
             _clamp(self._focused_match, -1, len(self._matches) - 1)
 
 
 class UrwidTagger():
-    def __init__(self, chosen_tags, upstream_tags):
+    def __init__(self, chosen_tags, reference_tags):
         del urwid.command_map['left']
         del urwid.command_map['down']
         del urwid.command_map['up']
         del urwid.command_map['right']
         self._chosen_tags = chosen_tags
 
-        self._fuzzy_input = FuzzyInput(upstream_tags)
-        self._choices_box = ChosenTagsListBox(chosen_tags, upstream_tags)
+        self._fuzzy_input = FuzzyInput(reference_tags)
+        self._choices_box = ChosenTagsListBox(chosen_tags, reference_tags)
         urwid.connect_signal(
             self._fuzzy_input, 'accept', self._on_tag_accept)
 
@@ -410,25 +417,25 @@ def _restore_stdio(saved_stdin, saved_stdout):
     os.dup(saved_stdout)
 
 
-def _get_upstream_tags(cache_patch):
+def _get_reference_tags(cache_patch):
     cache_path = os.path.expanduser(cache_patch)
-    result = {}
+    reference_tags = TagList()
     if not os.path.exists(cache_path):
-        return result
+        return reference_tags
     with open(cache_path) as handle:
         for line in handle:
-            word, usages = line.strip().split('\t')
-            usages = int(usages)
-            result[word] = usages
-    return result
+            name, importance = line.strip().split('\t')
+            importance = int(importance)
+            reference_tags.add(ReferenceTag(name, importance))
+    return reference_tags
 
 
 def parse_args():
     parser = argparse.ArgumentParser(
         description='Interactively choose tags')
     parser.add_argument(
-        '-c', '--cache-path',
-        default='~/.cache/tagger.txt', help='default cache patch')
+        '-r', '--reference-tags', dest='reference_tags_path',
+        default='~/.config/tagger.txt', help='path to reference tags')
     parser.add_argument(
         '-t', '--tags', help='list of initial tags')
     return parser.parse_args()
@@ -439,8 +446,8 @@ def main():
     saved_fds = _open_tty()
     chosen_tags = TagList()
     chosen_tags.add_all(re.split(r'\s+', args.tags or ''))
-    upstream_tags = _get_upstream_tags(args.cache_path)
-    tagger = UrwidTagger(chosen_tags, upstream_tags)
+    reference_tags = _get_reference_tags(args.reference_tags_path)
+    tagger = UrwidTagger(chosen_tags, reference_tags)
     result = False
     try:
         result = tagger.add_from_user_input()
