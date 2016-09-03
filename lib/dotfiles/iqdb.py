@@ -41,10 +41,10 @@ class IqdbResultList(list):
 def search(path):
     response = _query(path)
     soup = BeautifulSoup(response, 'html.parser')
-    if 'no relevant matches' in response.lower():
-        return []
-
     results = IqdbResultList()
+    if 'no relevant matches' in response.lower():
+        return results
+
     for i, parent in enumerate(['#pages', '#more1']):
         for table_element in soup.select('%s table' % parent):
             a_elements = table_element.select('a')
