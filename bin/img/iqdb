@@ -1,10 +1,17 @@
 #!/bin/python3
+import sys
 import argparse
 from dotfiles import iqdb
 from dotfiles import logging
 
 
 logger = logging.getLogger(__name__)
+GOOD_MATCH_THRESHOLD = 0.95
+POSSIBLE_MATCH_THRESHOLD = 0.85
+
+GOOD_MATCH_FOUND = 0
+POSSIBLE_MATCH_FOUND = 1
+NO_MATCH_FOUND = 2
 
 
 def _parse_args():
@@ -25,9 +32,9 @@ def _output_results(results):
         text = '[%3.0f%%, %5dx%-5d] %s' % (
             result.similarity * 100, result.width, result.height, result.url)
 
-        if result.similarity >= 0.95:
+        if result.similarity >= GOOD_MATCH_THRESHOLD:
             logger.success(text)
-        elif result.similarity >= 0.85:
+        elif result.similarity >= POSSIBLE_MATCH_THRESHOLD:
             logger.warning(text)
         else:
             logger.error(text)
@@ -52,6 +59,12 @@ def main():
         logger.info('')
         _output_header('Additional results')
         _output_results(extra_results)
+
+    if any(r for r in results if r.similarity >= GOOD_MATCH_THRESHOLD):
+        sys.exit(GOOD_MATCH_FOUND)
+    if any(r for r in results if r.similarity >= POSSIBLE_MATCH_THRESHOLD):
+        sys.exit(POSSIBLE_MATCH_FOUND)
+    sys.exit(NO_MATCH_FOUND)
 
 
 if __name__ == '__main__':
