@@ -1,6 +1,8 @@
 #!/bin/python3
+import os
 import sys
 import argparse
+import pathlib
 from dotfiles import iqdb
 from dotfiles import logging
 
@@ -16,16 +18,10 @@ NO_MATCH_FOUND = 2
 
 def _parse_args():
     parser = argparse.ArgumentParser(description='Searches for image via IQDB')
-    parser.add_argument('path', help='path to the image')
+    parser.add_argument('path', help='path to the image', nargs='+')
     parser.add_argument(
         '-f', '--filter', help='filter the results by URL', default='')
     return parser.parse_args()
-
-
-def _output_header(text):
-    margin = (40 - len(text)) // 2
-    line = '-' * margin
-    logger.info('%s %s %s', line, text, line)
 
 
 def _output_results(results):
@@ -41,9 +37,11 @@ def _output_results(results):
             logger.error(text)
 
 
-def main():
-    args = _parse_args()
-    results = iqdb.search(args.path)
+def _process_path(path, filter=''):
+    logger.info('Input file: %s', path)
+    logger.info('Input URL: %s', pathlib.Path(os.path.abspath(path)).as_uri())
+    results = iqdb.search(path)
+
     for result in reversed(results):
         if filter not in result.url:
             results.remove(result)
@@ -53,22 +51,30 @@ def main():
 
     if not main_results:
         logger.error('No direct matches')
-        return
+        logger.info('')
+        return NO_MATCH_FOUND
 
-    logger.info('Input: %dx%d', results.input_width, results.input_height)
-    logger.info('')
-    _output_header('Main results')
+    logger.info(
+        'Input resolution: %dx%d', results.input_width, results.input_height)
+
     _output_results(main_results)
     if extra_results:
-        logger.info('')
-        _output_header('Additional results')
         _output_results(extra_results)
+    logger.info('')
 
     if any(r for r in results if r.similarity >= GOOD_MATCH_THRESHOLD):
-        sys.exit(GOOD_MATCH_FOUND)
+        return GOOD_MATCH_FOUND
     if any(r for r in results if r.similarity >= POSSIBLE_MATCH_THRESHOLD):
-        sys.exit(POSSIBLE_MATCH_FOUND)
-    sys.exit(NO_MATCH_FOUND)
+        return POSSIBLE_MATCH_FOUND
+    return NO_MATCH_FOUND
+
+
+def main():
+    args = _parse_args()
+    exit_code = 0
+    for path in args.path:
+        exit_code = max(exit_code, _process_path(path, args.filter))
+    sys.exit(exit_code)
 
 
 if __name__ == '__main__':
