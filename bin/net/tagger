@@ -4,8 +4,8 @@ import os
 import sys
 import re
 import string
-import urwid
 import argparse
+import urwid
 from dotfiles.tag_list import TagList
 
 
@@ -151,21 +151,22 @@ class ReadlineEdit(urwid.Text):
         self.edit_pos = 0
 
     def _backward_kill_word(self):
-        x = self.edit_pos
-        while x > 0 and re.match(r'\s', self.text[x - 1]):
-            x -= 1
-        while x > 0 and re.match(self.WORD_REGEX, self.text[x - 1]):
-            x -= 1
-        self.text = self.text[0:x] + self.text[self.edit_pos:]
-        self.edit_pos = x
+        pos = self.edit_pos
+        while pos > 0 and re.match(r'\s', self.text[pos - 1]):
+            pos -= 1
+        while pos > 0 and re.match(self.WORD_REGEX, self.text[pos - 1]):
+            pos -= 1
+        self.text = self.text[0:pos] + self.text[self.edit_pos:]
+        self.edit_pos = pos
 
     def _kill_word(self):
-        x = self.edit_pos
-        while x < len(self.text) and re.match(r'\s', self.text[x]):
-            x += 1
-        while x < len(self.text) and re.match(self.WORD_REGEX, self.text[x]):
-            x += 1
-        self.text = self.text[0:self.edit_pos] + self.text[x:]
+        pos = self.edit_pos
+        while pos < len(self.text) and re.match(r'\s', self.text[pos]):
+            pos += 1
+        while pos < len(self.text) and re.match(
+                self.WORD_REGEX, self.text[pos]):
+            pos += 1
+        self.text = self.text[0:self.edit_pos] + self.text[pos:]
 
     def _move_beginning_of_line(self):
         self.edit_pos = 0
@@ -274,8 +275,8 @@ class FuzzyInput(urwid.Widget):
             class_name = 'match'
             if self._focused_match == i:
                 class_name = 'focused-' + class_name
-            canvases.append(
-                (urwid.TextCanvas(
+            canvases.append((
+                urwid.TextCanvas(
                     [text.encode()],
                     attr=[[(class_name, len(text))]],
                     maxcol=maxcol),
@@ -283,7 +284,7 @@ class FuzzyInput(urwid.Widget):
                 focus))
         canvas = urwid.CanvasCombine(canvases)
         if focus:
-            canvas.cursor = (min(self._input_box._edit_pos, maxcol), 0)
+            canvas.cursor = (min(self._input_box.edit_pos, maxcol), 0)
         return canvas
 
     def _accept(self, size):
@@ -326,10 +327,10 @@ class FuzzyInput(urwid.Widget):
 
 class UrwidTagger():
     def __init__(self, chosen_tags, upstream_tags):
-        del(urwid.command_map['left'])
-        del(urwid.command_map['down'])
-        del(urwid.command_map['up'])
-        del(urwid.command_map['right'])
+        del urwid.command_map['left']
+        del urwid.command_map['down']
+        del urwid.command_map['up']
+        del urwid.command_map['right']
         self._chosen_tags = chosen_tags
 
         self._fuzzy_input = FuzzyInput(upstream_tags)
@@ -383,10 +384,9 @@ class UrwidTagger():
 
     def _toggle_focus(self):
         if self._columns.get_focus_column() == 0:
-            self._columns.set_focus_column(1)
+            self._columns.set_focus(1)
         else:
-            self._columns.set_focus_column(0)
-        self._columns._invalidate()
+            self._columns.set_focus(0)
 
     def _on_tag_accept(self, _widget, text):
         self._chosen_tags.add(text)
