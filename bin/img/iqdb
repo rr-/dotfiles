@@ -26,8 +26,11 @@ def _parse_args():
 
 def _output_results(results):
     for result in sorted(results, key=lambda _: _.url):
-        text = '[%3.0f%%, %5dx%-5d] %s' % (
-            result.similarity * 100, result.width, result.height, result.url)
+        text = '[%3.0f%%, %5sx%-5s] %s' % (
+            result.similarity * 100,
+            result.width or '?',
+            result.height or '?',
+            result.url)
 
         if result.similarity >= GOOD_MATCH_THRESHOLD:
             logger.success(text)
@@ -55,7 +58,9 @@ def _process_path(path, filter=''):
         return NO_MATCH_FOUND
 
     logger.info(
-        'Input resolution: %dx%d', results.input_width, results.input_height)
+        'Input resolution: %sx%s',
+        results.input_width or '?',
+        results.input_height or '?')
 
     _output_results(main_results)
     if extra_results:
