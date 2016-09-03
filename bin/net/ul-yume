@@ -120,7 +120,7 @@ def upload_post(session, content, source, safety, tags):
                     'source': source,
                     'safety': SAFETY_MAP[safety],
                     'anonymous': False,
-                    'tags': tags,
+                    'tags': list(tags),
                 }),
             })
         decoded = json.loads(response.text)
@@ -158,17 +158,17 @@ def search_post_by_checksum(session, checksum):
 
 def collect_tags(args, initial_tags):
     assert args.tags or args.tag_cmd
-    ret = TagList()
-    ret.add_all(initial_tags)
+    tags = TagList()
+    tags.add_all(initial_tags)
     if args.tags:
-        ret.add_all(re.split(r'\s+', args.tags))
+        tags.add_all(re.split(r'\s+', args.tags))
     elif args.tag_cmd:
         process = subprocess.Popen(
-            [args.tag_cmd, '--tags', ' '.join(ret.get())],
+            [args.tag_cmd, '--tags', ' '.join(tags)],
             stdout=subprocess.PIPE)
         out, _ = process.communicate()
-        ret.add_all(re.split(r'\s+', out.decode()))
-    return ret
+        tags.add_all(re.split(r'\s+', out.decode()))
+    return tags
 
 
 def update_post_tags(session, post_id, post_version, tags):
@@ -176,7 +176,7 @@ def update_post_tags(session, post_id, post_version, tags):
         API_URL + '/post/' + str(post_id),
         data=json.dumps({
             'version': post_version,
-            'tags': tags,
+            'tags': list(tags),
         }))
     decoded = json.loads(response.text)
     if response.status_code == 200:
@@ -194,13 +194,13 @@ def main():
         post = search_post_by_checksum(session, checksum)
         tags = collect_tags(args, post['tags'] if post else [])
         print('Tags:')
-        print('\n'.join(tags.get()))
+        print('\n'.join(tags))
 
         if post:
-            update_post_tags(session, post['id'], post['version'], tags.get())
+            update_post_tags(session, post['id'], post['version'], tags)
         else:
             post = upload_post(
-                session, content, args.source, args.safety, tags.get())
+                session, content, args.source, args.safety, tags)
         print('Uploaded.')
         print('Address: ' + post['contentUrl'])
         sys.exit(0)
