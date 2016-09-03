@@ -25,7 +25,7 @@ def _get_fuzzy_matches(user_input, dictionary):
     if not user_input:
         return []
     suggestions = []
-    pattern = '.*?'.join(user_input)
+    pattern = '.*?'.join(re.escape(chunk) for chunk in list(user_input))
     regex = re.compile(pattern, re.I)
     for word, usages in dictionary.items():
         match = regex.search(word)
