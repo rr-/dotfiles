@@ -3,11 +3,13 @@ import urllib.parse
 import requests
 from bs4 import BeautifulSoup
 
+
 IQDB_URL = 'https://iqdb.org/'
+
 
 def _query(path):
     data = {
-        'service': list(range(100)), # all services, present and future
+        'service': list(range(100)),  # all services, present and future
     }
     if path.startswith('http'):
         data['url'] = path
@@ -18,6 +20,7 @@ def _query(path):
                 IQDB_URL, files={'file': handle}, data=data)
     return response.text
 
+
 class IqdbResult():
     def __init__(self, url, thumbnail_url):
         self.url = url
@@ -27,11 +30,13 @@ class IqdbResult():
         self.similarity = 0
         self.main = True
 
+
 class IqdbResultList(list):
     def __init__(self):
         super().__init__()
         self.input_width = None
         self.input_height = None
+
 
 def search(path):
     response = _query(path)
