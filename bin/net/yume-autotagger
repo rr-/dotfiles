@@ -14,7 +14,7 @@ from dotfiles import config
 from dotfiles import logging
 
 logger = logging.getLogger(__name__)
-config_key = config['pull-tags']
+config_key = config['yume-autotagger']
 
 HISTORY_PATH   = os.path.expanduser('~/.config/yume-autotagger.json')
 YUME_URL       = config_key.get('url', 'https://yume.pl/')

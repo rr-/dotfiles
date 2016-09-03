@@ -20,7 +20,7 @@ except:
     JSONDecodeError = ValueError
 
 
-config_key = config['send-to-yume']
+config_key = config['ul-yume']
 
 API_URL = config_key.get('api-url', 'https://yume.pl/api/')
 USER_NAME = config_key['user']
