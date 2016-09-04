@@ -5,8 +5,6 @@ import util
 def run():
     spell_dir = '~/.config/nvim/spell/'
     packages.try_install('neovim-git')
-    packages.try_install('fzf')
-    packages.try_install('the_silver_searcher')
 
     for name in ['undo', 'backup', 'swap', 'spell']:
         util.create_dir('~/.config/nvim/' + name)
