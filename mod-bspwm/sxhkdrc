@@ -6,6 +6,9 @@
 super + {r, d}
     dmenu_run
 
+super + space
+    switch_keyboard_layout
+
 # local terminal
 alt + ctrl + bracketleft
     run-or-raise -cn 'local_terminal' -p "urxvt -name 'local_terminal'"
