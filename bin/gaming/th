@@ -3,7 +3,7 @@ import os
 import sys
 import re
 import argparse
-from plumbum import local
+from subprocess import run
 
 TH_ROOT_DIR = os.path.expanduser('~/clutter/games/Touhou Project/')
 
@@ -44,9 +44,9 @@ def main(args):
         print(ex, file=sys.stderr)
         sys.exit(1)
     os.chdir(dir)
-    local['arrows'](['on'])
-    local['wine']([exe])
-    local['arrows'](['off'])
+    run(['arrows', 'on'])
+    run(['wine', exe])
+    run(['arrows', 'off'])
 
 
 if __name__ == '__main__':

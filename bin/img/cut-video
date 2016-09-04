@@ -3,7 +3,7 @@
 
 import os
 import argparse
-from plumbum import local, FG
+from subprocess import run
 
 
 def parse_args():
@@ -25,13 +25,14 @@ def parse_args():
 
 def main(args):
     print(args.input_path)
-    local['ffmpeg'][
+    run([
+        'ffmpeg',
         '-i', args.input_path,
         '-ss', args.start,
         '-to', args.end,
         '-vf', 'subtitles=' + args.input_path,
         '-c:v', 'libvpx-vp9',
-        args.output_path] & FG()
+        args.output_path])
 
 
 if __name__ == '__main__':

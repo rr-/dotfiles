@@ -6,7 +6,7 @@ import argparse
 import os
 import re
 import tempfile
-from plumbum import local, FG
+from subprocess import run
 
 MANAGED_EXTENSIONS = [
     'jpg', 'jpeg', 'jfif', 'gif', 'png', 'tga', 'bmp',
@@ -77,10 +77,11 @@ def main():
 
         try:
             # run mpv
-            _ = local['mpv'][
+            run([
+                'mpv',
                 '--profile=images',
                 '--playlist=%s' % handle.name,
-                '--playlist-pos=%d' % playlist_pos] & FG()
+                '--playlist-pos=%d' % playlist_pos])
         finally:
             os.unlink(handle.name)
 
