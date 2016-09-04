@@ -1,6 +1,5 @@
 #!/usr/bin/python3
-
-''' Sends files to yume.pl via its API and outputs copyable links. '''
+# Uploads files to yume.pl via its API and outputs copyable links
 
 import sys
 import re

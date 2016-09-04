@@ -1,4 +1,10 @@
 #!/bin/bash
+# Downloads images crawled by cron on the server to local directory.
+# Additionally, distributes the images to specific folders, and filters out small images.
+# TODO:
+# - possibly remove the check for small images
+# - possibly convert to Python
+
 remote_root_dir="$HOME/hub/img/"
 dst_root_dir="$HOME/img/net/"
 transit_root_dir="$HOME/hub/img/"
@@ -14,10 +20,10 @@ shopt -s extglob
 shopt -s nocasematch
 trap "exit" INT
 
-#download the images
+# download the images
 rsync --progress --whole-file -a --remove-source-files "$remote_host:$remote_root_dir" "$transit_root_dir"
 
-#distribute the images
+# distribute the images
 find "$transit_root_dir" -depth -type d -print0|while read -d '' -r src_folder; do
     dst_folder="$dst_root_dir${src_folder##$transit_root_dir}"
     dst_folder="${dst_folder/*([^\/]).2chan.net/2chan}"
@@ -31,13 +37,13 @@ find "$transit_root_dir" -depth -type d -print0|while read -d '' -r src_folder; 
 
         echo -n "$src_file "
 
-        #preprocess image
+        # preprocess image
         if [[ "$src_file" =~ .*\.(jpg|png) ]]; then
             read dimensions < <(identify -format '%w*%h' "$src_file" 2>/dev/null)
             if [ $? -eq 0 ]; then
                 size=$(($dimensions))
 
-                #check if too small
+                # check if too small
                 if [[ "$size" -lt "$min_size" ]]; then
                     echo "$dimensions < $min_width*$min_height"
                     rm "$src_file"
@@ -51,6 +57,6 @@ find "$transit_root_dir" -depth -type d -print0|while read -d '' -r src_folder; 
     distribute-files "$dst_folder" --fill-last -v
 done
 
-#remove empty directores
+# remove empty directores
 find "$transit_root_dir" -depth -type d -exec rmdir --ignore-fail-on-non-empty "{}" \;
 ssh "$remote_host" "bash -c 'find \"$remote_root_dir\" -depth -mindepth 1 -type d -exec rmdir --ignore-fail-on-non-empty \"{}\" \;'"

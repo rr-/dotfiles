@@ -3,14 +3,16 @@ import os
 import sys
 import re
 import argparse
-from plumbum import local, FG
+from plumbum import local
 
 TH_ROOT_DIR = os.path.expanduser('~/clutter/games/Touhou Project/')
+
 
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument(metavar='NUM', dest='num', help='which game to play')
     return parser.parse_args()
+
 
 def get_game_dir(num):
     pattern = r'^TH0*{0}\s.*$'.format(num)
@@ -20,17 +22,19 @@ def get_game_dir(num):
         raise RuntimeError('Game directory not found')
     return os.path.join(TH_ROOT_DIR, filtered_dirs[0])
 
+
 def get_executable(dir):
     en_pattern = '^th.*e.exe$'
     any_pattern = '^th.*.exe$'
     all_files = os.listdir(dir)
-    en_exes =  [name for name in all_files if re.match(en_pattern, name, re.I)]
-    any_exes =  [name for name in all_files if re.match(any_pattern, name, re.I)]
+    en_exes = [n for n in all_files if re.match(en_pattern, n, re.I)]
+    any_exes = [n for n in all_files if re.match(any_pattern, n, re.I)]
     if en_exes:
         return en_exes[0]
     if any_exes:
         return any_exes[0]
     raise RuntimeError('Game executable not found (directory=%s)' % dir)
+
 
 def main(args):
     try:
@@ -43,6 +47,7 @@ def main(args):
     local['arrows'](['on'])
     local['wine']([exe])
     local['arrows'](['off'])
+
 
 if __name__ == '__main__':
     main(parse_args())

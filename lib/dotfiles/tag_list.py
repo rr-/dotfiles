@@ -15,8 +15,9 @@ class TagList():
 
     def remove(self, tag):
         self._chosen_tags = [
-            t for t in self._chosen_tags \
-                if str(t).lower() != str(tag).lower()]
+            other_tag
+            for other_tag in self._chosen_tags
+            if str(other_tag).lower() != str(tag).lower()]
         del self._index[str(tag).lower()]
 
     def remove_all(self, collection):

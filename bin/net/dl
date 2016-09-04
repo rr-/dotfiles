@@ -1,5 +1,5 @@
 #!/usr/bin/python3
-''' Fetch things from the Internet with the power of regexes '''
+# Downloads things from the Internet with the power of regexes
 
 from queue import Queue, LifoQueue
 import argparse

@@ -1,4 +1,6 @@
 #!/bin/python3
+# Uploads images to Gelbooru
+
 import os
 import sys
 import argparse

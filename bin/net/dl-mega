@@ -1,4 +1,6 @@
 #!/bin/bash
+# Downloads files from Megaupload
+# TODO: get rid of it, JDownloader is more universal
 # Updated by Derek "Cyph3r"
 # Syntax ./mega.sh <URL>
 url=$1

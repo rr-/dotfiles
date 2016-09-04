@@ -1,4 +1,5 @@
 #!/bin/bash
+# Converts GIF images to WEBM videos.
 
 if [ -z "$1" ]; then
     echo No input file. 1>&2

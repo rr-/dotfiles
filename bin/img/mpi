@@ -1,6 +1,6 @@
 #!/bin/python3
-
-''' MPI - MPV-based image browser. '''
+# A wrapper around MPV optimized for images.
+# Used mostly to interact with vifm and shell to filter out non-images.
 
 import argparse
 import os
@@ -11,6 +11,7 @@ from plumbum import local, FG
 MANAGED_EXTENSIONS = [
     'jpg', 'jpeg', 'jfif', 'gif', 'png', 'tga', 'bmp',
     'webm', 'mkv', 'mp4']
+
 
 def parse_args():
     ''' Read the user arguments. '''
@@ -59,7 +60,9 @@ def main():
     playlist = list(set(playlist))
 
     # sort the playlist, get selection position
-    convert = lambda text: int(text) if text.isdigit() else text.lower()
+    def convert(text):
+        return int(text) if text.isdigit() else text.lower()
+
     playlist.sort(
         key=lambda key: [convert(c) for c in re.split('([0-9]+)', key)])
     if args.selected_path:

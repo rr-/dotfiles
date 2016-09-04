@@ -1,48 +1,58 @@
 #!/bin/python3
+# Distributes files in equal chunks to subdirectories
+
+import os
+import sys
 import argparse
 import shutil
 import collections
-import os, sys
 
 STYLE_FIRST = 0
 STYLE_LAST = 1
 STYLE_CREATE = 2
 
+
 def parse_args():
-    parser = argparse.ArgumentParser(
-        description='Distribute files in given directory to subdirectories.\n\n'
-            + 'Subdirectories have numeric names starting at 1. Names are '
-            + '*not* padded with 0 to avoid the need to rename existing '
-            + 'subdirectories whenever the digit count changes. Only files are '
-            + 'distributed - all directories are ignored.')
+    help = (
+        'Distribute files in given directory to subdirectories.\n\n' +
+        'Subdirectories have numeric names starting at 1. Names are *not* ' +
+        'padded with 0 to avoid the need to rename existing subdirectories ' +
+        'whenever the digit count changes. Only files are distributed - all ' +
+        'directories are ignored.')
 
-    parser.add_argument('-m', '--max', metavar='MAX', type=int, default=1000,
-        help=('set upper limit how many files a subdirectory should contain'
-            + ' (default: 1000)'))
+    parser = argparse.ArgumentParser(description=help.strip())
 
-    parser.add_argument('base_dir', metavar='DIR',
-        help='directory to organize')
+    parser.add_argument(
+        '-m', '--max', metavar='MAX', type=int, default=1000,
+        help=(
+            'set upper limit how many files a subdirectory should contain' +
+            ' (default: 1000)'))
+
+    parser.add_argument(
+        'base_dir', metavar='DIR', help='directory to organize')
 
     group = parser.add_mutually_exclusive_group()
-    group.set_defaults(style=STYLE_LAST, verbosity = 0)
+    group.set_defaults(style=STYLE_LAST, verbosity=0)
     group.add_argument(
         '--fill-last', action='store_const', dest='style', const=STYLE_LAST,
         help='try to fill last subdirectory available (default)')
     group.add_argument(
         '--fill-first', action='store_const', dest='style', const=STYLE_FIRST,
-        help='try to fill first subdirectory available '
-            + '(will recreate missing subdirectories starting at 1)')
+        help=(
+            'try to fill first subdirectory available ' +
+            '(will recreate missing subdirectories starting at 1)'))
     group.add_argument(
         '--always-create',
         action='store_const', dest='style', const=STYLE_CREATE,
-        help='don\'t fill existing subdirectories '
-            + '(will create new subdirectory after the last one available)')
+        help=(
+            'don\'t fill existing subdirectories ' +
+            '(will create new subdirectory after the last one available)'))
 
     parser.add_argument(
         '--dry-run', action='store_true',
         help='don\'t do anything (simulation)')
 
-    parser.set_defaults(verbosity = 0)
+    parser.set_defaults(verbosity=0)
     parser.add_argument(
         '-v', '--verbose', action='store_const', dest='verbosity', const=1,
         help='print basic movement statistics')
@@ -54,6 +64,7 @@ def parse_args():
         help='print only errors')
 
     return parser.parse_args()
+
 
 def next_dir_number(dir_map, style, max_file_count):
     next_dir_number = max(list(dir_map.keys()) + [0]) + 1
@@ -83,6 +94,7 @@ def next_dir_number(dir_map, style, max_file_count):
 
     return next_dir_number, max_file_count
 
+
 def main():
     args = parse_args()
 
@@ -95,13 +107,15 @@ def main():
 
     numeric_dirs = [dir for dir in dirs if dir.isdigit()]
     numeric_dirs = sorted(numeric_dirs)
-    dir_gen = ((int(dir), len(os.listdir(os.path.join(args.base_dir, dir))))
+    dir_gen = (
+        (int(dir), len(os.listdir(os.path.join(args.base_dir, dir))))
         for dir in numeric_dirs)
     dir_gen = sorted(dir_gen, key=lambda dir: int(dir[0]))
     dir_map = collections.OrderedDict(dir_gen)
 
     while files:
-        dir_number, avail_files = next_dir_number(dir_map, args.style, args.max)
+        dir_number, avail_files = \
+            next_dir_number(dir_map, args.style, args.max)
         dir = '%d' % dir_number
         files_to_move = files[0:avail_files]
 
@@ -122,6 +136,7 @@ def main():
 
         files = files[avail_files:]
         dir_map[dir_number] = args.max
+
 
 if __name__ == '__main__':
     main()

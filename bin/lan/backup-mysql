@@ -1,4 +1,6 @@
 #!/bin/sh
+# Backups selected MySQL database to local directory.
+# To be used with "backup" script.
 
 if [ -z "$1" ]; then
     echo 'No database specified' 1>&2

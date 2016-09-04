@@ -1,4 +1,6 @@
 #!/bin/sh
+# If an X11 program is running, bring it to front,
+# otherwise execute it in new process
 
 type=
 match=

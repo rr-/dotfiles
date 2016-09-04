@@ -1,6 +1,5 @@
 #!/usr/bin/python3
-
-''' Print color cube for XTerm. '''
+# Prints color cube for XTerm
 
 import re
 
@@ -300,9 +299,10 @@ CUBE_256 = '''
         #a88#a8a
 '''.strip('\n')
 
-def unescape(text):
-    ''' Strips all escape codes. '''
+
+def strip_escape_codes(text):
     return re.sub('\x1B.*?m', '', text)
+
 
 def join_templates(templates, separator=' '):
     ''' Merges text templates side by side. '''
@@ -310,14 +310,16 @@ def join_templates(templates, separator=' '):
     template_sizes = []
     for template in templates:
         template_sizes.append(
-            max(len(unescape(line)) for line in template))
+            max(len(strip_escape_codes(line)) for line in template))
     merged_template = ['' for _ in templates[0]]
     for i, template in enumerate(templates):
         for j, line in enumerate(template):
+            real_length = len(strip_escape_codes(line))
             merged_template[j] += line
-            merged_template[j] += ' ' * (template_sizes[i] - len(unescape(line)))
+            merged_template[j] += ' ' * (template_sizes[i] - real_length)
             merged_template[j] += separator
     return '\n'.join(merged_template)
+
 
 def render_system_colors():
     ''' Renders basic system color (i.e. the 16 color palette) ramp. '''
@@ -331,6 +333,7 @@ def render_system_colors():
     print(join_templates(templates))
     print()
 
+
 def render_grayscale_ramp():
     ''' Renders basic grayscale ramp. '''
     for fgbg in [48, 38]:
@@ -339,6 +342,7 @@ def render_grayscale_ramp():
             print(RAMP_TEMPLATE.format(fgbg=fgbg, color=color), end='')
         print('')
     print('')
+
 
 def render_color_cube():
     ''' Renders the XTerm 216 color cube. '''
@@ -362,10 +366,12 @@ def render_color_cube():
 
     print(join_templates(templates))
 
+
 def main():
     render_system_colors()
     render_grayscale_ramp()
     render_color_cube()
+
 
 if __name__ == '__main__':
     main()

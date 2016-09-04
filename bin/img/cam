@@ -1,9 +1,12 @@
 #!/bin/python3
+# Used for capturing screen as video.
+
 import os
 import argparse
 import re
 import time
 from plumbum import local, FG
+
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Capture selected window')
@@ -16,8 +19,10 @@ def parse_args():
         type=int, default=5, help='how many seconds to wait before starting')
     return parser.parse_args()
 
+
 def get_integer(result, prefix_pattern):
     return int(re.search(prefix_pattern + '.*?(\d+)', result, re.I).group(1))
+
 
 def main(args):
     result = local['xwininfo']()
@@ -42,8 +47,9 @@ def main(args):
         '-i', ':0.0+{x},{y}'.format(x=x, y=y),
         '-c:v', 'libvpx-vp9',
         '-y',
-        #'-lossless', '1',
+        # '-lossless', '1',
         args.output_path] & FG()
+
 
 if __name__ == '__main__':
     main(parse_args())

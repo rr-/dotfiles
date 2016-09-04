@@ -1,6 +1,5 @@
 #!/usr/bin/python3
-
-''' Sends files to tmp.sakuya.pl via SSH and outputs copyable links. '''
+# Uploads files to tmp.sakuya.pl via SSH outputs copyable links
 
 import os
 import sys
@@ -14,9 +13,11 @@ BASE_DIR = '/srv/www/tmp.sakuya.pl/f/'
 BASE_URL = 'https://tmp.sakuya.pl/f/'
 REMOTE_HOST = 'burza'
 
+
 def collect_single_file(arg):
     target_name = os.path.basename(arg)
     return (arg, target_name)
+
 
 def collect_files_from_dir(top):
     for root, _, filenames in os.walk(top):
@@ -25,6 +26,7 @@ def collect_files_from_dir(top):
             target_name = os.path.relpath(path, top)
             target_name = os.path.join(os.path.basename(top), target_name)
             yield (path, target_name)
+
 
 def collect_files(args):
     for arg in args:
@@ -36,6 +38,7 @@ def collect_files(args):
         elif os.path.isdir(arg):
             for name in collect_files_from_dir(arg):
                 yield name
+
 
 def send(src_paths):
     if not src_paths:
@@ -79,8 +82,10 @@ def send(src_paths):
         print(err.decode('utf8'), file=sys.stderr)
         sys.exit(1)
 
+
 def main():
     send(list(collect_files(sys.argv[1:])))
+
 
 if __name__ == '__main__':
     main()

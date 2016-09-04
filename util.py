@@ -1,14 +1,15 @@
 import os
 import shutil
-import subprocess
 import logging
 import glob
+from subprocess import Popen, call, PIPE
 import urllib.request
 
 logger = logging.getLogger(__name__)
 
+
 def run_silent(*args, **kwargs):
-    proc = subprocess.Popen(stdout=subprocess.PIPE, stderr=subprocess.PIPE, *args, **kwargs)
+    proc = Popen(stdout=PIPE, stderr=PIPE, *args, **kwargs)
     out, err = proc.communicate()
     try:
         out, err = out.decode('utf8'), err.decode('utf8')
@@ -16,15 +17,19 @@ def run_silent(*args, **kwargs):
         pass
     return (proc.returncode == 0, out, err)
 
+
 def run_verbose(*args, **kwargs):
-    return subprocess.call(*args, **kwargs) == 0
+    return call(*args, **kwargs) == 0
+
 
 def has_executable(program):
     return shutil.which(program) is not None
 
+
 def assert_has_executable(program):
     if not has_executable(program):
         raise RuntimeError('%s not installed, cannot proceed', program)
+
 
 def expand_path(path, source=None):
     is_dir = path.endswith('/') or path.endswith('\\')
@@ -33,14 +38,17 @@ def expand_path(path, source=None):
         target = os.path.join(target, os.path.basename(source))
     return target
 
+
 def abs_path(path):
     return os.path.abspath(expand_path(path))
+
 
 def find(path):
     path = abs_path(path)
     if os.path.isdir(path):
         return glob.glob(os.path.join(path, '*'))
     return glob.glob(path)
+
 
 def download(url, path, overwrite=False):
     path = expand_path(path)
@@ -51,9 +59,11 @@ def download(url, path, overwrite=False):
         logger.info('Downloading %r into %r...', url, path)
         urllib.request.urlretrieve(url, path)
 
+
 def exists(path):
     path = expand_path(path)
     return os.path.exists(path)
+
 
 def create_file(path, content=None, overwrite=False):
     path = expand_path(path)
@@ -66,12 +76,14 @@ def create_file(path, content=None, overwrite=False):
             if content:
                 handle.write(content)
 
+
 def create_dir(path):
     path = expand_path(path)
     _remove_symlink(path)
     if not os.path.exists(path):
         logger.info('Creating directory %r...', path)
         os.makedirs(path)
+
 
 def copy_file(source, target):
     source = expand_path(source)
@@ -81,15 +93,18 @@ def copy_file(source, target):
     create_dir(os.path.dirname(target))
     shutil.copy(source, target)
 
+
 def create_symlink(source, target):
     source = expand_path(source)
     target = expand_path(target, source)
     _remove_symlink(target)
     if os.path.exists(target):
-        raise RuntimeError('Target file %r exists and is not a symlink.', target)
+        raise RuntimeError(
+            'Target file %r exists and is not a symlink.', target)
     logger.info('Linking %r to %r...', source, target)
     create_dir(os.path.dirname(target))
     os.symlink(source, target)
+
 
 def _remove_symlink(path):
     if os.path.islink(path):

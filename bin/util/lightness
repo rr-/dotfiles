@@ -1,4 +1,6 @@
 #!/bin/bash
+# Switches between dark and light theme in various programs
+# (doesn't work too well with SSH)
 
 word=$1
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
