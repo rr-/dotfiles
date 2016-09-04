@@ -17,7 +17,8 @@ logger = logging.getLogger(__name__)
 config_key = config['yume-autotagger']
 
 HISTORY_PATH   = os.path.expanduser('~/.config/yume-autotagger.json')
-YUME_URL       = config_key.get('url', 'https://yume.pl/')
+YUME_URL       = config_key.get('url', 'https://yume.pl')
+API_URL        = config_key.get('api-url', 'https://yume.pl/api')
 YUME_USER_NAME = config_key['user']
 YUME_PASSWORD  = config_key['password']
 
@@ -129,20 +130,20 @@ def create_session():
     session.headers['Content-Type'] = 'application/json'
     session.headers['Accept'] = 'application/json'
     response = session.get(
-        YUME_URL + 'api/user/' + YUME_USER_NAME + '?bump-login')
+        API_URL + '/user/' + YUME_USER_NAME + '?bump-login')
     if response.status_code != 200:
         logger.error(json.loads(response.text)['description'])
         return None
     return session
 
 def pull_tags(session, post_id):
-    response = session.get(YUME_URL + 'api/post/' + str(post_id))
+    response = session.get(API_URL + '/post/' + str(post_id))
     if response.status_code != 200:
         logger.error(json.loads(response.text)['description'])
         return False
     post = json.loads(response.text)
     post_url = post['contentUrl']
-    logger.info('%spost/%d', YUME_URL, post['id'])
+    logger.info('%s/post/%d', YUME_URL, post['id'])
     logger.info(post_url)
 
     new_tags = TagList()
@@ -187,7 +188,7 @@ def pull_tags(session, post_id):
 
         target_tags.add(external_tag)
 
-        response = session.get(YUME_URL + 'api/tag/' + external_tag.name)
+        response = session.get(API_URL + '/tag/' + external_tag.name)
         if response.status_code == 200:
             logger.info('Added existing tag %r', external_tag.name)
             upstream_tag = json.loads(response.text)
@@ -213,7 +214,7 @@ def pull_tags(session, post_id):
         target_tags.delete(Tag('tagme'))
 
     response = session.put(
-        YUME_URL + 'api/post/' + str(post_id),
+        API_URL + '/post/' + str(post_id),
         data=json.dumps({
             'tags': [tag.name for tag in target_tags],
             'version': post['version'],
@@ -222,7 +223,7 @@ def pull_tags(session, post_id):
         logger.error(response.text, response.status_code)
 
     for new_tag in new_tags:
-        response = session.get(YUME_URL + 'api/tag/' + new_tag.name)
+        response = session.get(API_URL + '/tag/' + new_tag.name)
         if response.status_code != 200:
             logger.error('Upstream tag ' + new_tag.name + ' was not created')
             continue
@@ -230,7 +231,7 @@ def pull_tags(session, post_id):
         if new_tag.category in ('artist', 'copyright', 'character'):
             new_tag.name = capitalize(new_tag.name)
         response = session.put(
-            YUME_URL + 'api/tag/' + new_tag.name,
+            API_URL + '/tag/' + new_tag.name,
             data=json.dumps({
                 'names': [new_tag.name],
                 'category': config_key['categories'][new_tag.category],
@@ -282,7 +283,7 @@ class TaggingHistory():
             json.dump(result, handle)
 
 def get_last_post_id(session, history):
-    response = session.get(YUME_URL + 'api/posts?fields=id')
+    response = session.get(API_URL + '/posts?fields=id')
     decoded_response = json.loads(response.text)
     latest_id = decoded_response['results'][0]['id']
     processed_post_ids = history.get_processed_post_ids()

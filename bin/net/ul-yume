@@ -21,7 +21,7 @@ except:
 
 config_key = config['ul-yume']
 
-API_URL = config_key.get('api-url', 'https://yume.pl/api/')
+API_URL = config_key.get('api-url', 'https://yume.pl/api')
 USER_NAME = config_key['user']
 PASSWORD = config_key['password']
 SAFETY_MAP = {
