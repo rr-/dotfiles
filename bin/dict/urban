@@ -1,35 +1,54 @@
-#!/usr/bin/ruby -w
+#!/usr/bin/python3
 # Looks up word definitions on Urban Dictionary.
-# TODO: rewrite to Python
 
-require 'rubygems'
-require 'json'
-require 'net/http'
+import argparse
+import urllib.request
+import json
+import re
 
-def wrap_long_string(text, max_width = 80)
-  text.gsub(/(.{1,#{max_width}})(\s+|\Z)/, "\\1\n")
-end
 
-def get(word)
-  url = 'http://api.urbandictionary.com/v0/define?term=' \
-    + URI.encode_www_form_component(word)
-  content = Net::HTTP.get_response(URI(URI.parse(url))).body
-  defs = JSON.parse(content)['list']
-  if defs.empty?
-    puts 'Nothing found'
-  else
-    defs[0..2].each do |entry|
-      puts 'Definition:'
-      puts wrap_long_string(entry['definition'])
-      puts
-      puts 'Example:'
-      puts wrap_long_string(entry['example'])
-      puts '+' + entry['thumbs_up'].to_s + ' -' + entry['thumbs_down'].to_s
-      puts
-      puts '-' * 50
-      puts
-    end
-  end
-end
+def _wrap_long_text(text, length=70):
+    return '\n'.join(
+        line.strip()
+        for line in re.findall(r'.{1,%d}(?:\s+|$)' % length, text))
 
-ARGV.each { |arg| get(arg) }
+
+def _parse_args():
+    parser = argparse.ArgumentParser(
+        description='Looks up word definitions on Urban Dictionary')
+    parser.add_argument('word', nargs='+')
+    return parser.parse_args()
+
+
+def _lookup_word(word):
+    url = 'http://api.urbandictionary.com/v0/define?term=%s' % (
+        urllib.parse.quote(word))
+    with urllib.request.urlopen(url) as handle:
+        return json.loads(handle.read().decode())
+
+
+def _print_definition(definition):
+    if not definition['list']:
+        print('Nothing found')
+        return
+    for entry in definition['list'][0:3]:
+        print('Definition:')
+        print(_wrap_long_text(entry['definition']))
+        print()
+        print('Example:')
+        print(_wrap_long_text(entry['example']))
+        print('+%d -%d' % (entry['thumbs_up'], entry['thumbs_down']))
+        print()
+        print('-' * 50)
+        print()
+
+
+def main():
+    args = _parse_args()
+    for word in args.word:
+        definition = _lookup_word(word)
+        _print_definition(definition)
+
+
+if __name__ == '__main__':
+    main()
