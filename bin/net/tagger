@@ -233,6 +233,8 @@ class ChosenTagsListBox(urwid.ListBox):
         for tag in sorted(self._chosen_tags, key=lambda tag: tag.name):
             if tag.source == LocalTag.SOURCE_IMPLICATION:
                 class_name = 'implied-tag'
+            elif tag.source == LocalTag.SOURCE_INITIAL:
+                class_name = 'initial-tag'
             elif str(tag).lower() not in self._reference_tags:
                 class_name = 'new-tag'
             else:
@@ -381,7 +383,10 @@ class UrwidTagger():
         self._loop.screen.register_palette_entry(
             'implied-tag', 'light green', 'default',
             background_high='#DFD')
-        for class_name in ['tag', 'new-tag', 'implied-tag']:
+        self._loop.screen.register_palette_entry(
+            'initial-tag', 'dark blue', 'default',
+            background_high='#DDF')
+        for class_name in ('tag', 'new-tag', 'implied-tag', 'initial-tag'):
             self._loop.screen.register_palette_entry(
                 'focused-' + class_name, 'black', 'white',
                 background_high='#000', foreground_high='#FFF')
