@@ -1,8 +1,10 @@
 #!/bin/python3
+# Used to crop/cut videos to specific times.
+
 import os
 import argparse
-import re
 from plumbum import local, FG
+
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Crop the video stream')
@@ -20,6 +22,7 @@ def parse_args():
         default=os.path.expanduser('~/output.webm'))
     return parser.parse_args()
 
+
 def main(args):
     print(args.input_path)
     local['ffmpeg'][
@@ -29,6 +32,7 @@ def main(args):
         '-vf', 'subtitles=' + args.input_path,
         '-c:v', 'libvpx-vp9',
         args.output_path] & FG()
+
 
 if __name__ == '__main__':
     main(parse_args())

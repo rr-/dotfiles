@@ -7,10 +7,13 @@ import sys
 import argparse
 from plumbum import local
 
+
 def _parse_args():
-    parser = argparse.ArgumentParser(description='Toggles arrow layout on HHKB')
+    parser = argparse.ArgumentParser(
+        description='Toggles arrow layout on HHKB')
     parser.add_argument('mode', choices=('on', 'off', 'toggle'))
     return parser.parse_args()
+
 
 def enable():
     print('Enabling')
@@ -29,6 +32,7 @@ def enable():
         xmodmap(['-e', 'keycode 47 = Down'])
         xmodmap(['-e', 'keycode 48 = Right'])
 
+
 def disable():
     print('Disabling')
     if sys.platform == 'cygwin':
@@ -46,14 +50,17 @@ def disable():
         setxkbmap = local['setxkbmap']
         setxkbmap(['-layout', 'pl'])
 
+
 def is_enabled():
     if sys.platform == 'cygwin':
         raise NotImplementedError()
     else:
         xmodmap = local['xmodmap']
         result = xmodmap(['-pke']).split('\n')
-        keycodes_for_left = [l for l in result if re.search(r'\bleft\b', l, re.I)]
+        keycodes_for_left = [
+            l for l in result if re.search(r'\bleft\b', l, re.I)]
         return len(keycodes_for_left) > 1
+
 
 def main():
     args = _parse_args()

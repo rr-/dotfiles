@@ -1,4 +1,7 @@
 #!/usr/bin/ruby -w
+# Download things from Gelbooru
+# TODO: rewrite to Python
+
 require 'fileutils'
 require 'net/http'
 require 'open-uri'

@@ -1,4 +1,6 @@
 #!/bin/bash
+# Obsolete script I should rewrite already.
+
 if ! command -v convert &>/dev/null; then
     echo 1>&2 'imagemagick not found. Aborting.'
     exit 1

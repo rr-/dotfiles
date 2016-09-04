@@ -1,16 +1,17 @@
 #!/bin/python3
-
-''' Plays the stations in txt/radio-stations.txt using mpv. '''
+# Plays the stations in txt/radio-stations.txt using mpv.
 
 import os
 import sys
 import re
-import subprocess
+from subprocess import Popen, call, PIPE
+
 
 class RadioStation():
     def __init__(self, url, title):
         self.url = url
         self.title = title
+
 
 def collect_stations():
     dir_to_self = os.path.dirname(__file__)
@@ -25,8 +26,9 @@ def collect_stations():
         url = url.strip()
         yield RadioStation(url, title)
 
+
 def choose_station(stations):
-    process = subprocess.Popen(['fzf'], stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+    process = Popen(['fzf'], stdin=PIPE, stdout=PIPE)
     stdin = '\n'.join([station.title for station in stations])
     stdout, stderr = process.communicate(input=stdin.encode())
     stdout = stdout.strip().decode()
@@ -35,13 +37,15 @@ def choose_station(stations):
             return station
     return None
 
+
 def main():
     stations = list(collect_stations())
     station = choose_station(stations)
     if not station:
         print('Cancelled.', file=sys.stderr)
         sys.exit(1)
-    subprocess.call(['mpv', '--quiet', station.url])
+    call(['mpv', '--quiet', station.url])
+
 
 if __name__ == '__main__':
     main()

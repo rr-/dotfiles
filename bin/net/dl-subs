@@ -1,6 +1,5 @@
 #!/bin/python3
-
-''' Downloads movie subtitles from Napiprojekt database. '''
+# Downloads movie subtitles from Napiprojekt database
 
 import argparse
 import concurrent.futures
@@ -27,11 +26,13 @@ URL_TEMPLATE = (
     + '&napios=posix')
 MOVIE_EXTENSIONS = 'avi,mp4,mpg,mkv'.split(',')
 
+
 class Subtitle():
     def __init__(self, time_start, time_end, text):
         self.time_start = time_start
         self.time_end = time_end
         self.text = text
+
 
 class SubtitleReader():
     def __init__(self):
@@ -45,6 +46,7 @@ class SubtitleReader():
 
     def read(self, lines, _fps):
         raise NotImplementedError()
+
 
 class MdvdSubtitleReader(SubtitleReader):
     def __init__(self):
@@ -62,6 +64,7 @@ class MdvdSubtitleReader(SubtitleReader):
                     time_end = int(match.group(1)) / float(fps) + 3
                 text = match.group(3).strip().split('|')
                 yield Subtitle(time_start, time_end, text)
+
 
 class Sub2SubtitleReader(SubtitleReader):
     def __init__(self):
@@ -87,6 +90,7 @@ class Sub2SubtitleReader(SubtitleReader):
                     + int(match.group(8)) / 100.0)
                 text = next(lines_it).strip().split('[br]')
                 yield Subtitle(time_start, time_end, text)
+
 
 class SrtSubtitleReader(SubtitleReader):
     def __init__(self):
@@ -122,6 +126,7 @@ class SrtSubtitleReader(SubtitleReader):
                 text = next(lines_it)
             yield Subtitle(time_start, time_end, text_lines)
 
+
 class TmpSubtitleReader(SubtitleReader):
     def __init__(self):
         super().__init__()
@@ -148,6 +153,7 @@ class TmpSubtitleReader(SubtitleReader):
                 length = length + 1
             yield Subtitle(time, time + length, subs[time])
 
+
 class Mpl2SubtitleReader(SubtitleReader):
     def __init__(self):
         super().__init__()
@@ -165,6 +171,7 @@ class Mpl2SubtitleReader(SubtitleReader):
             text = group['line'].split('|')
             yield Subtitle(start, stop, text)
 
+
 class SubtitleParser():
     def __init__(self):
         self._readers = []
@@ -177,9 +184,10 @@ class SubtitleParser():
                 return list(reader.read(lines, fps))
 
     def to_srt(self, subtitles):
+        TEMPLATE = '%d\n%.2d:%.2d:%.2d,%.3d --> %.2d:%.2d:%.2d,%.3d\n%s\n\n'
         out = ''
         for i, subtitle in enumerate(subtitles):
-            out += '%d\n%.2d:%.2d:%.2d,%.3d --> %.2d:%.2d:%.2d,%.3d\n%s\n\n' % (
+            out += TEMPLATE % (
                 i + 1,
 
                 int(subtitle.time_start / 3600),
@@ -196,14 +204,18 @@ class SubtitleParser():
 
         return out
 
+
 def print_warning(arg):
     print(colorama.Fore.YELLOW + str(arg), file=sys.stderr)
+
 
 def print_error(arg):
     print(colorama.Fore.RED + str(arg), file=sys.stderr)
 
+
 def print_success(arg):
     print(colorama.Fore.GREEN + arg)
+
 
 def parse_args():
     parser = argparse.ArgumentParser(
@@ -236,11 +248,13 @@ def parse_args():
 
     return parser.parse_args()
 
+
 def flat_walk(top):
     ''' Returns recursive list of files contained inside the directory. '''
     for path, _, filenames in os.walk(top):
         for filename in filenames:
             yield os.path.join(path, filename)
+
 
 def collect_paths(paths):
     for path in paths:
@@ -255,8 +269,10 @@ def collect_paths(paths):
         else:
             yield path
 
+
 def get_fps(path):
     return 23.976
+
 
 def get_md5(path):
     ''' Gets the MD5 of the first 10 megabytes. '''
@@ -264,6 +280,7 @@ def get_md5(path):
         md5 = hashlib.md5()
         md5.update(handle.read(1024 * 1024 * 10))
         return md5.hexdigest()
+
 
 def get_checksum(md5):
     ''' Gets the checksum for Napiprojekt basing on the file's MD5. '''
@@ -276,6 +293,7 @@ def get_checksum(md5):
         value = int(md5[index:index+2], 16) * mul[i]
         checksum += '%x' % (value % 16)
     return checksum
+
 
 def get_raw_subtitles(movie_path, lang):
     md5 = get_md5(movie_path)
@@ -304,6 +322,7 @@ def get_raw_subtitles(movie_path, lang):
         if os.path.exists(arc_path):
             os.unlink(arc_path)
 
+
 def process_path(parser, movie_path, lang, force, debug):
     '''
     Stores subtitles for a single movie path.
@@ -330,6 +349,7 @@ def process_path(parser, movie_path, lang, force, debug):
         if debug:
             raise
         print_error(ex)
+
 
 def main():
     colorama.init()

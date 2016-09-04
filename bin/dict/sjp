@@ -1,9 +1,6 @@
 #!/usr/bin/python3
-
-'''
-Looks up a word in Słownik Języka Polskiego
-and prints it to the standard output.
-'''
+# Looks up a word in Słownik Języka Polskiego
+# and prints it to the standard output.
 
 import sys
 import urllib.request
@@ -12,9 +9,11 @@ import re
 import textwrap
 from bs4 import BeautifulSoup
 
+
 def get_first(input_list):
     ''' Gets the first element from a list, or None if the list is empty. '''
     return (input_list or [None])[0]
+
 
 def text_with_newlines(elem):
     text = ''
@@ -27,6 +26,7 @@ def text_with_newlines(elem):
     except AttributeError:
         return str(elem)
     return text
+
 
 def print_word_def(word):
     ''' Prints a word. '''
@@ -42,19 +42,23 @@ def print_word_def(word):
             if node.name != 'div':
                 text = text_with_newlines(node).strip()
                 text = re.sub(r'\n\s+', '\n', text)
-                if text and 'dopuszczalne w grach' not in text and text != header.text:
+                if text and 'dopuszczalne w grach' not in text \
+                        and text != header.text:
                     print(text)
             node = node.next_sibling
             if not node \
                     or node.name == 'hr' \
                     or node.name == 'h1' \
-                    or getattr(node, 'text', '').lower().startswith('komentarze:'):
+                    or getattr(
+                        node, 'text', '').lower().startswith('komentarze:'):
                 break
         print()
+
 
 def main():
     for arg in sys.argv[1:]:
         print_word_def(arg)
+
 
 if __name__ == '__main__':
     main()

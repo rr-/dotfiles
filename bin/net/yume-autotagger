@@ -1,6 +1,5 @@
 #!/usr/bin/python3
-
-''' Pulls tags to yume.pl from other boorus. '''
+# Pulls tags to yume.pl from other boorus
 
 import os
 import sys
@@ -16,17 +15,20 @@ from dotfiles import logging
 logger = logging.getLogger(__name__)
 config_key = config['yume-autotagger']
 
-HISTORY_PATH   = os.path.expanduser('~/.config/yume-autotagger.json')
-YUME_URL       = config_key.get('url', 'https://yume.pl')
-API_URL        = config_key.get('api-url', 'https://yume.pl/api')
+HISTORY_PATH = os.path.expanduser('~/.config/yume-autotagger.json')
+YUME_URL = config_key.get('url', 'https://yume.pl')
+API_URL = config_key.get('api-url', 'https://yume.pl/api')
 YUME_USER_NAME = config_key['user']
-YUME_PASSWORD  = config_key['password']
+YUME_PASSWORD = config_key['password']
+
 
 def sanitize_tag(name):
     return re.sub(r'[<>/]', '_', name)
 
+
 def capitalize(name):
     return re.sub(r'(^|[_()])([a-z])', lambda m: m.group(0).upper(), name)
+
 
 class Tag():
     def __init__(self, name, category=None):
@@ -35,6 +37,7 @@ class Tag():
 
     def __repr__(self):
         return 'Tag(%r, %r)' % (self.name, self.category)
+
 
 class TagList():
     def __init__(self, tags=None):
@@ -45,7 +48,8 @@ class TagList():
             self._tags.append(tag)
 
     def delete(self, tag):
-        self._tags = [t for t in self._tags if t.name.lower() != tag.name.lower()]
+        self._tags = [
+            t for t in self._tags if t.name.lower() != tag.name.lower()]
 
     def has(self, tag):
         return tag.name.lower() in [t.name.lower() for t in self._tags]
@@ -58,6 +62,7 @@ class TagList():
 
     def __repr__(self):
         return 'TagList(%r)' % self._tags
+
 
 def get_tags_from_gelbooru(url):
     if 'gelbooru' not in url:
@@ -74,6 +79,7 @@ def get_tags_from_gelbooru(url):
         except IndexError:
             pass
 
+
 def get_tags_from_danbooru(url):
     match = re.search('danbooru.*?(\d+)', url)
     if not match:
@@ -87,23 +93,31 @@ def get_tags_from_danbooru(url):
             if name:
                 yield Tag(name, category)
 
+
 def parse_args():
     parser = argparse.ArgumentParser(
         description='Pulls tags from Gelbooru to Szurubooru')
     parser.add_argument(
         metavar='POST_ID', dest='post_ids', nargs='*', type=int,
-        help='ID of the post to edit the tags for. If not specified, use latest unprocessed post')
+        help=(
+            'ID of the post to edit the tags for. ' +
+            'If not specified, use latest unprocessed post'))
     parser.add_argument(
         '--force', action='store_true',
         help='Pull tags for already processed posts (used with POST_ID)')
     parser.add_argument(
         '--untagged', action='store_true',
-        help='Pull tags only for posts that were not yet tagged (used with POST_ID)')
+        help=(
+            'Pull tags only for posts that were not yet ' +
+            'tagged (used with POST_ID)'))
     return parser.parse_args()
+
 
 def collect_external_tags(post_url):
     source_urls = [
-        result.url for result in iqdb.search(post_url) if result.similarity >= 0.90]
+        result.url
+        for result in iqdb.search(post_url)
+        if result.similarity >= 0.90]
 
     if not source_urls:
         raise RuntimeError('Post not found on IQDB')
@@ -123,6 +137,7 @@ def collect_external_tags(post_url):
 
     raise RuntimeError('Post found on IQDB, but not on any known site')
 
+
 def create_session():
     session = requests.Session()
     session.keep_alive = False
@@ -135,6 +150,7 @@ def create_session():
         logger.error(json.loads(response.text)['description'])
         return None
     return session
+
 
 def pull_tags(session, post_id):
     response = session.get(API_URL + '/post/' + str(post_id))
@@ -198,7 +214,8 @@ def pull_tags(session, post_id):
                     target_tags.add(implication)
                     logger.info('Added implication %r', implication.name)
         elif response.status_code == 404 \
-                and 'not found' in json.loads(response.text)['description'].lower():
+                and 'not found' in \
+                    json.loads(response.text)['description'].lower():
             logger.warn('Added new tag %r', external_tag.name)
             new_tags.add(external_tag)
         else:
@@ -243,6 +260,7 @@ def pull_tags(session, post_id):
     logger.success('Added %d new tags.', num_tags_added)
     return True
 
+
 class TaggingHistory():
     def __init__(self):
         self._history = {'tagged': set(), 'untagged': set(), 'unknown': set()}
@@ -282,6 +300,7 @@ class TaggingHistory():
         with open(HISTORY_PATH, 'w') as handle:
             json.dump(result, handle)
 
+
 def get_last_post_id(session, history):
     response = session.get(API_URL + '/posts?fields=id')
     decoded_response = json.loads(response.text)
@@ -291,6 +310,7 @@ def get_last_post_id(session, history):
         if post_id not in processed_post_ids:
             return post_id
     return None
+
 
 def main():
     args = parse_args()
@@ -338,6 +358,7 @@ def main():
         all_succeeded = all_succeeded and local_succeded
 
     sys.exit(0 if all_succeeded else 1)
+
 
 if __name__ == '__main__':
     main()

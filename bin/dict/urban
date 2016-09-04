@@ -1,4 +1,7 @@
 #!/usr/bin/ruby -w
+# Looks up word definitions on Urban Dictionary.
+# TODO: rewrite to Python
+
 require 'rubygems'
 require 'json'
 require 'net/http'

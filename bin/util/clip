@@ -1,6 +1,5 @@
 #!/bin/sh
-
-# portable clipboard
+# Portable clipboard
 
 # cygwin
 if [ -e /dev/clipboard ]; then

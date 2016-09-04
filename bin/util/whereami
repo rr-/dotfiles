@@ -1,2 +1,4 @@
 #!/bin/sh
+# Shows the external IP of current machine
+
 wget http://ipinfo.io/ip -qO -

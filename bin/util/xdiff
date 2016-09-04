@@ -1,4 +1,6 @@
 #!/bin/sh
+# Hexadecimal diff of binary files
+
 if ! command -v gawk &>/dev/null; then
     echo 1>&2 'gawk not found. Aborting.'
     exit 1

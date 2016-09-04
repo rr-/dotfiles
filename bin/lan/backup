@@ -1,4 +1,6 @@
 #!/bin/bash
+# Two-way backup between server and main PC.
+
 local_host=tornado
 remote_host=burza
 [ "$(hostname)" != "$local_host" ] && echo "Must be run on $local_host" 1>&2 && exit 1

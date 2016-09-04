@@ -2,8 +2,11 @@
 import logging
 import os
 import sys
-import util
+import re
 import argparse
+import importlib
+import util
+
 
 def setup_logger():
     root = logging.getLogger()
@@ -15,17 +18,23 @@ def setup_logger():
     ch.setFormatter(formatter)
     root.addHandler(ch)
 
+
 def parse_args():
     parser = argparse.ArgumentParser(description='Install modules')
     parser.add_argument(
         'module', help='directory to install')
     return parser.parse_args()
 
+
 def main():
     setup_logger()
     args = parse_args()
-    os.chdir(args.module)
-    __import__(args.module + '.install')
+    full_module_name = 'mod.' + re.sub('[-_]', '.', args.module)
+    full_module_path = full_module_name.replace('.', '/')
+    os.chdir(full_module_path)
+    module = importlib.import_module(full_module_name + '.install')
+    module.run()
+
 
 if __name__ == '__main__':
     main()
