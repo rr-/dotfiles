@@ -25,11 +25,11 @@ class WindowTitleProvider(object):
         self._NET_WM_DESKTOP = self._disp.intern_atom('_NET_WM_DESKTOP')
 
         self._desktop_id_to_monitor = {}
-        for i, m in enumerate(
+        for i, monitor in enumerate(
                 sorted(self._updater.monitors, key=lambda m: m.original_id)):
-            for ws in m.workspaces:
+            for _ in monitor.workspaces:
                 self._desktop_id_to_monitor[len(self._desktop_id_to_monitor)] \
-                    = m.display_id
+                    = monitor.display_id
 
         self._update_titles(self._root)
 

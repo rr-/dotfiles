@@ -81,7 +81,7 @@ def get_tags_from_gelbooru(url):
 
 
 def get_tags_from_danbooru(url):
-    match = re.search('danbooru.*?(\d+)', url)
+    match = re.search(r'danbooru.*?(\d+)', url)
     if not match:
         raise ValueError('Not a valid Danbooru URL')
     post_id = int(match.group(1))
@@ -127,7 +127,6 @@ def collect_external_tags(post_url):
         get_tags_from_gelbooru,
     ]
 
-    tags = []
     for handler in handlers:
         for source_url in source_urls:
             try:
@@ -181,7 +180,7 @@ def pull_tags(session, post_id):
                     break
 
         if banned:
-            logger.warn('Ignored tag %r', external_tag.name)
+            logger.warning('Ignored tag %r', external_tag.name)
             continue
 
         if external_tag.name in config_key['translations']:
@@ -216,7 +215,7 @@ def pull_tags(session, post_id):
         elif response.status_code == 404 \
                 and 'not found' in \
                     json.loads(response.text)['description'].lower():
-            logger.warn('Added new tag %r', external_tag.name)
+            logger.warning('Added new tag %r', external_tag.name)
             new_tags.add(external_tag)
         else:
             logger.error(response.text, response.status_code)
@@ -227,7 +226,7 @@ def pull_tags(session, post_id):
         return True
 
     if target_tags.has(Tag('tagme')):
-        logger.info('Deleting tag %r' % 'tagme')
+        logger.info('Deleting tag %r', 'tagme')
         target_tags.delete(Tag('tagme'))
 
     response = session.put(

@@ -67,11 +67,11 @@ def parse_args():
 
 
 def next_dir_number(dir_map, style, max_file_count):
-    next_dir_number = max(list(dir_map.keys()) + [0]) + 1
+    number = max(list(dir_map.keys()) + [0]) + 1
 
     if style == STYLE_FIRST:
-        if next_dir_number != len(dir_map):
-            for i in range(1, next_dir_number):
+        if number != len(dir_map):
+            for i in range(1, number):
                 if i not in dir_map:
                     return i, max_file_count
 

@@ -1,3 +1,4 @@
+# pylint: disable=invalid-name
 import collections
 from PyQt5 import QtGui
 from PyQt5 import QtWidgets
@@ -13,7 +14,7 @@ class Chart(QtWidgets.QWidget):
     def addPoint(self, color, y):
         self.points[color].append(y)
 
-    def paintEvent(self, e):
+    def paintEvent(self, _event):
         width = self.width()
         height = self.height() - settings.BOTTOM_BORDER
 
@@ -37,37 +38,40 @@ class Chart(QtWidgets.QWidget):
                 - 2 * margin \
                 - y * (height - 1 - 2 * margin) / highest
 
-        qp = QtGui.QPainter()
-        qp.begin(self)
+        painter = QtGui.QPainter()
+        painter.begin(self)
 
-        qp.setBrush(QtGui.QBrush(QtGui.QColor('#333')))
-        qp.setPen(QtGui.QPen(0))
-        qp.drawRect(margin, margin, width - 2 * margin, height - 2 * margin)
-        qp.setBrush(QtGui.QBrush())
+        painter.setBrush(QtGui.QBrush(QtGui.QColor('#333')))
+        painter.setPen(QtGui.QPen(0))
+        painter.drawRect(
+            margin, margin, width - 2 * margin, height - 2 * margin)
+        painter.setBrush(QtGui.QBrush())
 
         for color, points in self.points.items():
-            qp.setPen(QtGui.QColor(color))
-            size = self.size()
-            ox = 0
-            oy = points[-1]
+            painter.setPen(QtGui.QColor(color))
+            prev_x = 0
+            prev_y = points[-1]
             for x, y in enumerate(reversed(points)):
                 dx = x_transform(x)
                 excess = dx < margin
                 if excess:
                     dx = margin
-                qp.drawLine(
-                    x_transform(ox), y_transform(oy), dx, y_transform(y))
-                ox = x
-                oy = y
+                painter.drawLine(
+                    x_transform(prev_x),
+                    y_transform(prev_y),
+                    dx,
+                    y_transform(y))
+                prev_x = x
+                prev_y = y
                 if excess:
                     points.pop(0)
                     break
 
-        qp.setPen(QtGui.QColor('#808080'))
-        qp.drawRect(
+        painter.setPen(QtGui.QColor('#808080'))
+        painter.drawRect(
             margin - 1,
             margin - 1,
             width - 1 - 2 * (margin - 1),
             height - 1 - 2 * (margin - 1))
 
-        qp.end()
+        painter.end()

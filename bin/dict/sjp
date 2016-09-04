@@ -6,7 +6,6 @@ import sys
 import urllib.request
 import urllib.parse
 import re
-import textwrap
 from bs4 import BeautifulSoup
 
 
@@ -18,10 +17,10 @@ def get_first(input_list):
 def text_with_newlines(elem):
     text = ''
     try:
-        for e in elem.recursiveChildGenerator():
-            if isinstance(e, str):
-                text += e.strip()
-            elif e.name == 'br':
+        for child in elem.recursiveChildGenerator():
+            if isinstance(child, str):
+                text += child.strip()
+            elif child.name == 'br':
                 text += '\n'
     except AttributeError:
         return str(elem)

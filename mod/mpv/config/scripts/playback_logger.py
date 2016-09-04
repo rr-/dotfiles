@@ -80,8 +80,8 @@ def main():
             stderr=subprocess.PIPE,
             check=True)
 
-    except Exception as e:
-        print(e, file=sys.stderr)
+    except Exception as ex:
+        print(ex, file=sys.stderr)
 
 if __name__ == '__main__':
     main()

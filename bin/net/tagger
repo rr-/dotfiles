@@ -97,7 +97,7 @@ class ReadlineEdit(urwid.Text):
     def selectable(self):
         return True
 
-    def keypress(self, size, key):
+    def keypress(self, _size, key):
         keymap = {
             'ctrl b':         self._backward_char,
             'ctrl f':         self._forward_char,
@@ -210,7 +210,7 @@ class ChosenTagsListBox(urwid.ListBox):
     def selectable(self):
         return True
 
-    def keypress(self, size, key):
+    def keypress(self, _size, key):
         keymap = {
             'j':         self._select_prev,
             'k':         self._select_next,
@@ -318,7 +318,7 @@ class FuzzyInput(urwid.Widget):
             canvas.cursor = (min(self._input_box.edit_pos, maxcol), 0)
         return canvas
 
-    def _accept(self, size):
+    def _accept(self, _size):
         text = self._input_box.text
         self._input_box.text = ''
         self._update_matches()
@@ -326,7 +326,7 @@ class FuzzyInput(urwid.Widget):
         urwid.signals.emit_signal(self, 'accept', self, text)
         self._invalidate()
 
-    def _select_next(self, size):
+    def _select_next(self, _size):
         if self._focused_match > 0:
             self._focused_match -= 1
             self._on_results_focus_change()
@@ -338,10 +338,10 @@ class FuzzyInput(urwid.Widget):
             self._on_results_focus_change()
             self._invalidate()
 
-    def _on_text_change(self, *args, **kwargs):
+    def _on_text_change(self, *_args, **__):
         self._update_matches()
 
-    def _on_results_focus_change(self, *args, **kwargs):
+    def _on_results_focus_change(self, *_, **__):
         urwid.signals.disconnect_signal(
             self._input_box, 'change', self._on_text_change)
         self._input_box.text = self._matches[self._focused_match]
