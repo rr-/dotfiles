@@ -4,8 +4,6 @@ import util
 
 
 def run():
-    packages.try_install('wget')
-    packages.try_install('curl')
     if 'cygwin' in sys.platform:
         packages.try_install('ssh')
     else:
