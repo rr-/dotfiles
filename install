@@ -21,19 +21,21 @@ def setup_logger():
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Install modules')
-    parser.add_argument(
-        'module', help='directory to install')
+    parser.add_argument('module', help='directory to install', nargs='+')
     return parser.parse_args()
 
 
 def main():
     setup_logger()
     args = parse_args()
-    full_module_name = 'mod.' + re.sub('[-_]', '.', args.module)
-    full_module_path = full_module_name.replace('.', '/')
-    os.chdir(full_module_path)
-    module = importlib.import_module(full_module_name + '.install')
-    module.run()
+    original_dir = os.getcwd()
+    for module in args.module:
+        full_module_name = 'mod.' + re.sub('[-_]', '.', module)
+        full_module_path = full_module_name.replace('.', '/')
+        os.chdir(full_module_path)
+        module = importlib.import_module(full_module_name + '.install')
+        module.run()
+        os.chdir(original_dir)
 
 
 if __name__ == '__main__':
