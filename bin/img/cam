@@ -5,7 +5,7 @@ import os
 import argparse
 import re
 import time
-from plumbum import local, FG
+from subprocess import run, PIPE
 
 
 def parse_args():
@@ -21,11 +21,11 @@ def parse_args():
 
 
 def get_integer(result, prefix_pattern):
-    return int(re.search(prefix_pattern + '.*?(\d+)', result, re.I).group(1))
+    return int(re.search(prefix_pattern + r'.*?(\d+)', result, re.I).group(1))
 
 
 def main(args):
-    result = local['xwininfo']()
+    result = run(['xwininfo'], stdout=PIPE).stdout.decode()
     x = get_integer(result, 'absolute.*x')
     y = get_integer(result, 'absolute.*y')
     width = get_integer(result, 'width')
@@ -40,7 +40,7 @@ def main(args):
         time.sleep(1)
     print('Go!')
 
-    local['ffmpeg'][
+    run(['ffmpeg',
         '-video_size', '{width}x{height}'.format(width=width, height=height),
         '-framerate', '25',
         '-f', 'x11grab',
@@ -48,7 +48,7 @@ def main(args):
         '-c:v', 'libvpx-vp9',
         '-y',
         # '-lossless', '1',
-        args.output_path] & FG()
+        args.output_path])
 
 
 if __name__ == '__main__':

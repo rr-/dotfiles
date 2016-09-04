@@ -5,7 +5,7 @@ import os
 import re
 import sys
 import argparse
-from plumbum import local
+from subprocess import run, PIPE
 
 
 def _parse_args():
@@ -18,45 +18,44 @@ def _parse_args():
 def enable():
     print('Enabling')
     if sys.platform == 'cygwin':
-        cygstart = local['cygstart']
-        cygstart([os.path.join(
-            os.path.dirname(__file__),
-            os.pardir,
-            os.pardir,
-            'mod-ahk',
-            'arrows.ahk')])
+        run([
+            'cygstart',
+            os.path.join(
+                os.path.dirname(__file__),
+                os.pardir,
+                os.pardir,
+                'mod-ahk',
+                'arrows.ahk')])
     else:
-        xmodmap = local['xmodmap']
-        xmodmap(['-e', 'keycode 33 = Up'])
-        xmodmap(['-e', 'keycode 46 = Left'])
-        xmodmap(['-e', 'keycode 47 = Down'])
-        xmodmap(['-e', 'keycode 48 = Right'])
+        run(['xmodmap', '-e', 'keycode 33 = Up'])
+        run(['xmodmap', '-e', 'keycode 46 = Left'])
+        run(['xmodmap', '-e', 'keycode 47 = Down'])
+        run(['xmodmap', '-e', 'keycode 48 = Right'])
 
 
 def disable():
     print('Disabling')
     if sys.platform == 'cygwin':
         import csv
-        tasklist = local['tasklist']
-        taskkill = local['taskkill']
-        output = tasklist([
-            '/fi', 'imagename eq autohotkey.exe', '/v', '/fo', 'csv', '/nh'])
+        output = run([
+            'tasklist',
+            '/fi', 'imagename eq autohotkey.exe',
+            '/v', '/fo', 'csv', '/nh'], stdout=PIPE).stdout.read()
         tasks = [row for row in csv.reader(output.splitlines())]
         task = next((task for task in tasks if 'arrows' in task[-1]), None)
         if task:
             pid = task[1]
-            taskkill(['/pid', pid])
+            run(['taskkill', '/pid', pid])
     else:
-        setxkbmap = local['setxkbmap']
-        setxkbmap(['-layout', 'pl'])
+        run(['setxkbmap', '-layout', 'pl'])
 
 
 def is_enabled():
     if sys.platform == 'cygwin':
         raise NotImplementedError()
     else:
-        xmodmap = local['xmodmap']
-        result = xmodmap(['-pke']).split('\n')
+        result = run(['xmodmap', '-pke'], stdout=PIPE) \
+            .stdout.decode().split('\n')
         keycodes_for_left = [
             l for l in result if re.search(r'\bleft\b', l, re.I)]
         return len(keycodes_for_left) > 1
@@ -74,6 +73,7 @@ def main():
             disable()
         else:
             enable()
+
 
 if __name__ == '__main__':
     main()
