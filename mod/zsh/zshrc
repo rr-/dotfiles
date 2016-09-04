@@ -1,5 +1,5 @@
 SOURCE=$(readlink ${(%):-%N})
-DIR=${SOURCE:h:h}
+DIR=${SOURCE:h:h:h}
 HOST=$(hostname)
 
 if [ -n "$FBTERM" ]; then
