@@ -11,22 +11,14 @@ import threading
 import time
 import urllib.parse
 import signal
-
-
-try:
-    import lockfile
-    import requests
-    from bs4 import BeautifulSoup
-except ImportError as ex:
-    if ex.name is None:
-        raise
-    print('Please install %s.' % ex.name, file=sys.stderr)
-    sys.exit(1)
+import lockfile
+import requests
+from bs4 import BeautifulSoup
 
 
 def run_workers(queue, count, worker_factory):
     ''' Executes all the given workers and blocks until the queue's empty. '''
-    for i in range(count):
+    for _ in range(count):
         worker = worker_factory()
         thread = threading.Thread(target=worker.run)
         thread.daemon = True
@@ -344,7 +336,7 @@ def parse_args():
 def main():
     args = parse_args()
 
-    def signal_handler(signal, frame):
+    def signal_handler(_signal, _frame):
         if not Flow.terminated:
             sys.stdout.write('Exiting due to user abort\n')
             Flow.terminate()

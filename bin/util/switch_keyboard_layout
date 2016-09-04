@@ -9,7 +9,7 @@ from subprocess import run, PIPE
 def main():
     if run(['pgrep', 'ibus-daemon'], stdout=PIPE).returncode != 0:
         print('starting daemon')
-        subprocess.run(os.path.expanduser('~/.config/ibus/start'))
+        run(os.path.expanduser('~/.config/ibus/start'))
 
     engine = run(['ibus', 'engine'], stdout=PIPE).stdout.decode().strip()
     if engine != 'anthy':

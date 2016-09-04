@@ -26,9 +26,9 @@ class MpdProvider(object):
         self.random_label.setProperty('class', 'icon')
         self.random_label.setText('\U0001F500')
 
-        for w in [self.status_label, self.song_label, self.random_label]:
+        for widget in [self.status_label, self.song_label, self.random_label]:
             main_window[len(main_window) - 1] \
-                .right_widget.layout().addWidget(w)
+                .right_widget.layout().addWidget(widget)
 
         self.status_label.mouseReleaseEvent = self.play_pause_clicked
         self.song_label.mouseReleaseEvent = self.play_pause_clicked
@@ -36,7 +36,7 @@ class MpdProvider(object):
         self.status_label.wheelEvent = self.prev_or_next_track
         self.song_label.wheelEvent = self.prev_or_next_track
 
-    def play_pause_clicked(self, event):
+    def play_pause_clicked(self, _event):
         run(['mpc', 'toggle'])
         self.refresh()
         self.render()
@@ -46,7 +46,7 @@ class MpdProvider(object):
         self.refresh()
         self.render()
 
-    def random_clicked(self, event):
+    def random_clicked(self, _event):
         run(['mpc', 'random'])
         self.refresh()
         self.render()

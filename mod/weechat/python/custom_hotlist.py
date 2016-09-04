@@ -24,9 +24,6 @@ COLORS = {
     3: '255,166',
 }
 
-settings = {
-}
-
 
 def hotlist_item_cb(data, item, window):
     priorities = {}
@@ -76,9 +73,5 @@ if w.register(
         SCRIPT_DESC,
         '',
         ''):
-    for option, default_value in settings.iteritems():
-        if not w.config_is_set_plugin(option):
-            w.config_set_plugin(option, default_value)
-
     w.bar_item_new('custom_hotlist', 'hotlist_item_cb', '')
-    hook = w.hook_signal('buffer_line_added', 'hotlist_hook_cb', '')
+    w.hook_signal('buffer_line_added', 'hotlist_hook_cb', '')

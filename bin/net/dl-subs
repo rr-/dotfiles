@@ -73,7 +73,6 @@ class Sub2SubtitleReader(SubtitleReader):
             r'^(\d+):(\d+):(\d+)\.(\d+)\s*\,\s*(\d+):(\d+):(\d+)\.(\d+).*$')
 
     def read(self, lines, _fps):
-        subtitles = []
         lines_it = iter(lines)
         for line in lines_it:
             match = self._regex.match(line)
@@ -173,6 +172,8 @@ class Mpl2SubtitleReader(SubtitleReader):
 
 
 class SubtitleParser():
+    TEMPLATE = '%d\n%.2d:%.2d:%.2d,%.3d --> %.2d:%.2d:%.2d,%.3d\n%s\n\n'
+
     def __init__(self):
         self._readers = []
         for subclass in SubtitleReader.__subclasses__():
@@ -184,10 +185,9 @@ class SubtitleParser():
                 return list(reader.read(lines, fps))
 
     def to_srt(self, subtitles):
-        TEMPLATE = '%d\n%.2d:%.2d:%.2d,%.3d --> %.2d:%.2d:%.2d,%.3d\n%s\n\n'
         out = ''
         for i, subtitle in enumerate(subtitles):
-            out += TEMPLATE % (
+            out += self.TEMPLATE % (
                 i + 1,
 
                 int(subtitle.time_start / 3600),
@@ -270,7 +270,7 @@ def collect_paths(paths):
             yield path
 
 
-def get_fps(path):
+def get_fps(_path):
     return 23.976
 
 

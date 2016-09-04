@@ -1,0 +1,38 @@
+[basic]
+good-names=ex,_,logger,i,j,x,y
+
+[variables]
+dummy-variables-rgx=_|dummy
+
+[format]
+max-line-length=79
+
+[messages control]
+reports=no
+disable=
+    # we're not java
+    missing-docstring,
+
+    # covered better by pycodestyle
+    bad-continuation,
+
+    # we're adults
+    redefined-builtin,
+    duplicate-code,
+    too-many-return-statements,
+    too-many-arguments,
+    too-many-locals,
+    too-many-instance-attributes,
+
+    # plain stupid
+    no-self-use,
+    too-few-public-methods
+
+[typecheck]
+ignored-modules =
+    PyQt5.QtGui,
+    PyQt5.QtCore,
+    PyQt5.QtWidgets,
+    alsaaudio,
+    mpd,
+    weechat

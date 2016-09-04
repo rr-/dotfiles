@@ -73,8 +73,8 @@ class WorkspacesUpdater(object):
                 monitor.workspaces.append(workspace)
             self.monitors.append(monitor)
         self.monitors.sort(key=lambda m: m.x)
-        for i, m in enumerate(self.monitors):
-            m.display_id = i
+        for i, monitor in enumerate(self.monitors):
+            monitor.display_id = i
 
 
 class WorkspacesProvider(object):
@@ -90,16 +90,17 @@ class WorkspacesProvider(object):
         self._widgets = {}
         for i, monitor in enumerate(self._updater.monitors):
             monitor_widget = main_window[i].left_widget
-            monitor_widget.ws_widgets = {}
+            monitor_widget.workspace_widgets = {}
             monitor_widget.wheelEvent = \
                 lambda event, monitor_index=i: self.wheel(event, monitor_index)
-            for j, ws in enumerate(monitor.workspaces):
-                ws_widget = QtWidgets.QPushButton(ws.name)
-                ws_widget.setProperty('class', 'workspace')
-                ws_widget.mouseReleaseEvent = \
-                    lambda event, ws=ws: self.click(event, ws)
-                monitor_widget.ws_widgets[j] = ws_widget
-                monitor_widget.layout().addWidget(ws_widget)
+            for j, workspace in enumerate(monitor.workspaces):
+                workspace_widget = QtWidgets.QPushButton(workspace.name)
+                workspace_widget.setProperty('class', 'workspace')
+                workspace_widget.mouseReleaseEvent = \
+                    lambda event, workspace=workspace: \
+                        self.click(event, workspace)
+                monitor_widget.workspace_widgets[j] = workspace_widget
+                monitor_widget.layout().addWidget(workspace_widget)
             self._widgets[i] = monitor_widget
         self.render()
 
@@ -119,18 +120,21 @@ class WorkspacesProvider(object):
             'bspc', 'desktop', '-f', '%s' % (
                 focused_monitor.workspaces[focused_index].name)])
 
-    def click(self, event, ws):
-        subprocess.call(['bspc', 'desktop', '-f', ws.name])
+    def click(self, _event, workspace):
+        subprocess.call(['bspc', 'desktop', '-f', workspace.name])
 
     def refresh(self):
-        line = self._bspc_process.stdout.readline().decode('utf8').strip()
+        self._bspc_process.stdout.readline().decode('utf8').strip()
         self._updater.update()
 
     def render(self):
         for i, monitor in enumerate(self._updater.monitors):
-            for j, ws in enumerate(monitor.workspaces):
-                ws_widget = self._widgets[i].ws_widgets[j]
-                ws_widget.setProperty('ws_focused', '%s' % ws.focused)
-                ws_widget.setProperty('ws_urgent', '%s' % ws.urgent)
-                ws_widget.setProperty('ws_free', '%s' % ws.free)
+            for j, workspace in enumerate(monitor.workspaces):
+                workspace_widget = self._widgets[i].workspace_widgets[j]
+                workspace_widget.setProperty(
+                    'ws_focused', '%s' % workspace.focused)
+                workspace_widget.setProperty(
+                    'ws_urgent', '%s' % workspace.urgent)
+                workspace_widget.setProperty(
+                    'ws_free', '%s' % workspace.free)
         self._main_window.reloadStyleSheet()

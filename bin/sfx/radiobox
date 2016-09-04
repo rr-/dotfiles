@@ -30,7 +30,7 @@ def collect_stations():
 def choose_station(stations):
     process = Popen(['fzf'], stdin=PIPE, stdout=PIPE)
     stdin = '\n'.join([station.title for station in stations])
-    stdout, stderr = process.communicate(input=stdin.encode())
+    stdout, _stderr = process.communicate(input=stdin.encode())
     stdout = stdout.strip().decode()
     for station in stations:
         if station.title == stdout:

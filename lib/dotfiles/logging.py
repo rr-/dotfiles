@@ -1,5 +1,6 @@
-import coloredlogs
+# pylint: disable=wildcard-import,unused-wildcard-import,protected-access
 from logging import *
+import coloredlogs
 
 
 def _add_custom_level(number, name):
