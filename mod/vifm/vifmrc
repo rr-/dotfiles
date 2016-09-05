@@ -89,8 +89,8 @@ command! ln for x in %"f; do ln -s %d/"$x" %D; done
 filetype *.wav,*.mp3,*.flac,*.ogg,*.m4a,*.wma,*.ape,*.ac3 ffplay -nodisp %f
 
 " Video
-filetype *.avi,*.mp4,*.wmv,*.dat,*.3gp,*.ogv,*.mkv,*.mpg,*.vob,*.flv,*.m2v,*.mov,*.webm,*.ts,*.m4v mpv %f
-fileviewer *.avi,*.mp4,*.wmv,*.dat,*.3gp,*.ogv,*.mkv,*.mpg,*.vob,*.flv,*.m2v,*.mov,*.webm,*.ts,*.m4v ffprobe -pretty %c 2>&1
+filetype *.avi,*.mp4,*.wmv,*.dat,*.3gp,*.ogv,*.mkv,*.mpg,*.vob,*.flv,*.m2v,*.mov,*.ts,*.m4v mpv %f
+fileviewer *.avi,*.mp4,*.wmv,*.dat,*.3gp,*.ogv,*.mkv,*.mpg,*.vob,*.flv,*.m2v,*.mov,*.ts,*.m4v ffprobe -pretty %c 2>&1
 
 " Web
 filextype *.html,*.htm firefox %f &
@@ -103,8 +103,8 @@ filetype *.torrent qbittorrent %f &
 fileviewer *.7z,*.zip,*.rar,*.iso,*.mdf 7z l %c
 
 " Images
-filextype *.bmp,*.jpg,*.jpeg,*.png,*.gif mpi %d --select=%f 2>/dev/null &
-fileviewer *.bmp,*.jpg,*.jpeg,*.png,*.gif convert -identify %f -verbose /dev/null
+filextype *.bmp,*.jpg,*.jpeg,*.png,*.gif,*.webm mpi %d --select=%f 2>/dev/null &
+fileviewer *.bmp,*.jpg,*.jpeg,*.png,*.gif,*.webm convert -identify %f -verbose /dev/null
 
 " Rich text documents
 filextype *.pdf evince %c %i &
