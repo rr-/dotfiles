@@ -55,6 +55,7 @@ set nojoinspaces              "don't put double spaces when using auto wrapping
 set fillchars=vert:\│         "better character for vertical window splits
 set hidden                    "don't purge undo history when changing buffers
 let g:netrw_banner=0          "disable useless banner in :Explore
+let g:netrw_sort_sequence='[\/]$,*' "disable weird sort order
 
 "miscellaneous
 set noeb vb t_vb=             "disable beeping
