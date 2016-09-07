@@ -92,7 +92,7 @@ def next_dir_number(dir_map, style, max_file_count):
     else:
         raise AssertionError()
 
-    return next_dir_number, max_file_count
+    return number, max_file_count
 
 
 def main():
