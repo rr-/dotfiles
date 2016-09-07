@@ -57,7 +57,12 @@ def download(url, path, overwrite=False):
     create_dir(os.path.dirname(path))
     if overwrite or not os.path.exists(path):
         logger.info('Downloading %r into %r...', url, path)
-        urllib.request.urlretrieve(url, path)
+        request = urllib.request.Request(url)
+        request.add_header('User-Agent', 'mozilla')
+        request.add_header('Referer', url)
+        response = urllib.request.urlopen(request)
+        with open(path, 'wb') as handle:
+            handle.write(response.read())
 
 
 def exists(path):
