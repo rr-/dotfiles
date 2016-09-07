@@ -1,6 +1,6 @@
 #!/bin/python3
 # Switches between dark and light theme in various programs
-# (doesn't work too well with SSH)
+# (requires AcceptEnv in sshd_config to work on SSH)
 
 import argparse
 import shutil
@@ -76,9 +76,11 @@ def _update_bspwm(theme):
 def _update_zsh(theme):
     logger.info('Updating environment variable exporter for zsh')
     with open(expanduser('~/.config/zsh/lightness.sh'), 'w') as handle:
+        handle.write('if [ -z "$LIGHTNESS" ]; then\n')
         handle.write('export LIGHTNESS=%s\n' % theme)
+        handle.write('fi\n')
         handle.write(
-            'export FZF_DEFAULT_OPTS="$FZF_DEFAULT_OPTS --color=$LIGHTNESS')
+            'export FZF_DEFAULT_OPTS="$FZF_DEFAULT_OPTS --color=$LIGHTNESS\n')
 
 
 def _update_vifm(theme):
