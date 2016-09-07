@@ -15,6 +15,7 @@ Plug 'rr-/vim-hexdec'                   "convert hex to dec and vice versa
 Plug 'junegunn/vim-easy-align'          "replace :column ...
 Plug 'bronson/vim-visual-star-search'   "enable * and # in visual mode
 Plug 'duggiefresh/vim-easydir'          "create directories on save
+Plug 'terryma/vim-multiple-cursors'
 call plug#end()
 
 runtime editor.vim

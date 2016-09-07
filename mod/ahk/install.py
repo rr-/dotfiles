@@ -1,6 +1,10 @@
 import os
 import tempfile
 import util
+import logging
+from subprocess import call
+
+logger = logging.getLogger(__name__)
 
 
 def install_autohotkey():
@@ -18,13 +22,17 @@ def install_autohotkey():
 
 
 def run():
-    install_autohotkey()
+    try:
+        install_autohotkey()
+    except Exception as ex:
+        logger.error(ex)
 
     script_path = util.expand_path('./hk.ahk')
     if util.has_executable('cygpath'):
         script_path = util.run_silent(
             ['cygpath', '-w', script_path])[1].strip()
 
+    logger.info('Adding script to autostart')
     util.run_silent([
         'reg',
         'add', r'HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Run',
