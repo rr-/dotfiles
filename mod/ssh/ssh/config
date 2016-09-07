@@ -1,3 +1,5 @@
+SendEnv LIGHTNESS
+
 Host burza
     HostName sakuya.pl
     User rr-
