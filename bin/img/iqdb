@@ -10,6 +10,9 @@ from dotfiles import logging
 
 logger = logging.getLogger(__name__)
 
+SORT_STYLE_URL = 'url'
+SORT_STYLE_SIMILARITY = 'similarity'
+
 GOOD_MATCH_THRESHOLD = 0.95
 POSSIBLE_MATCH_THRESHOLD = 0.85
 
@@ -23,11 +26,20 @@ def _parse_args():
     parser.add_argument('path', help='path to the image', nargs='+')
     parser.add_argument(
         '-f', '--filter', help='filter the results by URL', default='')
+    parser.add_argument(
+        '-s', '--sort',
+        help='how to sort the results',
+        choices=(SORT_STYLE_SIMILARITY, SORT_STYLE_URL),
+        default=SORT_STYLE_SIMILARITY)
     return parser.parse_args()
 
 
-def _output_results(results):
-    for result in sorted(results, key=lambda _: _.url):
+def _output_results(results, sort_style):
+    if sort_style == SORT_STYLE_SIMILARITY:
+        results = sorted(results, key=lambda _: -_.similarity)
+    elif sort_style == SORT_STYLE_URL:
+        results = sorted(results, key=lambda _: _.url)
+    for result in results:
         text = '[%3.0f%%, %5sx%-5s] %s' % (
             result.similarity * 100,
             result.width or '?',
@@ -42,7 +54,7 @@ def _output_results(results):
             logger.error(text)
 
 
-def _process_path(path, filter=''):
+def _process_path(path, filter, sort_style):
     logger.info('Input file: %s', path)
     logger.info('Input URL: %s', pathlib.Path(os.path.abspath(path)).as_uri())
     results = iqdb.search(path)
@@ -64,9 +76,9 @@ def _process_path(path, filter=''):
         results.input_width or '?',
         results.input_height or '?')
 
-    _output_results(main_results)
+    _output_results(main_results, sort_style)
     if extra_results:
-        _output_results(extra_results)
+        _output_results(extra_results, sort_style)
     logger.info('')
 
     if any(r for r in results if r.similarity >= GOOD_MATCH_THRESHOLD):
@@ -80,7 +92,7 @@ def main():
     args = _parse_args()
     exit_code = 0
     for path in args.path:
-        exit_code = max(exit_code, _process_path(path, args.filter))
+        exit_code = max(exit_code, _process_path(path, args.filter, args.sort))
     sys.exit(exit_code)
 
 
