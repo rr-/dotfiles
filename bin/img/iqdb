@@ -31,6 +31,9 @@ def _parse_args():
         help='how to sort the results',
         choices=(SORT_STYLE_SIMILARITY, SORT_STYLE_URL),
         default=SORT_STYLE_SIMILARITY)
+    parser.add_argument(
+        '--separate', action='store_true',
+        help='separate additional results')
     return parser.parse_args()
 
 
@@ -54,7 +57,7 @@ def _output_results(results, sort_style):
             logger.error(text)
 
 
-def _process_path(path, filter, sort_style):
+def _process_path(path, filter, sort_style, separate):
     logger.info('Input file: %s', path)
     logger.info('Input URL: %s', pathlib.Path(os.path.abspath(path)).as_uri())
     results = iqdb.search(path)
@@ -76,9 +79,12 @@ def _process_path(path, filter, sort_style):
         results.input_width or '?',
         results.input_height or '?')
 
-    _output_results(main_results, sort_style)
-    if extra_results:
-        _output_results(extra_results, sort_style)
+    if separate:
+        _output_results(main_results, sort_style)
+        if extra_results:
+            _output_results(extra_results, sort_style)
+    else:
+        _output_results(main_results + (extra_results or []), sort_style)
     logger.info('')
 
     if any(r for r in results if r.similarity >= GOOD_MATCH_THRESHOLD):
@@ -92,7 +98,9 @@ def main():
     args = _parse_args()
     exit_code = 0
     for path in args.path:
-        exit_code = max(exit_code, _process_path(path, args.filter, args.sort))
+        exit_code = max(
+            exit_code,
+            _process_path(path, args.filter, args.sort, args.separate))
     sys.exit(exit_code)
 
 
