@@ -1,9 +1,9 @@
-highlight Win           ctermfg=12 ctermbg=08 cterm=none
+highlight Win           ctermfg=07 ctermbg=08 cterm=none
 
-highlight TopLine       ctermfg=04 ctermbg=08 cterm=none
-highlight TopLineSel    ctermfg=04 ctermbg=00 cterm=none
-highlight StatusLine    ctermfg=04 ctermbg=00 cterm=none
-highlight Border        ctermfg=04 ctermbg=00 cterm=none
+highlight TopLine       ctermfg=15 ctermbg=08 cterm=none
+highlight TopLineSel    ctermfg=15 ctermbg=00 cterm=none
+highlight StatusLine    ctermfg=15 ctermbg=00 cterm=none
+highlight Border        ctermfg=15 ctermbg=00 cterm=none
 
 highlight Selected      ctermfg=-1 ctermbg=00 cterm=none
 highlight CurrLine      ctermfg=-1 ctermbg=-1 cterm=standout

@@ -1,29 +1,21 @@
-" Available style values (some of them can be combined):
-" bold
-" underline
-" reverse or inverse
-" standout
-" none
-
 highlight Win cterm=none ctermfg=236 ctermbg=default
+
+highlight TopLine cterm=none ctermfg=236 ctermbg=254
+highlight TopLineSel cterm=bold ctermfg=236 ctermbg=254
+highlight StatusLine cterm=bold ctermfg=236 ctermbg=254
+highlight Border cterm=none ctermfg=236 ctermbg=254
+
+highlight Selected cterm=bold ctermfg=200 ctermbg=default
+highlight CurrLine cterm=bold ctermfg=255 ctermbg=27
+
+highlight WildMenu cterm=underline,reverse ctermfg=236 ctermbg=254
+highlight CmdLine cterm=none ctermfg=236 ctermbg=default
+highlight ErrorMsg cterm=none ctermfg=red ctermbg=default
+
 highlight Directory cterm=bold ctermfg=21 ctermbg=255
 highlight Link cterm=bold ctermfg=39 ctermbg=default
-
 highlight BrokenLink cterm=bold ctermfg=red ctermbg=default
 highlight Socket cterm=bold ctermfg=magenta ctermbg=default
 highlight Device cterm=bold ctermfg=blue ctermbg=default
-
 highlight Fifo cterm=bold ctermfg=cyan ctermbg=default
-highlight Executable cterm=bold ctermfg=red ctermbg=default
-highlight Selected cterm=bold ctermfg=200 ctermbg=default
-
-highlight CurrLine cterm=bold ctermfg=255 ctermbg=27
-highlight TopLine cterm=none ctermfg=236 ctermbg=254
-highlight TopLineSel cterm=bold ctermfg=236 ctermbg=254
-
-highlight StatusLine cterm=bold ctermfg=236 ctermbg=254
-highlight WildMenu cterm=underline,reverse ctermfg=236 ctermbg=254
-highlight CmdLine cterm=none ctermfg=236 ctermbg=default
-
-highlight ErrorMsg cterm=none ctermfg=red ctermbg=default
-highlight Border cterm=none ctermfg=236 ctermbg=254
+highlight Executable cterm=bold ctermfg=green ctermbg=default
