@@ -1,62 +1,97 @@
-#!/bin/bash
+#!/bin/python3
 # Downloads images crawled by cron on the server to local directory.
-# Additionally, distributes the images to specific folders, and filters out small images.
-# TODO:
-# - possibly remove the check for small images
-# - possibly convert to Python
+# Additionally, distributes the images to specific folders, and filters out
+# small images.
 
-remote_root_dir="$HOME/hub/img/"
-dst_root_dir="$HOME/img/net/"
-transit_root_dir="$HOME/hub/img/"
-remote_host=burza
-local_host=tornado
-min_width=500
-min_height=500
-min_size=$[$min_width*$min_height]
+import re
+import argparse
+from os import scandir, path, makedirs, rmdir, unlink, rename
+from subprocess import run
+from socket import gethostname
+from PIL import Image
+from dotfiles import logging
 
-[ "$(hostname)" != "$local_host" ] && echo "Must be run on $local_host" 1>&2 && exit 1
+logger = logging.getLogger(__name__)
 
-shopt -s extglob
-shopt -s nocasematch
-trap "exit" INT
+LOCAL_HOST = 'tornado'
+REMOTE_HOST = 'burza'
 
-# download the images
-rsync --progress --whole-file -a --remove-source-files "$remote_host:$remote_root_dir" "$transit_root_dir"
+LOCAL_ROOT_DIR = path.expanduser('~/img/net/')
+TRANSIT_ROOT_DIR = path.expanduser('~/hub/img/')
+REMOTE_ROOT_DIR = path.expanduser('~/hub/img/')
 
-# distribute the images
-find "$transit_root_dir" -depth -type d -print0|while read -d '' -r src_folder; do
-    dst_folder="$dst_root_dir${src_folder##$transit_root_dir}"
-    dst_folder="${dst_folder/*([^\/]).2chan.net/2chan}"
-    dst_folder="${dst_folder/*([^\/]).@(4chan|4cdn).org/4chan}"
-    dst_folder="${dst_folder/\/src/}"
+MIN_IMAGE_WIDTH = 500
+MIN_IMAGE_HEIGHT = 500
+MIN_IMAGE_AREA = MIN_IMAGE_WIDTH * MIN_IMAGE_HEIGHT
 
-    mkdir -p "$dst_folder"
 
-    find "$src_folder" -type f -maxdepth 1 -print0|while read -d '' -r src_file; do
-        dst_file="$dst_folder/$(basename "$src_file")"
+def _find_directories_recursive(root_dir):
+    ''' Returns all sub directories in DFS order '''
+    stack = [root_dir]
+    result = []
+    while len(stack):
+        dir_path = stack.pop(0)
+        result.append(dir_path)
+        for entry in scandir(dir_path):
+            if entry.is_dir():
+                stack.insert(0, entry.path)
+    while len(result):
+        yield result.pop()
 
-        echo -n "$src_file "
 
-        # preprocess image
-        if [[ "$src_file" =~ .*\.(jpg|png) ]]; then
-            read dimensions < <(identify -format '%w*%h' "$src_file" 2>/dev/null)
-            if [ $? -eq 0 ]; then
-                size=$(($dimensions))
+def _find_files(root_dir):
+    return [entry.path for entry in scandir(root_dir) if entry.is_file()]
 
-                # check if too small
-                if [[ "$size" -lt "$min_size" ]]; then
-                    echo "$dimensions < $min_width*$min_height"
-                    rm "$src_file"
-                    continue
-                fi
-            fi
-        fi
 
-        mv "$src_file" "$dst_file" && echo 'ok'
-    done
-    distribute-files "$dst_folder" --fill-last -v
-done
+def main():
+    if gethostname() != LOCAL_HOST:
+        raise RuntimeError('Must be run on %s' % LOCAL_HOST)
 
-# remove empty directores
-find "$transit_root_dir" -depth -type d -exec rmdir --ignore-fail-on-non-empty "{}" \;
-ssh "$remote_host" "bash -c 'find \"$remote_root_dir\" -depth -mindepth 1 -type d -exec rmdir --ignore-fail-on-non-empty \"{}\" \;'"
+    run([
+        'rsync',
+        '--progress',
+        '--whole-file',
+        '-a',
+        '--remove-source-files',
+        '%s:%s' % (REMOTE_HOST, REMOTE_ROOT_DIR),
+        TRANSIT_ROOT_DIR])
+
+    source_directories = list(_find_directories_recursive(TRANSIT_ROOT_DIR))
+    for source_directory in source_directories:
+        target_directory = path.join(
+            LOCAL_ROOT_DIR, path.relpath(source_directory, TRANSIT_ROOT_DIR))
+        target_directory = re.sub(
+            r'[^\\/]*\.2chan\.net', '2chan', target_directory)
+        target_directory = re.sub(
+            r'[^\\/]*\.(4chan|4cdn)\.org', '4chan', target_directory)
+
+        makedirs(target_directory, exist_ok=True)
+
+        source_files = list(_find_files(source_directory))
+        for source_file in source_files:
+            target_file = path.join(
+                target_directory, path.basename(source_file))
+
+            try:
+                with Image.open(source_file) as image:
+                    width, height = image.size
+                    if width * height < MIN_IMAGE_AREA:
+                        logger.warning('%s: too small, ignoring', source_file)
+                        unlink(source_file)
+                        continue
+            except:
+                pass
+
+            logger.info('%s: ok', source_file)
+            rename(source_file, target_file)
+
+        run(['distribute-files', target_directory, '--fill-last', '-v'])
+
+        try:
+            rmdir(source_directory)
+        except OSError:
+            pass
+
+
+if __name__ == '__main__':
+    main()
