@@ -20,10 +20,6 @@ LOCAL_ROOT_DIR = path.expanduser('~/img/net/')
 TRANSIT_ROOT_DIR = path.expanduser('~/hub/img/')
 REMOTE_ROOT_DIR = path.expanduser('~/hub/img/')
 
-MIN_IMAGE_WIDTH = 500
-MIN_IMAGE_HEIGHT = 500
-MIN_IMAGE_AREA = MIN_IMAGE_WIDTH * MIN_IMAGE_HEIGHT
-
 
 def _parse_args():
     description = (
@@ -32,6 +28,8 @@ def _parse_args():
     parser = argparse.ArgumentParser(description=description)
     parser.add_argument(
         '--dry', action='store_true', help='don\'t do anything')
+    parser.add_argument('--min-image-width', default=500, type=int)
+    parser.add_argument('--min-image-height', default=500, type=int)
     return parser.parse_args()
 
 
@@ -67,6 +65,8 @@ def main():
         '%s:%s' % (REMOTE_HOST, REMOTE_ROOT_DIR),
         TRANSIT_ROOT_DIR])
 
+    min_image_area = args.min_image_width * args.min_image_height
+
     source_directories = list(_find_directories_recursive(TRANSIT_ROOT_DIR))
     for source_directory in source_directories:
         target_directory = path.join(
@@ -86,7 +86,7 @@ def main():
             try:
                 with Image.open(source_file) as image:
                     width, height = image.size
-                    if width * height < MIN_IMAGE_AREA:
+                    if width * height < min_image_area:
                         logger.warning('%s: too small, ignoring', source_file)
                         if not args.dry:
                             unlink(source_file)
