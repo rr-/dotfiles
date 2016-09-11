@@ -25,6 +25,16 @@ MIN_IMAGE_HEIGHT = 500
 MIN_IMAGE_AREA = MIN_IMAGE_WIDTH * MIN_IMAGE_HEIGHT
 
 
+def _parse_args():
+    description = (
+        'Downloads, filters and organizes into directories ' +
+        'images crawled by cron job.')
+    parser = argparse.ArgumentParser(description=description)
+    parser.add_argument(
+        '--dry', action='store_true', help='don\'t do anything')
+    return parser.parse_args()
+
+
 def _find_directories_recursive(root_dir):
     ''' Returns all sub directories in DFS order '''
     stack = [root_dir]
@@ -44,6 +54,7 @@ def _find_files(root_dir):
 
 
 def main():
+    args = _parse_args()
     if gethostname() != LOCAL_HOST:
         raise RuntimeError('Must be run on %s' % LOCAL_HOST)
 
@@ -77,15 +88,18 @@ def main():
                     width, height = image.size
                     if width * height < MIN_IMAGE_AREA:
                         logger.warning('%s: too small, ignoring', source_file)
-                        unlink(source_file)
+                        if not args.dry:
+                            unlink(source_file)
                         continue
             except:
                 pass
 
             logger.info('%s: ok', source_file)
-            rename(source_file, target_file)
+            if not args.dry:
+                rename(source_file, target_file)
 
-        run(['distribute-files', target_directory, '--fill-last', '-v'])
+        if not args.dry:
+            run(['distribute-files', target_directory, '--fill-last', '-v'])
 
         try:
             rmdir(source_directory)
