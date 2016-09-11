@@ -19,6 +19,7 @@ REMOTE_HOST = 'burza'
 LOCAL_ROOT_DIR = path.expanduser('~/img/net/')
 TRANSIT_ROOT_DIR = path.expanduser('~/hub/img/')
 REMOTE_ROOT_DIR = path.expanduser('~/hub/img/')
+SMALL_IMAGE_EXTENSIONS = ['png', 'jpg', 'jpeg']
 
 
 def _parse_args():
@@ -51,6 +52,19 @@ def _find_files(root_dir):
     return [entry.path for entry in scandir(root_dir) if entry.is_file()]
 
 
+def _is_image_too_small(source_path, args):
+    min_image_area = args.min_image_width * args.min_image_height
+    try:
+        with Image.open(source_path) as image:
+            image_width, image_height = image.size
+            image_area = image_width * image_height
+            if image_area < min_image_area:
+                return True
+    except:
+        pass
+    return False
+
+
 def main():
     args = _parse_args()
     if gethostname() != LOCAL_HOST:
@@ -80,19 +94,16 @@ def main():
 
         source_files = list(_find_files(source_directory))
         for source_file in source_files:
+            extension = path.splitext(source_file)[1].lower().strip('.')
             target_file = path.join(
                 target_directory, path.basename(source_file))
 
-            try:
-                with Image.open(source_file) as image:
-                    width, height = image.size
-                    if width * height < min_image_area:
-                        logger.warning('%s: too small, ignoring', source_file)
-                        if not args.dry:
-                            unlink(source_file)
-                        continue
-            except:
-                pass
+            if extension in SMALL_IMAGE_EXTENSIONS \
+                    and _is_image_too_small(source_file, args):
+                logger.warning('%s: too small, ignoring', source_file)
+                if not args.dry:
+                    unlink(source_file)
+                continue
 
             logger.info('%s: ok', source_file)
             if not args.dry:
