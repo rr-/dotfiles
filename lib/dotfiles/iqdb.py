@@ -7,6 +7,18 @@ from bs4 import BeautifulSoup
 IQDB_URL = 'https://iqdb.org/'
 
 
+class IqdbError(RuntimeError):
+    pass
+
+
+class NothingFoundIqdbError(IqdbError):
+    pass
+
+
+class UploadTooBigIqdbError(IqdbError):
+    pass
+
+
 def _query(path):
     data = {
         'service': list(range(100)),  # all services, present and future
@@ -42,8 +54,10 @@ def search(path):
     response = _query(path)
     soup = BeautifulSoup(response, 'html.parser')
     results = IqdbResultList()
+    if 'too large' in response.lower():
+        raise UploadTooBigIqdbError('Image is too large for IQDB to handle')
     if 'no relevant matches' in response.lower():
-        return results
+        raise NothingFoundIqdbError('Image not found on IQDB')
 
     for i, parent in enumerate(['#pages', '#more1']):
         for table_element in soup.select('%s table' % parent):
