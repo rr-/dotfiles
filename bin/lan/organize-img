@@ -29,8 +29,8 @@ def _parse_args():
     parser = argparse.ArgumentParser(description=description)
     parser.add_argument(
         '--dry', action='store_true', help='don\'t do anything')
-    parser.add_argument('--min-image-width', default=500, type=int)
-    parser.add_argument('--min-image-height', default=500, type=int)
+    parser.add_argument('--min-image-width', default=300, type=int)
+    parser.add_argument('--min-image-height', default=300, type=int)
     return parser.parse_args()
 
 
