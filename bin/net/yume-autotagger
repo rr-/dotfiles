@@ -25,7 +25,7 @@ YUME_PASSWORD = config_key['password']
 
 
 def sanitize_tag(name):
-    return re.sub(r'[<>/]', '_', name)
+    return re.sub(r'\s+', '_', name)
 
 
 def capitalize(name):
