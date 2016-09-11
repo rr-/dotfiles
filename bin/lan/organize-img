@@ -86,7 +86,7 @@ def main():
         target_directory = path.join(
             LOCAL_ROOT_DIR, path.relpath(source_directory, TRANSIT_ROOT_DIR))
         target_directory = re.sub(
-            r'[^\\/]*\.2chan\.net', '2chan', target_directory)
+            r'([^\\/]*)\.2chan\.net', r'2chan/\1', target_directory)
         target_directory = re.sub(
             r'[^\\/]*\.(4chan|4cdn)\.org', '4chan', target_directory)
 
