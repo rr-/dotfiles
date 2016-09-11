@@ -103,9 +103,6 @@ def collect_third_party_tags(post_url):
         for result in iqdb.search(post_url)
         if result.similarity >= 0.90]
 
-    if not source_urls:
-        raise RuntimeError('Post not found on IQDB')
-
     handlers = [
         get_tags_from_danbooru,
         get_tags_from_gelbooru,
@@ -118,7 +115,7 @@ def collect_third_party_tags(post_url):
             except (ValueError, NotImplementedError):
                 pass
 
-    raise RuntimeError('Post found on IQDB, but not on any known site')
+    raise iqdb.IqdbError('Post found on IQDB, but not on any known site')
 
 
 def create_session():
@@ -218,7 +215,11 @@ def sync_tags(session, post_id):
         target_tags.add(tag)
         existing_tags.add(tag)
 
-    third_party_tags = collect_third_party_tags(post['contentUrl'])
+    try:
+        third_party_tags = collect_third_party_tags(post['contentUrl'])
+    except iqdb.UploadTooBigIqdbError:
+        third_party_tags = collect_third_party_tags(post['thumbnailUrl'])
+
     for third_party_tag in filter_third_party_tags(third_party_tags):
         if third_party_tag in target_tags:
             continue

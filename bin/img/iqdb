@@ -60,7 +60,11 @@ def _output_results(results, sort_style):
 def _process_path(path, filter, sort_style, separate):
     logger.info('Input file: %s', path)
     logger.info('Input URL: %s', pathlib.Path(os.path.abspath(path)).as_uri())
-    results = iqdb.search(path)
+
+    try:
+        results = iqdb.search(path)
+    except iqdb.NothingFoundIqdbError:
+        results = []
 
     for result in reversed(results):
         if filter not in result.url:
