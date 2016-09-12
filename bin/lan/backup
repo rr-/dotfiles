@@ -9,7 +9,7 @@ remote_home="$(ssh -n "$remote_host" "echo $HOME")"
 
 trap "exit" INT
 
-remote_backup=( "$remote_home" "/home/srv" )
+remote_backup=( "$remote_home/.backup/sql" "/home/srv" )
 local_backup=( "$local_home/clutter" "$local_home/img" "$local_home/text" )
 
 function sync {
@@ -26,19 +26,11 @@ function sync {
         --exclude "$local_home/clutter/games/" \
         --exclude "$local_home/clutter/software/" \
         --exclude "$local_home/img/net/" \
-        --exclude "$remote_home/src/" \
-        --exclude "$remote_home/img/" \
-        --exclude "$remote_home/dl/" \
-        --exclude "$remote_home/ul/" \
-        --exclude "$remote_home/dead/" \
         --exclude "$local_home/.backup/$remote_host/" \
-        --exclude "$remote_home/.backup/$local_host/" \
-        --exclude "/home/srv/www/mal-dev/data/" \
-        --exclude "/home/srv/www/booru-dev/public_html/data/" \
         --exclude "thumbnails/" \
         --exclude "remote/" \
+        --exclude "*-dev/" \
         --exclude "mxe/" \
-        --exclude "aur/" \
         --exclude '.git/' \
         --exclude 'node_modules/' \
         --exclude 'vendor/'
