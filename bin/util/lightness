@@ -76,9 +76,7 @@ def _update_bspwm(theme):
 def _update_zsh(theme):
     logger.info('Updating environment variable exporter for zsh')
     with open(expanduser('~/.config/zsh/lightness.sh'), 'w') as handle:
-        handle.write('if [ -z "$LIGHTNESS" ]; then\n')
         handle.write('export LIGHTNESS=%s\n' % theme)
-        handle.write('fi\n')
         handle.write(
             'export FZF_DEFAULT_OPTS="$FZF_DEFAULT_OPTS --color=$LIGHTNESS\n')
 
