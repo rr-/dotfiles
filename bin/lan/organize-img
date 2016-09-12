@@ -5,7 +5,8 @@
 
 import re
 import argparse
-from os import scandir, path, makedirs, rmdir, unlink, rename
+from os import scandir, path, makedirs, rmdir, unlink
+from shutil import move
 from subprocess import run
 from socket import gethostname
 from PIL import Image
@@ -107,7 +108,7 @@ def main():
 
             logger.info('%s: ok', source_file)
             if not args.dry:
-                rename(source_file, target_file)
+                move(source_file, target_file)
 
         if not args.dry:
             run(['distribute-files', target_directory, '--fill-last', '-v'])
