@@ -1,6 +1,7 @@
 import os
 import logging
 import tarfile
+import shutil
 import packages
 import util
 
@@ -12,19 +13,23 @@ def install_aur(package):
         logger.info('%s already installed', package)
         return
     old_dir = os.getcwd()
-    os.chdir('/tmp')
-    url = 'https://aur.archlinux.org/cgit/aur.git/snapshot/{0}.tar.gz' \
-        .format(package)
-    util.download(url, '/tmp/tmp.tar')
-    tar = tarfile.open('tmp.tar')
-    tar.extractall()
-    os.chdir(os.path.join('/tmp', package))
-    util.run_verbose(['makepkg', '-i'])
+    root_dir = '/tmp/install-' + package
+    os.makedirs(root_dir, exist_ok=True)
+    os.chdir(root_dir)
+    url = ('https://aur.archlinux.org/cgit/aur.git/plain/PKGBUILD?h=%s' %
+        package)
+    util.download(url, os.path.join(root_dir, 'PKGBUILD'))
+    util.run_verbose(['makepkg', 'PKGBUILD', '--skippgpcheck'])
+    util.run_verbose(['sudo', '-S', 'pacman', '-U', '--noconfirm',
+        util.find(os.path.join(root_dir, '*.tar.xz'))[0]])
+    shutil.rmtree(root_dir)
     os.chdir(old_dir)
 
 
 def run():
+    util.run_verbose(['sudo', '-S', 'pacman', '-Syu'])
     packages.install('sudo')
+    packages.install('base-devel') # package-query
     packages.install('tar')
     packages.install('wget')
     packages.install('gcc')       # to compile everything
