@@ -40,7 +40,7 @@ class PacmanPackageInstaller(object):
         return util.run_silent(['pacman', '-Ss', package])[0]
 
     def install(self, package):
-        return util.run_verbose(['sudo', 'pacman', '-S', package])
+        return util.run_verbose(['sudo', '-S', 'pacman', '-S', package])
 
 
 class YaourtPackageInstaller(object):
@@ -96,7 +96,7 @@ class PipPackageInstaller(object):
         command = [
             self.executable, 'install', '--cache-dir', self.cache_dir, package]
         if self.use_sudo:
-            command = ['sudo'] + command
+            command = ['sudo', '-S'] + command
         return util.run_verbose(command)
 
 
