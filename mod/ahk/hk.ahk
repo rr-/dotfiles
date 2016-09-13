@@ -350,8 +350,8 @@ DirectionalFocus(direction)
 #V::Send {Media_Play_Pause}
 
 ;screenshots
-+#I::Run, shot -w -i --output=Z:/
-#I::Run, shot -i --output=Z:/
++#I::Run, %CygPath%\bin\zsh.exe -i -l -c 'shot -w -i --output=Z:/', , Hide
+#I::Run, %CygPath%\bin\zsh.exe -i -l -c 'shot -i --output=Z:/', , Hide
 
 ;reload autohotkey
 !F12::Reload
