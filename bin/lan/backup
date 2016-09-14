@@ -2,7 +2,7 @@
 # Two-way backup between server and main PC.
 
 local_host=tornado
-remote_host=burza
+remote_host=cyclone
 [ "$(hostname)" != "$local_host" ] && echo "Must be run on $local_host" 1>&2 && exit 1
 local_home="$HOME"
 remote_home="$(ssh -n "$remote_host" "echo $HOME")"

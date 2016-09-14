@@ -17,9 +17,9 @@ alt + ctrl + bracketleft
 
 # remote terminal
 alt + ctrl + bracketright
-    run-or-raise -cn 'remote_terminal' -p "urxvt -name 'remote_terminal' -e zsh -i -l -c 'ssh burza'"
+    run-or-raise -cn 'remote_terminal' -p "urxvt -name 'remote_terminal' -e zsh -i -l -c 'ssh cyclone'"
 alt + ctrl + shift + bracketright
-    urxvt -name 'remote_terminal' -e zsh -i -l -c 'ssh burza'
+    urxvt -name 'remote_terminal' -e zsh -i -l -c 'ssh cyclone'
 
 # web browser
 alt + ctrl + semicolon
@@ -27,7 +27,7 @@ alt + ctrl + semicolon
 
 # irc
 alt + ctrl + m
-    run-or-raise -cn 'remote_irc' -p "urxvt -name 'remote_irc' -e zsh -i -l -c 'ssh burza -t "'"zsh -i -l -c tmux\ a"'"'"
+    run-or-raise -cn 'remote_irc' -p "urxvt -name 'remote_irc' -e zsh -i -l -c 'ssh cyclone -t "'"zsh -i -l -c tmux\ a"'"'"
 
 # text editor
 alt + ctrl + shift + n

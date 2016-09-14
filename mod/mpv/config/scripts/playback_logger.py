@@ -13,7 +13,7 @@ from datetime import datetime
 MINIMUM_WATCHED_PERCENTAGE = 80
 MINIMUM_DURATION = 300  # five minutes
 IGNORE_ONLINE_STREAMS = True
-REMOTE_HOST = 'burza'
+REMOTE_HOST = 'cyclone'
 REMOTE_LOG_PATH = '/srv/www/tmp.sakuya.pl/mal/watched.lst'
 ALLOWED_EXTENSIONS = [
     'mkv', 'mp4', 'avi', 'm4v', 'mov',
