@@ -11,7 +11,7 @@ import io
 
 BASE_DIR = '/srv/www/tmp.sakuya.pl/f/'
 BASE_URL = 'https://tmp.sakuya.pl/f/'
-REMOTE_HOST = 'burza'
+REMOTE_HOST = 'cyclone'
 
 
 def collect_single_file(arg):

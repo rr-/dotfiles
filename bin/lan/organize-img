@@ -15,7 +15,7 @@ from dotfiles import logging
 logger = logging.getLogger(__name__)
 
 LOCAL_HOST = 'tornado'
-REMOTE_HOST = 'burza'
+REMOTE_HOST = 'cyclone'
 
 LOCAL_ROOT_DIR = path.expanduser('~/img/net/')
 TRANSIT_ROOT_DIR = path.expanduser('~/hub/img/')

@@ -112,17 +112,17 @@ OnClipboardChange:
         return
     }
 
-    ;ssh to burza - activate/run
+    ;ssh to cyclone - activate/run
     +^!]::
     {
-        Run, %CygPath%\bin\mintty.exe --title "Remote terminal" --size "190`,65" --position "%RemoteTermX%`,%RemoteTermY%" --class mintty_ssh --exec /bin/ssh burza, %CygPath%/bin
+        Run, %CygPath%\bin\mintty.exe --title "Remote terminal" --size "190`,65" --position "%RemoteTermX%`,%RemoteTermY%" --class mintty_ssh --exec /bin/ssh cyclone, %CygPath%/bin
         return
     }
     ^!]::
     {
         if (!WinExist("ahk_class mintty_ssh"))
         {
-            Run, %CygPath%\bin\mintty.exe --title "Remote terminal" --size "190`,65" --position "%RemoteTermX%`,%RemoteTermY%" --class mintty_ssh --exec /bin/ssh burza, %CygPath%/bin
+            Run, %CygPath%\bin\mintty.exe --title "Remote terminal" --size "190`,65" --position "%RemoteTermX%`,%RemoteTermY%" --class mintty_ssh --exec /bin/ssh cyclone, %CygPath%/bin
             WinWait ahk_class mintty_ssh
         }
         else
