@@ -1,51 +1,62 @@
 local on = false
-local expected_pos = 0
+local expected_playlist_pos  = 0
 local timer = nil
 
-function next_slide()
-    mp.command('playlist_next')
+function get_playlist_pos()
+    return mp.get_property_number('playlist-pos') + 1
+end
+
+function get_playlist_count()
+    return mp.get_property_number('playlist-count')
+end
+
+function queue_next_slide()
+    local next_slide = function()
+        if (get_playlist_pos() == get_playlist_count()) or
+                (get_playlist_pos() ~= expected_playlist_pos) then
+            stop_slideshow()
+        else
+            mp.command('playlist_next')
+        end
+    end
+    if timer then
+        timer:kill()
+    end
+    timer = mp.add_timeout(0.5, next_slide)
 end
 
 function start_slideshow()
-    local playlist_pos = tonumber(mp.get_property('playlist-pos')) + 1
-    local playlist_count = tonumber(mp.get_property('playlist-count'))
-    if playlist_pos == playlist_count then
+    if get_playlist_pos() == get_playlist_count() then
         mp.osd_message('Can\'t start slideshow on last file')
         return
     end
-    expected_pos = playlist_pos + 1
     mp.osd_message('Slideshow started')
     on = true
-    if timer then
-        timer:resume()
-    else
-        timer = mp.add_periodic_timer(0.5, next_slide)
-    end
+    queue_next_slide()
+    expected_playlist_pos = get_playlist_pos()
 end
 
 function stop_slideshow()
+    if not on then
+        return
+    end
     mp.osd_message('Slideshow stopped')
     on = false
     timer:kill()
 end
 
 function toggle_slideshow()
-    if on == false then
-        start_slideshow()
-    else
+    if on then
         stop_slideshow()
+    else
+        start_slideshow()
     end
 end
 
 function file_loaded()
-    local playlist_pos = tonumber(mp.get_property('playlist-pos')) + 1
-    local playlist_count = tonumber(mp.get_property('playlist-count'))
     if on then
-        if playlist_pos == playlist_count or playlist_pos ~= expected_pos then
-            stop_slideshow()
-        else
-            expected_pos = playlist_pos + 1
-        end
+        expected_playlist_pos = expected_playlist_pos + 1
+        queue_next_slide()
     end
 end
 
