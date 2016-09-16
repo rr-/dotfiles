@@ -426,10 +426,18 @@ class UrwidTagger():
 
     def _on_tag_accept(self, _widget, text):
         self._chosen_tags.add(LocalTag(text, LocalTag.SOURCE_USER_INPUT))
-        if text in self._reference_tags:
-            for implication in self._reference_tags[text].implications:
-                self._chosen_tags.add(
-                    LocalTag(implication, LocalTag.SOURCE_IMPLICATION))
+        to_check = [text]
+        visited = set()
+        while to_check:
+            text = to_check.pop(0)
+            if text in visited:
+                continue
+            visited.add(text)
+            if text in self._reference_tags:
+                for implication in self._reference_tags[text].implications:
+                    self._chosen_tags.add(
+                        LocalTag(implication, LocalTag.SOURCE_IMPLICATION))
+                    to_check.append(implication)
         self._choices_box.update()
 
 
