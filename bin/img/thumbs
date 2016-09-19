@@ -1,0 +1,84 @@
+#!/usr/bin/python3
+# Generates HTML thumbnails.
+
+import os
+import sys
+import argparse
+import pathlib
+from tempfile import NamedTemporaryFile
+from subprocess import run
+
+
+MANAGED_EXTENSIONS = ['jpg', 'jpeg', 'jfif', 'gif', 'png', 'tga', 'bmp']
+
+HEADER_TEMPLATE = '''<html>
+<head>
+    <style>
+        body {
+            text-align: center;
+        }
+        img {
+            max-width: 15vw;
+            max-height: 15vh;
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            margin: 0.5em;
+            border: 1px solid black;
+        }
+    </style>
+    <title>Thumbnail list</title>
+</head>
+<body>'''
+
+FOOTER_TEMPLATE = '''</body>
+</html>'''
+
+LINK_TEMPLATE = '''<a href="{link}"><img
+    src="{link}"
+    alt="{name}"/></a>'''
+
+
+
+def _parse_args():
+    parser = argparse.ArgumentParser(
+        description='Generates thumbnails using a HTML page.')
+    parser.add_argument('paths', metavar='path', nargs='+')
+    return parser.parse_args()
+
+
+def _collect_files(paths):
+    for path in paths:
+        if os.path.isdir(path):
+            for entry in os.scandir(path):
+                if not entry.is_file:
+                    continue
+                ext = os.path.splitext(entry.path)[1].lstrip('.').lower()
+                if ext in MANAGED_EXTENSIONS:
+                    yield entry.path
+        elif os.path.isfile(path):
+            yield path
+
+
+def main():
+    args = _parse_args()
+
+    paths = sorted(_collect_files(args.paths))
+    if not paths:
+        print('No images to show', file=sys.stderr)
+        return
+
+    with NamedTemporaryFile(delete=False, prefix='thumbs', mode='w') as handle:
+        handle.write(HEADER_TEMPLATE)
+        for path in paths:
+            handle.write(
+                LINK_TEMPLATE.format(
+                    link=pathlib.Path(os.path.abspath(path)).as_uri(),
+                    name=path))
+        handle.write(FOOTER_TEMPLATE)
+        handle.flush()
+        run(['firefox', handle.name])
+
+
+if __name__ == '__main__':
+    main()
