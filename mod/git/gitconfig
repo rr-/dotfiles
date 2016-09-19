@@ -16,6 +16,7 @@
     amen = commit --amend
     ramen = commit --amend --all --no-edit
     hist = log --pretty=format:\"%Cred%h%Creset %ad %Cblue%<(50,trunc)%s%Creset [%an <%ae>]%d\" --graph --date=short
+    cl = "!f() { git log \"$1\" --pretty=tformat:'- %H: %s'|tac; }; f"
     sq = "!f() { \
             git diff --cached --exit-code &>/dev/null; anything_staged=$?; \
             git diff --exit-code &>/dev/null; anything_unstaged=$?; \
