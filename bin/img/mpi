@@ -23,7 +23,7 @@ def parse_args():
     parser.add_argument(
         metavar='PATH', nargs='*', dest='paths',
         help='path to the image or a directory', default=None)
-    args = parser.parse_args()
+    args, unknown_args = parser.parse_known_args()
 
     # decorate the user arguments
     if args.selected_path:
@@ -35,11 +35,11 @@ def parse_args():
             args.paths = ['.']
     args.paths = [os.path.abspath(path) for path in args.paths]
 
-    return args
+    return args, unknown_args
 
 
 def main():
-    args = parse_args()
+    args, unknown_args = parse_args()
 
     # compose the playlist
     playlist = []
@@ -81,7 +81,7 @@ def main():
                 'mpv',
                 '--profile=images',
                 '--playlist=%s' % handle.name,
-                '--playlist-pos=%d' % playlist_pos])
+                '--playlist-pos=%d' % playlist_pos] + unknown_args)
         finally:
             os.unlink(handle.name)
 
