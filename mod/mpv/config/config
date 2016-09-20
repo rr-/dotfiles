@@ -2,7 +2,7 @@
 
 fullscreen
 
-vo=opengl-hq,direct3d
+profile=opengl-hq
 script-opts=osc-layout=slimbox
 stop-screensaver=yes
 image-display-duration=inf
