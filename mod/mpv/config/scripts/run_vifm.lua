@@ -11,12 +11,10 @@ function run_vifm()
 
     if running then
         args = {'vifm'}
-        local extra_args = mp.get_opt('vifm-args')
-        if extra_args ~= nil then
-            for word in extra_args:gmatch('%S+') do
-                mp.log('error', word)
-                table.insert(args, word)
-            end
+        vifm_server_name = os.getenv('VIFM_SERVER_NAME')
+        if vifm_server_name then
+            table.insert(args, '--server-name')
+            table.insert(args, vifm_server_name)
         end
         table.insert(args, '--remote')
         table.insert(args, '--select')

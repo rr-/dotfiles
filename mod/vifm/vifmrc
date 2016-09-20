@@ -1,5 +1,5 @@
 " vim: filetype=vifm syntax=vim
-let $SERVER_NAME = v:servername
+let $VIFM_SERVER_NAME = v:servername
 
 " don't confirm file removals
 set confirm=permdelete
@@ -104,7 +104,7 @@ filetype *.torrent qbittorrent %f &
 fileviewer *.7z,*.zip,*.rar,*.iso,*.mdf 7z l %c
 
 " Images
-filextype *.bmp,*.jpg,*.jpeg,*.png,*.gif,*.webm mpi %d --select=%f --script-opts=vifm-args=--server-name=$SERVER_NAME 2>/dev/null &
+filextype *.bmp,*.jpg,*.jpeg,*.png,*.gif,*.webm mpi %d --select=%f 2>/dev/null &
 fileviewer *.bmp,*.jpg,*.jpeg,*.png,*.gif,*.webm convert -identify %f -verbose /dev/null
 
 " Rich text documents
