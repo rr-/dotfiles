@@ -81,7 +81,7 @@ def main():
                 'mpv',
                 '--profile=images',
                 '--playlist=%s' % handle.name,
-                '--playlist-pos=%d' % playlist_pos] + unknown_args)
+                '--playlist-start=%d' % playlist_pos] + unknown_args)
         finally:
             os.unlink(handle.name)
 
