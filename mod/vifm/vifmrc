@@ -140,7 +140,15 @@ vnoremap w :view<cr>gv
 " Open file in the background using its default program
 nnoremap gb :file &<cr>l
 
-" Mappings for faster renaming
+" Copy selected files
+nnoremap gc :copy<cr>
+vnoremap gc :copy<cr>
+
+" Move selected files
+nnoremap gm :move<cr>
+vnoremap gm :move<cr>
+
+" Faster renaming
 nnoremap I cw<c-a>
 nnoremap C cw<c-u>
 nnoremap A cw
