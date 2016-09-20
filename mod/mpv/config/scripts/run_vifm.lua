@@ -8,11 +8,23 @@ function run_vifm()
     })['status'] == 0
 
     local args
+
     if running then
-        args = {'vifm', '--remote', '--select', path}
+        args = {'vifm'}
+        local extra_args = mp.get_opt('vifm-args')
+        if extra_args ~= nil then
+            for word in extra_args:gmatch('%S+') do
+                mp.log('error', word)
+                table.insert(args, word)
+            end
+        end
+        table.insert(args, '--remote')
+        table.insert(args, '--select')
+        table.insert(args, path)
     else
         args = {'urxvt', '-e', 'vifm'}
     end
+
     mp_utils.subprocess_detached({args=args})
 end
 
