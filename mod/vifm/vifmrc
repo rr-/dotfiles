@@ -105,6 +105,7 @@ fileviewer *.7z,*.zip,*.rar,*.iso,*.mdf 7z l %c
 
 " Images
 filextype *.bmp,*.jpg,*.jpeg,*.png,*.gif,*.webm mpi %d --select=%f 2>/dev/null &
+fileviewer *.bmp,*.jpg,*.jpeg,*.png,*.gif,*.webm ./custom_viewer
 fileviewer *.bmp,*.jpg,*.jpeg,*.png,*.gif,*.webm convert -identify %f -verbose /dev/null
 
 " Rich text documents
