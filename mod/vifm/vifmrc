@@ -1,4 +1,5 @@
 " vim: filetype=vifm syntax=vim
+let $COLORED_LOGS = 1
 let $VIFM_SERVER_NAME = v:servername
 
 " don't confirm file removals
