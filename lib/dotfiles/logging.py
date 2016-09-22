@@ -1,4 +1,5 @@
 # pylint: disable=wildcard-import,unused-wildcard-import,protected-access
+import os
 from logging import *
 import coloredlogs
 
@@ -20,4 +21,4 @@ coloredlogs.install(fmt='%(message)s', level_styles={
     'success': {'color': 'green', 'bold': True},
     'error': {'color': 'red', 'bold': True},
     'info': {'color': 'blue', 'bold': True},
-})
+}, isatty=True if 'COLORED_LOGS' in os.environ else None)
