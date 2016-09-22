@@ -5,6 +5,7 @@ import os
 import sys
 import argparse
 import pathlib
+import pickle
 from dotfiles import iqdb
 from dotfiles import logging
 
@@ -32,8 +33,14 @@ def _parse_args():
         choices=(SORT_STYLE_SIMILARITY, SORT_STYLE_URL),
         default=SORT_STYLE_SIMILARITY)
     parser.add_argument(
+        '-n', '--no-cache', action='store_true',
+        help='disable caching the results')
+    parser.add_argument(
         '--separate', action='store_true',
         help='separate additional results')
+    parser.add_argument(
+        '--cache-path',
+        default='/tmp/iqdb-cache.json', help='path to the cache file')
     return parser.parse_args()
 
 
@@ -57,17 +64,50 @@ def _output_results(results, sort_style):
             logger.error(text)
 
 
-def _process_path(path, filter, sort_style, separate):
-    logger.info('Input file: %s', path)
-    logger.info('Input URL: %s', pathlib.Path(os.path.abspath(path)).as_uri())
+def _get_cache_path(args):
+    return os.path.expanduser(args.cache_path)
+
+
+def _get_cache(args):
+    cache_path = _get_cache_path(args)
+    try:
+        with open(cache_path, 'rb') as handle:
+            return pickle.load(handle)
+    except:
+        return {}
+
+
+def _save_cache(args, cache):
+    cache_path = _get_cache_path(args)
+    with open(cache_path, 'wb') as handle:
+        pickle.dump(cache, handle)
+
+
+def _get_results(path, args):
+    if not args.no_cache:
+        cache = _get_cache(args)
+        if path in cache:
+            return cache[path]
 
     try:
         results = iqdb.search(path)
     except iqdb.NothingFoundIqdbError:
         results = []
 
+    if not args.no_cache:
+        cache[path] = results
+        _save_cache(args, cache)
+    return results
+
+
+def _process_path(path, args):
+    logger.info('Input file: %s', path)
+    logger.info('Input URL: %s', pathlib.Path(os.path.abspath(path)).as_uri())
+
+    results = _get_results(path, args)
+
     for result in reversed(results):
-        if filter not in result.url:
+        if args.filter not in result.url:
             results.remove(result)
 
     main_results = [_ for _ in results if _.main]
@@ -83,12 +123,12 @@ def _process_path(path, filter, sort_style, separate):
         results.input_width or '?',
         results.input_height or '?')
 
-    if separate:
-        _output_results(main_results, sort_style)
+    if args.separate:
+        _output_results(main_results, args.sort)
         if extra_results:
-            _output_results(extra_results, sort_style)
+            _output_results(extra_results, args.sort)
     else:
-        _output_results(main_results + (extra_results or []), sort_style)
+        _output_results(main_results + (extra_results or []), args.sort)
     logger.info('')
 
     if any(r for r in results if r.similarity >= GOOD_MATCH_THRESHOLD):
@@ -104,7 +144,7 @@ def main():
     for path in args.path:
         exit_code = max(
             exit_code,
-            _process_path(path, args.filter, args.sort, args.separate))
+            _process_path(path, args))
     sys.exit(exit_code)
 
 
