@@ -11,6 +11,8 @@ from dotfiles import logging
 
 logger = logging.getLogger(__name__)
 
+MANAGED_EXTENSIONS = ['jpg', 'jpeg', 'gif', 'png']
+
 SORT_STYLE_URL = 'url'
 SORT_STYLE_SIMILARITY = 'similarity'
 
@@ -138,10 +140,23 @@ def _process_path(path, args):
     return NO_MATCH_FOUND
 
 
+def _collect_paths(paths):
+    for path in paths:
+        if os.path.isdir(path):
+            for entry in os.scandir(path):
+                if not entry.is_file:
+                    continue
+                ext = os.path.splitext(entry.path)[1].lstrip('.').lower()
+                if ext in MANAGED_EXTENSIONS:
+                    yield entry.path
+        elif os.path.isfile(path):
+            yield path
+
+
 def main():
     args = _parse_args()
     exit_code = 0
-    for path in args.path:
+    for path in _collect_paths(args.path):
         exit_code = max(
             exit_code,
             _process_path(path, args))
