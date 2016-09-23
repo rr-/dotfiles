@@ -86,6 +86,7 @@ def _save_cache(args, cache):
 
 
 def _get_results(path, args):
+    path = os.path.realpath(path)
     if not args.no_cache:
         cache = _get_cache(args)
         if path in cache:
