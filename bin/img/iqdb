@@ -26,7 +26,7 @@ NO_MATCH_FOUND = 2
 
 def _parse_args():
     parser = argparse.ArgumentParser(description='Searches for image via IQDB')
-    parser.add_argument('path', help='path to the image', nargs='+')
+    parser.add_argument('path', help='path to the image', nargs='*')
     parser.add_argument(
         '-f', '--filter', help='filter the results by URL', default='')
     parser.add_argument(
@@ -43,7 +43,10 @@ def _parse_args():
     parser.add_argument(
         '--cache-path',
         default='/tmp/iqdb-cache.json', help='path to the cache file')
-    return parser.parse_args()
+    args = parser.parse_args()
+    if not args.path:
+        args.path = ['.']
+    return args
 
 
 def _output_results(results, sort_style):
@@ -157,7 +160,11 @@ def _collect_paths(paths):
 def main():
     args = _parse_args()
     exit_code = 0
-    for path in _collect_paths(args.path):
+    paths = list(_collect_paths(args.path))
+    if not len(paths):
+        logger.error('No images found in ' + ', '.join(args.path))
+        sys.exit(1)
+    for path in paths:
         exit_code = max(
             exit_code,
             _process_path(path, args))
