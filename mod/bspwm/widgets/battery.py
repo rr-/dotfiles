@@ -13,14 +13,11 @@ class BatteryProvider(object):
 
     def __init__(self, main_window):
         self.percentage = None
-        self.status = None
         try:
             self._charge_now = glob.glob(
                 '/sys/class/power_supply/*/energy_now')[0]
             self._charge_max = glob.glob(
                 '/sys/class/power_supply/*/energy_full')[0]
-            self._charge_status = glob.glob(
-                '/sys/class/power_supply/*/status')[0]
             self._label = QtWidgets.QLabel()
             main_window[0].right_widget.layout().addWidget(self._label)
             self.battery_present = True
@@ -31,11 +28,9 @@ class BatteryProvider(object):
         if self.battery_present:
             current_value = int(read_file(self._charge_now))
             max_value = int(read_file(self._charge_max))
-            self.status = read_file(self._charge_status).lower()
             self.percentage = current_value * 100.0 / max_value
             time.sleep(3)
 
     def render(self):
         if self.battery_present:
-            self._label.setText(
-                'Battery: %5.02f%% (%s)' % (self.percentage, self.status))
+            self._label.setText('Battery: %5.02f%%' % self.percentage)
