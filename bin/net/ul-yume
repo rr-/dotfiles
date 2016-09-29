@@ -163,7 +163,13 @@ def collect_tags(args, initial_tags):
         tags.add_all(re.split(r'\s+', args.tags))
     elif args.tag_cmd:
         process = subprocess.Popen(
-            [args.tag_cmd, '--tags', ' '.join(tags)],
+            [
+                args.tag_cmd,
+                '--tags', ' '.join(tags),
+                '--title',
+                'Uploading to yume: %s (safety: %s)' % (
+                    args.path, args.safety),
+            ],
             stdout=subprocess.PIPE)
         out, _ = process.communicate()
         tags.add_all(re.split(r'\s+', out.decode()))
