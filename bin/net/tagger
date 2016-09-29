@@ -11,7 +11,7 @@ import urwid
 from dotfiles.tag_list import TagList
 
 
-class LocalTag():
+class LocalTag:
     SOURCE_INITIAL = 0
     SOURCE_USER_INPUT = 1
     SOURCE_IMPLICATION = 2
@@ -24,7 +24,7 @@ class LocalTag():
         return self.name
 
 
-class ReferenceTag():
+class ReferenceTag:
     def __init__(self, name, importance, implications):
         self.name = name
         self.importance = importance
@@ -356,8 +356,8 @@ class FuzzyInput(urwid.Widget):
             _clamp(self._focused_match, -1, len(self._matches) - 1)
 
 
-class UrwidTagger():
-    def __init__(self, chosen_tags, reference_tags):
+class UrwidTagger:
+    def __init__(self, chosen_tags, reference_tags, title):
         del urwid.command_map['left']
         del urwid.command_map['down']
         del urwid.command_map['up']
@@ -375,7 +375,8 @@ class UrwidTagger():
             urwid.LineBox(self._choices_box, title='Chosen tags')])
         self._columns.set_focus(0)
         self._loop = urwid.MainLoop(
-            self._columns, unhandled_input=self._keypress)
+            urwid.Frame(self._columns, header=urwid.Text(title, 'center')),
+            unhandled_input=self._keypress)
         self._loop.screen.set_terminal_properties(256)
         self._loop.screen.register_palette_entry(
             'focused-match', 'light green', 'default')
@@ -481,6 +482,7 @@ def parse_args():
         default='~/.config/tagger.json', help='path to reference tags')
     parser.add_argument(
         '-t', '--tags', help='list of initial tags')
+    parser.add_argument('--title', help='window title')
     return parser.parse_args()
 
 
@@ -492,7 +494,7 @@ def main():
         LocalTag(x, LocalTag.SOURCE_INITIAL)
         for x in re.split(r'\s+', args.tags or ''))
     reference_tags = _get_reference_tags(args.reference_tags_path)
-    tagger = UrwidTagger(chosen_tags, reference_tags)
+    tagger = UrwidTagger(chosen_tags, reference_tags, args.title)
     result = False
     try:
         result = tagger.add_from_user_input()
