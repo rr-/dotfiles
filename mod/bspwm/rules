@@ -7,7 +7,7 @@ title=$(xdotool getwindowname "$window_id")
 if [ "$instance" = remote_irc ] ; then
     echo desktop=IM
     xdotool windowmove "$window_id" 1990 90 windowsize "$window_id" 800 455
-elif [ "$title" = ul-yume ]; then
+elif [ "$title" = ul-yume ] || [ "$title" = ul-gelbooru ]; then
     compton-trans -c 50 -w "$window_id"
     width=$(xdotool getwindowgeometry --shell "$window_id" | head -4 | tail -1 | sed 's/[^0-9]*//')
     height=$(xdotool getwindowgeometry --shell "$window_id" | head -5 | tail -1 | sed 's/[^0-9]*//')
