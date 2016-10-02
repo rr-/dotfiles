@@ -9,6 +9,10 @@ noremap <C-v> <C-v><C-v>
 "prevent c-i hijacking on github... by adding alternative
 inoremap <C-S-i> <C-i>
 
+"easy paging
+noremap < [[
+noremap > ]]
+
 "long jump
 noremap J 50j
 noremap K 50k
