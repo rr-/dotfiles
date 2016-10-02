@@ -2,6 +2,10 @@
 inoremap <C-a> <C-Home><C-S-End>
 cnoremap <C-a> <C-Home><C-S-End>
 
+"use Firefox version of ctrl + c and ctrl + v
+noremap <C-c> <C-v><C-c>
+noremap <C-v> <C-v><C-v>
+
 "long jump
 noremap J 50j
 noremap K 50k
