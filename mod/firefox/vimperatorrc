@@ -6,6 +6,9 @@ cnoremap <C-a> <C-Home><C-S-End>
 noremap <C-c> <C-v><C-c>
 noremap <C-v> <C-v><C-v>
 
+"prevent c-i hijacking on github... by adding alternative
+inoremap <C-S-i> <C-i>
+
 "long jump
 noremap J 50j
 noremap K 50k
