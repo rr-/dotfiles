@@ -10,6 +10,7 @@ noremap <C-v> <C-v><C-v>
 inoremap <C-S-i> <C-i>
 
 "easy paging
+set previouspattern='\bprev\b|\bprevious\b,^<$,^(<<|«)$,^(<|«),(<|«)$'
 noremap < [[
 noremap > ]]
 
