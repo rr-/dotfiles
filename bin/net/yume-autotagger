@@ -94,15 +94,11 @@ def parse_args():
         help=(
             'Pull tags only for posts that were not yet ' +
             'tagged (used with POST_ID)'))
+    parser.add_argument('--source', help='Source URL where to get tags from.')
     return parser.parse_args()
 
 
-def collect_third_party_tags(post_url):
-    source_urls = [
-        result.url
-        for result in iqdb.search(post_url)
-        if result.similarity >= 0.90]
-
+def collect_third_party_tags_via_urls(source_urls):
     handlers = [
         get_tags_from_danbooru,
         get_tags_from_gelbooru,
@@ -116,6 +112,14 @@ def collect_third_party_tags(post_url):
                 pass
 
     raise iqdb.IqdbError('Post found on IQDB, but not on any known site')
+
+
+def collect_third_party_tags_via_iqdb(post_url):
+    source_urls = [
+        result.url
+        for result in iqdb.search(post_url)
+        if result.similarity >= 0.90]
+    return collect_third_party_tags_via_urls(source_urls)
 
 
 def create_session():
@@ -202,7 +206,7 @@ def collect_szurubooru_tag_implications(session, tag_name):
         return []
 
 
-def sync_tags(session, post_id):
+def sync_tags(session, post_id, source=None):
     post = get_szurubooru_post(session, post_id)
     logger.info('%s/post/%d', YUME_URL, post['id'])
     logger.info(post['contentUrl'])
@@ -215,10 +219,15 @@ def sync_tags(session, post_id):
         target_tags.add(tag)
         existing_tags.add(tag)
 
-    try:
-        third_party_tags = collect_third_party_tags(post['contentUrl'])
-    except iqdb.UploadTooBigIqdbError:
-        third_party_tags = collect_third_party_tags(post['thumbnailUrl'])
+    if source:
+        third_party_tags = collect_third_party_tags_via_urls([source])
+    else:
+        try:
+            third_party_tags = collect_third_party_tags_via_iqdb(
+                post['contentUrl'])
+        except iqdb.UploadTooBigIqdbError:
+            third_party_tags = collect_third_party_tags_iqdb(
+                post['thumbnailUrl'])
 
     for third_party_tag in filter_third_party_tags(third_party_tags):
         if third_party_tag in target_tags:
@@ -352,7 +361,7 @@ def main():
 
         logger.info('Getting post %d...', post_id)
         try:
-            sync_tags(session, post_id)
+            sync_tags(session, post_id, args.source)
             history.mark_as_tagged(post_id)
         except ConnectionError as ex:
             logger.error(str(ex))
