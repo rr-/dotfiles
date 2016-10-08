@@ -40,3 +40,9 @@ set tabnumbers=true
 
 "vimperator issue #590
 js services.services.autoCompleteSearch.class_="@mozilla.org/autocomplete/search;1?name=unifiedcomplete"
+
+"fit image to window
+noremap zf :set! browser.enable_automatic_image_resizing=true<CR><Esc>:reload<CR>
+
+"show image at original size
+noremap zo :set! browser.enable_automatic_image_resizing=false<CR><Esc>:reload<CR>
