@@ -7,12 +7,7 @@ while [ -h "$SOURCE" ]; do
 done
 DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
 
-if [ "$(hostname)" = tornado ]; then
-    bspc monitor HDMI-0 -d 1 2
-    bspc monitor DVI-I-1 -d 3 4 5 6 7 8 9 10 IM
-else
-    bspc monitor -d 1 2 3 4 5 6 7 8 9 10 IM
-fi
+bspc monitor -d 1 2 3 4 5 6 7 8 9 10 IM
 
 global_config() {
     bspc config $1 $2
