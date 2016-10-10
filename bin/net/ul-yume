@@ -159,7 +159,7 @@ def collect_tags(args, initial_tags):
     assert args.tags or args.tag_cmd
     tags = TagList()
     tags.add_all(initial_tags)
-    if args.tags:
+    if args.tags is not None:
         tags.add_all(re.split(r'\s+', args.tags))
     elif args.tag_cmd:
         process = subprocess.Popen(
