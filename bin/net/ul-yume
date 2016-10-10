@@ -93,9 +93,10 @@ def create_session():
     session = requests.Session()
     session.headers['Accept'] = 'application/json'
     session.auth = requests.auth.HTTPBasicAuth(USER_NAME, PASSWORD)
-    response = session.get(API_URL + '/user/' + USER_NAME + '?bump-login')
-    if response.status_code != 200:
-        raise LoginError(response.text)
+    # actually we don't need this
+    # response = session.get(API_URL + '/user/' + USER_NAME + '?bump-login')
+    # if response.status_code != 200:
+    #     raise LoginError(response.text)
     return session
 
 
