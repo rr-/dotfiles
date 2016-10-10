@@ -37,7 +37,15 @@ nnoremap <C-e> :Ag<CR>
 nnoremap <C-p> :Files<CR>
 nnoremap <C-m> :Buffers<CR>
 "toggle .h .cpp
-nnoremap <F4> :e %:p:s,.h$,.X123X,:s,.cc$,.h,:s,.X123X$,.cc,<CR>
+function! SwitchSourceHeader()
+  if (expand("%:e") == "cpp" || expand("%:e") == "c")
+    find %:t:r.h
+  else
+    silent! find %:t:r.cc | silent! find %:t:r.c | silent! find %:t:r.cpp
+  endif
+endfunction
+nnoremap <F4> :call SwitchSourceHeader()<CR>
+
 "file explorer
   inoremap <F3> <esc>:execute "Explore <bar> call search('" . expand('%:t') . "') <bar> normal! zz"<CR>
   nnoremap <F3> :execute "Explore <bar> call search('" . expand('%:t') . "') <bar> normal! zz"<CR>
