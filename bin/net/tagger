@@ -375,7 +375,9 @@ class UrwidTagger:
             urwid.LineBox(self._choices_box, title='Chosen tags')])
         self._columns.set_focus(0)
         self._loop = urwid.MainLoop(
-            urwid.Frame(self._columns, header=urwid.Text(title, 'center')),
+            urwid.Frame(
+                self._columns,
+                header=urwid.Text(title, 'center') if title else None),
             unhandled_input=self._keypress)
         self._loop.screen.set_terminal_properties(256)
         self._loop.screen.register_palette_entry(
