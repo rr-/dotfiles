@@ -38,7 +38,8 @@ nnoremap <C-p> :Files<CR>
 nnoremap <C-m> :Buffers<CR>
 "toggle .h .cpp
 function! SwitchSourceHeader()
-  if (expand("%:e") == "cpp" || expand("%:e") == "c")
+  let ext = expand("%:e")
+  if (ext == "cpp" || ext == "c" || ext == "cc")
     find %:t:r.h
   else
     silent! find %:t:r.cc | silent! find %:t:r.c | silent! find %:t:r.cpp
