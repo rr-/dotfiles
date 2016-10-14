@@ -122,7 +122,7 @@ if [[ -x "`whence -p dircolors`" ]]; then
 fi
 
 # aliases
-alias ls="`whence ls`"' -vhF1 --group-directories-first'
+alias ls="`whence ls`"' -vF1 --group-directories-first'
 alias ll="`whence ls`"' -lX --group-directories-first'
 alias la="`whence ls`"' -lXA --group-directories-first'
 alias lc="`whence ls`"' -lXC --group-directories-first'
