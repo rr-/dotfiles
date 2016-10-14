@@ -2,7 +2,7 @@ local on = mp.get_opt('reset-view') == 'yes'
 
 function file_changed()
     if on == true then
-        mp.set_property('video-unscaled', 'no')
+        --mp.set_property('video-unscaled', 'no')
         mp.set_property_number('video-pan-x', 0)
         mp.set_property_number('video-pan-y', 0)
         mp.set_property_number('video-zoom', 0)
