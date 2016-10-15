@@ -8,7 +8,7 @@ def run(process):
     return proc.stdout.read().decode('utf8')
 
 
-class Monitor(object):
+class Monitor:
     def __init__(self):
         self.original_id = None
         self.name = None
@@ -19,7 +19,7 @@ class Monitor(object):
         self.height = 0
 
 
-class Workspace(object):
+class Workspace:
     def __init__(self):
         self.original_id = None
         self.name = None
@@ -29,7 +29,7 @@ class Workspace(object):
         self.urgent = False
 
 
-class WorkspacesUpdater(object):
+class WorkspacesUpdater:
     monitor_names = None
 
     def __init__(self):
@@ -77,7 +77,7 @@ class WorkspacesUpdater(object):
             monitor.display_id = i
 
 
-class WorkspacesProvider(object):
+class WorkspacesProvider:
     delay = 0
 
     def __init__(self, main_window, workspaces_updater):

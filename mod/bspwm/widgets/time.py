@@ -2,7 +2,7 @@ from datetime import datetime
 from PyQt5 import QtWidgets
 
 
-class TimeProvider(object):
+class TimeProvider:
     delay = 1
 
     def __init__(self, main_window):
