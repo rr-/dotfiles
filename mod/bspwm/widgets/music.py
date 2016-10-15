@@ -1,7 +1,9 @@
+import os
+import sys
 import math
 from subprocess import run
 import mpd
-from PyQt5 import QtWidgets
+from PyQt5 import QtCore, QtGui, QtWidgets
 
 
 class MpdProvider(object):
@@ -15,12 +17,17 @@ class MpdProvider(object):
         self.current_song = None
 
         self.status_label = QtWidgets.QLabel()
-        self.status_label.setProperty('class', 'icon')
-        self.status_label.setStyleSheet('QWidget { margin-right: -8px }')
         self.song_label = QtWidgets.QLabel()
         self.random_label = QtWidgets.QLabel()
-        self.random_label.setProperty('class', 'icon')
-        self.random_label.setText('\U0001F500')
+
+        self._play_icon = QtGui.QIcon(QtGui.QPixmap(
+            os.path.join(sys.path[0], 'icons', 'play.svg')))
+        self._pause_icon = QtGui.QIcon(QtGui.QPixmap(
+            os.path.join(sys.path[0], 'icons', 'pause.svg')))
+        self._shuffle_on_icon = QtGui.QIcon(
+            QtGui.QPixmap(os.path.join(sys.path[0], 'icons', 'shuffle-on.svg')))
+        self._shuffle_off_icon = QtGui.QIcon(
+            QtGui.QPixmap(os.path.join(sys.path[0], 'icons', 'shuffle-off.svg')))
 
         for widget in [self.status_label, self.song_label, self.random_label]:
             main_window[len(main_window) - 1].layout().addWidget(widget)
@@ -67,9 +74,11 @@ class MpdProvider(object):
             return
 
         if 'state' in self.mpd_status and self.mpd_status['state'] == 'play':
-            self.status_label.setText('\u23f5')
+            self.status_label.setPixmap(
+                self._play_icon.pixmap(QtCore.QSize(18, 18)))
         else:
-            self.status_label.setText('\u23f8')
+            self.status_label.setPixmap(
+                self._pause_icon.pixmap(QtCore.QSize(18, 18)))
 
         text = ''
         if self.current_song:
@@ -90,10 +99,14 @@ class MpdProvider(object):
 
         random = 'random' in self.mpd_status \
             and self.mpd_status['random'] == '1'
-        new_status = '%s' % random
-        if self.random_label.property('active') != new_status:
-            self.random_label.setProperty('active', '%s' % random)
-            self.main_window.reloadStyleSheet()
+        if self.random_label.property('active') != random:
+            self.random_label.setProperty('active', random)
+            if random:
+                self.random_label.setPixmap(
+                    self._shuffle_on_icon.pixmap(QtCore.QSize(18, 18)))
+            else:
+                self.random_label.setPixmap(
+                    self._shuffle_off_icon.pixmap(QtCore.QSize(18, 18)))
 
     def format_seconds(self, seconds):
         seconds = math.floor(float(seconds))
