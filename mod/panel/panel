@@ -18,19 +18,7 @@ from widgets.cpu import CpuWidget
 from widgets.net import NetworkUsageWidget
 from widgets.battery import BatteryWidget
 from widgets.music import MpdWidget
-
-
-class StretchWidget:
-    delay = 1000
-
-    def __init__(self, main_window):
-        main_window[0].layout().addStretch()
-
-    def render(self):
-        pass
-
-    def refresh(self):
-        pass
+from widgets.stretch import StretchWidget
 
 
 class MainWindow(QtWidgets.QMainWindow):
