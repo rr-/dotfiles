@@ -40,7 +40,7 @@ nnoremap <C-m> :Buffers<CR>
 function! SwitchSourceHeader()
   let ext = expand("%:e")
   if (ext == "cpp" || ext == "c" || ext == "cc")
-    find %:t:r.h
+    silent! find %:t:r.h | edit %:r.h
   else
     silent! find %:t:r.cc | silent! find %:t:r.c | silent! find %:t:r.cpp
   endif
