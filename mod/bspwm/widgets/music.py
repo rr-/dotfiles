@@ -6,7 +6,7 @@ import mpd
 from PyQt5 import QtCore, QtGui, QtWidgets
 
 
-class MpdProvider(object):
+class MpdProvider:
     delay = 1
 
     def __init__(self, main_window):
