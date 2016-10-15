@@ -1,10 +1,9 @@
 # pylint: disable=invalid-name
-import os
-import sys
 import subprocess
 import alsaaudio
 from PyQt5 import QtCore, QtGui, QtWidgets
 import settings
+from .util import set_icon
 
 
 class VolumeControl(QtWidgets.QWidget):
@@ -65,11 +64,6 @@ class VolumeWidget:
         self.volume = None
         self.muted = False
 
-        self._on_icon = QtGui.QIcon(QtGui.QPixmap(
-            os.path.join(sys.path[0], 'icons', 'volume-on.svg')))
-        self._off_icon = QtGui.QIcon(QtGui.QPixmap(
-            os.path.join(sys.path[0], 'icons', 'volume-off.svg')))
-
         self._icon_label = QtWidgets.QLabel()
         self._volume_control = VolumeControl(QtCore.QSize(50, 10))
 
@@ -99,9 +93,6 @@ class VolumeWidget:
         self.muted = alsaaudio.Mixer().getmute()[0]
 
     def render(self):
-        if self.muted:
-            self._icon_label.setPixmap(self._off_icon.pixmap(QtCore.QSize(18, 18)))
-        else:
-            self._icon_label.setPixmap(self._on_icon.pixmap(QtCore.QSize(18, 18)))
+        set_icon(self._icon_label, 'volume-off' if self.muted else 'volume-on')
         self._volume_control.set(self.volume)
         self._volume_control.repaint()

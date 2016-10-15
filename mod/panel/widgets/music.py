@@ -1,9 +1,8 @@
-import os
-import sys
 import math
 from subprocess import run
 import mpd
-from PyQt5 import QtCore, QtGui, QtWidgets
+from PyQt5 import QtWidgets
+from .util import set_icon
 
 
 class MpdWidget:
@@ -19,15 +18,6 @@ class MpdWidget:
         self._status_icon_label = QtWidgets.QLabel()
         self._song_label = QtWidgets.QLabel()
         self._shuffle_icon_label = QtWidgets.QLabel()
-
-        self._play_icon = QtGui.QIcon(QtGui.QPixmap(
-            os.path.join(sys.path[0], 'icons', 'play.svg')))
-        self._pause_icon = QtGui.QIcon(QtGui.QPixmap(
-            os.path.join(sys.path[0], 'icons', 'pause.svg')))
-        self._shuffle_on_icon = QtGui.QIcon(
-            QtGui.QPixmap(os.path.join(sys.path[0], 'icons', 'shuffle-on.svg')))
-        self._shuffle_off_icon = QtGui.QIcon(
-            QtGui.QPixmap(os.path.join(sys.path[0], 'icons', 'shuffle-off.svg')))
 
         self._status_icon_label.mouseReleaseEvent = self.play_pause_clicked
         self._song_label.mouseReleaseEvent = self.play_pause_clicked
@@ -78,11 +68,9 @@ class MpdWidget:
             return
 
         if 'state' in self.mpd_status and self.mpd_status['state'] == 'play':
-            self._status_icon_label.setPixmap(
-                self._play_icon.pixmap(QtCore.QSize(18, 18)))
+            set_icon(self._status_icon_label, 'play')
         else:
-            self._status_icon_label.setPixmap(
-                self._pause_icon.pixmap(QtCore.QSize(18, 18)))
+            set_icon(self._status_icon_label, 'pause')
 
         text = ''
         if self.current_song:
@@ -106,11 +94,9 @@ class MpdWidget:
         if self._shuffle_icon_label.property('active') != shuffle:
             self._shuffle_icon_label.setProperty('active', shuffle)
             if shuffle:
-                self._shuffle_icon_label.setPixmap(
-                    self._shuffle_on_icon.pixmap(QtCore.QSize(18, 18)))
+                set_icon(self._shuffle_icon_label, 'shuffle-on')
             else:
-                self._shuffle_icon_label.setPixmap(
-                    self._shuffle_off_icon.pixmap(QtCore.QSize(18, 18)))
+                set_icon(self._shuffle_icon_label, 'shuffle-off')
 
     def format_seconds(self, seconds):
         seconds = math.floor(float(seconds))
