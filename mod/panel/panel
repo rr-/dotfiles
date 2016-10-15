@@ -9,7 +9,6 @@ from PyQt5 import QtCore
 from PyQt5 import QtGui
 
 import settings
-from widgets.flow_layout import FlowLayout
 from widgets.workspaces import WorkspacesWidget, WorkspacesUpdater
 from widgets.window_title import WindowTitleWidget
 from widgets.time import TimeWidget
