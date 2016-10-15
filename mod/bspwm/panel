@@ -20,6 +20,19 @@ from widgets.battery import BatteryProvider
 from widgets.music import MpdProvider
 
 
+class StretchProvider:
+    delay = 1000
+
+    def __init__(self, main_window):
+        main_window[0].layout().addStretch()
+
+    def render(self):
+        pass
+
+    def refresh(self):
+        pass
+
+
 class MainWindow(QtWidgets.QMainWindow):
     trigger = QtCore.pyqtSignal(object)
 
@@ -106,18 +119,7 @@ class MainWindow(QtWidgets.QMainWindow):
         for monitor in monitors:
             monitor_widget = QtWidgets.QWidget(
                 size=QtCore.QSize(int(monitor.width), 0))
-            QtWidgets.QHBoxLayout(monitor_widget, spacing=0, margin=0)
-            subwidgets = []
-            for class_name in ['left', 'right']:
-                subwidget = QtWidgets.QWidget(
-                    size=QtCore.QSize(int(monitor.width) / 2.0, 0))
-                subwidget.setProperty('class', class_name)
-                FlowLayout(
-                    subwidget, spacing=0, margin=0, rtl=class_name == 'right')
-                monitor_widget.layout().addWidget(subwidget)
-                subwidgets.append(subwidget)
-            monitor_widget.left_widget = subwidgets[0]
-            monitor_widget.right_widget = subwidgets[1]
+            QtWidgets.QHBoxLayout(monitor_widget, spacing=8, margin=0)
             central_widget.layout().addWidget(monitor_widget)
             self.monitor_widgets.append(monitor_widget)
 
@@ -146,6 +148,7 @@ def main():
     providers = [
         WorkspacesProvider(main_window, workspaces_updater),
         WindowTitleProvider(main_window, workspaces_updater),
+        StretchProvider(main_window),
         MpdProvider(main_window),
         NetworkUsageProvider(main_window),
         BatteryProvider(main_window),

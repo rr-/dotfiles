@@ -13,9 +13,9 @@ class WindowTitleProvider(object):
         for i, _ in enumerate(main_window):
             label = QtWidgets.QLabel()
             label.setProperty('class', 'wintitle')
-            main_window[i].left_widget.layout().addWidget(label)
+            main_window[i].layout().addWidget(label)
             self._labels.append(label)
-            self._max_width = main_window[i].left_widget.width() * 0.8
+            self._max_width = main_window[i].width() * 0.8
         self._font_metrics = QtGui.QFontMetrics(self._labels[0].font())
         self._desktop_id_to_window_title = defaultdict(str)
 

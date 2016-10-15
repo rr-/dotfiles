@@ -67,8 +67,8 @@ class VolumeProvider(object):
         self._label = QtWidgets.QLabel()
         self._volume_control = VolumeControl(
             QtCore.QSize(50, main_window.height()))
-        main_window[0].right_widget.layout().addWidget(self._label)
-        main_window[0].right_widget.layout().addWidget(self._volume_control)
+        main_window[0].layout().addWidget(self._label)
+        main_window[0].layout().addWidget(self._volume_control)
         for widget in [self._label, self._volume_control]:
             widget.mouseReleaseEvent = self.toggle_mute
             widget.wheelEvent = self.change_volume

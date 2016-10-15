@@ -19,7 +19,7 @@ class BatteryProvider(object):
             self._charge_max = glob.glob(
                 '/sys/class/power_supply/*/energy_full')[0]
             self._label = QtWidgets.QLabel()
-            main_window[0].right_widget.layout().addWidget(self._label)
+            main_window[0].layout().addWidget(self._label)
             self.battery_present = True
         except IndexError:
             self.battery_present = False
