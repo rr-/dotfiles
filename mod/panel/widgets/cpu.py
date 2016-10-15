@@ -16,7 +16,7 @@ class CpuWidget:
         set_icon(self._icon_label, 'chip')
 
         container = QtWidgets.QWidget()
-        container.setLayout(QtWidgets.QHBoxLayout(margin=0, spacing=8))
+        container.setLayout(QtWidgets.QHBoxLayout(margin=0, spacing=6))
         container.layout().addWidget(self._icon_label)
         container.layout().addWidget(self._text_label)
         container.layout().addWidget(self._chart)

@@ -26,7 +26,7 @@ class MpdWidget:
         self._song_label.wheelEvent = self.prev_or_next_track
 
         container = QtWidgets.QWidget()
-        container.setLayout(QtWidgets.QHBoxLayout(margin=0, spacing=4))
+        container.setLayout(QtWidgets.QHBoxLayout(margin=0, spacing=6))
         container.layout().addWidget(self._status_icon_label)
         container.layout().addWidget(self._song_label)
         container.layout().addWidget(self._shuffle_icon_label)

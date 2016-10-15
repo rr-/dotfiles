@@ -47,7 +47,7 @@ class NetworkUsageWidget:
         set_icon(self._net_out_icon_label, 'arrow-up')
 
         container = QtWidgets.QWidget()
-        container.setLayout(QtWidgets.QHBoxLayout(margin=0, spacing=8))
+        container.setLayout(QtWidgets.QHBoxLayout(margin=0, spacing=6))
         container.layout().addWidget(self._net_in_icon_label)
         container.layout().addWidget(self._net_in_text_label)
         container.layout().addWidget(self._net_out_icon_label)
