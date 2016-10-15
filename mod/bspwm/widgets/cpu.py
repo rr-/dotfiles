@@ -11,8 +11,8 @@ class CpuProvider(object):
         self.percentage = None
         self._label = QtWidgets.QLabel()
         self._chart = Chart(QtCore.QSize(80, main_window.height()))
-        main_window[0].right_widget.layout().addWidget(self._label)
-        main_window[0].right_widget.layout().addWidget(self._chart)
+        main_window[0].layout().addWidget(self._label)
+        main_window[0].layout().addWidget(self._chart)
 
     def refresh(self):
         self.percentage = psutil.cpu_percent(interval=1)

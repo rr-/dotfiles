@@ -10,7 +10,7 @@ class TimeProvider(object):
         self._date_label = QtWidgets.QLabel()
         self._clock_label = QtWidgets.QLabel()
         for widget in [self._date_label, self._clock_label]:
-            main_window[0].right_widget.layout().addWidget(widget)
+            main_window[0].layout().addWidget(widget)
         self._date_label.setStyleSheet(
             'QWidget { margin-left: 12px; margin-right: 0 }')
         self._clock_label.setStyleSheet(

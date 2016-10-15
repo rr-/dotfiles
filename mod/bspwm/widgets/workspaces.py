@@ -89,19 +89,22 @@ class WorkspacesProvider(object):
 
         self._widgets = {}
         for i, monitor in enumerate(self._updater.monitors):
-            monitor_widget = main_window[i].left_widget
-            monitor_widget.workspace_widgets = {}
-            monitor_widget.wheelEvent = \
+            monitor_widget = main_window[i]
+            container_widget = QtWidgets.QWidget()
+            container_widget.workspace_widgets = {}
+            container_widget.wheelEvent = \
                 lambda event, monitor_index=i: self.wheel(event, monitor_index)
+            QtWidgets.QHBoxLayout(container_widget, margin=0, spacing=0)
             for j, workspace in enumerate(monitor.workspaces):
                 workspace_widget = QtWidgets.QPushButton(workspace.name)
                 workspace_widget.setProperty('class', 'workspace')
                 workspace_widget.mouseReleaseEvent = \
                     lambda event, workspace=workspace: \
                         self.click(event, workspace)
-                monitor_widget.workspace_widgets[j] = workspace_widget
-                monitor_widget.layout().addWidget(workspace_widget)
-            self._widgets[i] = monitor_widget
+                container_widget.workspace_widgets[j] = workspace_widget
+                container_widget.layout().addWidget(workspace_widget)
+            monitor_widget.layout().addWidget(container_widget)
+            self._widgets[i] = container_widget
         self.render()
 
     def wheel(self, event, monitor_index):

@@ -39,7 +39,7 @@ class NetworkUsageProvider(object):
             self._chart = Chart(QtCore.QSize(80, main_window.height()))
             for widget in [
                     self._net_in_label, self._net_out_label, self._chart]:
-                main_window[0].right_widget.layout().addWidget(widget)
+                main_window[0].layout().addWidget(widget)
             self._chart.repaint()
 
     def refresh(self):

@@ -8,10 +8,6 @@ class MpdProvider(object):
     delay = 1
 
     def __init__(self, main_window):
-        self.enabled = len(main_window) > 1
-        if not self.enabled:
-            return
-
         self.main_window = main_window
         self.client = mpd.MPDClient()
         self.connected = False
@@ -27,8 +23,7 @@ class MpdProvider(object):
         self.random_label.setText('\U0001F500')
 
         for widget in [self.status_label, self.song_label, self.random_label]:
-            main_window[len(main_window) - 1] \
-                .right_widget.layout().addWidget(widget)
+            main_window[len(main_window) - 1].layout().addWidget(widget)
 
         self.status_label.mouseReleaseEvent = self.play_pause_clicked
         self.song_label.mouseReleaseEvent = self.play_pause_clicked
@@ -52,8 +47,6 @@ class MpdProvider(object):
         self.render()
 
     def refresh(self):
-        if not self.enabled:
-            return
         if self.connected:
             try:
                 self.mpd_status = self.client.status()
@@ -70,7 +63,7 @@ class MpdProvider(object):
                 self.connected = False
 
     def render(self):
-        if not self.enabled or not self.mpd_status:
+        if not self.mpd_status:
             return
 
         if 'state' in self.mpd_status and self.mpd_status['state'] == 'play':
