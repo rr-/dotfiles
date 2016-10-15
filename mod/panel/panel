@@ -10,17 +10,17 @@ from PyQt5 import QtGui
 
 import settings
 from widgets.flow_layout import FlowLayout
-from widgets.workspaces import WorkspacesProvider, WorkspacesUpdater
-from widgets.window_title import WindowTitleProvider
-from widgets.time import TimeProvider
-from widgets.volume import VolumeProvider
-from widgets.cpu import CpuProvider
-from widgets.net import NetworkUsageProvider
-from widgets.battery import BatteryProvider
-from widgets.music import MpdProvider
+from widgets.workspaces import WorkspacesWidget, WorkspacesUpdater
+from widgets.window_title import WindowTitleWidget
+from widgets.time import TimeWidget
+from widgets.volume import VolumeWidget
+from widgets.cpu import CpuWidget
+from widgets.net import NetworkUsageWidget
+from widgets.battery import BatteryWidget
+from widgets.music import MpdWidget
 
 
-class StretchProvider:
+class StretchWidget:
     delay = 1000
 
     def __init__(self, main_window):
@@ -137,28 +137,28 @@ def main():
     workspaces_updater = WorkspacesUpdater()
     main_window = MainWindow(workspaces_updater.monitors)
 
-    providers = [
-        WorkspacesProvider(main_window, workspaces_updater),
-        WindowTitleProvider(main_window, workspaces_updater),
-        StretchProvider(main_window),
-        MpdProvider(main_window),
-        NetworkUsageProvider(main_window),
-        BatteryProvider(main_window),
-        CpuProvider(main_window),
-        VolumeProvider(main_window),
-        TimeProvider(main_window)
+    widgets = [
+        WorkspacesWidget(main_window, workspaces_updater),
+        WindowTitleWidget(main_window, workspaces_updater),
+        StretchWidget(main_window),
+        MpdWidget(main_window),
+        NetworkUsageWidget(main_window),
+        BatteryWidget(main_window),
+        CpuWidget(main_window),
+        VolumeWidget(main_window),
+        TimeWidget(main_window)
     ]
 
-    def worker(provider, trigger):
+    def worker(widget, trigger):
         while True:
-            provider.refresh()
-            if provider.delay > 0:
-                time.sleep(provider.delay)
-            trigger.emit(provider.render)
+            widget.refresh()
+            if widget.delay > 0:
+                time.sleep(widget.delay)
+            trigger.emit(widget.render)
 
-    for provider in providers:
+    for widget in widgets:
         t = threading.Thread(
-            target=worker, args=(provider, main_window.trigger), daemon=True)
+            target=worker, args=(widget, main_window.trigger), daemon=True)
         t.start()
 
     signal.signal(signal.SIGINT, signal.SIG_DFL)

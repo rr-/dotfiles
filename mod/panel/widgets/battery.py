@@ -8,7 +8,7 @@ def read_file(path):
         return handle.read().strip()
 
 
-class BatteryProvider:
+class BatteryWidget:
     delay = 3
 
     def __init__(self, main_window):

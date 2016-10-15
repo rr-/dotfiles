@@ -10,7 +10,7 @@ def read_file(path):
         return handle.read().strip()
 
 
-class NetworkUsageProvider:
+class NetworkUsageWidget:
     delay = 1
 
     def __init__(self, main_window):
