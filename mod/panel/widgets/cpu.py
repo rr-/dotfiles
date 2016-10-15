@@ -1,6 +1,5 @@
 import psutil
-from PyQt5 import QtWidgets
-from PyQt5 import QtCore
+from PyQt5 import QtCore, QtWidgets
 from widgets.chart import Chart
 
 
@@ -11,8 +10,12 @@ class CpuWidget:
         self.percentage = None
         self._label = QtWidgets.QLabel()
         self._chart = Chart(QtCore.QSize(80, main_window.height()))
-        main_window[0].layout().addWidget(self._label)
-        main_window[0].layout().addWidget(self._chart)
+
+        container = QtWidgets.QWidget()
+        container.setLayout(QtWidgets.QHBoxLayout(margin=0, spacing=8))
+        container.layout().addWidget(self._label)
+        container.layout().addWidget(self._chart)
+        main_window[0].layout().addWidget(container)
 
     def refresh(self):
         self.percentage = psutil.cpu_percent(interval=1)

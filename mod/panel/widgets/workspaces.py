@@ -94,13 +94,14 @@ class WorkspacesWidget:
             container_widget.workspace_widgets = {}
             container_widget.wheelEvent = \
                 lambda event, monitor_index=i: self.wheel(event, monitor_index)
-            QtWidgets.QHBoxLayout(container_widget, margin=0, spacing=0)
+            container_widget.setLayout(
+                QtWidgets.QHBoxLayout(margin=0, spacing=0))
             for j, workspace in enumerate(monitor.workspaces):
                 workspace_widget = QtWidgets.QPushButton(workspace.name)
                 workspace_widget.setProperty('class', 'workspace')
-                workspace_widget.mouseReleaseEvent = \
-                    lambda event, workspace=workspace: \
-                        self.click(event, workspace)
+                workspace_widget.mouseReleaseEvent = (
+                    lambda event, workspace=workspace:
+                        self.click(event, workspace))
                 container_widget.workspace_widgets[j] = workspace_widget
                 container_widget.layout().addWidget(workspace_widget)
             monitor_widget.layout().addWidget(container_widget)

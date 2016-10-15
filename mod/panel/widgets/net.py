@@ -1,7 +1,7 @@
 import os
 import sys
 import glob
-from PyQt5 import QtGui, QtCore, QtWidgets
+from PyQt5 import QtCore, QtGui, QtWidgets
 from widgets.chart import Chart
 
 
@@ -32,32 +32,35 @@ class NetworkUsageWidget:
         except:
             pass
 
-        if self.network_enabled:
-            self._old_rx_bytes = int(read_file(self._rx_path))
-            self._old_tx_bytes = int(read_file(self._tx_path))
-            self._net_in_icon_label = QtWidgets.QLabel()
-            self._net_in_text_label = QtWidgets.QLabel()
-            self._net_out_icon_label = QtWidgets.QLabel()
-            self._net_out_text_label = QtWidgets.QLabel()
-            self._chart = Chart(QtCore.QSize(80, main_window.height()))
+        if not self.network_enabled:
+            return
 
-            up_icon = QtGui.QIcon(QtGui.QPixmap(
-                os.path.join(sys.path[0], 'icons', 'arrow-up.svg')))
-            down_icon = QtGui.QIcon(QtGui.QPixmap(
-                os.path.join(sys.path[0], 'icons', 'arrow-down.svg')))
-            self._net_in_icon_label.setPixmap(
-                down_icon.pixmap(QtCore.QSize(18, 18)))
-            self._net_out_icon_label.setPixmap(
-                up_icon.pixmap(QtCore.QSize(18, 18)))
+        self._old_rx_bytes = int(read_file(self._rx_path))
+        self._old_tx_bytes = int(read_file(self._tx_path))
+        self._net_in_icon_label = QtWidgets.QLabel()
+        self._net_in_text_label = QtWidgets.QLabel()
+        self._net_out_icon_label = QtWidgets.QLabel()
+        self._net_out_text_label = QtWidgets.QLabel()
+        self._chart = Chart(QtCore.QSize(80, main_window.height()))
 
-            for widget in [
-                    self._net_in_icon_label,
-                    self._net_in_text_label,
-                    self._net_out_icon_label,
-                    self._net_out_text_label,
-                    self._chart]:
-                main_window[0].layout().addWidget(widget)
-            self._chart.repaint()
+        up_icon = QtGui.QIcon(QtGui.QPixmap(
+            os.path.join(sys.path[0], 'icons', 'arrow-up.svg')))
+        down_icon = QtGui.QIcon(QtGui.QPixmap(
+            os.path.join(sys.path[0], 'icons', 'arrow-down.svg')))
+        self._net_in_icon_label.setPixmap(
+            down_icon.pixmap(QtCore.QSize(18, 18)))
+        self._net_out_icon_label.setPixmap(
+            up_icon.pixmap(QtCore.QSize(18, 18)))
+
+        container = QtWidgets.QWidget()
+        container.setLayout(QtWidgets.QHBoxLayout(margin=0, spacing=8))
+        container.layout().addWidget(self._net_in_icon_label)
+        container.layout().addWidget(self._net_in_text_label)
+        container.layout().addWidget(self._net_out_icon_label)
+        container.layout().addWidget(self._net_out_text_label)
+        container.layout().addWidget(self._chart)
+        main_window[0].layout().addWidget(container)
+        self._chart.repaint()
 
     def refresh(self):
         if self.network_enabled:

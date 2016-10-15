@@ -16,9 +16,9 @@ class MpdWidget:
         self.mpd_status = None
         self.current_song = None
 
-        self.status_label = QtWidgets.QLabel()
-        self.song_label = QtWidgets.QLabel()
-        self.random_label = QtWidgets.QLabel()
+        self._status_icon_label = QtWidgets.QLabel()
+        self._song_label = QtWidgets.QLabel()
+        self._shuffle_icon_label = QtWidgets.QLabel()
 
         self._play_icon = QtGui.QIcon(QtGui.QPixmap(
             os.path.join(sys.path[0], 'icons', 'play.svg')))
@@ -29,14 +29,18 @@ class MpdWidget:
         self._shuffle_off_icon = QtGui.QIcon(
             QtGui.QPixmap(os.path.join(sys.path[0], 'icons', 'shuffle-off.svg')))
 
-        for widget in [self.status_label, self.song_label, self.random_label]:
-            main_window[len(main_window) - 1].layout().addWidget(widget)
+        self._status_icon_label.mouseReleaseEvent = self.play_pause_clicked
+        self._song_label.mouseReleaseEvent = self.play_pause_clicked
+        self._shuffle_icon_label.mouseReleaseEvent = self.shuffle_clicked
+        self._status_icon_label.wheelEvent = self.prev_or_next_track
+        self._song_label.wheelEvent = self.prev_or_next_track
 
-        self.status_label.mouseReleaseEvent = self.play_pause_clicked
-        self.song_label.mouseReleaseEvent = self.play_pause_clicked
-        self.random_label.mouseReleaseEvent = self.random_clicked
-        self.status_label.wheelEvent = self.prev_or_next_track
-        self.song_label.wheelEvent = self.prev_or_next_track
+        container = QtWidgets.QWidget()
+        container.setLayout(QtWidgets.QHBoxLayout(margin=0, spacing=4))
+        container.layout().addWidget(self._status_icon_label)
+        container.layout().addWidget(self._song_label)
+        container.layout().addWidget(self._shuffle_icon_label)
+        main_window[0].layout().addWidget(container)
 
     def play_pause_clicked(self, _event):
         run(['mpc', 'toggle'])
@@ -48,7 +52,7 @@ class MpdWidget:
         self.refresh()
         self.render()
 
-    def random_clicked(self, _event):
+    def shuffle_clicked(self, _event):
         run(['mpc', 'random'])
         self.refresh()
         self.render()
@@ -74,10 +78,10 @@ class MpdWidget:
             return
 
         if 'state' in self.mpd_status and self.mpd_status['state'] == 'play':
-            self.status_label.setPixmap(
+            self._status_icon_label.setPixmap(
                 self._play_icon.pixmap(QtCore.QSize(18, 18)))
         else:
-            self.status_label.setPixmap(
+            self._status_icon_label.setPixmap(
                 self._pause_icon.pixmap(QtCore.QSize(18, 18)))
 
         text = ''
@@ -95,17 +99,17 @@ class MpdWidget:
                     self.format_seconds(self.current_song['time']))
             else:
                 text += ' (unknown time remaining)'
-        self.song_label.setText(text)
+        self._song_label.setText(text)
 
-        random = 'random' in self.mpd_status \
+        shuffle = 'random' in self.mpd_status \
             and self.mpd_status['random'] == '1'
-        if self.random_label.property('active') != random:
-            self.random_label.setProperty('active', random)
-            if random:
-                self.random_label.setPixmap(
+        if self._shuffle_icon_label.property('active') != shuffle:
+            self._shuffle_icon_label.setProperty('active', shuffle)
+            if shuffle:
+                self._shuffle_icon_label.setPixmap(
                     self._shuffle_on_icon.pixmap(QtCore.QSize(18, 18)))
             else:
-                self.random_label.setPixmap(
+                self._shuffle_icon_label.setPixmap(
                     self._shuffle_off_icon.pixmap(QtCore.QSize(18, 18)))
 
     def format_seconds(self, seconds):
