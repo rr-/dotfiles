@@ -1,7 +1,6 @@
 # pylint: disable=invalid-name
 import collections
-from PyQt5 import QtGui
-from PyQt5 import QtWidgets
+from PyQt5 import QtGui, QtWidgets
 import settings
 
 

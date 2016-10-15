@@ -91,14 +91,15 @@ class MainWindow(QtWidgets.QMainWindow):
         ''')
 
         central_widget = QtWidgets.QWidget()
-        QtWidgets.QHBoxLayout(central_widget, margin=0, spacing=0)
+        central_widget.setLayout(QtWidgets.QHBoxLayout(margin=0, spacing=0))
         self.setCentralWidget(central_widget)
 
         self.monitor_widgets = []
         for monitor in monitors:
             monitor_widget = QtWidgets.QWidget(
                 size=QtCore.QSize(int(monitor.width), 0))
-            QtWidgets.QHBoxLayout(monitor_widget, spacing=8, margin=0)
+            monitor_widget.setLayout(
+                QtWidgets.QHBoxLayout(margin=0, spacing=12))
             central_widget.layout().addWidget(monitor_widget)
             self.monitor_widgets.append(monitor_widget)
 

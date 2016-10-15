@@ -3,9 +3,7 @@ import os
 import sys
 import subprocess
 import alsaaudio
-from PyQt5 import QtGui
-from PyQt5 import QtWidgets
-from PyQt5 import QtCore
+from PyQt5 import QtCore, QtGui, QtWidgets
 import settings
 
 
@@ -66,19 +64,22 @@ class VolumeWidget:
     def __init__(self, main_window):
         self.volume = None
         self.muted = False
-        self._label = QtWidgets.QLabel()
-        self._volume_control = VolumeControl(
-            QtCore.QSize(50, main_window.height()))
-        main_window[0].layout().addWidget(self._label)
-        main_window[0].layout().addWidget(self._volume_control)
-        for widget in [self._label, self._volume_control]:
-            widget.mouseReleaseEvent = self.toggle_mute
-            widget.wheelEvent = self.change_volume
 
         self._on_icon = QtGui.QIcon(QtGui.QPixmap(
             os.path.join(sys.path[0], 'icons', 'volume-on.svg')))
         self._off_icon = QtGui.QIcon(QtGui.QPixmap(
             os.path.join(sys.path[0], 'icons', 'volume-off.svg')))
+
+        self._icon_label = QtWidgets.QLabel()
+        self._volume_control = VolumeControl(QtCore.QSize(50, 10))
+
+        container = QtWidgets.QWidget()
+        container.mouseReleaseEvent = self.toggle_mute
+        container.wheelEvent = self.change_volume
+        container.setLayout(QtWidgets.QHBoxLayout(margin=0, spacing=8))
+        container.layout().addWidget(self._icon_label)
+        container.layout().addWidget(self._volume_control)
+        main_window[0].layout().addWidget(container)
 
     def change_volume(self, event):
         subprocess.call([
@@ -99,8 +100,8 @@ class VolumeWidget:
 
     def render(self):
         if self.muted:
-            self._label.setPixmap(self._off_icon.pixmap(QtCore.QSize(18, 18)))
+            self._icon_label.setPixmap(self._off_icon.pixmap(QtCore.QSize(18, 18)))
         else:
-            self._label.setPixmap(self._on_icon.pixmap(QtCore.QSize(18, 18)))
+            self._icon_label.setPixmap(self._on_icon.pixmap(QtCore.QSize(18, 18)))
         self._volume_control.set(self.volume)
         self._volume_control.repaint()

@@ -1,5 +1,5 @@
 from collections import defaultdict
-from PyQt5 import QtWidgets, QtGui, QtCore
+from PyQt5 import QtCore, QtGui, QtWidgets
 import Xlib
 import Xlib.display
 
