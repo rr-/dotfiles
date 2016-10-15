@@ -77,7 +77,7 @@ class WorkspacesUpdater:
             monitor.display_id = i
 
 
-class WorkspacesProvider:
+class WorkspacesWidget:
     delay = 0
 
     def __init__(self, main_window, workspaces_updater):

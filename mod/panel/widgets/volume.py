@@ -60,7 +60,7 @@ class VolumeControl(QtWidgets.QWidget):
         painter.end()
 
 
-class VolumeProvider:
+class VolumeWidget:
     delay = 1
 
     def __init__(self, main_window):

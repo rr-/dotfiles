@@ -4,7 +4,7 @@ import Xlib
 import Xlib.display
 
 
-class WindowTitleProvider:
+class WindowTitleWidget:
     delay = 0
 
     def __init__(self, main_window, workspaces_updater):

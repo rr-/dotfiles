@@ -4,7 +4,7 @@ from PyQt5 import QtCore
 from widgets.chart import Chart
 
 
-class CpuProvider:
+class CpuWidget:
     delay = 0
 
     def __init__(self, main_window):
