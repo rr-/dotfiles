@@ -13,7 +13,6 @@ custom goodies are located in the `bin/` directory.
 - `bin/`: custom tools
 - `mod/`: configuration and installers for third party programs
 - `lib/`: code shared between scripts in `bin/` and modules in `mod/`
-- `aux/`: miscellaneous executables
 - `txt/`: miscellaneous text resources
 
 ### Installing module
@@ -34,10 +33,6 @@ will download `bspwm-git`, `PyQt4` and other dependencies required for the full
 `bspwm` setup.
 
 #### Caveats
-
-On fresh systems things such as `apt-cyg` and `yaourt` are missing and it's
-tedious to install them by hand. For this reason, I've put them in separate
-directory, `aux/`. These might get changed into `mod-tool-X` in the future.
 
 Some modules will work only on GNU/Linux, but essential ones such as `vim` or
 `zsh` will also work on Cygwin.
