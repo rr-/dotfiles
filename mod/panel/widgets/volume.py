@@ -70,7 +70,7 @@ class VolumeWidget:
         container = QtWidgets.QWidget()
         container.mouseReleaseEvent = self.toggle_mute
         container.wheelEvent = self.change_volume
-        container.setLayout(QtWidgets.QHBoxLayout(margin=0, spacing=8))
+        container.setLayout(QtWidgets.QHBoxLayout(margin=0, spacing=6))
         container.layout().addWidget(self._icon_label)
         container.layout().addWidget(self._volume_control)
         main_window[0].layout().addWidget(container)
