@@ -1,4 +1,6 @@
 # pylint: disable=invalid-name
+import os
+import sys
 import subprocess
 import alsaaudio
 from PyQt5 import QtGui
@@ -73,6 +75,11 @@ class VolumeProvider(object):
             widget.mouseReleaseEvent = self.toggle_mute
             widget.wheelEvent = self.change_volume
 
+        self._on_icon = QtGui.QIcon(QtGui.QPixmap(
+            os.path.join(sys.path[0], 'icons', 'volume-on.svg')))
+        self._off_icon = QtGui.QIcon(QtGui.QPixmap(
+            os.path.join(sys.path[0], 'icons', 'volume-off.svg')))
+
     def change_volume(self, event):
         subprocess.call([
             'amixer', '-q', 'set', 'Master',
@@ -92,8 +99,8 @@ class VolumeProvider(object):
 
     def render(self):
         if self.muted:
-            self._label.setText('\U0001f507')
+            self._label.setPixmap(self._off_icon.pixmap(QtCore.QSize(18, 18)))
         else:
-            self._label.setText('\U0001f50a')
+            self._label.setPixmap(self._on_icon.pixmap(QtCore.QSize(18, 18)))
         self._volume_control.set(self.volume)
         self._volume_control.repaint()
