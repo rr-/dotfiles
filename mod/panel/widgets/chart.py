@@ -17,11 +17,7 @@ class Chart(QtWidgets.QWidget):
         width = self.width()
         height = self.height() - settings.BOTTOM_BORDER
 
-        if not self.points:
-            return
         highest = max(p for points in self.points.values() for p in points)
-        if highest == 0:
-            return
 
         margin = 3
 
@@ -35,7 +31,7 @@ class Chart(QtWidgets.QWidget):
             return margin \
                 + height - 1 \
                 - 2 * margin \
-                - y * (height - 1 - 2 * margin) / highest
+                - y * (height - 1 - 2 * margin) / max(1, highest)
 
         painter = QtGui.QPainter()
         painter.begin(self)
