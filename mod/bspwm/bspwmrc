@@ -71,8 +71,8 @@ else
     xprop -root -f _NET_WM_NAME 8s -set _NET_WM_NAME "$IRONIC_WM_NAME"
 fi
 
-pkill -f bspwm/panel
-nohup ~/.config/bspwm/panel </dev/null &>/dev/null &
+pkill -f .config/panel
+nohup ~/.config/panel </dev/null &>/dev/null &
 if [ -e ~/.config/zsh/lightness.sh ]; then
     . ~/.config/zsh/lightness.sh
     ~/src/dotfiles/bin/util/lightness $LIGHTNESS
