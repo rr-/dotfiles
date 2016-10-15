@@ -1,6 +1,7 @@
 import psutil
 from PyQt5 import QtCore, QtWidgets
 from widgets.chart import Chart
+from .util import set_icon
 
 
 class CpuWidget:
@@ -8,12 +9,16 @@ class CpuWidget:
 
     def __init__(self, main_window):
         self.percentage = None
-        self._label = QtWidgets.QLabel()
+        self._icon_label = QtWidgets.QLabel()
+        self._text_label = QtWidgets.QLabel()
         self._chart = Chart(QtCore.QSize(80, main_window.height()))
+
+        set_icon(self._icon_label, 'chip')
 
         container = QtWidgets.QWidget()
         container.setLayout(QtWidgets.QHBoxLayout(margin=0, spacing=8))
-        container.layout().addWidget(self._label)
+        container.layout().addWidget(self._icon_label)
+        container.layout().addWidget(self._text_label)
         container.layout().addWidget(self._chart)
         main_window[0].layout().addWidget(container)
 
@@ -24,6 +29,6 @@ class CpuWidget:
             self.percentage = psutil.cpu_percent(interval=1)
 
     def render(self):
-        self._label.setText('CPU %05.1f%%' % (self.percentage))
+        self._text_label.setText('%05.1f%%' % (self.percentage))
         self._chart.addPoint('#f00', self.percentage)
         self._chart.repaint()
