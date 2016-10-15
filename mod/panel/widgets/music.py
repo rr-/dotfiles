@@ -48,20 +48,14 @@ class MpdWidget:
         self.render()
 
     def refresh(self):
-        if self.connected:
-            try:
-                self.mpd_status = self.client.status()
-                self.current_song = self.client.currentsong()
-            except:
-                self.mpd_status = None
-                self.current_song = None
-                self.connected = False
-        else:
-            try:
+        try:
+            if not self.connected:
                 self.client.connect(host='localhost', port=6600)
                 self.connected = True
-            except:
-                self.connected = False
+            self.mpd_status = self.client.status()
+            self.current_song = self.client.currentsong()
+        except:
+            self.connected = False
 
     def render(self):
         if not self.mpd_status:

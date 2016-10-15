@@ -145,6 +145,9 @@ def main():
             trigger.emit(widget.render)
 
     for widget in widgets:
+        widget.refresh()
+        main_window.trigger.emit(widget.render)
+
         t = threading.Thread(
             target=worker, args=(widget, main_window.trigger), daemon=True)
         t.start()

@@ -18,7 +18,10 @@ class CpuWidget:
         main_window[0].layout().addWidget(container)
 
     def refresh(self):
-        self.percentage = psutil.cpu_percent(interval=1)
+        if self.percentage is None:
+            self.percentage = psutil.cpu_percent(interval=0.1)
+        else:
+            self.percentage = psutil.cpu_percent(interval=1)
 
     def render(self):
         self._label.setText('CPU %05.1f%%' % (self.percentage))
