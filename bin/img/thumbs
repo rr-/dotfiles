@@ -5,16 +5,20 @@ import os
 import sys
 import argparse
 import pathlib
+import json
 from tempfile import NamedTemporaryFile
 from subprocess import run
 
 
 MANAGED_EXTENSIONS = ['jpg', 'jpeg', 'jfif', 'gif', 'png', 'tga', 'bmp']
 
-HEADER_TEMPLATE = '''<html>
+HTML_TEMPLATE = '''<!DOCTYPE html>
+<html>
 <head>
+    <meta charset="utf-8"/>
     <style>
         body {
+            font-family: sans-serif;
             text-align: center;
         }
         img {
@@ -25,19 +29,119 @@ HEADER_TEMPLATE = '''<html>
             background-position: center;
             margin: 0.5em;
             border: 1px solid black;
+            vertical-align: top;
+        }
+        #pager {
+            margin-bottom: 2em;
+        }
+        #pager a {
+            background: #f5f5f5;
+            padding: 0.2em 0.5em;
+            margin: 0.5em 0.1em;
+        }
+        #pager a.active {
+            background: peachpuff;
         }
     </style>
     <title>Thumbnail list</title>
 </head>
-<body>'''
+<body>
+<div id="pager"></div>
+<div id="content"></div>
 
-FOOTER_TEMPLATE = '''</body>
-</html>'''
+<script type="text/javascript">
+class Pager {
+    constructor(pagerDiv, collection, pageSize, showPage) {
+        this.collection = collection;
+        this.pagerDiv = pagerDiv;
+        this.pageSize = pageSize;
+        this.pageCount = Math.ceil(collection.length / pageSize);
+        this.showPage = showPage;
 
-LINK_TEMPLATE = '''<a href="{link}"><img
-    src="{link}"
-    alt="{name}"/></a>'''
+        const prevPageLink = document.createElement('a');
+        const nextPageLink = document.createElement('a');
+        prevPageLink.appendChild(document.createTextNode('<'));
+        nextPageLink.appendChild(document.createTextNode('>'));
+        prevPageLink.addEventListener(
+            'click', e => this.prevPageLinkClicked(e));
+        nextPageLink.addEventListener(
+            'click', e => this.nextPageLinkClicked(e));
 
+        pagerDiv.appendChild(prevPageLink);
+        for (let page = 1; page <= this.pageCount; page++) {
+            const pageLink = document.createElement('a');
+            pageLink.appendChild(document.createTextNode(page));
+            pageLink.setAttribute('data-page', page);
+            pageLink.addEventListener('click', e => this.pageLinkClicked(e));
+            pagerDiv.appendChild(pageLink);
+        }
+        pagerDiv.appendChild(nextPageLink);
+
+        this.activatePage(1);
+    }
+
+    activatePage(number) {
+        const lastActivePageLink = this.pagerDiv.querySelector('.active');
+        const currentActivePageLink = (
+            this.pagerDiv.querySelector('[data-page=\\'' + number + '\\']'));
+
+        if (lastActivePageLink) {
+            lastActivePageLink.classList.remove('active');
+        }
+        currentActivePageLink.classList.add('active');
+
+        this.activePage = number;
+        this.showPage(
+            this.collection.slice(
+                (this.activePage - 1) * this.pageSize,
+                this.activePage * this.pageSize));
+    }
+
+    prevPageLinkClicked(e) {
+        e.preventDefault();
+        if (this.activePage - 1 >= 1) {
+            this.activatePage(this.activePage - 1);
+        }
+    }
+
+    nextPageLinkClicked(e) {
+        e.preventDefault();
+        if (this.activePage + 1 <= this.pageCount) {
+            this.activatePage(this.activePage + 1);
+        }
+    }
+
+    pageLinkClicked(e) {
+        e.preventDefault();
+        this.activatePage(parseInt(e.target.getAttribute('data-page')));
+    }
+}
+
+function showPage(collection) {
+    const contentDiv = document.getElementById('content');
+    while (contentDiv.firstChild) {
+        contentDiv.removeChild(contentDiv.firstChild);
+    }
+
+    for (let item of collection) {
+        const imageLink = document.createElement('a');
+        const image = document.createElement('img');
+        imageLink.setAttribute('href', item.link);
+        image.setAttribute('src', item.link);
+        image.setAttribute('alt', item.name);
+        imageLink.appendChild(image);
+        contentDiv.appendChild(imageLink);
+    }
+}
+
+const pageSize = 250;
+const collection = %JSON%;
+const pagerDiv = document.getElementById('pager');
+const pager = new Pager(pagerDiv, collection, pageSize, showPage);
+</script>
+</body>
+</html>
+'''
 
 
 def _parse_args():
@@ -69,13 +173,14 @@ def main():
         return
 
     with NamedTemporaryFile(delete=False, prefix='thumbs', mode='w') as handle:
-        handle.write(HEADER_TEMPLATE)
-        for path in paths:
-            handle.write(
-                LINK_TEMPLATE.format(
-                    link=pathlib.Path(os.path.abspath(path)).as_uri(),
-                    name=path))
-        handle.write(FOOTER_TEMPLATE)
+        images = [
+            {
+                'link': pathlib.Path(os.path.abspath(path)).as_uri(),
+                'name': path,
+            }
+            for path in paths
+        ]
+        handle.write(HTML_TEMPLATE.replace('%JSON%', json.dumps(images)))
         handle.flush()
         run(['firefox', handle.name])
 
