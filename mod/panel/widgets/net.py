@@ -68,9 +68,9 @@ class NetworkUsageWidget:
     def render(self):
         if self.network_enabled:
             self._net_in_text_label.setText(
-                '%03.0f KB/s' % (self.net_in / 1024.0))
+                '%04.0f KB/s' % (self.net_in / 1024.0))
             self._net_out_text_label.setText(
-                '%03.0f KB/s' % (self.net_out / 1024.0))
+                '%04.0f KB/s' % (self.net_out / 1024.0))
             self._chart.addPoint('#0b0', self.net_in)
             self._chart.addPoint('#f00', self.net_out)
             self._chart.repaint()
