@@ -79,8 +79,6 @@ class MpdWidget:
                 text += ' %s / %s' % (
                     self.format_seconds(self.mpd_status['elapsed']),
                     self.format_seconds(self.current_song['time']))
-            else:
-                text += ' (unknown time remaining)'
         self._song_label.setText(text)
 
         shuffle = 'random' in self.mpd_status \
