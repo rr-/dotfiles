@@ -39,13 +39,13 @@ class WorkspacesUpdater:
         if WorkspacesUpdater.monitor_names is None:
             WorkspacesUpdater.monitor_names = (
                 [l for l in run(['bspc', 'query', '-M']).splitlines() if l])
-        self.monitors = []
+        monitors = []
         workspace_id = 0
         for monitor_name in WorkspacesUpdater.monitor_names:
             monitor_spec = json.loads(
                 run(['bspc', 'query', '-T', '-m', monitor_name]))
             monitor = Monitor()
-            monitor.original_id = len(self.monitors)
+            monitor.original_id = len(monitors)
             monitor.name = monitor_name
             monitor.width = int(monitor_spec['rectangle']['width'])
             monitor.height = int(monitor_spec['rectangle']['height'])
@@ -71,10 +71,11 @@ class WorkspacesUpdater:
                         if bool(child['client']['urgent']):
                             workspace.urgent = True
                 monitor.workspaces.append(workspace)
-            self.monitors.append(monitor)
-        self.monitors.sort(key=lambda m: m.x)
-        for i, monitor in enumerate(self.monitors):
+            monitors.append(monitor)
+        monitors.sort(key=lambda m: m.x)
+        for i, monitor in enumerate(monitors):
             monitor.display_id = i
+        self.monitors = monitors
 
 
 class WorkspacesWidget:
