@@ -38,7 +38,7 @@ def main():
     else:
         logger.info('Mounting %s', target_dir)
         makedirs(target_dir, exist_ok=True)
-        run(['gocryptfs', source_dir, target_dir])
+        run(['gocryptfs', '-allow_other', source_dir, target_dir])
 
 
 if __name__ == '__main__':
