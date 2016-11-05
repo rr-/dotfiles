@@ -1,0 +1,51 @@
+#!/usr/bin/python3
+# Looks up word definitions on jisho.org.
+
+import argparse
+import urllib.request
+import json
+import re
+
+
+def _parse_args():
+    parser = argparse.ArgumentParser(
+        description='Looks up word definitions on jisho.org')
+    parser.add_argument('word', nargs='+')
+    return parser.parse_args()
+
+
+def _lookup_word(word):
+    url = 'http://jisho.org/api/v1/search/words?keyword=%s' % (
+        urllib.parse.quote(word))
+    with urllib.request.urlopen(url) as handle:
+        return json.loads(handle.read().decode())
+
+
+def _print_definition(definition):
+    if not definition['data']:
+        print('Nothing found')
+        return
+    for entry in definition['data']:
+        print('Definition:')
+        for item in entry['japanese']:
+            if 'word' in item:
+                print('%s (%s)' % (item['word'], item['reading']))
+            else:
+                print(item['reading'])
+        print('Meanings:')
+        for item in entry['senses']:
+            for definition in item['english_definitions']:
+                print(definition)
+        print('-' * 50)
+        print()
+
+
+def main():
+    args = _parse_args()
+    for word in args.word:
+        definition = _lookup_word(word)
+        _print_definition(definition)
+
+
+if __name__ == '__main__':
+    main()
