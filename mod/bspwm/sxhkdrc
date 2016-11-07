@@ -115,9 +115,8 @@ super + s
 super + f
     bash -c '~/.config/bspwm/toggle-state fullscreen'
 
-# toggle desktop padding for active monitor
 super + shift + f
-    bash -c '~/.config/bspwm/toggle-desktop-padding'
+    bspc desktop -l {tiled,monocle}
 
 # focus window with regard to focus history
 super + {bracketleft,bracketright}
@@ -148,9 +147,9 @@ super + shift + i
 super + alt + i
     bash -c 'shot -M -i --output ~/'
 
+# toggle desktop padding for active monitor
 super + o
-  {smartsplit ; bspc node -i,\
-  for i in $(bspc query -N -n .leaf.!window.local); do bspc node $i -k; done}
+    bash -c '~/.config/bspwm/toggle-desktop-padding'
 
 ~button1
     bspc pointer -g focus
