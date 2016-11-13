@@ -74,8 +74,6 @@ def main():
                 '>>',
                 shlex.quote(REMOTE_LOG_PATH),
             ],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
             check=True)
 
     except Exception as ex:
