@@ -22,7 +22,7 @@ function queue_next_slide()
     if timer then
         timer:kill()
     end
-    timer = mp.add_timeout(0.5, next_slide)
+    timer = mp.add_timeout(0.3, next_slide)
 end
 
 function start_slideshow()
