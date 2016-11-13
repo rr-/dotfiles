@@ -2,7 +2,6 @@
 import os
 import sys
 import argparse
-import json
 import subprocess
 import shlex
 import socket
@@ -14,7 +13,7 @@ MINIMUM_WATCHED_PERCENTAGE = 80
 MINIMUM_DURATION = 300  # five minutes
 IGNORE_ONLINE_STREAMS = True
 REMOTE_HOST = 'cyclone'
-REMOTE_LOG_PATH = '/srv/www/tmp.sakuya.pl/mal/watched.lst'
+REMOTE_LOG_PATH = '/srv/www/sakuya.pl/data/playback.lst'
 ALLOWED_EXTENSIONS = [
     'mkv', 'mp4', 'avi', 'm4v', 'mov',
     'flv', 'mpeg', 'mpg', 'wmv', 'ogv', 'webm', 'rm']
@@ -60,13 +59,12 @@ def main():
                     args.duration,
                     MINIMUM_DURATION))
 
-        line = json.dumps({
-            'date': datetime.now().isoformat(),
-            'host': socket.gethostname(),
-            'path': os.path.abspath(args.path),
-        })
+        line = '%s %s %s' % (
+            datetime.now().replace(microsecond=0).isoformat(),
+            socket.gethostname(),
+            os.path.abspath(args.path))
 
-        print('Sending JSON: ' + line)
+        print('Sending data: ' + line)
         subprocess.run(
             [
                 'ssh',
