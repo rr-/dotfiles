@@ -13,7 +13,7 @@ MINIMUM_WATCHED_PERCENTAGE = 80
 MINIMUM_DURATION = 300  # five minutes
 IGNORE_ONLINE_STREAMS = True
 REMOTE_HOST = 'cyclone'
-REMOTE_LOG_PATH = '/srv/www/sakuya.pl/data/playback.lst'
+REMOTE_CMD = 'cd /srv/www/sakuya.pl && echo %s>>data/playback.lst && ./build'
 ALLOWED_EXTENSIONS = [
     'mkv', 'mp4', 'avi', 'm4v', 'mov',
     'flv', 'mpeg', 'mpg', 'wmv', 'ogv', 'webm', 'rm']
@@ -66,14 +66,8 @@ def main():
 
         print('Sending data: ' + line)
         subprocess.run(
-            [
-                'ssh',
-                REMOTE_HOST,
-                'echo',
-                shlex.quote(line).encode('utf-8').decode('unicode-escape'),
-                '>>',
-                shlex.quote(REMOTE_LOG_PATH),
-            ],
+            ['ssh', REMOTE_HOST, REMOTE_CMD % (
+                shlex.quote(line).encode('utf-8').decode('unicode-escape'))],
             check=True)
 
     except Exception as ex:
