@@ -6,8 +6,15 @@ import sys
 import argparse
 import pathlib
 import json
+import re
 from tempfile import NamedTemporaryFile
 from subprocess import run
+
+
+def natural_sort_key(s, _nsre=re.compile('([0-9]+)')):
+    return [int(text)
+        if text.isdigit() else text.lower()
+        for text in re.split(_nsre, s)]
 
 
 MANAGED_EXTENSIONS = ['jpg', 'jpeg', 'jfif', 'gif', 'png', 'tga', 'bmp']
@@ -167,7 +174,7 @@ def _collect_files(paths):
 def main():
     args = _parse_args()
 
-    paths = sorted(_collect_files(args.paths))
+    paths = sorted(_collect_files(args.paths), key=natural_sort_key)
     if not paths:
         print('No images to show', file=sys.stderr)
         return
