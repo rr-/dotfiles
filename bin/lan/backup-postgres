@@ -1,21 +1,38 @@
-#!/bin/sh
+#!/bin/python3
 # Backups selected Postgres database to local directory.
 # To be used with "backup" script.
 
-if [ -z "$1" ]; then
-    echo 'No database specified' 1>&2
-    exit 1
-else
-    dbname="$1"
-fi
+import argparse
+import os
+import sys
+from datetime import datetime
+from calendar import day_name
+from shutil import which
+from subprocess import run
 
-if ! command -v pg_dump &>/dev/null; then
-    echo 1>&2 'pg_dump not found. Aborting.'
-    exit 1
-fi
 
-day_of_week=$(date +'%A'|tr '[[:upper:]]' '[[:lower:]]')
-path=~/.backup/sql/"$dbname"/"$day_of_week".sql
-mkdir -p "$(dirname "$path")"
+def _parse_args():
+    description = ('Backups PostgreSQL database to selected directory.')
+    parser = argparse.ArgumentParser(description=description)
+    parser.add_argument('db_name')
+    parser.add_argument('dir')
+    return parser.parse_args()
 
-pg_dump -U postgres -d "$dbname" >"$path"
+
+def main():
+    args = _parse_args()
+
+    if not which('pg_dump'):
+        print('pg_dump not found. Aborting.', file=sys.stderr)
+        sys.exit(1)
+
+    day_of_week = day_name[datetime.today().weekday()].lower()
+    path = os.path.join(args.dir, '%s_%s.sql' % (args.db_name, day_of_week))
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+
+    with open(path, 'wb') as handle:
+        run(['pg_dump', '-U', 'postgres', '-d', args.db_name], stdout=handle)
+
+
+if __name__ == '__main__':
+    main()
