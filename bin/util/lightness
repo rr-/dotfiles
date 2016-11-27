@@ -26,8 +26,8 @@ def _relink(target, source):
 
 
 def _parse_args():
-    parser = argparse.ArgumentParser(
-        description='Switches between dark and light theme in various programs')
+    description = 'Switches between dark and light theme in various programs'
+    parser = argparse.ArgumentParser(description=description)
     parser.add_argument('theme', choices=('light', 'dark'))
     return parser.parse_args()
 
@@ -45,7 +45,8 @@ def _update_wallpaper(theme):
         logging.warning('feh not found, skipped updating wallpapers')
         return
     logging.info('Updating wallpapers using feh')
-    monitor_count = (run(['xrandr', '-q'], stdout=PIPE)
+    monitor_count = (
+        run(['xrandr', '-q'], stdout=PIPE)
         .stdout
         .decode()
         .count(' connected'))
