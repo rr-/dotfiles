@@ -1,20 +1,30 @@
-# pylint: disable=wildcard-import,unused-wildcard-import,protected-access
+# pylint: disable=unused-import,protected-access,invalid-name
 import os
-from logging import *
+import logging
+from logging import (
+    getLogger,
+    info, warning, error,
+    INFO, WARNING, ERROR)
 import coloredlogs
 
 
 def _add_custom_level(number, name):
-    addLevelName(number, name.upper())
+    logging.addLevelName(number, name.upper())
 
-    def handler(self, message, *args, **kws):
+    def member(self, message, *args, **kwargs):
         if self.isEnabledFor(number):
-            self._log(number, message, args, **kws)
+            self._log(number, message, args, **kwargs)
 
-    setattr(Logger, name, handler)
+    def function(message, *args, **kwargs):
+        if len(logging.Logger.root.handlers) == 0:
+            logging.basicConfig()
+        logging.Logger.root._log(number, message, args, **kwargs)
+
+    setattr(logging.Logger, name, member)
+    return (number, function)
 
 
-_add_custom_level(29, 'success')
+SUCCESS, success = _add_custom_level(29, 'success')
 
 coloredlogs.install(fmt='%(message)s', level_styles={
     'warning': {'color': 'yellow'},

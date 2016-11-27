@@ -4,12 +4,10 @@
 
 import argparse
 import shutil
-from dotfiles import logging
 from os import unlink, symlink
 from os.path import expanduser, islink, exists
 from subprocess import run, PIPE
-
-logger = logging.getLogger(__name__)
+from dotfiles import logging
 
 
 def _has_executable(program):
@@ -20,7 +18,7 @@ def _relink(target, source):
     source = expanduser(source)
     target = expanduser(target)
     if not exists(target):
-        logger.warning('Target doesn\'t exist: %s, symlink skipped' % target)
+        logging.warning('Target doesn\'t exist: %s, symlink skipped', target)
         return
     if islink(target):
         unlink(target)
@@ -36,17 +34,17 @@ def _parse_args():
 
 def _update_mintty(theme):
     if not _has_executable('mintty'):
-        logger.warning('MinTTY not found, skipped updating symlinks')
+        logging.warning('MinTTY not found, skipped updating symlinks')
         return
-    logger.info('Updating symlinks for MinTTY')
+    logging.info('Updating symlinks for MinTTY')
     _relink('~/.minttyrc', '~/.minttyrc-%s' % theme)
 
 
 def _update_wallpaper(theme):
     if not _has_executable('feh'):
-        logger.warning('feh not found, skipped updating wallpapers')
+        logging.warning('feh not found, skipped updating wallpapers')
         return
-    logger.info('Updating wallpapers using feh')
+    logging.info('Updating wallpapers using feh')
     monitor_count = (run(['xrandr', '-q'], stdout=PIPE)
         .stdout
         .decode()
@@ -60,9 +58,9 @@ def _update_wallpaper(theme):
 
 def _update_bspwm(theme):
     if not _has_executable('bspc'):
-        logger.warning('bspc not found, skipped updating window borders')
+        logging.warning('bspc not found, skipped updating window borders')
         return
-    logger.info('Updating window borders using bspc')
+    logging.info('Updating window borders using bspc')
     if theme == 'light':
         run(['bspc', 'config', 'normal_border_color', '#bbbbbb'])
         run(['bspc', 'config', 'active_border_color', '#bbbbbb'])
@@ -74,7 +72,7 @@ def _update_bspwm(theme):
 
 
 def _update_zsh(theme):
-    logger.info('Updating environment variable exporter for zsh')
+    logging.info('Updating environment variable exporter for zsh')
     with open(expanduser('~/.config/zsh/lightness.sh'), 'w') as handle:
         handle.write('export LIGHTNESS=%s\n' % theme)
         handle.write(
@@ -91,9 +89,9 @@ def _update_vifm(theme):
 
 def _update_xresources(theme):
     if not _has_executable('xrdb'):
-        logger.warning('XRDB not found, skipped updating xresources')
+        logging.warning('XRDB not found, skipped updating xresources')
         return
-    logger.info('Updating sylminks for xresources')
+    logging.info('Updating sylminks for xresources')
     _relink('~/.config/Xresources-theme', '~/.config/Xresources-%s' % theme)
     run(['xrdb', '-override', expanduser('~/.config/Xresources-theme')])
 

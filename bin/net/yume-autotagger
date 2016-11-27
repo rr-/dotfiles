@@ -14,7 +14,6 @@ from dotfiles import config
 from dotfiles import logging
 from dotfiles.tag_list import TagList
 
-logger = logging.getLogger(__name__)
 config_key = config['yume-autotagger']
 
 HISTORY_PATH = os.path.expanduser('~/.config/yume-autotagger.json')
@@ -171,11 +170,11 @@ def is_banned(tag_name):
 def filter_third_party_tags(third_party_tags):
     for tag in third_party_tags:
         if is_banned(tag.name):
-            logger.warning('Ignored tag %r', tag.name)
+            logging.warning('Ignored tag %r', tag.name)
             continue
 
         if tag.name in config_key.get('translations', {}):
-            logger.info(
+            logging.info(
                 'Translated tag %r → %r',
                 tag.name,
                 config_key['translations'][tag.name])
@@ -183,7 +182,7 @@ def filter_third_party_tags(third_party_tags):
 
         sanitized_name = sanitize_tag(tag.name)
         if sanitized_name != tag.name:
-            logger.info('Sanitized tag %r → %r', tag.name, sanitized_name)
+            logging.info('Sanitized tag %r → %r', tag.name, sanitized_name)
             tag.name = sanitized_name
 
         yield tag
@@ -191,8 +190,8 @@ def filter_third_party_tags(third_party_tags):
 
 def sync_tags(szuru_api, post_id, source=None):
     post = szuru_api.get_post(post_id)
-    logger.info('%s/post/%d', YUME_URL, post['id'])
-    logger.info(post['contentUrl'])
+    logging.info('%s/post/%d', YUME_URL, post['id'])
+    logging.info(post['contentUrl'])
 
     new_tags = TagList()
     target_tags = TagList()
@@ -220,10 +219,10 @@ def sync_tags(szuru_api, post_id, source=None):
 
         try:
             szuru_api.get_tag(third_party_tag.name)
-            logger.info('Added existing tag %r', third_party_tag.name)
+            logging.info('Added existing tag %r', third_party_tag.name)
         except SzurubooruApiError as ex:
             if 'not found' in str(ex).lower():
-                logger.warning('Added new tag %r', third_party_tag.name)
+                logging.warning('Added new tag %r', third_party_tag.name)
                 new_tags.add(third_party_tag)
             else:
                 raise
@@ -232,19 +231,19 @@ def sync_tags(szuru_api, post_id, source=None):
                 third_party_tag.name):
             if implication not in target_tags:
                 target_tags.add(implication)
-                logger.info('Added implication %r', implication.name)
+                logging.info('Added implication %r', implication.name)
 
     num_tags_added = len(target_tags) - len(existing_tags)
     if num_tags_added <= 0:
-        logger.success('No new tags.')
+        logging.success('No new tags.')
         return
 
     if 'tagme' in target_tags:
-        logger.info('Deleting tag %r', 'tagme')
+        logging.info('Deleting tag %r', 'tagme')
         target_tags.remove('tagme')
 
     for new_tag in new_tags:
-        logger.info('Creating new tag: %r', new_tag.name)
+        logging.info('Creating new tag: %r', new_tag.name)
         if new_tag.category in ('artist', 'copyright', 'character'):
             new_tag.name = capitalize(new_tag.name)
         szuru_api.create_tag({
@@ -252,12 +251,12 @@ def sync_tags(szuru_api, post_id, source=None):
             'category': config_key['categories'][new_tag.category],
         })
 
-    logger.info('Updating post tags')
+    logging.info('Updating post tags')
     szuru_api.update_post(post_id, {
         'tags': [tag.name for tag in target_tags],
         'version': post['version'],
     })
-    logger.success('Tagged with %d tags.', num_tags_added)
+    logging.success('Tagged with %d tags.', num_tags_added)
 
 
 class TaggingHistory:
@@ -323,20 +322,20 @@ class FetchNewestCommand(Command):
     def run(self, args):
         post_id = self._get_last_post_id()
         if not post_id:
-            logger.success('All posts up to date')
+            logging.success('All posts up to date')
             return
         if post_id in self._history.get_processed_post_ids():
-            logger.info('Skipping post %d - already processed', post_id)
+            logging.info('Skipping post %d - already processed', post_id)
             return
-        logger.info('Getting post %d...', post_id)
+        logging.info('Getting post %d...', post_id)
         try:
             sync_tags(self._szuru_api, post_id)
             self._history.mark_as_tagged(post_id)
         except ConnectionError as ex:
-            logger.error(str(ex))
+            logging.error(str(ex))
             return False
         except Exception as ex:
-            logger.error(str(ex))
+            logging.error(str(ex))
             self._history.mark_as_untagged(post_id)
             return False
         return True
@@ -361,17 +360,17 @@ class FetchChosenPostCommand(Command):
         for post_id in args.post_ids:
             if post_id in self._history.get_processed_post_ids() \
                     and not args.force:
-                logger.info('Skipping post %d - already processed', post_id)
+                logging.info('Skipping post %d - already processed', post_id)
                 continue
-            logger.info('Getting post %d...', post_id)
+            logging.info('Getting post %d...', post_id)
             try:
                 sync_tags(self._szuru_api, post_id, args.source)
                 self._history.mark_as_tagged(post_id)
             except ConnectionError as ex:
-                logger.error(str(ex))
+                logging.error(str(ex))
                 all_succeeded = False
             except Exception as ex:
-                logger.error(str(ex))
+                logging.error(str(ex))
                 all_succeeded = False
                 self._history.mark_as_untagged(post_id)
         return all_succeeded
