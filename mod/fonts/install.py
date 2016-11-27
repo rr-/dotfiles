@@ -1,6 +1,6 @@
 import os
-import packages
-import util
+from dotinstall import packages
+from dotinstall import util
 
 
 def run():

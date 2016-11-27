@@ -2,7 +2,7 @@ import sys
 import logging
 import tempfile
 import re
-import util
+from dotinstall import util
 
 logger = logging.getLogger(__name__)
 

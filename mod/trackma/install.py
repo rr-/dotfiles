@@ -1,4 +1,4 @@
-import packages
+from dotinstall import packages
 
 
 def run():

@@ -5,18 +5,17 @@ import sys
 import re
 import argparse
 import importlib
-import util
 
 
 def setup_logger():
     root = logging.getLogger()
     root.setLevel(logging.DEBUG)
 
-    ch = logging.StreamHandler(sys.stdout)
-    ch.setLevel(logging.DEBUG)
+    handler = logging.StreamHandler(sys.stdout)
+    handler.setLevel(logging.DEBUG)
     formatter = logging.Formatter('[%(asctime)s/%(name)s] %(message)s')
-    ch.setFormatter(formatter)
-    root.addHandler(ch)
+    handler.setFormatter(formatter)
+    root.addHandler(handler)
 
 
 def parse_args():

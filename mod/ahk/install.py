@@ -1,8 +1,7 @@
 import os
 import tempfile
-import util
-import logging
-from subprocess import call
+from dotfiles import logging
+from dotinstall import util
 
 logger = logging.getLogger(__name__)
 

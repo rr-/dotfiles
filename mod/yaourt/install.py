@@ -1,9 +1,8 @@
 import os
-import logging
-import tarfile
 import shutil
-import packages
-import util
+from dotfiles import logging
+from dotinstall import packages
+from dotinstall import util
 
 logger = logging.getLogger(__name__)
 
