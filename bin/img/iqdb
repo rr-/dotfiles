@@ -96,7 +96,7 @@ def _get_results(path, args):
     try:
         results = iqdb.search(path)
     except iqdb.NothingFoundIqdbError:
-        results = []
+        results = iqdb.IqdbResultList()
 
     if not args.no_cache:
         cache[path] = results
