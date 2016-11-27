@@ -92,7 +92,7 @@ def _update_xresources(theme):
     if not _has_executable('xrdb'):
         logging.warning('XRDB not found, skipped updating xresources')
         return
-    logging.info('Updating sylminks for xresources')
+    logging.info('Updating symlinks for xresources')
     _relink('~/.config/Xresources-theme', '~/.config/Xresources-%s' % theme)
     run(['xrdb', '-override', expanduser('~/.config/Xresources-theme')])
 
