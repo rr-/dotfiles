@@ -4,7 +4,6 @@
 import argparse
 import urllib.request
 import json
-import re
 
 
 def _parse_args():
