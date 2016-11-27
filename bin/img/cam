@@ -40,7 +40,8 @@ def main(args):
         time.sleep(1)
     print('Go!')
 
-    run(['ffmpeg',
+    run([
+        'ffmpeg',
         '-video_size', '{width}x{height}'.format(width=width, height=height),
         '-framerate', '25',
         '-f', 'x11grab',
