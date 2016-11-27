@@ -25,6 +25,9 @@ def parse_args():
 
 
 def main():
+    directory = os.path.abspath(os.path.dirname(__file__))
+    sys.path.append(os.path.join(directory, 'lib'))
+
     setup_logger()
     args = parse_args()
     original_dir = os.getcwd()
