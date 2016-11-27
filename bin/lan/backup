@@ -1,53 +1,50 @@
-#!/bin/bash
+#!/bin/python3
 # Two-way backup between server and main PC.
 
-local_host=tornado
-remote_host=cyclone
-[ "$(hostname)" != "$local_host" ] && echo "Must be run on $local_host" 1>&2 && exit 1
-local_home="$HOME"
-remote_home="$(ssh -n "$remote_host" "echo $HOME")"
+from subprocess import run
+from dotfiles import logging
 
-trap "exit" INT
 
-remote_backup=( "$remote_home/.backup/sql" "/home/srv" )
-local_backup=( "$local_home/clutter" "$local_home/img" "$local_home/text" )
+def sync(source, target):
+    source_machine, source_path = source.split(':', 1)
+    target_machine, target_path = target.split(':', 1)
 
-function sync {
-    rsync \
-        --chmod=D=rwxrxrx,F=rwrr \
-        --progress \
-        --whole-file \
-        -aKR \
-        --delete-excluded \
-        --delete-during \
-        "$1" \
-        "$2" \
-        --exclude "*.vdi" \
-        --exclude "$local_home/clutter/games/" \
-        --exclude "$local_home/clutter/software/" \
-        --exclude "$local_home/img/net/" \
-        --exclude "$local_home/.backup/$remote_host/" \
-        --exclude "thumbnails/" \
-        --exclude "remote/" \
-        --exclude "*-dev/" \
-        --exclude "mxe/" \
-        --exclude '.git/' \
-        --exclude 'node_modules/' \
-        --exclude 'vendor/'
-}
+    logging.info('%s -> %s', source, target)
 
-for x in ${remote_backup[@]}; do
-    echo "$remote_host --> $local_host: $x"
-    target_dir="$local_home/.backup/$remote_host/"
-    mkdir -p "$target_dir"
-    sync "$remote_host:$x/" "$target_dir"
-    echo
-done
+    run(['ssh', target_machine, 'mkdir', '-p', target_path])
 
-for x in ${local_backup[@]}; do
-    echo "$local_host --> $remote_host: $x"
-    target_dir="$remote_home/.backup/$local_host/"
-    ssh -n "$remote_host" "mkdir -p \"$target_dir\"; chmod 0755 \"$target_dir\""
-    sync "$x/" "$remote_host:$target_dir"
-    echo
-done
+    run([
+        'ssh',
+        '-A',
+        source_machine,
+
+        'rsync',
+        '--progress',
+        '--whole-file',
+        '--chmod=D=rwxrxrx,F=rwrr',
+        '-vaKR',
+        '--delete-excluded',
+        '--delete-during',
+        # '--dry-run',
+
+        source_path,
+        target])
+
+
+def main():
+    logging.info('tornado -> cyclone')
+    sync(
+        'tornado:/home/rr-/src',
+        'cyclone:/usb1/backup/tornado/')
+    for directory in ['clutter', 'hub', 'img', 'software', 'text']:
+        sync(
+            'tornado:/home/rr-/.enc/' + directory,
+            'cyclone:/usb1/backup/tornado/')
+
+    logging.info('tornado -> cyclone')
+    sync('cyclone:/srv/www/', 'tornado:/home/rr-/.backup/cyclone/')
+    sync('cyclone:/home/rr-/text/', 'tornado:/home/rr-/.backup/cyclone/')
+
+
+if __name__ == '__main__':
+    main()
