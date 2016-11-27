@@ -348,7 +348,7 @@ def render_color_cube():
     ''' Renders the XTerm 216 color cube. '''
     templates = []
     for fgbg in [48, 38]:
-        def _replace_callback(match):
+        def _replace_callback(match, fgbg=fgbg):
             color = [int(x, 16) * 16 + int(x, 16) for x in match.group(1)]
             min_diff = None
             ret = ''
