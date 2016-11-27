@@ -12,8 +12,6 @@ from socket import gethostname
 from PIL import Image
 from dotfiles import logging
 
-logger = logging.getLogger(__name__)
-
 LOCAL_HOST = 'tornado'
 REMOTE_HOST = 'cyclone'
 
@@ -99,12 +97,12 @@ def main():
 
             if extension in SMALL_IMAGE_EXTENSIONS \
                     and _is_image_too_small(source_file, args):
-                logger.warning('%s: too small, ignoring', source_file)
+                logging.warning('%s: too small, ignoring', source_file)
                 if not args.dry:
                     unlink(source_file)
                 continue
 
-            logger.info('%s: ok', source_file)
+            logging.info('%s: ok', source_file)
             if not args.dry:
                 move(source_file, target_file)
 
