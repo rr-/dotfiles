@@ -80,8 +80,6 @@ def main():
         '%s:%s' % (REMOTE_HOST, REMOTE_ROOT_DIR),
         TRANSIT_ROOT_DIR])
 
-    min_image_area = args.min_image_width * args.min_image_height
-
     source_directories = list(_find_directories_recursive(TRANSIT_ROOT_DIR))
     for source_directory in source_directories:
         target_directory = path.join(
