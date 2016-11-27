@@ -33,7 +33,8 @@ def main():
     original_dir = os.getcwd()
     for module in args.module:
         full_module_name = 'mod.' + re.sub('[-_]', '.', module)
-        full_module_path = full_module_name.replace('.', '/')
+        full_module_path = os.path.join(
+            directory, full_module_name.replace('.', '/'))
         os.chdir(full_module_path)
         module = importlib.import_module(full_module_name + '.install')
         module.run()
