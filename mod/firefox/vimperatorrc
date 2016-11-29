@@ -1,3 +1,6 @@
+"default search engine
+set ds=duckduckgo
+
 "ctrl + a
 inoremap <C-a> <C-Home><C-S-End>
 cnoremap <C-a> <C-Home><C-S-End>
