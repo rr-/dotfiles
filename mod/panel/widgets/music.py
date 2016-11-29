@@ -73,7 +73,7 @@ class MpdWidget:
                 text = self.current_song['file']
             else:
                 if 'artist' in self.current_song:
-                    text = self.current_song['artist'] + ' - '
+                    text = str(self.current_song['artist']) + ' - '
                 text += self.current_song['title']
             if 'elapsed' in self.mpd_status and 'time' in self.current_song:
                 text += ' %s / %s' % (
