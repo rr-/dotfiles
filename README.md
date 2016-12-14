@@ -12,12 +12,12 @@ custom goodies are located in the `bin/` directory.
 
 - `bin/`: custom tools
 - `mod/`: configuration and installers for third party programs
-- `lib/`: code shared between scripts in `bin/` and modules in `mod/`
+- `lib/`: code shared between the scripts in `bin/` and the modules in `mod/`
 - `txt/`: miscellaneous text resources
 
-### Installing module
+### Installing a module
 
-All of modules can be installed with `./install` like this:
+Every module can be installed with `./install` like this:
 
 ```console
 ./install zsh
@@ -39,5 +39,5 @@ Some modules will work only on GNU/Linux, but essential ones such as `vim` or
 
 While the repository tries to be modular, some things (the ones having to do
 with graphical environment) may not work. For example, I haven't tested panel
-behavior if there is no mpd installed. Similarly, most AutoHotkey stuff makes
-sense only if one has installed Cygwin and Firefox.
+behavior if there is no mpd installed. Similarly, most of the AutoHotkey stuff
+makes sense only if one has installed Cygwin and Firefox.
