@@ -15,7 +15,7 @@ class Chart(QtWidgets.QWidget):
 
     def paintEvent(self, _event):
         width = self.width()
-        height = self.height() - settings.BOTTOM_BORDER
+        height = self.height()
 
         highest = max(p for points in self.points.values() for p in points)
 
