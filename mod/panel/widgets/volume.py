@@ -18,7 +18,7 @@ class VolumeControl(QtWidgets.QWidget):
 
     def paintEvent(self, _event):
         width = self.width()
-        height = self.height() - settings.BOTTOM_BORDER
+        height = self.height()
         margin_x = 3
         margin_y = 3
         inner_width = width - margin_x
