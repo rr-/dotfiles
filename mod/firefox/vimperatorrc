@@ -1,5 +1,5 @@
 "default search engine
-set ds=google  "used to be duckduckgo but it sucks too much
+"used to be duckduckgo but it sucks too much
 
 "ctrl + a
 inoremap <C-a> <C-Home><C-S-End>
