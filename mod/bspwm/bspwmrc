@@ -34,7 +34,7 @@ global_config urgent_border_color "#de3333"
 global_config active_border_color "#bbbbbb"
 global_config normal_border_color "#bbbbbb"
 
-monitor_config top_padding 19
+monitor_config top_padding 0
 monitor_config right_padding 0
 monitor_config bottom_padding 0
 monitor_config left_padding 0

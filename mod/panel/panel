@@ -4,6 +4,7 @@ import sys
 import threading
 import time
 import signal
+from subprocess import run
 from PyQt5 import QtWidgets
 from PyQt5 import QtCore
 from PyQt5 import QtGui
@@ -30,7 +31,8 @@ class MainWindow(QtWidgets.QMainWindow):
             | QtCore.Qt.WindowStaysOnTopHint
             | QtCore.Qt.X11BypassWindowManagerHint)
         self.setFixedSize(
-            sum([int(m.width) for m in monitors]), settings.HEIGHT)
+            sum([int(m.width) for m in monitors]) / self.devicePixelRatioF(),
+            settings.HEIGHT)
         self.move(0, 0)
         self.show()
 
@@ -95,8 +97,8 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.monitor_widgets = []
         for monitor in monitors:
-            monitor_widget = QtWidgets.QWidget(
-                size=QtCore.QSize(int(monitor.width), 0))
+            monitor_widget = QtWidgets.QWidget(size=QtCore.QSize(
+                monitor.width / self.devicePixelRatioF(), 0))
             monitor_widget.setLayout(
                 QtWidgets.QHBoxLayout(margin=0, spacing=12))
             central_widget.layout().addWidget(monitor_widget)
@@ -121,6 +123,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
 def main():
     app = QtWidgets.QApplication([os.fsencode(arg) for arg in sys.argv])
+    app.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling)
     workspaces_updater = WorkspacesUpdater()
     main_window = MainWindow(workspaces_updater.monitors)
 
@@ -142,6 +145,14 @@ def main():
             if widget.delay > 0:
                 time.sleep(widget.delay)
             trigger.emit(widget.render)
+
+    physical_height = main_window.height() * app.devicePixelRatio()
+    for monitor in workspaces_updater.monitors:
+        run([
+            'bspc',
+            'config',
+            '-m', monitor.name,
+            'top_padding', str(physical_height)])
 
     for widget in widgets:
         widget.refresh()
