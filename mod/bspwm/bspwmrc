@@ -72,7 +72,7 @@ else
 fi
 
 pkill -f .config/panel
-nohup ~/.config/panel </dev/null &>/dev/null &
+nohup ~/.config/panel </dev/null &>/tmp/panel.log &
 if [ -e ~/.config/zsh/lightness.sh ]; then
     . ~/.config/zsh/lightness.sh
     ~/src/dotfiles/bin/util/lightness $LIGHTNESS
