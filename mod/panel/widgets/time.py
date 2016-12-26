@@ -1,11 +1,13 @@
 from datetime import datetime
 from PyQt5 import QtWidgets
+from widgets.widget import Widget
 
 
-class TimeWidget:
+class TimeWidget(Widget):
     delay = 1
 
-    def __init__(self, main_window):
+    def __init__(self, app, main_window):
+        super().__init__(app, main_window)
         self.date = None
         self._date_label = QtWidgets.QLabel()
         self._clock_label = QtWidgets.QLabel()
