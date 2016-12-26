@@ -18,6 +18,7 @@ screenshot-format=jpg
 screenshot-template=~/shot-%f-%P
 
 [images]
+video-aspect=no
 fullscreen=yes
 script-opts=osc-showwindowed=no,osc-showfullscreen=no,images-statusbar=yes,reset-view=yes
 input-conf=~~/images/input.conf
