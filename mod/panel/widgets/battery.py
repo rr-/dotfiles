@@ -1,6 +1,7 @@
 import glob
 import time
 from PyQt5 import QtWidgets
+from widgets.widget import Widget
 
 
 def read_file(path):
@@ -8,10 +9,11 @@ def read_file(path):
         return handle.read().strip()
 
 
-class BatteryWidget:
+class BatteryWidget(Widget):
     delay = 3
 
-    def __init__(self, main_window):
+    def __init__(self, app, main_window):
+        super().__init__(app, main_window)
         self.percentage = None
         try:
             self._charge_now = glob.glob(

@@ -2,14 +2,14 @@ import math
 from subprocess import run
 import mpd
 from PyQt5 import QtWidgets
-from .util import set_icon
+from widgets.widget import Widget
 
 
-class MpdWidget:
+class MpdWidget(Widget):
     delay = 1
 
-    def __init__(self, main_window):
-        self.main_window = main_window
+    def __init__(self, app, main_window):
+        super().__init__(app, main_window)
         self.client = mpd.MPDClient()
         self.connected = False
         self.mpd_status = None
@@ -62,9 +62,9 @@ class MpdWidget:
             return
 
         if 'state' in self.mpd_status and self.mpd_status['state'] == 'play':
-            set_icon(self._status_icon_label, 'play')
+            self.set_icon(self._status_icon_label, 'play')
         else:
-            set_icon(self._status_icon_label, 'pause')
+            self.set_icon(self._status_icon_label, 'pause')
 
         text = ''
         if self.current_song:
@@ -86,9 +86,9 @@ class MpdWidget:
         if self._shuffle_icon_label.property('active') != shuffle:
             self._shuffle_icon_label.setProperty('active', shuffle)
             if shuffle:
-                set_icon(self._shuffle_icon_label, 'shuffle-on')
+                self.set_icon(self._shuffle_icon_label, 'shuffle-on')
             else:
-                set_icon(self._shuffle_icon_label, 'shuffle-off')
+                self.set_icon(self._shuffle_icon_label, 'shuffle-off')
 
     def format_seconds(self, seconds):
         seconds = math.floor(float(seconds))

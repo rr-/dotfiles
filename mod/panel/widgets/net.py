@@ -2,7 +2,7 @@ import os
 import glob
 from PyQt5 import QtCore, QtWidgets
 from widgets.chart import Chart
-from .util import set_icon
+from widgets.widget import Widget
 
 
 def read_file(path):
@@ -10,11 +10,11 @@ def read_file(path):
         return handle.read().strip()
 
 
-class NetworkUsageWidget:
+class NetworkUsageWidget(Widget):
     delay = 1
 
-    def __init__(self, main_window):
-
+    def __init__(self, app, main_window):
+        super().__init__(app, main_window)
         self.net_in = 0
         self.net_out = 0
         self.network_enabled = False
@@ -43,8 +43,8 @@ class NetworkUsageWidget:
         self._net_out_text_label = QtWidgets.QLabel()
         self._chart = Chart(QtCore.QSize(80, main_window.height()))
 
-        set_icon(self._net_in_icon_label, 'arrow-down')
-        set_icon(self._net_out_icon_label, 'arrow-up')
+        self.set_icon(self._net_in_icon_label, 'arrow-down')
+        self.set_icon(self._net_out_icon_label, 'arrow-up')
 
         container = QtWidgets.QWidget()
         container.setLayout(QtWidgets.QHBoxLayout(margin=0, spacing=6))

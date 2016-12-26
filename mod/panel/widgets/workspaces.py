@@ -1,6 +1,7 @@
 import json
 import subprocess
 from PyQt5 import QtWidgets
+from widgets.widget import Widget
 
 
 def run(process):
@@ -78,10 +79,11 @@ class WorkspacesUpdater:
         self.monitors = monitors
 
 
-class WorkspacesWidget:
+class WorkspacesWidget(Widget):
     delay = 0
 
-    def __init__(self, main_window, workspaces_updater):
+    def __init__(self, app, main_window, workspaces_updater):
+        super().__init__(app, main_window)
         self._main_window = main_window
         self._updater = workspaces_updater
 

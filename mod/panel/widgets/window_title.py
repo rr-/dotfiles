@@ -3,12 +3,14 @@ from collections import defaultdict
 from PyQt5 import QtCore, QtGui, QtWidgets
 import Xlib
 import Xlib.display
+from widgets.widget import Widget
 
 
-class WindowTitleWidget:
+class WindowTitleWidget(Widget):
     delay = 0
 
-    def __init__(self, main_window, workspaces_updater):
+    def __init__(self, app, main_window, workspaces_updater):
+        super().__init__(app, main_window)
         self._updater = workspaces_updater
         self._labels = []
         for i, _ in enumerate(main_window):

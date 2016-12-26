@@ -1,7 +1,11 @@
-class StretchWidget:
+from widgets.widget import Widget
+
+
+class StretchWidget(Widget):
     delay = 1000
 
-    def __init__(self, main_window):
+    def __init__(self, app, main_window):
+        super().__init__(app, main_window)
         main_window[0].layout().addStretch()
 
     def render(self):

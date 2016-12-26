@@ -3,7 +3,7 @@ import subprocess
 import alsaaudio
 from PyQt5 import QtCore, QtGui, QtWidgets
 import settings
-from .util import set_icon
+from widgets.widget import Widget
 
 
 class VolumeControl(QtWidgets.QWidget):
@@ -57,10 +57,11 @@ class VolumeControl(QtWidgets.QWidget):
         painter.end()
 
 
-class VolumeWidget:
+class VolumeWidget(Widget):
     delay = 1
 
-    def __init__(self, main_window):
+    def __init__(self, app, main_window):
+        super().__init__(app, main_window)
         self.volume = None
         self.muted = False
 
@@ -93,6 +94,8 @@ class VolumeWidget:
         self.muted = alsaaudio.Mixer().getmute()[0]
 
     def render(self):
-        set_icon(self._icon_label, 'volume-off' if self.muted else 'volume-on')
+        self.set_icon(
+            self._icon_label,
+            'volume-off' if self.muted else 'volume-on')
         self._volume_control.set(self.volume)
         self._volume_control.repaint()

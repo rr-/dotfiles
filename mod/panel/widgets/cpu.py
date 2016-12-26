@@ -1,19 +1,20 @@
 import psutil
 from PyQt5 import QtCore, QtWidgets
 from widgets.chart import Chart
-from .util import set_icon
+from widgets.widget import Widget
 
 
-class CpuWidget:
+class CpuWidget(Widget):
     delay = 0
 
-    def __init__(self, main_window):
+    def __init__(self, app, main_window):
+        super().__init__(app, main_window)
         self.percentage = None
         self._icon_label = QtWidgets.QLabel()
         self._text_label = QtWidgets.QLabel()
         self._chart = Chart(QtCore.QSize(80, main_window.height()))
 
-        set_icon(self._icon_label, 'chip')
+        self.set_icon(self._icon_label, 'chip')
 
         container = QtWidgets.QWidget()
         container.setLayout(QtWidgets.QHBoxLayout(margin=0, spacing=6))
