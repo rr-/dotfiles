@@ -156,6 +156,23 @@ def search_post_by_checksum(session, checksum):
     raise SearchError(decoded['description'])
 
 
+def search_posts_by_content(session, content):
+    with TemporaryFile() as handle:
+        handle.write(content)
+        handle.seek(0)
+        response = session.post(
+            API_URL + '/posts/reverse-search',
+            files={
+                'content': handle,
+            })
+        decoded = json.loads(response.text)
+        if response.status_code == 200:
+            if len(decoded['results']):
+                return decoded['results']
+            return []
+        raise SearchError(decoded['description'])
+
+
 def collect_tags(args, initial_tags):
     assert args.tags or args.tag_cmd
     tags = TagList()
@@ -197,7 +214,24 @@ def main():
         session = create_session()
         content = get_file_content(args)
         checksum = get_sha1_checksum(content)
+
         post = search_post_by_checksum(session, checksum)
+
+        if not post:
+            try:
+                similar_results = search_posts_by_content(session, content)
+                if similar_results:
+                    print('Similar posts found:')
+                    for result in similar_results:
+                        print('%.02f: %s (%dx%d)' % (
+                            result['dist'],
+                            result['post']['contentUrl'],
+                            result['post']['canvasWidth'],
+                            result['post']['canvasHeight']))
+                    input('Hit enter to continue, ^C to abort\n')
+            except SearchError:
+                pass
+
         tags = collect_tags(args, post['tags'] if post else [])
         print('Tags:')
         print('\n'.join(tags))
