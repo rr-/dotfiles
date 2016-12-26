@@ -8,8 +8,8 @@ class StretchWidget(Widget):
         super().__init__(app, main_window)
         main_window[0].layout().addStretch()
 
-    def render(self):
+    def refresh_impl(self):
         pass
 
-    def refresh(self):
+    def render_impl(self):
         pass

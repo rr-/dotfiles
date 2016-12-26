@@ -26,13 +26,13 @@ class BatteryWidget(Widget):
         except IndexError:
             self.battery_present = False
 
-    def refresh(self):
+    def refresh_impl(self):
         if self.battery_present:
             current_value = int(read_file(self._charge_now))
             max_value = int(read_file(self._charge_max))
             self.percentage = current_value * 100.0 / max_value
             time.sleep(3)
 
-    def render(self):
+    def render_impl(self):
         if self.battery_present:
             self._label.setText('Battery: %5.02f%%' % self.percentage)

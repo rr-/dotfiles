@@ -130,11 +130,11 @@ class WorkspacesWidget(Widget):
     def click(self, _event, workspace):
         subprocess.call(['bspc', 'desktop', '-f', workspace.name])
 
-    def refresh(self):
+    def refresh_impl(self):
         self._bspc_process.stdout.readline().decode('utf8').strip()
         self._updater.update()
 
-    def render(self):
+    def render_impl(self):
         for i, monitor in enumerate(self._updater.monitors):
             for j, workspace in enumerate(monitor.workspaces):
                 workspace_widget = self._widgets[i].workspace_widgets[j]

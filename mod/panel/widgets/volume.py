@@ -89,11 +89,11 @@ class VolumeWidget(Widget):
         self.refresh()
         self.render()
 
-    def refresh(self):
+    def refresh_impl(self):
         self.volume = alsaaudio.Mixer().getvolume()[0]
         self.muted = alsaaudio.Mixer().getmute()[0]
 
-    def render(self):
+    def render_impl(self):
         self.set_icon(
             self._icon_label,
             'volume-off' if self.muted else 'volume-on')

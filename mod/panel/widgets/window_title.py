@@ -36,7 +36,7 @@ class WindowTitleWidget(Widget):
 
         self._update_titles(self._root)
 
-    def refresh(self):
+    def refresh_impl(self):
         event = self._disp.next_event()
         event_type = getattr(event, 'type', None)
         event_atom = getattr(event, 'atom', None)
@@ -45,7 +45,7 @@ class WindowTitleWidget(Widget):
                 or event_type in [Xlib.X.FocusIn, Xlib.X.FocusOut]:
             self._update_titles(self._root)
 
-    def render(self):
+    def render_impl(self):
         for i, monitor in enumerate(self._updater.monitors):
             focused_desktops = [ws for ws in monitor.workspaces if ws.focused]
             if not focused_desktops:
