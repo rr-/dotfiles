@@ -69,12 +69,12 @@ class MpdWidget(Widget):
         text = ''
         if self.current_song:
             if 'title' not in self.current_song \
-                    or not self.current_song['title'].strip():
+                    or not str(self.current_song['title']).strip():
                 text = self.current_song['file']
             else:
                 if 'artist' in self.current_song:
                     text = str(self.current_song['artist']) + ' - '
-                text += self.current_song['title']
+                text += str(self.current_song['title'])
             if 'elapsed' in self.mpd_status and 'time' in self.current_song:
                 text += ' %s / %s' % (
                     self.format_seconds(self.mpd_status['elapsed']),
