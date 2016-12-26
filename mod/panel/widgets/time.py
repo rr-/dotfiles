@@ -18,9 +18,9 @@ class TimeWidget(Widget):
         self._clock_label.setStyleSheet(
             'QWidget { margin-left: 0; padding: 0 }')
 
-    def refresh(self):
+    def refresh_impl(self):
         self.date = datetime.now()
 
-    def render(self):
+    def render_impl(self):
         self._clock_label.setText(datetime.strftime(self.date, '%H:%M:%S'))
         self._date_label.setText(datetime.strftime(self.date, '%a, %d %b %Y'))

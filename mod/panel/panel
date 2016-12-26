@@ -2,7 +2,6 @@
 import os
 import sys
 import threading
-import logging
 import time
 import signal
 from subprocess import run
@@ -142,14 +141,10 @@ def main():
 
     def worker(widget, trigger):
         while True:
-            try:
-                widget.refresh()
-                if widget.delay > 0:
-                    time.sleep(widget.delay)
-                trigger.emit(widget.render)
-            except Exception as ex:
-                logging.error(ex)
-                time.sleep(1)
+            widget.refresh()
+            if widget.delay > 0:
+                time.sleep(widget.delay)
+            trigger.emit(widget.render)
 
     physical_height = main_window.height() * app.devicePixelRatio()
     for monitor in workspaces_updater.monitors:

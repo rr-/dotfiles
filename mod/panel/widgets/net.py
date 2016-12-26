@@ -56,7 +56,7 @@ class NetworkUsageWidget(Widget):
         main_window[0].layout().addWidget(container)
         self._chart.repaint()
 
-    def refresh(self):
+    def refresh_impl(self):
         if self.network_enabled:
             rx_bytes = int(read_file(self._rx_path))
             tx_bytes = int(read_file(self._tx_path))
@@ -65,7 +65,7 @@ class NetworkUsageWidget(Widget):
             self._old_rx_bytes = rx_bytes
             self._old_tx_bytes = tx_bytes
 
-    def render(self):
+    def render_impl(self):
         if self.network_enabled:
             self._net_in_text_label.setText(
                 '%04.0f KB/s' % (self.net_in / 1024.0))

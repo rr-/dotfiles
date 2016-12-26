@@ -23,13 +23,13 @@ class CpuWidget(Widget):
         container.layout().addWidget(self._chart)
         main_window[0].layout().addWidget(container)
 
-    def refresh(self):
+    def refresh_impl(self):
         if self.percentage is None:
             self.percentage = psutil.cpu_percent(interval=0.1)
         else:
             self.percentage = psutil.cpu_percent(interval=1)
 
-    def render(self):
+    def render_impl(self):
         self._text_label.setText('%05.1f%%' % (self.percentage))
         self._chart.addPoint('#f00', self.percentage)
         self._chart.repaint()

@@ -1,5 +1,7 @@
 import os
 import sys
+import time
+import logging
 from PyQt5 import QtCore, QtGui, QtSvg
 
 
@@ -8,6 +10,25 @@ class Widget:
         self.app = app
         self.main_window = main_window
 
+    def refresh(self):
+        try:
+            self.refresh_impl()
+        except Exception as e:
+            logging.error(e)
+            time.sleep(1)
+
+    def render(self):
+        try:
+            self.render_impl()
+        except Exception as e:
+            logging.error(e)
+            time.sleep(1)
+
+    def refresh_impl(self):
+        raise NotImplementedError()
+
+    def render_impl(self):
+        raise NotImplementedError()
 
     def set_icon(self, widget, icon_name):
         if widget.property('icon_name') == icon_name:
