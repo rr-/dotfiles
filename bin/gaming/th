@@ -5,7 +5,7 @@ import re
 import argparse
 from subprocess import run
 
-TH_ROOT_DIR = os.path.expanduser('~/clutter/games/Touhou Project/')
+TH_ROOT_DIR = os.path.expanduser('~/games/Touhou Project/')
 
 
 def parse_args():
