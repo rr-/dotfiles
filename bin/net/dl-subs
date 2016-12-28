@@ -9,9 +9,8 @@ import re
 import subprocess
 import sys
 import tempfile
-
-import colorama
 import requests
+from dotfiles import logging
 
 PASSWORD = 'iBlm8NTigvru0Jr0'
 URL_TEMPLATE = (
@@ -205,18 +204,6 @@ class SubtitleParser():
         return out
 
 
-def print_warning(arg):
-    print(colorama.Fore.YELLOW + str(arg), file=sys.stderr)
-
-
-def print_error(arg):
-    print(colorama.Fore.RED + str(arg), file=sys.stderr)
-
-
-def print_success(arg):
-    print(colorama.Fore.GREEN + arg)
-
-
 def parse_args():
     parser = argparse.ArgumentParser(
         description='Get movie subtitles using napiprojekt.pl database')
@@ -259,7 +246,7 @@ def flat_walk(top):
 def collect_paths(paths):
     for path in paths:
         if not os.path.exists(path):
-            print_warning('Warning: %s does not exist' % path)
+            logging.warning('Warning: %s does not exist' % path)
             continue
         if os.path.isdir(path):
             for child_path in flat_walk(path):
@@ -304,7 +291,7 @@ def get_raw_subtitles(movie_path, lang):
 
     response = requests.get(url, timeout=3)
     if response.content[0:3] == b'NPc':
-        print_error('%r error: subtitles not found.' % (movie_path))
+        logging.error('%r error: subtitles not found.' % (movie_path))
         return
 
     with tempfile.NamedTemporaryFile(suffix='.7z', delete=False) as arc_file:
@@ -330,7 +317,7 @@ def process_path(parser, movie_path, lang, force, debug):
     '''
     subs_path = os.path.splitext(movie_path)[0] + '.srt'
     if os.path.exists(subs_path) and not force:
-        print_warning('%r has subs, ignoring' % movie_path)
+        logging.warning('%r has subs, ignoring' % movie_path)
         return
 
     try:
@@ -344,16 +331,14 @@ def process_path(parser, movie_path, lang, force, debug):
 
         with open(subs_path, 'wb') as sub_file:
             sub_file.write(output.encode('utf-8'))
-            print_success('%r saved' % movie_path)
+            logging.success('%r saved' % movie_path)
     except Exception as ex:
         if debug:
             raise
-        print_error(ex)
+        logging.error(ex)
 
 
 def main():
-    colorama.init()
-
     args = parse_args()
     paths = collect_paths(args.paths)
     parser = SubtitleParser()
