@@ -12,6 +12,9 @@ path=(/usr/local/bin $path)             # prefer manually compiled libraries
 if [ -d $DIR/bin ]; then                # PATH for all the goodies in this repo
     path=($DIR/bin/* $path)
 fi
+if [ -d ~/.gem/ruby/ ]; then            # ruby!
+    path=(~/.gem/ruby/*/bin $path)
+fi
 export PATH                             # export modified var for subprocesses
 
 typeset -T PYTHONPATH pythonpath :      # turn PYTHONPATH into zsh list
