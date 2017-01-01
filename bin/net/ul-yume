@@ -20,7 +20,8 @@ except:
 
 config_key = config['ul-yume']
 
-API_URL = config_key.get('api-url', 'https://yume.pl/api')
+SITE_URL = config_key.get('api-url', 'https://yume.pl/').rstrip('/')
+API_URL = config_key.get('api-url', 'https://yume.pl/api').rstrip('/')
 USER_NAME = config_key['user']
 PASSWORD = config_key['password']
 SAFETY_MAP = {
@@ -223,9 +224,10 @@ def main():
                 if similar_results:
                     print('Similar posts found:')
                     for result in similar_results:
-                        print('%.02f: %s (%dx%d)' % (
+                        print('%.02f: %s/post/%s (%dx%d)' % (
                             result['dist'],
-                            result['post']['contentUrl'],
+                            SITE_URL,
+                            result['post']['id'],
                             result['post']['canvasWidth'],
                             result['post']['canvasHeight']))
                     input('Hit enter to continue, ^C to abort\n')
