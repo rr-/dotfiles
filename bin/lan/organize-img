@@ -16,7 +16,7 @@ LOCAL_HOST = 'tornado'
 REMOTE_HOST = 'cyclone'
 
 LOCAL_ROOT_DIR = path.expanduser('~/img/net/')
-TRANSIT_ROOT_DIR = path.expanduser('~/hub/img/')
+TRANSIT_ROOT_DIR = path.expanduser('/tmp/img/')
 REMOTE_ROOT_DIR = path.expanduser('~/hub/img/')
 SMALL_IMAGE_EXTENSIONS = ['png', 'jpg', 'jpeg']
 
