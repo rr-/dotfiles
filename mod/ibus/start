@@ -2,3 +2,6 @@
 dconf load /desktop/ibus/<~/.config/ibus/config.ini
 killall ibus-daemon
 ibus-daemon -drR --xim
+export GTK_IM_MODULE=ibus
+export XMODIFIERS=@im=ibus
+export QT_IM_MODULE=ibus
