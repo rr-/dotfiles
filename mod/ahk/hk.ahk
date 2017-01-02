@@ -152,7 +152,7 @@ OnClipboardChange:
     }
 
     ;vifm - activate/run
-    #E::
+    #e::
     {
         IfWinExist, ahk_class Vifm
         {
@@ -168,7 +168,7 @@ OnClipboardChange:
     }
 
     ;vifm - just run
-    +#E::
+    +#e::
     {
         Run, %CygPath%\bin\mintty.exe --window max --class "Vifm" --exec /bin/zsh -l -i -c vifm, %CygPath%/bin
         return
@@ -233,13 +233,13 @@ OnClipboardChange:
 #IfWinActive
 
 ;close active window
-#Q::
+#q::
     ActiveHwnd := WinExist("A")
     WinClose
     return
 
 ;fullscreen
-#F::
+#f::
     WinGet MX, MinMax, A
     if MX
         WinRestore A
@@ -248,13 +248,13 @@ OnClipboardChange:
     return
 
 ;restore active window
-#S::
+#s::
     ActiveHwnd := WinExist("A")
     PostMessage 0x112, 0xf120 ;WM_SYSCOMMAND, SC_RESTORE
     return
 
 ;minimize active window
-#W::
+#w::
     if WinActive("WTW$")
     {
         WinHide
@@ -271,7 +271,7 @@ OnClipboardChange:
     return
 
 ;set active window as always on top
-#A::WinSet, AlwaysOnTop, Toggle, A
+#a::WinSet, AlwaysOnTop, Toggle, A
 
 ;transparency
 AddTransparency(delta)
@@ -297,8 +297,8 @@ AddTransparency(delta)
 }
 #WheelUp::AddTransparency(12)
 #WheelDown::AddTransparency(-12)
-#Z::AddTransparency(-12)
-+#Z::AddTransparency(12)
+#z::AddTransparency(-12)
++#z::AddTransparency(12)
 
 ;directional focus
 DirectionalFocus(direction)
@@ -337,23 +337,23 @@ DirectionalFocus(direction)
     DetectHiddenWindows, On
     return
 }
-#H::DirectionalFocus("left")
-#J::DirectionalFocus("down")
-#K::DirectionalFocus("up")
-#L::DirectionalFocus("right")
-+#H::SendInput, {LWin down}{LShift down}{Left}{LShift up}{LWin up}
-+#L::SendInput, {LWin down}{LShift down}{Right}{LShift up}{LWin up}
+#h::DirectionalFocus("left")
+#j::DirectionalFocus("down")
+#k::DirectionalFocus("up")
+#l::DirectionalFocus("right")
++#h::SendInput, {LWin down}{LShift down}{Left}{LShift up}{LWin up}
++#l::SendInput, {LWin down}{LShift down}{Right}{LShift up}{LWin up}
 
 ;music
-#X::Send {Volume_Up}
-+#X::Volume_Down
-#C::Send {Media_Next}
-+#C::Media_Prev
-#V::Send {Media_Play_Pause}
+#x::Send {Volume_Up}
++#x::Volume_Down
+#c::Send {Media_Next}
++#c::Media_Prev
+#v::Send {Media_Play_Pause}
 
 ;screenshots
-+#I::Run, %CygPath%\bin\zsh.exe -i -l -c 'shot -w -i --output=Z:/', , Hide
-#I::Run, %CygPath%\bin\zsh.exe -i -l -c 'shot -i --output=Z:/', , Hide
++#i::Run, %CygPath%\bin\zsh.exe -i -l -c 'shot -w -i --output=Z:/', , Hide
+#i::Run, %CygPath%\bin\zsh.exe -i -l -c 'shot -i --output=Z:/', , Hide
 
 ;reload autohotkey
 !F12::Reload
