@@ -31,11 +31,13 @@ global IMClass
 global IMPath
 IMClass := "Buddy List"
 IMPath := "C:\Program Files (x86)\pidgin\pidgin.exe"
-If !FileExist(IMPath) {
+If !FileExist(IMPath)
+{
     ;wtw
     IMClass := "ahk_class {B993D471-D465-43f2-BBA5-DEEA18A1789E}"
     IMPath := "C:\Program Files\WTW\WTW.exe"
-    If !FileExist(IMPath) {
+    If !FileExist(IMPath)
+    {
         IMPath := "C:\Program Files\K2T\WTW\WTW.exe"
     }
 }
@@ -360,6 +362,6 @@ DirectionalFocus(direction)
 ~ScrollLock::
     Sleep, 300
     if GetKeyState("ScrollLock", "T")
-       Run, %CygPath%\bin\zsh.exe -i -l -c 'arrows 1', , Hide
+        Run, %CygPath%\bin\zsh.exe -i -l -c 'arrows 1', , Hide
     else
         Run, %CygPath%\bin\zsh.exe -i -l -c 'arrows 0', , Hide
