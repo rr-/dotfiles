@@ -131,14 +131,6 @@ Scroll_Lock
 alt + F12
     bash -c '~/.config/bspwm/bspwmrc'
 
-# resize/move while holding mod and LMB/RMB
-super + button{1,3}
-    bspc pointer -g {move,resize_corner}
-
-# finish resize/move
-super + @button{1,3}
-    bspc pointer -u
-
 # screenshots
 super + i
     bash -c 'shot -i --output ~/'
