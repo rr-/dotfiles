@@ -1,0 +1,33 @@
+# basic
+set editor=`echo \$EDITOR`
+set mail_check=30
+set timeout=30
+set send_charset='utf-8'
+set beep_new=yes
+
+# directories
+set header_cache="~/.mutt/cache/headers"
+set message_cachedir="~/.mutt/cache/bodies"
+set certificate_file="~/.mutt/certificates"
+
+# account
+source ~/.mutt/identify.muttrc
+set realname='Marcin Kurczewski'
+#set from="GMAIL_USER@gmail.com"
+#set imap_user="GMAIL_USER@gmail.com"
+#set smtp_url="smtps://GMAIL_USER@smtp.gmail.com:465/"
+#set imap_pass="GMAIL_PASS"
+#set smtp_pass="GMAIL_PASS"
+
+set folder='imaps://imap.gmail.com/'
+set spoolfile='imaps://imap.gmail.com/INBOX'
+set postponed='imaps://imaps.gmail.com/[Gmail]/Drafts'
+set trash='imaps://imap.gmail.com/[Gmail]/Trash'
+set ssl_starttls=yes
+set ssl_force_tls=yes
+set move=no
+#folder-hook . 'unset trash'
+#folder-hook imaps://imap.gmail.com 'set trash="=[Gmail]/Trash"'
+
+# colors
+source ~/.mutt/colors.muttrc
