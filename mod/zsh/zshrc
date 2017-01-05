@@ -7,22 +7,6 @@ if [ -n "$FBTERM" ]; then
     alias git='TERM=fbterm git'
 fi
 
-# path
-path=(/usr/local/bin $path)             # prefer manually compiled libraries
-if [ -d $DIR/bin ]; then                # PATH for all the goodies in this repo
-    path=($DIR/bin/* $path)
-fi
-if [ -d ~/.gem/ruby/ ]; then            # ruby!
-    path=(~/.gem/ruby/*/bin $path)
-fi
-export PATH                             # export modified var for subprocesses
-
-typeset -T PYTHONPATH pythonpath :      # turn PYTHONPATH into zsh list
-if [ -d $DIR/lib ]; then                # shared libraries for Python scripts
-    pythonpath=($DIR/lib/)
-fi
-export PYTHONPATH                       # export modified var for subprocesses
-
 # autocomplete
 autoload -Uz compinit                   # initialize autocompletion engine
 compinit -i                             # initialize autocompletion engine (2)
@@ -31,6 +15,7 @@ zstyle ':completion:*' matcher-list \
     '+l:|=* r:|=*'                      # recursive
 setopt NO_NOMATCH                       # if extended glob fails, run cmd as-is
 setopt NO_CASE_GLOB                     # ignore case in glob searches
+setopt nullglob                         # nonexisting wildcards expand to ''
 
 # miscellaneous
 unsetopt beep                           # disable beep on errors
@@ -166,7 +151,22 @@ man() {
     man "$@"
 }
 
-[ -d ~/.config/zsh ] && for x in ~/.config/zsh/*.sh; do source "$x"; done &>/dev/null
+# path
+path=(/usr/local/bin $path)             # prefer manually compiled libraries
+path=($DIR/bin/* $path)                 # PATH for all the goodies in this repo
+path=(~/.gem/ruby/*/bin $path)          # ruby!
+export PATH                             # export modified var for subprocesses
+
+typeset -T PYTHONPATH pythonpath :      # turn PYTHONPATH into zsh list
+if [ -d $DIR/lib ]; then                # shared libraries for Python scripts
+    pythonpath=($DIR/lib/)
+fi
+export PYTHONPATH                       # export modified var for subprocesses
+
+# load additional modules
+for x in ~/.config/zsh/*.sh; do
+    source "$x"
+done &>/dev/null
 
 # config fzf
 if [ -f ~/.fzf.zsh ]; then
