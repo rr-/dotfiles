@@ -78,3 +78,16 @@ if [ -e ~/.config/zsh/lightness.sh ]; then
     . ~/.config/zsh/lightness.sh
     ~/src/dotfiles/bin/util/lightness $LIGHTNESS
 fi
+
+#enable transparency manager
+#this is also supposed to eliminate problems with tearing.
+comptonflags=( )
+if lspci | grep -i nvidia &>/dev/null; then
+    # nvidia
+    comptonflags+=( --backend glx --vsync opengl --paint-on-overlay )
+else
+    # amd
+    comptonflags+=( --backend xrender --paint-on-overlay --unredir-if-possible )
+fi
+pkill -f -9 compton &>/dev/null
+compton "${comptonflags[@]}" & # -b broke on pacman -Syu at 2016-03-14
