@@ -4,7 +4,7 @@ import sys
 import threading
 import time
 import signal
-from subprocess import run
+from subprocess import run, PIPE
 from PyQt5 import QtWidgets
 from PyQt5 import QtCore
 from PyQt5 import QtGui
@@ -36,6 +36,12 @@ class MainWindow(QtWidgets.QMainWindow):
         self.move(0, 0)
         self.show()
 
+        window_gap = int(
+            run(['bspc', 'config', 'window_gap'], stdout=PIPE).stdout)
+        window_border = int(
+            run(['bspc', 'config', 'border_width'], stdout=PIPE).stdout)
+        content_margin = (window_gap + window_border) / self.devicePixelRatioF()
+
         # font = QtWidgets.QApplication.font()
         # font.setStyleStrategy(QtGui.QFont.NoAntialias)
         # QtWidgets.QApplication.setFont(font)
@@ -48,7 +54,7 @@ class MainWindow(QtWidgets.QMainWindow):
             color: #333;
             font-family: 'DejaVu Sans';
             font-weight: 500;
-            font-size: 13px;
+            font-size: 12px;
         }
         [class=left] QWidget {
             margin: 1px 3px 3px 0;
@@ -60,7 +66,7 @@ class MainWindow(QtWidgets.QMainWindow):
             background: #EEE;
             height: 10px;
             width: 10px;
-            margin: 3px 0 4px 4px;
+            margin: 4px 4px 4px 0;
             padding: 0;
             color: transparent;
             border: 1px solid #888;
@@ -70,29 +76,21 @@ class MainWindow(QtWidgets.QMainWindow):
             border: 1px solid #888;
         }
         QWidget[class=workspace][ws_focused=True][ws_free=True] {
-            border: 2px solid #0CC;
-            width: 8px;
-            height: 8px;
+            border: 1px solid #0CC;
         }
         QWidget[class=workspace][ws_focused=True][ws_free=False] {
-            border: 2px solid #04A;
+            border: 1px solid #04A;
             background: #0DC;
-            width: 8px;
-            height: 8px;
         }
         QWidget[class=workspace][ws_urgent=True] {
             background: #FFA000;
-            border: 2px solid #DD4000;
-            width: 8px;
-            height: 8px;
-        }
-        QWidget[class=wintitle] {
-            margin-left: 8px;
+            border: 1px solid #DD4000;
         }
         ''')
 
         central_widget = QtWidgets.QWidget()
         central_widget.setLayout(QtWidgets.QHBoxLayout(margin=0, spacing=0))
+        central_widget.layout().setContentsMargins(*[content_margin, 0] * 2)
         self.setCentralWidget(central_widget)
 
         self.monitor_widgets = []
