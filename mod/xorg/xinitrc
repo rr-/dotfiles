@@ -16,18 +16,6 @@ xsetroot -cursor_name left_ptr
 #set Polish keyboard
 setxkbmap pl
 
-#enable transparency manager
-#this is also supposed to eliminate problems with tearing.
-comptonflags=( )
-if lspci | grep -i nvidia &>/dev/null; then
-    # nvidia
-    comptonflags+=( --backend glx --vsync opengl --paint-on-overlay )
-else
-    # amd
-    comptonflags+=( --backend xrender --paint-on-overlay --unredir-if-possible )
-fi
-compton "${comptonflags[@]}" & # -b broke on pacman -Syu at 2016-03-14
-
 clipit -d &
 autocutsel -fork &
 autocutsel -selection PRIMARY -fork &
