@@ -76,11 +76,12 @@ class MainWindow(QtWidgets.QMainWindow):
             border: 1px solid #888;
         }
         QWidget[class=workspace][ws_focused=True][ws_free=True] {
-            border: 1px solid #0CC;
+            border: 1px solid #6AB;
+            background: #8EF;
         }
         QWidget[class=workspace][ws_focused=True][ws_free=False] {
-            border: 1px solid #04A;
-            background: #0DC;
+            border: 1px solid #378;
+            background: #0BC;
         }
         QWidget[class=workspace][ws_urgent=True] {
             background: #FFA000;
