@@ -93,7 +93,8 @@ class WorkspacesWidget(Widget):
         self._widgets = {}
         for i, monitor in enumerate(self._updater.monitors):
             monitor_widget = main_window[i]
-            container_widget = QtWidgets.QWidget()
+            container_widget = QtWidgets.QFrame()
+            container_widget.setObjectName('workspaces')
             container_widget.workspace_widgets = {}
             container_widget.wheelEvent = \
                 lambda event, monitor_index=i: self.wheel(event, monitor_index)

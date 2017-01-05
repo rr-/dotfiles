@@ -47,22 +47,28 @@ class MainWindow(QtWidgets.QMainWindow):
         # QtWidgets.QApplication.setFont(font)
 
         self.setStyleSheet('''
-        QMainWindow {
+        QMainWindow {{
             background: #CCC;
-        }
-        QWidget {
+        }}
+        QWidget {{
             color: #333;
             font-family: 'DejaVu Sans';
             font-weight: 500;
             font-size: 12px;
-        }
-        [class=left] QWidget {
+        }}
+        [class=left] QWidget {{
             margin: 1px 3px 3px 0;
-        }
-        [class=right] QWidget {
+        }}
+        [class=right] QWidget {{
             margin: 1px 0 3px 3px;
-        }
-        QWidget[class=workspace] {
+        }}
+        #workspaces {{
+            padding-left: {content_margin}px;
+        }}
+        #time {{
+            padding-right: {content_margin}px;
+        }}
+        QWidget[class=workspace] {{
             background: #EEE;
             height: 10px;
             width: 10px;
@@ -70,28 +76,27 @@ class MainWindow(QtWidgets.QMainWindow):
             padding: 0;
             color: transparent;
             border: 1px solid #888;
-        }
-        QWidget[class=workspace][ws_free=False] {
+        }}
+        QWidget[class=workspace][ws_free=False] {{
             background: #AAA;
             border: 1px solid #888;
-        }
-        QWidget[class=workspace][ws_focused=True][ws_free=True] {
+        }}
+        QWidget[class=workspace][ws_focused=True][ws_free=True] {{
             border: 1px solid #6AB;
             background: #8EF;
-        }
-        QWidget[class=workspace][ws_focused=True][ws_free=False] {
+        }}
+        QWidget[class=workspace][ws_focused=True][ws_free=False] {{
             border: 1px solid #378;
             background: #0BC;
-        }
-        QWidget[class=workspace][ws_urgent=True] {
+        }}
+        QWidget[class=workspace][ws_urgent=True] {{
             background: #FFA000;
             border: 1px solid #DD4000;
-        }
-        ''')
+        }}
+        '''.format(content_margin=content_margin))
 
         central_widget = QtWidgets.QWidget()
         central_widget.setLayout(QtWidgets.QHBoxLayout(margin=0, spacing=0))
-        central_widget.layout().setContentsMargins(*[content_margin, 0] * 2)
         self.setCentralWidget(central_widget)
 
         self.monitor_widgets = []
