@@ -11,12 +11,12 @@ class TimeWidget(Widget):
         self.date = None
         self._date_label = QtWidgets.QLabel()
         self._clock_label = QtWidgets.QLabel()
-        for widget in [self._date_label, self._clock_label]:
-            main_window[0].layout().addWidget(widget)
-        self._date_label.setStyleSheet(
-            'QWidget { margin-left: 12px; margin-right: 0 }')
-        self._clock_label.setStyleSheet(
-            'QWidget { margin-left: 0; padding: 0 }')
+        wrapper_widget = QtWidgets.QFrame()
+        wrapper_widget.setObjectName('time')
+        wrapper_widget.setLayout(QtWidgets.QHBoxLayout(spacing=12, margin=0))
+        wrapper_widget.layout().addWidget(self._date_label)
+        wrapper_widget.layout().addWidget(self._clock_label)
+        main_window[0].layout().addWidget(wrapper_widget)
 
     def refresh_impl(self):
         self.date = datetime.now()
