@@ -1,5 +1,5 @@
-URxvt.font: xft:Literation Mono Powerline:size=13,xft:DejaVu Sans Mono:size=16,xft:IPAPMincho:size=16,xft:Symbola:size=16,xft:Unifont
-URxvt.boldFont: xft:Literation Mono Powerline:size=13,xft:DejaVu Sans Mono:size=16,xft:IPAPMincho:size=16,xft:Symbola:size=16,xft:Unifont
+URxvt.font: xft:Literation Mono Powerline:size=12,xft:DejaVu Sans Mono:size=16,xft:IPAPMincho:size=16,xft:Symbola:size=16,xft:Unifont
+URxvt.boldFont: xft:Literation Mono Powerline:size=12,xft:DejaVu Sans Mono:size=16,xft:IPAPMincho:size=16,xft:Symbola:size=16,xft:Unifont
 URxvt.allowBoldFonts: false
 URxvt.scrollBar: false
 URxvt.scrollWithBuffer: true
