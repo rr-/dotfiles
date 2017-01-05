@@ -36,11 +36,6 @@ if [[ $- == *i* ]]; then
     stty stop undef                         # reclaim ctrl+s for Vim
 fi
 
-# powerful copying/renaming/linking
-autoload -U zmv
-alias zcp='zmv -C'
-alias zln='zmv -L'
-
 # key bindings for terminal emulator
 if [ "$TERM" =~ rxvt ]; then
     bindkey "\e[3~"   delete-char           # delete
