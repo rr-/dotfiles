@@ -30,3 +30,25 @@ URxvt.url-launcher: /usr/bin/firefox
 URxvt.matcher.button: 1
 
 URxvt.cursorBlink: 1
+
+*.background: #FBFBFB
+*.foreground: #101010
+*.color0:     #2B2B2B
+*.color1:     #870000
+*.color2:     #3F573F
+*.color3:     #875F00
+*.color4:     #005FAF
+*.color5:     #3F3F67
+*.color6:     #004747
+*.color7:     #818181
+*.color8:     #414141
+*.color9:     #D70000
+*.color10:    #6FA76F
+*.color11:    #D7AF00
+*.color12:    #00AFFF
+*.color13:    #7F7FB7
+*.color14:    #00B7B7
+*.color15:    #CECECE
+
+URxvt.depth: 24
+URxvt.background: rgba:FB00/FB00/FB00/FFFF

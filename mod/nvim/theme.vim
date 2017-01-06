@@ -5,19 +5,11 @@
 "basic vim
 if has('nvim')
   set termguicolors
-  if $LIGHTNESS ==? 'light'     "$LIGHTNESS exported by zshrc
-    let theme='PaperColor'
-  else
-    let theme='Tomorrow-Night'
-  endif
+  let theme='PaperColor'
 else
-  if $LIGHTNESS ==? 'light'     "$LIGHTNESS exported by zshrc
-    let theme='hemisu'
-  else
-    let theme='sorcerer'
-  endif
+  let theme='hemisu'
 endif
-let &background=$LIGHTNESS
+let &background='light'
 silent! execute 'colorscheme '.theme
 
 "fix ColorColumn on dark backgrounds
