@@ -21,7 +21,6 @@ def run():
     util.create_symlink('./sxhkdrc', '~/.config/sxhkd/')
     util.create_symlink('./bspwmrc', '~/.config/bspwm/')
     util.create_symlink('./toggle-state', '~/.config/bspwm/')
-    util.create_symlink('./toggle-desktop-padding', '~/.config/bspwm/')
     util.create_symlink('./rules', '~/.config/bspwm/')
     util.create_symlink('./panel', '~/.config/bspwm/')
     util.create_symlink('./start', '~/.config/x/start-bspwm.sh')
