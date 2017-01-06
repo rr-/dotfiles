@@ -1,7 +1,7 @@
 import math
 from subprocess import run
-import mpd
 from PyQt5 import QtWidgets
+from lib.mpd import MpdClient
 from widgets.widget import Widget
 
 
@@ -10,8 +10,7 @@ class MpdWidget(Widget):
 
     def __init__(self, app, main_window):
         super().__init__(app, main_window)
-        self.client = mpd.MPDClient()
-        self.connected = False
+        self.client = MpdClient()
         self.mpd_status = None
         self.current_song = None
 
@@ -48,9 +47,8 @@ class MpdWidget(Widget):
         self.render()
 
     def refresh_impl(self):
-        if not self.connected:
+        if not self.client.connected:
             self.client.connect(host='localhost', port=6600)
-            self.connected = True
         self.mpd_status = self.client.status()
         self.current_song = self.client.currentsong()
 
