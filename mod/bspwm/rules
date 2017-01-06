@@ -18,6 +18,8 @@ elif [ "$title" = ul-yume ] || [ "$title" = ul-gelbooru ]; then
     xdotool windowsize "$window_id" $newWidth $newHeight
     xdotool windowmove "$window_id" --relative -- $x $y
     echo 'state=floating layer=above'
+elif [ "$window_class" = URxvt ]; then
+    compton-trans -c 95 -w "$window_id"
 elif [[ "$instance" =~ Diablo.* ]]; then
     bspc config -n "$window_id" border_width 0
     echo border=off
