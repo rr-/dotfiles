@@ -41,7 +41,7 @@ set noiec
 set syscalls
 
 " active color scheme
-colorscheme current
+colorscheme light
 
 " what should be saved automatically between vifm runs
 set vifminfo=dhistory,savedirs,chistory,state,tui,shistory,phistory,fhistory,dirstack,registers,bookmarks
