@@ -1,7 +1,7 @@
 import json
 import subprocess
 from PyQt5 import QtWidgets
-from widgets.widget import Widget
+from panel.widgets.widget import Widget
 
 
 def run(process):

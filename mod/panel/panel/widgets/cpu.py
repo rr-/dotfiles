@@ -1,7 +1,7 @@
 import psutil
 from PyQt5 import QtCore, QtWidgets
-from widgets.chart import Chart
-from widgets.widget import Widget
+from panel.widgets.chart import Chart
+from panel.widgets.widget import Widget
 
 
 class CpuWidget(Widget):

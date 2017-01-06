@@ -47,8 +47,9 @@ else
     xprop -root -f _NET_WM_NAME 8s -set _NET_WM_NAME "$IRONIC_WM_NAME"
 fi
 
-pkill -f .config/panel
-nohup ~/.config/panel </dev/null &>/tmp/panel.log &
+pkill -f .local/bin/panel
+( cd ~/.local/bin && nohup python3 -m panel </dev/null &>/tmp/panel.log & )
+
 if [ -e ~/.config/zsh/lightness.sh ]; then
     . ~/.config/zsh/lightness.sh
     ~/src/dotfiles/bin/util/lightness $LIGHTNESS
