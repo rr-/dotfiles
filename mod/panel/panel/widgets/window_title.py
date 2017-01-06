@@ -3,7 +3,7 @@ from collections import defaultdict
 from PyQt5 import QtCore, QtGui, QtWidgets
 import Xlib
 import Xlib.display
-from widgets.widget import Widget
+from panel.widgets.widget import Widget
 
 
 class WindowTitleWidget(Widget):

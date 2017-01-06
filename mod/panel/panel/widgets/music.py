@@ -1,7 +1,7 @@
 import math
 from PyQt5 import QtWidgets
-from lib.mpd import MpdClient
-from widgets.widget import Widget
+from panel.lib.mpd import MpdClient
+from panel.widgets.widget import Widget
 
 
 class MpdWidget(Widget):

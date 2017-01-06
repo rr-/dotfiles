@@ -7,18 +7,17 @@ import signal
 from subprocess import run, PIPE
 from PyQt5 import QtWidgets
 from PyQt5 import QtCore
-from PyQt5 import QtGui
 
-import settings
-from widgets.workspaces import WorkspacesWidget, WorkspacesUpdater
-from widgets.window_title import WindowTitleWidget
-from widgets.time import TimeWidget
-from widgets.volume import VolumeWidget
-from widgets.cpu import CpuWidget
-from widgets.net import NetworkUsageWidget
-from widgets.battery import BatteryWidget
-from widgets.music import MpdWidget
-from widgets.stretch import StretchWidget
+from panel import settings
+from panel.widgets.workspaces import WorkspacesWidget, WorkspacesUpdater
+from panel.widgets.window_title import WindowTitleWidget
+from panel.widgets.time import TimeWidget
+from panel.widgets.volume import VolumeWidget
+from panel.widgets.cpu import CpuWidget
+from panel.widgets.net import NetworkUsageWidget
+from panel.widgets.battery import BatteryWidget
+from panel.widgets.music import MpdWidget
+from panel.widgets.stretch import StretchWidget
 
 
 class MainWindow(QtWidgets.QMainWindow):
@@ -40,11 +39,8 @@ class MainWindow(QtWidgets.QMainWindow):
             run(['bspc', 'config', 'window_gap'], stdout=PIPE).stdout)
         window_border = int(
             run(['bspc', 'config', 'border_width'], stdout=PIPE).stdout)
-        content_margin = (window_gap + window_border) / self.devicePixelRatioF()
-
-        # font = QtWidgets.QApplication.font()
-        # font.setStyleStrategy(QtGui.QFont.NoAntialias)
-        # QtWidgets.QApplication.setFont(font)
+        content_margin = (
+            (window_gap + window_border) / self.devicePixelRatioF())
 
         self.setStyleSheet('''
         QMainWindow {{

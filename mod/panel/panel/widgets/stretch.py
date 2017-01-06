@@ -1,4 +1,4 @@
-from widgets.widget import Widget
+from panel.widgets.widget import Widget
 
 
 class StretchWidget(Widget):

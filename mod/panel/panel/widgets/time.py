@@ -1,6 +1,6 @@
 from datetime import datetime
 from PyQt5 import QtWidgets
-from widgets.widget import Widget
+from panel.widgets.widget import Widget
 
 
 class TimeWidget(Widget):

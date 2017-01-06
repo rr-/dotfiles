@@ -2,8 +2,7 @@
 import subprocess
 import alsaaudio
 from PyQt5 import QtCore, QtGui, QtWidgets
-import settings
-from widgets.widget import Widget
+from panel.widgets.widget import Widget
 
 
 class VolumeControl(QtWidgets.QWidget):

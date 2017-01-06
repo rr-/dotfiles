@@ -1,7 +1,7 @@
 import glob
 import time
 from PyQt5 import QtWidgets
-from widgets.widget import Widget
+from panel.widgets.widget import Widget
 
 
 def read_file(path):

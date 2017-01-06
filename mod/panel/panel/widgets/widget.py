@@ -1,5 +1,4 @@
 import os
-import sys
 import time
 import logging
 from PyQt5 import QtCore, QtGui, QtSvg
@@ -35,7 +34,8 @@ class Widget:
             return
         widget.setProperty('icon_name', icon_name)
 
-        icon_path = os.path.join(sys.path[0], 'icons', icon_name + '.svg')
+        icon_path = os.path.join(
+            os.path.dirname(__file__), os.pardir, 'icons', icon_name + '.svg')
         target_size = QtCore.QSize(18, 18)
 
         svg_renderer = QtSvg.QSvgRenderer(icon_path)
