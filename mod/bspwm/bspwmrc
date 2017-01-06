@@ -9,41 +9,11 @@ DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
 
 bspc monitor -d 1 2 3 4 5 6 7 8 9 10 IM
 
-global_config() {
-    bspc config $1 $2
-}
-monitor_config() {
-    for M in $(bspc query -M); do
-        bspc config -m $M $1 $2
-    done
-}
-desktop_config() {
-    for D in $(bspc query -D); do
-        bspc config -d $D $1 $2
-    done
-}
-run_if_needed() {
-    name=$1; shift
-    if ! xdotool search --name "$name"; then
-        nohup $@ </dev/null &>/dev/null &
-    fi
-}
-
-global_config pointer_modifier mod4
-global_config focused_border_color "#00d0ee"
-global_config urgent_border_color "#de3333"
-global_config active_border_color "#bbbbbb"
-global_config normal_border_color "#bbbbbb"
-
-monitor_config top_padding 0
-monitor_config right_padding 0
-monitor_config bottom_padding 0
-monitor_config left_padding 0
-
-desktop_config top_padding 0
-desktop_config right_padding 0
-desktop_config bottom_padding 0
-desktop_config left_padding 0
+bspc config pointer_modifier mod4
+bspc config focused_border_color "#00d0ee"
+bspc config urgent_border_color "#de3333"
+bspc config active_border_color "#bbbbbb"
+bspc config normal_border_color "#bbbbbb"
 
 if [ "$(hostname)" = tornado ]; then
     bspc config border_width 4
@@ -52,11 +22,11 @@ else
     bspc config border_width 3
     bspc config window_gap 10
 fi
-global_config split_ratio             0.6
-global_config borderless_monocle      true
-global_config gapless_monocle         true
-global_config focus_by_distance       true
-global_config focus_follows_pointer   true
+bspc config split_ratio             0.6
+bspc config borderless_monocle      true
+bspc config gapless_monocle         true
+bspc config focus_by_distance       true
+bspc config focus_follows_pointer   true
 
 bspc rule -a remote_irc desktop=IM
 bspc rule -a qbittorrent desktop=9
@@ -84,8 +54,8 @@ if [ -e ~/.config/zsh/lightness.sh ]; then
     ~/src/dotfiles/bin/util/lightness $LIGHTNESS
 fi
 
-#enable transparency manager
-#this is also supposed to eliminate problems with tearing.
+# enable transparency manager
+# this is also supposed to eliminate problems with tearing.
 comptonflags=( )
 if lspci | grep -i nvidia &>/dev/null; then
     # nvidia
