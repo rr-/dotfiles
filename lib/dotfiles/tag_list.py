@@ -1,4 +1,4 @@
-class TagList():
+class TagList:
     def __init__(self):
         self._chosen_tags = []
         self._index = {}
