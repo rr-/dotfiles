@@ -13,15 +13,15 @@ class Widget:
     def refresh(self):
         try:
             self.refresh_impl()
-        except Exception as e:
-            logging.error(e)
+        except Exception as ex:
+            logging.exception(ex)
             time.sleep(1)
 
     def render(self):
         try:
             self.render_impl()
-        except Exception as e:
-            logging.error(e)
+        except Exception as ex:
+            logging.error(ex)
             time.sleep(1)
 
     def refresh_impl(self):
