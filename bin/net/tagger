@@ -364,6 +364,7 @@ class UrwidTagger:
         del urwid.command_map['right']
         self._chosen_tags = chosen_tags
         self._reference_tags = reference_tags
+        self._undo_stack = []
 
         self._fuzzy_input = FuzzyInput(reference_tags)
         self._choices_box = ChosenTagsListBox(chosen_tags, reference_tags)
@@ -411,6 +412,7 @@ class UrwidTagger:
             'ctrl c': self._abort,
             'ctrl q': self._confirm,
             'ctrl x': self._toggle_focus,
+            'ctrl r': self._undo_tag,
         }
         if key in keymap:
             keymap[key]()
@@ -427,7 +429,15 @@ class UrwidTagger:
         else:
             self._columns.set_focus(0)
 
+    def _undo_tag(self):
+        if len(self._undo_stack) == 0:
+            return
+        for tag in self._undo_stack.pop():
+            self._chosen_tags.remove(tag)
+        self._choices_box.update()
+
     def _on_tag_accept(self, _widget, text):
+        previous_tags = set([t.name for t in self._chosen_tags])
         self._chosen_tags.add(LocalTag(text, LocalTag.SOURCE_USER_INPUT))
         to_check = [text]
         visited = set()
@@ -441,6 +451,8 @@ class UrwidTagger:
                     self._chosen_tags.add(
                         LocalTag(implication, LocalTag.SOURCE_IMPLICATION))
                     to_check.append(implication)
+        added_tags = set([t.name for t in self._chosen_tags]) - previous_tags
+        self._undo_stack.append(added_tags)
         self._choices_box.update()
 
 
