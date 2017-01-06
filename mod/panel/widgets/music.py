@@ -1,5 +1,4 @@
 import math
-from subprocess import run
 from PyQt5 import QtWidgets
 from lib.mpd import MpdClient
 from widgets.widget import Widget
@@ -32,17 +31,20 @@ class MpdWidget(Widget):
         main_window[0].layout().addWidget(container)
 
     def play_pause_clicked(self, _event):
-        run(['mpc', 'toggle'])
+        self.client.pause()
         self.refresh()
         self.render()
 
     def prev_or_next_track(self, event):
-        run(['mpc', ['prev', 'next'][event.angleDelta().y() > 0]])
+        if event.angleDelta().y() > 0:
+            self.client.next()
+        else:
+            self.client.prev()
         self.refresh()
         self.render()
 
     def shuffle_clicked(self, _event):
-        run(['mpc', 'random'])
+        self.client.random(self.client.status()['random'] == '0')
         self.refresh()
         self.render()
 
