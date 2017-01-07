@@ -3,7 +3,7 @@ state=$(bspc query -T -n|python -c 'import json,sys;print(json.loads(sys.stdin.r
 if [ "$state" == "$1" ]; then
     bspc node -t tiled -l normal
 else
-    xdo above -t "$(xdo id -N Bspwm -n root | sort | head -n 1)" $(xdo id -n panel)
+    xdo above -t "$(xdo id -N Bspwm -n root | sort | head -n 1)" $(xdo id -a panel)
     if [ "$?" == '0' ]; then
         bspc node -t "$1" -l normal
     else
