@@ -126,6 +126,7 @@ def main():
     app.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling)
     workspaces_updater = WorkspacesUpdater()
     main_window = MainWindow(workspaces_updater.monitors)
+    main_window.setWindowTitle('panel')
 
     widgets = [
         WorkspacesWidget(app, main_window, workspaces_updater),
