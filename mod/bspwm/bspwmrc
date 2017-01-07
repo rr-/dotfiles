@@ -47,7 +47,7 @@ else
     xprop -root -f _NET_WM_NAME 8s -set _NET_WM_NAME "$IRONIC_WM_NAME"
 fi
 
-pkill -f .local/bin/panel
+pkill -f panel
 ( cd ~/.local/bin && nohup python3 -m panel </dev/null &>/tmp/panel.log & )
 
 # enable transparency manager
