@@ -11,8 +11,13 @@ import subprocess
 from tempfile import TemporaryFile
 import requests
 from bs4 import BeautifulSoup
+from dotfiles import config
 from dotfiles.tag_list import TagList
 
+
+CONFIG_KEY = 'ul-gelbooru'
+USER_NAME = config[CONFIG_KEY]['user']
+PASSWORD = config[CONFIG_KEY]['password']
 
 SAFETY_MAP = {
     'safe': 's',
@@ -54,9 +59,6 @@ class DuplicateUploadError(RuntimeError):
 def parse_args():
     parser = argparse.ArgumentParser(
         description='Sends post to gelbooru from CLI')
-    parser.add_argument(
-        '-c', '--config', metavar='CONFIG_PATH',
-        help='path to config JSON file', default='~/.config/gelbooru.json')
     parser.add_argument(
         '-s', '--safety', choices=SAFETY_MAP.keys(),
         required=True, help='safety')
@@ -152,8 +154,6 @@ def collect_tags(args):
 
 def main():
     args = parse_args()
-    with open(os.path.expanduser(args.config), 'r') as handle:
-        config = json.load(handle)
 
     try:
         content = get_file_content(args)
@@ -161,7 +161,7 @@ def main():
         print('Tags:')
         print('\n'.join(tags))
 
-        session = create_session(config['user'], config['pass'])
+        session = create_session(USER_NAME, PASSWORD)
         upload(
             session, content, args.source, args.title, args.safety, tags)
         print('Uploaded.')
