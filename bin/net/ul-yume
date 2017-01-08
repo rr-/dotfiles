@@ -4,7 +4,6 @@
 import sys
 import re
 import argparse
-import hashlib
 import json
 import subprocess
 from tempfile import TemporaryFile
@@ -140,24 +139,7 @@ def get_file_content(args):
         return handle.read()
 
 
-def get_sha1_checksum(content):
-    sha1 = hashlib.sha1()
-    sha1.update(content)
-    return sha1.hexdigest()
-
-
-def search_post_by_checksum(session, checksum):
-    response = session.get(
-        API_URL + '/posts?query=content-checksum:' + checksum)
-    decoded = json.loads(response.text)
-    if response.status_code == 200:
-        if len(decoded['results']):
-            return decoded['results'][0]
-        return None
-    raise SearchError(decoded['description'])
-
-
-def search_posts_by_content(session, content):
+def find_similar_posts(session, content):
     with TemporaryFile() as handle:
         handle.write(content)
         handle.seek(0)
@@ -168,9 +150,7 @@ def search_posts_by_content(session, content):
             })
         decoded = json.loads(response.text)
         if response.status_code == 200:
-            if len(decoded['results']):
-                return decoded['results']
-            return []
+            return decoded
         raise SearchError(decoded['description'])
 
 
@@ -214,18 +194,18 @@ def main():
     try:
         session = create_session()
         content = get_file_content(args)
-        checksum = get_sha1_checksum(content)
 
-        post = search_post_by_checksum(session, checksum)
+        search_results = find_similar_posts(session, content)
 
+        post = search_results['exactPost']
         if not post:
             try:
-                similar_results = search_posts_by_content(session, content)
+                similar_results = search_results['similarPosts']
                 if similar_results:
                     print('Similar posts found:')
                     for result in similar_results:
                         print('%.02f: %s/post/%s (%dx%d)' % (
-                            result['dist'],
+                            result['distance'],
                             SITE_URL,
                             result['post']['id'],
                             result['post']['canvasWidth'],
@@ -260,6 +240,7 @@ def main():
     except JSONDecodeError as ex:
         print('Error decoding JSON: %s' % str(ex.doc), file=sys.stderr)
     sys.exit(1)
+
 
 if __name__ == '__main__':
     main()
