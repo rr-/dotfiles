@@ -21,11 +21,17 @@ set realname='Marcin Kurczewski'
 
 set folder='imaps://imap.gmail.com/'
 set spoolfile='imaps://imap.gmail.com/INBOX'
-set postponed='imaps://imaps.gmail.com/[Gmail]/Drafts'
+set postponed='imaps://imap.gmail.com/[Gmail]/Drafts'
 set trash='imaps://imap.gmail.com/[Gmail]/Trash'
 set ssl_starttls=yes
 set ssl_force_tls=yes
 set move=no
+
+#keep the fucking connection to prevent 'Mailbox closed.'
+set imap_passive=no
+set imap_idle=yes
+set imap_keepalive=60
+
 #folder-hook . 'unset trash'
 #folder-hook imaps://imap.gmail.com 'set trash="=[Gmail]/Trash"'
 
