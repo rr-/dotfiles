@@ -290,4 +290,6 @@ print(results
   .flatten
   .sort { |i| i['grade_sort'] }
   .map { |i| i['kanji'] }
+  .each_slice(20)
+  .map { |row| row.join(' ') }
   .join("\n"))
