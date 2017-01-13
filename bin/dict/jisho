@@ -28,7 +28,7 @@ def _print_definition(definition):
         print('Definition:')
         for item in entry['japanese']:
             if 'word' in item:
-                print('%s (%s)' % (item['word'], item['reading']))
+                print('%s (%s)' % (item['word'], item.get('reading', '')))
             else:
                 print(item['reading'])
         print('Meanings:')
