@@ -1,6 +1,6 @@
 import math
 from PyQt5 import QtWidgets
-from panel.lib.mpd import MpdClient
+from mpd import MPDClient
 from panel.widgets.widget import Widget
 
 
@@ -9,7 +9,7 @@ class MpdWidget(Widget):
 
     def __init__(self, app, main_window):
         super().__init__(app, main_window)
-        self.client = MpdClient()
+        self.client = MPDClient()
         self.mpd_status = None
         self.current_song = None
 
@@ -44,12 +44,12 @@ class MpdWidget(Widget):
         self.render()
 
     def shuffle_clicked(self, _event):
-        self.client.random(self.client.status()['random'] == '0')
+        self.client.random(int(self.client.status()['random'] == '0'))
         self.refresh()
         self.render()
 
     def refresh_impl(self):
-        if not self.client.connected:
+        if not self.client._sock:
             self.client.connect(host='localhost', port=6600)
         self.mpd_status = self.client.status()
         self.current_song = self.client.currentsong()
