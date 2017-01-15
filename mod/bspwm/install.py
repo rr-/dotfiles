@@ -12,12 +12,6 @@ def run():
     packages.try_install('xdo-git')           # like xdotool, but different
     packages.try_install('feh')               # wallpaper renderer
 
-    packages.try_install('python-pip')                  # need PIP
-    packages.try_install('psutil', method='pip')        # CPU usage
-    packages.try_install('pyalsaaudio', method='pip')   # system volume
-    packages.try_install('python-mpd2', method='pip')   # mpd interaction
-    packages.try_install('python3-xlib', method='pip')  # window titles
-
     util.create_symlink('./sxhkdrc', '~/.config/sxhkd/')
     util.create_symlink('./bspwmrc', '~/.config/bspwm/')
     util.create_symlink('./toggle-state', '~/.config/bspwm/')
