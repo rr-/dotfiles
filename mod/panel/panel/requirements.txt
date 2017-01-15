@@ -2,3 +2,4 @@ PyQT5
 python-xlib
 pyalsaaudio
 psutil
+python-mpd2
