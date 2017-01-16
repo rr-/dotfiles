@@ -41,7 +41,7 @@ class MpdWidget(Widget):
             if event.angleDelta().y() > 0:
                 self.client.next()
             else:
-                self.client.prev()
+                self.client.previous()
             self.refresh()
             self.render()
 
