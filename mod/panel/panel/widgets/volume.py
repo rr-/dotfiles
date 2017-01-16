@@ -76,17 +76,19 @@ class VolumeWidget(Widget):
         main_window[0].layout().addWidget(container)
 
     def change_volume(self, event):
-        subprocess.call([
-            'amixer', '-q', 'set', 'Master',
-            '1dB%s' % ['-', '+'][event.angleDelta().y() > 0],
-            'unmute'])
-        self.refresh()
-        self.render()
+        with self.exception_guard():
+            subprocess.call([
+                'amixer', '-q', 'set', 'Master',
+                '1dB%s' % ['-', '+'][event.angleDelta().y() > 0],
+                'unmute'])
+            self.refresh()
+            self.render()
 
     def toggle_mute(self, _event):
-        subprocess.call(['amixer', '-q', 'set', 'Master', 'toggle'])
-        self.refresh()
-        self.render()
+        with self.exception_guard():
+            subprocess.call(['amixer', '-q', 'set', 'Master', 'toggle'])
+            self.refresh()
+            self.render()
 
     def refresh_impl(self):
         self.volume = alsaaudio.Mixer().getvolume()[0]
