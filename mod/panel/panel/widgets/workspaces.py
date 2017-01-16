@@ -113,23 +113,25 @@ class WorkspacesWidget(Widget):
         self.render()
 
     def wheel(self, event, monitor_index):
-        focused_monitor = self._updater.monitors[monitor_index]
-        focused_index = None
-        for i, workspace in enumerate(focused_monitor.workspaces):
-            if workspace.focused:
-                focused_index = i
-                break
-        if focused_index is None:
-            return
+        with self.exception_guard():
+            focused_monitor = self._updater.monitors[monitor_index]
+            focused_index = None
+            for i, workspace in enumerate(focused_monitor.workspaces):
+                if workspace.focused:
+                    focused_index = i
+                    break
+            if focused_index is None:
+                return
 
-        focused_index += 1 if event.angleDelta().y() > 0 else -1
-        focused_index %= len(focused_monitor.workspaces)
-        subprocess.call([
-            'bspc', 'desktop', '-f', '%s' % (
-                focused_monitor.workspaces[focused_index].name)])
+            focused_index += 1 if event.angleDelta().y() > 0 else -1
+            focused_index %= len(focused_monitor.workspaces)
+            subprocess.call([
+                'bspc', 'desktop', '-f', '%s' % (
+                    focused_monitor.workspaces[focused_index].name)])
 
     def click(self, _event, workspace):
-        subprocess.call(['bspc', 'desktop', '-f', workspace.name])
+        with self.exception_guard():
+            subprocess.call(['bspc', 'desktop', '-f', workspace.name])
 
     def refresh_impl(self):
         self._bspc_process.stdout.readline().decode('utf8').strip()

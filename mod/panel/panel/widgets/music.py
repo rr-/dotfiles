@@ -31,22 +31,25 @@ class MpdWidget(Widget):
         main_window[0].layout().addWidget(container)
 
     def play_pause_clicked(self, _event):
-        self.client.pause()
-        self.refresh()
-        self.render()
+        with self.exception_guard():
+            self.client.pause()
+            self.refresh()
+            self.render()
 
     def prev_or_next_track(self, event):
-        if event.angleDelta().y() > 0:
-            self.client.next()
-        else:
-            self.client.prev()
-        self.refresh()
-        self.render()
+        with self.exception_guard():
+            if event.angleDelta().y() > 0:
+                self.client.next()
+            else:
+                self.client.prev()
+            self.refresh()
+            self.render()
 
     def shuffle_clicked(self, _event):
-        self.client.random(int(self.client.status()['random'] == '0'))
-        self.refresh()
-        self.render()
+        with self.exception_guard():
+            self.client.random(int(self.client.status()['random'] == '0'))
+            self.refresh()
+            self.render()
 
     def refresh_impl(self):
         if not self.client._sock:

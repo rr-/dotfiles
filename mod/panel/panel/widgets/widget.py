@@ -1,6 +1,7 @@
 import os
 import time
 import logging
+from contextlib import contextmanager
 from PyQt5 import QtCore, QtGui, QtSvg
 
 
@@ -9,19 +10,21 @@ class Widget:
         self.app = app
         self.main_window = main_window
 
-    def refresh(self):
+    @contextmanager
+    def exception_guard(self):
         try:
-            self.refresh_impl()
+            yield
         except Exception as ex:
             logging.exception(ex)
             time.sleep(1)
 
+    def refresh(self):
+        with self.exception_guard():
+            self.refresh_impl()
+
     def render(self):
-        try:
+        with self.exception_guard():
             self.render_impl()
-        except Exception as ex:
-            logging.error(ex)
-            time.sleep(1)
 
     def refresh_impl(self):
         raise NotImplementedError()
