@@ -6,11 +6,13 @@ import sys
 import argparse
 import shutil
 import collections
+from enum import Enum
 
-STYLE_FILL_FIRST = 0
-STYLE_FILL_LAST = 1
-STYLE_FILL_FIRST_AVAILABLE = 3
-STYLE_CREATE = 2
+class DistributionStyle:
+    FILL_FIRST = 0
+    FILL_LAST = 1
+    FILL_FIRST_AVAILABLE = 3
+    ALWAYS_CREATE = 2
 
 
 def parse_args():
@@ -33,26 +35,27 @@ def parse_args():
         'base_dir', metavar='DIR', help='directory to organize')
 
     group = parser.add_mutually_exclusive_group()
-    group.set_defaults(style=STYLE_FILL_LAST, verbosity=0)
+    group.set_defaults(style=DistributionStyle.FILL_LAST, verbosity=0)
     group.add_argument(
         '--fill-last', action='store_const', dest='style',
-        const=STYLE_FILL_LAST,
+        const=DistributionStyle.FILL_LAST,
         help='try to fill last subdirectory available (default)')
     group.add_argument(
         '--fill-first', action='store_const', dest='style',
-        const=STYLE_FILL_FIRST,
+        const=DistributionStyle.FILL_FIRST,
         help=(
             'try to fill first subdirectory available ' +
             '(will recreate missing subdirectories starting at 1)'))
     group.add_argument(
         '--fill-first-available', action='store_const', dest='style',
-        const=STYLE_FILL_FIRST_AVAILABLE,
+        const=DistributionStyle.FILL_FIRST_AVAILABLE,
         help=(
             'try to fill first existing subdirectory ' +
             '(won\'t recreate missing subdirectories starting at 1)'))
     group.add_argument(
         '--always-create',
-        action='store_const', dest='style', const=STYLE_CREATE,
+        action='store_const', dest='style',
+        const=DistributionStyle.ALWAYS_CREATE,
         help=(
             'don\'t fill existing subdirectories ' +
             '(will create new subdirectory after the last one available)'))
@@ -79,7 +82,7 @@ def next_dir_number(dir_map, style, max_file_count):
     max_dir_number = max(list(dir_map.keys()) + [0])
     next_dir_number = max_dir_number + 1
 
-    if style == STYLE_FILL_FIRST:
+    if style == DistributionStyle.FILL_FIRST:
         for i in range(1, max_dir_number + 1):
             if i not in dir_map:
                 return i, max_file_count
@@ -87,20 +90,20 @@ def next_dir_number(dir_map, style, max_file_count):
                 return dir, max_file_count - dir_map[i]
         return next_dir_number, max_file_count
 
-    elif style == STYLE_FILL_FIRST_AVAILABLE:
+    elif style == DistributionStyle.FILL_FIRST_AVAILABLE:
         for dir, file_count in dir_map.items():
             if file_count < max_file_count:
                 return dir, max_file_count - file_count
         return next_dir_number, max_file_count
 
-    elif style == STYLE_FILL_LAST:
+    elif style == DistributionStyle.FILL_LAST:
         for dir, file_count in reversed(dir_map.items()):
             if file_count < max_file_count:
                 return dir, max_file_count - file_count
             break
         return next_dir_number, max_file_count
 
-    elif style == STYLE_CREATE:
+    elif style == DistributionStyle.ALWAYS_CREATE:
         return next_dir_number, max_file_count
 
     raise AssertionError()
