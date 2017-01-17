@@ -35,14 +35,17 @@ set gui=none,tabs
 "use smaller set of characters for hints to ease single handed navigation
 set hintchars=123456
 
+"automatically follow typed hint after a while
+set hinttimeout=750
+
+"don't display anything extra in hints, just the numbers
+set showtexthints=false
+
 "disable scrollbars
 set scrollbars=false
 
 "show small numbers above each tab
 set tabnumbers=true
-
-"don't display anything extra in hints, just the numbers
-set showtexthints=false
 
 "vimperator issue #590
 js services.services.autoCompleteSearch.class_="@mozilla.org/autocomplete/search;1?name=unifiedcomplete"
