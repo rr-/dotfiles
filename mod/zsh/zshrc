@@ -119,7 +119,11 @@ alias light='lightness light'
 alias yum=ul-yume
 alias gel=ul-gelbooru
 alias tmp=ul-tmp
-alias vb="dec vm; vboxsdl --startvm $(VBoxManage list vms |pcregrep -o1 '(?:")(.*)(?:")') &; disown"
+vb() {
+    dec vm
+    vboxsdl --startvm $(VBoxManage list vms |pcregrep -o1 '(?:")(.*)(?:")') &
+    disown
+}
 
 # legacy aliases
 command -v hd >/dev/null 2>&1 || alias hd='od -Ax -t x1'
