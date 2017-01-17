@@ -29,6 +29,9 @@ HTML_TEMPLATE = '''<!DOCTYPE html>
             font-family: sans-serif;
             text-align: center;
         }
+        a {
+            display: inline-block;
+        }
         img {
             max-width: 15vw;
             max-height: 15vh;
