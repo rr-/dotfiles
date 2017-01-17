@@ -7,8 +7,9 @@ import argparse
 import shutil
 import collections
 
-STYLE_FIRST = 0
-STYLE_LAST = 1
+STYLE_FILL_FIRST = 0
+STYLE_FILL_LAST = 1
+STYLE_FILL_FIRST_AVAILABLE = 3
 STYLE_CREATE = 2
 
 
@@ -32,15 +33,23 @@ def parse_args():
         'base_dir', metavar='DIR', help='directory to organize')
 
     group = parser.add_mutually_exclusive_group()
-    group.set_defaults(style=STYLE_LAST, verbosity=0)
+    group.set_defaults(style=STYLE_FILL_LAST, verbosity=0)
     group.add_argument(
-        '--fill-last', action='store_const', dest='style', const=STYLE_LAST,
+        '--fill-last', action='store_const', dest='style',
+        const=STYLE_FILL_LAST,
         help='try to fill last subdirectory available (default)')
     group.add_argument(
-        '--fill-first', action='store_const', dest='style', const=STYLE_FIRST,
+        '--fill-first', action='store_const', dest='style',
+        const=STYLE_FILL_FIRST,
         help=(
             'try to fill first subdirectory available ' +
             '(will recreate missing subdirectories starting at 1)'))
+    group.add_argument(
+        '--fill-first-available', action='store_const', dest='style',
+        const=STYLE_FILL_FIRST_AVAILABLE,
+        help=(
+            'try to fill first existing subdirectory ' +
+            '(won\'t recreate missing subdirectories starting at 1)'))
     group.add_argument(
         '--always-create',
         action='store_const', dest='style', const=STYLE_CREATE,
@@ -67,32 +76,34 @@ def parse_args():
 
 
 def next_dir_number(dir_map, style, max_file_count):
-    number = max(list(dir_map.keys()) + [0]) + 1
+    max_dir_number = max(list(dir_map.keys()) + [0])
+    next_dir_number = max_dir_number + 1
 
-    if style == STYLE_FIRST:
-        if number != len(dir_map):
-            for i in range(1, number):
-                if i not in dir_map:
-                    return i, max_file_count
+    if style == STYLE_FILL_FIRST:
+        for i in range(1, max_dir_number + 1):
+            if i not in dir_map:
+                return i, max_file_count
+            elif dir_map[i] < max_file_count:
+                return dir, max_file_count - dir_map[i]
+        return next_dir_number, max_file_count
 
+    elif style == STYLE_FILL_FIRST_AVAILABLE:
         for dir, file_count in dir_map.items():
             if file_count < max_file_count:
                 return dir, max_file_count - file_count
+        return next_dir_number, max_file_count
 
-    elif style == STYLE_LAST:
-        # this shouldn't be a loop, but it's late and I'm tired, and this works
-        for dir, file_count in reversed(list(dir_map.items())):
+    elif style == STYLE_FILL_LAST:
+        for dir, file_count in reversed(dir_map.items()):
             if file_count < max_file_count:
                 return dir, max_file_count - file_count
             break
+        return next_dir_number, max_file_count
 
     elif style == STYLE_CREATE:
-        pass
+        return next_dir_number, max_file_count
 
-    else:
-        raise AssertionError()
-
-    return number, max_file_count
+    raise AssertionError()
 
 
 def main():
