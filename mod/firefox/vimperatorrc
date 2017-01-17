@@ -32,8 +32,8 @@ set complete=sl
 "disable everything but tabs
 set gui=none,tabs
 
-"use only 12345 to constructs hints
-set hintchars=12345
+"use smaller set of characters for hints to ease single handed navigation
+set hintchars=123456
 
 "disable scrollbars
 set scrollbars=false
