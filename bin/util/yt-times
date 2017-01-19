@@ -1,0 +1,32 @@
+#!/bin/python3
+import datetime
+import sys
+import re
+
+REGEX = r'(?P<before>.*)((?P<hour>\d+):)?(?P<minute>\d+):(?P<second>\d+)(?P<after>.*)'
+
+
+def main():
+    seconds = 0
+    for line in sys.stdin:
+        line = line.strip()
+        match = re.match(REGEX, line)
+        if not match:
+            print(line)
+            continue
+        results = match.groupdict()
+        print(re.sub(
+            REGEX,
+            '%s: %s %s' % (
+                datetime.timedelta(seconds=seconds),
+                results['before'].rstrip(' -'),
+                results['after'].lstrip(' -')),
+            line))
+        seconds += int(results['hour'] or '0') * 3600
+        seconds += int(results['minute'] or '0') * 60
+        seconds += int(results['second'] or '0')
+
+    print(datetime.timedelta(seconds=seconds))
+
+if __name__ == '__main__':
+    main()
