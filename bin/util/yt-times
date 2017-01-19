@@ -3,6 +3,7 @@ import datetime
 import sys
 import re
 
+STRIP = ' -\N{EN DASH}\N{EM DASH}'
 REGEX = r'(?P<before>.*)((?P<hour>\d+):)?(?P<minute>\d+):(?P<second>\d+)(?P<after>.*)'
 
 
@@ -19,8 +20,8 @@ def main():
             REGEX,
             '%s: %s %s' % (
                 datetime.timedelta(seconds=seconds),
-                results['before'].rstrip(' -'),
-                results['after'].lstrip(' -')),
+                results['before'].rstrip(STRIP),
+                results['after'].lstrip(STRIP)),
             line))
         seconds += int(results['hour'] or '0') * 3600
         seconds += int(results['minute'] or '0') * 60
