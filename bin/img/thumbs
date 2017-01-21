@@ -28,37 +28,53 @@ HTML_TEMPLATE = '''<!DOCTYPE html>
         body {
             font-family: sans-serif;
             text-align: center;
+            background: black;
+        }
+        ul {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            list-style-type: none;
+        }
+        li {
+            display: inline-block;
+            width: 20vh;
+            margin: 0.5em;
+            padding: 0;
         }
         a {
+            margin: auto;
             display: inline-block;
         }
         img {
-            max-width: 15vw;
-            max-height: 15vh;
+            max-width: 20vh;
+            max-height: 20vh;
             background-size: contain;
             background-repeat: no-repeat;
             background-position: center;
-            margin: 0.5em;
             border: 1px solid black;
+            box-sizing: border-box;
             vertical-align: top;
         }
         #pager {
-            margin-bottom: 2em;
+            margin-top: 1em;
         }
         #pager a {
-            background: #f5f5f5;
+            background: #333;
+            color: #eee;
             padding: 0.2em 0.5em;
             margin: 0.5em 0.1em;
         }
         #pager a.active {
             background: peachpuff;
+            color: #333;
         }
     </style>
     <title>Thumbnail list</title>
 </head>
 <body>
+<div id="content"><ul></ul></div>
 <div id="pager"></div>
-<div id="content"></div>
 
 <script type="text/javascript">
 class Pager {
@@ -129,19 +145,21 @@ class Pager {
 }
 
 function showPage(collection) {
-    const contentDiv = document.getElementById('content');
-    while (contentDiv.firstChild) {
-        contentDiv.removeChild(contentDiv.firstChild);
+    const contentList = document.querySelector('#content ul');
+    while (contentList.firstChild) {
+        contentList.removeChild(contentList.firstChild);
     }
 
     for (let item of collection) {
+        const listItem = document.createElement('li');
         const imageLink = document.createElement('a');
         const image = document.createElement('img');
         imageLink.setAttribute('href', item.link);
         image.setAttribute('src', item.link);
         image.setAttribute('alt', item.name);
         imageLink.appendChild(image);
-        contentDiv.appendChild(imageLink);
+        listItem.appendChild(imageLink);
+        contentList.appendChild(listItem);
     }
 }
 
