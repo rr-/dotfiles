@@ -24,10 +24,12 @@ URxvt.keysym.C-0: perl:font-size:reset
 URxvt.keysym.C-minus: perl:font-size:decrease
 URxvt.keysym.C-equal: perl:font-size:increase
 
-URxvt.perl-ext-common: default,matcher,font-size,keyboard-select
+URxvt.perl-ext-common: default,matcher,font-size,keyboard-select,clipboard
 URxvt.keysym.M-Escape: perl:keyboard-select:activate
-URxvt.url-launcher: /usr/bin/firefox
-URxvt.matcher.button: 1
+URxvt.keysym.M-s:      perl:keyboard-select:search
+URxvt.keysym.M-u:      perl:matcher:list
+URxvt.keysym.M-U:      perl:matcher:last
+URxvt.matcher.button:  1
 
 URxvt.cursorBlink: 1
 
