@@ -54,8 +54,12 @@ class MpdWidget(Widget):
     def refresh_impl(self):
         if not self.client._sock:
             self.client.connect(host='localhost', port=6600)
-        self.mpd_status = self.client.status()
-        self.current_song = self.client.currentsong()
+        try:
+            self.mpd_status = self.client.status()
+            self.current_song = self.client.currentsong()
+        except BrokenPipeError:
+            self.client.disconnect()
+            raise
 
     def render_impl(self):
         if not self.mpd_status:
