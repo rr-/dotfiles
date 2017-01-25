@@ -147,9 +147,10 @@ man() {
 }
 
 # path
+path=(~/.local/bin/ $path)              # python!
+path=(~/.gem/ruby/*/bin $path)          # ruby!
 path=(/usr/local/bin $path)             # prefer manually compiled libraries
 path=($DIR/bin/* $path)                 # PATH for all the goodies in this repo
-path=(~/.gem/ruby/*/bin $path)          # ruby!
 export PATH                             # export modified var for subprocesses
 
 typeset -T PYTHONPATH pythonpath :      # turn PYTHONPATH into zsh list
