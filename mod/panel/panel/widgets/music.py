@@ -57,7 +57,7 @@ class MpdWidget(Widget):
         try:
             self.mpd_status = self.client.status()
             self.current_song = self.client.currentsong()
-        except BrokenPipeError:
+        except (BrokenPipeError, ValueError):
             self.client.disconnect()
             raise
 
