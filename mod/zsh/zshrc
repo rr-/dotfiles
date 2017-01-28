@@ -171,6 +171,3 @@ if [ -f ~/.fzf.zsh ]; then
     bindkey '\C-t' transpose-chars
     bindkey '\C-o' fzf-file-widget
 fi
-
-# don't create *.pyc and __pycache__
-export PYTHONDONTWRITEBYTECODE=1

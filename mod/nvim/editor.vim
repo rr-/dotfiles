@@ -54,6 +54,8 @@ set scrolloff=5               "keep at least x lines below and above cursor
 set nojoinspaces              "don't put double spaces when using auto wrapping
 set fillchars=vert:\│         "better character for vertical window splits
 set hidden                    "don't purge undo history when changing buffers
+
+"netrw (directory explorer)
 let g:netrw_banner=0          "disable useless banner in :Explore
 let g:netrw_sort_sequence='[\/]$,*' "disable weird sort order
 
@@ -94,6 +96,11 @@ set wildignore+=*.swp,*.spl
 set wildignore+=*.stackdump
 set wildignore+=*~.*
 set wildignorecase    "case-insensitive filename completion in commands
+let g:netrw_list_hide='*\.o,*\.obj,'
+let g:netrw_list_hide.='*\.pyc,*\.pyo,__pycache__,'
+let g:netrw_list_hide.='*\.swp,*\.spl,'
+let g:netrw_list_hide.='*\.stackdump,'
+let g:netrw_list_hide.='*\~\.*'
 
 function! DeleteHiddenBuffers()
     redir => buffersoutput
