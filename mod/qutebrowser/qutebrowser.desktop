@@ -1,0 +1,14 @@
+[Desktop Entry]
+Name=Qutebrowser
+GenericName=Web Browser
+Categories=Application;Network;
+Comment=Custom definition for Qutebrowser
+Exec=/usr/bin/qutebrowser %u
+Encoding=UTF-8
+MimeType=text/html;text/xml;application/xhtml+xml;application/xml;application/vnd.mozilla.xul+xml;application/rss+xml;application/rdf+xml;image/gif;image/jpeg;image/png;x-scheme-handler/http;x-scheme-handler/https;x-scheme-handler/ftp;x-scheme-handler/chrome;
+MultipleArgs=false
+NoDisplay=true
+StartupNotify=true
+Terminal=false
+Type=Application
+Version=1.0

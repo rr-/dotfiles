@@ -23,7 +23,7 @@ alt + ctrl + shift + bracketright
 
 # web browser
 alt + ctrl + semicolon
-    run-or-raise -n 'Mozilla Firefox|Vimperator' -p firefox
+    run-or-raise -n 'Mozilla Firefox|Vimperator|Qutebrowser' -p "xdg-open 'about:blank'"
 
 # irc
 alt + ctrl + m
