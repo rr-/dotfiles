@@ -18,5 +18,6 @@ def _make_default():
 
 def run():
     packages.try_install('qutebrowser')
+    packages.try_install('python-pyqt5')
     util.create_symlink('./qutebrowser', '~/.config/')
     _make_default()
