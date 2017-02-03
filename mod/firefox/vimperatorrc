@@ -1,6 +1,8 @@
 "default search engine
 "used to be duckduckgo but it sucks too much
 
+map , <Leader>
+
 "ctrl + a
 inoremap <C-a> <C-Home><C-S-End>
 cnoremap <C-a> <C-Home><C-S-End>
@@ -55,3 +57,36 @@ noremap zf :set! browser.enable_automatic_image_resizing=true<CR><Esc>:reload<CR
 
 "show image at original size
 noremap zo :set! browser.enable_automatic_image_resizing=false<CR><Esc>:reload<CR>
+
+"play current url with mpv
+nnoremap <leader>m :silent :execute "!mpv --fullscreen \"" + content.location.href + "\" &"<CR>
+
+"play hinted url with mpv
+javascript <<EOS
+    function extractLink(node) {
+        if (node.tagName === 'A') {
+            return node.getAttribute('href');
+        }
+        for (let child of node.getElementsByTagName('a')) {
+            if (child.getAttribute('href')) {
+                return child.getAttribute('href');
+            }
+        }
+        while (node) {
+            node = node.parentNode;
+            if (node.tagName === 'A' && node.getAttribute('href')) {
+                return node.getAttribute('href');
+            }
+        }
+        return null;
+    }
+
+    hints.addMode('m', 'Open with mpv:', (elem, loc) => {
+        let link = extractLink(elem);
+        if (!link) {
+            liberator.echoerr('Link item doesn\'t exists.');
+            return;
+        }
+        liberator.execute("silent !mpv --fs --ytdl --ytdl-format='(mp4)[height>=720][height<=?1080][fps>=30]+bestaudio' '" + link + "' &", null, true);
+    });
+EOS
