@@ -19,10 +19,11 @@ set realname='Marcin Kurczewski'
 #set imap_pass="GMAIL_PASS"
 #set smtp_pass="GMAIL_PASS"
 
-set folder='imaps://imap.gmail.com/'
-set spoolfile='imaps://imap.gmail.com/INBOX'
-set postponed='imaps://imap.gmail.com/[Gmail]/Drafts'
-set trash='imaps://imap.gmail.com/[Gmail]/Trash'
+set folder='imaps://imap.mailbox.org/'
+set spoolfile='+INBOX'
+set postponed='+Drafts'
+set trash='+Trash'
+set record='+Send'
 set ssl_starttls=yes
 set ssl_force_tls=yes
 set move=no
