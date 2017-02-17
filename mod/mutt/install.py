@@ -3,7 +3,7 @@ from dotinstall import util
 
 
 def run():
-    packages.try_install('mutt-patched')
+    packages.try_install('neomutt')
     util.create_file('~/.mutt/certificates')
     util.create_dir('~/.mutt/cache/bodies')
     util.create_dir('~/.mutt/cache/headers')
