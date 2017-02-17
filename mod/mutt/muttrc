@@ -41,3 +41,5 @@ source ~/.mutt/colors.muttrc
 
 # save to file on S
 macro index,pager S "| ~/.mutt/file_email ~/text/mail/<enter>"
+
+auto_view text/html # view html automatically
