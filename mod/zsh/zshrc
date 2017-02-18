@@ -76,18 +76,18 @@ fi
     fi
 
 # cool command prompt
-PS1=$'%{\e[1;31m%}%n@%M'               # user@host
+if [ -n "$SSH_CLIENT" ] || [ -n "$SSH_TTY" ]; then
+    PS1=$'%{\e[0;36m%}'
+else
+    PS1=$'%{\e[0;33m%}'
+fi
+PS1+='%n@%M'                           # user@host
 PS1+=$'%{\e[0;37m%}:'                  # :
 PS1+=$'%{\e[0;32m%}%~'                 # path relative to $HOME
 PS1+=$'%(?.%{\e[0;37m%}.%{\e[1;31m%})$ ' # colored $ depending on last exit code
 PS1+=$'%{\e[0m%}'                      # reset colors
 if [[ "$TERM" != linux ]]; then
     PS1+=$'%{\e]0;%n@%M:%~\007%}'          # add titlebar user@host:~/
-fi
-
-# command prompt in different color for SSH sessions
-if [ -n "$SSH_CLIENT" ] || [ -n "$SSH_TTY" ]; then
-    PS1=$(echo "$PS1"|sed 's/1;31/0;36/')
 fi
 
 # aliases related to colors
