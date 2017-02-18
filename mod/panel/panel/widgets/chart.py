@@ -1,6 +1,7 @@
 # pylint: disable=invalid-name
 import collections
 from PyQt5 import QtGui, QtWidgets
+from panel.colors import Colors
 
 
 class Chart(QtWidgets.QWidget):
@@ -35,7 +36,7 @@ class Chart(QtWidgets.QWidget):
         painter = QtGui.QPainter()
         painter.begin(self)
 
-        painter.setBrush(QtGui.QBrush(QtGui.QColor('#EEE')))
+        painter.setBrush(QtGui.QBrush(QtGui.QColor(Colors.chart_background)))
         painter.setPen(QtGui.QPen(0))
         painter.drawRect(
             margin, margin, width - 2 * margin, height - 2 * margin)
@@ -61,7 +62,7 @@ class Chart(QtWidgets.QWidget):
                     points.pop(0)
                     break
 
-        painter.setPen(QtGui.QColor('#888'))
+        painter.setPen(QtGui.QColor(Colors.chart_foreground))
         painter.drawRect(
             margin - 1,
             margin - 1,

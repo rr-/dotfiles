@@ -3,6 +3,7 @@ import subprocess
 import alsaaudio
 from PyQt5 import QtCore, QtGui, QtWidgets
 from panel.widgets.widget import Widget
+from panel.colors import Colors
 
 
 class VolumeControl(QtWidgets.QWidget):
@@ -41,14 +42,14 @@ class VolumeControl(QtWidgets.QWidget):
 
         poly = [points['zero'], points['vol1'], points['vol2']]
         painter.setPen(QtGui.QPen(0))
-        painter.setBrush(QtGui.QColor('#AAA'))
+        painter.setBrush(QtGui.QColor(Colors.volume_chart_background))
         painter.drawPolygon(QtGui.QPolygon(poly))
 
         poly = [points['vol1'], points['vol2'], points['max1'], points['max2']]
-        painter.setBrush(QtGui.QColor('#EEE'))
+        painter.setBrush(QtGui.QColor(Colors.chart_background))
         painter.drawPolygon(QtGui.QPolygon(poly))
 
-        painter.setPen(QtGui.QPen(QtGui.QColor('#888')))
+        painter.setPen(QtGui.QPen(QtGui.QColor(Colors.chart_foreground)))
         poly = [points['zero'], points['max1'], points['max2']]
         painter.setBrush(QtGui.QBrush())
         painter.drawPolygon(QtGui.QPolygon(poly))

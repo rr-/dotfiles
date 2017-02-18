@@ -2,6 +2,7 @@ import psutil
 from PyQt5 import QtCore, QtWidgets
 from panel.widgets.chart import Chart
 from panel.widgets.widget import Widget
+from panel.colors import Colors
 
 
 class CpuWidget(Widget):
@@ -31,5 +32,5 @@ class CpuWidget(Widget):
 
     def render_impl(self):
         self._text_label.setText('%05.1f%%' % (self.percentage))
-        self._chart.addPoint('#f00', self.percentage)
+        self._chart.addPoint(Colors.cpu_chart_line, self.percentage)
         self._chart.repaint()
