@@ -5,3 +5,4 @@ if [ -z "$SSH_CLIENT" ] && [ -z "$SSH_CONNECTION" ]; then
         echo 'startx not found'
     fi
 fi
+/bin/true
