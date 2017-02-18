@@ -3,6 +3,7 @@ import glob
 from PyQt5 import QtCore, QtWidgets
 from panel.widgets.chart import Chart
 from panel.widgets.widget import Widget
+from panel.colors import Colors
 
 
 def read_file(path):
@@ -71,6 +72,6 @@ class NetworkUsageWidget(Widget):
                 '%04.0f KB/s' % (self.net_in / 1024.0))
             self._net_out_text_label.setText(
                 '%04.0f KB/s' % (self.net_out / 1024.0))
-            self._chart.addPoint('#0b0', self.net_in)
-            self._chart.addPoint('#f00', self.net_out)
+            self._chart.addPoint(Colors.net_up_chart_line, self.net_in)
+            self._chart.addPoint(Colors.net_down_chart_line, self.net_out)
             self._chart.repaint()

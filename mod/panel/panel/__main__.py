@@ -18,6 +18,7 @@ from panel.widgets.net import NetworkUsageWidget
 from panel.widgets.battery import BatteryWidget
 from panel.widgets.music import MpdWidget
 from panel.widgets.stretch import StretchWidget
+from panel.colors import Colors
 
 
 class MainWindow(QtWidgets.QMainWindow):
@@ -44,10 +45,10 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.setStyleSheet('''
         QMainWindow {{
-            background: #CCC;
+            background: {colors.background};
         }}
         QWidget {{
-            color: #333;
+            color: {colors.foreground};
             font-family: 'DejaVu Sans';
             font-weight: 500;
             font-size: 12px;
@@ -65,31 +66,31 @@ class MainWindow(QtWidgets.QMainWindow):
             padding-right: {content_margin}px;
         }}
         QWidget[class=workspace] {{
-            background: #EEE;
             height: 10px;
             width: 10px;
             margin: 4px 4px 4px 0;
             padding: 0;
             color: transparent;
-            border: 1px solid #888;
+            background: {colors.workspace_background};
+            border: 1px solid {colors.workspace_border};
         }}
         QWidget[class=workspace][ws_free=False] {{
-            background: #AAA;
-            border: 1px solid #888;
+            background: {colors.workspace_full_background};
+            border: 1px solid {colors.workspace_full_border};
         }}
         QWidget[class=workspace][ws_focused=True][ws_free=True] {{
-            border: 1px solid #6AB;
-            background: #8EF;
+            background: {colors.workspace_focused_background};
+            border: 1px solid {colors.workspace_focused_border};
         }}
         QWidget[class=workspace][ws_focused=True][ws_free=False] {{
-            border: 1px solid #378;
-            background: #0BC;
+            background: {colors.workspace_focused_full_background};
+            border: 1px solid {colors.workspace_focused_full_border};
         }}
         QWidget[class=workspace][ws_urgent=True] {{
-            background: #FFA000;
-            border: 1px solid #DD4000;
+            background: {colors.workspace_urgent_background};
+            border: 1px solid {colors.workspace_urgent_border};
         }}
-        '''.format(content_margin=content_margin))
+        '''.format(content_margin=content_margin, colors=Colors))
 
         central_widget = QtWidgets.QWidget()
         central_widget.setLayout(QtWidgets.QHBoxLayout(margin=0, spacing=0))
