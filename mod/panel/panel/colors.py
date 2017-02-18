@@ -1,4 +1,25 @@
-class Colors:
+class ColorsDark:
+    background = '#000'
+    foreground = '#CCC'
+    workspace_background = '#111'
+    workspace_border = '#666'
+    workspace_full_background = '#555'
+    workspace_full_border = '#666'
+    workspace_focused_background = '#540'
+    workspace_focused_border = '#B90'
+    workspace_focused_full_background = '#A80'
+    workspace_focused_full_border = '#CB0'
+    workspace_urgent_background = '#FFA000'
+    workspace_urgent_border = '#FFA000'
+    chart_background = '#111'
+    chart_foreground = '#666'
+    cpu_chart_line = '#F00'
+    net_up_chart_line = '#0B0'
+    net_down_chart_line = '#F00'
+    volume_chart_background = '#AAA'
+
+
+class ColorsLight:
     background = '#CCC'
     foreground = '#333'
     workspace_background = '#EEE'
@@ -17,3 +38,6 @@ class Colors:
     net_up_chart_line = '#0B0'
     net_down_chart_line = '#F00'
     volume_chart_background = '#AAA'
+
+
+Colors = ColorsLight
