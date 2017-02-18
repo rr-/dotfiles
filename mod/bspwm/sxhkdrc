@@ -151,6 +151,3 @@ super + shift + i
     bash -c 'shot -W -i --output ~/ && mpv ~/.local/share/beep-shot.mp3'
 super + alt + i
     bash -c 'shot -M -i --output ~/ && mpv ~/.local/share/beep-shot.mp3'
-
-~button1
-    bspc pointer -g focus
