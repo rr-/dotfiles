@@ -38,18 +38,18 @@ URxvt.cursorBlink: 1
 *.foreground: #101010
 *.color0:     #2B2B2B
 *.color1:     #870000
-*.color2:     #3F573F
+*.color2:     #0F670F
 *.color3:     #875F00
 *.color4:     #005FAF
-*.color5:     #3F3F67
-*.color6:     #004747
+*.color5:     #6F3F6F
+*.color6:     #006767
 *.color7:     #818181
 *.color8:     #414141
 *.color9:     #D70000
-*.color10:    #6FA76F
+*.color10:    #2FA72F
 *.color11:    #D7AF00
 *.color12:    #00AFFF
-*.color13:    #7F7FB7
+*.color13:    #BF7FBF
 *.color14:    #00B7B7
 *.color15:    #CECECE
 
