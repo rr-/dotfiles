@@ -79,7 +79,7 @@ fi
 if [ -n "$SSH_CLIENT" ] || [ -n "$SSH_TTY" ]; then
     PS1=$'%{\e[0;36m%}'
 else
-    PS1=$'%{\e[0;33m%}'
+    PS1=$'%{\e[1;31m%}'
 fi
 PS1+='%n@%M'                           # user@host
 PS1+=$'%{\e[0;37m%}:'                  # :
