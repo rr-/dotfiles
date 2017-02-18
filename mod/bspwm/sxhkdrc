@@ -11,35 +11,44 @@ super + space
 
 # local terminal
 alt + ctrl + bracketleft
-    run-or-raise -cn 'local_terminal' -p "urxvt -name 'local_terminal'"
-{super + Return,alt + ctrl + shift + bracketleft}
-    urxvt -name 'local_terminal'
+    run-or-raise -cn local_terminal -p "urxvt -name local_terminal -e zsh -ilc 'tmux new-session -As work'"
+
+super + Return
+    xdotool search --classname local_terminal windowactivate; \
+    if [ $? -ne 0 ]; then; \
+        urxvt -name local_terminal -e zsh -ilc 'if tmux has-session -t work &>/dev/null; then tmux new-window -t work:; tmux attach-session -t work; else tmux new-session -s work; fi'; \
+    else; \
+        tmux new-window -t work; \
+    fi
+
+alt + ctrl + shift + bracketleft
+    urxvt
 
 # remote terminal
 alt + ctrl + bracketright
-    run-or-raise -cn 'remote_terminal' -p "urxvt -name 'remote_terminal' -e zsh -i -l -c 'ssh cyclone'"
+    run-or-raise -cn remote_terminal -p "urxvt -name remote_terminal -e zsh -ilc 'ssh cyclone -t "'"zsh -ilc tmux\ new-session\ -As\ work"'"'"
+
 alt + ctrl + shift + bracketright
-    urxvt -name 'remote_terminal' -e zsh -i -l -c 'ssh cyclone'
+    urxvt -e zsh -ilc 'ssh cyclone'
+
+# irc
+alt + ctrl + m
+    run-or-raise -cn remote_irc -p "urxvt -name remote_irc -e zsh -ilc 'ssh cyclone -t "'"zsh -ilc tmux\ a"'"'"
+
+alt + ctrl + shift + m
+    run-or-raise -cn remote_irc -p "urxvt -name remote_irc -e zsh -ilc 'ssh cyclone -t "'"zsh -ilc tmux\ a\ -d"'"'"
 
 # web browser
 alt + ctrl + semicolon
     run-or-raise -n 'Mozilla Firefox|Vimperator|Qutebrowser' -p "xdg-open 'about:blank'"
 
-# irc
-alt + ctrl + m
-    run-or-raise -cn 'remote_irc' -p "urxvt -name 'remote_irc' -e zsh -i -l -c 'ssh cyclone -t "'"zsh -i -l -c tmux\ a"'"'"
-
-# irc
-alt + ctrl + shift + m
-    run-or-raise -cn 'remote_irc' -p "urxvt -name 'remote_irc' -e zsh -i -l -c 'ssh cyclone -t "'"zsh -i -l -c tmux\ a\ -d"'"'"
-
 # text editor
 alt + ctrl + shift + n
-    urxvt -e zsh -i -l -c vim
+    urxvt -e zsh -ilc vim
 
 # file manager
 super + e
-    run-or-raise -cn vifm -p 'urxvt -name vifm -e zsh -i -l -c vifm'
+    run-or-raise -cn vifm -p 'urxvt -name vifm -e zsh -ilc vifm'
 
 
 
