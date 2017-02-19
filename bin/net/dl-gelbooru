@@ -45,6 +45,7 @@ class UrlList:
 
 class DownloadStats:
     def __init__(self) -> None:
+        self.errors = 0
         self.ignored = 0
         self.downloaded = 0
 
@@ -61,6 +62,7 @@ class DownloadStats:
             logging.info('ok')
         except Exception as ex:
             logging.error('error: %s', ex)
+            self.errors += 1
 
 
 class Downloader:
@@ -138,6 +140,7 @@ class Downloader:
                 page += 1
         logging.info('Downloaded: %d', self.stats.downloaded)
         logging.info('Ignored: %d', self.stats.ignored)
+        logging.info('Errors: %d', self.stats.errors)
 
 
 def parse_args() -> argparse.Namespace:
