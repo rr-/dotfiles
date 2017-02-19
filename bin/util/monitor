@@ -4,6 +4,7 @@ import hashlib
 import os
 import subprocess
 import time
+from datetime import datetime
 from typing import List
 
 
@@ -46,8 +47,12 @@ def main() -> None:
         current_checksum = _get_checksum(paths)
         if current_checksum != last_checksum:
             print('Change detected.')
+            start = datetime.now()
             subprocess.run(command_line)
             last_checksum = current_checksum
+            print('%s: finished in %.02fs' % (
+                ' '.join(command_line),
+                (datetime.now() - start).total_seconds()))
 
         time.sleep(sleep_time)
 
