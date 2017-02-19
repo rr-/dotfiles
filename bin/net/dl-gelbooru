@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # Downloads images from Gelbooru
 
+import asyncio
 import argparse
 import os
 import re
@@ -67,7 +68,7 @@ class Downloader:
         self.base_dir = base_dir
         self.url_list = url_list
         self.force = force
-        self.limit = 25
+        self.limit = 10
         self.stats = DownloadStats()
         self.session = requests.session()
 
@@ -126,10 +127,14 @@ class Downloader:
                 posts = doc.getElementsByTagName('post')
                 if not posts:
                     break
-                for post in posts:
-                    self.download_file(
+                loop = asyncio.get_event_loop()
+                loop.run_until_complete(asyncio.gather(*[
+                    loop.run_in_executor(
+                        None,
+                        self.download_file,
                         post.getAttribute('file_url'),
                         int(post.getAttribute('id')))
+                    for post in posts]))
                 page += 1
         logging.info('Downloaded: %d', self.stats.downloaded)
         logging.info('Ignored: %d', self.stats.ignored)
