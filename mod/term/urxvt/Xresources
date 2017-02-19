@@ -31,6 +31,7 @@ URxvt.keysym.M-u:      perl:matcher:list
 URxvt.keysym.M-U:      perl:matcher:last
 URxvt.url-launcher:    /usr/bin/xdg-open
 URxvt.matcher.button:  1
+URxvt.matcher.pattern.0: \\b(?:(?:https?|ftp|news|file):\/\/|mailto:)\\w[\\w\-\@;\/?:&=%\$_.+!*\x27(),~#\\[\\]:]+
 
 URxvt.cursorBlink: 1
 
