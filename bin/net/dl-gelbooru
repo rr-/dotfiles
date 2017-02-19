@@ -1,181 +1,166 @@
-#!/usr/bin/ruby -w
-# Download things from Gelbooru
-# TODO: rewrite to Python
+#!/usr/bin/env python
+# Downloads images from Gelbooru
 
-require 'fileutils'
-require 'net/http'
-require 'open-uri'
-require 'rexml/document'
-require 'json'
+import argparse
+import os
+import re
+import xml.dom.minidom
+from contextlib import contextmanager
+from typing import List, Dict, Generator
+import requests
+from dotfiles import config
+from dotfiles import logging
 
-class UrlList
-  attr_reader :downloaded_urls
+CONFIG_KEY = 'ul-gelbooru'
+USER_NAME = config[CONFIG_KEY]['user']
+PASSWORD = config[CONFIG_KEY]['password']
+LOG_PATH = os.path.expanduser('~/.cache/gelbooru.log')
 
-  def initialize
-    @downloaded_urls = {}
-    @buffered_urls = []
-    return unless File.exist?(log_path)
-    File.readlines(log_path).each do |line|
-      @downloaded_urls[line.strip!] = true
-    end
-  end
 
-  def log_path
-    File.join(File.expand_path('~/.cache'), 'gelbooru.log')
-  end
+class UrlList:
+    def __init__(self) -> None:
+        self.downloaded_urls: Dict[str, bool] = {}
+        self.buffered_urls: List[str] = []
+        if not os.path.exists(LOG_PATH):
+            for line in open(LOG_PATH, 'r'):
+                self.downloaded_urls[line.strip()] = True
 
-  def add(url)
-    return if downloaded?(url)
-    @downloaded_urls[url] = true
-    @buffered_urls.push(url)
-  end
+    def add(self, url: str) -> None:
+        if self.is_downloaded(url):
+            return
+        self.downloaded_urls[url] = True
+        self.buffered_urls.append(url)
 
-  def flush
-    FileUtils.mkdir_p(File.dirname(log_path))
-    open(log_path, 'a') do |f|
-      @buffered_urls.each do |url|
-        f << url + "\n"
-      end
-    end
-    @buffered_urls = []
-  end
+    def flush(self) -> None:
+        os.makedirs(os.path.dirname(LOG_PATH), exist_ok=True)
+        with open(LOG_PATH, 'a') as handle:
+            for url in self.buffered_urls:
+                print(url, file=handle)
+        self.buffered_urls = []
 
-  def downloaded?(url)
-    @downloaded_urls[url]
-  end
-end
+    def is_downloaded(self, url: str) -> bool:
+        return url in self.downloaded_urls
 
-class DownloadStats
-  attr_accessor :ignored
-  attr_accessor :downloaded
 
-  def initialize
-    @ignored = 0
-    @downloaded = 0
-  end
+class DownloadStats:
+    def __init__(self) -> None:
+        self.ignored = 0
+        self.downloaded = 0
 
-  def ignore(url, reason)
-    puts url + '... ' + reason
-    @ignored += 1
-  end
+    def ignore(self, url: str, reason: str) -> None:
+        logging.info('%s... %s', url, reason)
+        self.ignored += 1
 
-  def download(url)
-    fail unless block_given?
-    begin
-      print url, '... downloading... '
-      yield self
-      @downloaded += 1
-      puts 'ok'
-    rescue => e
-      puts 'error: ' + e.to_s
-    end
-  end
-end
+    @contextmanager
+    def download(self, url: str) -> Generator:
+        try:
+            logging.info('%s... downloading', url)
+            yield
+            self.downloaded += 1
+            logging.info('ok')
+        except Exception as ex:
+            logging.error('error: %s', ex)
 
-class Downloader
-  def initialize(base_folder, url_list, force)
-    @limit = 75
-    @base_folder = base_folder
-    @stats = DownloadStats.new
-    @url_list = url_list
-    @force = force
-    @cookies = ''
-  end
 
-  def login(user, pass)
-    response = Net::HTTP.post_form(
-      URI.parse('http://gelbooru.com/index.php?page=account&s=login&code=00'),
-      {
-        'user' => user,
-        'pass' => pass,
-        'submit' => 'Log in'
-      })
-    all_cookies = response.get_fields('set-cookie')
-    cookies_array = Array.new
-    all_cookies.each { | cookie |
-      cookies_array.push(cookie.split('; ')[0])
-    }
-    @cookies = cookies_array.join('; ')
-  end
+class Downloader:
+    def __init__(self, base_dir: str, url_list: UrlList, force: bool) -> None:
+        self.base_dir = base_dir
+        self.url_list = url_list
+        self.force = force
+        self.limit = 25
+        self.stats = DownloadStats()
+        self.session = requests.session()
 
-  def target_path(post_id, url)
-    File.join(
-      @base_folder,
-      'gelbooru_' + post_id.to_s + '_' + File.basename(url))
-  end
+    def login(self, user: str, password: str) -> None:
+        response = self.session.post(
+            'http://gelbooru.com/index.php?page=account&s=login&code=00',
+            data={
+                'user': user,
+                'pass': password,
+                'submit': 'Log in',
+            })
+        response.raise_for_status()
 
-  def download_file(url, post_id)
-    target_path = target_path(post_id, url)
+    def get_target_path(self, post_id: int, url: str) -> str:
+        return os.path.join(
+            self.base_dir,
+            'gelbooru_' + str(post_id) + '_' + os.path.basename(url))
 
-    if !@force && !@url_list.nil? && @url_list.downloaded?(File.basename(url))
-      @stats.ignore(url, 'already downloaded')
-      return
-    end
+    def download_file(self, url: str, post_id: int) -> None:
+        target_path = self.get_target_path(post_id, url)
+        if not url.startswith('http'):
+            url = 'http://' + url.lstrip('/')
 
-    if File.exist?(target_path)
-      @stats.ignore(url, 'already exists')
-      return
-    end
+        if not self.force \
+                and self.url_list.is_downloaded(os.path.basename(url)):
+            self.stats.ignore(url, 'already downloaded')
+            return
 
-    @stats.download(url) do
-      content = Net::HTTP.get_response(URI.parse(url)).body
-      open(target_path, 'wb') do |file|
-        file.write(content)
-      end
-      unless @url_list.nil?
-        @url_list.add(File.basename(url))
-        @url_list.flush
-      end
-    end
-  end
+        if os.path.exists(target_path):
+            self.stats.ignore(url, 'already exists')
+            return
 
-  def download_page(page, tags)
-    url = 'http://gelbooru.com/index.php?page=dapi&s=post&q=index' \
-      + '&limit=' + @limit.to_s \
-      + '&tags=' + URI.encode_www_form_component(tags) \
-      + '&pid=' + page.to_s
-    uri = URI.parse(url)
+        with self.stats.download(url):
+            response = self.session.get(url)
+            response.raise_for_status()
+            with open(target_path, 'wb') as handle:
+                handle.write(response.content)
+            self.url_list.add(os.path.basename(url))
+            self.url_list.flush()
 
-    request = Net::HTTP::Get.new(uri.request_uri)
-    request['Cookie'] = @cookies
-    xml_data = Net::HTTP.new(uri.host).request(request).body
-    doc = REXML::Document.new(xml_data)
-    doc.elements.each('posts/post') { |e| e }
-  end
+    def download_page(self, page: int, query: str) -> bytes:
+        url = (
+            'http://gelbooru.com/index.php?page=dapi&s=post&q=index'
+            + '&limit=' + str(self.limit)
+            + '&tags=' + query
+            + '&pid=' + str(page))
+        response = self.session.get(url)
+        response.raise_for_status()
+        return response.content
 
-  def download_posts(posts)
-    posts.each do |post|
-      download_file(
-        post.attribute('file_url').to_s,
-        post.attribute('id').to_s.to_i)
-    end
-  end
+    def run(self, query: str) -> None:
+        page = 0
+        while True:
+            response = self.download_page(page, query)
+            with xml.dom.minidom.parseString(response) as doc:
+                posts = doc.getElementsByTagName('post')
+                if not posts:
+                    break
+                for post in posts:
+                    self.download_file(
+                        post.getAttribute('file_url'),
+                        int(post.getAttribute('id')))
+                page += 1
+        logging.info('Downloaded: %d', self.stats.downloaded)
+        logging.info('Ignored: %d', self.stats.ignored)
 
-  def run(tags)
-    page = 0
-    loop do
-      posts = download_page(page, tags)
-      break if posts.size == 0
-      download_posts posts
-      page += 1
-    end
-    puts "Downloaded: #{@stats.downloaded}"
-    puts "Ignored: #{@stats.ignored}"
-  end
-end
 
-if ARGV.length < 1
-  STDERR.puts 'Too few arguments'
-  exit 1
-end
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser('Download images from gelbooru.')
+    parser.add_argument('query', nargs='+')
+    parser.add_argument('--target-dir', default='~/img/net/gelbooru/')
+    parser.add_argument('-f', '--force', action='store_true')
+    return parser.parse_args()
 
-tags = ARGV.select { |a| !a[/^--/] }.join(' ')
-base_folder = File.expand_path('~/img/net/gelbooru/' + tags.gsub(/[\\\/:*?"<>|]/, '_'))
-FileUtils.mkdir_p(base_folder)
 
-config = JSON.parse(File.read(File.expand_path('~/.config/gelbooru.json')))
-force = ARGV.include?('--force')
-url_list = UrlList.new
-downloader = Downloader.new(base_folder, url_list, force)
-downloader.login(config['user'], config['pass'])
-downloader.run(tags)
+def sanitize_filename(name: str) -> str:
+    return re.sub(r'[\\\/:*?"<>|]', '_', name)
+
+
+def main() -> None:
+    args = parse_args()
+    query: str = ' '.join(args.query)
+    target_dir: str = args.target_dir
+    force: bool = args.force
+
+    target_dir = os.path.expanduser(target_dir + sanitize_filename(query))
+    os.makedirs(target_dir, exist_ok=True)
+
+    url_list = UrlList()
+    downloader = Downloader(target_dir, url_list, force)
+    downloader.login(USER_NAME, PASSWORD)
+    downloader.run(query)
+
+
+if __name__ == '__main__':
+    main()
