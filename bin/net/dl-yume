@@ -7,7 +7,7 @@ import requests
 from dotfiles import config
 from dotfiles import logging
 
-config_key = config['yume-autotagger']
+config_key = config['dl-yume']
 YUME_URL = config_key.get('url', 'https://yume.pl')
 API_URL = config_key.get('api-url', 'https://yume.pl/api')
 YUME_USER_NAME = config_key['user']
