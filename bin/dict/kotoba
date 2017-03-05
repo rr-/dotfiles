@@ -1,0 +1,174 @@
+#!/bin/python3
+import argparse
+from os.path import expanduser
+from typing import Any, List
+import sqlalchemy as sa
+from drillsrs import db, cmd, util
+from drillsrs.cmd.command_base import CommandBase
+from drillsrs.__main__ import (
+    create_arg_parser, parse_args, execute_command_with_args)
+
+
+DECK_NAME = 'kotoba'
+REPORT_PATH = expanduser('~/.local/share/drillsrs/kotoba.htm')
+
+
+def _remove_argparse_options(
+        parser: argparse.ArgumentParser, options: List[str]):
+    for option in options:
+        for action in parser._actions:
+            if option == action.dest:
+                action.container._remove_action(action)
+            elif option in action.option_strings:
+                action.option_strings.remove(option)
+                action._option_string_actions.pop(option, None)
+                if not action.option_strings:
+                    action.container._remove_action(action)
+
+
+def _proxy_command(command: CommandBase) -> CommandBase:
+    original_command = command()
+
+    class ProxyCommand(CommandBase):
+        names = original_command.names
+
+        def decorate_arg_parser(self, parser: argparse.ArgumentParser) -> None:
+            original_command.decorate_arg_parser(parser)
+            _remove_argparse_options(parser, ['deck', 'deck_name'])
+
+        def run(self, args: argparse.Namespace) -> None:
+            args.deck = DECK_NAME
+            original_command.run(args)
+
+    return ProxyCommand
+
+
+class ListCommand(cmd.ListCardsCommand):
+    names = ['list']
+
+
+class UpdateCommand(cmd.UpdateCardCommand):
+    names = ['update']
+
+
+class DeleteCommand(cmd.DeleteCardCommand):
+    names = ['delete']
+
+
+class ReviewCommand(cmd.ReviewCommand):
+    def run(self, args: argparse.Namespace) -> None:
+        try:
+            super().run(args)
+        finally:
+            stats_args = argparse.Namespace()
+            stats_args.deck = DECK_NAME
+            stats_args.output = REPORT_PATH
+            cmd.StatsCommand().run(stats_args)
+
+
+def _create_card(
+        session: Any,
+        deck: db.Deck,
+        question: str,
+        answers: List[str],
+        tags: List[str]) -> None:
+    if not answers:
+        return None
+    card = db.Card()
+    card.question = question
+    card.answers = answers
+    card.tags = [db.get_tag_by_name(session, deck, tag) for tag in tags]
+    card.is_active = False
+    card.due_date = None
+    deck.cards.append(card)
+    return card
+
+
+def _sync_card_answers(answers: List[str], card: db.Card) -> None:
+    for answer in answers:
+        if answer.lower() not in [a.lower() for a in card.answers]:
+            print('%s not in %r' % (answer, card.answers))
+            if util.confirm('Add alias?'):
+                card.answers.append(answer)
+
+
+class AddCommand(CommandBase):
+    names = ['add']
+
+    def decorate_arg_parser(self, parser: argparse.ArgumentParser) -> None:
+        parser.add_argument('-q', '--question', required=True)
+        parser.add_argument('-r', '--reading', nargs='*')
+        parser.add_argument('-m', '--meaning', nargs='+', required=True)
+
+    def run(self, args: argparse.Namespace) -> None:
+        question: str = args.question
+        meanings: List[str] = args.meaning
+        readings: List[str] = args.reading
+
+        with db.session_scope() as session:
+            deck = db.get_deck_by_name(session, DECK_NAME)
+
+            meaning_card = None
+            reading_card = None
+
+            existing_cards = (
+                session
+                .query(db.Card)
+                .filter(db.Card.deck_id == deck.id)
+                .filter(db.Card.question.ilike(question))
+                .all())
+
+            if existing_cards:
+                for i, card in enumerate(existing_cards):
+                    if 'reading' in [tag.name for tag in card.tags]:
+                        print('Found reading card #%d' % card.num)
+                        reading_card = card
+                        _sync_card_answers(readings, reading_card)
+                    elif 'meaning' in [tag.name for tag in card.tags]:
+                        print('Found meaning card #%d' % card.num)
+                        meaning_card = card
+                        _sync_card_answers(meanings, meaning_card)
+            else:
+                reading_card = _create_card(
+                    session, deck, question, readings, ['reading'])
+                meaning_card = _create_card(
+                    session, deck, question, meanings, ['meaning'])
+
+            num = (
+                session
+                .query(sa.func.max(db.Card.num))
+                .filter(db.Card.deck_id == deck.id)
+                .filter(db.Card.is_active == 1)
+                .scalar()) or 0
+
+            for i, card in enumerate([reading_card, meaning_card]):
+                if card:
+                    db.move_card(session, card, num + 1 + i)
+                    print(
+                        '%s card %s' % (
+                            'Updated' if existing_cards else 'Created',
+                            '#%d' % card.num))
+
+
+def main() -> None:
+    db.init()
+
+    commands = [
+        AddCommand(),
+        _proxy_command(ListCommand)(),
+        _proxy_command(UpdateCommand)(),
+        _proxy_command(DeleteCommand)(),
+        _proxy_command(cmd.StudyCommand)(),
+        _proxy_command(ReviewCommand)(),
+        _proxy_command(cmd.HowToCommand)(),
+    ]
+
+    parser = create_arg_parser(
+        commands,
+        'Wrapper around drill-srs with extra convenience functions')
+    args = parse_args(parser)
+    execute_command_with_args(args.command_cls, args)
+
+
+if __name__ == '__main__':
+    main()
