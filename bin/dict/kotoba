@@ -142,7 +142,12 @@ class AddCommand(CommandBase):
                 .scalar()) or 0
 
             for i, card in enumerate([reading_card, meaning_card]):
-                if card:
+                if not card:
+                    continue
+
+                if card.is_active:
+                    print('Not moving already active card %s' % card.num)
+                else:
                     db.move_card(session, card, num + 1 + i)
                     print(
                         '%s card %s' % (
