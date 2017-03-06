@@ -104,6 +104,9 @@ alias ls="`whence ls`"' -vF1 --group-directories-first'
 alias ll="`whence ls`"' -lX --group-directories-first'
 alias la="`whence ls`"' -lXA --group-directories-first'
 alias lc="`whence ls`"' -lXC --group-directories-first'
+jisho() {
+    command jisho "$@"|less -r
+}
 tl() {
     source="$1"; shift
     target="$1"; shift
