@@ -110,7 +110,7 @@ jisho() {
 tl() {
     source="$1"; shift
     target="$1"; shift
-    trans -s "$source" -t "$target" "$@"
+    trans -s "$source" -t "$target" "$@"|less -r
 }
 alias plen='tl pl en'
 alias enpl='tl en pl'
