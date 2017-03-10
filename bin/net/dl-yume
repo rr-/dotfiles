@@ -7,7 +7,7 @@ import requests
 from dotfiles import config
 from dotfiles import logging
 
-config_key = config['yume-autotagger']
+config_key = config['dl-yume']
 YUME_URL = config_key.get('url', 'https://yume.pl')
 API_URL = config_key.get('api-url', 'https://yume.pl/api')
 YUME_USER_NAME = config_key['user']
@@ -23,17 +23,17 @@ def parse_args():
 
 def collect_urls(session, query):
     logging.info('Collecting posts...')
-    page = 1
+    offset = 0
     while True:
         response = session.get(
-            API_URL + '/posts?fields=contentUrl&query=%s&page=%d' %
-                (urllib.parse.quote(query), page))
+            API_URL + '/posts?fields=contentUrl&query=%s&offset=%d' %
+                (urllib.parse.quote(query), offset))
         if response.status_code != 200:
             raise RuntimeError(json.loads(response.text)['description'])
         decoded_response = json.loads(response.text)
-        page = int(decoded_response['page']) + 1
         if not len(decoded_response['results']):
             break
+        offset += len(decoded_response['results'])
         for result in decoded_response['results']:
             yield result['contentUrl']
 
