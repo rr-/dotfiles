@@ -22,7 +22,7 @@ class UrlList:
     def __init__(self) -> None:
         self.downloaded_urls: Dict[str, bool] = {}
         self.buffered_urls: List[str] = []
-        if not os.path.exists(LOG_PATH):
+        if os.path.exists(LOG_PATH):
             for line in open(LOG_PATH, 'r'):
                 self.downloaded_urls[line.strip()] = True
 
