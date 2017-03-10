@@ -17,6 +17,7 @@ Plug 'bronson/vim-visual-star-search'   "enable * and # in visual mode
 Plug 'duggiefresh/vim-easydir'          "create directories on save
 Plug 'terryma/vim-multiple-cursors'
 Plug 'leafgarland/typescript-vim'       "typescript highlighting
+Plug 'christoomey/vim-tmux-navigator'   "integration with tmux
 call plug#end()
 
 runtime editor.vim
