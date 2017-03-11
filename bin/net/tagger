@@ -4,10 +4,10 @@
 import os
 import sys
 import re
-import string
 import argparse
 import json
 import urwid
+from urwid_readline import ReadlineEdit
 from dotfiles.tag_list import TagList
 
 
@@ -57,147 +57,6 @@ def _get_fuzzy_matches(user_input, reference_tags):
         if match:
             suggestions.append((-reference_tag.importance, reference_tag.name))
     return [x for _, x in sorted(suggestions)]
-
-
-class ReadlineEdit(urwid.Text):
-    WORD_REGEX = r'^(?u)[\w*?_\-.\[\]~=/&;!#$%^(){}<>]$'
-    signals = ['change']
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self._edit_pos = 0
-
-    @property
-    def edit_pos(self):
-        return self._edit_pos
-
-    @edit_pos.setter
-    def edit_pos(self, pos):
-        self._edit_pos = pos
-        self._invalidate()
-
-    @property
-    def text(self):
-        return self.get_text()[0]
-
-    @text.setter
-    def text(self, text):
-        self.set_text(text)
-        self.edit_pos = _clamp(self.edit_pos, 0, len(text))
-        urwid.signals.emit_signal(self, 'change', self, text)
-
-    def render(self, size, focus=False):
-        (maxcol,) = size
-        canv = urwid.Text.render(self, (maxcol,))
-        if focus:
-            canv = urwid.CompositeCanvas(canv)
-            canv.cursor = (min(self._edit_pos, maxcol - 1), 0)
-        return canv
-
-    def selectable(self):
-        return True
-
-    def keypress(self, _size, key):
-        keymap = {
-            'ctrl b':         self._backward_char,
-            'ctrl f':         self._forward_char,
-            'left':           self._backward_char,
-            'right':          self._forward_char,
-            'ctrl a':         self._move_beginning_of_line,
-            'ctrl e':         self._move_end_of_line,
-            'home':           self._move_beginning_of_line,
-            'end':            self._move_end_of_line,
-            'meta b':         self._backward_word,
-            'meta f':         self._forward_word,
-            'shift left':     self._backward_word,
-            'shift right':    self._forward_word,
-
-            'ctrl h':         self._delete_backward_char,
-            'backspace':      self._delete_backward_char,
-            'ctrl d':         self._delete_forward_char,
-            'delete':         self._delete_forward_char,
-            'ctrl u':         self._kill_whole_line,
-            'ctrl w':         self._backward_kill_word,
-            'meta backspace': self._backward_kill_word,
-            'meta d':         self._kill_word,
-        }
-        if key in keymap:
-            keymap[key]()
-            return None
-        elif key in string.printable:
-            self._insert_char_at_cusor(key)
-            return None
-        return key
-
-    def _insert_char_at_cusor(self, key):
-        if key == ' ':
-            key = '_'
-        self.text = self.text[0:self.edit_pos] \
-            + key \
-            + self.text[self.edit_pos:]
-        self.edit_pos += 1
-
-    def _backward_char(self):
-        if self.edit_pos > 0:
-            self.edit_pos -= 1
-
-    def _forward_char(self):
-        if self.edit_pos < len(self.text):
-            self.edit_pos += 1
-
-    def _backward_word(self):
-        while self.edit_pos > 0 \
-                and re.match(r'\s', self.text[self.edit_pos - 1]):
-            self.edit_pos -= 1
-        while self.edit_pos > 0 \
-                and re.match(self.WORD_REGEX, self.text[self.edit_pos - 1]):
-            self.edit_pos -= 1
-
-    def _forward_word(self):
-        while self.edit_pos < len(self.text) \
-                and re.match(r'\s', self.text[self.edit_pos]):
-            self.edit_pos += 1
-        while self.edit_pos < len(self.text) \
-                and re.match(self.WORD_REGEX, self.text[self.edit_pos]):
-            self.edit_pos += 1
-
-    def _delete_backward_char(self):
-        if self.edit_pos > 0:
-            self.text = \
-                self.text[0:self.edit_pos-1] + self.text[self.edit_pos:]
-
-    def _delete_forward_char(self):
-        if self.edit_pos < len(self.text):
-            self.text = \
-                self.text[0:self.edit_pos] + self.text[self.edit_pos+1:]
-
-    def _kill_whole_line(self):
-        self.text = ''
-        self.edit_pos = 0
-
-    def _backward_kill_word(self):
-        pos = self.edit_pos
-        while pos > 0 and re.match(r'\s', self.text[pos - 1]):
-            pos -= 1
-        while pos > 0 and re.match(self.WORD_REGEX, self.text[pos - 1]):
-            pos -= 1
-        self.text = self.text[0:pos] + self.text[self.edit_pos:]
-        self.edit_pos = pos
-
-    def _kill_word(self):
-        pos = self.edit_pos
-        while pos < len(self.text) and re.match(r'\s', self.text[pos]):
-            pos += 1
-        while pos < len(self.text) and re.match(
-                self.WORD_REGEX, self.text[pos]):
-            pos += 1
-        self.text = self.text[0:self.edit_pos] + self.text[pos:]
-
-    def _move_beginning_of_line(self):
-        self.edit_pos = 0
-
-    def _move_end_of_line(self):
-        self.edit_pos = len(self.text)
 
 
 class ChosenTagsListBox(urwid.ListBox):
