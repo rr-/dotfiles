@@ -11,6 +11,14 @@ from urwid_readline import ReadlineEdit
 from dotfiles.tag_list import TagList
 
 
+def box_to_gui(str):
+    return str.replace('_', ' ')
+
+
+def unbox_from_gui(str):
+    return str.replace(' ', '_')
+
+
 class LocalTag:
     SOURCE_INITIAL = 0
     SOURCE_USER_INPUT = 1
@@ -21,7 +29,7 @@ class LocalTag:
         self.source = source
 
     def __str__(self):
-        return self.name
+        return box_to_gui(self.name)
 
 
 class ReferenceTag:
@@ -31,7 +39,7 @@ class ReferenceTag:
         self.implications = implications
 
     def __str__(self):
-        return self.name
+        return box_to_gui(self.name)
 
 
 class AbortInterrupt(KeyboardInterrupt):
@@ -50,12 +58,14 @@ def _get_fuzzy_matches(user_input, reference_tags):
     if not user_input:
         return []
     suggestions = []
-    pattern = '.*?'.join(re.escape(chunk) for chunk in list(user_input))
+    pattern = '.*?'.join(
+        re.escape(ch)
+        for ch in list(user_input))
     regex = re.compile(pattern, re.I)
     for reference_tag in reference_tags:
-        match = regex.search(reference_tag.name)
+        match = regex.search(str(reference_tag))
         if match:
-            suggestions.append((-reference_tag.importance, reference_tag.name))
+            suggestions.append((-reference_tag.importance, str(reference_tag)))
     return [x for _, x in sorted(suggestions)]
 
 
@@ -91,7 +101,7 @@ class ChosenTagsListBox(urwid.ListBox):
 
     def update(self):
         self.body.clear()
-        for tag in sorted(self._chosen_tags, key=lambda tag: tag.name):
+        for tag in sorted(self._chosen_tags, key=lambda tag: str(tag)):
             if tag.source == LocalTag.SOURCE_IMPLICATION:
                 class_name = 'implied-tag'
             elif tag.source == LocalTag.SOURCE_INITIAL:
@@ -289,14 +299,14 @@ class UrwidTagger:
             self._columns.set_focus(0)
 
     def _undo_tag(self):
-        if len(self._undo_stack) == 0:
+        if not self._undo_stack:
             return
         for tag in self._undo_stack.pop():
             self._chosen_tags.remove(tag)
         self._choices_box.update()
 
     def _on_tag_accept(self, _widget, text):
-        previous_tags = set([t.name for t in self._chosen_tags])
+        previous_tags = set([str(t) for t in self._chosen_tags])
         self._chosen_tags.add(LocalTag(text, LocalTag.SOURCE_USER_INPUT))
         to_check = [text]
         visited = set()
@@ -310,7 +320,7 @@ class UrwidTagger:
                     self._chosen_tags.add(
                         LocalTag(implication, LocalTag.SOURCE_IMPLICATION))
                     to_check.append(implication)
-        added_tags = set([t.name for t in self._chosen_tags]) - previous_tags
+        added_tags = set([str(t) for t in self._chosen_tags]) - previous_tags
         self._undo_stack.append(added_tags)
         self._choices_box.update()
 
@@ -374,7 +384,7 @@ def main():
     finally:
         _restore_stdio(*saved_fds)
     if result:
-        print('\n'.join(tag.name for tag in chosen_tags))
+        print('\n'.join(unbox_from_gui(str(tag)) for tag in chosen_tags))
     else:
         sys.exit(1)
 
