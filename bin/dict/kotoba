@@ -134,12 +134,7 @@ class AddCommand(CommandBase):
                 meaning_card = _create_card(
                     session, deck, question, meanings, ['meaning'])
 
-            num = (
-                session
-                .query(sa.func.max(db.Card.num))
-                .filter(db.Card.deck_id == deck.id)
-                .filter(db.Card.is_active == 1)
-                .scalar()) or 0
+            num = db.get_max_active_card_num(session, deck)
 
             for i, card in enumerate([reading_card, meaning_card]):
                 if not card:
