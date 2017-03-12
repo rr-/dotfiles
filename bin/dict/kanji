@@ -303,6 +303,7 @@ def main() -> None:
                 print(item['kanji'], end=' ')
                 if i % 20 == 19:
                     print()
+        print('\n')
 
 
 if __name__ == '__main__':
