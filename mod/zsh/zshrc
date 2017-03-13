@@ -105,12 +105,12 @@ alias ll="`whence ls`"' -lX --group-directories-first'
 alias la="`whence ls`"' -lXA --group-directories-first'
 alias lc="`whence ls`"' -lXC --group-directories-first'
 jisho() {
-    command jisho "$@"|less -r
+    command jisho "$@"|less -rFX
 }
 tl() {
     source="$1"; shift
     target="$1"; shift
-    trans -s "$source" -t "$target" "$@"|less -r
+    trans -s "$source" -t "$target" "$@"|less -rFX
 }
 alias plen='tl pl en'
 alias enpl='tl en pl'
