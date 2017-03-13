@@ -48,7 +48,8 @@ alt + ctrl + shift + n
 
 # file manager
 super + e
-    run-or-raise -cn vifm -p 'urxvt -name vifm -e zsh -ilc vifm'
+    run-or-raise -cn local_terminal -p "urxvt -name local_terminal -e zsh -ilc 'tmux new-session -As work'"; \
+    tmux select-window -t work:vifm || tmux new-window -t work: -n vifm vifm
 
 
 
