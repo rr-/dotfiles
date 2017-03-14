@@ -103,13 +103,24 @@ class Downloader:
             self.stats.ignore(url, 'already exists')
             return
 
-        with self.stats.download(url):
-            response = self.session.get(url)
-            response.raise_for_status()
-            with open(target_path, 'wb') as handle:
-                handle.write(response.content)
-            self.url_list.add(os.path.basename(url))
-            self.url_list.flush()
+        response = None
+        attempt = 0
+        while True:
+            attempt += 1
+            with self.stats.download(url):
+                try:
+                    response = self.session.get(url)
+                    response.raise_for_status()
+                    break
+                except:
+                    if attempt > 3:
+                        raise
+        assert response
+
+        with open(target_path, 'wb') as handle:
+            handle.write(response.content)
+        self.url_list.add(os.path.basename(url))
+        self.url_list.flush()
 
     def download_page(self, page: int, query: str) -> bytes:
         url = (
