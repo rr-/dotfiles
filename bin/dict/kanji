@@ -165,7 +165,7 @@ _RADICALS: Dict[str, List[str]] = {
   '冊': ['books'],
   '母': ['drawer'],
   '買': ['sauron'],   # ⺲
-  '牙': [],
+  '牙': ['tusk', 'fang'],
   '瓜': [],
   '竹': ['bamboo'],
   '米': ['rice'],
