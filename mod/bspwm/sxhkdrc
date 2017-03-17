@@ -59,7 +59,7 @@ super + e
 
 # volume up and down
 super + {x,X}
-    amixer -q set Master 1dB{+,-} unmute
+    amixer -q set Master 1%{+,-} unmute
 
 # previous and next track
 super + {c,C}
