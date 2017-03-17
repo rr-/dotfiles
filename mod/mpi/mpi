@@ -79,7 +79,7 @@ def main():
             # run mpv
             run([
                 'mpv',
-                '--profile=images',
+                '--config-dir=%s' % os.path.expanduser('~/.config/mpi'),
                 '--playlist=%s' % handle.name,
                 '--playlist-start=%d' % playlist_pos] + unknown_args)
         finally:

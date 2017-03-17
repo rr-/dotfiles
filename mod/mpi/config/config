@@ -1,0 +1,30 @@
+# vim syntax=config
+
+profile=opengl-hq
+script-opts=osc-layout=slimbox
+stop-screensaver=yes
+image-display-duration=inf
+
+audio-channels=2
+alang=jpn,jp,jap,Japanese,en,eng,English
+slang=en,eng,English,pl,pol,Polish
+sub-codepage=utf8:cp1250
+volume-max=300
+
+video-aspect=no
+fullscreen=yes
+script-opts=osc-showwindowed=no,osc-showfullscreen=no,images-statusbar=yes,reset-view=yes
+no-input-default-bindings
+msg-level=all=warn
+native-keyrepeat
+loop-file=yes
+osd-align-x=right
+osd-align-y=bottom
+osd-margin-x=5
+osd-margin-y=5
+osd-border-size=2
+osd-border-color='#aa000000'
+osd-blur=2
+osd-font='InputMono Light'
+osd-font-size=16
+sws-scaler=point
