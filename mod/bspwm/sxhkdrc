@@ -33,10 +33,10 @@ alt + ctrl + shift + bracketright
 
 # irc
 alt + ctrl + m
-    run-or-raise -cn remote_irc -p "urxvt -name remote_irc -e zsh -ilc 'ssh cyclone -t "'"zsh -ilc tmux\ a"'"'"
+    run-or-raise -cn remote_irc -p "urxvt -name remote_irc -e zsh -ilc 'ssh cyclone -t "'"zsh -ilc tmux\ a\ -t\ irc"'"'"
 
 alt + ctrl + shift + m
-    run-or-raise -cn remote_irc -p "urxvt -name remote_irc -e zsh -ilc 'ssh cyclone -t "'"zsh -ilc tmux\ a\ -d"'"'"
+    run-or-raise -cn remote_irc -p "urxvt -name remote_irc -e zsh -ilc 'ssh cyclone -t "'"zsh -ilc tmux\ a\ -d\ -t\ irc"'"'"
 
 # web browser
 alt + ctrl + semicolon
