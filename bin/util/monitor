@@ -21,8 +21,11 @@ def _get_checksum(paths: List[str]) -> str:
     ret = {}
     m = hashlib.md5()
     for path in paths:
-        with open(path, 'rb') as handle:
-            m.update(handle.read())
+        try:
+            with open(path, 'rb') as handle:
+                m.update(handle.read())
+        except FileNotFoundError:
+            pass
     return m.hexdigest()
 
 
