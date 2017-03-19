@@ -1,9 +1,13 @@
 local mp_utils = require('mp.utils')
+local last_known_path = nil
+
+function playback_started(event)
+    last_known_path = mp.get_property('path')
+end
 
 function run_vifm()
-    local path = mp.get_property('path')
-    local running = mp_utils.subprocess(
-        {args = {'pidof', 'vifm'},
+    local running = mp_utils.subprocess({
+        args = {'pidof', 'vifm'},
         cancellable=false,
     })['status'] == 0
 
@@ -18,7 +22,7 @@ function run_vifm()
         end
         table.insert(args, '--remote')
         table.insert(args, '--select')
-        table.insert(args, path)
+        table.insert(args, last_known_path)
     else
         args = {'urxvt', '-e', 'vifm'}
     end
@@ -27,3 +31,4 @@ function run_vifm()
 end
 
 mp.register_script_message('run-vifm', run_vifm)
+mp.add_hook('on_load', 50, playback_started)
