@@ -1,7 +1,6 @@
 # vim syntax=config
 
 profile=opengl-hq
-script-opts=osc-layout=slimbox
 stop-screensaver=yes
 image-display-duration=inf
 
