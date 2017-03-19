@@ -14,7 +14,6 @@ video-aspect=no
 fullscreen=yes
 script-opts=osc-showwindowed=no,osc-showfullscreen=no,images-statusbar=yes,reset-view=yes
 no-input-default-bindings
-msg-level=all=warn
 native-keyrepeat
 loop-file=yes
 osd-align-x=right
