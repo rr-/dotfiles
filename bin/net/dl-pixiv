@@ -1,0 +1,188 @@
+#!/usr/bin/env python
+# Downloads images from Pixiv
+
+import asyncio
+import getpass
+import json
+import os
+import re
+from concurrent.futures import ThreadPoolExecutor
+from contextlib import contextmanager
+from typing import Dict, Generator
+import configargparse
+import requests
+from dotfiles import logging
+
+
+PAGE_SIZE = 50
+MAX_CONCURRENT_DOWNLOADS = 5
+MAX_ATTEMPTS = 3
+
+
+class DownloadStats:
+    def __init__(self) -> None:
+        self.errors = 0
+        self.ignored = 0
+        self.downloaded = 0
+
+    def ignore(self, url: str, reason: str) -> None:
+        logging.info('%s... %s', url, reason)
+        self.ignored += 1
+
+    @contextmanager
+    def download(self, url: str) -> Generator:
+        try:
+            logging.info('%s... downloading', url)
+            yield
+            self.downloaded += 1
+            logging.info('%s... ok', url)
+        except Exception as ex:
+            logging.error('error: %s', ex)
+            self.errors += 1
+
+
+class Downloader:
+    def __init__(self, base_dir: str) -> None:
+        self.base_dir = base_dir
+        self.stats = DownloadStats()
+        self.session = requests.session()
+
+    def login(self, user_name: str, password: str) -> None:
+        url = 'https://oauth.secure.pixiv.net/auth/token'
+        data = {
+            'username': user_name,
+            'password': password,
+            'grant_type': 'password',
+            'client_id': 'bYGKuGVw91e0NMfPGp44euvGt59s',
+            'client_secret': 'HP3RmkgAmEGro0gn1x9ioawQE8WMfvLXDz3ZqxpK',
+        }
+        response = self.session.post(url, data=data)
+        response.raise_for_status()
+        response_data = self._parse_response(response.text)
+        access_token = response_data['response']['access_token']
+        self.session.headers.update({
+            # 'User-Agent': 'PixivIOSApp/6.4.0',
+            'Referer': 'http://www.pixiv.net/',
+            'Authorization': 'Bearer {}'.format(access_token)})
+
+    def run_artist(self, artist_id: int) -> None:
+        def get_page(page, page_size):
+            return self._get_artist_page(artist_id, page, page_size)
+
+        def get_dir_name(item):
+            return '{} - {}'.format(artist_id, item['user']['name'])
+
+        self._run(get_page, get_dir_name)
+
+    def _run(self, page_getter, dir_name_getter):
+        page = 1
+        page_size = PAGE_SIZE
+
+        loop = asyncio.get_event_loop()
+        executor = ThreadPoolExecutor(max_workers=MAX_CONCURRENT_DOWNLOADS)
+        while page is not None:
+            page_data = page_getter(page, page_size)
+
+            tasks = []
+            for item in page_data['response']:
+                url = item['image_urls']['large']
+                path = self._get_target_path(
+                    dir_name_getter(item), item['title'], url)
+                tasks.append(
+                    loop.run_in_executor(
+                        executor, self._download, url, path))
+            loop.run_until_complete(asyncio.gather(*tasks))
+
+            page_size = min(page_size, len(page_data['response']))
+            page = page_data['pagination']['next']
+
+        logging.info('Downloaded: %d', self.stats.downloaded)
+        logging.info('Ignored: %d', self.stats.ignored)
+        logging.info('Errors: %d', self.stats.errors)
+
+    def _get_artist_page(
+            self, artist_id: int, page: int, page_size: int) -> Dict:
+        url = (
+            'https://public-api.secure.pixiv.net/v1/users/{}/works.json'
+            .format(artist_id))
+        return self._get_page(url, page, page_size)
+
+    def _get_page(self, url: str, page: int, page_size: int) -> Dict:
+        params = {
+            'page': page,
+            'per_page': page_size,
+            'include_stats': True,
+            'include_sanity_level': True,
+            'image_sizes': ','.join(
+                ['px_128x128', 'px_480mw', 'small', 'medium', 'large']),
+            'profile_image_sizes': ','.join(['px_170x170', 'px_50x50']),
+        }
+        response = self.session.get(url, params=params)
+        return self._parse_response(response.text)
+
+    def _download(self, url: str, target_path: str) -> None:
+        if os.path.exists(target_path):
+            self.stats.ignore(url, 'already exists')
+            return
+
+        response = None
+        attempt = 0
+        while True:
+            attempt += 1
+            with self.stats.download(url):
+                try:
+                    response = self.session.get(url)
+                    response.raise_for_status()
+                    break
+                except Exception:
+                    if attempt > MAX_ATTEMPTS:
+                        raise
+        assert response
+
+        target_dir = os.path.dirname(target_path)
+        os.makedirs(target_dir, exist_ok=True)
+        with open(target_path, 'wb') as handle:
+            handle.write(response.content)
+
+    def _get_target_path(
+            self, dir_name: str, illust_title: str, url: str) -> str:
+        stem, ext = os.path.splitext(os.path.basename(url))
+        name = (
+            '{} - {}{}'.format(stem, illust_title, ext)
+            if illust_title
+            else '{}{}'.format(stem, ext))
+        name = re.sub(r'[\\/*?:"<>|]', '_', name)
+        return os.path.join(self.base_dir, dir_name, name)
+
+    def _parse_response(self, text: str) -> Dict:
+        ret = json.loads(text)
+        if 'status' not in ret or ret['status'] == 'success':
+            return ret
+        raise RuntimeError('Error from Pixiv: {}'.format(ret))
+
+
+def parse_args() -> configargparse.Namespace:
+    parser = configargparse.ArgParser(
+        'Download images from pixiv.',
+        default_config_files=['~/.config/dl-pixiv.conf'])
+    parser.add('artist_id', type=int)
+    parser.add('-u', '--user')
+    parser.add('-p', '--password')
+    parser.add('--target-dir', default='~')
+    return parser.parse_args()
+
+
+def main() -> None:
+    args = parse_args()
+    user_name: str = args.user or input('User:')
+    password: str = args.password or getpass.getpass('Password:')
+    artist_id: int = args.artist_id
+    target_dir: str = args.target_dir
+
+    downloader = Downloader(target_dir)
+    downloader.login(user_name, password)
+    downloader.run_artist(artist_id)
+
+
+if __name__ == '__main__':
+    main()
