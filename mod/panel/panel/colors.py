@@ -40,4 +40,4 @@ class ColorsLight:
     volume_chart_background = '#AAA'
 
 
-Colors = ColorsLight
+Colors = ColorsDark
