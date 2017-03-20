@@ -132,6 +132,20 @@ super + f
 super + shift + f
     bspc desktop -l {tiled,monocle}
 
+super + o
+    if test $(bspc config -d focused window_gap) -eq 0; then; \
+        bspc config -d focused window_gap $BSPC_WINDOW_GAP; \
+    else; \
+        bspc config -d focused window_gap 0; \
+    fi
+
+super + shift + o
+    if test $(bspc config -d focused border_width) -eq 0; then; \
+        bspc config -d focused border_width $BSPC_BORDER_WIDTH; \
+    else; \
+        bspc config -d focused border_width 0; \
+    fi
+
 # focus window with regard to focus history
 super + {bracketleft,bracketright}
     bspc control --record-history off; \
