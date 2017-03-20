@@ -44,6 +44,7 @@ set formatoptions-=c          "auto comment continuation works against me
 set formatoptions-=j          "make :join not remove nonwhitespace
 
 "editor behavior
+set lazyredraw                "don't redraw screen in macros
 set showcmd                   "show last command in status
 set virtualedit=onemore       "allow moving cursor up to EOL+1 character
 set splitbelow splitright     "change placement when splitting a buffer
