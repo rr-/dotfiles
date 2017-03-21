@@ -243,8 +243,8 @@ def parse_args() -> configargparse.Namespace:
 
 def main() -> None:
     args = parse_args()
-    user_name: str = args.user or input('User:')
-    password: str = args.password or getpass.getpass('Password:')
+    user_name: str = args.user or input('User: ')
+    password: str = args.password or getpass.getpass('Password: ')
     artist_id: Optional[int] = args.artist_id
     query: Optional[List[str]] = args.query
     force: bool = args.force
