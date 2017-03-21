@@ -22,7 +22,7 @@ function search_iqdb()
     mp_utils.subprocess_detached({args = {
         'sh',
         '-c',
-        'curl -F file=@' .. source .. ' -o' .. target2 .. ' https://iqdb.org/ && ' ..
+        'curl -F "file=@' .. source .. '" -o' .. target2 .. ' https://iqdb.org/ && ' ..
         'sed -i "s#</head>#<base href="https://iqdb.org"></head>#" ' .. target2 .. ' && ' ..
         'sed -i "s#<body>#<body><img style=\'max-width:200px;max-height:200px\' src=\'file://' .. source .. '\'/>#" ' .. target2 .. ' && ' ..
         'mv ' .. target2 .. ' ' .. target1,
