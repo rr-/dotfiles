@@ -1,23 +1,18 @@
 #!/bin/python3
 # Uploads images to Gelbooru
 
-import os
 import sys
-import argparse
+import getpass
 import re
-import json
 import urllib
 import subprocess
 from tempfile import TemporaryFile
+from typing import Optional
+import configargparse
 import requests
 from bs4 import BeautifulSoup
-from dotfiles import config
 from dotfiles.tag_list import TagList
 
-
-CONFIG_KEY = 'ul-gelbooru'
-USER_NAME = config[CONFIG_KEY]['user']
-PASSWORD = config[CONFIG_KEY]['password']
 
 SAFETY_MAP = {
     'safe': 's',
@@ -57,25 +52,21 @@ class DuplicateUploadError(RuntimeError):
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(
-        description='Sends post to gelbooru from CLI')
-    parser.add_argument(
+    parser = configargparse.ArgParser(
+        'Sends post to gelbooru from CLI',
+        default_config_files=['~/.config/ul-gelbooru.conf'])
+    parser.add('-u', '--user')
+    parser.add('-p', '--password')
+    parser.add(
         '-s', '--safety', choices=SAFETY_MAP.keys(),
         required=True, help='safety')
-    parser.add_argument(
-        '--source', default='', help='source')
-    parser.add_argument(
-        '--title', default='', help='title')
+    parser.add('--source', default='', help='source')
+    parser.add('--title', default='', help='title')
     group = parser.add_mutually_exclusive_group()
-    group.add_argument(
-        '-T', '--tag-cmd',
-        help='external command to tags')
-    group.add_argument(
-        '-t', '--tags', help='list of space separated tags')
+    group.add('-T', '--tag-cmd', help='external command to tags')
+    group.add('-t', '--tags', help='list of space separated tags')
     parser.set_defaults(tag_cmd='tagger')
-    parser.add_argument(
-        metavar='POST_PATH', dest='path',
-        help='path to the post')
+    parser.add(metavar='POST_PATH', dest='path', help='path to the post')
     return parser.parse_args()
 
 
@@ -147,13 +138,19 @@ def collect_tags(args):
             stdout=subprocess.PIPE)
         out, _ = process.communicate()
         ret.add_all(re.split(r'\s+', out.decode()))
-    if not len(ret):
+    if not ret:
         raise NoTagsError()
     return ret
 
 
 def main():
     args = parse_args()
+    user_name: str = args.user or input('User: ')
+    password: str = args.password or getpass.getpass('Password: ')
+
+    source: Optional[str] = args.source
+    title: Optional[str] = args.title
+    safety: str = args.safety
 
     try:
         content = get_file_content(args)
@@ -161,9 +158,9 @@ def main():
         print('Tags:')
         print('\n'.join(tags))
 
-        session = create_session(USER_NAME, PASSWORD)
+        session = create_session(user_name, password)
         upload(
-            session, content, args.source, args.title, args.safety, tags)
+            session, content, source, title, safety, tags)
         print('Uploaded.')
         sys.exit(0)
 
