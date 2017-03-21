@@ -180,8 +180,8 @@ def update_post_tags(session, api_url, post_id, post_version, tags):
 def main():
     args = parse_args()
 
-    site_url: str = args.site_url
-    api_url: str = args.api_url
+    site_url: str = args.site_url.rstrip('/')
+    api_url: str = args.api_url.rstrip('/')
     user_name: str = args.user or input('User: ')
     password: str = args.password or getpass.getpass('Password: ')
 
