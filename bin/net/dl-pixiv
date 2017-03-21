@@ -206,7 +206,7 @@ def main() -> None:
     password: str = args.password or getpass.getpass('Password:')
     artist_id: Optional[int] = args.artist_id
     query: Optional[List[str]] = args.query
-    target_dir: str = args.target_dir
+    target_dir: str = os.path.expanduser(args.target_dir)
 
     downloader = Downloader(target_dir)
     downloader.login(user_name, password)
