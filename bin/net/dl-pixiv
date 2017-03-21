@@ -19,6 +19,10 @@ MAX_CONCURRENT_DOWNLOADS = 5
 MAX_ATTEMPTS = 3
 
 
+def sanitize_file_name(name):
+    return re.sub(r'[\\/*?:"<>|]', '_', name)
+
+
 class DownloadStats:
     def __init__(self) -> None:
         self.errors = 0
@@ -74,6 +78,15 @@ class Downloader:
 
         self._run(get_page, get_dir_name)
 
+    def run_query(self, query: str) -> None:
+        def get_page(page, page_size):
+            return self._get_query_page(query, page, page_size)
+
+        def get_dir_name(_item):
+            return sanitize_file_name(query)
+
+        self._run(get_page, get_dir_name)
+
     def _run(self, page_getter, dir_name_getter):
         page = 1
         page_size = PAGE_SIZE
@@ -105,10 +118,23 @@ class Downloader:
         url = (
             'https://public-api.secure.pixiv.net/v1/users/{}/works.json'
             .format(artist_id))
-        return self._get_page(url, page, page_size)
-
-    def _get_page(self, url: str, page: int, page_size: int) -> Dict:
         params = {
+            'page': page,
+            'per_page': page_size,
+            'include_stats': True,
+            'include_sanity_level': True,
+            'image_sizes': ','.join(
+                ['px_128x128', 'px_480mw', 'small', 'medium', 'large']),
+            'profile_image_sizes': ','.join(['px_170x170', 'px_50x50']),
+        }
+        response = self.session.get(url, params=params)
+        return self._parse_response(response.text)
+
+    def _get_query_page(
+            self, query: str, page: int, page_size: int) -> Dict:
+        url = 'https://public-api.secure.pixiv.net/v1/search/works.json'
+        params = {
+            'q': query,
             'page': page,
             'per_page': page_size,
             'include_stats': True,
@@ -151,7 +177,7 @@ class Downloader:
             '{} - {}{}'.format(stem, illust_title, ext)
             if illust_title
             else '{}{}'.format(stem, ext))
-        name = re.sub(r'[\\/*?:"<>|]', '_', name)
+        name = sanitize_file_name(name)
         return os.path.join(self.base_dir, dir_name, name)
 
     def _parse_response(self, text: str) -> Dict:
@@ -165,7 +191,9 @@ def parse_args() -> configargparse.Namespace:
     parser = configargparse.ArgParser(
         'Download images from pixiv.',
         default_config_files=['~/.config/dl-pixiv.conf'])
-    parser.add('artist_id', type=int)
+    group = parser.add_mutually_exclusive_group(required=True)
+    group.add('-a', '--artist-id', type=int)
+    group.add('-q', '--query', nargs='*')
     parser.add('-u', '--user')
     parser.add('-p', '--password')
     parser.add('--target-dir', default='~')
@@ -176,12 +204,18 @@ def main() -> None:
     args = parse_args()
     user_name: str = args.user or input('User:')
     password: str = args.password or getpass.getpass('Password:')
-    artist_id: int = args.artist_id
+    artist_id: Optional[int] = args.artist_id
+    query: Optional[List[str]] = args.query
     target_dir: str = args.target_dir
 
     downloader = Downloader(target_dir)
     downloader.login(user_name, password)
-    downloader.run_artist(artist_id)
+    if artist_id:
+        downloader.run_artist(artist_id)
+    elif query:
+        downloader.run_query(' '.join(query))
+    else:
+        assert False
 
 
 if __name__ == '__main__':
