@@ -2,27 +2,17 @@
 # Uploads files to yume.pl via its API and outputs copyable links
 
 import sys
+import getpass
 import re
-import argparse
 import json
 import subprocess
 from tempfile import TemporaryFile
+from typing import Optional
+import configargparse
 import requests
-from dotfiles import config
 from dotfiles.tag_list import TagList
 
-try:
-    JSONDecodeError = json.decoder.JSONDecodeError
-except:
-    JSONDecodeError = ValueError
 
-
-config_key = config['ul-yume']
-
-SITE_URL = config_key.get('api-url', 'https://yume.pl/').rstrip('/')
-API_URL = config_key.get('api-url', 'https://yume.pl/api').rstrip('/')
-USER_NAME = config_key['user']
-PASSWORD = config_key['password']
 SAFETY_MAP = {
     'safe': 'safe',
     'sketchy': 'sketchy',
@@ -69,51 +59,50 @@ class DuplicatePostUploadError(RuntimeError):
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(
-        description='Sends post to yume.pl from CLI')
-    parser.add_argument(
+    parser = configargparse.ArgParser(
+        'Sends post to yume.pl from CLI',
+        default_config_files=['~/.config/ul-yume.conf'])
+    parser.add('--site-url', default='https://yume.pl/')
+    parser.add('--api-url', default='https://yume.pl/api')
+    parser.add('-u', '--user')
+    parser.add('-p', '--password')
+    parser.add(
         '-s', '--safety', choices=SAFETY_MAP.keys(),
         required=False, default='safe', help='safety')
-    parser.add_argument(
-        '--source', default='', help='source')
+    parser.add('--source', default='', help='source')
     group = parser.add_mutually_exclusive_group()
-    group.add_argument(
-        '-T', '--tag-cmd',
-        help='external command to tags')
-    group.add_argument(
-        '-t', '--tags', help='list of space separated tags')
+    group.add('-T', '--tag-cmd', help='external command to tags')
+    group.add('-t', '--tags', help='list of space separated tags')
     parser.set_defaults(tag_cmd='tagger')
-    parser.add_argument(
-        metavar='POST_PATH', dest='path',
-        help='path to the post')
+    parser.add(metavar='POST_PATH', dest='path', help='path to the post')
     return parser.parse_args()
 
 
-def create_session():
+def create_session(_api_url, user_name, password):
     session = requests.Session()
     session.headers['Accept'] = 'application/json'
-    session.auth = requests.auth.HTTPBasicAuth(USER_NAME, PASSWORD)
+    session.auth = requests.auth.HTTPBasicAuth(user_name, password)
     # actually we don't need this
-    # response = session.get(API_URL + '/user/' + USER_NAME + '?bump-login')
+    # response = session.get(api_url + '/user/' + user_name + '?bump-login')
     # if response.status_code != 200:
     #     raise LoginError(response.text)
     return session
 
 
-def get_post(session, post_id):
-    response = session.get(API_URL + '/post/' + str(post_id))
+def get_post(session, api_url, post_id):
+    response = session.get(api_url + '/post/' + str(post_id))
     decoded = json.loads(response.text)
     if response.status_code == 200:
         return decoded
     raise PostRetrievalError(decoded['description'])
 
 
-def upload_post(session, content, source, safety, tags):
+def upload_post(session, api_url, content, source, safety, tags):
     with TemporaryFile() as handle:
         handle.write(content)
         handle.seek(0)
         response = session.post(
-            API_URL + '/posts',
+            api_url + '/posts',
             files={
                 'content': handle,
                 'metadata': json.dumps({
@@ -132,19 +121,19 @@ def upload_post(session, content, source, safety, tags):
         raise PostUploadError(decoded['description'])
 
 
-def get_file_content(args):
-    if not args.path:
+def get_file_content(path):
+    if not path:
         raise NoContentError()
-    with open(args.path, 'rb') as handle:
+    with open(path, 'rb') as handle:
         return handle.read()
 
 
-def find_similar_posts(session, content):
+def find_similar_posts(session, api_url, content):
     with TemporaryFile() as handle:
         handle.write(content)
         handle.seek(0)
         response = session.post(
-            API_URL + '/posts/reverse-search',
+            api_url + '/posts/reverse-search',
             files={
                 'content': handle,
             })
@@ -175,9 +164,9 @@ def collect_tags(args, initial_tags):
     return tags
 
 
-def update_post_tags(session, post_id, post_version, tags):
+def update_post_tags(session, api_url, post_id, post_version, tags):
     response = session.put(
-        API_URL + '/post/' + str(post_id),
+        api_url + '/post/' + str(post_id),
         data=json.dumps({
             'version': post_version,
             'tags': list(tags),
@@ -191,11 +180,20 @@ def update_post_tags(session, post_id, post_version, tags):
 def main():
     args = parse_args()
 
-    try:
-        session = create_session()
-        content = get_file_content(args)
+    site_url: str = args.site_url
+    api_url: str = args.api_url
+    user_name: str = args.user or input('User: ')
+    password: str = args.password or getpass.getpass('Password: ')
 
-        search_results = find_similar_posts(session, content)
+    source: Optional[str] = args.source
+    safety: str = args.safety
+    path: str = args.path
+
+    try:
+        session = create_session(api_url, user_name, password)
+        content = get_file_content(path)
+
+        search_results = find_similar_posts(session, api_url, content)
 
         post = search_results['exactPost']
         if not post:
@@ -206,7 +204,7 @@ def main():
                     for result in similar_results:
                         print('%.02f: %s/post/%s (%dx%d)' % (
                             result['distance'],
-                            SITE_URL,
+                            site_url,
                             result['post']['id'],
                             result['post']['canvasWidth'],
                             result['post']['canvasHeight']))
@@ -219,10 +217,11 @@ def main():
         print('\n'.join(tags))
 
         if post:
-            update_post_tags(session, post['id'], post['version'], tags)
+            update_post_tags(
+                session, api_url, post['id'], post['version'], tags)
         else:
             post = upload_post(
-                session, content, args.source, args.safety, tags)
+                session, api_url, content, source, safety, tags)
         print('Uploaded.')
         print('Address: ' + post['contentUrl'])
         sys.exit(0)
@@ -237,7 +236,7 @@ def main():
         print('Error logging in: %s' % str(ex), file=sys.stderr)
     except NoContentError:
         print('Error: nothing to send.', file=sys.stderr)
-    except JSONDecodeError as ex:
+    except json.decoder.JSONDecodeError as ex:
         print('Error decoding JSON: %s' % str(ex.doc), file=sys.stderr)
     sys.exit(1)
 
