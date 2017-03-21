@@ -8,7 +8,7 @@ import os
 import re
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager
-from typing import Dict, Generator
+from typing import Optional, List, Dict, Generator
 import configargparse
 import requests
 from dotfiles import logging
@@ -21,6 +21,32 @@ MAX_ATTEMPTS = 3
 
 def sanitize_file_name(name):
     return re.sub(r'[\\/*?:"<>|]', '_', name)
+
+
+class DownloadHistory:
+    def __init__(self, path: str) -> None:
+        self.path = path
+        self.downloaded_urls: Dict[str, bool] = {}
+        self.buffered_urls: List[str] = []
+        if os.path.exists(path):
+            for line in open(path, 'r'):
+                self.downloaded_urls[line.strip()] = True
+
+    def add(self, url: str) -> None:
+        if self.is_downloaded(url):
+            return
+        self.downloaded_urls[url] = True
+        self.buffered_urls.append(url)
+
+    def flush(self) -> None:
+        os.makedirs(os.path.dirname(self.path), exist_ok=True)
+        with open(self.path, 'a') as handle:
+            for url in self.buffered_urls:
+                print(url, file=handle)
+        self.buffered_urls = []
+
+    def is_downloaded(self, url: str) -> bool:
+        return url in self.downloaded_urls
 
 
 class DownloadStats:
@@ -46,8 +72,14 @@ class DownloadStats:
 
 
 class Downloader:
-    def __init__(self, base_dir: str) -> None:
+    def __init__(
+            self,
+            base_dir: str,
+            history: DownloadHistory,
+            force: bool) -> None:
         self.base_dir = base_dir
+        self.history = history
+        self.force = force
         self.stats = DownloadStats()
         self.session = requests.session()
 
@@ -151,6 +183,11 @@ class Downloader:
             self.stats.ignore(url, 'already exists')
             return
 
+        if not self.force \
+                and self.history.is_downloaded(os.path.basename(url)):
+            self.stats.ignore(url, 'already downloaded')
+            return
+
         response = None
         attempt = 0
         while True:
@@ -169,6 +206,8 @@ class Downloader:
         os.makedirs(target_dir, exist_ok=True)
         with open(target_path, 'wb') as handle:
             handle.write(response.content)
+        self.history.add(os.path.basename(url))
+        self.history.flush()
 
     def _get_target_path(
             self, dir_name: str, illust_title: str, url: str) -> str:
@@ -196,6 +235,8 @@ def parse_args() -> configargparse.Namespace:
     group.add('-q', '--query', nargs='*')
     parser.add('-u', '--user')
     parser.add('-p', '--password')
+    parser.add('-f', '--force', action='store_true')
+    parser.add('--cache-path', default='~/.cache/dl-pixiv.log')
     parser.add('--target-dir', default='~')
     return parser.parse_args()
 
@@ -206,9 +247,12 @@ def main() -> None:
     password: str = args.password or getpass.getpass('Password:')
     artist_id: Optional[int] = args.artist_id
     query: Optional[List[str]] = args.query
+    force: bool = args.force
+    cache_path: str = os.path.expanduser(args.cache_path)
     target_dir: str = os.path.expanduser(args.target_dir)
 
-    downloader = Downloader(target_dir)
+    history = DownloadHistory(cache_path)
+    downloader = Downloader(target_dir, history, force)
     downloader.login(user_name, password)
     if artist_id:
         downloader.run_artist(artist_id)
