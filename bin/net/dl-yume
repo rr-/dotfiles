@@ -66,7 +66,7 @@ def save_urls(session, dest_dir, urls):
 
 def main():
     args = parse_args()
-    api_url: str = args.api_url
+    api_url: str = args.api_url.rstrip('/')
     user_name: str = args.user or input('User: ')
     password: str = args.password or getpass.getpass('Password: ')
 
