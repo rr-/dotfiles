@@ -1,32 +1,46 @@
 #!/usr/bin/env python
 import os
+import getpass
 import json
-import argparse
 import urllib.parse
+import configargparse
 import requests
-from dotfiles import config
 from dotfiles import logging
-
-config_key = config['dl-yume']
-YUME_URL = config_key.get('url', 'https://yume.pl')
-API_URL = config_key.get('api-url', 'https://yume.pl/api')
-YUME_USER_NAME = config_key['user']
-YUME_PASSWORD = config_key['password']
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(description='Downloads posts from yume.pl')
-    parser.add_argument('query', help='query to filter the posts with')
-    parser.add_argument('dir', help='where to put the files')
+    parser = configargparse.ArgParser(
+        'Downloads posts from yume.pl',
+        default_config_files=['~/.config/dl-yume.conf'])
+    parser.add('--api-url', default='https://yume.pl/api')
+    parser.add('-u', '--user')
+    parser.add('-p', '--password')
+    parser.add('query', help='query to filter the posts with')
+    parser.add('dir', help='where to put the files')
     return parser.parse_args()
 
 
-def collect_urls(session, query):
+def create_session(api_url, user_name, password):
+    session = requests.Session()
+    session.keep_alive = False
+    session.auth = requests.auth.HTTPBasicAuth(user_name, password)
+    session.headers['Content-Type'] = 'application/json'
+    session.headers['Accept'] = 'application/json'
+    return session
+
+
+def bump_login(session, api_url, user_name):
+    response = session.get(api_url + '/user/' + user_name + '?bump-login')
+    if response.status_code != 200:
+        raise RuntimeError(json.loads(response.text)['description'])
+
+
+def collect_urls(session, api_url, query):
     logging.info('Collecting posts...')
     offset = 0
     while True:
         response = session.get(
-            API_URL + '/posts?fields=contentUrl&query=%s&offset=%d' %
+            api_url + '/posts?fields=contentUrl&query=%s&offset=%d' %
                 (urllib.parse.quote(query), offset))
         if response.status_code != 200:
             raise RuntimeError(json.loads(response.text)['description'])
@@ -52,18 +66,13 @@ def save_urls(session, dest_dir, urls):
 
 def main():
     args = parse_args()
+    api_url: str = args.api_url
+    user_name: str = args.user or input('User: ')
+    password: str = args.password or getpass.getpass('Password: ')
 
-    session = requests.Session()
-    session.keep_alive = False
-    session.auth = (requests.auth.HTTPBasicAuth(YUME_USER_NAME, YUME_PASSWORD))
-    session.headers['Content-Type'] = 'application/json'
-    session.headers['Accept'] = 'application/json'
-
-    response = session.get(API_URL + '/user/' + YUME_USER_NAME + '?bump-login')
-    if response.status_code != 200:
-        raise RuntimeError(json.loads(response.text)['description'])
-
-    urls = collect_urls(session, args.query)
+    session = create_session(api_url, user_name, password)
+    bump_login(session, api_url, user_name)
+    urls = collect_urls(session, api_url, args.query)
     save_urls(session, args.dir, urls)
 
 
