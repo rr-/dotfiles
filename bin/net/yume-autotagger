@@ -8,19 +8,25 @@ import json
 import argparse
 import functools
 import requests
+import yaml
 from bs4 import BeautifulSoup
 from dotfiles import iqdb
-from dotfiles import config
 from dotfiles import logging
 from dotfiles.tag_list import TagList
 
-config_key = config['yume-autotagger']
 
+def load_config():
+    path = os.path.expanduser('~/.config/yume-autotagger.yml')
+    with open(path, 'r') as handle:
+        return yaml.load(handle)
+
+
+config = load_config()
 HISTORY_PATH = os.path.expanduser('~/.config/yume-autotagger.json')
-YUME_URL = config_key.get('url', 'https://yume.pl')
-API_URL = config_key.get('api-url', 'https://yume.pl/api')
-YUME_USER_NAME = config_key['user']
-YUME_PASSWORD = config_key['password']
+SITE_URL = config.get('url', 'https://yume.pl')
+API_URL = config.get('api-url', 'https://yume.pl/api')
+USER_NAME = config['user']
+PASSWORD = config['password']
 
 
 def sanitize_tag(name):
@@ -106,7 +112,7 @@ class SzurubooruApi:
         self._session = requests.Session()
         self._session.keep_alive = False
         self._session.auth = (
-            requests.auth.HTTPBasicAuth(YUME_USER_NAME, YUME_PASSWORD))
+            requests.auth.HTTPBasicAuth(USER_NAME, PASSWORD))
         self._session.headers['Content-Type'] = 'application/json'
         self._session.headers['Accept'] = 'application/json'
         self._login()
@@ -153,15 +159,15 @@ class SzurubooruApi:
 
     def _login(self):
         response = self._session.get(
-            API_URL + '/user/' + YUME_USER_NAME + '?bump-login')
+            API_URL + '/user/' + USER_NAME + '?bump-login')
         if response.status_code != 200:
             raise SzurubooruApiError(json.loads(response.text)['description'])
 
 
 def is_banned(tag_name):
-    if tag_name in config_key.get('banned', []):
+    if tag_name in config.get('banned', []):
         return True
-    for banned_regex in config_key.get('banned_regex', []):
+    for banned_regex in config.get('banned_regex', []):
         if re.match(banned_regex, tag_name, re.I):
             return True
     return False
@@ -173,12 +179,12 @@ def filter_third_party_tags(third_party_tags):
             logging.warning('Ignored tag %r', tag.name)
             continue
 
-        if tag.name in config_key.get('translations', {}):
+        if tag.name in config.get('translations', {}):
             logging.info(
                 'Translated tag %r → %r',
                 tag.name,
-                config_key['translations'][tag.name])
-            tag.name = config_key['translations'][tag.name]
+                config['translations'][tag.name])
+            tag.name = config['translations'][tag.name]
 
         sanitized_name = sanitize_tag(tag.name)
         if sanitized_name != tag.name:
@@ -190,7 +196,7 @@ def filter_third_party_tags(third_party_tags):
 
 def sync_tags(szuru_api, post_id, source=None):
     post = szuru_api.get_post(post_id)
-    logging.info('%s/post/%d', YUME_URL, post['id'])
+    logging.info('%s/post/%d', SITE_URL, post['id'])
     logging.info(post['contentUrl'])
 
     new_tags = TagList()
@@ -248,7 +254,7 @@ def sync_tags(szuru_api, post_id, source=None):
             new_tag.name = capitalize(new_tag.name)
         szuru_api.create_tag({
             'names': [new_tag.name],
-            'category': config_key['categories'][new_tag.category],
+            'category': config['categories'][new_tag.category],
         })
 
     logging.info('Updating post tags')
