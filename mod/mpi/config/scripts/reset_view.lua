@@ -1,12 +1,15 @@
 local on = mp.get_opt('reset-view') == 'yes'
 
 function file_changed()
-    if on == true then
-        --mp.set_property('video-unscaled', 'no')
-        mp.set_property_number('video-pan-x', 0)
-        mp.set_property_number('video-pan-y', 0)
-        mp.set_property_number('video-zoom', 0)
-        mp.set_property_number('video-rotate', 0)
+    if not on then
+        return
+    end
+
+    props = {'video-pan-x', 'video-pan-y', 'video-zoom', 'video-rotate'}
+    for _, prop in pairs(props) do
+        if mp.get_property_number(prop) ~= 0 then
+            mp.set_property_number(prop, 0)
+        end
     end
 end
 
