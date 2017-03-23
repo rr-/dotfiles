@@ -43,6 +43,13 @@ def _proxy_command(command: CommandBase) -> CommandBase:
     return ProxyCommand
 
 
+def _generate_report():
+    args = argparse.Namespace()
+    args.deck = DECK_NAME
+    args.output = REPORT_PATH
+    cmd.StatsCommand().run(args)
+
+
 class ListCommand(cmd.ListCardsCommand):
     names = ['list']
 
@@ -60,10 +67,15 @@ class ReviewCommand(cmd.ReviewCommand):
         try:
             super().run(args)
         finally:
-            stats_args = argparse.Namespace()
-            stats_args.deck = DECK_NAME
-            stats_args.output = REPORT_PATH
-            cmd.StatsCommand().run(stats_args)
+            _generate_report()
+
+
+class StudyCommand(cmd.StudyCommand):
+    def run(self, args: argparse.Namespace) -> None:
+        try:
+            super().run(args)
+        finally:
+            _generate_report()
 
 
 def _create_card(
@@ -158,7 +170,7 @@ def main() -> None:
         _proxy_command(ListCommand)(),
         _proxy_command(UpdateCommand)(),
         _proxy_command(DeleteCommand)(),
-        _proxy_command(cmd.StudyCommand)(),
+        _proxy_command(StudyCommand)(),
         _proxy_command(ReviewCommand)(),
         _proxy_command(cmd.HowToCommand)(),
     ]
