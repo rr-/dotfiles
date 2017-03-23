@@ -38,6 +38,10 @@ function get_property_number_or_nil(name)
     return mp.get_property_number(name)
 end
 
+function force_redraw()
+    mp.osd_message('')
+end
+
 function update_statusbar()
     if on == true then
         local playlist_pos = mp.get_property_number('playlist-pos') + 1
@@ -56,11 +60,8 @@ function update_statusbar()
                 size,
                 playlist_pos,
                 playlist_count))
-        mp.set_property(
-            'options/osd-msg3',
-            string.format(
-                '%s',
-                path))
+        mp.set_property('options/osd-msg3', string.format('%s', path))
+        force_redraw()
     end
 end
 
@@ -71,6 +72,7 @@ function toggle_statusbar()
     else
         on = false
         mp.set_property('options/osd-msg1', '')
+        force_redraw()
     end
     mp.resume_all()
 end
