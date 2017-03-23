@@ -25,4 +25,4 @@ osd-border-color='#aa000000'
 osd-blur=2
 osd-font='InputMono Light'
 osd-font-size=16
-sws-scaler=point
+sws-scaler=lanczos
