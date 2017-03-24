@@ -61,7 +61,9 @@ def hotlist_item_cb(data, item, window):
             w.color(COLORS[item.priority]),
             item.title,
             w.color('reset'))
-        for item in sorted(items, key=lambda item: (item.number, item.priority))
+        for item in sorted(
+            items,
+            key=lambda item: (-item.priority, item.number))
         if item.priority != GUI_HOTLIST_LOW)
 
 
