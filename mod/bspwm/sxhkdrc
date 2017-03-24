@@ -82,21 +82,11 @@ alt + shift + ctrl + {Left,Right}
 # window manager
 #
 
-# widen/shrink current window
-super + w
-    bspc node {@west -r -50,@south -r +50, @north -r -50, @east -r +50}
-super + W
-    bspc node {@west -r +50,@south -r -50, @north -r +50, @east -r -50}
-
 # transparency
 super + {button5,button4}
     compton-trans -c {-,+}5
 super + {z,Z}
     compton-trans -c {-,+}5
-
-# exit bpswm
-super + shift + q
-    bspc quit
 
 # close active window
 super + q
@@ -159,9 +149,6 @@ super + {bracketleft,bracketright}
     bspc control --record-history off; \
     bspc node {older,newer} -f; \
     bspc control --record-history on
-
-Scroll_Lock
-    zsh -i -l -c 'arrows toggle' >/tmp/tmp
 
 # reload sxhkd configuration
 alt + F12
