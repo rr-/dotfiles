@@ -6,13 +6,15 @@
 super + {r, d}
     dmenu_run
 
+# switch Polish↔Japanese
 super + space
     switch_keyboard_layout
 
-# local terminal
+# focus or spawn local terminal with tmux
 alt + ctrl + bracketleft
     run-or-raise -cn local_terminal -p "urxvt -name local_terminal -e zsh -ilc 'tmux new-session -As work'"
 
+# focus and spawn local terminal with tmux
 super + Return
     xdotool search --classname local_terminal windowactivate; \
     if [ $? -ne 0 ]; then; \
@@ -21,32 +23,35 @@ super + Return
         tmux new-window -t work; \
     fi
 
+# spawn plain terminal
 alt + ctrl + shift + bracketleft
     urxvt
 
-# remote terminal
+# focus or spawn remote terminal
 alt + ctrl + bracketright
     run-or-raise -cn remote_terminal -p "urxvt -name remote_terminal -e zsh -ilc 'ssh cyclone -t "'"zsh -ilc tmux\ new-session\ -As\ work"'"'"
 
+# spawn plain remote terminal
 alt + ctrl + shift + bracketright
     urxvt -e zsh -ilc 'ssh cyclone'
 
-# irc
+# focus or spawn irc
 alt + ctrl + m
     run-or-raise -cn remote_irc -p "urxvt -name remote_irc -e zsh -ilc 'ssh cyclone -t "'"zsh -ilc tmux\ a\ -t\ irc"'"'"
 
+# focus or spawn irc, and detach all other sessions
 alt + ctrl + shift + m
     run-or-raise -cn remote_irc -p "urxvt -name remote_irc -e zsh -ilc 'ssh cyclone -t "'"zsh -ilc tmux\ a\ -d\ -t\ irc"'"'"
 
-# web browser
+# spawn web browser
 alt + ctrl + semicolon
     run-or-raise -n 'Mozilla Firefox|Vimperator|Qutebrowser' -p "xdg-open 'about:blank'"
 
-# text editor
+# spawn text editor
 alt + ctrl + shift + n
     urxvt -e zsh -ilc vim
 
-# file manager
+# spawn file manager within local terminal
 super + e
     run-or-raise -cn local_terminal -p "urxvt -name local_terminal -e zsh -ilc 'tmux new-session -As work'"; \
     tmux select-window -t work:vifm || tmux new-window -t work: -n vifm vifm
@@ -69,6 +74,7 @@ super + {c,C}
 super + v
     mpc toggle
 
+# copy current song title to clipboard
 super + V
     zsh -i -l -c 'mpc|head -n1|clip'
 
@@ -127,9 +133,11 @@ super + s
 super + f
     bash -c '~/.config/bspwm/toggle-state fullscreen'
 
+# cycle between desktop layouts
 super + shift + f
     bspc desktop -l {tiled,monocle}
 
+# toggle window gaps
 super + o
     if test $(bspc config -d focused window_gap) -eq 0; then; \
         bspc config -d focused window_gap $BSPC_WINDOW_GAP; \
@@ -137,6 +145,7 @@ super + o
         bspc config -d focused window_gap 0; \
     fi
 
+# toggle window borders
 super + shift + o
     if test $(bspc config -d focused border_width) -eq 0; then; \
         bspc config -d focused border_width $BSPC_BORDER_WIDTH; \
