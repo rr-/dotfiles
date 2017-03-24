@@ -25,9 +25,23 @@ COLORS = {
 }
 
 
+class HotlistItem:
+    def __init__(self, number, priority, name, count):
+        self.number = number
+        self.priority = priority
+        self.name = name
+        self.count = count
+
+    @property
+    def title(self):
+        ret = '%d:%s' % (self.number, self.name)
+        if self.count:
+            ret += '(%d)' % self.count
+        return ret
+
+
 def hotlist_item_cb(data, item, window):
-    priorities = {}
-    titles = {}
+    items = []
 
     hdata_hotlist = w.hdata_get('hotlist')
     ptr_hotlist = w.hdata_get_list(hdata_hotlist, 'gui_hotlist')
@@ -39,21 +53,16 @@ def hotlist_item_cb(data, item, window):
         number = w.buffer_get_integer(buffer, 'number')
         name = w.buffer_get_string(buffer, 'short_name')
 
-        if priority != GUI_HOTLIST_LOW:
-            priorities[number] = priority
-            titles[number] = '%d:%s' % (number, name)
-            if count:
-                titles[number] += '(%d)' % count
-
+        items.append(HotlistItem(number, priority, name, count))
         ptr_hotlist = w.hdata_move(hdata_hotlist, ptr_hotlist, 1)
 
-    items = []
-    for number, priority in sorted(priorities.items()):
-        items.append('%s %s %s' % (
-            w.color(COLORS[priority]),
-            titles[number],
-            w.color('reset')))
-    return ' '.join(items)
+    return ' '.join(
+        '%s %s %s' % (
+            w.color(COLORS[item.priority]),
+            item.title,
+            w.color('reset'))
+        for item in sorted(items, key=lambda item: (item.number, item.priority))
+        if item.priority != GUI_HOTLIST_LOW)
 
 
 def hotlist_hook_cb(data, signal, signal_data):
