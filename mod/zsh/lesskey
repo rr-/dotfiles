@@ -1,0 +1,11 @@
+# shell (or Emacs) like shortcuts for the line-edit mode
+#line-edit
+^A home
+^E end
+^F right
+^B left
+^D delete
+^W word-backspace
+\e abort
+^P up
+^N down
