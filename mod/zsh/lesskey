@@ -9,3 +9,6 @@
 \e abort
 ^P up
 ^N down
+^Q abort
+#command
+^Q quit
