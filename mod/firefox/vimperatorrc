@@ -3,6 +3,11 @@
 
 map , <Leader>
 
+"enter
+inoremap <C-j> <Enter>
+nnoremap <C-j> <Nop>
+cnoremap <C-j> <Enter>
+
 "ctrl + a
 inoremap <C-a> <C-Home><C-S-End>
 cnoremap <C-a> <C-Home><C-S-End>
