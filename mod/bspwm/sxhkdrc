@@ -81,8 +81,8 @@ super + V
 
 # seek backward and forward
 alt + shift + ctrl + {Left,Right}
-    CMD="seek "{-,+}10; \
-    mpc $CMD || mpvmc $CMD
+    NUM={-,+}10; \
+    mpc seek $NUM || mpvmc seek "$NUM"
 
 
 
