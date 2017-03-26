@@ -7,6 +7,9 @@ map , <Leader>
 inoremap <C-j> <Enter>
 nnoremap <C-j> <Nop>
 cnoremap <C-j> <Enter>
+inoremap <C-m> <Enter>
+nnoremap <C-m> <Nop>
+cnoremap <C-m> <Enter>
 
 "ctrl + a
 inoremap <C-a> <C-Home><C-S-End>
