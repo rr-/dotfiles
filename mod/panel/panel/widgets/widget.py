@@ -12,15 +12,15 @@ class Widget:
         self.main_window = main_window
 
     @contextmanager
-    def exception_guard(self):
+    def exception_guard(self, sleep_time=0):
         try:
             yield
         except Exception as ex:
             logging.exception(ex)
-            time.sleep(1)
+            time.sleep(sleep_time)
 
     def refresh(self):
-        with self.exception_guard():
+        with self.exception_guard(sleep_time=1):
             self.refresh_impl()
 
     def render(self):
