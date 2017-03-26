@@ -16,7 +16,7 @@ from panel.widgets.volume import VolumeWidget
 from panel.widgets.cpu import CpuWidget
 from panel.widgets.net import NetworkUsageWidget
 from panel.widgets.battery import BatteryWidget
-from panel.widgets.music import MpdWidget
+from panel.widgets.mpd import MpdWidget
 from panel.widgets.stretch import StretchWidget
 from panel.colors import Colors
 
