@@ -146,9 +146,9 @@ def main():
     def worker(widget, trigger):
         while True:
             widget.refresh()
+            trigger.emit(widget.render)
             if widget.delay > 0:
                 time.sleep(widget.delay)
-            trigger.emit(widget.render)
 
     physical_height = main_window.height() * app.devicePixelRatio()
     for monitor in workspaces_updater.monitors:
