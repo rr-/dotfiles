@@ -59,7 +59,7 @@ def _is_image_too_small(source_path, args):
             image_area = image_width * image_height
             if image_area < min_image_area:
                 return True
-    except:
+    except Exception:
         pass
     return False
 

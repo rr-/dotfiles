@@ -4,7 +4,12 @@ import sys
 import re
 
 STRIP = ' -\N{EN DASH}\N{EM DASH}'
-REGEX = r'(?P<before>.*)((?P<hour>\d+):)?(?P<minute>\d+):(?P<second>\d+)(?P<after>.*)'
+REGEX = (
+    r'(?P<before>.*)' +
+    r'((?P<hour>\d+):)?' +
+    r'(?P<minute>\d+):' +
+    r'(?P<second>\d+)' +
+    r'(?P<after>.*)')
 
 
 def main():
@@ -28,6 +33,7 @@ def main():
         seconds += int(results['second'] or '0')
 
     print(datetime.timedelta(seconds=seconds))
+
 
 if __name__ == '__main__':
     main()

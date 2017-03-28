@@ -6,7 +6,7 @@ import sys
 import argparse
 import shutil
 import collections
-from enum import Enum
+
 
 class DistributionStyle:
     FILL_FIRST = 0

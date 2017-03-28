@@ -162,9 +162,9 @@ def main():
         widget.refresh()
         main_window.trigger.emit(widget.render)
 
-        t = threading.Thread(
+        thread = threading.Thread(
             target=worker, args=(widget, main_window.trigger), daemon=True)
-        t.start()
+        thread.start()
 
     signal.signal(signal.SIGINT, signal.SIG_DFL)
     app.exec_()

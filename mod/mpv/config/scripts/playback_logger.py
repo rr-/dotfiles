@@ -8,7 +8,6 @@ import socket
 from datetime import datetime
 
 
-# configuration
 MINIMUM_WATCHED_PERCENTAGE = 80
 MINIMUM_DURATION = 300  # five minutes
 IGNORE_ONLINE_STREAMS = True
@@ -72,6 +71,7 @@ def main():
 
     except Exception as ex:
         print(ex, file=sys.stderr)
+
 
 if __name__ == '__main__':
     main()

@@ -10,7 +10,7 @@ from typing import List
 
 def _get_paths(target_dir: str) -> List[str]:
     paths: List[str] = []
-    for root, subdirs, files in os.walk(target_dir):
+    for root, _subdirs, files in os.walk(target_dir):
         for file in files:
             paths.append(os.path.join(root, file))
     paths.sort()
@@ -18,15 +18,14 @@ def _get_paths(target_dir: str) -> List[str]:
 
 
 def _get_checksum(paths: List[str]) -> str:
-    ret = {}
-    m = hashlib.md5()
+    digest = hashlib.md5()
     for path in paths:
         try:
             with open(path, 'rb') as handle:
-                m.update(handle.read())
+                digest.update(handle.read())
         except FileNotFoundError:
             pass
-    return m.hexdigest()
+    return digest.hexdigest()
 
 
 def _parse_args() -> argparse.Namespace:

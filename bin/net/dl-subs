@@ -7,10 +7,10 @@ import hashlib
 import os
 import re
 import subprocess
-import sys
 import tempfile
 import requests
 from dotfiles import logging
+
 
 PASSWORD = 'iBlm8NTigvru0Jr0'
 URL_TEMPLATE = (
@@ -349,6 +349,7 @@ def main():
                 process_path(*func_args)
             else:
                 executor.submit(process_path, *func_args)
+
 
 if __name__ == '__main__':
     main()

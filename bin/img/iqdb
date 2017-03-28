@@ -76,7 +76,7 @@ def _get_cache(args):
     try:
         with open(cache_path, 'rb') as handle:
             return pickle.load(handle)
-    except:
+    except Exception:
         return {}
 
 

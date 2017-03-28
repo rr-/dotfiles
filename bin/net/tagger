@@ -101,7 +101,7 @@ class ChosenTagsListBox(urwid.ListBox):
 
     def update(self):
         self.body.clear()
-        for tag in sorted(self._chosen_tags, key=lambda tag: str(tag)):
+        for tag in sorted(self._chosen_tags, key=str):
             if tag.source == LocalTag.SOURCE_IMPLICATION:
                 class_name = 'implied-tag'
             elif tag.source == LocalTag.SOURCE_INITIAL:
@@ -221,8 +221,8 @@ class FuzzyInput(urwid.Widget):
     def _update_matches(self):
         self._matches = _get_fuzzy_matches(
             self._input_box.text, self._reference_tags)
-        self._focused_match = \
-            _clamp(self._focused_match, -1, len(self._matches) - 1)
+        self._focused_match = _clamp(
+            self._focused_match, -1, len(self._matches) - 1)
 
 
 class UrwidTagger:

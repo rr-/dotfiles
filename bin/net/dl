@@ -197,8 +197,7 @@ class DownloadCommand(Command):
             mime = response.headers['content-type'].split(';')[0].lower()
             if mime == 'text/html':
                 return self._process_html(response)
-            else:
-                return self._process_nonhtml(response)
+            return self._process_nonhtml(response)
 
         def _process_html(self, response):
             soup = BeautifulSoup(response.text, 'html.parser')
