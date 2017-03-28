@@ -20,7 +20,7 @@ def parse_args():
     return parser.parse_args()
 
 
-def create_session(api_url, user_name, password):
+def create_session(user_name, password):
     session = requests.Session()
     session.keep_alive = False
     session.auth = requests.auth.HTTPBasicAuth(user_name, password)
@@ -40,12 +40,12 @@ def collect_urls(session, api_url, query):
     offset = 0
     while True:
         response = session.get(
-            api_url + '/posts?fields=contentUrl&query=%s&offset=%d' %
-                (urllib.parse.quote(query), offset))
+            api_url + '/posts?fields=contentUrl&query=%s&offset=%d' % (
+                urllib.parse.quote(query), offset))
         if response.status_code != 200:
             raise RuntimeError(json.loads(response.text)['description'])
         decoded_response = json.loads(response.text)
-        if not len(decoded_response['results']):
+        if not decoded_response['results']:
             break
         offset += len(decoded_response['results'])
         for result in decoded_response['results']:
@@ -70,7 +70,7 @@ def main():
     user_name: str = args.user or input('User: ')
     password: str = args.password or getpass.getpass('Password: ')
 
-    session = create_session(api_url, user_name, password)
+    session = create_session(user_name, password)
     bump_login(session, api_url, user_name)
     urls = collect_urls(session, api_url, args.query)
     save_urls(session, args.dir, urls)

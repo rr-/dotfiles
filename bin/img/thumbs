@@ -11,11 +11,11 @@ from tempfile import NamedTemporaryFile
 from subprocess import run
 
 
-def natural_sort_key(s, _nsre=re.compile('([0-9]+)')):
+def natural_sort_key(text, _nsre=re.compile('([0-9]+)')):
     return [
-        int(text)
-        if text.isdigit() else text.lower()
-        for text in re.split(_nsre, s)]
+        int(term)
+        if term.isdigit() else term.lower()
+        for term in re.split(_nsre, text)]
 
 
 MANAGED_EXTENSIONS = ['jpg', 'jpeg', 'jfif', 'gif', 'png', 'tga', 'bmp']
