@@ -6,7 +6,6 @@ Plug 'vim-airline/vim-airline'          "riced status bar
 Plug 'vim-airline/vim-airline-themes'   "riced status bar - themes
 Plug 'Yggdroot/indentLine'              "vertical bars showing indent level
 Plug 'flazz/vim-colorschemes'           "color schemes!
-Plug 'octol/vim-cpp-enhanced-highlight' "improved C++11 highlighting
 Plug 'embear/vim-localvimrc'            "local vimrc
 Plug 'ntpeters/vim-better-whitespace'   "highlight and strip trailing whitespace
 Plug 'airblade/vim-gitgutter'           "show changed lines in git on margin
@@ -15,8 +14,6 @@ Plug 'rr-/vim-hexdec'                   "convert hex to dec and vice versa
 Plug 'junegunn/vim-easy-align'          "replace :column ...
 Plug 'bronson/vim-visual-star-search'   "enable * and # in visual mode
 Plug 'duggiefresh/vim-easydir'          "create directories on save
-Plug 'terryma/vim-multiple-cursors'
-Plug 'leafgarland/typescript-vim'       "typescript highlighting
 Plug 'christoomey/vim-tmux-navigator'   "integration with tmux
 call plug#end()
 
