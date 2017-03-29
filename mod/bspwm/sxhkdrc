@@ -79,6 +79,10 @@ super + v
 super + V
     zsh -ilc 'mpc||mpvmc print --format="[[[%artist%|%albumartist%] - ]%title%|%name%]"|head -n1|tr -d "\n"|clip'
 
+# toggle random
+super + b
+    mpc random || mpvmc toggle-random
+
 # seek backward and forward
 alt + shift + ctrl + {Left,Right}
     NUM={-,+}10; \
