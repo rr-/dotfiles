@@ -1,7 +1,7 @@
 local on = false
-local expected_playlist_pos  = 0
 local timer = nil
 local slideshow_sleep = mp.get_opt('slideshow-duration')
+local jump_from_slideshow = false
 
 if slideshow_sleep == nil then
     slideshow_sleep = 0.3
@@ -17,10 +17,10 @@ end
 
 function queue_next_slide()
     local next_slide = function()
-        if (get_playlist_pos() == get_playlist_count()) or
-                (get_playlist_pos() ~= expected_playlist_pos) then
+        if (get_playlist_pos() == get_playlist_count()) then
             stop_slideshow()
         else
+            jump_from_slideshow = true
             mp.command('playlist_next')
         end
     end
@@ -37,8 +37,8 @@ function start_slideshow()
     end
     mp.osd_message('Slideshow started')
     on = true
-    queue_next_slide()
-    expected_playlist_pos = get_playlist_pos()
+    jump_from_slideshow = true
+    mp.command('playlist_next')
 end
 
 function stop_slideshow()
@@ -47,6 +47,7 @@ function stop_slideshow()
     end
     mp.osd_message('Slideshow stopped')
     on = false
+    jump_from_slideshow = false
     timer:kill()
 end
 
@@ -73,8 +74,12 @@ end
 
 function file_loaded()
     if on then
-        expected_playlist_pos = expected_playlist_pos + 1
-        queue_next_slide()
+        if jump_from_slideshow then
+            jump_from_slideshow = false
+            queue_next_slide()
+        else
+            stop_slideshow()
+        end
     end
 end
 
