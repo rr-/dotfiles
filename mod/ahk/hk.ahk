@@ -26,37 +26,8 @@ BrowserPath = C:\Program Files (x86)\Mozilla Firefox\firefox.exe
 IfNotExist %BrowserPath%
     BrowserPath = "C:\Users\rr-\AppData\Local\Google\Chrome\Application\chrome.exe"
 
-;detect im
-global IMClass
-global IMPath
-IMClass := "Buddy List"
-IMPath := "C:\Program Files (x86)\pidgin\pidgin.exe"
-If !FileExist(IMPath)
-{
-    ;wtw
-    IMClass := "ahk_class {B993D471-D465-43f2-BBA5-DEEA18A1789E}"
-    IMPath := "C:\Program Files\WTW\WTW.exe"
-    If !FileExist(IMPath)
-    {
-        IMPath := "C:\Program Files\K2T\WTW\WTW.exe"
-    }
-}
-
 ;disable windows+l
 RegWrite, REG_DWORD, HKEY_CURRENT_USER, Software\Microsoft\Windows\CurrentVersion\Policies\System, DisableLockWorkstation, 1
-
-;detect screen resolution
-global MonitorWorkAreaLeft
-global MonitorWorkAreaRight
-global MonitorWorkAreaTop
-global MonitorWorkAreaBottom
-SysGet, MonitorPrimary, MonitorPrimary
-SysGet, MonitorWorkArea, MonitorWorkArea, %MonitorPrimary%
-;...and set terminal position basing on this
-TermX := MonitorWorkAreaRight - 920
-TermY := 45
-RemoteTermX := 45
-RemoteTermY := 45
 
 ;activate/run a program
 FRun(window, path, folder)
@@ -91,19 +62,19 @@ OnClipboardChange:
     ;cygwin - activate/run
     #Enter::
     {
-        Run, %CygPath%\bin\mintty.exe --title "Terminal" --size "110`,35" --position "%TermX%`,%TermY%" --class "mintty_thetty" --exec /bin/zsh -i -l, %CygPath%
+        Run, %CygPath%\bin\mintty.exe --title "Terminal" --class "mintty_thetty" --exec /bin/zsh -i -l, %CygPath%
         return
     }
     +^![::
     {
-        Run, %CygPath%\bin\mintty.exe --title "Terminal" --size "110`,35" --position "%TermX%`,%TermY%" --class "mintty_thetty" --exec /bin/zsh -i -l, %CygPath%
+        Run, %CygPath%\bin\mintty.exe --title "Terminal" --class "mintty_thetty" --exec /bin/zsh -i -l, %CygPath%
         return
     }
     ^![::
     {
         if (!WinExist("ahk_class mintty_thetty"))
         {
-            Run, %CygPath%\bin\mintty.exe --title "Terminal" --size "110`,35" --position "%TermX%`,%TermY%" --class "mintty_thetty" --exec /bin/zsh -i -l, %CygPath%
+            Run, %CygPath%\bin\mintty.exe --title "Terminal" --class "mintty_thetty" --exec /bin/zsh -i -l, %CygPath%
             WinWait ahk_class mintty_thetty
         }
         else
@@ -117,14 +88,14 @@ OnClipboardChange:
     ;ssh to cyclone - activate/run
     +^!]::
     {
-        Run, %CygPath%\bin\mintty.exe --title "Remote terminal" --size "190`,65" --position "%RemoteTermX%`,%RemoteTermY%" --class mintty_ssh --exec /bin/ssh cyclone, %CygPath%/bin
+        Run, %CygPath%\bin\mintty.exe --title "Remote terminal" --class mintty_ssh --exec /bin/ssh cyclone, %CygPath%/bin
         return
     }
     ^!]::
     {
         if (!WinExist("ahk_class mintty_ssh"))
         {
-            Run, %CygPath%\bin\mintty.exe --title "Remote terminal" --size "190`,65" --position "%RemoteTermX%`,%RemoteTermY%" --class mintty_ssh --exec /bin/ssh cyclone, %CygPath%/bin
+            Run, %CygPath%\bin\mintty.exe --title "Remote terminal" --class mintty_ssh --exec /bin/ssh cyclone, %CygPath%/bin
             WinWait ahk_class mintty_ssh
         }
         else
@@ -135,7 +106,7 @@ OnClipboardChange:
         return
     }
 
-    ;text editor - activate/run + fix screen position
+    ;text editor - activate/run
     +^!N::
     {
         IfWinExist, ahk_class Vim
@@ -145,7 +116,7 @@ OnClipboardChange:
         }
         else
         {
-            Run, %CygPath%\bin\mintty.exe --size "180`,60" --position "100`,100" --class "Vim" --exec /bin/zsh -l -i -c /bin/vim, %CygPath%/bin
+            Run, %CygPath%\bin\mintty.exe --class "Vim" --exec /bin/zsh -l -i -c /bin/vim, %CygPath%/bin
             WinWait, ahk_class Vim
         }
         return
@@ -173,21 +144,6 @@ OnClipboardChange:
         Run, %CygPath%\bin\mintty.exe --window max --class "Vifm" --exec /bin/zsh -l -i -c vifm, %CygPath%/bin
         return
     }
-
-;im
-#If FileExist(IMPath)
-    ;im - activate/run
-    +^!M::
-        if (!WinExist(IMClass))
-        {
-            Run, %IMPath% -x
-        }
-        else
-        {
-            WinShow
-            WinActivate
-        }
-        return
 
 ;browser
 #If FileExist(BrowserPath)
@@ -300,50 +256,6 @@ AddTransparency(delta)
 #z::AddTransparency(-12)
 +#z::AddTransparency(12)
 
-;directional focus
-DirectionalFocus(direction)
-{
-    DetectHiddenWindows, Off
-    ActiveHwnd := WinExist("A")
-    WinGetPos bx, by, _, _, ahk_id %ActiveHwnd%
-    WinGet windows, List
-    Loop %windows%
-    {
-        id := windows%A_Index%
-        WinGetPos wx, wy, _, _, ahk_id %id%
-        if (direction == "left")
-            condition := wx < bx
-        else if (direction == "right")
-            condition := wx > bx
-        else if (direction == "up")
-            condition := wy < by
-        else if (direction == "down")
-            condition := wy > by
-        else
-        {
-            MsgBox % "Bad direction"
-            return
-        }
-        if (condition)
-        {
-            WinGetTitle, wtitle, ahk_id %id%
-            if (wtitle != "")
-            {
-                WinActivate, ahk_id %id%
-                break
-            }
-        }
-    }
-    DetectHiddenWindows, On
-    return
-}
-#h::DirectionalFocus("left")
-#j::DirectionalFocus("down")
-#k::DirectionalFocus("up")
-#l::DirectionalFocus("right")
-+#h::SendInput, {LWin down}{LShift down}{Left}{LShift up}{LWin up}
-+#l::SendInput, {LWin down}{LShift down}{Right}{LShift up}{LWin up}
-
 ;music
 #x::Send {Volume_Up}
 +#x::Volume_Down
@@ -357,11 +269,3 @@ DirectionalFocus(direction)
 
 ;reload autohotkey
 !F12::Reload
-
-;toggle arrows
-~ScrollLock::
-    Sleep, 300
-    if GetKeyState("ScrollLock", "T")
-        Run, %CygPath%\bin\zsh.exe -i -l -c 'arrows 1', , Hide
-    else
-        Run, %CygPath%\bin\zsh.exe -i -l -c 'arrows 0', , Hide
