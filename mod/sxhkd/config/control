@@ -1,0 +1,18 @@
+#!/bin/sh
+stop()
+{
+    # pkill sxhkd
+    tmux kill-session -t sxhkd
+}
+
+start()
+{
+    tmux new-session -s sxhkd -d
+    printf '%s\n' '. ~/.config/sxhkd/functions' | tmux load-buffer -
+    tmux paste-buffer -t sxhkd
+    SXHKD_SHELL=~/.config/sxhkd/runner sxhkd
+}
+
+case $1 in
+    start|stop) "$1" ;;
+esac
