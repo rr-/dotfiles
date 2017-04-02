@@ -167,8 +167,10 @@ class ChosenTagsListBox(VimListBox):
         self._invalidate()
 
     def _delete_selected(self):
+        old_focused_item = self._focus
         self._chosen_tags.remove(self.body.get_focus()[0].text)
         self.update()
+        self._focus = old_focused_item
         self._invalidate()
 
 
