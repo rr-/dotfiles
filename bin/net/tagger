@@ -127,7 +127,7 @@ class VimListBox(urwid.ListBox):
 
     @_focus.setter
     def _focus(self, focus):
-        self.body.focus = sorted((0, focus, len(self.body) - 1))[1]
+        self.body.focus = _clamp(focus, 0, len(self.body) - 1)
 
 
 class ChosenTagsListBox(VimListBox):
@@ -152,18 +152,18 @@ class ChosenTagsListBox(VimListBox):
         self.body.clear()
         for tag in sorted(self._chosen_tags, key=str):
             if tag.source == LocalTag.SOURCE_IMPLICATION:
-                class_name = 'implied-tag'
+                attr_name = 'implied-tag'
             elif tag.source == LocalTag.SOURCE_INITIAL:
-                class_name = 'initial-tag'
+                attr_name = 'initial-tag'
             elif str(tag).lower() not in self._reference_tags:
-                class_name = 'new-tag'
+                attr_name = 'new-tag'
             else:
-                class_name = 'tag'
+                attr_name = 'tag'
             self.body.append(
                 urwid.AttrWrap(
                     urwid.Text(str(tag), wrap=urwid.CLIP),
-                    class_name,
-                    'focused-' + class_name))
+                    attr_name,
+                    'f-' + attr_name))
         self._invalidate()
 
     def _delete_selected(self):
@@ -207,13 +207,13 @@ class FuzzyInput(urwid.Widget):
             text = self._matches[i] if i < len(self._matches) else ' '
             if len(text) > maxcol:
                 text = text[0:maxcol-3] + '...'
-            class_name = 'match'
+            attr_name = 'match'
             if self._focused_match == i:
-                class_name = 'focused-' + class_name
+                attr_name = 'f-' + attr_name
             canvases.append((
                 urwid.TextCanvas(
                     [text.encode()],
-                    attr=[[(class_name, len(text))]],
+                    attr=[[(attr_name, len(text))]],
                     maxcol=maxcol),
                 i + 1,
                 focus))
@@ -285,21 +285,19 @@ class UrwidTagger:
                 header=urwid.Text(title, 'center') if title else None),
             unhandled_input=self._keypress)
         self._loop.screen.set_terminal_properties(256)
-        self._loop.screen.register_palette_entry(
-            'focused-match', 'light green', 'default')
-        self._loop.screen.register_palette_entry(
-            'new-tag', 'light red', 'default',
-            background_high='#FF0')
-        self._loop.screen.register_palette_entry(
-            'implied-tag', 'light green', 'default',
-            background_high='#DFD')
-        self._loop.screen.register_palette_entry(
-            'initial-tag', 'dark blue', 'default',
-            background_high='#DDF')
-        for class_name in ('tag', 'new-tag', 'implied-tag', 'initial-tag'):
-            self._loop.screen.register_palette_entry(
-                'focused-' + class_name, 'black', 'white',
-                background_high='#000', foreground_high='#FFF')
+
+        self._loop.screen.register_palette([
+            ('match',         'default',     'default'),
+            ('f-match',       'light green', 'default'),
+            ('tag',           'default',     'default',  None, None,   None),
+            ('new-tag',       'light red',   'default',  None, None,   '#FF0'),
+            ('implied-tag',   'light green', 'default',  None, None,   '#DFD'),
+            ('initial-tag',   'dark blue',   'default',  None, None,   '#DDF'),
+            ('f-tag',         'black',       'white',    None, '#FFF', '#000'),
+            ('f-new-tag',     'black',       'white',    None, '#FFF', '#000'),
+            ('f-implied-tag', 'black',       'white',    None, '#FFF', '#000'),
+            ('f-initial-tag', 'black',       'white',    None, '#FFF', '#000'),
+        ])
 
     def add_from_user_input(self):
         try:
