@@ -38,9 +38,9 @@ bspc config external_rules_command "$DIR/rules"
 pkill -f sxhkd
 tmux kill-session -t sxhkd
 tmux new-session -s sxhkd -d
-printf '%s\n' '. "$DIR"/sxhkd-functions' | tmux load-buffer -
+printf '%s\n' '. ~/.config/sxhkd/functions' | tmux load-buffer -
 tmux paste-buffer -t sxhkd
-SXHKD_SHELL="$DIR/sxhkd-runner" sxhkd &
+SXHKD_SHELL=~/.config/sxhkd/runner sxhkd &
 
 # fix Java GUI rendering - found in baskerville's dotfiles
 IRONIC_WM_NAME="LG3D"
