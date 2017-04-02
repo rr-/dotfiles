@@ -73,8 +73,7 @@ def exists(path):
 def create_file(path, content=None, overwrite=False):
     path = expand_path(path)
     dir_path = os.path.dirname(path)
-    if not os.path.islink(dir_path):
-        create_dir(dir_path)
+    create_dir(dir_path)
     if overwrite or not os.path.exists(path):
         logger.info('Creating file %r...', path)
         with open(path, 'w') as handle:
@@ -84,7 +83,6 @@ def create_file(path, content=None, overwrite=False):
 
 def create_dir(path):
     path = expand_path(path)
-    _remove_symlink(path)
     if not os.path.exists(path):
         logger.info('Creating directory %r...', path)
         os.makedirs(path)
