@@ -53,7 +53,7 @@ alt + ctrl + shift + n
 
 # spawn file manager within local terminal
 super + e
-    run-or-raise -cn local_terminal -p "urxvt -name local_terminal -e zsh -ilc 'tmux new-session -As work'"; \
+    run-or-raise -cn local_terminal -p "urxvt -name local_terminal -e zsh -ilc 'tmux new-session -As work -n vifm vifm'"; \
     tmux select-window -t work:vifm || tmux new-window -t work: -n vifm vifm
 
 
