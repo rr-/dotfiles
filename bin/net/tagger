@@ -127,11 +127,17 @@ class ChosenTagsListBox(urwid.ListBox):
         self._invalidate()
 
     def _select_first(self):
-        self.body.focus = 0
+        if self.num is not None:
+            self.body.focus = sorted((0, self.num - 1, len(self.body) - 1))[1]
+        else:
+            self.body.focus = 0
         self._invalidate()
 
     def _select_last(self):
-        self.body.focus = len(self.body) - 1
+        if self.num is not None:
+            self.body.focus = sorted((0, self.num - 1, len(self.body) - 1))[1]
+        else:
+            self.body.focus = len(self.body) - 1
         self._invalidate()
 
     def _delete_selected(self):
