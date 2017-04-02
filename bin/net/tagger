@@ -69,12 +69,9 @@ def _get_fuzzy_matches(user_input, reference_tags):
     return [x for _, x in sorted(suggestions)]
 
 
-class ChosenTagsListBox(urwid.ListBox):
-    def __init__(self, chosen_tags, reference_tags):
-        super().__init__(urwid.SimpleListWalker([]))
-        self._chosen_tags = chosen_tags
-        self._reference_tags = reference_tags
-        self.update()
+class VimListBox(urwid.ListBox):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.num = None
 
     def selectable(self):
@@ -86,17 +83,70 @@ class ChosenTagsListBox(urwid.ListBox):
             'k':         self._select_next,
             'g':         self._select_first,
             'G':         self._select_last,
-            'd':         self._delete_selected,
-            'delete':    self._delete_selected,
         }
         if key in '0123456789':
             self.num = self.num * 10 if self.num is not None else 0
             self.num += int(key)
+            return None
         elif key in keymap:
             keymap[key]()
-            self.num = None
+            self._cancel_num()
             return None
         return key
+
+    def _cancel_num(self):
+        self.num = None
+
+    def _select_next(self):
+        num = self.num if self.num is not None else 1
+        self._focus -= 1
+        self._invalidate()
+
+    def _select_prev(self):
+        num = self.num if self.num is not None else 1
+        self._focus += num
+        self._invalidate()
+
+    def _select_first(self):
+        if self.num is not None:
+            self._focus = self.num - 1
+        else:
+            self._focus = 0
+        self._invalidate()
+
+    def _select_last(self):
+        if self.num is not None:
+            self._focus = self.num - 1
+        else:
+            self._focus = len(self.body) - 1
+        self._invalidate()
+
+    @property
+    def _focus(self):
+        return self.body.focus
+
+    @_focus.setter
+    def _focus(self, focus):
+        self.body.focus = sorted((0, focus, len(self.body) - 1))[1]
+
+
+class ChosenTagsListBox(VimListBox):
+    def __init__(self, chosen_tags, reference_tags):
+        super().__init__(urwid.SimpleListWalker([]))
+        self._chosen_tags = chosen_tags
+        self._reference_tags = reference_tags
+        self.update()
+
+    def keypress(self, size, key):
+        keymap = {
+            'd':         self._delete_selected,
+            'delete':    self._delete_selected,
+        }
+        if key in keymap:
+            keymap[key]()
+            self._cancel_num()
+            return None
+        return super().keypress(size, key)
 
     def update(self):
         self.body.clear()
@@ -114,30 +164,6 @@ class ChosenTagsListBox(urwid.ListBox):
                     urwid.Text(str(tag), wrap=urwid.CLIP),
                     class_name,
                     'focused-' + class_name))
-        self._invalidate()
-
-    def _select_next(self):
-        num = self.num if self.num is not None else 1
-        self.body.focus = max(self.body.focus - num, 0)
-        self._invalidate()
-
-    def _select_prev(self):
-        num = self.num if self.num is not None else 1
-        self.body.focus = min(self.body.focus + num, len(self.body) - 1)
-        self._invalidate()
-
-    def _select_first(self):
-        if self.num is not None:
-            self.body.focus = sorted((0, self.num - 1, len(self.body) - 1))[1]
-        else:
-            self.body.focus = 0
-        self._invalidate()
-
-    def _select_last(self):
-        if self.num is not None:
-            self.body.focus = sorted((0, self.num - 1, len(self.body) - 1))[1]
-        else:
-            self.body.focus = len(self.body) - 1
         self._invalidate()
 
     def _delete_selected(self):
