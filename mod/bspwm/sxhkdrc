@@ -12,7 +12,7 @@ super + space
 
 # focus or spawn local terminal with tmux
 alt + ctrl + bracketleft
-    run-or-raise -cn local_terminal -p "urxvt -name local_terminal -e zsh -ilc 'tmux new-session -As work'"
+    run_or_raise -cn local_terminal -p "urxvt -name local_terminal -e zsh -ilc 'tmux new-session -As work'"
 
 # focus and spawn local terminal with tmux
 super + Return
@@ -29,7 +29,7 @@ alt + ctrl + shift + bracketleft
 
 # focus or spawn remote terminal
 alt + ctrl + bracketright
-    run-or-raise -cn remote_terminal -p "urxvt -name remote_terminal -e zsh -ilc 'ssh cyclone -t "'"zsh -ilc tmux\ new-session\ -As\ work"'"'"
+    run_or_raise -cn remote_terminal -p "urxvt -name remote_terminal -e zsh -ilc 'ssh cyclone -t "'"zsh -ilc tmux\ new-session\ -As\ work"'"'"
 
 # spawn plain remote terminal
 alt + ctrl + shift + bracketright
@@ -37,24 +37,24 @@ alt + ctrl + shift + bracketright
 
 # focus or spawn irc
 alt + ctrl + m
-    run-or-raise -cn remote_irc -p "urxvt -name remote_irc -e zsh -ilc 'ssh cyclone -t "'"zsh -ilc tmux\ a\ -t\ irc"'"'"
+    run_or_raise -cn remote_irc -p "urxvt -name remote_irc -e zsh -ilc 'ssh cyclone -t "'"zsh -ilc tmux\ a\ -t\ irc"'"'"
 
 # focus or spawn irc, and detach all other sessions
 alt + ctrl + shift + m
-    run-or-raise -cn remote_irc -p "urxvt -name remote_irc -e zsh -ilc 'ssh cyclone -t "'"zsh -ilc tmux\ a\ -d\ -t\ irc"'"'"
+    run_or_raise -cn remote_irc -p "urxvt -name remote_irc -e zsh -ilc 'ssh cyclone -t "'"zsh -ilc tmux\ a\ -d\ -t\ irc"'"'"
 
 # spawn web browser
 alt + ctrl + semicolon
-    run-or-raise -n 'Mozilla Firefox|Vimperator|Qutebrowser' -p "xdg-open 'about:blank'"
+    run_or_raise -n 'Mozilla Firefox|Vimperator|Qutebrowser' -p "xdg-open 'about:blank'"
 
 # focus or spawn scratchpad
 alt + ctrl + n
-    run-or-raise -cn local_terminal -p "urxvt -name local_terminal -e zsh -ilc 'tmux new-session -As work -n scratchpad nvim'"; \
+    run_or_raise -cn local_terminal -p "urxvt -name local_terminal -e zsh -ilc 'tmux new-session -As work -n scratchpad nvim'"; \
     tmux select-window -t work:scratchpad || tmux new-window -t work: -n scratchpad nvim
 
 # spawn file manager within local terminal
 super + e
-    run-or-raise -cn local_terminal -p "urxvt -name local_terminal -e zsh -ilc 'tmux new-session -As work -n vifm vifm'"; \
+    run_or_raise -cn local_terminal -p "urxvt -name local_terminal -e zsh -ilc 'tmux new-session -As work -n vifm vifm'"; \
     tmux select-window -t work:vifm || tmux new-window -t work: -n vifm vifm
 
 
