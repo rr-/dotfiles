@@ -83,14 +83,6 @@ class ChosenTagsListBox(urwid.ListBox):
         keymap = {
             'j':         self._select_prev,
             'k':         self._select_next,
-            'ctrl j':    self._select_prev,
-            'ctrl k':    self._select_next,
-            'ctrl n':    self._select_prev,
-            'ctrl p':    self._select_next,
-            'down':      self._select_prev,
-            'up':        self._select_next,
-            'tab':       self._select_prev,
-            'shift tab': self._select_next,
             'd':         self._delete_selected,
             'delete':    self._delete_selected,
         }
@@ -151,12 +143,6 @@ class FuzzyInput(urwid.Widget):
     def keypress(self, size, key):
         keymap = {
             'enter':     self._accept,
-            'ctrl j':    self._select_prev,
-            'ctrl k':    self._select_next,
-            'ctrl n':    self._select_prev,
-            'ctrl p':    self._select_next,
-            'down':      self._select_prev,
-            'up':        self._select_next,
             'tab':       self._select_prev,
             'shift tab': self._select_next,
         }
