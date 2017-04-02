@@ -52,3 +52,18 @@ run_or_raise()
     fi
     xdotool search --sync --$type "$match" windowactivate
 }
+
+toggle_state()
+{
+    state=$(bspc query -T -n|python -c 'import json,sys;print(json.loads(sys.stdin.read())["client"]["state"])')
+    if [ "$state" == "$1" ]; then
+        bspc node -t tiled -l normal
+    else
+        xdo above -t "$(xdo id -N Bspwm -n root | sort | head -n 1)" $(xdo id -a panel)
+        if [ "$?" == '0' ]; then
+            bspc node -t "$1" -l normal
+        else
+            bspc node -t "$1" -l above
+        fi
+    fi
+}

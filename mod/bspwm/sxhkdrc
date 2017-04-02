@@ -134,11 +134,11 @@ super + alt + shift + {h,j,k,l}
 
 # set current window as floating
 super + s
-    bash -c '~/.config/bspwm/toggle-state floating'
+    toggle_state floating
 
 # set current window as fullscreen
 super + f
-    bash -c '~/.config/bspwm/toggle-state fullscreen'
+    toggle_state fullscreen
 
 # cycle between desktop layouts
 super + shift + f
