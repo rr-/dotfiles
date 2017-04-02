@@ -5,6 +5,7 @@
 type=
 match=
 program=
+on_raise=
 
 while [[ $# > 0 ]]
 do
@@ -29,6 +30,10 @@ do
             shift
             program=$1
             ;;
+        --on-raise)
+            shift
+            on_raise=$1
+            ;;
         *)
             echo "Unknown option: $key"
             exit 1
@@ -40,5 +45,7 @@ done
 window=$(xdotool search --$type "$match" | head -1)
 if [ -z "$window" ]; then
     eval "$program" &
+else
+    eval "$on_raise" &
 fi
 xdotool search --sync --$type "$match" windowactivate

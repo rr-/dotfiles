@@ -47,9 +47,10 @@ alt + ctrl + shift + m
 alt + ctrl + semicolon
     run-or-raise -n 'Mozilla Firefox|Vimperator|Qutebrowser' -p "xdg-open 'about:blank'"
 
-# spawn text editor
-alt + ctrl + shift + n
-    urxvt -e zsh -ilc vim
+# focus or spawn scratchpad
+alt + ctrl + n
+    run-or-raise -cn local_terminal -p "urxvt -name local_terminal -e zsh -ilc 'tmux new-session -As work -n scratchpad nvim'"; \
+    tmux select-window -t work:scratchpad || tmux new-window -t work: -n scratchpad nvim
 
 # spawn file manager within local terminal
 super + e
