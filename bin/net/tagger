@@ -75,6 +75,7 @@ class ChosenTagsListBox(urwid.ListBox):
         self._chosen_tags = chosen_tags
         self._reference_tags = reference_tags
         self.update()
+        self.num = None
 
     def selectable(self):
         return True
@@ -86,8 +87,12 @@ class ChosenTagsListBox(urwid.ListBox):
             'd':         self._delete_selected,
             'delete':    self._delete_selected,
         }
-        if key in keymap:
+        if key in '0123456789':
+            self.num = self.num * 10 if self.num is not None else 0
+            self.num += int(key)
+        elif key in keymap:
             keymap[key]()
+            self.num = None
             return None
         return key
 
@@ -110,14 +115,14 @@ class ChosenTagsListBox(urwid.ListBox):
         self._invalidate()
 
     def _select_next(self):
-        if self.body.focus > 0:
-            self.body.focus -= 1
-            self._invalidate()
+        num = self.num if self.num is not None else 1
+        self.body.focus = max(self.body.focus - num, 0)
+        self._invalidate()
 
     def _select_prev(self):
-        if self.body.focus + 1 < len(self.body):
-            self.body.focus += 1
-            self._invalidate()
+        num = self.num if self.num is not None else 1
+        self.body.focus = min(self.body.focus + num, len(self.body) - 1)
+        self._invalidate()
 
     def _delete_selected(self):
         self._chosen_tags.remove(self.body.get_focus()[0].text)
