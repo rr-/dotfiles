@@ -168,7 +168,7 @@ super + {bracketleft,bracketright}
 
 # reload sxhkd configuration
 alt + F12
-    systemctl restart --user sxhkd
+    killall -SIGUSR1 sxhkd
 
 alt + shift + F12
     bash -c '~/.config/bspwm/bspwmrc'
