@@ -10,4 +10,4 @@ def run():
 
     util.create_symlink('./bspwmrc', '~/.config/bspwm/')
     util.create_symlink('./rules', '~/.config/bspwm/')
-    util.create_symlink('./start', '~/.config/x/start-bspwm.sh')
+    util.create_symlink('./start', '~/.config/x/start-wm.sh')
