@@ -8,8 +8,4 @@ def run():
 
     util.create_symlink('./config', '~/.config/sxhkd')
     util.create_symlink('./beep-shot.mp3', '~/.local/share/')
-
-    util.create_symlink('./sxhkd.service', '~/.config/systemd/user/')
-    util.run_verbose(['systemctl', 'daemon-reload', '--user'])
-    util.run_verbose(['systemctl', 'enable', '--user', 'sxhkd'])
-    util.run_verbose(['systemctl', 'start', '--user', 'sxhkd'])
+    util.create_symlink('./start', '~/.config/x/start-sxhkd.sh')
