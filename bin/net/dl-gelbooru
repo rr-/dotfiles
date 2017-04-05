@@ -93,19 +93,19 @@ class Downloader:
             self.base_dir,
             'gelbooru_' + str(post_id) + '_' + os.path.basename(url))
 
-    def download_file(self, url: str, post_id: int) -> None:
+    def download_file(self, url: str, post_id: int) -> bool:
         target_path = self.get_target_path(post_id, url)
         if not url.startswith('http'):
             url = 'http://' + url.lstrip('/')
 
         if os.path.exists(target_path):
             self.stats.ignore(url, 'already exists')
-            return
+            return False
 
         if not self.force \
                 and self.history.is_downloaded(os.path.basename(url)):
             self.stats.ignore(url, 'already downloaded')
-            return
+            return False
 
         response = None
         attempt = 0
@@ -125,6 +125,7 @@ class Downloader:
             handle.write(response.content)
         self.history.add(os.path.basename(url))
         self.history.flush()
+        return True
 
     def download_page(self, page: int, query: str) -> bytes:
         url = (
@@ -136,22 +137,27 @@ class Downloader:
         response.raise_for_status()
         return response.content
 
-    def run(self, query: str) -> None:
+    def run(self, query: str, limit: int) -> None:
         page = 0
-        while True:
+        done = 0
+        while not limit or done < limit:
             response = self.download_page(page, query)
             with xml.dom.minidom.parseString(response) as doc:
                 posts = doc.getElementsByTagName('post')
                 if not posts:
                     break
+
                 loop = asyncio.get_event_loop()
-                loop.run_until_complete(asyncio.gather(*[
+
+                results = loop.run_until_complete(asyncio.gather(*[
                     loop.run_in_executor(
                         None,
                         self.download_file,
                         post.getAttribute('file_url'),
                         int(post.getAttribute('id')))
                     for post in posts]))
+                done += sum(int(result) for result in results)
+
                 page += 1
         logging.info('Downloaded: %d', self.stats.downloaded)
         logging.info('Ignored: %d', self.stats.ignored)
@@ -168,6 +174,7 @@ def parse_args() -> configargparse.Namespace:
     parser.add('--cache-path', default='~/.cache/dl-pixiv.log')
     parser.add('--target-dir', default='~')
     parser.add('-f', '--force', action='store_true')
+    parser.add('-l', '--limit', default=0, type=int)
     return parser.parse_args()
 
 
@@ -179,6 +186,7 @@ def main() -> None:
     target_dir: str = args.target_dir
     cache_path: str = os.path.expanduser(args.cache_path)
     force: bool = args.force
+    limit: int = args.limit
 
     target_dir = os.path.expanduser(
         os.path.join(target_dir, sanitize_file_name(query)))
@@ -187,7 +195,7 @@ def main() -> None:
     history = DownloadHistory(cache_path)
     downloader = Downloader(target_dir, history, force)
     downloader.login(user_name, password)
-    downloader.run(query)
+    downloader.run(query, limit)
 
 
 if __name__ == '__main__':
