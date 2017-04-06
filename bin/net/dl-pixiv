@@ -69,6 +69,7 @@ class DownloadStats:
         except Exception as ex:
             logging.error('error: %s', ex)
             self.errors += 1
+            raise
 
 
 class Downloader:
