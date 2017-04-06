@@ -132,12 +132,14 @@ class Downloader:
 
             tasks = []
             for item in page_data['response']:
-                url = item['image_urls']['large']
-                path = self._get_target_path(
-                    dir_name_getter(item), item['title'], url)
-                tasks.append(
-                    loop.run_in_executor(
-                        executor, self._download, url, path))
+                base_url = item['image_urls']['large']
+                for page in range(item['page_count']):
+                    url = base_url.replace('_p0', '_p{}'.format(page))
+                    path = self._get_target_path(
+                        dir_name_getter(item), item['title'], url)
+                    tasks.append(
+                        loop.run_in_executor(
+                            executor, self._download, url, path))
             results = loop.run_until_complete(asyncio.gather(*tasks))
             done += sum(int(result) for result in results)
 
