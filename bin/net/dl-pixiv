@@ -14,7 +14,7 @@ import requests
 from dotfiles import logging
 
 
-PAGE_SIZE = 50
+PAGE_SIZE = 10
 MAX_CONCURRENT_DOWNLOADS = 5
 MAX_ATTEMPTS = 3
 
@@ -101,31 +101,32 @@ class Downloader:
             'Referer': 'http://www.pixiv.net/',
             'Authorization': 'Bearer {}'.format(access_token)})
 
-    def run_artist(self, artist_id: int) -> None:
+    def run_artist(self, artist_id: int, limit: int) -> None:
         def get_page(page, page_size):
             return self._get_artist_page(artist_id, page, page_size)
 
         def get_dir_name(item):
             return '{} - {}'.format(artist_id, item['user']['name'])
 
-        self._run(get_page, get_dir_name)
+        self._run(get_page, get_dir_name, limit)
 
-    def run_query(self, query: str) -> None:
+    def run_query(self, query: str, limit: int) -> None:
         def get_page(page, page_size):
             return self._get_query_page(query, page, page_size)
 
         def get_dir_name(_item):
             return sanitize_file_name(query)
 
-        self._run(get_page, get_dir_name)
+        self._run(get_page, get_dir_name, limit)
 
-    def _run(self, page_getter, dir_name_getter):
+    def _run(self, page_getter, dir_name_getter, limit: int) -> None:
+        done = 0
         page = 1
         page_size = PAGE_SIZE
 
         loop = asyncio.get_event_loop()
         executor = ThreadPoolExecutor(max_workers=MAX_CONCURRENT_DOWNLOADS)
-        while page is not None:
+        while page is not None and (not limit or done < limit):
             page_data = page_getter(page, page_size)
 
             tasks = []
@@ -136,7 +137,8 @@ class Downloader:
                 tasks.append(
                     loop.run_in_executor(
                         executor, self._download, url, path))
-            loop.run_until_complete(asyncio.gather(*tasks))
+            results = loop.run_until_complete(asyncio.gather(*tasks))
+            done += sum(int(result) for result in results)
 
             page_size = min(page_size, len(page_data['response']))
             page = page_data['pagination']['next']
@@ -178,15 +180,15 @@ class Downloader:
         response = self.session.get(url, params=params)
         return self._parse_response(response.text)
 
-    def _download(self, url: str, target_path: str) -> None:
+    def _download(self, url: str, target_path: str) -> bool:
         if os.path.exists(target_path):
             self.stats.ignore(url, 'already exists')
-            return
+            return False
 
         if not self.force \
                 and self.history.is_downloaded(os.path.basename(url)):
             self.stats.ignore(url, 'already downloaded')
-            return
+            return False
 
         response = None
         attempt = 0
@@ -208,6 +210,7 @@ class Downloader:
             handle.write(response.content)
         self.history.add(os.path.basename(url))
         self.history.flush()
+        return True
 
     def _get_target_path(
             self, dir_name: str, illust_title: str, url: str) -> str:
@@ -236,6 +239,7 @@ def parse_args() -> configargparse.Namespace:
     parser.add('-u', '--user')
     parser.add('-p', '--password')
     parser.add('-f', '--force', action='store_true')
+    parser.add('-l', '--limit', default=0, type=int)
     parser.add('--cache-path', default='~/.cache/dl-pixiv.log')
     parser.add('--target-dir', default='~')
     return parser.parse_args()
@@ -250,14 +254,15 @@ def main() -> None:
     force: bool = args.force
     cache_path: str = os.path.expanduser(args.cache_path)
     target_dir: str = os.path.expanduser(args.target_dir)
+    limit: int = args.limit
 
     history = DownloadHistory(cache_path)
     downloader = Downloader(target_dir, history, force)
     downloader.login(user_name, password)
     if artist_id:
-        downloader.run_artist(artist_id)
+        downloader.run_artist(artist_id, limit)
     elif query:
-        downloader.run_query(' '.join(query))
+        downloader.run_query(' '.join(query), limit)
     else:
         assert False
 
