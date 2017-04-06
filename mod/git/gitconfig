@@ -56,6 +56,8 @@
     tool = meld
 [push]
     default = upstream
+[status]
+    showUntrackedFiles = all
 [color "diff"]
     old = red reverse
     new = green reverse
