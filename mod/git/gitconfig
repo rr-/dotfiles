@@ -12,6 +12,8 @@
     autocrlf = false
     eol = lf
     whitespace = tab-in-indent
+[merge]
+    ff = only
 [alias]
     amen = commit --amend
     ramen = commit --amend --all --no-edit
