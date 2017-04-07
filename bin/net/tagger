@@ -223,7 +223,7 @@ class FuzzyInput(urwid.Widget):
         return canvas
 
     def _accept(self, _size):
-        text = self._input_box.text
+        text = self._input_box.text.strip()
         self._input_box.text = ''
         self._update_matches()
         self._focused_match = -1
