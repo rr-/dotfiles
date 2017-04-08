@@ -46,9 +46,8 @@ class UploadError(RuntimeError):
 
 
 class DuplicateUploadError(RuntimeError):
-    def __init__(self, duplicate_url):
-        super().__init__('Image already uploaded: %s' % duplicate_url)
-        self.url = duplicate_url
+    def __init__(self):
+        super().__init__('Image already uploaded')
 
 
 def parse_args():
@@ -106,9 +105,7 @@ def upload(session, content, source, title, safety, tags):
         if 'image added' in text:
             return
         elif 'already exists' in text:
-            raise DuplicateUploadError(
-                urllib.parse.urljoin(
-                    'http://gelbooru.com', content_div.find('a')['href']))
+            raise DuplicateUploadError()
         else:
             raise UploadError('Unknown response from the server')
 
@@ -169,7 +166,7 @@ def main():
     except LoginError as ex:
         print('Error logging in: %s' % str(ex), file=sys.stderr)
     except DuplicateUploadError as ex:
-        print('Error uploading post: %s' % ex.url, file=sys.stderr)
+        print('Error uploading post: duplicate', file=sys.stderr)
     except UploadError as ex:
         print('Error uploading post: %s' % str(ex), file=sys.stderr)
     except NoTagsError as _:
