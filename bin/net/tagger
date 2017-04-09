@@ -4,8 +4,10 @@
 import os
 import sys
 import re
+import asyncio
 import argparse
 import json
+import urllib.parse
 from pathlib import Path
 from enum import Enum
 from typing import Any, Optional, Tuple, Set, List, Dict, Generator, Callable
@@ -57,16 +59,16 @@ class TagList:
 
 
 class TagApi:
-    def has_tag(self, tag_name: str) -> bool:
+    async def has_tag(self, tag_name: str) -> bool:
         raise NotImplementedError('Not implemented')
 
-    def get_matches(self, user_input: str) -> List[str]:
+    async def find_tags(self, user_input: str) -> List[str]:
         raise NotImplementedError('Not implemented')
 
-    def get_implications(self, tag_name: str) -> List[str]:
+    async def get_implications(self, tag_name: str) -> List[str]:
         raise NotImplementedError('Not implemented')
 
-    def get_all_implications(
+    async def get_all_implications(
             self, tag_name: str) -> Generator[str, None, None]:
         to_check = [tag_name]
         visited: Set[str] = set()
@@ -75,7 +77,7 @@ class TagApi:
             if text in visited:
                 continue
             visited.add(text)
-            for implication in self.get_implications(text):
+            for implication in await self.get_implications(text):
                 yield implication
                 to_check.append(implication)
 
@@ -95,16 +97,10 @@ class FileTagApi(TagApi):
                             importance=tag['usages'],
                             implications=tag.get('implications', [])))
 
-    def has_tag(self, tag_name: str) -> bool:
+    async def has_tag(self, tag_name: str) -> bool:
         return tag_name in self._reference_tags
 
-    def get_implications(self, tag_name: str) -> List[str]:
-        tag_name = tag_name.lower()
-        if tag_name not in self._reference_tags:
-            return []
-        return self._reference_tags[tag_name].implications
-
-    def get_matches(self, user_input: str) -> List[str]:
+    async def find_tags(self, user_input: str) -> List[str]:
         if not user_input:
             return []
         suggestions = []
@@ -118,6 +114,12 @@ class FileTagApi(TagApi):
                 suggestions.append(
                     (-reference_tag.importance, reference_tag.name))
         return [x for _, x in sorted(suggestions)]
+
+    async def get_implications(self, tag_name: str) -> List[str]:
+        tag_name = tag_name.lower()
+        if tag_name not in self._reference_tags:
+            return []
+        return self._reference_tags[tag_name].implications
 
     class ReferenceTag:
         def __init__(
@@ -207,7 +209,7 @@ class ChosenTagsListBox(VimListBox):
         super().__init__(urwid.SimpleListWalker([]))
         self._chosen_tags = chosen_tags
         self._tag_api = tag_api
-        self.update()
+        self.schedule_update()
 
     def keypress(self, size: WidgetSize, key: str) -> Optional[str]:
         keymap = {
@@ -220,27 +222,33 @@ class ChosenTagsListBox(VimListBox):
             return None
         return super().keypress(size, key)
 
-    def update(self) -> None:
-        self.body.clear()
+    def schedule_update(self) -> None:
+        asyncio.ensure_future(self.update())
+
+    async def update(self):
+        new_list = []
         for tag in self._chosen_tags.get_all():
             if tag.source == TagSource.Implication:
                 attr_name = 'implied-tag'
             elif tag.source == TagSource.Initial:
                 attr_name = 'initial-tag'
-            elif not self._tag_api.has_tag(tag.name):
+            elif not (await self._tag_api.has_tag(tag.name)):
                 attr_name = 'new-tag'
             else:
                 attr_name = 'tag'
             text_widget = urwid.Text(_box_to_ui(tag.name), wrap=urwid.CLIP)
             setattr(text_widget, 'tag', tag)
-            self.body.append(
+            new_list.append(
                 urwid.AttrWrap(text_widget, attr_name, 'f-' + attr_name))
+        self.body.clear()
+        for item in new_list:
+            self.body.append(item)
         self._invalidate()
 
     def _delete_selected(self) -> None:
         old_focused_item = self._focus
         self._chosen_tags.delete(self.body.get_focus()[0].tag)
-        self.update()
+        self.schedule_update()
         self._focus = old_focused_item
         self._invalidate()
 
@@ -248,13 +256,19 @@ class ChosenTagsListBox(VimListBox):
 class FuzzyInput(urwid.Widget):
     signals = ['accept']
 
-    def __init__(self, tag_api: TagApi) -> None:
+    def __init__(self, tag_api: TagApi, main_loop: urwid.MainLoop) -> None:
         self._tag_api = tag_api
+        self._main_loop = main_loop
+
         self._focused_match = -1
         self._matches: List[str] = []
+
+        self._update_id = 0
+        self._update_alarm = None
         self._input_box = ReadlineEdit('', wrap=urwid.CLIP)
         urwid.signals.connect_signal(
             self._input_box, 'change', self._on_text_change)
+
         self._update_matches()
 
     def selectable(self) -> bool:
@@ -319,7 +333,10 @@ class FuzzyInput(urwid.Widget):
             self._invalidate()
 
     def _on_text_change(self, *_args: Any, **_kwargs: Any) -> None:
-        self._update_matches()
+        if self._update_alarm:
+            self._main_loop.remove_alarm(self._update_alarm)
+        self._update_alarm = self._main_loop.set_alarm_in(
+            0.05, lambda *_: self._update_matches())
 
     def _on_results_focus_change(self, *_args: Any, **_kwargs: Any) -> None:
         urwid.signals.disconnect_signal(
@@ -330,10 +347,22 @@ class FuzzyInput(urwid.Widget):
             self._input_box, 'change', self._on_text_change)
 
     def _update_matches(self) -> None:
-        self._matches = self._tag_api.get_matches(
-            _unbox_from_ui(self._input_box.text))
-        self._focused_match = _clamp(
-            self._focused_match, -1, len(self._matches) - 1)
+        text = _unbox_from_ui(self._input_box.text)
+
+        self._update_id += 1
+        update_id = self._update_id
+
+        async def go():
+            matches = await self._tag_api.find_tags(text)
+            if self._update_id > update_id:
+                return
+
+            self._matches = matches
+            self._focused_match = _clamp(
+                self._focused_match, -1, len(self._matches) - 1)
+            self._invalidate()
+
+        asyncio.ensure_future(go())
 
 
 class UrwidTagger:
@@ -347,21 +376,24 @@ class UrwidTagger:
         self._tag_api = tag_api
         self._undo_stack: List[Set[Tag]] = []
 
-        self._fuzzy_input = FuzzyInput(tag_api)
-        self._choices_box = ChosenTagsListBox(chosen_tags, tag_api)
+        frame = urwid.Frame(
+            None, header=urwid.Text(title, 'center') if bool(title) else None)
+        self._loop = urwid.MainLoop(
+            frame,
+            unhandled_input=self._keypress,
+            event_loop=urwid.AsyncioEventLoop())
+
+        self._loop.screen.set_terminal_properties(256)
+        self._fuzzy_input = FuzzyInput(tag_api, self._loop)
         urwid.connect_signal(
             self._fuzzy_input, 'accept', self._on_tag_accept)
 
+        self._choices_box = ChosenTagsListBox(chosen_tags, tag_api)
         self._columns = urwid.Columns([
             urwid.LineBox(self._fuzzy_input, title='Input'),
             urwid.LineBox(self._choices_box, title='Chosen tags')])
         self._columns.set_focus(0)
-        self._loop = urwid.MainLoop(
-            urwid.Frame(
-                self._columns,
-                header=urwid.Text(title, 'center') if bool(title) else None),
-            unhandled_input=self._keypress)
-        self._loop.screen.set_terminal_properties(256)
+        frame.set_body(self._columns)
 
         self._loop.screen.register_palette([
             ('match',         'default',     'default'),
@@ -413,21 +445,29 @@ class UrwidTagger:
             return
         for tag in self._undo_stack.pop():
             self._chosen_tags.delete(tag)
-        self._choices_box.update()
+        self._choices_box.schedule_update()
 
     def _on_tag_accept(self, _widget: urwid.Widget, text: str) -> None:
         text = _unbox_from_ui(text)
+
         previous_tags = self._chosen_tags.get_all()
         self._chosen_tags.add(Tag(text, TagSource.UserInput))
-        for implication in self._tag_api.get_all_implications(text):
-            self._chosen_tags.add(
-                Tag(implication, TagSource.Implication))
-        added_tags = set([
-            tag
-            for tag in self._chosen_tags.get_all()
-            if tag not in previous_tags])
-        self._undo_stack.append(added_tags)
-        self._choices_box.update()
+
+        async def go():
+            await self._choices_box.update()
+
+            async for implication in self._tag_api.get_all_implications(text):
+                self._chosen_tags.add(
+                    Tag(implication, TagSource.Implication))
+                await self._choices_box.update()
+
+            added_tags = set([
+                tag
+                for tag in self._chosen_tags.get_all()
+                if tag not in previous_tags])
+            self._undo_stack.append(added_tags)
+
+        asyncio.ensure_future(go())
 
 
 def _open_tty() -> Tuple[Any, Any]:
