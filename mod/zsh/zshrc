@@ -121,9 +121,13 @@ alias jaen='tl ja en'
 alias isvim='ps ux|grep vim|grep -v grep' # also works for nvim
 alias dark='lightness dark'
 alias light='lightness light'
-alias yum=ul-yume
-alias gel=ul-gelbooru
-alias tmp=ul-tmp
+
+alias dl-gelbooru='dl-booru --config=~/.config/dl-gelbooru.conf'
+alias dl-pixiv='dl-booru --config=~/.config/dl-pixiv.conf'
+alias dl-yume='dl-booru --config=~/.config/dl-yume.conf'
+alias ul-gelbooru='ul-booru --config=~/.config/ul-gelbooru.conf'
+alias ul-yume='ul-booru --config=~/.config/ul-yume.conf'
+
 vb() {
     dec vm
     vboxsdl --startvm $(VBoxManage list vms |pcregrep -o1 '(?:")(.*)(?:")') &
