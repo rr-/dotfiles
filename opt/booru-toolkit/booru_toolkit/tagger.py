@@ -3,16 +3,13 @@
 
 import os
 import sys
-import re
 import asyncio
-import argparse
-import json
-import urllib.parse
-from pathlib import Path
+import concurrent.futures
 from enum import Enum
-from typing import Any, Optional, Tuple, Set, List, Dict, Generator, Callable
+from typing import Any, Optional, Tuple, Set, List, Dict, Callable
 import urwid
 from urwid_readline import ReadlineEdit
+from booru_toolkit.plugin import PluginBase
 
 
 WidgetSize = Tuple[int, int]
@@ -24,6 +21,10 @@ def _box_to_ui(text: str) -> str:
 
 def _unbox_from_ui(text: str) -> str:
     return text.replace(' ', '_')
+
+
+def _clamp(number: int, min_value: int, max_value: int) -> int:
+    return max(min_value, min(max_value, number))
 
 
 class TagSource(Enum):
@@ -52,96 +53,10 @@ class TagList:
             if tag.name.lower() != tag_to_remove.name.lower()
         ]
 
-    def add(self, tag: Tag) -> None:
-        if any(tag.name.lower() == t.name.lower() for t in self._tags):
+    def add(self, name: str, source: TagSource) -> None:
+        if any(name.lower() == tag.name.lower() for tag in self._tags):
             return
-        self._tags.append(tag)
-
-
-class TagApi:
-    async def has_tag(self, tag_name: str) -> bool:
-        raise NotImplementedError('Not implemented')
-
-    async def find_tags(self, user_input: str) -> List[str]:
-        raise NotImplementedError('Not implemented')
-
-    async def get_implications(self, tag_name: str) -> List[str]:
-        raise NotImplementedError('Not implemented')
-
-    async def get_all_implications(
-            self, tag_name: str) -> Generator[str, None, None]:
-        to_check = [tag_name]
-        visited: Set[str] = set()
-        while bool(to_check):
-            text = to_check.pop(0)
-            if text in visited:
-                continue
-            visited.add(text)
-            for implication in await self.get_implications(text):
-                yield implication
-                to_check.append(implication)
-
-
-class FileTagApi(TagApi):
-    def __init__(self, path: Path) -> None:
-        cache_path = path.expanduser()
-        self._reference_tags: Dict[str, FileTagApi.ReferenceTag] = {}
-        if not cache_path.exists():
-            return
-        with cache_path.open('r') as handle:
-            for tag in json.load(handle)['tags']:
-                for alias in tag['names']:
-                    self._reference_tags[alias.lower()] = (
-                        FileTagApi.ReferenceTag(
-                            name=alias,
-                            importance=tag['usages'],
-                            implications=tag.get('implications', [])))
-
-    async def has_tag(self, tag_name: str) -> bool:
-        return tag_name in self._reference_tags
-
-    async def find_tags(self, user_input: str) -> List[str]:
-        if not user_input:
-            return []
-        suggestions = []
-        pattern = '.*?'.join(
-            re.escape(ch)
-            for ch in list(user_input))
-        regex = re.compile(pattern, re.I)
-        for reference_tag in self._reference_tags.values():
-            match = regex.search(reference_tag.name)
-            if bool(match):
-                suggestions.append(
-                    (-reference_tag.importance, reference_tag.name))
-        return [x for _, x in sorted(suggestions)]
-
-    async def get_implications(self, tag_name: str) -> List[str]:
-        tag_name = tag_name.lower()
-        if tag_name not in self._reference_tags:
-            return []
-        return self._reference_tags[tag_name].implications
-
-    class ReferenceTag:
-        def __init__(
-                self,
-                name: str,
-                importance: int,
-                implications: List[str]) -> None:
-            self.name = name
-            self.importance = importance
-            self.implications = implications
-
-
-class AbortInterrupt(KeyboardInterrupt):
-    pass
-
-
-class ConfirmInterrupt(KeyboardInterrupt):
-    pass
-
-
-def _clamp(number: int, min_value: int, max_value: int) -> int:
-    return max(min_value, min(max_value, number))
+        self._tags.append(Tag(name, source))
 
 
 class VimListBox(urwid.ListBox):
@@ -154,10 +69,10 @@ class VimListBox(urwid.ListBox):
 
     def keypress(self, _size: WidgetSize, key: str) -> Optional[str]:
         keymap = {
-            'j':         self._select_prev,
-            'k':         self._select_next,
-            'g':         self._select_first,
-            'G':         self._select_last,
+            'j': self._select_prev,
+            'k': self._select_next,
+            'g': self._select_first,
+            'G': self._select_last,
         }
         if key in '0123456789':
             self.num = (0 if self.num is None else self.num) * 10 + int(key)
@@ -205,10 +120,13 @@ class VimListBox(urwid.ListBox):
 
 
 class ChosenTagsListBox(VimListBox):
-    def __init__(self, chosen_tags: TagList, tag_api: TagApi) -> None:
+    def __init__(
+            self,
+            chosen_tags: TagList,
+            plugin: PluginBase) -> None:
         super().__init__(urwid.SimpleListWalker([]))
         self._chosen_tags = chosen_tags
-        self._tag_api = tag_api
+        self._plugin = plugin
         self.schedule_update()
 
     def keypress(self, size: WidgetSize, key: str) -> Optional[str]:
@@ -225,14 +143,14 @@ class ChosenTagsListBox(VimListBox):
     def schedule_update(self) -> None:
         asyncio.ensure_future(self.update())
 
-    async def update(self):
+    async def update(self) -> None:
         new_list = []
         for tag in self._chosen_tags.get_all():
             if tag.source == TagSource.Implication:
                 attr_name = 'implied-tag'
             elif tag.source == TagSource.Initial:
                 attr_name = 'initial-tag'
-            elif not (await self._tag_api.has_tag(tag.name)):
+            elif not await self._plugin.tag_exists(tag.name):
                 attr_name = 'new-tag'
             else:
                 attr_name = 'tag'
@@ -256,8 +174,8 @@ class ChosenTagsListBox(VimListBox):
 class FuzzyInput(urwid.Widget):
     signals = ['accept']
 
-    def __init__(self, tag_api: TagApi, main_loop: urwid.MainLoop) -> None:
-        self._tag_api = tag_api
+    def __init__(self, plugin: PluginBase, main_loop: urwid.MainLoop) -> None:
+        self._plugin = plugin
         self._main_loop = main_loop
 
         self._focused_match = -1
@@ -352,8 +270,8 @@ class FuzzyInput(urwid.Widget):
         self._update_id += 1
         update_id = self._update_id
 
-        async def go():
-            matches = await self._tag_api.find_tags(text)
+        async def work() -> None:
+            matches = await self._plugin.find_tags(text)
             if self._update_id > update_id:
                 return
 
@@ -362,33 +280,37 @@ class FuzzyInput(urwid.Widget):
                 self._focused_match, -1, len(self._matches) - 1)
             self._invalidate()
 
-        asyncio.ensure_future(go())
+        asyncio.ensure_future(work())
 
 
 class UrwidTagger:
     def __init__(
-            self, chosen_tags: TagList, tag_api: TagApi, title: str) -> None:
+            self,
+            chosen_tags: TagList,
+            plugin: PluginBase,
+            title: str) -> None:
         del urwid.command_map['left']
         del urwid.command_map['down']
         del urwid.command_map['up']
         del urwid.command_map['right']
         self._chosen_tags = chosen_tags
-        self._tag_api = tag_api
+        self._plugin = plugin
         self._undo_stack: List[Set[Tag]] = []
+        self._running = True
 
         frame = urwid.Frame(
-            None, header=urwid.Text(title, 'center') if bool(title) else None)
+            None, header=urwid.Text(title, 'center') if title else None)
         self._loop = urwid.MainLoop(
             frame,
             unhandled_input=self._keypress,
             event_loop=urwid.AsyncioEventLoop())
 
         self._loop.screen.set_terminal_properties(256)
-        self._fuzzy_input = FuzzyInput(tag_api, self._loop)
+        self._fuzzy_input = FuzzyInput(plugin, self._loop)
         urwid.connect_signal(
             self._fuzzy_input, 'accept', self._on_tag_accept)
 
-        self._choices_box = ChosenTagsListBox(chosen_tags, tag_api)
+        self._choices_box = ChosenTagsListBox(chosen_tags, plugin)
         self._columns = urwid.Columns([
             urwid.LineBox(self._fuzzy_input, title='Input'),
             urwid.LineBox(self._choices_box, title='Chosen tags')])
@@ -408,19 +330,19 @@ class UrwidTagger:
             ('f-initial-tag', 'black',       'white',    None, '#FFF', '#000'),
         ])
 
-    def add_from_user_input(self) -> bool:
+    async def add_from_user_input(self) -> bool:
+        self._loop.start()  # we'll manage the loop manually
         try:
-            self._loop.run()
-        except ConfirmInterrupt as _:
+            while self._running:
+                await asyncio.sleep(0.1)
             return True
-        except AbortInterrupt as _:
+        except concurrent.futures.CancelledError:
             return False
-        except KeyboardInterrupt as _:
-            return False
+        finally:
+            self._loop.stop()
 
     def _keypress(self, key: str) -> None:
         keymap = {
-            'ctrl c': self._abort,
             'ctrl q': self._confirm,
             'ctrl x': self._toggle_focus,
             'ctrl r': self._undo_tag,
@@ -428,11 +350,8 @@ class UrwidTagger:
         if key in keymap:
             keymap[key]()
 
-    def _abort(self) -> None:
-        raise AbortInterrupt()
-
     def _confirm(self) -> None:
-        raise ConfirmInterrupt()
+        self._running = False
 
     def _toggle_focus(self) -> None:
         if self._columns.get_focus_column() == 0:
@@ -451,14 +370,14 @@ class UrwidTagger:
         text = _unbox_from_ui(text)
 
         previous_tags = self._chosen_tags.get_all()
-        self._chosen_tags.add(Tag(text, TagSource.UserInput))
+        self._chosen_tags.add(text, TagSource.UserInput)
 
-        async def go():
+        async def work() -> None:
             await self._choices_box.update()
 
-            async for implication in self._tag_api.get_all_implications(text):
-                self._chosen_tags.add(
-                    Tag(implication, TagSource.Implication))
+            async for implication in (
+                    self._plugin.get_tag_implications_recursive(text)):
+                self._chosen_tags.add(implication, TagSource.Implication)
                 await self._choices_box.update()
 
             added_tags = set([
@@ -467,7 +386,7 @@ class UrwidTagger:
                 if tag not in previous_tags])
             self._undo_stack.append(added_tags)
 
-        asyncio.ensure_future(go())
+        asyncio.ensure_future(work())
 
 
 def _open_tty() -> Tuple[Any, Any]:
@@ -487,35 +406,10 @@ def _restore_stdio(saved_stdin: Any, saved_stdout: Any) -> None:
     os.dup(saved_stdout)
 
 
-def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(
-        description='Interactively choose tags')
-    parser.add_argument('-t', '--tags', help='list of initial tags')
-    parser.add_argument('--title', help='window title')
-    return parser.parse_args()
-
-
-def main() -> None:
-    args = parse_args()
+async def run(plugin: PluginBase, tag_list: TagList, title: str) -> bool:
     saved_fds = _open_tty()
-
-    chosen_tags = TagList()
-    for tag_text in re.split(r'\s+', args.tags or ''):
-        if tag_text:
-            chosen_tags.add(Tag(tag_text, TagSource.Initial))
-
-    tag_api = FileTagApi(Path('~/.config/tagger.json').expanduser())
-    tagger = UrwidTagger(chosen_tags, tag_api, args.title)
-    result = False
+    tagger = UrwidTagger(tag_list, plugin, title)
     try:
-        result = tagger.add_from_user_input()
+        return await tagger.add_from_user_input()
     finally:
         _restore_stdio(*saved_fds)
-    if result:
-        print('\n'.join(tag.name for tag in chosen_tags.get_all()))
-    else:
-        sys.exit(1)
-
-
-if __name__ == '__main__':
-    main()
