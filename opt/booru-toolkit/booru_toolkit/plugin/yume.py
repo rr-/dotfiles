@@ -9,6 +9,7 @@ from booru_toolkit.util import bidict
 from booru_toolkit.plugin.base import PluginBase
 from booru_toolkit.plugin.base import Post
 from booru_toolkit.plugin.base import Safety
+from booru_toolkit.plugin.tag_cache import CachedTag, TagCache
 
 
 Json = Any
@@ -50,11 +51,12 @@ class PluginYume(PluginBase):
     def __init__(self) -> None:
         self._session = requests.Session()
         self._session.headers['Accept'] = 'application/json'
-        self._tag_cache: Dict[str, Dict] = {}
+        self._tag_cache = TagCache(self.name)
 
     async def login(self, user_name: str, password: str) -> None:
         self._session.auth = (user_name, password)
         await self._get('/user/' + user_name + '?bump-login')
+        await self._update_tag_cache()
 
     async def find_exact_post(self, content: bytes) -> Optional[Post]:
         result = await self._get_similar_posts(content)
@@ -128,38 +130,27 @@ class PluginYume(PluginBase):
             })
 
     async def find_tags(self, query: str) -> List[str]:
-        if not query:
-            return []
-        response = await self._get(
-            '/tags?query={}&limit=20'.format(
-                urllib.parse.quote(
-                    '*{}* sort:usages,desc'.format('*'.join(query)))))
-        return [
-            name
-            for tag in response['results']
-            for name in tag['names']
-        ]
+        return await self._tag_cache.find_tags(query)
 
     async def tag_exists(self, tag_name: str) -> bool:
-        try:
-            await self._get_tag(tag_name)
-            return True
-        except errors.NotFoundError:
-            return False
+        return await self._tag_cache.tag_exists(tag_name)
 
-    async def get_tag_implications(self, tag_name: str) -> List[str]:
-        try:
-            return (await self._get_tag(tag_name))['implications']
-        except (errors.NotFoundError, KeyError):
-            return []
+    async def get_tag_implications(self, tag_name: str) -> AsyncIterable[str]:
+        async for tag in self._tag_cache.get_tag_implications(tag_name):
+            yield tag
 
-    async def _get_tag(self, tag_name: str) -> Json:
-        cache_key = tag_name.lower()
-        if cache_key in self._tag_cache:
-            return self._tag_cache[cache_key]
-        tag = await self._get('/tag/{}'.format(urllib.parse.quote(tag_name)))
-        self._tag_cache[cache_key] = tag
-        return tag
+    async def _update_tag_cache(self):
+        if self._tag_cache.exists():
+            return
+        print('Downloading tag cache...')
+        response = await self._get('../data/tags.json')
+        for tag in response['tags']:
+            for name in tag['names']:
+                self._tag_cache.add(CachedTag(
+                    name=name,
+                    importance=tag['usages'],
+                    implications=tag.get('implications', [])))
+        self._tag_cache.save()
 
     # TODO: memoize
     async def _get_similar_posts(self, content: bytes) -> Json:

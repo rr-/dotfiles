@@ -376,7 +376,7 @@ class UrwidTagger:
             await self._choices_box.update()
 
             async for implication in (
-                    self._plugin.get_tag_implications_recursive(text)):
+                    self._plugin.get_tag_implications(text)):
                 self._chosen_tags.add(implication, TagSource.Implication)
                 await self._choices_box.update()
 
