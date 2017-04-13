@@ -1,9 +1,11 @@
+import asyncio
 from pathlib import Path
 from typing import Any, Set, List, AsyncIterable
 import sqlalchemy as sa
 import sqlalchemy.orm
 import sqlalchemy.ext.declarative
 import sqlalchemy.ext.mutable
+import sqlalchemy.pool
 
 
 Base: Any = sa.ext.declarative.declarative_base()
@@ -26,11 +28,13 @@ class TagCache:
             '~/.cache/tags-{}.sqlite'.format(cache_name)).expanduser()
 
         self._path.parent.mkdir(parents=True, exist_ok=True)
-        engine: Any = sa.create_engine('sqlite:///%s' % str(self._path))
-        session_maker: Any = (
-            sa.orm.session.sessionmaker(bind=engine, autoflush=False))
+        engine: Any = sa.create_engine(
+            'sqlite:///%s' % str(self._path),
+            connect_args={'check_same_thread': False},
+            poolclass=sa.pool.StaticPool)
         Base.metadata.create_all(bind=engine)
-        self._session = session_maker()
+        self._session = sa.orm.scoped_session(
+            sa.orm.session.sessionmaker(bind=engine, autoflush=False))
 
     def exists(self) -> bool:
         return self._session.query(sa.func.count(CachedTag.id)).scalar() > 0
@@ -58,11 +62,17 @@ class TagCache:
                 .all())]
 
     async def _get_tag_by_name(self, tag_name: str) -> CachedTag:
-        return (
-            self._session
-            .query(CachedTag)
-            .filter(sa.func.lower(CachedTag.name) == sa.func.lower(tag_name))
-            .one_or_none())
+        def work():
+            ret = (
+                self._session
+                .query(CachedTag)
+                .filter(sa.func.lower(CachedTag.name) == tag_name.lower())
+                .one_or_none())
+            if ret:
+                self._session.expunge(ret)
+            return ret
+
+        return await asyncio.get_event_loop().run_in_executor(None, work)
 
     async def get_tag_implications(
             self, tag_name: str) -> AsyncIterable[str]:
