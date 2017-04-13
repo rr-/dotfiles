@@ -20,4 +20,5 @@ setup(
         'bs4',
         'urwid',
         'urwid-readline',
+        'sqlalchemy',
     ])

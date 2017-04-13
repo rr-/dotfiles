@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Optional, Tuple, Set, List, AsyncIterable
+from typing import Optional, Tuple, List, AsyncIterable
 
 
 class Safety(Enum):
@@ -69,18 +69,5 @@ class PluginBase:
     async def tag_exists(self, tag_name: str) -> bool:
         raise NotImplementedError('Not implemented')
 
-    async def get_tag_implications(self, tag_name: str) -> List[str]:
+    async def get_tag_implications(self, tag_name: str) -> AsyncIterable[str]:
         raise NotImplementedError('Not implemented')
-
-    async def get_tag_implications_recursive(
-            self, tag_name: str) -> AsyncIterable[str]:
-        to_check = [tag_name]
-        visited: Set[str] = set()
-        while bool(to_check):
-            text = to_check.pop(0)
-            if text in visited:
-                continue
-            visited.add(text)
-            for implication in await self.get_tag_implications(text):
-                yield implication
-                to_check.append(implication)

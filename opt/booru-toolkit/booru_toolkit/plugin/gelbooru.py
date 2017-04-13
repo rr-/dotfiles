@@ -1,5 +1,4 @@
 import asyncio
-import re
 import urllib.parse
 import xml.dom.minidom
 from typing import Optional, Tuple, List, Dict, AsyncIterable
@@ -10,6 +9,7 @@ from booru_toolkit import errors
 from booru_toolkit.plugin.base import PluginBase
 from booru_toolkit.plugin.base import Post
 from booru_toolkit.plugin.base import Safety
+from booru_toolkit.plugin.tag_cache import CachedTag, TagCache
 
 
 def _process_response(response: requests.Response) -> str:
@@ -22,6 +22,7 @@ class PluginGelbooru(PluginBase):
 
     def __init__(self) -> None:
         self._session = requests.Session()
+        self._tag_cache = TagCache(self.name)
 
     async def login(self, user_name: str, password: str) -> None:
         await self._post(
@@ -31,6 +32,7 @@ class PluginGelbooru(PluginBase):
                 'pass': password,
                 'submit': 'Log in',
             })
+        await self._update_tag_cache()
 
     async def find_exact_post(self, content: bytes) -> Optional[Post]:
         return None
@@ -125,33 +127,44 @@ class PluginGelbooru(PluginBase):
         raise NotImplementedError('Not supported')
 
     async def find_tags(self, query: str) -> List[str]:
-        if not query:
-            return []
-        response = await self._get(
-            '/index.php?page=tags&s=list&tags={}'
-            '&sort=desc&order_by=index_count'
-            .format(urllib.parse.quote('*{}*'.format('*'.join(query)))))
-        results = []
-        for match in re.finditer(
-                r'<tr><td>(?P<usages>\d+)<\/td>'
-                r'<td>.*?<a[^>]*>(?P<name>[^<]*)<\/a>.*?<\/tr>',
-                response):
-            usages = int(match.group('usages'))
-            name = match.group('name')
-            results.append(name)
-        return results
+        return await self._tag_cache.find_tags(query)
 
     async def tag_exists(self, tag_name: str) -> bool:
-        try:
-            await self._get(
-                '/index.php?page=tags&s=list&tags={}'
-                .format(urllib.parse.quote(tag_name)))
-            return True
-        except requests.RequestException:
-            return False
+        return await self._tag_cache.tag_exists(tag_name)
 
-    async def get_tag_implications(self, tag_name: str) -> List[str]:
-        return []
+    async def get_tag_implications(self, tag_name: str) -> AsyncIterable[str]:
+        async for tag in self._tag_cache.get_tag_implications(tag_name):
+            yield tag
+
+    async def _update_tag_cache(self):
+        if self._tag_cache.exists():
+            return
+
+        page = 0
+        while True:
+            print('Downloading tag cache... page {}'.format(page))
+            response = await self._get(
+                '/index.php?page=dapi&s=tag&q=index&limit={limit}&pid={page}'
+                .format(limit=1000, page=page))
+            page += 1
+
+            with xml.dom.minidom.parseString(response) as doc:
+                tag_wrapper = doc.getElementsByTagName('tags')
+                if not tag_wrapper:
+                    break
+                tags = tag_wrapper[0].getElementsByTagName('tag')
+                for tag in tags:
+                    name = tag.getAttribute('name')
+                    importance = int(tag.getAttribute('count'))
+                    if importance > 1:
+                        self._tag_cache.add(CachedTag(
+                            name=name,
+                            importance=importance,
+                            implications=[]))
+                if not tags:
+                    break
+
+        self._tag_cache.save()
 
     async def _get(self, url: str) -> str:
         return _process_response(
