@@ -11,7 +11,6 @@ sub-codepage=utf8:cp1250
 volume-max=300
 
 video-aspect=no
-fullscreen=yes
 script-opts=osc-showwindowed=no,osc-showfullscreen=no,images-statusbar=yes,reset-view=yes
 no-input-default-bindings
 native-keyrepeat
