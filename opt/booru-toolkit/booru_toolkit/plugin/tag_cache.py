@@ -77,14 +77,13 @@ class TagCache:
     async def get_tag_implications(
             self, tag_name: str) -> AsyncIterable[str]:
         to_check = [tag_name]
-        visited: Set[str] = set()
+        visited: Set[str] = set(tag_name)
         while bool(to_check):
             text = to_check.pop(0)
-            if text in visited:
-                continue
-            visited.add(text)
             tag = await self._get_tag_by_name(tag_name)
             if tag:
                 for implication in tag.implications:
-                    yield implication
-                    to_check.append(implication)
+                    if implication not in visited:
+                        yield implication
+                        visited.add(implication)
+                        to_check.append(implication)
