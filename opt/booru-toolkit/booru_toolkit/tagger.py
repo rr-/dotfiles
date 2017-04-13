@@ -330,14 +330,11 @@ class UrwidTagger:
             ('f-initial-tag', 'black',       'white',    None, '#FFF', '#000'),
         ])
 
-    async def add_from_user_input(self) -> bool:
+    async def add_from_user_input(self) -> None:
         self._loop.start()  # we'll manage the loop manually
         try:
             while self._running:
                 await asyncio.sleep(0.1)
-            return True
-        except concurrent.futures.CancelledError:
-            return False
         finally:
             self._loop.stop()
 
@@ -406,10 +403,10 @@ def _restore_stdio(saved_stdin: Any, saved_stdout: Any) -> None:
     os.dup(saved_stdout)
 
 
-async def run(plugin: PluginBase, tag_list: TagList, title: str) -> bool:
+async def run(plugin: PluginBase, tag_list: TagList, title: str) -> None:
     saved_fds = _open_tty()
     tagger = UrwidTagger(tag_list, plugin, title)
     try:
-        return await tagger.add_from_user_input()
+        await tagger.add_from_user_input()
     finally:
         _restore_stdio(*saved_fds)
