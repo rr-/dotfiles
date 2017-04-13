@@ -1,4 +1,7 @@
 import re
+import asyncio
+import functools
+from collections import OrderedDict
 from typing import Any, Dict
 
 
@@ -22,3 +25,36 @@ class bidict(dict):
 
 def sanitize_file_name(name: str) -> str:
     return re.sub(r'[\\\/:*?"<>|]', '_', name)
+
+
+# credit: http://stackoverflow.com/a/39628789
+def async_lru_cache(maxsize=128):
+    cache = OrderedDict()
+    awaiting = dict()
+
+    async def run_and_cache(func, args, kwargs):
+        result = await func(*args, **kwargs)
+        key = functools._make_key(args, kwargs, False)
+        cache[key] = result
+        if len(cache) > maxsize:
+            cache.popitem(False)
+        cache.move_to_end(key)
+        return result
+
+    def decorator(func):
+        @functools.wraps(func)
+        async def wrapper(*args, **kwargs):
+            key = functools._make_key(args, kwargs, False)
+            if key in cache:
+                return cache[key]
+            if key in awaiting:
+                task = awaiting[key]
+                return await asyncio.wait_for(task, timeout=None)
+            task = asyncio.ensure_future(run_and_cache(func, args, kwargs))
+            awaiting[key] = task
+            result = await asyncio.wait_for(task, timeout=None)
+            del awaiting[key]
+            return result
+        return wrapper
+
+    return decorator

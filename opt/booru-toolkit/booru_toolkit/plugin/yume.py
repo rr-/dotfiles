@@ -4,6 +4,7 @@ import urllib.parse
 from typing import Any, Optional, Tuple, List, Dict, AsyncIterable
 from tempfile import TemporaryFile
 import requests
+from booru_toolkit import util
 from booru_toolkit import errors
 from booru_toolkit.util import bidict
 from booru_toolkit.plugin.base import PluginBase
@@ -152,7 +153,7 @@ class PluginYume(PluginBase):
                     implications=tag.get('implications', [])))
         self._tag_cache.save()
 
-    # TODO: memoize
+    @util.async_lru_cache()
     async def _get_similar_posts(self, content: bytes) -> Json:
         with TemporaryFile() as handle:
             handle.write(content)
