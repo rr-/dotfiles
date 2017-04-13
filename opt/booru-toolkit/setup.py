@@ -15,6 +15,7 @@ setup(
     },
 
     install_requires=[
+        'aioconsole',
         'configargparse',
         'requests',
         'bs4',

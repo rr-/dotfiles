@@ -1,7 +1,9 @@
 import asyncio
+import concurrent.futures
 import sys
 from pathlib import Path
 from typing import Optional, List
+import aioconsole
 import configargparse
 from booru_toolkit import errors
 from booru_toolkit import cli
@@ -44,15 +46,16 @@ def parse_args() -> configargparse.Namespace:
 
 async def confirm_similar_posts(plugin: PluginBase, content: bytes) -> None:
     similar_posts = await plugin.find_similar_posts(content)
-    if similar_posts:
-        print('Similar posts found:')
-        for similarity, post in similar_posts:
-            print('%.02f: %s (%dx%d)' % (
-                similarity,
-                post.site_url,
-                post.width,
-                post.height))
-        input('Hit enter to continue, ^C to abort\n')
+    if not similar_posts:
+        return
+    print('Similar posts found:')
+    for similarity, post in similar_posts:
+        print('%.02f: %s (%dx%d)' % (
+            similarity,
+            post.site_url,
+            post.width,
+            post.height))
+    await aioconsole.ainput('Hit enter to continue, ^C to abort\n')
 
 
 async def run(args: configargparse.Namespace) -> int:
@@ -88,7 +91,7 @@ async def run(args: configargparse.Namespace) -> int:
         for tag in initial_tags:
             tag_list.add(tag, tagger.TagSource.UserInput)
         if interactive:
-            result = await tagger.run(
+            await tagger.run(
                 plugin,
                 tag_list,
                 'Uploading to {}: {} (safety: {})'.format(
@@ -99,9 +102,6 @@ async def run(args: configargparse.Namespace) -> int:
                         Safety.Questionable: 'questionable',
                         Safety.Explicit: 'explicit',
                     }[safety]))
-            if not result:
-                print('Aborted.')
-                return 0
         tags = [tag.name for tag in tag_list.get_all()]
 
         print('Tags:')
@@ -129,13 +129,15 @@ def main() -> int:
     args = parse_args()
     loop = asyncio.get_event_loop()
     try:
-        task = loop.create_task(run(args))
-        result = loop.run_until_complete(task)
-    except KeyboardInterrupt:
-        result = 1
+        try:
+            task = loop.create_task(run(args))
+            result = loop.run_until_complete(task)
+        except KeyboardInterrupt:
+            task.cancel()
+            loop.run_until_complete(task)
+    except concurrent.futures.CancelledError:
         print('Aborted.')
-        task.cancel()  # throw CancelledError wherever the code is running
-        loop.run_forever()  # give the task a chance to tidy up
+        result = 1
     finally:
         loop.close()
     sys.exit(result)
