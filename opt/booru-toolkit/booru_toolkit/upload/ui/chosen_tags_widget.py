@@ -2,16 +2,14 @@ import asyncio
 from typing import Optional, Tuple, List
 import urwid
 from booru_toolkit.plugin import PluginBase
-from booru_toolkit.upload.ui.common import box_to_ui
-from booru_toolkit.upload.ui.common import TagSource
-from booru_toolkit.upload.ui.common import TagList
+from booru_toolkit.upload import common
 from booru_toolkit.upload.ui.vim_list_box import VimListBox
 
 
 class ChosenTagsListBox(VimListBox):
     def __init__(
             self,
-            chosen_tags: TagList,
+            chosen_tags: common.TagList,
             plugin: PluginBase) -> None:
         super().__init__(urwid.SimpleListWalker([]))
         self._chosen_tags = chosen_tags
@@ -35,9 +33,9 @@ class ChosenTagsListBox(VimListBox):
     async def update(self) -> None:
         new_list: List[urwid.Widget] = []
         for tag in self._chosen_tags.get_all():
-            if tag.source == TagSource.Implication:
+            if tag.source == common.TagSource.Implication:
                 attr_name = 'implied-tag'
-            elif tag.source == TagSource.Initial:
+            elif tag.source == common.TagSource.Initial:
                 attr_name = 'initial-tag'
             elif not await self._plugin.tag_exists(tag.name):
                 attr_name = 'new-tag'
@@ -46,7 +44,7 @@ class ChosenTagsListBox(VimListBox):
             tag_usage_count = await self._plugin.get_tag_usage_count(tag.name)
 
             columns_widget = urwid.Columns([
-                (urwid.Text(box_to_ui(tag.name), wrap=urwid.CLIP)),
+                (urwid.Text(common.box_to_ui(tag.name), wrap=urwid.CLIP)),
                 (urwid.PACK, urwid.Text(str(tag_usage_count))),
             ])
             setattr(columns_widget, 'tag', tag)

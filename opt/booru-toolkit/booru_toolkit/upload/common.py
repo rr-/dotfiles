@@ -1,5 +1,6 @@
 from enum import Enum
-from typing import List, Callable
+from typing import Optional, List, Callable
+from booru_toolkit.plugin import Safety
 
 
 def box_to_ui(text: str) -> str:
@@ -47,3 +48,20 @@ class TagList:
     def _trigger_update(self) -> None:
         for callback in self.on_update:
             callback()
+
+
+class UploadSettings:
+    def __init__(
+            self,
+            safety: Safety,
+            source: Optional[str],
+            tags: List[str] = []) -> None:
+        self.safety = safety
+        self.source = source
+        self.tags = TagList()
+        for tag_name in tags:
+            self.tags.add(tag_name, TagSource.UserInput)
+
+    @property
+    def tag_names(self) -> List[str]:
+        return [tag.name for tag in self.tags.get_all()]
