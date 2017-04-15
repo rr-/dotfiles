@@ -9,8 +9,8 @@ setup(
 
     entry_points={
         'console_scripts': [
-            'dl-booru = booru_toolkit.download:main',
-            'ul-booru = booru_toolkit.upload:main'
+            'dl-booru = booru_toolkit.download.__main__:main',
+            'ul-booru = booru_toolkit.upload.__main__:main'
         ]
     },
 
