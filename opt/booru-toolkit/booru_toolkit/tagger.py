@@ -43,6 +43,7 @@ class Tag:
 class TagList:
     def __init__(self) -> None:
         self._tags: List[Tag] = []
+        self.on_update: List[Callable[[], None]] = []
 
     def get_all(self) -> List[Tag]:
         return sorted(self._tags, key=lambda tag: tag.name)
@@ -53,11 +54,17 @@ class TagList:
             for tag in self._tags
             if tag.name.lower() != tag_to_remove.name.lower()
         ]
+        self._trigger_update()
 
     def add(self, name: str, source: TagSource) -> None:
         if any(name.lower() == tag.name.lower() for tag in self._tags):
             return
         self._tags.append(Tag(name, source))
+        self._trigger_update()
+
+    def _trigger_update(self) -> None:
+        for callback in self.on_update:
+            callback()
 
 
 class VimListBox(urwid.ListBox):
@@ -166,7 +173,6 @@ class ChosenTagsListBox(VimListBox):
                 urwid.AttrWrap(columns_widget, attr_name, 'f-' + attr_name))
         self.body.clear()
         self.body.extend(new_list)
-        self._invalidate()
 
     def _delete_selected(self) -> None:
         old_focused_item = self._focus
@@ -316,6 +322,8 @@ class UrwidTagger:
         self._undo_stack: List[Set[Tag]] = []
         self._running = True
 
+        chosen_tags.on_update.append(self._on_tags_change)
+
         frame = urwid.Frame(
             None, header=urwid.Text(title, 'center') if title else None)
         self._loop = urwid.MainLoop(
@@ -324,14 +332,17 @@ class UrwidTagger:
             event_loop=urwid.AsyncioEventLoop())
 
         self._loop.screen.set_terminal_properties(256)
-        self._fuzzy_input = FuzzyInput(plugin, self._loop)
-        urwid.connect_signal(
-            self._fuzzy_input, 'accept', self._on_tag_accept)
 
-        self._choices_box = ChosenTagsListBox(chosen_tags, plugin)
-        self._columns = urwid.Columns([
-            urwid.LineBox(self._fuzzy_input, title='Input'),
-            urwid.LineBox(self._choices_box, title='Chosen tags')])
+        self._input_box = urwid.LineBox(
+            FuzzyInput(plugin, self._loop), title='Tag input')
+        urwid.connect_signal(
+            self._input_box.original_widget, 'accept', self._on_tag_accept)
+
+        self._chosen_tags_box = urwid.LineBox(
+            ChosenTagsListBox(chosen_tags, plugin),
+            title='Chosen tags ({})'.format(len(chosen_tags.get_all())))
+
+        self._columns = urwid.Columns([self._input_box, self._chosen_tags_box])
         self._columns.set_focus(0)
         frame.set_body(self._columns)
 
@@ -379,7 +390,11 @@ class UrwidTagger:
             return
         for tag in self._undo_stack.pop():
             self._chosen_tags.delete(tag)
-        self._choices_box.schedule_update()
+        self._chosen_tags_box.original_widget.schedule_update()
+
+    def _on_tags_change(self) -> None:
+        self._chosen_tags_box.set_title(
+            'Chosen tags ({})'.format(len(self._chosen_tags.get_all())))
 
     def _on_tag_accept(self, _widget: urwid.Widget, text: str) -> None:
         text = _unbox_from_ui(text)
@@ -388,12 +403,12 @@ class UrwidTagger:
         self._chosen_tags.add(text, TagSource.UserInput)
 
         async def work() -> None:
-            await self._choices_box.update()
+            await self._chosen_tags_box.original_widget.update()
 
             async for implication in (
                     self._plugin.get_tag_implications(text)):
                 self._chosen_tags.add(implication, TagSource.Implication)
-                await self._choices_box.update()
+                await self._chosen_tags_box.original_widget.update()
 
             added_tags = set([
                 tag
