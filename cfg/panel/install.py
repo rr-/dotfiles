@@ -1,3 +1,4 @@
+from dotinstall import packages
 from dotinstall import util
 
 
