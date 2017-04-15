@@ -11,7 +11,7 @@ custom goodies are located in the `bin/` directory.
 #### Repository structure
 
 - `bin/`: custom tools
-- `mod/`: configuration and installers for third party programs
+- `cfg/`: configuration and installers for third party programs
 - `lib/`: code shared between the scripts in `bin/` and the modules in `mod/`
 - `opt/`: projects too big to fit in `bin/`
 - `txt/`: miscellaneous text resources
