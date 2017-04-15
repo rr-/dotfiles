@@ -4,8 +4,7 @@ import urwid
 from urwid_readline import ReadlineEdit
 from booru_toolkit import util
 from booru_toolkit.plugin import PluginBase
-from booru_toolkit.upload.ui.common import box_to_ui
-from booru_toolkit.upload.ui.common import unbox_from_ui
+from booru_toolkit.upload import common
 
 
 class FuzzyInput(urwid.ListBox):
@@ -74,7 +73,7 @@ class FuzzyInput(urwid.ListBox):
         urwid.signals.disconnect_signal(
             self._input_box, 'change', self._on_text_change)
         self._input_box.set_edit_text(
-            box_to_ui(self._matches[self._focus][0]))
+            common.box_to_ui(self._matches[self._focus][0]))
         self._input_box.set_edit_pos(len(self._input_box.text))
         urwid.signals.connect_signal(
             self._input_box, 'change', self._on_text_change)
@@ -83,7 +82,7 @@ class FuzzyInput(urwid.ListBox):
         asyncio.ensure_future(self._update_matches())
 
     async def _update_matches(self) -> None:
-        text = unbox_from_ui(self._input_box.text)
+        text = common.unbox_from_ui(self._input_box.text)
         self._update_id += 1
         update_id = self._update_id
 
@@ -108,7 +107,7 @@ class FuzzyInput(urwid.ListBox):
             if i == self._focus:
                 attr_name = 'f-' + attr_name
             columns_widget = urwid.Columns([
-                (urwid.Text(box_to_ui(tag_name), wrap=urwid.CLIP)),
+                (urwid.Text(common.box_to_ui(tag_name), wrap=urwid.CLIP)),
                 (urwid.PACK, urwid.Text(str(tag_usage_count))),
             ])
             new_list.append(urwid.AttrWrap(columns_widget, attr_name))

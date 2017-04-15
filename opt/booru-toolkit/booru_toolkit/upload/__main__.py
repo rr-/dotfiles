@@ -11,6 +11,7 @@ from booru_toolkit.plugin import Safety
 from booru_toolkit.plugin import PluginBase
 from booru_toolkit.plugin import PluginYume
 from booru_toolkit.plugin import PluginGelbooru
+from booru_toolkit.upload import common
 from booru_toolkit.upload import ui
 
 
@@ -63,11 +64,13 @@ async def run(args: configargparse.Namespace) -> int:
     user_name: str = args.user
     password: str = args.password
 
-    safety: Safety = SAFETY_MAP[args.safety]
-    source: Optional[str] = args.source
-    initial_tags: List[str] = args.tags or []
     interactive: bool = args.interactive
     path: Path = Path(args.path)
+
+    upload_settings = common.UploadSettings(
+        safety=SAFETY_MAP[args.safety],
+        source=args.source,
+        tags=args.tags or [])
 
     try:
         if not path.exists():
@@ -84,35 +87,25 @@ async def run(args: configargparse.Namespace) -> int:
             await confirm_similar_posts(plugin, content)
 
         print('Gathering tags...')
-        tag_list = ui.TagList()
         if post:
             for tag in post.tags:
-                tag_list.add(tag, ui.TagSource.Initial)
-        for tag in initial_tags:
-            tag_list.add(tag, ui.TagSource.UserInput)
+                upload_settings.tags.add(tag, common.TagSource.Initial)
+
         if interactive:
-            await ui.run(
-                plugin,
-                tag_list,
-                'Uploading to {}: {} (safety: {})'.format(
-                    plugin.name,
-                    path,
-                    {
-                        Safety.Safe: 'safe',
-                        Safety.Questionable: 'questionable',
-                        Safety.Explicit: 'explicit',
-                    }[safety]))
-        tags = [tag.name for tag in tag_list.get_all()]
+            await ui.run(plugin, path, upload_settings)
 
         print('Tags:')
-        print('\n'.join(tags))
+        print('\n'.join(upload_settings.tag_names))
 
         if post:
-            await plugin.update_post_tags(post, tags)
+            await plugin.update_post_tags(post, upload_settings.tag_names)
             print('Updated.')
         else:
             post = await plugin.upload_post(
-                content, source=source, safety=safety, tags=tags)
+                content,
+                source=upload_settings.source,
+                safety=upload_settings.safety,
+                tags=upload_settings.tag_names)
             print('Uploaded.')
 
         if post:
