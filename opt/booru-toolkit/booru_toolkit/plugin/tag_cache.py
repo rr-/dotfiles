@@ -58,7 +58,7 @@ class TagCache:
                 .query(CachedTag)
                 .filter(CachedTag.name.ilike('%{}%'.format('%'.join(query))))
                 .order_by(CachedTag.importance.desc())
-                .limit(250)
+                .limit(100)
                 .all())]
 
     async def _get_tag_by_name(self, tag_name: str) -> CachedTag:
