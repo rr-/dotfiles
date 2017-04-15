@@ -128,7 +128,11 @@ class PluginPixiv(PluginBase):
     async def get_tag_implications(self, tag_name: str) -> AsyncIterable[str]:
         return []
 
-    async def update_post_tags(self, post: Post, tags: List[str]) -> None:
+    async def update_post(
+            self,
+            post_id: int,
+            safety: Safety,
+            tags: List[str]) -> None:
         raise NotImplementedError('Not implemented')
 
     async def _get(self, url: str, params: Dict) -> Dict:

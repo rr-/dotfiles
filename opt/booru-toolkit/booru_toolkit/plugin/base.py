@@ -60,7 +60,11 @@ class PluginBase:
             tags: List[str]) -> Optional[Post]:
         raise NotImplementedError('Not implemented')
 
-    async def update_post_tags(self, post: Post, tags: List[str]) -> None:
+    async def update_post(
+            self,
+            post_id: int,
+            safety: Safety,
+            tags: List[str]) -> None:
         raise NotImplementedError('Not implemented')
 
     async def find_tags(self, query: str) -> List[str]:

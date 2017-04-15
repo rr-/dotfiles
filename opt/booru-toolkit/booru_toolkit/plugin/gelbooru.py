@@ -123,7 +123,11 @@ class PluginGelbooru(PluginBase):
             else:
                 raise errors.ApiError('Unknown response from the server')
 
-    async def update_post_tags(self, post: Post, tags: List[str]) -> None:
+    async def update_post(
+            self,
+            post_id: int,
+            safety: Safety,
+            tags: List[str]) -> None:
         raise NotImplementedError('Not supported')
 
     async def find_tags(self, query: str) -> List[str]:

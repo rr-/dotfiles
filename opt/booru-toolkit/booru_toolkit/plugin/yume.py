@@ -19,12 +19,13 @@ _SAFETY_MAP = bidict({
     Safety.Questionable: 'sketchy',
     Safety.Explicit: 'unsafe',
 })
+_version_cache: Dict[int, int] = {}
 
 
 def _result_to_post(result: Json) -> Post:
     post = Post(
         post_id=result['id'],
-        safety=_SAFETY_MAP.inverse[result['safety']],
+        safety=_SAFETY_MAP.inverse[result['safety']][0],
         tags=result['tags'],
         site_url='https://yume.pl/post/{}'.format(result['id']),
         content_url=result['contentUrl'],
@@ -33,7 +34,7 @@ def _result_to_post(result: Json) -> Post:
         source=result['source'],
         title=None
     )
-    setattr(post, 'version', result['version'])
+    _version_cache[post.id] = result['version']
     return post
 
 
@@ -122,13 +123,19 @@ class PluginYume(PluginBase):
                 })
             return _result_to_post(result)
 
-    async def update_post_tags(self, post: Post, tags: List[str]) -> None:
-        await self._put(
-            '/post/{}'.format(post.id),
+    async def update_post(
+            self,
+            post_id: int,
+            safety: Safety,
+            tags: List[str]) -> None:
+        response = await self._put(
+            '/post/{}'.format(post_id),
             data={
-                'version': getattr(post, 'version'),
+                'version': _version_cache[post_id],
+                'safety': _SAFETY_MAP[safety],
                 'tags': tags,
             })
+        _result_to_post(response)
 
     async def find_tags(self, query: str) -> List[str]:
         return await self._tag_cache.find_tags(query)
