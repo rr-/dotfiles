@@ -1,6 +1,3 @@
-#!/bin/python3
-# Interactive stand-alone tagger for ul-gelbooru, ul-yume etc.
-
 import os
 import sys
 import asyncio

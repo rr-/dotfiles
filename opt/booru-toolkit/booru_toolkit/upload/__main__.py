@@ -7,11 +7,11 @@ import aioconsole
 import configargparse
 from booru_toolkit import errors
 from booru_toolkit import cli
-from booru_toolkit import tagger
 from booru_toolkit.plugin import Safety
 from booru_toolkit.plugin import PluginBase
 from booru_toolkit.plugin import PluginYume
 from booru_toolkit.plugin import PluginGelbooru
+from booru_toolkit.upload import ui
 
 
 PLUGINS: List[PluginBase] = [PluginGelbooru(), PluginYume()]
@@ -84,14 +84,14 @@ async def run(args: configargparse.Namespace) -> int:
             await confirm_similar_posts(plugin, content)
 
         print('Gathering tags...')
-        tag_list = tagger.TagList()
+        tag_list = ui.TagList()
         if post:
             for tag in post.tags:
-                tag_list.add(tag, tagger.TagSource.Initial)
+                tag_list.add(tag, ui.TagSource.Initial)
         for tag in initial_tags:
-            tag_list.add(tag, tagger.TagSource.UserInput)
+            tag_list.add(tag, ui.TagSource.UserInput)
         if interactive:
-            await tagger.run(
+            await ui.run(
                 plugin,
                 tag_list,
                 'Uploading to {}: {} (safety: {})'.format(
