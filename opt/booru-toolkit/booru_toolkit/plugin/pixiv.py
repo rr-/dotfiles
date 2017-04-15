@@ -122,6 +122,9 @@ class PluginPixiv(PluginBase):
     async def find_tags(self, query: str) -> List[str]:
         raise NotImplementedError('Not implemented')
 
+    async def get_tag_usage_count(self, tag_name: str) -> int:
+        return 0
+
     async def get_tag_implications(self, tag_name: str) -> AsyncIterable[str]:
         return []
 

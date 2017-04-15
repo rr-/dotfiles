@@ -1,6 +1,6 @@
 import asyncio
 from pathlib import Path
-from typing import Any, Set, List, AsyncIterable
+from typing import Any, Set, List, Dict, AsyncIterable
 import sqlalchemy as sa
 import sqlalchemy.orm
 import sqlalchemy.ext.declarative
@@ -24,6 +24,7 @@ class CachedTag(Base):
 
 class TagCache:
     def __init__(self, cache_name: str) -> None:
+        self._cache: Dict[str, CachedTag] = {}
         self._path = Path(
             '~/.cache/tags-{}.sqlite'.format(cache_name)).expanduser()
 
@@ -51,17 +52,22 @@ class TagCache:
     async def find_tags(self, query: str) -> List[str]:
         if not query:
             return []
-        return [
-            tag.name
-            for tag in (
+        ret: List[str] = []
+        for tag in (
                 self._session
                 .query(CachedTag)
                 .filter(CachedTag.name.ilike('%{}%'.format('%'.join(query))))
                 .order_by(CachedTag.importance.desc())
                 .limit(100)
-                .all())]
+                .all()):
+            self._cache[tag.name] = tag
+            ret.append(tag.name)
+        return ret
 
     async def _get_tag_by_name(self, tag_name: str) -> CachedTag:
+        if tag_name in self._cache:
+            return self._cache[tag_name]
+
         def work():
             ret = (
                 self._session
@@ -72,7 +78,15 @@ class TagCache:
                 self._session.expunge(ret)
             return ret
 
-        return await asyncio.get_event_loop().run_in_executor(None, work)
+        tag = await asyncio.get_event_loop().run_in_executor(None, work)
+        self._cache[tag_name] = tag
+        return tag
+
+    async def get_tag_usage_count(self, tag_name: str) -> int:
+        tag = await self._get_tag_by_name(tag_name)
+        if tag:
+            return tag.importance
+        return 0
 
     async def get_tag_implications(self, tag_name: str) -> AsyncIterable[str]:
         to_check = [tag_name]

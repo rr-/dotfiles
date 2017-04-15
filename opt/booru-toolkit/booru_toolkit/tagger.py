@@ -4,6 +4,7 @@
 import os
 import sys
 import asyncio
+import textwrap
 import concurrent.futures
 from enum import Enum
 from typing import Any, Optional, Tuple, Set, List, Dict, Callable
@@ -131,8 +132,8 @@ class ChosenTagsListBox(VimListBox):
 
     def keypress(self, size: WidgetSize, key: str) -> Optional[str]:
         keymap = {
-            'd':         self._delete_selected,
-            'delete':    self._delete_selected,
+            'd':      self._delete_selected,
+            'delete': self._delete_selected,
         }
         if key in keymap:
             keymap[key]()
@@ -154,13 +155,17 @@ class ChosenTagsListBox(VimListBox):
                 attr_name = 'new-tag'
             else:
                 attr_name = 'tag'
-            text_widget = urwid.Text(_box_to_ui(tag.name), wrap=urwid.CLIP)
-            setattr(text_widget, 'tag', tag)
+            tag_usage_count = await self._plugin.get_tag_usage_count(tag.name)
+
+            columns_widget = urwid.Columns([
+                (urwid.Text(_box_to_ui(tag.name), wrap=urwid.CLIP)),
+                (urwid.PACK, urwid.Text(str(tag_usage_count))),
+            ])
+            setattr(columns_widget, 'tag', tag)
             new_list.append(
-                urwid.AttrWrap(text_widget, attr_name, 'f-' + attr_name))
+                urwid.AttrWrap(columns_widget, attr_name, 'f-' + attr_name))
         self.body.clear()
-        for item in new_list:
-            self.body.append(item)
+        self.body.extend(new_list)
         self._invalidate()
 
     def _delete_selected(self) -> None:
@@ -178,8 +183,8 @@ class FuzzyInput(urwid.Widget):
         self._plugin = plugin
         self._main_loop = main_loop
 
-        self._focused_match = -1
-        self._matches: List[str] = []
+        self._focus = -1
+        self._matches: List[Tuple[str, int]] = []
 
         self._update_id = 0
         self._update_alarm = None
@@ -206,15 +211,21 @@ class FuzzyInput(urwid.Widget):
     def render(self, size: WidgetSize, focus: bool = False) -> None:
         maxcol, maxrow = size
         canvases = [(self._input_box.render((maxcol,)), 0, focus)]
-        for i in range(maxrow - 1):
-            text = (
-                _box_to_ui(self._matches[i])
-                if i < len(self._matches)
-                else ' ')
-            if len(text) > maxcol:
-                text = text[0:maxcol-3] + '...'
+        for i in range(min(len(self._matches), maxrow - 1)):
+            tag_name, tag_usage_count = self._matches[i]
+
+            column_a = _box_to_ui(tag_name)
+            column_b = str(tag_usage_count)
+
+            column_a_len = maxcol - 1 - len(column_b)
+            assert column_a_len > 0
+            text = textwrap.shorten(column_a, width=column_a_len)
+            text += ' ' * (column_a_len - len(text))
+            text += ' '
+            text += column_b
+
             attr_name = 'match'
-            if self._focused_match == i:
+            if self._focus == i:
                 attr_name = 'f-' + attr_name
             canvases.append((
                 urwid.TextCanvas(
@@ -223,7 +234,9 @@ class FuzzyInput(urwid.Widget):
                     maxcol=maxcol),
                 i + 1,
                 focus))
+
         canvas = urwid.CanvasCombine(canvases)
+        canvas.pad_trim_top_bottom(0, maxrow - len(canvases))
         if focus:
             canvas.cursor = (min(self._input_box.edit_pos, maxcol), 0)
         return canvas
@@ -234,19 +247,19 @@ class FuzzyInput(urwid.Widget):
             return
         self._input_box.text = ''
         self._update_matches()
-        self._focused_match = -1
+        self._focus = -1
         urwid.signals.emit_signal(self, 'accept', self, text)
         self._invalidate()
 
     def _select_next(self, _size: WidgetSize) -> None:
-        if self._focused_match > 0:
-            self._focused_match -= 1
+        if self._focus > 0:
+            self._focus -= 1
             self._on_results_focus_change()
             self._invalidate()
 
     def _select_prev(self, size: WidgetSize) -> None:
-        if self._focused_match + 1 < min(len(self._matches), size[1] - 1):
-            self._focused_match += 1
+        if self._focus + 1 < min(len(self._matches), size[1] - 1):
+            self._focus += 1
             self._on_results_focus_change()
             self._invalidate()
 
@@ -259,7 +272,7 @@ class FuzzyInput(urwid.Widget):
     def _on_results_focus_change(self, *_args: Any, **_kwargs: Any) -> None:
         urwid.signals.disconnect_signal(
             self._input_box, 'change', self._on_text_change)
-        self._input_box.text = _box_to_ui(self._matches[self._focused_match])
+        self._input_box.text = _box_to_ui(self._matches[self._focus][0])
         self._input_box.edit_pos = len(self._input_box.text)
         urwid.signals.connect_signal(
             self._input_box, 'change', self._on_text_change)
@@ -271,13 +284,18 @@ class FuzzyInput(urwid.Widget):
         update_id = self._update_id
 
         async def work() -> None:
-            matches = await self._plugin.find_tags(text)
+            tag_names = await self._plugin.find_tags(text)
             if self._update_id > update_id:
                 return
 
+            matches = []
+            for tag_name in tag_names:
+                tag_usage_count = (
+                    await self._plugin.get_tag_usage_count(tag_name))
+                matches.append((tag_name, tag_usage_count))
+
             self._matches = matches
-            self._focused_match = _clamp(
-                self._focused_match, -1, len(self._matches) - 1)
+            self._focus = _clamp(self._focus, -1, len(self._matches) - 1)
             self._invalidate()
 
         asyncio.ensure_future(work())
