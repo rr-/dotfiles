@@ -140,22 +140,22 @@ class Ui:
     def _make_header_widget(self) -> urwid.Widget:
         return urwid.Columns([
             (urwid.PACK, TableColumn([
-                (urwid.Text('Path:')),
-                (urwid.Text('Safety:')),
                 (urwid.Text('Plugin:')),
+                (urwid.Text('Safety:')),
+                (urwid.Text('Path:')),
             ])),
             TableColumn([
-                urwid.Text(
-                    str(self._upload_settings.path),
-                    wrap=urwid.CLIP,
-                    align=urwid.RIGHT,
-                    layout=EllipsisTextLayout()),
+                urwid.Text(self._plugin.name),
                 urwid.Text({
                     Safety.Safe: 'safe',
                     Safety.Questionable: 'questionable',
                     Safety.Explicit: 'explicit',
                 }[self._upload_settings.safety]),
-                urwid.Text(self._plugin.name),
+                urwid.Text(
+                    str(self._upload_settings.path),
+                    wrap=urwid.CLIP,
+                    align=urwid.RIGHT,
+                    layout=EllipsisTextLayout()),
             ])
         ], dividechars=1)
 
