@@ -1,4 +1,5 @@
 from enum import Enum
+from pathlib import Path
 from typing import Optional, List, Callable
 from booru_toolkit.plugin import Safety
 
@@ -53,9 +54,11 @@ class TagList:
 class UploadSettings:
     def __init__(
             self,
+            path: Path,
             safety: Safety,
             source: Optional[str],
             tags: List[str] = []) -> None:
+        self.path = path
         self.safety = safety
         self.source = source
         self.tags = TagList()

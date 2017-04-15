@@ -65,17 +65,17 @@ async def run(args: configargparse.Namespace) -> int:
     password: str = args.password
 
     interactive: bool = args.interactive
-    path: Path = Path(args.path)
 
     upload_settings = common.UploadSettings(
+        Path(args.path),
         safety=SAFETY_MAP[args.safety],
         source=args.source,
         tags=args.tags or [])
 
     try:
-        if not path.exists():
+        if not upload_settings.path.exists():
             raise errors.NoContentError()
-        with path.open('rb') as handle:
+        with upload_settings.path.open('rb') as handle:
             content = handle.read()
 
         print('Logging in...')
@@ -90,15 +90,19 @@ async def run(args: configargparse.Namespace) -> int:
         if post:
             for tag in post.tags:
                 upload_settings.tags.add(tag, common.TagSource.Initial)
+            upload_settings.safety = post.safety
 
         if interactive:
-            await ui.run(plugin, path, upload_settings)
+            await ui.run(plugin, upload_settings)
 
         print('Tags:')
         print('\n'.join(upload_settings.tag_names))
 
         if post:
-            await plugin.update_post_tags(post, upload_settings.tag_names)
+            await plugin.update_post(
+                post.id,
+                safety=upload_settings.safety,
+                tags=upload_settings.tag_names)
             print('Updated.')
         else:
             post = await plugin.upload_post(

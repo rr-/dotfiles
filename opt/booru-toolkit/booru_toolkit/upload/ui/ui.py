@@ -1,5 +1,4 @@
 import asyncio
-from pathlib import Path
 from typing import Any, Tuple, Set, List
 import urwid
 from booru_toolkit import util
@@ -49,7 +48,6 @@ class Ui:
     def __init__(
             self,
             plugin: PluginBase,
-            path: Path,
             upload_settings: common.UploadSettings) -> None:
         self._plugin = plugin
         self._upload_settings = upload_settings
@@ -58,22 +56,7 @@ class Ui:
 
         upload_settings.tags.on_update.append(self._on_tags_change)
 
-        frame = urwid.Frame(None, header=urwid.Columns([
-            (urwid.PACK, TableColumn([
-                (urwid.Text('Path:')),
-                (urwid.Text('Safety:')),
-                (urwid.Text('Plugin:')),
-            ])),
-            TableColumn([
-                LeftClippedText(str(path)),
-                urwid.Text({
-                    Safety.Safe: 'safe',
-                    Safety.Questionable: 'questionable',
-                    Safety.Explicit: 'explicit',
-                }[upload_settings.safety]),
-                urwid.Text(plugin.name),
-            ])
-        ], dividechars=1))
+        frame = urwid.Frame(None, header=self._make_header_widget())
 
         self._loop = urwid.MainLoop(
             frame,
@@ -105,12 +88,21 @@ class Ui:
 
     def _keypress(self, key: str) -> None:
         keymap = {
+            'ctrl s': self._cycle_safety,
             'ctrl q': self._confirm,
             'ctrl x': self._toggle_focus,
             'ctrl r': self._undo_tag,
         }
         if key in keymap:
             keymap[key]()
+
+    def _cycle_safety(self) -> None:
+        self._upload_settings.safety = {
+            Safety.Safe: Safety.Questionable,
+            Safety.Questionable: Safety.Explicit,
+            Safety.Explicit: Safety.Safe
+        }[self._upload_settings.safety]
+        self._loop.widget.set_header(self._make_header_widget())
 
     def _confirm(self) -> None:
         self._running = False
@@ -155,11 +147,27 @@ class Ui:
 
         asyncio.ensure_future(work())
 
+    def _make_header_widget(self) -> urwid.Widget:
+        return urwid.Columns([
+            (urwid.PACK, TableColumn([
+                (urwid.Text('Path:')),
+                (urwid.Text('Safety:')),
+                (urwid.Text('Plugin:')),
+            ])),
+            TableColumn([
+                LeftClippedText(str(self._upload_settings.path)),
+                urwid.Text({
+                    Safety.Safe: 'safe',
+                    Safety.Questionable: 'questionable',
+                    Safety.Explicit: 'explicit',
+                }[self._upload_settings.safety]),
+                urwid.Text(self._plugin.name),
+            ])
+        ], dividechars=1)
+
 
 async def run(
-        plugin: PluginBase,
-        path: Path,
-        upload_settings: common.UploadSettings) -> None:
+        plugin: PluginBase, upload_settings: common.UploadSettings) -> None:
     with util.redirect_stdio():
-        tagger = Ui(plugin, path, upload_settings)
+        tagger = Ui(plugin, upload_settings)
         await tagger.add_from_user_input()
