@@ -4,7 +4,6 @@
 import os
 import sys
 import asyncio
-import textwrap
 import concurrent.futures
 from enum import Enum
 from typing import Any, Optional, Tuple, Set, List, Dict, Callable
@@ -152,7 +151,7 @@ class ChosenTagsListBox(VimListBox):
         asyncio.ensure_future(self.update())
 
     async def update(self) -> None:
-        new_list = []
+        new_list: List[urwid.Widget] = []
         for tag in self._chosen_tags.get_all():
             if tag.source == TagSource.Implication:
                 attr_name = 'implied-tag'
@@ -171,7 +170,7 @@ class ChosenTagsListBox(VimListBox):
             setattr(columns_widget, 'tag', tag)
             new_list.append(
                 urwid.AttrWrap(columns_widget, attr_name, 'f-' + attr_name))
-        self.body.clear()
+        list.clear(self.body)
         self.body.extend(new_list)
 
     def _delete_selected(self) -> None:
@@ -182,7 +181,7 @@ class ChosenTagsListBox(VimListBox):
         self._invalidate()
 
 
-class FuzzyInput(urwid.Widget):
+class FuzzyInput(urwid.ListBox):
     signals = ['accept']
 
     def __init__(self, plugin: PluginBase, main_loop: urwid.MainLoop) -> None:
@@ -198,7 +197,8 @@ class FuzzyInput(urwid.Widget):
         urwid.signals.connect_signal(
             self._input_box, 'change', self._on_text_change)
 
-        self._update_matches()
+        super().__init__(urwid.SimpleListWalker([]))
+        self._update_widgets()
 
     def selectable(self) -> bool:
         return True
@@ -212,48 +212,16 @@ class FuzzyInput(urwid.Widget):
         if key in keymap:
             keymap[key](size)
             return None
-        return self._input_box.keypress(size, key)
-
-    def render(self, size: WidgetSize, focus: bool = False) -> None:
-        maxcol, maxrow = size
-        canvases = [(self._input_box.render((maxcol,)), 0, focus)]
-        for i in range(min(len(self._matches), maxrow - 1)):
-            tag_name, tag_usage_count = self._matches[i]
-
-            column_a = _box_to_ui(tag_name)
-            column_b = str(tag_usage_count)
-
-            column_a_len = maxcol - 1 - len(column_b)
-            assert column_a_len > 0
-            text = textwrap.shorten(column_a, width=column_a_len)
-            text += ' ' * (column_a_len - len(text))
-            text += ' '
-            text += column_b
-
-            attr_name = 'match'
-            if self._focus == i:
-                attr_name = 'f-' + attr_name
-            canvases.append((
-                urwid.TextCanvas(
-                    [text.encode()],
-                    attr=[[(attr_name, len(text))]],
-                    maxcol=maxcol),
-                i + 1,
-                focus))
-
-        canvas = urwid.CanvasCombine(canvases)
-        canvas.pad_trim_top_bottom(0, maxrow - len(canvases))
-        if focus:
-            canvas.cursor = (min(self._input_box.edit_pos, maxcol), 0)
-        return canvas
+        return self._input_box.keypress((size[0],), key)
 
     def _accept(self, _size: WidgetSize) -> None:
         text = self._input_box.text.strip()
         if not text:
             return
         self._input_box.text = ''
-        self._update_matches()
+        self._matches = []
         self._focus = -1
+        self._update_widgets()
         urwid.signals.emit_signal(self, 'accept', self, text)
         self._invalidate()
 
@@ -261,19 +229,19 @@ class FuzzyInput(urwid.Widget):
         if self._focus > 0:
             self._focus -= 1
             self._on_results_focus_change()
-            self._invalidate()
+            self._update_widgets()
 
     def _select_prev(self, size: WidgetSize) -> None:
         if self._focus + 1 < min(len(self._matches), size[1] - 1):
             self._focus += 1
             self._on_results_focus_change()
-            self._invalidate()
+            self._update_widgets()
 
     def _on_text_change(self, *_args: Any, **_kwargs: Any) -> None:
         if self._update_alarm:
             self._main_loop.remove_alarm(self._update_alarm)
         self._update_alarm = self._main_loop.set_alarm_in(
-            0.05, lambda *_: self._update_matches())
+            0.05, lambda *_: self._schedule_update_matches())
 
     def _on_results_focus_change(self, *_args: Any, **_kwargs: Any) -> None:
         urwid.signals.disconnect_signal(
@@ -283,28 +251,42 @@ class FuzzyInput(urwid.Widget):
         urwid.signals.connect_signal(
             self._input_box, 'change', self._on_text_change)
 
-    def _update_matches(self) -> None:
-        text = _unbox_from_ui(self._input_box.text)
+    def _schedule_update_matches(self) -> None:
+        asyncio.ensure_future(self._update_matches())
 
+    async def _update_matches(self) -> None:
+        text = _unbox_from_ui(self._input_box.text)
         self._update_id += 1
         update_id = self._update_id
 
-        async def work() -> None:
-            tag_names = await self._plugin.find_tags(text)
-            if self._update_id > update_id:
-                return
+        tag_names = await self._plugin.find_tags(text)
+        if self._update_id > update_id:
+            return
 
-            matches = []
-            for tag_name in tag_names:
-                tag_usage_count = (
-                    await self._plugin.get_tag_usage_count(tag_name))
-                matches.append((tag_name, tag_usage_count))
+        matches = []
+        for tag_name in tag_names:
+            tag_usage_count = (
+                await self._plugin.get_tag_usage_count(tag_name))
+            matches.append((tag_name, tag_usage_count))
 
-            self._matches = matches
-            self._focus = _clamp(self._focus, -1, len(self._matches) - 1)
-            self._invalidate()
+        self._matches = matches
+        self._focus = _clamp(self._focus, -1, len(self._matches) - 1)
+        self._update_widgets()
 
-        asyncio.ensure_future(work())
+    def _update_widgets(self) -> None:
+        new_list: List[urwid.Widget] = [self._input_box]
+        for i, (tag_name, tag_usage_count) in enumerate(self._matches):
+            attr_name = 'match'
+            if i == self._focus:
+                attr_name = 'f-' + attr_name
+            columns_widget = urwid.Columns([
+                (urwid.Text(_box_to_ui(tag_name), wrap=urwid.CLIP)),
+                (urwid.PACK, urwid.Text(str(tag_usage_count))),
+            ])
+            new_list.append(urwid.AttrWrap(columns_widget, attr_name))
+        list.clear(self.body)
+        self.body.extend(new_list)
+        self.body.set_focus(0)
 
 
 class UrwidTagger:
