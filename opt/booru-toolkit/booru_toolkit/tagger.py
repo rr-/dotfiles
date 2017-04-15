@@ -218,7 +218,7 @@ class FuzzyInput(urwid.ListBox):
         text = self._input_box.text.strip()
         if not text:
             return
-        self._input_box.text = ''
+        self._input_box.set_edit_text('')
         self._matches = []
         self._focus = -1
         self._update_widgets()
@@ -246,8 +246,9 @@ class FuzzyInput(urwid.ListBox):
     def _on_results_focus_change(self, *_args: Any, **_kwargs: Any) -> None:
         urwid.signals.disconnect_signal(
             self._input_box, 'change', self._on_text_change)
-        self._input_box.text = _box_to_ui(self._matches[self._focus][0])
-        self._input_box.edit_pos = len(self._input_box.text)
+        self._input_box.set_edit_text(
+            _box_to_ui(self._matches[self._focus][0]))
+        self._input_box.set_edit_pos(len(self._input_box.text))
         urwid.signals.connect_signal(
             self._input_box, 'change', self._on_text_change)
 
