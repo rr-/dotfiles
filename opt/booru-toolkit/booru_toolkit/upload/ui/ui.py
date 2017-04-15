@@ -1,5 +1,5 @@
 import asyncio
-from typing import Any, Tuple, Set, List
+from typing import Tuple, Set, List
 import urwid
 from booru_toolkit import util
 from booru_toolkit.plugin import PluginBase
@@ -7,6 +7,7 @@ from booru_toolkit.plugin import Safety
 from booru_toolkit.upload import common
 from booru_toolkit.upload.ui.fuzzy_input_widget import FuzzyInput
 from booru_toolkit.upload.ui.chosen_tags_widget import ChosenTagsListBox
+from booru_toolkit.upload.ui.ellipsis_text_layout import EllipsisTextLayout
 
 
 _PALETTE = [
@@ -31,17 +32,6 @@ class TableColumn(urwid.Pile):
         maxcol = size[0]
         maximum = max([i[0].pack((maxcol,), focus)[0] for i in self.contents])
         return (min(maximum, maxcol), len(self.contents))
-
-
-class LeftClippedText(urwid.Text):
-    def get_line_translation(
-            self, maxcol: int, ta: Tuple[str, Any] = None) -> Any:
-        if ta:
-            text, _attr = ta
-        else:
-            text, _attr = self.get_text()
-        return self.layout.layout(
-            text, min(maxcol, len(text)), urwid.RIGHT, urwid.CLIP)
 
 
 class Ui:
@@ -155,7 +145,11 @@ class Ui:
                 (urwid.Text('Plugin:')),
             ])),
             TableColumn([
-                LeftClippedText(str(self._upload_settings.path)),
+                urwid.Text(
+                    str(self._upload_settings.path),
+                    wrap=urwid.CLIP,
+                    align=urwid.RIGHT,
+                    layout=EllipsisTextLayout()),
                 urwid.Text({
                     Safety.Safe: 'safe',
                     Safety.Questionable: 'questionable',
