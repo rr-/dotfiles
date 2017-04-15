@@ -69,5 +69,8 @@ class PluginBase:
     async def tag_exists(self, tag_name: str) -> bool:
         raise NotImplementedError('Not implemented')
 
+    async def get_tag_usage_count(self, tag_name: str) -> int:
+        raise NotImplementedError('Not implemented')
+
     async def get_tag_implications(self, tag_name: str) -> AsyncIterable[str]:
         raise NotImplementedError('Not implemented')
