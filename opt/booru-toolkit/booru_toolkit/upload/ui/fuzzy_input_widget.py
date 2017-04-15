@@ -5,6 +5,7 @@ from urwid_readline import ReadlineEdit
 from booru_toolkit import util
 from booru_toolkit.plugin import PluginBase
 from booru_toolkit.upload import common
+from booru_toolkit.upload.ui.ellipsis_text_layout import EllipsisTextLayout
 
 
 class FuzzyInput(urwid.ListBox):
@@ -107,9 +108,13 @@ class FuzzyInput(urwid.ListBox):
             if i == self._focus:
                 attr_name = 'f-' + attr_name
             columns_widget = urwid.Columns([
-                (urwid.Text(common.box_to_ui(tag_name), wrap=urwid.CLIP)),
+                (urwid.Text(
+                    common.box_to_ui(tag_name),
+                    align=urwid.LEFT,
+                    wrap=urwid.CLIP,
+                    layout=EllipsisTextLayout())),
                 (urwid.PACK, urwid.Text(str(tag_usage_count))),
-            ])
+            ], dividechars=1)
             new_list.append(urwid.AttrWrap(columns_widget, attr_name))
         list.clear(self.body)
         self.body.extend(new_list)

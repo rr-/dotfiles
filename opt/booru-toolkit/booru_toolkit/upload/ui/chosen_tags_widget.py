@@ -4,6 +4,7 @@ import urwid
 from booru_toolkit.plugin import PluginBase
 from booru_toolkit.upload import common
 from booru_toolkit.upload.ui.vim_list_box import VimListBox
+from booru_toolkit.upload.ui.ellipsis_text_layout import EllipsisTextLayout
 
 
 class ChosenTagsListBox(VimListBox):
@@ -44,9 +45,13 @@ class ChosenTagsListBox(VimListBox):
             tag_usage_count = await self._plugin.get_tag_usage_count(tag.name)
 
             columns_widget = urwid.Columns([
-                (urwid.Text(common.box_to_ui(tag.name), wrap=urwid.CLIP)),
+                (urwid.Text(
+                    common.box_to_ui(tag.name),
+                    align=urwid.LEFT,
+                    wrap=urwid.CLIP,
+                    layout=EllipsisTextLayout())),
                 (urwid.PACK, urwid.Text(str(tag_usage_count))),
-            ])
+            ], dividechars=1)
             setattr(columns_widget, 'tag', tag)
             new_list.append(
                 urwid.AttrWrap(columns_widget, attr_name, 'f-' + attr_name))
