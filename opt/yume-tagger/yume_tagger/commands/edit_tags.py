@@ -1,13 +1,9 @@
-import os
 import sys
-import subprocess
-import tempfile
-from pathlib import Path
 from typing import Dict
 import configargparse
 import tabulate
+from yume_tagger import util
 from yume_tagger.api import Api, Tag
-from yume_tagger.util import confirm
 from yume_tagger.commands.base import BaseCommand
 
 
@@ -67,17 +63,8 @@ def _deserialize_tags(text: str) -> Dict[int, Tag]:
 
 
 def _edit_tags_interactively(tags: Dict[int, Tag]) -> Dict[int, Tag]:
-    text = _serialize_tags(tags)
-    with tempfile.TemporaryDirectory() as tmp_dir:
-        path: Path = Path(tmp_dir).joinpath('tags.txt')
-        path.write_text(text)
-        while True:
-            subprocess.run([os.getenv('EDITOR') or 'vim', str(path)])
-            text = path.read_text()
-            try:
-                return _deserialize_tags(text)
-            except ValueError as ex:
-                input(str(ex))
+    return util.run_editor(
+        'tags.txt', tags, _serialize_tags, _deserialize_tags)
 
 
 def _update_tags(
@@ -87,7 +74,7 @@ def _update_tags(
     for old_tag_id, old_tag in old_tags.items():
         try:
             if old_tag_id not in new_tags:
-                if confirm('Delete tag {}?'.format(old_tag['names'][0])):
+                if util.confirm('Delete tag {}?'.format(old_tag['names'][0])):
                     api.delete_tag(old_tag)
         except Exception as ex:
             print(ex, file=sys.stderr)
@@ -95,7 +82,7 @@ def _update_tags(
     for new_tag_id, new_tag in new_tags.items():
         try:
             if new_tag_id not in old_tags:
-                if confirm('Create tag {}?'.format(new_tag['names'][0])):
+                if util.confirm('Create tag {}?'.format(new_tag['names'][0])):
                     api.create_tag(new_tag)
             else:
                 old_tag = old_tags[new_tag_id]
@@ -110,7 +97,7 @@ def _update_tags(
                 if not request:
                     continue
 
-                if confirm('Update tag {} ({})?'.format(
+                if util.confirm('Update tag {} ({})?'.format(
                         new_tag['names'][0], request)):
                     request['version'] = old_tag['version']
                     api.update_tag(old_tag['names'][0], request)

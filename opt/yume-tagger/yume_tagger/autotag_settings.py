@@ -111,7 +111,7 @@ class AutoTagSettings:
                 return True
         return False
 
-    def save(self, target_path: Path) -> None:
+    def serialize(self) -> str:
         sections = [
             (SECTION_TAGGED_POST_IDS, _from_int_set(self._tagged_post_ids)),
             (SECTION_UNTAGGED_POST_IDS, _from_int_set(
@@ -123,20 +123,20 @@ class AutoTagSettings:
             (SECTION_TAG_CATEGORY_MAP, _from_str_dict(self._tag_category_map)),
         ]
 
-        target_path.parent.mkdir(parents=True, exist_ok=True)
-        target_path.write_text(
+        return (
             '\n\n'.join(
                 '\n'.join(
                     ['--- {} ---'.format(section_title)] +
                     [line for line in section_lines if line])
                 for (section_title, section_lines) in sections))
 
+    def save(self, target_path: Path) -> None:
+        target_path.parent.mkdir(parents=True, exist_ok=True)
+        target_path.write_text(self.serialize())
 
-def load(source_path: Path) -> AutoTagSettings:
-    if not source_path.exists():
-        return AutoTagSettings()
 
-    iterator = iter(enumerate(source_path.read_text().split('\n')))
+def deserialize(text: str) -> AutoTagSettings:
+    iterator = iter(enumerate(text.split('\n')))
     sections: Dict[str, List[str]] = {}
     current_section_title: Optional[str] = None
     for i, line in iterator:
@@ -149,10 +149,20 @@ def load(source_path: Path) -> AutoTagSettings:
             assert current_section_title is not None
             sections[current_section_title].append(line)
 
-    return AutoTagSettings(
-        tagged_post_ids=_to_int_set(sections[SECTION_TAGGED_POST_IDS]),
-        untagged_post_ids=_to_int_set(sections[SECTION_UNTAGGED_POST_IDS]),
-        banned_tag_regexes=_to_str_set(sections[SECTION_BANNED_TAG_REGEXES]),
-        banned_tags=_to_str_set(sections[SECTION_BANNED_TAGS]),
-        tag_map=_to_str_dict(sections[SECTION_TAG_MAP]),
-        tag_category_map=_to_str_dict(sections[SECTION_TAG_CATEGORY_MAP]))
+    try:
+        return AutoTagSettings(
+            tagged_post_ids=_to_int_set(sections[SECTION_TAGGED_POST_IDS]),
+            untagged_post_ids=_to_int_set(sections[SECTION_UNTAGGED_POST_IDS]),
+            banned_tag_regexes=(
+                _to_str_set(sections[SECTION_BANNED_TAG_REGEXES])),
+            banned_tags=_to_str_set(sections[SECTION_BANNED_TAGS]),
+            tag_map=_to_str_dict(sections[SECTION_TAG_MAP]),
+            tag_category_map=_to_str_dict(sections[SECTION_TAG_CATEGORY_MAP]))
+    except KeyError as ex:
+        raise ValueError('Missing section {}'.format(ex.args[0]))
+
+
+def load(source_path: Path) -> AutoTagSettings:
+    if not source_path.exists():
+        return AutoTagSettings()
+    return deserialize(source_path.read_text())

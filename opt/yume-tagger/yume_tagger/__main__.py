@@ -8,6 +8,7 @@ from yume_tagger import autotag_settings
 from yume_tagger import util
 from yume_tagger.commands import AutoTagNewestPostCommand
 from yume_tagger.commands import AutoTagChosenPostCommand
+from yume_tagger.commands import AutoTagConfigCommand
 from yume_tagger.commands import AutoTagError
 from yume_tagger.commands import EditTagsCommand
 
@@ -29,6 +30,7 @@ def parse_args() -> Optional[configargparse.Namespace]:
     EditTagsCommand.decorate_parser(subparsers)
     AutoTagNewestPostCommand.decorate_parser(subparsers)
     AutoTagChosenPostCommand.decorate_parser(subparsers)
+    AutoTagConfigCommand.decorate_parser(subparsers)
     args = parser.parse_args()
     if not args.command:
         parser.print_help()
