@@ -2,3 +2,4 @@ from yume_tagger.commands.edit_tags import EditTagsCommand
 from yume_tagger.commands.autotag import AutoTagNewestPostCommand
 from yume_tagger.commands.autotag import AutoTagChosenPostCommand
 from yume_tagger.commands.autotag import AutoTagError
+from yume_tagger.commands.autotag_config import AutoTagConfigCommand
