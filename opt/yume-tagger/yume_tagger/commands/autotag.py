@@ -1,5 +1,6 @@
 import re
 import json
+import enum
 from typing import Optional, List, Callable, Iterable
 import configargparse
 import requests
@@ -13,6 +14,12 @@ from yume_tagger.commands.base import BaseCommand
 
 CACHE_PATH = util.DB_DIR.joinpath('cache')
 TAGS_TO_REMOVE = ['tagme']
+
+
+class Force(enum.IntEnum):
+    NoForce = enum.auto()
+    TagAgain = enum.auto()
+    DownloadAgain = enum.auto()
 
 
 class AutoTagError(RuntimeError):
@@ -113,11 +120,13 @@ def _get_post(
 
 
 def _collect_third_party_tags(
-        post: Post, source: Optional[str] = None) -> List[_ThirdPartyTag]:
+        post: Post,
+        source: Optional[str],
+        skip_cache: bool) -> List[_ThirdPartyTag]:
     print('Collecting third party tags...')
 
     cache_path = CACHE_PATH.joinpath('autotagger-{}.dat'.format(post['id']))
-    if cache_path.exists():
+    if cache_path.exists() and not skip_cache:
         result = json.loads(cache_path.read_text())
         sources = result['sources']
         third_party_tags = [
@@ -264,12 +273,13 @@ def _sync(
         autotag_settings: AutoTagSettings,
         post_id: int,
         source: Optional[str],
-        force: bool,
+        force: Force,
         dry_run: bool) -> None:
-    post = _get_post(api, autotag_settings, post_id, force)
+    post = _get_post(api, autotag_settings, post_id, force >= Force.TagAgain)
     if not post:
         return
-    third_party_tags = _collect_third_party_tags(post, source)
+    third_party_tags = _collect_third_party_tags(
+        post, source, force >= Force.DownloadAgain)
     sync_info = _get_sync_info(api, autotag_settings, post, third_party_tags)
     _create_new_tags(None if dry_run else api, sync_info.tags_to_create)
     _update_post_tags(
@@ -282,7 +292,7 @@ def _sync(
 class AutoTagChosenPostCommand(BaseCommand):
     def run(self, args: configargparse.Namespace) -> None:
         source: Optional[str] = args.source
-        force: bool = args.force
+        force: Force = args.force
         dry_run: bool = args.dry_run
 
         for post_id in args.post_ids:
@@ -307,13 +317,18 @@ class AutoTagChosenPostCommand(BaseCommand):
     ) -> configargparse.ArgumentParser:
         parser = parent_parser.add_parser(
             'autotag-chosen', help='fetch tags for chosen posts')
+        parser.set_defaults(force=Force.NoForce)
         parser.add_argument(
             metavar='POST_ID', dest='post_ids', nargs='*', type=int,
             help='ID of the post to edit the tags for.')
         parser.add_argument(
-            '-f', '--force', action='store_true', help=(
-                'Force downloading post tags, even if the post was ' +
-                'processed earlier.'))
+            '-f', dest='force',
+            action='store_const', const=Force.TagAgain, help=(
+                'Force tagging even if the post was processed earlier.'))
+        parser.add_argument(
+            '-ff', dest='force',
+            action='store_const', const=Force.DownloadAgain, help=(
+                'Same as -f, but ignores IQDB cache.'))
         parser.add_argument(
             '--source', help='Source URL where to get tags from.')
         parser.add_argument(
@@ -335,7 +350,7 @@ class AutoTagNewestPostCommand(BaseCommand):
                 self._autotag_settings,
                 post_id,
                 None,
-                False,
+                Force.NoForce,
                 dry_run)
             if not dry_run:
                 self._autotag_settings.mark_as_tagged(post_id)
