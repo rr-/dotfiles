@@ -85,7 +85,7 @@ super + b
     mpc random || mpvmc toggle-random
 
 # seek backward and forward
-alt + shift + ctrl + {Left,Right}
+alt + shift + ctrl + {h,l}
     NUM={-,+}10; \
     mpc seek $NUM || mpvmc seek "$NUM"
 
