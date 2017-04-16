@@ -3,7 +3,7 @@ from typing import Dict
 import configargparse
 import tabulate
 from yume_tagger import util
-from yume_tagger.api import Api, Tag
+from yume_tagger.api import Api, ApiError, Tag
 from yume_tagger.autotag_settings import AutoTagSettings
 from yume_tagger.commands.base import BaseCommand
 
@@ -72,6 +72,16 @@ def _deserialize_tags(text: str) -> Dict[int, Tag]:
     return ret
 
 
+def _confirm_relations(api: Api, request: Dict):
+    for implication in set(
+            request.get('implications', []) +
+            request.get('suggestions', [])):
+        try:
+            api.get_tag(implication)
+        except ApiError:
+            print('Warning: tag {} does not exist.'.format(implication))
+
+
 def _edit_tags_interactively(tags: Dict[int, Tag]) -> Dict[int, Tag]:
     return util.run_editor(
         'tags.txt', tags, _serialize_tags, _deserialize_tags)
@@ -87,6 +97,7 @@ def _delete_tag(api: Api, autotag_settings: AutoTagSettings, tag: Tag) -> None:
 
 
 def _create_tag(api: Api, autotag_settings: AutoTagSettings, tag: Tag) -> None:
+    _confirm_relations(api, tag)
     if util.confirm('Create tag {}?'.format(tag['names'][0])):
         api.create_tag(tag)
     for tag_name in tag['names']:
@@ -106,6 +117,7 @@ def _update_tag(api: Api, old_tag: Tag, new_tag: Tag) -> None:
     if not request:
         return
 
+    _confirm_relations(api, request)
     if util.confirm('Update tag {} ({})?'.format(
             new_tag['names'][0], request)):
         request['version'] = old_tag['version']
