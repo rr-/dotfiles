@@ -73,14 +73,14 @@ def _get_third_party_tags(source_urls: List[str]) -> List[_ThirdPartyTag]:
         _get_tags_from_danbooru,
         _get_tags_from_gelbooru,
     ]
+    ret: List[_ThirdPartyTag] = []
     for handler in handlers:
         for source_url in source_urls:
-            # TODO: allow multiple sources
             try:
-                return list(handler(source_url))
+                ret.extend(list(handler(source_url)))
             except (ValueError, NotImplementedError):
                 pass
-    return []
+    return ret
 
 
 def _get_third_party_tag_sources(post_url: str) -> List[str]:
