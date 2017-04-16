@@ -90,7 +90,7 @@ class TagCache:
 
     async def get_tag_implications(self, tag_name: str) -> AsyncIterable[str]:
         to_check = [tag_name]
-        visited: Set[str] = set(tag_name)
+        visited: Set[str] = set([tag_name])
         while to_check:
             tag_name = to_check.pop(0)
             tag = await self._get_tag_by_name(tag_name)
