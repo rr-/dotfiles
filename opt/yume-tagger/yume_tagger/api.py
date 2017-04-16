@@ -75,14 +75,22 @@ class Api:
             return None
         return results[0]['id']
 
-    def create_tag(self, tag: Tag) -> None:
-        self._post('/tags', data=tag)
+    def create_tag(self, tag: Tag) -> Tag:
+        return self._post('/tags', data=tag)
 
     def delete_tag(self, tag: Tag) -> None:
         self._delete('/tag/{}'.format(tag['names'][0]), data=tag)
 
-    def update_tag(self, old_tag_name: str, new_tag_data: Tag) -> None:
-        self._put('/tag/{}'.format(old_tag_name), data=new_tag_data)
+    def update_tag(self, old_tag_name: str, new_tag_data: Tag) -> Tag:
+        return self._put('/tag/{}'.format(old_tag_name), data=new_tag_data)
+
+    def merge_tags(self, old_tag: Tag, new_tag: Tag) -> Tag:
+        return self._post('/tag-merge', data={
+            'removeVersion': old_tag['version'],
+            'remove': old_tag['names'][0],
+            'mergeToVersion': new_tag['version'],
+            'mergeTo': new_tag['names'][0],
+        })
 
     def _bump_login(self, user_name: str) -> None:
         self._get('/user/{}?bump-login=true'.format(user_name))

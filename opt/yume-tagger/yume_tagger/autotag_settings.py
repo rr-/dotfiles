@@ -74,6 +74,9 @@ class AutoTagSettings:
         self._tag_map: Dict[str, str] = tag_map or {}
         self._tag_category_map: Dict[str, str] = tag_category_map or {}
 
+    def set_tag_alias(self, tag_name: str, target_tag_name: str) -> None:
+        self._tag_map[tag_name] = target_tag_name
+
     def ban_tag(self, tag_name: str) -> None:
         self._banned_tags.add(tag_name)
 
