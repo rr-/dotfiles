@@ -130,8 +130,8 @@ def _collect_third_party_tags(
         result = json.loads(cache_path.read_text())
         sources = result['sources']
         third_party_tags = [
-            _ThirdPartyTag(name=tag['name'], category=tag['category'])
-            for tag in result['tags']
+            _ThirdPartyTag(name=item[0], category=item[1])
+            for item in result['tags']
         ]
     else:
         if source:
@@ -146,10 +146,8 @@ def _collect_third_party_tags(
         cache_path.parent.mkdir(parents=True, exist_ok=True)
         cache_path.write_text(json.dumps({
             'sources': sources,
-            'tags': [
-                {'name': tag.name, 'category': tag.category}
-                for tag in third_party_tags],
-        }))
+            'tags': [(tag.name, tag.category) for tag in third_party_tags],
+        }, separators=(',', ':')))
 
     if sources:
         print('Sources:')
