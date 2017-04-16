@@ -31,10 +31,10 @@ class TooBigError(AutoTagError):
 
 
 class _ThirdPartyTag:
-    def __init__(self, name: str, category: str) -> None:
+    def __init__(self, name: str, category: str, source: str) -> None:
         self.name = name
         self.category = category
-        # TODO: info about source
+        self.source = source
 
 
 class _SyncInfo:
@@ -55,7 +55,7 @@ def _get_tags_from_gelbooru(url: str) -> Iterable[_ThirdPartyTag]:
         try:
             category = list_item['class'][0].replace('tag-type-', '')
             name = list_item.select('a')[1].text.replace(' ', '_')
-            yield _ThirdPartyTag(name, category)
+            yield _ThirdPartyTag(name, category, url)
         except IndexError:
             pass
 
@@ -72,7 +72,7 @@ def _get_tags_from_danbooru(url: str) -> Iterable[_ThirdPartyTag]:
     for category in ['artist', 'character', 'copyright', 'general']:
         for name in post['tag_string_' + category].split(' '):
             if name:
-                yield _ThirdPartyTag(name, category)
+                yield _ThirdPartyTag(name, category, url)
 
 
 def _get_third_party_tags(source_urls: List[str]) -> List[_ThirdPartyTag]:
@@ -130,7 +130,8 @@ def _collect_third_party_tags(
         result = json.loads(cache_path.read_text())
         sources = result['sources']
         third_party_tags = [
-            _ThirdPartyTag(name=item[0], category=item[1])
+            _ThirdPartyTag(
+                name=item[0], category=item[1], source=sources[item[2]])
             for item in result['tags']
         ]
     else:
@@ -146,13 +147,18 @@ def _collect_third_party_tags(
         cache_path.parent.mkdir(parents=True, exist_ok=True)
         cache_path.write_text(json.dumps({
             'sources': sources,
-            'tags': [(tag.name, tag.category) for tag in third_party_tags],
+            'tags': [
+                (tag.name, tag.category, sources.index(tag.source))
+                for tag in third_party_tags
+            ],
         }, separators=(',', ':')))
+
+    sources.sort()
 
     if sources:
         print('Sources:')
-        for source in sorted(sources):
-            print('- {}'.format(source))
+        for i, source in enumerate(sources):
+            print('- (#{}) {}'.format(i + 1, source))
         if not third_party_tags:
             raise AutoTagError('Tag sources found, but not on any known site')
     else:
@@ -160,7 +166,8 @@ def _collect_third_party_tags(
 
     print('Tags:')
     for tag in third_party_tags:
-        print('- {}'.format(tag.name))
+        print('- (#{}) {}'.format(
+            sources.index(tag.source) + 1, tag.name))
     print()
     return third_party_tags
 
@@ -191,7 +198,8 @@ def _sanitize_third_party_tags(
 
         yield _ThirdPartyTag(
             name=sanitized_name,
-            category=autotag_settings.translate_tag_category(tag.category))
+            category=autotag_settings.translate_tag_category(tag.category),
+            source=tag.source)
 
 
 def _get_sync_info(
