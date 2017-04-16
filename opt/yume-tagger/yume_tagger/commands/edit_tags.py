@@ -4,6 +4,7 @@ import configargparse
 import tabulate
 from yume_tagger import util
 from yume_tagger.api import Api, Tag
+from yume_tagger.autotag_settings import AutoTagSettings
 from yume_tagger.commands.base import BaseCommand
 
 
@@ -76,14 +77,22 @@ def _edit_tags_interactively(tags: Dict[int, Tag]) -> Dict[int, Tag]:
         'tags.txt', tags, _serialize_tags, _deserialize_tags)
 
 
-def _delete_tag(api: Api, tag: Tag) -> None:
+def _delete_tag(api: Api, autotag_settings: AutoTagSettings, tag: Tag) -> None:
     if util.confirm('Delete tag {}?'.format(tag['names'][0])):
         api.delete_tag(tag)
+    for tag_name in tag['names']:
+        if not autotag_settings.is_tag_banned(tag_name):
+            if util.confirm('Ban autotagging {}?'.format(tag_name)):
+                autotag_settings.ban_tag(tag_name)
 
 
-def _create_tag(api: Api, tag: Tag) -> None:
+def _create_tag(api: Api, autotag_settings: AutoTagSettings, tag: Tag) -> None:
     if util.confirm('Create tag {}?'.format(tag['names'][0])):
         api.create_tag(tag)
+    for tag_name in tag['names']:
+        if autotag_settings.is_tag_banned(tag_name):
+            if util.confirm('Unban autotagging {}?'.format(tag_name)):
+                autotag_settings.unban_tag(tag_name)
 
 
 def _update_tag(api: Api, old_tag: Tag, new_tag: Tag) -> None:
@@ -105,19 +114,20 @@ def _update_tag(api: Api, old_tag: Tag, new_tag: Tag) -> None:
 
 def _update_tags(
         api: Api,
+        autotag_settings: AutoTagSettings,
         old_tags: Dict[int, Tag],
         new_tags: Dict[int, Tag]) -> None:
     for old_tag_id, old_tag in old_tags.items():
         try:
             if old_tag_id not in new_tags:
-                _delete_tag(api, old_tag)
+                _delete_tag(api, autotag_settings, old_tag)
         except Exception as ex:
             print(ex, file=sys.stderr)
 
     for new_tag_id, new_tag in new_tags.items():
         try:
             if new_tag_id not in old_tags:
-                _create_tag(api, new_tag)
+                _create_tag(api, autotag_settings, new_tag)
             else:
                 old_tag = old_tags[new_tag_id]
                 _update_tag(api, old_tag, new_tag)
@@ -133,7 +143,7 @@ class EditTagsCommand(BaseCommand):
             for i, old_tag in enumerate(self._api.find_tags(query))
         }
         new_tags = _edit_tags_interactively(old_tags)
-        _update_tags(self._api, old_tags, new_tags)
+        _update_tags(self._api, self._autotag_settings, old_tags, new_tags)
 
     @staticmethod
     def _create_parser(

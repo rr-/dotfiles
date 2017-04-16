@@ -74,6 +74,12 @@ class AutoTagSettings:
         self._tag_map: Dict[str, str] = tag_map or {}
         self._tag_category_map: Dict[str, str] = tag_category_map or {}
 
+    def ban_tag(self, tag_name: str) -> None:
+        self._banned_tags.add(tag_name)
+
+    def unban_tag(self, tag_name: str) -> None:
+        self._banned_tags.discard(tag_name)
+
     def mark_as_tagged(self, post_id: int) -> None:
         self._tagged_post_ids.add(post_id)
         self._untagged_post_ids.discard(post_id)
