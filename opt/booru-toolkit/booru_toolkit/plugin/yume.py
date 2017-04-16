@@ -57,7 +57,7 @@ class PluginYume(PluginBase):
 
     async def login(self, user_name: str, password: str) -> None:
         self._session.auth = (user_name, password)
-        await self._get('/user/' + user_name + '?bump-login')
+        await self._get('/user/' + user_name + '?bump-login=true')
         await self._update_tag_cache()
 
     async def find_exact_post(self, content: bytes) -> Optional[Post]:
