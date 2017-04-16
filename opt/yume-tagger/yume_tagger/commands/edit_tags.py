@@ -16,10 +16,18 @@ def _serialize_tags(tags: Dict[int, Tag]) -> str:
                 ' '.join(tag['implications']),
                 ' '.join(tag['suggestions']),
                 tag['category'],
+                tag['usages'],
             ]
             for tag_id, tag in tags.items()
         ],
-        headers=['ID', 'Names', 'Implications', 'Suggestions', 'Category'],
+        headers=[
+            'ID',
+            'Names',
+            'Implications',
+            'Suggestions',
+            'Category',
+            'Usages',
+        ],
         tablefmt='pipe')
 
 
@@ -43,6 +51,7 @@ def _deserialize_tags(text: str) -> Dict[int, Tag]:
                 tag_implications = list(set(row[2].split()))
                 tag_suggestions = list(set(row[3].split()))
                 tag_category = row[4]
+                tag_usages = int(row[5])
 
                 assert tag_id not in ret, 'Tag appears twice'
 
