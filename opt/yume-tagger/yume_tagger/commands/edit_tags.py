@@ -40,8 +40,8 @@ def _deserialize_tags(text: str) -> Dict[int, Tag]:
         try:
             if not line:
                 continue
-            assert line.startswith('|'), 'Line should start with "|"'
-            assert line.endswith('|'), 'Line should end with "|"'
+            if not line.startswith('|') or not line.endswith('|'):
+                raise ValueError('Line should start and end with "|"')
 
             if ' ' not in line.strip():
                 past_header = True
@@ -54,7 +54,8 @@ def _deserialize_tags(text: str) -> Dict[int, Tag]:
                 tag_category = row[4]
                 tag_usages = int(row[5])
 
-                assert tag_id not in ret, 'Tag appears twice'
+                if tag_id in ret:
+                    raise ValueError('Tag {} appears twice'.format(tag_id))
 
                 ret[tag_id] = {
                     'names': tag_names,
@@ -63,7 +64,7 @@ def _deserialize_tags(text: str) -> Dict[int, Tag]:
                     'category': tag_category,
                 }
 
-        except Exception as ex:
+        except (ValueError, IndexError) as ex:
             raise ValueError('Syntax error near line {}: {}'.format(i + 1, ex))
 
     if not past_header:
@@ -133,7 +134,7 @@ def _update_tags(
         try:
             if old_tag_id not in new_tags:
                 _delete_tag(api, autotag_settings, old_tag)
-        except Exception as ex:
+        except ApiError as ex:
             print(ex, file=sys.stderr)
 
     for new_tag_id, new_tag in new_tags.items():
@@ -143,7 +144,7 @@ def _update_tags(
             else:
                 old_tag = old_tags[new_tag_id]
                 _update_tag(api, old_tag, new_tag)
-        except Exception as ex:
+        except ApiError as ex:
             print(ex, file=sys.stderr)
 
 
