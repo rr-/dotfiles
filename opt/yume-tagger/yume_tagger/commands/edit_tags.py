@@ -76,6 +76,33 @@ def _edit_tags_interactively(tags: Dict[int, Tag]) -> Dict[int, Tag]:
         'tags.txt', tags, _serialize_tags, _deserialize_tags)
 
 
+def _delete_tag(api: Api, tag: Tag) -> None:
+    if util.confirm('Delete tag {}?'.format(tag['names'][0])):
+        api.delete_tag(tag)
+
+
+def _create_tag(api: Api, tag: Tag) -> None:
+    if util.confirm('Create tag {}?'.format(tag['names'][0])):
+        api.create_tag(tag)
+
+
+def _update_tag(api: Api, old_tag: Tag, new_tag: Tag) -> None:
+    request: Dict = {}
+    for key in ['names', 'implications', 'suggestions']:
+        if sorted(old_tag[key]) != sorted(new_tag[key]):
+            request[key] = new_tag[key]
+    if old_tag['category'] != new_tag['category']:
+        request['category'] = new_tag['category']
+
+    if not request:
+        return
+
+    if util.confirm('Update tag {} ({})?'.format(
+            new_tag['names'][0], request)):
+        request['version'] = old_tag['version']
+        api.update_tag(old_tag['names'][0], request)
+
+
 def _update_tags(
         api: Api,
         old_tags: Dict[int, Tag],
@@ -83,33 +110,17 @@ def _update_tags(
     for old_tag_id, old_tag in old_tags.items():
         try:
             if old_tag_id not in new_tags:
-                if util.confirm('Delete tag {}?'.format(old_tag['names'][0])):
-                    api.delete_tag(old_tag)
+                _delete_tag(api, old_tag)
         except Exception as ex:
             print(ex, file=sys.stderr)
 
     for new_tag_id, new_tag in new_tags.items():
         try:
             if new_tag_id not in old_tags:
-                if util.confirm('Create tag {}?'.format(new_tag['names'][0])):
-                    api.create_tag(new_tag)
+                _create_tag(api, new_tag)
             else:
                 old_tag = old_tags[new_tag_id]
-
-                request: Dict = {}
-                for key in ['names', 'implications', 'suggestions']:
-                    if sorted(old_tag[key]) != sorted(new_tag[key]):
-                        request[key] = new_tag[key]
-                if old_tag['category'] != new_tag['category']:
-                    request['category'] = new_tag['category']
-
-                if not request:
-                    continue
-
-                if util.confirm('Update tag {} ({})?'.format(
-                        new_tag['names'][0], request)):
-                    request['version'] = old_tag['version']
-                    api.update_tag(old_tag['names'][0], request)
+                _update_tag(api, old_tag, new_tag)
         except Exception as ex:
             print(ex, file=sys.stderr)
 
