@@ -19,6 +19,9 @@ def parse_args() -> Optional[configargparse.Namespace]:
     parser = configargparse.ArgumentParser(
         description='Yume.pl tag manager',
         default_config_files=['~/.config/yume-tagger.conf'])
+    parser.add_argument(
+        '-c', '--config', metavar='PATH', is_config_file=True,
+        help='config file path')
     parser.add_argument('-u', '--user')
     parser.add_argument('-p', '--password')
     subparsers = parser.add_subparsers(
