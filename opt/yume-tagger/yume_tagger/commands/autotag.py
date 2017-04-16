@@ -299,25 +299,25 @@ def _sync(
 
 class AutoTagChosenPostCommand(BaseCommand):
     def run(self, args: configargparse.Namespace) -> None:
+        post_id: int = args.post_id
         source: Optional[str] = args.source
         force: Force = args.force
         dry_run: bool = args.dry_run
 
-        for post_id in args.post_ids:
-            try:
-                _sync(
-                    self._api,
-                    self._autotag_settings,
-                    post_id,
-                    source,
-                    force,
-                    dry_run)
-                if not dry_run:
-                    self._autotag_settings.mark_as_tagged(post_id)
-            except Exception as ex:
-                if not dry_run:
-                    self._autotag_settings.mark_as_untagged(post_id)
-                raise
+        try:
+            _sync(
+                self._api,
+                self._autotag_settings,
+                post_id,
+                source,
+                force,
+                dry_run)
+            if not dry_run:
+                self._autotag_settings.mark_as_tagged(post_id)
+        except Exception as ex:
+            if not dry_run:
+                self._autotag_settings.mark_as_untagged(post_id)
+            raise
 
     @staticmethod
     def _create_parser(
@@ -327,8 +327,7 @@ class AutoTagChosenPostCommand(BaseCommand):
             'autotag-chosen', help='fetch tags for chosen posts')
         parser.set_defaults(force=Force.NoForce)
         parser.add_argument(
-            metavar='POST_ID', dest='post_ids', nargs='*', type=int,
-            help='ID of the post to edit the tags for.')
+            'post_id', type=int, help='ID of the post to edit the tags for.')
         parser.add_argument(
             '-f', dest='force',
             action='store_const', const=Force.TagAgain, help=(
