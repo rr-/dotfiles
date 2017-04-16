@@ -178,43 +178,46 @@ def _sanitize_third_party_tags(
         api: Api,
         autotag_settings: AutoTagSettings,
         third_party_tags: List[_ThirdPartyTag]) -> Iterable[_ThirdPartyTag]:
+    print('Sanitizing third party tags...')
     for tag in third_party_tags:
         if autotag_settings.is_tag_banned(tag.name):
-            print('Ignored tag {}'.format(tag.name))
+            print('- {}: ignored'.format(tag.name))
             continue
 
         translated_tag = autotag_settings.translate_tag(tag.name)
         if tag.name != translated_tag:
-            print('Translated tag {} → {}'.format(tag.name, translated_tag))
+            print('- {}: translated to {}'.format(tag.name, translated_tag))
 
         sanitized_name = util.sanitize_tag(translated_tag)
         if sanitized_name != tag.name:
-            print('Sanitized tag {} → {}'.format(tag.name, sanitized_name))
+            print('- {}: sanitized to {}'.format(tag.name, sanitized_name))
 
         try:
             upstream_tag = api.get_tag(sanitized_name)
         except ApiError:
             upstream_tag = None
         if upstream_tag:
-            sanitized_name = upstream_tag['names'][0]
+            upstream_name = upstream_tag['names'][0].lower()
+            if sanitized_name != upstream_name:
+                print('- {}: alias of {}'.format(tag.name, upstream_name))
+            sanitized_name = upstream_name
 
         yield _ThirdPartyTag(
             name=sanitized_name,
             category=autotag_settings.translate_tag_category(tag.category),
             source=tag.source)
+    print()
 
 
 def _get_sync_info(
         api: Api,
-        autotag_settings: AutoTagSettings,
         post: Post,
-        third_party_tags: List[_ThirdPartyTag]) -> _SyncInfo:
+        sanitized_third_party_tags: List[_ThirdPartyTag]) -> _SyncInfo:
     sync_info = _SyncInfo()
     sync_info.source_tags = [tag.lower() for tag in post['tags']]
     sync_info.target_tags = sync_info.source_tags[:]
 
-    for third_party_tag in _sanitize_third_party_tags(
-            api, autotag_settings, third_party_tags):
+    for third_party_tag in sanitized_third_party_tags:
         if third_party_tag.name.lower() in sync_info.source_tags:
             continue
 
@@ -296,7 +299,9 @@ def _sync(
         return
     third_party_tags = _collect_third_party_tags(
         post, source, force >= Force.DownloadAgain)
-    sync_info = _get_sync_info(api, autotag_settings, post, third_party_tags)
+    sanitized_third_party_tags = list(_sanitize_third_party_tags(
+        api, autotag_settings, third_party_tags))
+    sync_info = _get_sync_info(api, post, sanitized_third_party_tags)
     _create_new_tags(None if dry_run else api, sync_info.tags_to_create)
     _update_post_tags(
         None if dry_run else api,
