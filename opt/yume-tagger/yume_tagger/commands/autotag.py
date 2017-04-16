@@ -84,7 +84,9 @@ def _get_third_party_tags(source_urls: List[str]) -> List[_ThirdPartyTag]:
     for handler in handlers:
         for source_url in source_urls:
             try:
-                ret.extend(list(handler(source_url)))
+                for tag in handler(source_url):
+                    if not any(added.name == tag.name for added in ret):
+                        ret.append(tag)
             except (ValueError, NotImplementedError):
                 pass
     return ret
