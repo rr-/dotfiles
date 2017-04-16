@@ -101,27 +101,39 @@ def _edit_tags_interactively(tags: Dict[int, Tag]) -> Dict[int, Tag]:
         'tags.txt', tags, _serialize_tags, _deserialize_tags)
 
 
-def _delete_tag(api: Api, autotag_settings: AutoTagSettings, tag: Tag) -> None:
+def _delete_tag(
+        api: Api,
+        autotag_settings: AutoTagSettings,
+        tag: Tag,
+        dry_run: bool) -> None:
     if util.confirm('Delete tag {}?'.format(tag['names'][0])):
-        api.delete_tag(tag)
+        if not dry_run:
+            api.delete_tag(tag)
     for tag_name in tag['names']:
         if not autotag_settings.is_tag_banned(tag_name):
             if util.confirm('Ban autotagging {}?'.format(tag_name)):
-                autotag_settings.ban_tag(tag_name)
+                if not dry_run:
+                    autotag_settings.ban_tag(tag_name)
 
 
-def _create_tag(api: Api, autotag_settings: AutoTagSettings, tag: Tag) -> Tag:
+def _create_tag(
+        api: Api,
+        autotag_settings: AutoTagSettings,
+        tag: Tag,
+        dry_run: bool) -> Tag:
     _confirm_relations(api, tag)
     if util.confirm('Create tag {}?'.format(tag['names'][0])):
-        tag = api.create_tag(tag)
+        if not dry_run:
+            tag = api.create_tag(tag)
     for tag_name in tag['names']:
         if autotag_settings.is_tag_banned(tag_name):
             if util.confirm('Unban autotagging {}?'.format(tag_name)):
-                autotag_settings.unban_tag(tag_name)
+                if not dry_run:
+                    autotag_settings.unban_tag(tag_name)
     return tag
 
 
-def _update_tag(api: Api, old_tag: Tag, new_tag: Tag) -> Tag:
+def _update_tag(api: Api, old_tag: Tag, new_tag: Tag, dry_run: bool) -> Tag:
     if not 'version' in new_tag:
         new_tag['version'] = old_tag['version']
 
@@ -137,7 +149,8 @@ def _update_tag(api: Api, old_tag: Tag, new_tag: Tag) -> Tag:
         if util.confirm('Update tag {} ({})?'.format(
                 new_tag['names'][0], request)):
             request['version'] = old_tag['version']
-            return api.update_tag(old_tag['names'][0], request)
+            if not dry_run:
+                return api.update_tag(old_tag['names'][0], request)
     return new_tag
 
 
@@ -145,15 +158,20 @@ def _merge_tags(
         api: Api,
         autotag_settings: AutoTagSettings,
         old_tag: Tag,
-        new_tag: Tag) -> Tag:
+        new_tag: Tag,
+        dry_run: bool) -> Tag:
     if util.confirm('Merge tag {} to {}?'.format(
             old_tag['names'][0], new_tag['names'][0])):
-        new_tag = api.merge_tags(old_tag, new_tag)
+        if not dry_run:
+            new_tag = api.merge_tags(old_tag, new_tag)
     for tag_name in old_tag['names']:
         if util.confirm('Set up autotagging alias {}?'.format(tag_name)):
-            autotag_settings.set_tag_alias(tag_name, new_tag['names'][0])
+            if not dry_run:
+                autotag_settings.set_tag_alias(
+                    tag_name, new_tag['names'][0])
         elif util.confirm('Ban autotagging {}?'.format(tag_name)):
-            autotag_settings.ban_tag(tag_name)
+            if not dry_run:
+                autotag_settings.ban_tag(tag_name)
     return new_tag
 
 
@@ -161,25 +179,26 @@ def _update_tags(
         api: Api,
         autotag_settings: AutoTagSettings,
         old_tags: Dict[int, Tag],
-        new_tags: Dict[int, Tag]) -> None:
+        new_tags: Dict[int, Tag],
+        dry_run: bool) -> None:
     for old_tag_id, old_tag in old_tags.items():
         try:
             if old_tag_id not in new_tags:
-                _delete_tag(api, autotag_settings, old_tag)
+                _delete_tag(api, autotag_settings, old_tag, dry_run)
         except ApiError as ex:
             print(ex, file=sys.stderr)
 
     for new_tag_id, new_tag in new_tags.items():
         try:
             if new_tag_id not in old_tags:
-                _create_tag(api, autotag_settings, new_tag)
+                _create_tag(api, autotag_settings, new_tag, dry_run)
             else:
                 old_tag = old_tags[new_tag_id]
-                new_tag.update(_update_tag(api, old_tag, new_tag))
+                new_tag.update(_update_tag(api, old_tag, new_tag, dry_run))
                 if new_tag['merge-to']:
                     target_tag = old_tags[new_tag['merge-to']]
                     resulting_tag = _merge_tags(
-                        api, autotag_settings, new_tag, target_tag)
+                        api, autotag_settings, new_tag, target_tag, dry_run)
                     target_tag.update(resulting_tag)
                     new_tag.update(resulting_tag)
         except ApiError as ex:
@@ -188,13 +207,15 @@ def _update_tags(
 
 class EditTagsCommand(BaseCommand):
     def run(self, args: configargparse.Namespace) -> None:
+        dry_run: bool = args.dry_run
         query: str = args.query
         old_tags = {
             i + 1: old_tag
             for i, old_tag in enumerate(self._api.find_tags(query))
         }
         new_tags = _edit_tags_interactively(old_tags)
-        _update_tags(self._api, self._autotag_settings, old_tags, new_tags)
+        _update_tags(
+            self._api, self._autotag_settings, old_tags, new_tags, dry_run)
 
     @staticmethod
     def _create_parser(
@@ -203,4 +224,6 @@ class EditTagsCommand(BaseCommand):
         parser = parent_parser.add_parser(
             'edit', help='edit tags interactively')
         parser.add('query', help='query to filter the tags with')
+        parser.add_argument(
+            '--dry-run', action='store_true', help='Don\'t do anything.')
         return parser
