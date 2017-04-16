@@ -1,7 +1,7 @@
 import json
 import functools
 import urllib.parse
-from typing import Any, Optional, Dict, Iterable
+from typing import Any, Optional, Set, Dict, Iterable
 import requests
 
 
@@ -40,14 +40,21 @@ class Api:
     def get_tag(self, tag_name: str) -> Tag:
         return self._get('/tag/' + tag_name)
 
-    # TODO: recursion
     def get_tag_implications(self, tag_name: str) -> Iterable[str]:
-        try:
-            tag = self.get_tag(tag_name)
-            for implication in tag['implications']:
-                yield implication
-        except ApiError:
-            return []
+        to_check = [tag_name]
+        visited: Set[str] = set([tag_name])
+        while to_check:
+            tag_name = to_check.pop(0)
+            try:
+                tag = self.get_tag(tag_name)
+            except ApiError:
+                tag = None
+            if tag:
+                for implication in tag['implications']:
+                    if implication not in visited:
+                        yield implication
+                        visited.add(implication)
+                        to_check.append(implication)
 
     def find_tags(self, query: str) -> Iterable[Tag]:
         offset = 0
