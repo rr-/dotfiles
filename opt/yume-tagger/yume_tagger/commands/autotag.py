@@ -168,6 +168,7 @@ def _collect_third_party_tags(
 
 
 def _sanitize_third_party_tags(
+        api: Api,
         autotag_settings: AutoTagSettings,
         third_party_tags: List[_ThirdPartyTag]) -> Iterable[_ThirdPartyTag]:
     for tag in third_party_tags:
@@ -182,6 +183,13 @@ def _sanitize_third_party_tags(
         sanitized_name = util.sanitize_tag(translated_tag)
         if sanitized_name != tag.name:
             print('Sanitized tag {} → {}'.format(tag.name, sanitized_name))
+
+        try:
+            upstream_tag = api.get_tag(sanitized_name)
+        except ApiError:
+            upstream_tag = None
+        if upstream_tag:
+            sanitized_name = upstream_tag['names'][0]
 
         yield _ThirdPartyTag(
             name=sanitized_name,
@@ -198,7 +206,7 @@ def _get_sync_info(
     sync_info.target_tags = sync_info.source_tags[:]
 
     for third_party_tag in _sanitize_third_party_tags(
-            autotag_settings, third_party_tags):
+            api, autotag_settings, third_party_tags):
         if third_party_tag.name.lower() in sync_info.source_tags:
             continue
 
