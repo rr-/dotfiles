@@ -95,20 +95,19 @@ class MpvmdWidget(Widget):
 
         metadata = {k.lower(): v for k, v in self._info['metadata'].items()}
 
-        title = metadata.get('title')
-        artist = metadata.get('artist')
-        file = os.path.basename(self._info['path'] or '')
         elapsed = self._info['time-pos']
         duration = self._info['duration']
 
         text = ''
-        if title:
-            if artist:
-                text = artist + ' - ' + title
+        if metadata.get('title'):
+            if metadata.get('artist'):
+                text = metadata['artist'] + ' - ' + metadata['title']
             else:
-                text = title
+                text = metadata['title']
+        elif metadata.get('icy-title'):
+            text = metadata['icy-title']
         else:
-            text = file
+            text = os.path.basename(self._info['path'] or '')
 
         if elapsed and duration:
             text += ' %s / %s' % (
