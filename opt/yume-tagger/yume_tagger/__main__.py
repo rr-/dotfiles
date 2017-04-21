@@ -3,6 +3,7 @@ import sys
 import getpass
 from typing import Optional
 import configargparse
+from filelock import FileLock
 from yume_tagger.api import Api, ApiError
 from yume_tagger import autotag_settings
 from yume_tagger import util
@@ -45,18 +46,20 @@ def main() -> None:
 
     user_name: str = args.user or input('User: ')
     password: str = args.password or getpass.getpass('Password: ')
-    autotag_settings_ = autotag_settings.load(AUTOTAGGER_SETTINGS_PATH)
 
-    try:
-        api = Api()
-        api.login(user_name, password)
-        args.command(api, autotag_settings_).run(args)
-        sys.exit(0)
-    except (ApiError, AutoTagError) as ex:
-        print(ex, file=sys.stderr)
-        sys.exit(1)
-    finally:
-        autotag_settings_.save(AUTOTAGGER_SETTINGS_PATH)
+    with FileLock(str(AUTOTAGGER_SETTINGS_PATH) + '.lock'):
+        autotag_settings_ = autotag_settings.load(AUTOTAGGER_SETTINGS_PATH)
+
+        try:
+            api = Api()
+            api.login(user_name, password)
+            args.command(api, autotag_settings_).run(args)
+            sys.exit(0)
+        except (ApiError, AutoTagError) as ex:
+            print(ex, file=sys.stderr)
+            sys.exit(1)
+        finally:
+            autotag_settings_.save(AUTOTAGGER_SETTINGS_PATH)
 
 
 if __name__ == '__main__':

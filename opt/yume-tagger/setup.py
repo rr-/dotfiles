@@ -18,4 +18,5 @@ setup(
         'requests',
         'tabulate',
         'wcwidth',
+        'filelock',
     ])
