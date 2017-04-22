@@ -67,7 +67,7 @@ class PluginGelbooru(PluginBase):
                         }[post.getAttribute('rating')],
                         tags=post.getAttribute('tags').split(),
                         site_url=(
-                            'http://gelbooru.com/index.php?page=post&s=view'
+                            'https://gelbooru.com/index.php?page=post&s=view'
                             '&id=' + post.getAttribute('id')),
                         content_url='https:' + post.getAttribute('file_url'),
                         width=int(post.getAttribute('width')),
@@ -189,6 +189,6 @@ class PluginGelbooru(PluginBase):
             await asyncio.get_event_loop().run_in_executor(
                 None,
                 lambda: self._session.post(
-                    'http://gelbooru.com/' + url.lstrip('/'),
+                    'https://gelbooru.com/' + url.lstrip('/'),
                     data=data,
                     files=files)))
