@@ -1,0 +1,22 @@
+#!/bin/bash
+src="$1"
+if [ ! -r "$src" ] ; then
+    echo "Usage: $0 <image> [<lameopts>]"
+    exit 1
+fi
+
+shift
+args=$*
+size="$(identify "$src" | tr ' ' '\n' | egrep '[0-9]+x[0-9]+' | head -1 | tr x ' ')"
+
+for channel in r g b a; do
+    convert "$src" -channel $channel -separate mp3img.gray || exit 1
+    lame -r -s 24 --resample 24 --bitwidth 8 -m m $args mp3img.gray mp3img.mp3 || exit 1
+    lame --decode --unsigned -x -t mp3img.mp3 mp3img.gray || exit 1
+    python2 -c "import sys;sys.stdout.write('P5\n$size\n255\n'+''.join([chr((ord(c)+128)&255) for c in sys.stdin.read()[::2]]))" <mp3img.gray >mp3img-$channel.pgm
+done
+
+convert mp3img-r.pgm mp3img-g.pgm mp3img-b.pgm mp3img-a.pgm -set colorspace RGBA -combine mp3img.png || exit 1
+
+rm -f mp3img.{gray,mp3}
+rm -f mp3img-{r,g,b,a}.pgm
