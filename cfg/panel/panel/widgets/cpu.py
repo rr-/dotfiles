@@ -13,6 +13,9 @@ class CpuWidget(Widget):
         self.percentage = None
         self._icon_label = QtWidgets.QLabel()
         self._text_label = QtWidgets.QLabel()
+        self._text_label.setFixedWidth(45)
+        self._text_label.setAlignment(
+            QtCore.Qt.AlignCenter | QtCore.Qt.AlignVCenter)
         self._chart = Chart(QtCore.QSize(80, main_window.height()))
 
         self.set_icon(self._icon_label, 'chip')
@@ -31,6 +34,6 @@ class CpuWidget(Widget):
             self.percentage = psutil.cpu_percent(interval=1)
 
     def render_impl(self):
-        self._text_label.setText('%05.1f%%' % (self.percentage))
+        self._text_label.setText('{:.1f}%'.format(self.percentage))
         self._chart.addPoint(Colors.cpu_chart_line, self.percentage)
         self._chart.repaint()
