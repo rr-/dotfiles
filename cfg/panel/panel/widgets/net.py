@@ -1,5 +1,6 @@
 import os
 import glob
+import math
 from PyQt5 import QtCore, QtWidgets
 from panel.widgets.chart import Chart
 from panel.widgets.widget import Widget
@@ -9,6 +10,15 @@ from panel.colors import Colors
 def read_file(path):
     with open(path, 'r') as handle:
         return handle.read().strip()
+
+
+def convert_speed(speed_bytes):
+    suffix = ("B/s", "KB/s", "MB/s", "GB/s", "TB/s")
+    if speed_bytes < 1024:
+        return '{:.0f} {}'.format(speed_bytes, suffix[0])
+    i = int(math.floor(math.log(speed_bytes, 1024)))
+    p = math.pow(1024, i)
+    return '{:.1f} {}'.format(round(speed_bytes/p, 2), suffix[i])
 
 
 class NetworkUsageWidget(Widget):
@@ -40,8 +50,14 @@ class NetworkUsageWidget(Widget):
         self._old_tx_bytes = int(read_file(self._tx_path))
         self._net_in_icon_label = QtWidgets.QLabel()
         self._net_in_text_label = QtWidgets.QLabel()
+        self._net_in_text_label.setFixedWidth(65)
+        self._net_in_text_label.setAlignment(
+            QtCore.Qt.AlignCenter | QtCore.Qt.AlignVCenter)
         self._net_out_icon_label = QtWidgets.QLabel()
         self._net_out_text_label = QtWidgets.QLabel()
+        self._net_out_text_label.setFixedWidth(65)
+        self._net_out_text_label.setAlignment(
+            QtCore.Qt.AlignCenter | QtCore.Qt.AlignVCenter)
         self._chart = Chart(QtCore.QSize(80, main_window.height()))
 
         self.set_icon(self._net_in_icon_label, 'arrow-down')
@@ -68,10 +84,8 @@ class NetworkUsageWidget(Widget):
 
     def render_impl(self):
         if self.network_enabled:
-            self._net_in_text_label.setText(
-                '%04.0f KB/s' % (self.net_in / 1024.0))
-            self._net_out_text_label.setText(
-                '%04.0f KB/s' % (self.net_out / 1024.0))
+            self._net_in_text_label.setText(convert_speed(self.net_in))
+            self._net_out_text_label.setText(convert_speed(self.net_out))
             self._chart.addPoint(Colors.net_up_chart_line, self.net_in)
             self._chart.addPoint(Colors.net_down_chart_line, self.net_out)
             self._chart.repaint()
