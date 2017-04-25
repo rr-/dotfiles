@@ -1,6 +1,7 @@
 from enum import Enum
 from pathlib import Path
 from typing import Optional, List, Callable
+from booru_toolkit import errors
 from booru_toolkit.plugin import Safety
 
 
@@ -70,3 +71,8 @@ class UploadSettings:
     @property
     def tag_names(self) -> List[str]:
         return [tag.name for tag in self.tags.get_all()]
+
+    def read_content(self) -> bytes:
+        if not self.path.exists():
+            raise errors.NoContentError()
+        return self.path.read_bytes()

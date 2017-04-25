@@ -1,9 +1,6 @@
-import os
-import sys
 import re
 import asyncio
 import functools
-import contextlib
 from collections import OrderedDict
 from typing import Any, Dict
 
@@ -65,18 +62,3 @@ def async_lru_cache(maxsize=128):
 
 def clamp(number: int, min_value: int, max_value: int) -> int:
     return max(min_value, min(max_value, number))
-
-
-@contextlib.contextmanager
-def redirect_stdio():
-    saved_stdin = os.dup(sys.stdin.fileno())
-    saved_stdout = os.dup(sys.stdout.fileno())
-    os.close(sys.stdin.fileno())
-    os.close(sys.stdout.fileno())
-    sys.stdin = open('/dev/tty', 'r')
-    sys.stdout = open('/dev/tty', 'w')
-    yield
-    os.close(sys.stdin.fileno())
-    os.close(sys.stdout.fileno())
-    os.dup(saved_stdin)
-    os.dup(saved_stdout)

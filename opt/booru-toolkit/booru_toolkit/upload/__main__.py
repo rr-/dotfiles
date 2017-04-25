@@ -77,10 +77,7 @@ async def run(args: configargparse.Namespace) -> int:
         anonymous=args.anonymous)
 
     try:
-        if not upload_settings.path.exists():
-            raise errors.NoContentError()
-        with upload_settings.path.open('rb') as handle:
-            content = handle.read()
+        content = upload_settings.read_content()
 
         print('Logging in...')
         await plugin.login(user_name, password)
@@ -95,39 +92,45 @@ async def run(args: configargparse.Namespace) -> int:
             for tag in post.tags:
                 upload_settings.tags.add(tag, common.TagSource.Initial)
             upload_settings.safety = post.safety
-
-        if interactive:
-            await ui.run(plugin, upload_settings)
-
-        print('Tags:')
-        print('\n'.join(upload_settings.tag_names))
-
-        if post:
-            if upload_settings.anonymous:
-                raise errors.ApiError(
-                    'Anonymous post updates are not supported.')
-            await plugin.update_post(
-                post.id,
-                safety=upload_settings.safety,
-                tags=upload_settings.tag_names)
-            print('Updated.')
-        else:
-            post = await plugin.upload_post(
-                content,
-                source=upload_settings.source,
-                safety=upload_settings.safety,
-                tags=upload_settings.tag_names,
-                anonymous=upload_settings.anonymous)
-            print('Uploaded.')
-
-        if post:
-            print('Address: ' + post.content_url)
-        return 0
-
     except (errors.ApiError, errors.DuplicateUploadError) as ex:
         print('Error: %s' % str(ex), file=sys.stderr)
+        return 1
 
-    return 1
+    error_message: Optional[str] = None
+
+    while True:
+        await ui.run(plugin, upload_settings, error_message)
+
+        try:
+            if post:
+                if upload_settings.anonymous:
+                    raise errors.ApiError(
+                        'Anonymous post updates are not supported.')
+                await plugin.update_post(
+                    post.id,
+                    safety=upload_settings.safety,
+                    tags=upload_settings.tag_names)
+                print('Updated.')
+            else:
+                post = await plugin.upload_post(
+                    content,
+                    source=upload_settings.source,
+                    safety=upload_settings.safety,
+                    tags=upload_settings.tag_names,
+                    anonymous=upload_settings.anonymous)
+                print('Uploaded.')
+
+            if post:
+                print('Address: ' + post.content_url)
+            return 0
+
+        except (errors.ApiError, errors.DuplicateUploadError) as ex:
+            if interactive:
+                error_message = str(ex)
+                continue
+            else:
+                print('Error: %s' % str(ex), file=sys.stderr)
+                return 1
 
 
 def main() -> int:
@@ -136,16 +139,16 @@ def main() -> int:
     try:
         try:
             task = loop.create_task(run(args))
-            result = loop.run_until_complete(task)
+            exit_code = loop.run_until_complete(task)
         except KeyboardInterrupt:
             task.cancel()
             loop.run_until_complete(task)
     except concurrent.futures.CancelledError:
         print('Aborted.')
-        result = 1
+        exit_code = 1
     finally:
         loop.close()
-    sys.exit(result)
+    sys.exit(exit_code)
 
 
 if __name__ == '__main__':
