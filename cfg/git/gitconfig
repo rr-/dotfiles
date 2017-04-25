@@ -18,6 +18,12 @@
 [alias]
     amen = commit --amend
     ramen = commit --amend --all --no-edit
+    push-up-to = "!f() { \
+        commit="$1"; \
+        remote=origin; \
+        branch=$(git rev-parse --abbrev-ref HEAD); \
+        git push "$remote" "$commit":"$branch"; \
+    }; f"
     hist = log --pretty=format:\"%Cred%h%Creset %ad %Cblue%<(50,trunc)%s%Creset [%an <%ae>]%d\" --graph --date=short
     cl = "!f() { git log \"$1\" --pretty=tformat:'- %H: %s'|tac; }; f"
     sq = "!f() { \
