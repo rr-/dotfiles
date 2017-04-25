@@ -3,6 +3,7 @@
 fullscreen
 
 profile=opengl-hq
+vo=opengl,drm
 script-opts=osc-layout=slimbox
 stop-screensaver=yes
 image-display-duration=inf
