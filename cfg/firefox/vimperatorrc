@@ -70,8 +70,19 @@ noremap zo :set! browser.enable_automatic_image_resizing=false<CR><Esc>:reload<C
 nnoremap <leader>m :silent :execute "!mpv --fs --ytdl --ytdl-format=best \"" + content.location.href + "\" &"<CR>
 
 "play hinted url with mpv
-javascript <<EOS
+javascript <<EOF
     hints.addMode('m', 'Open with mpv:', (elem, loc) => {
         liberator.execute("silent !mpv --fs --ytdl --ytdl-format=best '" + loc + "' &", null, true);
     });
-EOS
+EOF
+
+"open tabs next to active tab
+javascript <<EOF
+    function tabnextto(url) {
+        let n = gBrowser.tabContainer.selectedIndex;
+        liberator.execute(':tabopen ' + url);
+        liberator.execute(':tabmove ' + (n + 1));
+    }
+EOF
+command! tabnextto -nargs=* -complete=url :js tabnextto('<args>')
+nnoremap t :tabnextto<Space>
