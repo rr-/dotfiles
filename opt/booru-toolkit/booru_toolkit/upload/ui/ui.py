@@ -135,14 +135,17 @@ class Ui:
     def _on_tag_accept(self, _widget: urwid.Widget, text: str) -> None:
         text = common.unbox_from_ui(text)
 
-        previous_tags = self._upload_settings.tags.get_all()
-        self._upload_settings.tags.add(text, common.TagSource.UserInput)
-
         async def work() -> None:
+            tag_name = await self._plugin.get_tag_real_name(text) or text
+
+            previous_tags = self._upload_settings.tags.get_all()
+            self._upload_settings.tags.add(
+                tag_name, common.TagSource.UserInput)
+
             await self._chosen_tags_box.original_widget.update()
 
             async for implication in (
-                    self._plugin.get_tag_implications(text)):
+                    self._plugin.get_tag_implications(tag_name)):
                 self._upload_settings.tags.add(
                     implication, common.TagSource.Implication)
                 await self._chosen_tags_box.original_widget.update()
