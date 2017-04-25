@@ -154,6 +154,8 @@ class Ui:
                     implication, common.TagSource.Implication)
                 await self._chosen_tags_box.original_widget.update()
 
+            self._chosen_tags_box.original_widget.focus_tag(tag_name)
+
             added_tags = set([
                 tag
                 for tag in self._upload_settings.tags.get_all()
