@@ -78,7 +78,7 @@ class Ui:
 
     def _keypress(self, key: str) -> None:
         keymap = {
-            'ctrl s': self._cycle_safety,
+            'meta s': self._cycle_safety,
             'ctrl q': self._confirm,
             'ctrl x': self._toggle_focus,
             'ctrl r': self._undo_tag,
