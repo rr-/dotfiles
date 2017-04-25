@@ -1,6 +1,6 @@
 import asyncio
 from pathlib import Path
-from typing import Any, Set, List, Dict, AsyncIterable
+from typing import Any, Optional, Set, List, Dict, AsyncIterable
 import sqlalchemy as sa
 import sqlalchemy.orm
 import sqlalchemy.ext.declarative
@@ -81,6 +81,12 @@ class TagCache:
         tag = await asyncio.get_event_loop().run_in_executor(None, work)
         self._cache[tag_name] = tag
         return tag
+
+    async def get_tag_real_name(self, tag_name: str) -> Optional[str]:
+        tag = await self._get_tag_by_name(tag_name)
+        if tag:
+            return tag.name
+        return None
 
     async def get_tag_usage_count(self, tag_name: str) -> int:
         tag = await self._get_tag_by_name(tag_name)

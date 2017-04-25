@@ -82,6 +82,9 @@ class PluginBase:
     async def tag_exists(self, tag_name: str) -> bool:
         return await self._tag_cache.tag_exists(tag_name)
 
+    async def get_tag_real_name(self, tag_name: str) -> Optional[str]:
+        return await self._tag_cache.get_tag_real_name(tag_name)
+
     async def get_tag_usage_count(self, tag_name: str) -> int:
         return await self._tag_cache.get_tag_usage_count(tag_name)
 
