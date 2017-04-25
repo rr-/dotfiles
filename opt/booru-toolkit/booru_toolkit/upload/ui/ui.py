@@ -1,7 +1,6 @@
 import asyncio
-from typing import Tuple, Set, List
+from typing import Optional, Tuple, Set, List
 import urwid
-from booru_toolkit import util
 from booru_toolkit.plugin import PluginBase
 from booru_toolkit.plugin import Safety
 from booru_toolkit.upload import common
@@ -67,6 +66,20 @@ class Ui:
         self._columns = urwid.Columns([input_box, self._chosen_tags_box])
         self._columns.set_focus(0)
         frame.set_body(self._columns)
+
+    def show_alert(self, message: str) -> None:
+        original_widget = self._loop.widget
+
+        def button_click(*args) -> None:
+            self._loop.widget = original_widget
+
+        button = urwid.Button('OK')
+        urwid.connect_signal(button, 'click', button_click)
+
+        self._loop.widget = urwid.Overlay(
+            urwid.LineBox(urwid.Pile([urwid.Text(message), button])),
+            original_widget,
+            'center', (urwid.RELATIVE, 40), 'middle', (urwid.PACK))
 
     async def add_from_user_input(self) -> None:
         self._loop.start()  # the loop is managed manually
@@ -171,7 +184,10 @@ class Ui:
 
 
 async def run(
-        plugin: PluginBase, upload_settings: common.UploadSettings) -> None:
-    with util.redirect_stdio():
-        tagger = Ui(plugin, upload_settings)
-        await tagger.add_from_user_input()
+        plugin: PluginBase,
+        upload_settings: common.UploadSettings,
+        message: Optional[str]) -> None:
+    ui = Ui(plugin, upload_settings)
+    if message:
+        ui.show_alert(message)
+    await ui.add_from_user_input()
