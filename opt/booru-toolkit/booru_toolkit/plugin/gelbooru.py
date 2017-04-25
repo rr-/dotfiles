@@ -9,7 +9,7 @@ from booru_toolkit import errors
 from booru_toolkit.plugin.base import PluginBase
 from booru_toolkit.plugin.base import Post
 from booru_toolkit.plugin.base import Safety
-from booru_toolkit.plugin.tag_cache import CachedTag, TagCache
+from booru_toolkit.plugin.tag_cache import CachedTag
 
 
 def _process_response(response: requests.Response) -> str:
@@ -21,10 +21,10 @@ class PluginGelbooru(PluginBase):
     name = 'gelbooru'
 
     def __init__(self) -> None:
+        super().__init__()
         self._session = requests.Session()
-        self._tag_cache = TagCache(self.name)
 
-    async def login(self, user_name: str, password: str) -> None:
+    async def _login(self, user_name: str, password: str) -> None:
         await self._post(
             '/index.php?page=account&s=login&code=00',
             data={
@@ -32,7 +32,6 @@ class PluginGelbooru(PluginBase):
                 'pass': password,
                 'submit': 'Log in',
             })
-        await self._update_tag_cache()
 
     async def find_exact_post(self, content: bytes) -> Optional[Post]:
         return None
@@ -134,20 +133,7 @@ class PluginGelbooru(PluginBase):
             tags: List[str]) -> None:
         raise NotImplementedError('Not supported')
 
-    async def find_tags(self, query: str) -> List[str]:
-        return await self._tag_cache.find_tags(query)
-
-    async def tag_exists(self, tag_name: str) -> bool:
-        return await self._tag_cache.tag_exists(tag_name)
-
-    async def get_tag_usage_count(self, tag_name: str) -> int:
-        return await self._tag_cache.get_tag_usage_count(tag_name)
-
-    async def get_tag_implications(self, tag_name: str) -> AsyncIterable[str]:
-        async for tag in self._tag_cache.get_tag_implications(tag_name):
-            yield tag
-
-    async def _update_tag_cache(self):
+    async def _update_tag_cache(self) -> None:
         if self._tag_cache.exists():
             return
 
