@@ -33,6 +33,9 @@ class TagList:
     def get_all(self) -> List[Tag]:
         return sorted(self._tags, key=lambda tag: tag.name)
 
+    def contains(self, name: str) -> bool:
+        return any(name.lower() == tag.name.lower() for tag in self._tags)
+
     def delete(self, tag_to_remove: Tag) -> None:
         self._tags = [
             tag
@@ -42,7 +45,7 @@ class TagList:
         self._trigger_update()
 
     def add(self, name: str, source: TagSource) -> None:
-        if any(name.lower() == tag.name.lower() for tag in self._tags):
+        if self.contains(name):
             return
         self._tags.append(Tag(name, source))
         self._trigger_update()

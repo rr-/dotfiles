@@ -11,7 +11,9 @@ from booru_toolkit.upload.ui.ellipsis_text_layout import EllipsisTextLayout
 
 _PALETTE = [
     ('match',         'default',     'default'),
+    ('e-match',       'light gray',  'default'),
     ('f-match',       'light green', 'default'),
+    ('f-e-match',     'light green', 'default'),
     ('tag',           'default',     'default',  None, None,   None),
     ('new-tag',       'light red',   'default',  None, None,   '#FF0'),
     ('implied-tag',   'light green', 'default',  None, None,   '#DFD'),
@@ -55,7 +57,9 @@ class Ui:
         self._loop.screen.register_palette(_PALETTE)
 
         input_box = urwid.LineBox(
-            FuzzyInput(plugin, self._loop), title='Tag input')
+            FuzzyInput(
+                plugin, self._loop, self._upload_settings.tags.contains),
+            title='Tag input')
         urwid.connect_signal(
             input_box.original_widget, 'accept', self._on_tag_accept)
 

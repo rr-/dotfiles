@@ -11,9 +11,14 @@ from booru_toolkit.upload.ui.ellipsis_text_layout import EllipsisTextLayout
 class FuzzyInput(urwid.ListBox):
     signals = ['accept']
 
-    def __init__(self, plugin: PluginBase, main_loop: urwid.MainLoop) -> None:
+    def __init__(
+            self,
+            plugin: PluginBase,
+            main_loop: urwid.MainLoop,
+            is_tag_used: Callable[[str], bool]) -> None:
         self._plugin = plugin
         self._main_loop = main_loop
+        self._is_tag_used = is_tag_used
 
         self._focus = -1
         self._matches: List[Tuple[str, int]] = []
@@ -105,6 +110,8 @@ class FuzzyInput(urwid.ListBox):
         new_list: List[urwid.Widget] = [self._input_box]
         for i, (tag_name, tag_usage_count) in enumerate(self._matches):
             attr_name = 'match'
+            if self._is_tag_used(tag_name):
+                attr_name = 'e-' + attr_name
             if i == self._focus:
                 attr_name = 'f-' + attr_name
             columns_widget = urwid.Columns([
