@@ -21,9 +21,10 @@ class PluginPixiv(PluginBase):
     name = 'pixiv'
 
     def __init__(self) -> None:
+        super().__init__()
         self._session = requests.Session()
 
-    async def login(self, user_name: str, password: str) -> None:
+    async def _login(self, user_name: str, password: str) -> None:
         url = 'https://oauth.secure.pixiv.net/auth/token'
         data = {
             'username': user_name,
@@ -117,17 +118,8 @@ class PluginPixiv(PluginBase):
             anonymous: bool) -> Optional[Post]:
         raise NotImplementedError('Not implemented')
 
-    async def tag_exists(self, tag_name: str) -> bool:
-        raise NotImplementedError('Not implemented')
-
-    async def find_tags(self, query: str) -> List[str]:
-        raise NotImplementedError('Not implemented')
-
-    async def get_tag_usage_count(self, tag_name: str) -> int:
-        return 0
-
-    async def get_tag_implications(self, tag_name: str) -> AsyncIterable[str]:
-        return []
+    async def _update_tag_cache(self) -> None:
+        pass
 
     async def update_post(
             self,

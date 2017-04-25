@@ -1,5 +1,6 @@
 from enum import Enum
 from typing import Optional, Tuple, List, AsyncIterable
+from booru_toolkit.plugin.tag_cache import TagCache
 
 
 class Safety(Enum):
@@ -36,7 +37,14 @@ class PluginBase:
     def name(self) -> str:
         raise NotImplementedError('Not implemented')
 
+    def __init__(self):
+        self._tag_cache = TagCache(self.name)
+
     async def login(self, user_name: str, password: str) -> None:
+        await self._login(user_name, password)
+        await self._update_tag_cache()
+
+    async def _login(self, user_name: str, password: str) -> None:
         raise NotImplementedError('Not implemented')
 
     async def find_exact_post(self, content: bytes) -> Optional[Post]:
@@ -69,13 +77,17 @@ class PluginBase:
         raise NotImplementedError('Not implemented')
 
     async def find_tags(self, query: str) -> List[str]:
-        raise NotImplementedError('Not implemented')
+        return await self._tag_cache.find_tags(query)
 
     async def tag_exists(self, tag_name: str) -> bool:
-        raise NotImplementedError('Not implemented')
+        return await self._tag_cache.tag_exists(tag_name)
 
     async def get_tag_usage_count(self, tag_name: str) -> int:
-        raise NotImplementedError('Not implemented')
+        return await self._tag_cache.get_tag_usage_count(tag_name)
 
     async def get_tag_implications(self, tag_name: str) -> AsyncIterable[str]:
+        async for tag in self._tag_cache.get_tag_implications(tag_name):
+            yield tag
+
+    async def _update_tag_cache(self) -> None:
         raise NotImplementedError('Not implemented')
