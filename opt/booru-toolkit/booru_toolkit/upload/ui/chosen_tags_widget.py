@@ -58,6 +58,11 @@ class ChosenTagsListBox(VimListBox):
         list.clear(self.body)
         self.body.extend(new_list)
 
+    def focus_tag(self, tag_name: str) -> None:
+        for i, widget in enumerate(self.body):
+            if widget.contents[0][0].text == tag_name:
+                self._focus = i
+
     def _delete_selected(self) -> None:
         old_focused_item = self._focus
         self._chosen_tags.delete(self.body.get_focus()[0].tag)
