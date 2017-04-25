@@ -78,6 +78,7 @@ class Ui:
 
     def _keypress(self, key: str) -> None:
         keymap = {
+            'meta i': self._cycle_anonymity,
             'meta s': self._cycle_safety,
             'ctrl q': self._confirm,
             'ctrl x': self._toggle_focus,
@@ -85,6 +86,10 @@ class Ui:
         }
         if key in keymap:
             keymap[key]()
+
+    def _cycle_anonymity(self) -> None:
+        self._upload_settings.anonymous = not self._upload_settings.anonymous
+        self._loop.widget.set_header(self._make_header_widget())
 
     def _cycle_safety(self) -> None:
         self._upload_settings.safety = {
@@ -141,11 +146,16 @@ class Ui:
         return urwid.Columns([
             (urwid.PACK, TableColumn([
                 (urwid.Text('Plugin:')),
+                (urwid.Text('Anonymity:')),
                 (urwid.Text('Safety:')),
                 (urwid.Text('Path:')),
             ])),
             TableColumn([
                 urwid.Text(self._plugin.name),
+                urwid.Text({
+                    False: 'off',
+                    True: 'on',
+                }[self._upload_settings.anonymous]),
                 urwid.Text({
                     Safety.Safe: 'safe',
                     Safety.Questionable: 'questionable',

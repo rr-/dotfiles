@@ -57,7 +57,8 @@ class PluginBase:
             content: bytes,
             source: Optional[str],
             safety: Safety,
-            tags: List[str]) -> Optional[Post]:
+            tags: List[str],
+            anonymous: bool) -> Optional[Post]:
         raise NotImplementedError('Not implemented')
 
     async def update_post(

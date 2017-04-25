@@ -39,8 +39,11 @@ def parse_args() -> configargparse.Namespace:
         '-t', '--tags', nargs='*', metavar='TAG',
         help='list of post tags')
     parser.add(
+        '--anonymous', action='store_true',
+        help='upload anonimously if possible')
+    parser.add(
         '-i', '--interactive', action='store_true',
-        help='edit tags interactively')
+        help='open up interactive editor')
     parser.add(metavar='POST_PATH', dest='path', help='path to the post')
     return parser.parse_args()
 
@@ -70,7 +73,8 @@ async def run(args: configargparse.Namespace) -> int:
         Path(args.path),
         safety=SAFETY_MAP[args.safety],
         source=args.source,
-        tags=args.tags or [])
+        tags=args.tags or [],
+        anonymous=args.anonymous)
 
     try:
         if not upload_settings.path.exists():
@@ -99,6 +103,9 @@ async def run(args: configargparse.Namespace) -> int:
         print('\n'.join(upload_settings.tag_names))
 
         if post:
+            if upload_settings.anonymous:
+                raise errors.ApiError(
+                    'Anonymous post updates are not supported.')
             await plugin.update_post(
                 post.id,
                 safety=upload_settings.safety,
@@ -109,7 +116,8 @@ async def run(args: configargparse.Namespace) -> int:
                 content,
                 source=upload_settings.source,
                 safety=upload_settings.safety,
-                tags=upload_settings.tag_names)
+                tags=upload_settings.tag_names,
+                anonymous=upload_settings.anonymous)
             print('Uploaded.')
 
         if post:

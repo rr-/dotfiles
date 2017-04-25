@@ -106,7 +106,8 @@ class PluginYume(PluginBase):
             content: bytes,
             source: Optional[str],
             safety: Safety,
-            tags: List[str]) -> Optional[Post]:
+            tags: List[str],
+            anonymous: bool) -> Optional[Post]:
         with TemporaryFile() as handle:
             handle.write(content)
             handle.seek(0)
@@ -117,7 +118,7 @@ class PluginYume(PluginBase):
                     'metadata': json.dumps({
                         'source': source,
                         'safety': _SAFETY_MAP[safety],
-                        'anonymous': False,
+                        'anonymous': anonymous,
                         'tags': tags,
                     }),
                 })
