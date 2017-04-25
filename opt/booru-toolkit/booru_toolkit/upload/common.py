@@ -57,13 +57,15 @@ class UploadSettings:
             path: Path,
             safety: Safety,
             source: Optional[str],
-            tags: List[str] = []) -> None:
+            tags: List[str],
+            anonymous: bool) -> None:
         self.path = path
         self.safety = safety
         self.source = source
         self.tags = TagList()
         for tag_name in tags:
             self.tags.add(tag_name, TagSource.UserInput)
+        self.anonymous = anonymous
 
     @property
     def tag_names(self) -> List[str]:

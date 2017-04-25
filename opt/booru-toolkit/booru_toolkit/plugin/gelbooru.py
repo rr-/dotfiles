@@ -87,9 +87,13 @@ class PluginGelbooru(PluginBase):
             content: bytes,
             source: Optional[str],
             safety: Safety,
-            tags: List[str]) -> Optional[Post]:
+            tags: List[str],
+            anonymous: bool) -> Optional[Post]:
         if not tags:
             raise errors.ApiError('No tags given')
+
+        if anonymous:
+            raise errors.ApiError('Anonymous uploads are not supported')
 
         with TemporaryFile() as handle:
             handle.write(content)
