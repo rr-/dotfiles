@@ -86,3 +86,6 @@ javascript <<EOF
 EOF
 command! tabnextto -nargs=* -complete=url :js tabnextto('<args>')
 nnoremap t :tabnextto<Space>
+
+"focus last selected tab on closing the current tab
+nnoremap d :bd -s lastactive<CR>
