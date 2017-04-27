@@ -1,21 +1,21 @@
-highlight Win cterm=none ctermfg=236 ctermbg=default
+highlight Win cterm=none ctermfg=236 ctermbg=231
 
 highlight TopLine cterm=none ctermfg=236 ctermbg=254
 highlight TopLineSel cterm=bold ctermfg=236 ctermbg=254
 highlight StatusLine cterm=bold ctermfg=236 ctermbg=254
 highlight Border cterm=none ctermfg=236 ctermbg=254
 
-highlight Selected cterm=bold ctermfg=200 ctermbg=default
+highlight Selected cterm=bold ctermfg=200 ctermbg=231
 highlight CurrLine cterm=bold ctermfg=255 ctermbg=27
 
 highlight WildMenu cterm=underline,reverse ctermfg=236 ctermbg=254
-highlight CmdLine cterm=none ctermfg=236 ctermbg=default
-highlight ErrorMsg cterm=none ctermfg=red ctermbg=default
+highlight CmdLine cterm=none ctermfg=236 ctermbg=231
+highlight ErrorMsg cterm=none ctermfg=red ctermbg=231
 
 highlight Directory cterm=bold ctermfg=21 ctermbg=255
-highlight Link cterm=bold ctermfg=39 ctermbg=default
-highlight BrokenLink cterm=bold ctermfg=red ctermbg=default
-highlight Socket cterm=bold ctermfg=magenta ctermbg=default
-highlight Device cterm=bold ctermfg=blue ctermbg=default
-highlight Fifo cterm=bold ctermfg=cyan ctermbg=default
-highlight Executable cterm=bold ctermfg=green ctermbg=default
+highlight Link cterm=bold ctermfg=39 ctermbg=231
+highlight BrokenLink cterm=bold ctermfg=red ctermbg=231
+highlight Socket cterm=bold ctermfg=magenta ctermbg=231
+highlight Device cterm=bold ctermfg=blue ctermbg=231
+highlight Fifo cterm=bold ctermfg=cyan ctermbg=231
+highlight Executable cterm=bold ctermfg=green ctermbg=231
