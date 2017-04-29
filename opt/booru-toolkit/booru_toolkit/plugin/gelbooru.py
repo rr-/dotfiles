@@ -112,7 +112,6 @@ class PluginGelbooru(PluginBase):
                     'submit': 'Upload',
                 },
                 files={'upload': handle})
-            print(response)
 
             soup = BeautifulSoup(response, 'html.parser')
             content_div = soup.find('div', {'id': 'content'})
