@@ -30,6 +30,9 @@
             if [ "$1" == --root ]; then \
                 log_since=""; \
                 rebase_args="--root"; \
+            elif [ ! -z "$1" ]; then \
+                log_since="$1"..; \
+                rebase_args="$1"; \
             else \
                 log_since="@{u}.."; \
                 rebase_args=""; \
