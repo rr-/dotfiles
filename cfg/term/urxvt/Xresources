@@ -35,24 +35,22 @@ URxvt.matcher.pattern.0: \\b(?:(?:https?|ftp|news|file):\/\/|mailto:)\\w[\\w\-\@
 
 URxvt.cursorBlink: 1
 
-*.background: #FBFBFB
-*.foreground: #101010
-*.color0:     #2B2B2B
-*.color1:     #870000
-*.color2:     #0F670F
-*.color3:     #875F00
-*.color4:     #005FAF
-*.color5:     #6F3F6F
-*.color6:     #006767
-*.color7:     #818181
-*.color8:     #414141
-*.color9:     #D70000
-*.color10:    #2FA72F
-*.color11:    #D7AF00
-*.color12:    #00AFFF
-*.color13:    #BF7FBF
-*.color14:    #00B7B7
-*.color15:    #CECECE
-
-URxvt.depth: 24
-URxvt.background: rgba:FB00/FB00/FB00/FFFF
+URxvt.background: #FBFBFB
+URxvt.foreground: #101010
+URxvt.color0:     #2B2B2B
+URxvt.color1:     #870000
+URxvt.color2:     #0F670F
+URxvt.color3:     #875F00
+URxvt.color4:     #005FAF
+URxvt.color5:     #6F3F6F
+URxvt.color6:     #006767
+URxvt.color7:     #818181
+URxvt.color8:     #414141
+URxvt.color9:     #D70000
+URxvt.color10:    #2FA72F
+URxvt.color11:    #D7AF00
+URxvt.color12:    #00AFFF
+URxvt.color13:    #BF7FBF
+URxvt.color14:    #00B7B7
+URxvt.color15:    #CECECE
+URxvt*color231:   #FBFBFB
