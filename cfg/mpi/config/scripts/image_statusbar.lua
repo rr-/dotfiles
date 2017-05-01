@@ -18,7 +18,7 @@ local function roundNumber(num, digits)
 end
 
 local function get_file_size(size)
-    if size == 0 then
+    if size == 0 or size == nil then
         return "0" .. si[1]
     end
     local exponent = math.floor(math.log(size) / math.log(1024))
