@@ -99,7 +99,8 @@ async def run(args: configargparse.Namespace) -> int:
     error_message: Optional[str] = None
 
     while True:
-        await ui.run(plugin, upload_settings, error_message)
+        if interactive:
+            await ui.run(plugin, upload_settings, error_message)
 
         try:
             if post:
