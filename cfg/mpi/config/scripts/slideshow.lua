@@ -60,12 +60,12 @@ function toggle_slideshow()
 end
 
 function increase_slideshow_speed()
-    slideshow_sleep = slideshow_sleep + 0.1
+    slideshow_sleep = slideshow_sleep + 0.025
     mp.osd_message('Slideshow speed: ' .. slideshow_sleep)
 end
 
 function decrease_slideshow_speed()
-    slideshow_sleep = slideshow_sleep - 0.1
+    slideshow_sleep = slideshow_sleep - 0.025
     if slideshow_sleep < 0.1 then
         slideshow_sleep = 0.1
     end
