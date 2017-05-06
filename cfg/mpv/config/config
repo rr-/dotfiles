@@ -7,6 +7,7 @@ script-opts=osc-layout=slimbox
 stop-screensaver=yes
 image-display-duration=inf
 script-opts=images-statusbar=no,reset-view=no
+sub-paths=subs
 
 audio-channels=2
 alang=jpn,jp,jap,Japanese,en,eng,English
