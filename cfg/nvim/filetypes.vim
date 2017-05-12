@@ -24,3 +24,5 @@ au BufWritePost */spell/*.add silent mkspell! %
 
 "disable spellcheck in urls
 au FileType text,markdown syn match UrlNoSpell "\w\+:\/\/[^[:space:]]\+" contains=@NoSpell
+
+au FileType mail setlocal spell textwidth=72 colorcolumn=72,80
