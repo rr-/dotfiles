@@ -14,7 +14,6 @@
     whitespace = tab-in-indent
 [merge]
     conflictStyle = diff3
-    ff = only
 [alias]
     amen = commit --amend
     ramen = commit --amend --all --no-edit
