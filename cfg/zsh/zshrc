@@ -106,9 +106,8 @@ alias la="`whence ls`"' -lXA --group-directories-first'
 alias lc="`whence ls`"' -lXC --group-directories-first'
 alias e=vifm
 alias v=vim
-jisho() {
-    command jisho "$@"|less -rFX
-}
+jisho() { command jisho "$@"|less -rFX }
+edict() { command edict "$@"|less -rFX }
 tl() {
     source="$1"; shift
     target="$1"; shift
