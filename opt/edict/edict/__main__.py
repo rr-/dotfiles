@@ -47,9 +47,13 @@ def main() -> None:
     else:
         query = word
 
-    for kanji in sorted(db.search(query), key=lambda kanji: len(kanji.kanji)):
-        print(kanji.kanji)
-        print(kanji.kana)
+    entries = {}
+    for kanji in db.search(query):
+        entries[kanji.entry.id] = kanji.entry
+
+    for entry in entries.values():
+        for kanji in entry.kanji:
+            print('{} ({})'.format(kanji.kanji, kanji.kana))
         for glossary in kanji.entry.glossaries:
             print(glossary.english)
         print()
