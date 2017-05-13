@@ -15,6 +15,7 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser('Look up words in edict2 dictionary')
     parser.add_argument('word')
     parser.add_argument('-w', '--wild', action='store_true')
+    parser.add_argument('-r', '--regex', action='store_true')
     return parser.parse_args()
 
 
@@ -40,15 +41,21 @@ def main() -> None:
     args = parse_args()
     word: str = args.word
     wild: bool = args.wild
+    regex: bool = args.regex
+    if regex and wild:
+        raise ValueError('Cannot combine --wild and --regex')
+
     create_db_if_needed()
 
-    if wild:
-        query = '%' + '%'.join(word) + '%'
+    if regex:
+        results = db.search_by_regex(word)
+    elif wild:
+        results = db.search('%' + '%'.join(word) + '%')
     else:
-        query = word
+        results = db.search(word)
 
     entries = {}
-    for kanji in db.search(query):
+    for kanji in results:
         entries[kanji.entry.id] = kanji.entry
 
     for entry in entries.values():
