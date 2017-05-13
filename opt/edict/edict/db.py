@@ -1,3 +1,4 @@
+import re
 import pathlib
 import typing as t
 import sqlalchemy as sa
@@ -10,6 +11,7 @@ from edict import parser
 _Base: t.Any = sa.ext.declarative.declarative_base()
 _DB_PATH = pathlib.Path('~/.local/cache/edict2.sqlite').expanduser()
 _session: t.Any = None
+_regex_cache: t.Dict[str, t.Pattern] = {}
 
 
 class EdictKanji(_Base):
@@ -59,9 +61,20 @@ class EdictEntry(_Base):
     ent_seq: t.Optional[str] = sa.Column('ent_seq', sa.String)
 
 
+def re_fn(regex: str, value: str) -> bool:
+    if regex not in _regex_cache:
+        _regex_cache[regex] = re.compile(regex)
+    return _regex_cache[regex].match(value) is not None
+
+
 def init() -> None:
     _DB_PATH.parent.mkdir(parents=True, exist_ok=True)
     engine: t.Any = sa.create_engine('sqlite:///%s' % str(_DB_PATH))
+
+    @sa.event.listens_for(engine, 'begin')
+    def _do_begin(conn):
+        conn.connection.create_function('regexp', 2, re_fn)
+
     _Base.metadata.create_all(bind=engine)
     global _session
     _session = sa.orm.scoped_session(
@@ -105,3 +118,8 @@ def put_entries(parsed_entries: t.Iterable[parser.EdictEntry]) -> None:
 
 def search(text: str) -> t.List[EdictKanji]:
     return _session.query(EdictKanji).filter(EdictKanji.kana.like(text))
+
+
+def search_by_regex(pattern: str) -> t.List[EdictKanji]:
+    return _session.query(
+        EdictKanji).filter(EdictKanji.kana.op('regexp')(pattern))
