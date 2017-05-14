@@ -45,6 +45,7 @@ def main() -> None:
     entries = db.search_entries_by_regex(patterns)
 
     for entry in entries:
+        print('({})'.format(','.join(entry.tags)))
         for kanji in entry.kanji:
             print('{} ({})'.format(kanji.kanji, kanji.kana))
         for glossary in entry.glossaries:
