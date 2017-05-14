@@ -64,7 +64,7 @@ class EdictEntry(_Base):
 def re_fn(regex: str, value: str) -> bool:
     if regex not in _regex_cache:
         _regex_cache[regex] = re.compile(regex)
-    return _regex_cache[regex].match(value) is not None
+    return _regex_cache[regex].search(value) is not None
 
 
 def init() -> None:
