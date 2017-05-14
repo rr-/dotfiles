@@ -25,8 +25,8 @@ class EdictKanji(_Base):
         nullable=False,
         index=True)
 
-    kanji: str = sa.Column('kanji', sa.String)
-    kana: str = sa.Column('kana', sa.String)
+    kanji: str = sa.Column('kanji', sa.String, index=True)
+    kana: str = sa.Column('kana', sa.String, index=True)
     kanji_tags: t.Sequence[str] = sa.Column('kanji_tags', sa.PickleType)
     kana_tags: t.Sequence[str] = sa.Column('kana_tags', sa.PickleType)
 
@@ -42,7 +42,7 @@ class EdictGlossary(_Base):
         nullable=False,
         index=True)
 
-    english: str = sa.Column('english', sa.String)
+    english: str = sa.Column('english', sa.String, index=True)
     tags: t.Sequence[str] = sa.Column('tags', sa.PickleType)
     field: t.Optional[str] = sa.Column('field', sa.String)
     related: t.List[str] = sa.Column('related', sa.PickleType)
