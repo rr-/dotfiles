@@ -120,6 +120,10 @@ def search(text: str) -> t.List[EdictKanji]:
     return _session.query(EdictKanji).filter(EdictKanji.kana.like(text))
 
 
-def search_by_regex(pattern: str) -> t.List[EdictKanji]:
-    return _session.query(
+def search_entries_by_regex(pattern: str) -> t.List[EdictEntry]:
+    results = _session.query(
         EdictKanji).filter(EdictKanji.kana.op('regexp')(pattern))
+    entries = {}
+    for kanji in results:
+        entries[kanji.entry.id] = kanji.entry
+    return list(entries.values())
