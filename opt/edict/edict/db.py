@@ -126,9 +126,13 @@ def search_entries_by_regex(patterns: t.List[str]) -> t.List[EdictEntry]:
     kanjis = (
         _session
         .query(EdictKanji)
-        .filter(sa.and_(
-            EdictKanji.kana.op('regexp')(pattern)
-            for pattern in patterns)))
+        .filter(
+            sa.and_(
+                EdictKanji.kana.op('regexp')(pattern)
+                for pattern in patterns) |
+            sa.and_(
+                EdictKanji.kanji.op('regexp')(pattern)
+                for pattern in patterns)))
     for kanji in kanjis:
         entries[kanji.entry.id] = kanji.entry
 
