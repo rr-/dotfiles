@@ -121,9 +121,20 @@ def search(text: str) -> t.List[EdictKanji]:
 
 
 def search_entries_by_regex(pattern: str) -> t.List[EdictEntry]:
-    results = _session.query(
-        EdictKanji).filter(EdictKanji.kana.op('regexp')(pattern))
-    entries = {}
-    for kanji in results:
+    entries: t.Dict[int, EdictEntry] = {}
+
+    kanjis = (
+        _session
+        .query(EdictKanji)
+        .filter(EdictKanji.kana.op('regexp')(pattern)))
+    for kanji in kanjis:
         entries[kanji.entry.id] = kanji.entry
+
+    glossaries = (
+        _session
+        .query(EdictGlossary)
+        .filter(EdictGlossary.english.op('regexp')(pattern)))
+    for glossary in glossaries:
+        entries[glossary.entry.id] = glossary.entry
+
     return list(entries.values())

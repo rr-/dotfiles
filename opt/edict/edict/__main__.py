@@ -45,7 +45,7 @@ def main() -> None:
     for entry in entries:
         for kanji in entry.kanji:
             print('{} ({})'.format(kanji.kanji, kanji.kana))
-        for glossary in kanji.entry.glossaries:
+        for glossary in entry.glossaries:
             print(glossary.english)
         print()
 
