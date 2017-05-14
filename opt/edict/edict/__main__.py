@@ -32,6 +32,7 @@ def create_db_if_needed() -> None:
         _RAW_PATH.write_text(data)
     db.init()
     if not db.exists():
+        print('Recreating SQLite database...', flush=True)
         with _RAW_PATH.open('r') as handle:
             db.put_entries(entry for entry in parser.parse(list(handle)))
 
