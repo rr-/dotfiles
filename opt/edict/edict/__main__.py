@@ -2,6 +2,7 @@
 import argparse
 import gzip
 import pathlib
+import typing as t
 import requests
 from edict import parser
 from edict import db
@@ -13,7 +14,7 @@ _RAW_PATH = pathlib.Path('~/.local/cache/edict2.txt').expanduser()
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser('Look up words in edict2 dictionary')
-    parser.add_argument('word')
+    parser.add_argument('pattern', nargs='+', help='regex to search for')
     return parser.parse_args()
 
 
@@ -37,10 +38,10 @@ def create_db_if_needed() -> None:
 
 def main() -> None:
     args = parse_args()
-    word: str = args.word
+    patterns: t.List[str] = args.pattern
 
     create_db_if_needed()
-    entries = db.search_entries_by_regex(word)
+    entries = db.search_entries_by_regex(patterns)
 
     for entry in entries:
         for kanji in entry.kanji:

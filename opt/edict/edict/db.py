@@ -120,20 +120,24 @@ def search(text: str) -> t.List[EdictKanji]:
     return _session.query(EdictKanji).filter(EdictKanji.kana.like(text))
 
 
-def search_entries_by_regex(pattern: str) -> t.List[EdictEntry]:
+def search_entries_by_regex(patterns: t.List[str]) -> t.List[EdictEntry]:
     entries: t.Dict[int, EdictEntry] = {}
 
     kanjis = (
         _session
         .query(EdictKanji)
-        .filter(EdictKanji.kana.op('regexp')(pattern)))
+        .filter(sa.and_(
+            EdictKanji.kana.op('regexp')(pattern)
+            for pattern in patterns)))
     for kanji in kanjis:
         entries[kanji.entry.id] = kanji.entry
 
     glossaries = (
         _session
         .query(EdictGlossary)
-        .filter(EdictGlossary.english.op('regexp')(pattern)))
+        .filter(sa.and_(
+            EdictGlossary.english.op('regexp')(pattern)
+            for pattern in patterns)))
     for glossary in glossaries:
         entries[glossary.entry.id] = glossary.entry
 
