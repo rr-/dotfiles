@@ -7,7 +7,7 @@ super + {r, d}
     dmenu_run
 
 # switch Polish↔Japanese
-super + space
+super + n
     switch_keyboard_layout
 
 # focus or spawn local terminal with tmux
