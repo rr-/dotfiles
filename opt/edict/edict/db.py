@@ -1,4 +1,5 @@
 import re
+import enum
 import pathlib
 import typing as t
 import sqlalchemy as sa
@@ -11,6 +12,12 @@ _Base: t.Any = sa.ext.declarative.declarative_base()
 _DB_PATH = pathlib.Path('~/.local/cache/edict2.sqlite').expanduser()
 _session: t.Any = None
 _regex_cache: t.Dict[str, t.Pattern] = {}
+
+
+class SearchSource(enum.Flag):
+    KANJI = enum.auto()
+    KANA = enum.auto()
+    ENGLISH = enum.auto()
 
 
 class EdictKanji(_Base):
@@ -116,40 +123,42 @@ def put_entries(parsed_entries: t.Iterable[parser.EdictEntry]) -> None:
     _session.commit()
 
 
-def search_entries_by_regex(patterns: t.List[str]) -> t.List[EdictEntry]:
+def search_entries_by_regex(
+        patterns: t.List[str], sources: enum.Flag) -> t.List[EdictEntry]:
     entries: t.Dict[int, t.Tuple[int, EdictEntry]] = {}
 
-    # kanji
-    kanjis = (
-        _session
-        .query(EdictKanji)
-        .filter(
-            sa.and_(
-                EdictKanji.kanji.op('regexp')(pattern)
-                for pattern in patterns)))
-    for kanji in kanjis:
-        entries[kanji.entry.id] = (len(kanji.kanji), kanji.entry)
+    if sources & SearchSource.KANJI:
+        kanjis = (
+            _session
+            .query(EdictKanji)
+            .filter(
+                sa.and_(
+                    EdictKanji.kanji.op('regexp')(pattern)
+                    for pattern in patterns)))
+        for kanji in kanjis:
+            entries[kanji.entry.id] = (len(kanji.kanji), kanji.entry)
 
-    # kana
-    kanjis = (
-        _session
-        .query(EdictKanji)
-        .filter(
-            sa.and_(
-                EdictKanji.kana.op('regexp')(pattern)
-                for pattern in patterns)))
-    for kanji in kanjis:
-        entries[kanji.entry.id] = (len(kanji.kana), kanji.entry)
+    if sources & SearchSource.KANA:
+        kanjis = (
+            _session
+            .query(EdictKanji)
+            .filter(
+                sa.and_(
+                    EdictKanji.kana.op('regexp')(pattern)
+                    for pattern in patterns)))
+        for kanji in kanjis:
+            entries[kanji.entry.id] = (len(kanji.kana), kanji.entry)
 
-    # English
-    glossaries = (
-        _session
-        .query(EdictGlossary)
-        .filter(sa.and_(
-            EdictGlossary.english.op('regexp')(pattern)
-            for pattern in patterns)))
-    for glossary in glossaries:
-        entries[glossary.entry.id] = (len(glossary.english), glossary.entry)
+    if sources & SearchSource.ENGLISH:
+        glossaries = (
+            _session
+            .query(EdictGlossary)
+            .filter(sa.and_(
+                EdictGlossary.english.op('regexp')(pattern)
+                for pattern in patterns)))
+        for glossary in glossaries:
+            entries[glossary.entry.id] = (
+                len(glossary.english), glossary.entry)
 
     return [
         item[1]
