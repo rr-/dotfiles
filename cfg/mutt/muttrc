@@ -39,8 +39,8 @@ set imap_keepalive=60
 # colors
 source ~/.mutt/colors.muttrc
 
-# save to file on S
-macro index,pager S "| ~/.mutt/file_email ~/text/mail/<enter>"
+# save mail to file
+macro index,pager s "| ~/.mutt/file_email ~/text/saved-mail/<enter>"
 
 # prefer plaintext to html
 auto_view text/html
