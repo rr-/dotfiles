@@ -42,6 +42,9 @@ source ~/.mutt/colors.muttrc
 # save mail to file
 macro index,pager s "| ~/.mutt/file_email ~/text/saved-mail/<enter>"
 
+# save attachment to ~/hub/mail/
+macro attach s <save-entry><bol>~/hub/mail/<enter>
+
 # prefer plaintext to html
 auto_view text/html
 alternative_order text/plain text/html
