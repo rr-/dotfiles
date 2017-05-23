@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import argparse
+import re
 import gzip
 import pathlib
 import typing as t
@@ -64,7 +65,7 @@ def main() -> None:
         entry
         for entry in entries
         if all(
-            tag_pattern.lower() in [tag.lower() for tag in entry.tags]
+            any(re.match(tag_pattern, tag, re.I) for tag in entry.tags)
             for tag_pattern in tag_patterns)]
 
     for entry in entries:
