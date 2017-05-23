@@ -1,0 +1,2 @@
+#!/bin/sh
+curl -F'shorten='"$(cat -)" -s https://0x0.st
