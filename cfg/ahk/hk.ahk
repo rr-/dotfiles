@@ -270,7 +270,7 @@ AddTransparency(delta)
 ;reload autohotkey
 !F12::Reload
 
-#j::
+#n::
 {
     SetFormat, Integer, H
     Locale1=0x4150415
