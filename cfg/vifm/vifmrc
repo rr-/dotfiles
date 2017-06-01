@@ -177,5 +177,7 @@ nnoremap yn :!echo -n "'"%"c:gs!\!/!"'" %i | clip<cr>
 " full path to selected file's directory
 nnoremap yd :!echo -n "'"%"d:gs!\!/!"'" %i | clip<cr>
 
+nnoremap <c-t> :!tmp "'"%"c:p:gs!\!/!"'"<cr>
+
 " Hide junk
 filter __pycache__
