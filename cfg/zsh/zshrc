@@ -1,7 +1,3 @@
-SOURCE=$(readlink ${(%):-%N})
-DIR=${SOURCE:h:h:h}
-HOST=$(hostname)
-
 # autocomplete
 autoload -Uz compinit                   # initialize autocompletion engine
 compinit -i                             # initialize autocompletion engine (2)
@@ -89,90 +85,6 @@ PS1+=$'%{\e[0m%}'                      # reset colors
 if [[ "$TERM" != linux ]]; then
     PS1+=$'%{\e]0;%n@%M:%~\007%}'          # add titlebar user@host:~/
 fi
-
-# aliases related to colors
-if [[ -x "`whence -p dircolors`" ]]; then
-    eval `dircolors`
-    alias ls='ls --color=auto'
-    alias grep='grep --color=auto'
-    alias fgrep='fgrep --color=auto'
-    alias egrep='egrep --color=auto'
-fi
-
-# aliases
-alias ls="`whence ls`"' -vF1 --group-directories-first'
-alias ll="`whence ls`"' -lX --group-directories-first'
-alias la="`whence ls`"' -lXA --group-directories-first'
-alias lc="`whence ls`"' -lXC --group-directories-first'
-alias e=vifm
-alias v=vim
-jisho() { command jisho "$@"|less -rFX }
-edict() { command edict "$@"|less -rFX }
-tl() {
-    source="$1"; shift
-    target="$1"; shift
-    trans -s "$source" -t "$target" "$@"|less -rFX
-}
-alias plen='tl pl en'
-alias enpl='tl en pl'
-alias enja='tl en ja'
-alias jaen='tl ja en'
-alias isvim='ps ux|grep vim|grep -v grep' # also works for nvim
-alias dark='lightness dark'
-alias light='lightness light'
-
-alias dl-gelbooru='dl-booru --config=~/.config/dl-gelbooru.conf'
-alias dl-pixiv='dl-booru --config=~/.config/dl-pixiv.conf'
-alias dl-yume='dl-booru --config=~/.config/dl-yume.conf'
-alias ul-gelbooru='ul-booru --config=~/.config/ul-gelbooru.conf'
-alias ul-yume='ul-booru --config=~/.config/ul-yume.conf'
-alias tmp=ul-tmp
-
-vb() {
-    dec vm
-    vboxsdl --startvm $(VBoxManage list vms |pcregrep -o1 '(?:")(.*)(?:")') &
-    disown
-}
-
-# legacy aliases
-command -v hd >/dev/null 2>&1 || alias hd='od -Ax -t x1'
-if ! command -v poweroff >/dev/null 2>&1; then
-    [[ $(uname) =~ cygwin ]] && alias poweroff='shutdown /p /f' || alias poweroff='shutdown -s now'
-fi
-if ! command -v reboot >/dev/null 2>&1; then
-    [[ $(uname) =~ cygwin ]] && alias reboot='shutdown /r /t 0 /f' || alias reboot='shutdown -r now'
-fi
-
-# colorful manpages
-man() {
-    env LESS_TERMCAP_mb=$'\E[01;31m' \
-    LESS_TERMCAP_md=$'\E[01;38;5;74m' \
-    LESS_TERMCAP_me=$'\E[0m' \
-    LESS_TERMCAP_se=$'\E[0m' \
-    LESS_TERMCAP_ue=$'\E[0m' \
-    LESS_TERMCAP_us=$'\E[04;38;5;146m' \
-    man "$@"
-}
-
-# path
-path=(~/.local/bin/ $path)              # python!
-path=(~/.gem/ruby/*/bin $path)          # ruby!
-path=(/usr/local/bin $path)             # prefer manually compiled libraries
-path=($DIR/bin/* $path)                 # PATH for all the goodies in this repo
-export PATH                             # export modified var for subprocesses
-
-export LD_LIBRARY_PATH=/usr/local/lib
-
-typeset -T PYTHONPATH pythonpath :      # turn PYTHONPATH into zsh list
-if [ -d $DIR/lib ]; then                # shared libraries for Python scripts
-    pythonpath=($DIR/lib/)
-fi
-export PYTHONPATH                       # export modified var for subprocesses
-
-# load additional modules
-for x in ~/.config/zsh/*.sh; do
-    source "$x"
-done &>/dev/null
 
 # config fzf
 if [ -f ~/.fzf.zsh ]; then
