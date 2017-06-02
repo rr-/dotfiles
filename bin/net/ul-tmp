@@ -1,5 +1,5 @@
 #!/usr/bin/python3
-# Uploads files to tmp.sakuya.pl via SSH outputs copyable links
+# Uploads files to tmp.sakuya.pl via SSH and outputs copyable links
 
 import os
 import sys
