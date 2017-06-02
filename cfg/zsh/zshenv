@@ -35,6 +35,7 @@ alias dl-yume='dl-booru --config=~/.config/dl-yume.conf'
 alias ul-gelbooru='ul-booru --config=~/.config/ul-gelbooru.conf'
 alias ul-yume='ul-booru --config=~/.config/ul-yume.conf'
 alias tmp=ul-tmp
+alias 0x0=ul-0x0
 
 vb() {
     dec vm
