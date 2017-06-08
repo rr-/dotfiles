@@ -8,11 +8,12 @@ from datetime import datetime
 from typing import List
 
 
-def _get_paths(target_dir: str) -> List[str]:
+def _get_paths(target_dirs: List[str]) -> List[str]:
     paths: List[str] = []
-    for root, _subdirs, files in os.walk(target_dir):
-        for file in files:
-            paths.append(os.path.join(root, file))
+    for target_dir in target_dirs:
+        for root, _subdirs, files in os.walk(target_dir):
+            for file in files:
+                paths.append(os.path.join(root, file))
     paths.sort()
     return paths
 
@@ -31,7 +32,7 @@ def _get_checksum(paths: List[str]) -> str:
 def _parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser('Monitor filesystem for changes')
     parser.add_argument('--sleep', default=1, type=int)
-    parser.add_argument('target_dir')
+    parser.add_argument('-t', '--target-dir', nargs='*')
     parser.add_argument('cmd', metavar='cmd')
     parser.add_argument('cmd_args', metavar='cmd_arg', nargs='*')
     return parser.parse_args()
@@ -39,13 +40,13 @@ def _parse_args() -> argparse.Namespace:
 
 def main() -> None:
     args = _parse_args()
-    target_dir: str = args.target_dir
+    target_dirs: List[str] = args.target_dir
     command_line: List[str] = [args.cmd] + args.cmd_args
     sleep_time: int = args.sleep
     last_checksum = None
 
     while True:
-        paths = _get_paths(target_dir)
+        paths = _get_paths(target_dirs)
         current_checksum = _get_checksum(paths)
         if current_checksum != last_checksum:
             print('Change detected.')
