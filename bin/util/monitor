@@ -8,12 +8,15 @@ from datetime import datetime
 from typing import List
 
 
-def _get_paths(target_dirs: List[str]) -> List[str]:
+def _get_paths(target_paths: List[str]) -> List[str]:
     paths: List[str] = []
-    for target_dir in target_dirs:
-        for root, _subdirs, files in os.walk(target_dir):
-            for file in files:
-                paths.append(os.path.join(root, file))
+    for target_path in target_paths:
+        if os.path.isdir(target_path):
+            for root, _subdirs, files in os.walk(target_path):
+                for file in files:
+                    paths.append(os.path.join(root, file))
+        else:
+            paths.append(target_path)
     paths.sort()
     return paths
 
