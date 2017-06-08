@@ -50,15 +50,24 @@ def main() -> None:
 
     while True:
         paths = _get_paths(target_dirs)
-        current_checksum = _get_checksum(paths)
+        try:
+            current_checksum = _get_checksum(paths)
+        except Exception:
+            pass
         if current_checksum != last_checksum:
             print('Change detected.')
             start = datetime.now()
-            subprocess.run(command_line)
+            try:
+                subprocess.run(command_line)
+                print('%s: finished in %.02fs' % (
+                    ' '.join(command_line),
+                    (datetime.now() - start).total_seconds()))
+            except Exception as ex:
+                print('%s: error (%s) in %.02fs' % (
+                    ' '.join(command_line),
+                    ex,
+                    (datetime.now() - start).total_seconds()))
             last_checksum = current_checksum
-            print('%s: finished in %.02fs' % (
-                ' '.join(command_line),
-                (datetime.now() - start).total_seconds()))
 
         time.sleep(sleep_time)
 
