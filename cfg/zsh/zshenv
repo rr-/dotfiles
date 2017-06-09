@@ -62,3 +62,8 @@ man() {
     LESS_TERMCAP_us=$'\E[04;38;5;146m' \
     man "$@"
 }
+
+# load additional modules
+for x in ~/.config/zsh/*.sh; do
+    source "$x"
+done &>/dev/null
