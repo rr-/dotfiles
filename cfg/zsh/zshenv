@@ -13,7 +13,7 @@ alias ll="`whence ls`"' -lX --group-directories-first'
 alias la="`whence ls`"' -lXA --group-directories-first'
 alias lc="`whence ls`"' -lXC --group-directories-first'
 alias e=vifm
-alias v=vim
+alias v=nvim
 jisho() { command jisho "$@"|less -rFX }
 edict() { command edict "$@"|less -rFX }
 tl() {
