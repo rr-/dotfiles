@@ -6,6 +6,7 @@ profile=opengl-hq
 vo=opengl,drm
 script-opts=osc-layout=slimbox
 stop-screensaver=yes
+osd-fractions=yes
 image-display-duration=inf
 script-opts=images-statusbar=no,reset-view=no
 sub-paths=subs:~/src/subs
