@@ -25,6 +25,7 @@ URxvt.keysym.C-minus: perl:font-size:decrease
 URxvt.keysym.C-equal: perl:font-size:increase
 
 URxvt.perl-ext-common: default,matcher,font-size,keyboard-select
+
 URxvt.keysym.M-Escape: builtin: ! Unbind M-Escape
 URxvt.keysym.M-s:      builtin: ! Unbind M-s
 URxvt.keysym.M-u:      perl:matcher:list
