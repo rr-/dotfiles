@@ -25,9 +25,9 @@ color body       green        default     [\-\.+_a-zA-Z0-9]+@[\-\.a-zA-Z0-9]+
 color signature  blue         default     # sigs
 color search     red          black       # highlight results
 
-color indicator  black        brightblue  # currently highlighted message
+color indicator  color195     color24     # currently highlighted message
 color error      red          default     # error messages
-color status     black        brightwhite # status line
+color status     default      color234    # status line
 color tree       green        default     # thread tree
 color tilde      black        default     # blank line padding
 

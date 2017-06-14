@@ -2,29 +2,32 @@
 "- color scheme settings
 "----------------------------------------
 
-"basic vim
-if has('nvim')
-  set termguicolors
-  let theme='PaperColor'
-else
-  let theme='hemisu'
-endif
-let &background='light'
-silent! execute 'colorscheme '.theme
-
-"fix ColorColumn on dark backgrounds
-if &background == 'dark'
-  highlight ColorColumn ctermbg=235
-else
-  highlight ColorColumn ctermbg=255
-end
-highlight Normal guibg=NONE
-
-"airline color scheme
-if &background == 'dark'
-  let g:airline_theme = 'ubaryd'
-else
-  let g:airline_theme = 'sol'
-endif
+" airline
+let g:airline_theme = 'ubaryd'
 "allow use of special characters that are supplied by terminal font
 let g:airline_powerline_fonts = 1
+
+" Remove all existing highlighting and set the defaults.
+highlight clear
+
+" Remove all highlighting
+highlight clear Constant
+highlight clear Number
+highlight clear Statement
+highlight clear PreProc
+highlight clear Type
+highlight clear Special
+highlight clear Identifier
+highlight clear String
+highlight clear Comment
+highlight clear Error
+highlight clear LineNr
+highlight clear NonText
+highlight clear SpecialKey
+
+highlight String     term=underline cterm=NONE ctermfg=Magenta
+highlight Comment    term=bold      cterm=NONE ctermfg=Cyan
+highlight Error      term=reverse   cterm=NONE ctermbg=Red
+highlight LineNr     term=bold      cterm=NONE ctermfg=238
+highlight NonText    term=bold      cterm=NONE ctermfg=Yellow
+highlight SpecialKey term=bold      cterm=NONE ctermfg=Yellow
