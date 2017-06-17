@@ -3,8 +3,8 @@
 
 import re
 
-SYSTEM_TEMPLATE = "\x1B[{fgbg};5;{color}m-{color:02X}-\x1B[0m"
-CUBE_TEMPLATE = "\x1B[{fgbg};5;{color}m{color:02X}\x1B[0m"
+SYSTEM_TEMPLATE = "\x1B[{fgbg};5;{color}m-{color:03d}-\x1B[0m"
+CUBE_TEMPLATE = "\x1B[{fgbg};5;{color}m#{color:03d}\x1B[0m"
 RAMP_TEMPLATE = CUBE_TEMPLATE
 
 PALETTE_SYSTEM = {
@@ -277,7 +277,7 @@ CUBE_256 = '''
             #60f#00d#06d#08d#0ad#0dd#0fd
           #80f#60d#00a#06a#08a#0aa#0da#0fa
         #a0f#80d#60a#008#068#088#0a8#0d8#0f8
-      #d0f#a0d#80d#608#006#066#086#0a6#0d6#0f6
+      #d0f#a0d#80a#608#006#066#086#0a6#0d6#0f6
     #f0f#d0d#a0a#808#606#000#060#080#0a0#0d0#0f0#0f6#0f8#0fa#0fd#0ff
       #f0d#d0a#a08#806#600#660#680#6a0#6d0#6f0#6f6#6f8#6fa#6fd#6ff#0df
         #f0a#d08#a06#800#860#880#8a0#8d0#8f0#8f6#8f8#8fa#8fd#8ff#6df#0af
@@ -306,19 +306,7 @@ def strip_escape_codes(text):
 
 def join_templates(templates, separator=' '):
     ''' Merges text templates side by side. '''
-    templates = [template.split('\n') for template in templates]
-    template_sizes = []
-    for template in templates:
-        template_sizes.append(
-            max(len(strip_escape_codes(line)) for line in template))
-    merged_template = ['' for _ in templates[0]]
-    for i, template in enumerate(templates):
-        for j, line in enumerate(template):
-            real_length = len(strip_escape_codes(line))
-            merged_template[j] += line
-            merged_template[j] += ' ' * (template_sizes[i] - real_length)
-            merged_template[j] += separator
-    return '\n'.join(merged_template)
+    return '\n\n'.join(templates)
 
 
 def render_system_colors():
@@ -359,9 +347,7 @@ def render_color_cube():
                     min_diff = diff
             return ret
 
-        template = re.sub(r'([^#\s]{3})', _replace_callback, CUBE_256)
-        template = re.sub('#', '', template)
-        template = re.sub('  ', ' ', template)
+        template = re.sub(r'#([0-9a-fA-F]{3})', _replace_callback, CUBE_256)
         templates.append(template)
 
     print(join_templates(templates))
