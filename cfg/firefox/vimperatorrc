@@ -114,7 +114,7 @@ hi Bell                 border: 0 none; background-color: #222;
 hi ErrorMsg             color: #ffffff; background: red; font-weight: bold;
 
 "Hint section
-hi Hint                 font-size: 10px; line-height: 10px; font-weight: bold; color: black; background-color: #FA4; padding: 0.3em 0.5em; border-radius: 3px;
+hi Hint                 font-size: 10px; font-family: sans-serif; line-height: 10px; color: black; background-color: #FA4; padding: 0.3em 0.5em; border-radius: 3px;
 hi Hint::after          content: attr(number);
 hi HintActive           background: lime; color: #000;
 hi HintElem             background: #FF0; color: #000;
