@@ -9,7 +9,7 @@ stop-screensaver=yes
 osd-fractions=yes
 image-display-duration=inf
 script-opts=images-statusbar=no,reset-view=no
-sub-paths=subs:~/src/subs
+sub-paths=subs:~/src/subs:..
 
 audio-channels=2
 alang=jpn,jp,jap,Japanese,en,eng,English
