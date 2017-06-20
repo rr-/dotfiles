@@ -270,6 +270,16 @@ AddTransparency(delta)
 ;reload autohotkey
 !F12::Reload
 
+RAlt & -::
+    if GetKeyState("Shift") {
+        Send {U+2014}
+    } else {
+        Send {U+2013}
+    }
+    return
+RAlt & k::Send {U+2026}
+RAlt & =::Send {U+0304}
+
 #n::
 {
     SetFormat, Integer, H
