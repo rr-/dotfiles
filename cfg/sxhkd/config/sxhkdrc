@@ -8,7 +8,7 @@ super + {r, d}
 
 # switch Polish↔Japanese
 super + n
-    switch_keyboard_layout
+    kb
 
 # focus or spawn local terminal with tmux
 alt + ctrl + bracketleft
