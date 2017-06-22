@@ -3,19 +3,34 @@
 # (the default switcher of ibus was too buggy)
 
 import os
+import argparse
 from subprocess import run, PIPE
 
 
-def main():
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser()
+    parser.add_argument('lang', nargs='?', choices=['pl', 'jp'])
+    return parser.parse_args()
+
+
+def main() -> None:
     if run(['pgrep', 'ibus-daemon'], stdout=PIPE).returncode != 0:
         print('starting daemon')
         run(os.path.expanduser('~/.config/ibus/start'))
 
-    engine = run(['ibus', 'engine'], stdout=PIPE).stdout.decode().strip()
-    if engine != 'anthy':
-        run(['ibus', 'engine', 'anthy'])
+    args = parse_args()
+
+    if args.lang == 'jp':
+        engine = 'anthy'
+    elif args.lang == 'pl':
+        engine = 'xkb:pl::pol'
     else:
-        run(['ibus', 'engine', 'xkb:pl::pol'])
+        engine = run(['ibus', 'engine'], stdout=PIPE).stdout.decode().strip()
+        if engine != 'anthy':
+            engine = 'anthy'
+        else:
+            engine = 'xkb:pl::pol'
+    run(['ibus', 'engine', engine])
 
 
 if __name__ == '__main__':
