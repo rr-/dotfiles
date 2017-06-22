@@ -7,6 +7,11 @@ import argparse
 from subprocess import run, PIPE
 
 
+xmodmaps = [
+    'keycode 21 = equal plus equal plus dead_macron dead_macron',
+]
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument('lang', nargs='?', choices=['pl', 'jp'])
@@ -31,6 +36,9 @@ def main() -> None:
         else:
             engine = 'xkb:pl::pol'
     run(['ibus', 'engine', engine])
+
+    for expr in xmodmaps:
+        run(['xmodmap', '-e', expr])
 
 
 if __name__ == '__main__':

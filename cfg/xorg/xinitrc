@@ -1,5 +1,4 @@
 #!/bin/sh
-
 if [ -d /etc/X11/xinit/xinitrc.d ]; then
     for f in /etc/X11/xinit/xinitrc.d/*; do
         [ -x "$f" ] && . "$f"
@@ -14,7 +13,7 @@ xrdb -override ~/.config/Xresources-theme
 xsetroot -cursor_name left_ptr
 
 #set Polish keyboard
-setxkbmap pl
+kb pl
 
 clipit -d &
 autocutsel -fork &
