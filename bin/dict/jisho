@@ -33,8 +33,9 @@ def _print_definition(definition):
                 print(item['reading'])
         print('Meanings:')
         for item in entry['senses']:
-            for definition in item['english_definitions']:
-                print(definition)
+            if 'english_definitions' in item:
+                for definition in item['english_definitions']:
+                    print(definition)
         print('-' * 50)
         print()
 
