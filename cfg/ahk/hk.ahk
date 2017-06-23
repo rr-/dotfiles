@@ -49,7 +49,7 @@ FRun(window, path, folder)
 ;fix URLs copied by some browsers so they're clickable in popular programs
 ClipboardChanged(Type)
 {
-    if (SubStr(clipboard, 1, 7) == "http://") {
+    if (SubStr(clipboard, 1, 7) == "http://") || SubStr(clipboard, 1, 8) == "https://" {
         clipboard := StrReplace(clipboard, "[", "%5b", All)
         clipboard := StrReplace(clipboard, "\", "%5c", All)
         clipboard := StrReplace(clipboard, "]", "%5d", All)
