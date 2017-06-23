@@ -25,6 +25,9 @@ If !FileExist(CygPath) {
 ;detect browser
 BrowserPath := "C:\Program Files (x86)\Mozilla Firefox\firefox.exe"
 if !FileExist(BrowserPath) {
+    BrowserPath := "C:\Program Files\Mozilla Firefox\firefox.exe"
+}
+if !FileExist(BrowserPath) {
     BrowserPath := "C:\Users\rr-\AppData\Local\Google\Chrome\Application\chrome.exe"
 }
 
