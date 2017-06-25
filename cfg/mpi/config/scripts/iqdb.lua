@@ -17,7 +17,7 @@ function search_iqdb()
     file:write('<img src="' .. source .. '"/>')
     file:close()
 
-    mp_utils.subprocess({args = {'firefox', target1}})
+    mp_utils.subprocess({args = {'xdg-open', 'file://' .. target1}})
 
     mp_utils.subprocess_detached({args = {
         'sh',
