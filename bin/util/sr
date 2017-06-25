@@ -1,0 +1,29 @@
+#!/usr/bin/env python3
+import argparse
+import speech_recognition as sr
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-l', '--language')
+    parser.add_argument('file')
+    return parser.parse_args()
+
+
+def main():
+    args = parse_args()
+
+    r = sr.Recognizer()
+    with sr.AudioFile(args.file) as source:
+        audio = r.record(source)
+
+    try:
+        print(r.recognize_google(audio, language=args.language))
+    except sr.UnknownValueError:
+        print("Google Speech Recognition could not understand audio")
+    except sr.RequestError as e:
+        print("Could not request results from Google Speech Recognition service; {0}".format(e))
+
+
+if __name__ == '__main__':
+    main()
