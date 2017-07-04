@@ -1,17 +1,18 @@
 # aliases related to colors
-if [[ -x "`whence -p dircolors`" ]]; then
+LS_OPTIONS="--group-directories-first"
+if whence -p dircolors >/dev/null; then
     eval `dircolors`
-    alias ls='ls --color=auto'
+    LS_OPTIONS="$LS_OPTIONS --color=auto"
     alias grep='grep --color=auto'
     alias fgrep='fgrep --color=auto'
     alias egrep='egrep --color=auto'
 fi
 
 # aliases
-alias ls="`whence ls`"' -vF1 --group-directories-first'
-alias ll="`whence ls`"' -lX --group-directories-first'
-alias la="`whence ls`"' -lXA --group-directories-first'
-alias lc="`whence ls`"' -lXC --group-directories-first'
+alias ls="ls $LS_OPTIONS -vF1"
+alias ll="ls $LS_OPTIONS -lX"
+alias la="ls $LS_OPTIONS -lXA"
+alias lc="ls $LS_OPTIONS -lXC"
 alias e=vifm
 alias v=nvim
 jisho() { command jisho "$@"|less -rFX }
