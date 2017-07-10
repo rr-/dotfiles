@@ -33,8 +33,6 @@ if !FileExist(BrowserPath) {
     BrowserPath := "C:\Users\rr-\AppData\Local\Google\Chrome\Application\chrome.exe"
 }
 
-;disable windows+l
-RegWrite(1, "REG_DWORD", "HKEY_CURRENT_USER\\Software\Microsoft\Windows\CurrentVersion\Policies\System\\DisableLockWorkstation")
 
 ;activate/run a program
 FRun(window, path, folder)
