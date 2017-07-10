@@ -13,6 +13,7 @@ A_TitleMatchModeSpeed := "Slow" ;match titles and classes using regular expressi
 A_CoordModeMouse := "Screen"
 A_CoordModeToolTip := "Screen"
 
+
 ;detect cygwin
 CygPath := "C:\Program Files (x86)\cygwin"
 if !FileExist(CygPath) {
@@ -21,6 +22,7 @@ if !FileExist(CygPath) {
 If !FileExist(CygPath) {
     CygPath := "C:\Cygwin64"
 }
+
 
 ;detect browser
 BrowserPath := "C:\Program Files (x86)\Mozilla Firefox\firefox.exe"
@@ -46,8 +48,9 @@ FRun(window, path, folder)
     return
 }
 
+
 ;fix URLs copied by some browsers so they're clickable in popular programs
-ClipboardChanged(Type)
+ClipboardChanged(type)
 {
     if (SubStr(clipboard, 1, 7) == "http://") || SubStr(clipboard, 1, 8) == "https://" {
         clipboard := StrReplace(clipboard, "[", "%5b", All)
@@ -56,10 +59,54 @@ ClipboardChanged(Type)
     }
     return
 }
-
 OnClipboardChange("ClipboardChanged")
 
+
+;enforce same keyboard layout across all programs
+global Locale1 := 0x4150415
+global Locale2 := 0x4110411
+global CurrentLocale := Locale1
+
+GetActiveLocale()
+{
+    win_id := WinGetID("A")
+    thread_id := DllCall("GetWindowThreadProcessId", "Int", win_id, "Int", "0")
+    return DllCall("GetKeyboardLayout", "Int", thread_id)
+}
+
+ApplyLocale(locale)
+{
+    global CurrentLocale := locale
+    SendMessage(0x50, 0, locale, "", "A")
+}
+
+CycleLocale()
+{
+    if CurrentLocale == Locale1 {
+        ApplyLocale(locale2)
+    } else if CurrentLocale == Locale2 {
+        ApplyLocale(Locale1)
+    }
+}
+
+ShellMessage(wparam, lparam)
+{
+    title := WinGetTitle(lparam)
+    if wParam == 4 { ;HSHELL_WINDOWACTIVATED
+        ApplyLocale(CurrentLocale)
+    }
+}
+
+gui := GuiCreate("", "")
+gui.Opt("+LastFound")
+hwnd := WinExist()
+DllCall("RegisterShellHookWindow", uint, hwnd)
+msgnum := DllCall("RegisterWindowMessage", str, "SHELLHOOK")
+OnMessage(msgnum, "ShellMessage")
+
+
 return
+
 
 #If FileExist(CygPath)
     ;cygwin - activate/run
@@ -290,14 +337,5 @@ RAlt & =::
 
 #n::
 {
-    Locale1 := 0x4150415
-    Locale2 := 0x4110411
-    WinID := WinGetID("A")
-    ThreadID := DllCall("GetWindowThreadProcessId", "Int", WinID, "Int", "0")
-    InputLocaleID := DllCall("GetKeyboardLayout", "Int", ThreadID)
-    if InputLocaleID == Locale1 {
-        SendMessage(0x50, 0, Locale2, "", "A")
-    } else if InputLocaleID == Locale2 {
-        SendMessage(0x50, 0, Locale1, "", "A")
-    }
+    CycleLocale()
 }
