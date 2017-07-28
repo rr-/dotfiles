@@ -31,3 +31,10 @@ highlight Error      term=reverse   cterm=NONE ctermbg=Red
 highlight LineNr     term=bold      cterm=NONE ctermfg=238
 highlight NonText    term=bold      cterm=NONE ctermfg=Yellow
 highlight SpecialKey term=bold      cterm=NONE ctermfg=Yellow
+
+"highlight color for bad whitespace
+highlight SpecialKey ctermbg=NONE ctermfg=167
+highlight ColorColumn ctermbg=52
+
+highlight SpellBad ctermbg=52
+highlight VertSplit cterm=NONE ctermfg=245

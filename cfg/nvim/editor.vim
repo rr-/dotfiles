@@ -24,8 +24,6 @@ if !has('gui_running')
   augroup END
 endif
 
-"highlight color for bad whitespace
-highlight SpecialKey ctermbg=NONE ctermfg=187
 "show white characters
 set list listchars=tab:→\ ,trail:·
 
