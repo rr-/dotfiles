@@ -48,3 +48,5 @@ macro attach s <save-entry><bol>~/hub/mail/<enter>
 # prefer plaintext to html
 auto_view text/html
 alternative_order text/plain text/html
+
+set reverse_name
