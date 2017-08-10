@@ -334,8 +334,20 @@ def main() -> None:
         found_anything = True
         print('Radicals: {}'.format(' + '.join(combination)))
 
-        for i, kanji in enumerate(results):
-            print(kanji, end='')
+        kanjis = sum([
+            [key] +
+            list(values)
+            for key, values in itertools.groupby(
+                sorted(results, key=sort_order), sort_order)],
+            [])
+
+        for i, kanji_or_number in enumerate(kanjis):
+            if isinstance(kanji_or_number, int):
+                text = colored.stylize(
+                    ' {:2} '.format(kanji_or_number), colored.fg(240))
+            else:
+                text = (' {} '.format(kanji_or_number))
+            print(text, end='')
             if i % 20 == 19:
                 print()
         print('\n')
