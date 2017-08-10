@@ -277,6 +277,7 @@ _RADICALS: t.Dict[str, t.List[str]] = {
 def _build():
     ret: t.Dict[str, t.Dict] = {'radicals': {}, 'strokes': {}, 'grade': {}}
     for radical in _RADICALS:
+        print('Creating cache for {}...'.format(radical), file=sys.stderr)
         url = 'http://jisho.org/radicals/' + urllib.parse.quote(radical)
         with urllib.request.urlopen(url) as handle:
             response = json.loads(handle.read().decode())
