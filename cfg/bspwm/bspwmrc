@@ -7,18 +7,18 @@ while [ -h "$SOURCE" ]; do
 done
 DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
 
-bspc monitor -d 1 2 3 4 5 6 7 8 9 10 IM
+bspc monitor -d 1 2 3 4 5 6 7 8 9 10
 
 bspc config pointer_modifier mod4
-bspc config focused_border_color "#FF8000"
-bspc config active_border_color "#A08060"
-bspc config normal_border_color "#A08060"
+bspc config focused_border_color "#027BB2"
+bspc config active_border_color "#555555"
+bspc config normal_border_color "#555555"
 
 if [ "$(hostname)" = tornado ]; then
-    BSPC_BORDER_WIDTH=4
+    BSPC_BORDER_WIDTH=8
     BSPC_WINDOW_GAP=20
 else
-    BSPC_BORDER_WIDTH=2
+    BSPC_BORDER_WIDTH=4
     BSPC_WINDOW_GAP=10
 fi
 
@@ -29,7 +29,7 @@ bspc config borderless_monocle    true
 bspc config gapless_monocle       true
 bspc config focus_follows_pointer true
 
-bspc rule -a remote_irc desktop=IM
+bspc rule -a remote_irc desktop=10
 bspc rule -a qbittorrent desktop=9
 bspc rule -a Steam desktop=8
 bspc config external_rules_command "$DIR/rules"

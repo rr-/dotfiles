@@ -16,7 +16,7 @@ class CpuWidget(Widget):
         self._text_label.setFixedWidth(45)
         self._text_label.setAlignment(
             QtCore.Qt.AlignCenter | QtCore.Qt.AlignVCenter)
-        self._chart = Chart(QtCore.QSize(80, main_window.height()))
+        self._chart = Chart(80)
 
         self.set_icon(self._icon_label, 'chip')
 
