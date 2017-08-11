@@ -26,7 +26,8 @@ class MainWindow(QtWidgets.QMainWindow):
     trigger = QtCore.pyqtSignal(object)
 
     def __init__(self, monitors):
-        super().__init__()
+        super().__init__(flags=QtCore.Qt.FramelessWindowHint)
+        self.setAttribute(QtCore.Qt.WA_TranslucentBackground, True)
         self.setWindowFlags(
             QtCore.Qt.SplashScreen
             | QtCore.Qt.WindowStaysOnTopHint
@@ -45,7 +46,7 @@ class MainWindow(QtWidgets.QMainWindow):
             (window_gap + window_border) / self.devicePixelRatioF())
 
         self.setStyleSheet('''
-        QMainWindow {{
+        QMainWindow QWidget {{
             background: {colors.background};
         }}
         QWidget {{
@@ -53,9 +54,6 @@ class MainWindow(QtWidgets.QMainWindow):
             font-family: 'DejaVu Sans';
             font-weight: 500;
             font-size: 12px;
-        }}
-        [class=left] QWidget {{
-            margin: 1px 3px 3px 0;
         }}
         [class=right] QWidget {{
             margin: 1px 0 3px 3px;
@@ -67,29 +65,36 @@ class MainWindow(QtWidgets.QMainWindow):
             padding-right: {content_margin}px;
         }}
         QWidget[class=workspace] {{
-            height: 10px;
-            width: 10px;
-            margin: 4px 4px 4px 0;
+            height: 20px;
+            width: 20px;
+            margin: 0 3px 0 0;
             padding: 0;
-            color: transparent;
+            color: black;
             background: {colors.workspace_background};
-            border: 1px solid {colors.workspace_border};
+            color: {colors.workspace_foreground};
+            border: 0;
         }}
         QWidget[class=workspace][ws_free=False] {{
             background: {colors.workspace_full_background};
-            border: 1px solid {colors.workspace_full_border};
+            color: {colors.workspace_full_foreground};
         }}
         QWidget[class=workspace][ws_focused=True][ws_free=True] {{
             background: {colors.workspace_focused_background};
-            border: 1px solid {colors.workspace_focused_border};
+            color: {colors.workspace_focused_foreground};
         }}
         QWidget[class=workspace][ws_focused=True][ws_free=False] {{
             background: {colors.workspace_focused_full_background};
-            border: 1px solid {colors.workspace_focused_full_border};
+            color: {colors.workspace_focused_full_foreground};
         }}
         QWidget[class=workspace][ws_urgent=True] {{
             background: {colors.workspace_urgent_background};
-            border: 1px solid {colors.workspace_urgent_border};
+            color: {colors.workspace_urgent_foreground};
+        }}
+        QWidget[class=chart] {{
+            background: orange;
+            height: 16px;
+            margin: 2px;
+            border: 4px solid red;
         }}
         '''.format(content_margin=content_margin, colors=Colors))
 

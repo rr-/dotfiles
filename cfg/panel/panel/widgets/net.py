@@ -58,7 +58,7 @@ class NetworkUsageWidget(Widget):
         self._net_out_text_label.setFixedWidth(65)
         self._net_out_text_label.setAlignment(
             QtCore.Qt.AlignCenter | QtCore.Qt.AlignVCenter)
-        self._chart = Chart(QtCore.QSize(80, main_window.height()))
+        self._chart = Chart(80)
 
         self.set_icon(self._net_in_icon_label, 'arrow-down')
         self.set_icon(self._net_out_icon_label, 'arrow-up')
