@@ -38,6 +38,8 @@ alias ul-yume='ul-booru --config=~/.config/ul-yume.conf'
 alias tmp=ul-tmp
 alias 0x0=ul-0x0
 
+alias todo='vim scp://rr-@sakuya.pl/todo.txt'
+
 vb() {
     dec vm
     vboxsdl --startvm $(VBoxManage list vms |pcregrep -o1 '(?:")(.*)(?:")') &

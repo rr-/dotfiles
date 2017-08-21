@@ -73,3 +73,5 @@ if has("digraphs")
   digraph .. 8230 " …
   digraph xx 215 " ×
 endif
+
+inoreabbr <expr> ts# strftime("%Y-%m-%d")
