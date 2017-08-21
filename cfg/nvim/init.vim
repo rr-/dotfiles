@@ -3,7 +3,6 @@ Plug 'junegunn/fzf', { 'dir': '~/.fzf', 'do': './install --all' }
 Plug 'junegunn/fzf.vim'                 "open files using fuzzy matching
 Plug 'Lokaltog/vim-easymotion'          "move to any character!
 Plug 'Yggdroot/indentLine'              "vertical bars showing indent level
-Plug 'flazz/vim-colorschemes'           "color schemes!
 Plug 'embear/vim-localvimrc'            "local vimrc
 Plug 'ntpeters/vim-better-whitespace'   "highlight and strip trailing whitespace
 Plug 'airblade/vim-gitgutter'           "show changed lines in git on margin
