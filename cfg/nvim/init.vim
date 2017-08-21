@@ -2,8 +2,6 @@ call plug#begin()
 Plug 'junegunn/fzf', { 'dir': '~/.fzf', 'do': './install --all' }
 Plug 'junegunn/fzf.vim'                 "open files using fuzzy matching
 Plug 'Lokaltog/vim-easymotion'          "move to any character!
-Plug 'vim-airline/vim-airline'          "riced status bar
-Plug 'vim-airline/vim-airline-themes'   "riced status bar - themes
 Plug 'Yggdroot/indentLine'              "vertical bars showing indent level
 Plug 'flazz/vim-colorschemes'           "color schemes!
 Plug 'embear/vim-localvimrc'            "local vimrc
