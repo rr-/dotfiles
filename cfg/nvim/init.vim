@@ -11,7 +11,7 @@ Plug 'junegunn/vim-easy-align'          "replace :column ...
 Plug 'bronson/vim-visual-star-search'   "enable * and # in visual mode
 Plug 'duggiefresh/vim-easydir'          "create directories on save
 Plug 'christoomey/vim-tmux-navigator'   "integration with tmux
-Plug 'tpope/vim-vinegar'                "better tpope
+Plug 'tpope/vim-vinegar'                "better netrw
 call plug#end()
 
 runtime editor.vim
