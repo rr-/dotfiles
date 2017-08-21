@@ -2,11 +2,6 @@
 "- color scheme settings
 "----------------------------------------
 
-" airline
-let g:airline_theme = 'ubaryd'
-"allow use of special characters that are supplied by terminal font
-let g:airline_powerline_fonts = 1
-
 " Remove all existing highlighting and set the defaults.
 highlight clear
 
@@ -31,6 +26,7 @@ highlight Error      term=reverse   cterm=NONE ctermbg=Red
 highlight LineNr     term=bold      cterm=NONE ctermfg=238
 highlight NonText    term=bold      cterm=NONE ctermfg=Yellow
 highlight SpecialKey term=bold      cterm=NONE ctermfg=Yellow
+highlight StatusLine term=bold      cterm=NONE ctermbg=234
 
 "highlight color for bad whitespace
 highlight SpecialKey ctermbg=NONE ctermfg=167
