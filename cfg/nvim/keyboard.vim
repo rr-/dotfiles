@@ -4,6 +4,9 @@
 
 "set the leader key to -
 let mapleader = "-"
+"prevent vinegar from binding to -
+nnoremap - -
+
 "movement over visual lines, not physical lines
 map <buffer> <silent> k gk
 map <buffer> <silent> j gj
@@ -48,8 +51,8 @@ endfunction
 nnoremap <F4> :call SwitchSourceHeader()<CR>
 
 "file explorer
-  inoremap <F3> <esc>:execute "Explore <bar> call search('" . expand('%:t') . "') <bar> normal! zz"<CR>
-  nnoremap <F3> :execute "Explore <bar> call search('" . expand('%:t') . "') <bar> normal! zz"<CR>
+  imap <F3> <Esc><Plug>VinegarUp
+  nmap <F3> <Plug>VinegarUp
 "EasyAlign
   "normal mode (e.g. gaip)
   nmap ga <Plug>(EasyAlign)
