@@ -3,7 +3,7 @@
 "----------------------------------------
 
 " Remove all existing highlighting and set the defaults.
-highlight clear
+colorscheme default
 
 " Remove all highlighting
 highlight clear Constant
@@ -13,24 +13,17 @@ highlight clear PreProc
 highlight clear Type
 highlight clear Special
 highlight clear Identifier
-highlight clear String
-highlight clear Comment
-highlight clear Error
-highlight clear LineNr
-highlight clear NonText
-highlight clear SpecialKey
 
-highlight String     term=underline cterm=NONE ctermfg=Magenta
-highlight Comment    term=bold      cterm=NONE ctermfg=Cyan
-highlight Error      term=reverse   cterm=NONE ctermbg=Red
-highlight LineNr     term=bold      cterm=NONE ctermfg=238
-highlight NonText    term=bold      cterm=NONE ctermfg=Yellow
-highlight SpecialKey term=bold      cterm=NONE ctermfg=Yellow
-highlight StatusLine term=bold      cterm=NONE ctermbg=234
-
-"highlight color for bad whitespace
-highlight SpecialKey ctermbg=NONE ctermfg=167
-highlight ColorColumn ctermbg=52
-
-highlight SpellBad ctermbg=52
-highlight VertSplit cterm=NONE ctermfg=245
+highlight String      term=underline cterm=NONE ctermfg=green
+highlight Comment     term=bold      cterm=NONE ctermfg=cyan
+highlight Error       term=reverse   cterm=NONE ctermbg=red
+highlight LineNr      term=bold      cterm=NONE ctermfg=238
+highlight NonText     term=bold      cterm=NONE ctermfg=yellow
+highlight SpecialKey  term=NONE      cterm=NONE ctermfg=167
+highlight StatusLine  term=bold      cterm=NONE ctermbg=234
+highlight ColorColumn term=NONE      ctermbg=52
+highlight SpellBad    term=NONE      ctermbg=52
+highlight SpellCap    term=NONE      ctermbg=58
+highlight SpellRare   term=NONE      ctermbg=23
+highlight SpellLocal  term=NONE      ctermbg=23
+highlight VertSplit   term=NONE      cterm=NONE ctermfg=245
