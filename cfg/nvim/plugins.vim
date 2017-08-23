@@ -20,7 +20,7 @@ let g:move_key_modifier = 'C'           "c-j and c-k rather than default binding
 let g:move_auto_indent = 0              "disable indentation aids
 
 "gitgutter
-let g:gitgutter_sign_column_always = 1  "don't 'jump' between buffers
+set signcolumn=yes                      "don't 'jump' between buffers
 set updatetime=250                      "be more responsive
 
 "change tmux-navigator bindings
