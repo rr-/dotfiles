@@ -140,14 +140,24 @@ class PluginYume(PluginBase):
     async def _update_tag_cache(self) -> None:
         if self._tag_cache.exists():
             return
-        print('Downloading tag cache...')
-        response = await self._get('../data/tags.json')
-        for tag in response['tags']:
-            for name in tag['names']:
-                self._tag_cache.add(CachedTag(
-                    name=name,
-                    importance=tag['usages'],
-                    implications=tag.get('implications', [])))
+        offset = 0
+        limit = 100
+        while True:
+            print('Downloading tag cache... page {}'.format(offset // limit))
+            response = await self._get(
+                '/tags?offset={offset}&limit={limit}&fields={fields}'.format(
+                    offset=offset,
+                    limit=limit,
+                    fields=','.join(['names', 'usages', 'implications'])))
+            if not response['results']:
+                break
+            offset += len(response['results'])
+            for tag in response['results']:
+                for name in tag['names']:
+                    self._tag_cache.add(CachedTag(
+                        name=name,
+                        importance=tag['usages'],
+                        implications=tag.get('implications', [])))
         self._tag_cache.save()
 
     @util.async_lru_cache()
