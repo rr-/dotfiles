@@ -63,4 +63,4 @@ fi
 pkill -f -9 compton &>/dev/null
 compton "${comptonflags[@]}" & # -b broke on pacman -Syu at 2016-03-14
 
-feh --bg-fill ~/.wallpaper
+feh --no-fehbg --bg-fill ~/.wallpaper
