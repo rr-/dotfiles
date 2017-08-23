@@ -53,8 +53,7 @@ def get_theme_names():
     result = []
     for path in paths:
         name, ext = os.path.splitext(os.path.basename(path))
-        if name != 'current_scheme':
-            result.append(name)
+        result.append(name)
     return list(sorted(result))
 
 
@@ -72,8 +71,6 @@ def apply_theme(theme_name):
                 continue
             key, value = match.groups()
             change_color(key, value)
-    with open('current_scheme.txt', 'w') as handle:
-        handle.write(theme_name)
 
 
 def main():
@@ -85,28 +82,10 @@ def main():
         print('No themes', file=sys.stderr)
         sys.exit(1)
 
-    try:
-        with open('current_scheme.txt', 'r') as handle:
-            active_theme = handle.read()
-    except IOError:
-        active_theme = theme_names[0]
-    if active_theme not in theme_names:
-        print('Invalid theme', file=sys.stderr)
-        sys.exit(1)
-
-    if args.command_name == 'restore':
-        apply_theme(active_theme)
     elif args.command_name == 'list':
         print('\n'.join(theme_names))
-    elif args.command_name == 'get':
-        print(active_theme)
     elif args.command_name == 'set':
         apply_theme(args.theme)
-    elif args.command_name == 'cycle':
-        current_theme_idx = theme_names.index(active_theme)
-        next_theme_idx = (current_theme_idx + 1) % len(theme_names)
-        next_theme_name = theme_names[next_theme_idx]
-        apply_theme(next_theme_name)
     else:
         print('No command chosen', file=sys.stderr)
         sys.exit(1)
