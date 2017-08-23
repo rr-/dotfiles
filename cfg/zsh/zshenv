@@ -39,6 +39,7 @@ alias tmp=ul-tmp
 alias 0x0=ul-0x0
 
 alias todo='vim scp://rr-@sakuya.pl/todo.txt'
+alias notes='vim scp://rr-@sakuya.pl/notes.txt'
 
 vb() {
     dec vm
