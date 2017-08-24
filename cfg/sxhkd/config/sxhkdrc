@@ -65,7 +65,8 @@ super + e
 
 # volume up and down
 super + {x,X}
-    amixer -q set Master 1%{+,-} unmute
+    dir={+,-}; \
+    amixer -D pulse set Master 1%$dir unmute || amixer -q set Master 1%$dir unmute
 
 # previous and next track
 super + {c,C}
