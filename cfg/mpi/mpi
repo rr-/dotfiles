@@ -1,11 +1,11 @@
 #!/bin/python3
 # A wrapper around MPV optimized for images.
 # Used mostly to interact with vifm and shell to filter out non-images.
-
 import argparse
 import os
 import re
 import tempfile
+from pathlib import Path
 from subprocess import run
 
 MANAGED_EXTENSIONS = [
@@ -14,76 +14,74 @@ MANAGED_EXTENSIONS = [
 
 
 def parse_args():
-    ''' Read the user arguments. '''
-
     parser = argparse.ArgumentParser(description='Run mpv as image viewer')
     parser.add_argument(
-        '-s', '--select', dest='selected_path',
-        help='Which file to preselect')
+        '-s', '--select', dest='selected_path', help='Which file to preselect')
     parser.add_argument(
         metavar='PATH', nargs='*', dest='paths',
         help='path to the image or a directory', default=None)
     args, unknown_args = parser.parse_known_args()
 
-    # decorate the user arguments
+    # convert user arguments to absolute pathlib.Path
     if args.selected_path:
-        args.selected_path = os.path.abspath(args.selected_path)
-    if not args.paths:
+        args.selected_path = Path(args.selected_path).absolute()
+
+    if args.paths:
+        args.paths = [Path(path).absolute() for path in args.paths]
+    else:
         if args.selected_path is not None:
-            args.paths = [os.path.dirname(args.selected_path)]
+            args.paths = [args.selected_path.parent]
         else:
-            args.paths = ['.']
-    args.paths = [os.path.abspath(path) for path in args.paths]
+            args.paths = [Path('.').absolute()]
 
     return args, unknown_args
+
+
+def gather_playlist(paths, selected_path):
+    for path in paths:
+        if path.is_dir():
+            for entry in path.iterdir():
+                if entry.is_file() \
+                and entry.suffix.lower().lstrip('.') in MANAGED_EXTENSIONS:
+                    yield entry
+        elif path.is_file():
+            yield path
+    if selected_path:
+        yield selected_path
+
+
+def sort_playlist(playlist):
+    def convert(text):
+        return int(text) if text.isdigit() else text.lower()
+
+    playlist.sort(
+        key=lambda key: [convert(c) for c in re.split(r'(\d+)', str(key))])
 
 
 def main():
     args, unknown_args = parse_args()
 
-    # compose the playlist
-    playlist = []
-    for path in args.paths:
-        if os.path.isdir(path):
-            for entry in os.scandir(path):
-                if not entry.is_file:
-                    continue
-                ext = os.path.splitext(entry.path)[1].lstrip('.').lower()
-                if ext in MANAGED_EXTENSIONS:
-                    playlist.append(entry.path)
-        elif os.path.isfile(path):
-            playlist.append(path)
-    if args.selected_path:
-        playlist.append(args.selected_path)
+    playlist = list(gather_playlist(args.paths, args.selected_path))
+    playlist = list(set(playlist))  # remove duplicates
+    sort_playlist(playlist)
 
-    # remove the duplicates from the playlist
-    playlist = list(set(playlist))
-
-    # sort the playlist, get selection position
-    def convert(text):
-        return int(text) if text.isdigit() else text.lower()
-
-    playlist.sort(
-        key=lambda key: [convert(c) for c in re.split('([0-9]+)', key)])
-    if args.selected_path:
-        playlist_pos = playlist.index(args.selected_path)
-    else:
-        playlist_pos = 0
+    playlist_pos = (
+        playlist.index(args.selected_path) if args.selected_path else 0)
 
     # write the playlist
-    with tempfile.NamedTemporaryFile(delete=False, mode='wb') as handle:
-        handle.write('\n'.join(playlist).encode('utf-8'))
-        handle.close()
+    with tempfile.NamedTemporaryFile(
+            delete=False, mode='w', encoding='utf-8') as handle:
+        handle.write('\n'.join(str(path) for path in playlist))
 
-        try:
-            # run mpv
-            run([
-                'mpv',
-                '--config-dir=%s' % os.path.expanduser('~/.config/mpi'),
-                '--playlist=%s' % handle.name,
-                '--playlist-start=%d' % playlist_pos] + unknown_args)
-        finally:
-            os.unlink(handle.name)
+    try:
+        run([
+            'mpv',
+            '--config-dir={}'.format(Path('~/.config/mpi').expanduser()),
+            '--playlist={}'.format(handle.name),
+            '--playlist-start={}'.format(playlist_pos)]
+            + unknown_args)
+    finally:
+        os.unlink(handle.name)
 
 
 if __name__ == '__main__':
