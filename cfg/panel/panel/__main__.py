@@ -16,7 +16,6 @@ from panel.widgets.volume import VolumeWidget
 from panel.widgets.cpu import CpuWidget
 from panel.widgets.net import NetworkUsageWidget
 from panel.widgets.battery import BatteryWidget
-from panel.widgets.mpd import MpdWidget
 from panel.widgets.mpvmd import MpvmdWidget
 from panel.widgets.stretch import StretchWidget
 from panel.colors import Colors
@@ -139,7 +138,6 @@ def main():
         WorkspacesWidget(app, main_window, workspaces_updater),
         WindowTitleWidget(app, main_window, workspaces_updater),
         StretchWidget(app, main_window),
-        MpdWidget(app, main_window),
         MpvmdWidget(app, main_window),
         NetworkUsageWidget(app, main_window),
         BatteryWidget(app, main_window),
