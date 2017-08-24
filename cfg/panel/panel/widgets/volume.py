@@ -63,7 +63,6 @@ class VolumeWidget(Widget):
     def __init__(self, app, main_window):
         super().__init__(app, main_window)
         self.volume = None
-        self.muted = False
 
         self._icon_label = QtWidgets.QLabel()
         self._volume_control = VolumeControl(QtCore.QSize(50, 10))
@@ -76,28 +75,32 @@ class VolumeWidget(Widget):
         container.layout().addWidget(self._volume_control)
         main_window[0].layout().addWidget(container)
 
+    @property
+    def mixer(self):
+        return alsaaudio.Mixer(device='pulse')
+
     def change_volume(self, event):
         with self.exception_guard():
             subprocess.call([
-                'amixer', '-q', 'set', 'Master',
-                '1dB%s' % ['-', '+'][event.angleDelta().y() > 0],
+                'amixer', '-D', 'pulse', 'set', 'Master',
+                '1%' + ['-', '+'][event.angleDelta().y() > 0],
                 'unmute'])
             self.refresh()
             self.render()
 
     def toggle_mute(self, _event):
         with self.exception_guard():
-            subprocess.call(['amixer', '-q', 'set', 'Master', 'toggle'])
+            self.mixer.setmute(1 - self.mixer.getmute()[0])
             self.refresh()
             self.render()
 
     def refresh_impl(self):
-        self.volume = alsaaudio.Mixer().getvolume()[0]
-        self.muted = alsaaudio.Mixer().getmute()[0]
+        self.volume = self.mixer.getvolume()[0]
+        self.muted = self.mixer.getmute()[0]
 
     def render_impl(self):
         self.set_icon(
             self._icon_label,
-            'volume-off' if self.muted else 'volume-on')
+            'volume-off' if self.mixer.getmute()[0] else 'volume-on')
         self._volume_control.set(self.volume)
         self._volume_control.repaint()
