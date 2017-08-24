@@ -1,6 +1,7 @@
 import os
 import time
 import logging
+import pathlib
 from contextlib import contextmanager
 from PyQt5 import QtCore, QtGui, QtSvg
 from panel.colors import Colors
@@ -38,12 +39,12 @@ class Widget:
             return
         widget.setProperty('icon_name', icon_name)
 
-        icon_path = os.path.join(
-            os.path.dirname(__file__), os.pardir, 'icons', icon_name + '.svg')
+        icon_path = (
+            pathlib.Path(__file__).parent.parent
+            / 'data' / 'icons' / (icon_name + '.svg'))
         target_size = QtCore.QSize(18, 18)
 
-        with open(icon_path, 'rb') as handle:
-            icon_content = handle.read()
+        icon_content = icon_path.read_bytes()
 
         icon_content = icon_content.replace(
             b'<svg', b'<svg fill="%s"' % Colors.foreground.encode('ascii'))
