@@ -1,4 +1,5 @@
 import os
+import pathlib
 import shutil
 import logging
 import glob
@@ -6,6 +7,7 @@ from subprocess import Popen, call, PIPE
 import urllib.request
 
 logger = logging.getLogger(__name__)
+root_dir = pathlib.Path(__file__).parent.parent.parent
 
 
 def run_silent(*args, **kwargs):

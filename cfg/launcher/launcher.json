@@ -1,0 +1,7 @@
+(https?|file)://.*          :: qutebrowser
+.*\.html?                   :: qutebrowser
+about:blank                 :: qutebrowser
+.*\.pdf                     :: libreoffice
+.*\.(jpg|jpeg|gif|png)      :: mpi
+magnet:                     :: qbittorrent
+.*\.torrent                 :: qbittorrent
