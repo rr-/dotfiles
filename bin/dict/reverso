@@ -1,0 +1,59 @@
+#!/usr/bin/python3
+import argparse
+import re
+import urllib.request
+import bs4
+
+
+COLOR_RESET = '\x1B[0m'
+COLOR_HIGHLIGHT = '\x1B[38;5;%dm\x1B[48;5;%dm' % (229, 58)
+
+
+USER_AGENT = (
+    'Mozilla/5.0 (X11; Linux x86_64; rv:10.0) Gecko/20100101 Firefox/10.0')
+
+
+def _parse_args():
+    parser = argparse.ArgumentParser(
+        description='Looks up phrases on reverso.net')
+    parser.add_argument('-l', '--language', default='polish')
+    parser.add_argument('phrase', nargs='+')
+    return parser.parse_args()
+
+
+def _format_html(node):
+    inner_html = ''.join(str(child) for child in node)
+    inner_html = (
+        inner_html
+        .replace('<em>', COLOR_HIGHLIGHT)
+        .replace('</em>', COLOR_RESET))
+    return re.sub('<[^>]*>', '', inner_html).strip()
+
+
+def _lookup_context_phrase(language, phrase):
+    URL = 'http://context.reverso.net/translation/english-{language}/{phrase}'
+
+    request = urllib.request.Request(
+        url=URL.format(language=language, phrase=urllib.parse.quote(phrase)),
+        headers={'User-Agent': USER_AGENT})
+
+    with urllib.request.urlopen(request) as handle:
+        content = handle.read()
+        soup = bs4.BeautifulSoup(content, 'lxml')
+        for example_div in soup.find_all('div', {'class': 'example'}):
+            src_div = example_div.find('div', {'class': 'src'}).div
+            dst_div = example_div.find('div', {'class': 'trg'}).div
+            yield (_format_html(src_div), _format_html(dst_div))
+
+
+def main():
+    args = _parse_args()
+    results = _lookup_context_phrase(args.language, ' '.join(args.phrase))
+    for src, dst in results:
+        print(src)
+        print(dst)
+        print()
+
+
+if __name__ == '__main__':
+    main()
