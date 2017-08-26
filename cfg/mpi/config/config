@@ -1,13 +1,13 @@
 # vim syntax=config
 
-profile=opengl
+vo=opengl
 stop-screensaver=yes
 image-display-duration=inf
 
 audio-channels=2
 alang=jpn,jp,jap,Japanese,en,eng,English
 slang=en,eng,English,pl,pol,Polish
-sub-codepage=utf8:cp1250
+sub-codepage=utf8,cp1250
 volume-max=300
 
 video-aspect=no
