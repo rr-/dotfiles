@@ -1,4 +1,5 @@
 #!/bin/python3
+import os
 import argparse
 from os.path import expanduser
 from typing import Any, List
@@ -6,10 +7,11 @@ from drillsrs import db, cmd, util
 from drillsrs.cmd.command_base import CommandBase
 from drillsrs.__main__ import (
     create_arg_parser, parse_args, execute_command_with_args)
+import xdg
 
 
 DECK_NAME = 'kotoba'
-REPORT_PATH = expanduser('~/.local/share/drillsrs/kotoba.htm')
+REPORT_PATH = os.path.join(xdg.XDG_DATA_HOME, 'drillsrs/kotoba.htm')
 
 
 def _remove_argparse_options(
