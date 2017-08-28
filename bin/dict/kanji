@@ -11,9 +11,10 @@ import json
 import sys
 import typing as t
 import colored
+import xdg
 
 
-_CACHE_PATH = pathlib.Path('~/.local/cache/kanji.json').expanduser()
+_CACHE_PATH = pathlib.Path(xdg.XDG_CACHE_HOME) / 'kanji.json'
 
 
 # Radicals as I was taught by wanikani

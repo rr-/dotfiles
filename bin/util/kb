@@ -5,6 +5,7 @@
 import os
 import argparse
 from subprocess import run, PIPE
+import xdg
 
 
 xmodmaps = [
@@ -21,7 +22,7 @@ def parse_args() -> argparse.Namespace:
 def main() -> None:
     if run(['pgrep', 'ibus-daemon'], stdout=PIPE).returncode != 0:
         print('starting daemon')
-        run(os.path.expanduser('~/.config/ibus/start'))
+        run(os.path.join(xdg.XDG_CONFIG_HOME, 'ibus/start'))
 
     args = parse_args()
 
