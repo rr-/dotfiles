@@ -1,5 +1,9 @@
 SendEnv LIGHTNESS
 
+Host *
+    ServerAliveInterval 15
+    ServerAliveCountMax 2
+
 Host cyclone
     HostName sakuya.pl
     User rr-
