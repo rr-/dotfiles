@@ -41,8 +41,14 @@ def _lookup_context_phrase(language, phrase):
         content = handle.read()
         soup = bs4.BeautifulSoup(content, 'lxml')
         for example_div in soup.find_all('div', {'class': 'example'}):
-            src_div = example_div.find('div', {'class': 'src'}).div
-            dst_div = example_div.find('div', {'class': 'trg'}).div
+            src_div = (
+                example_div
+                .find('div', {'class': 'src'})
+                .find('span', {'class': 'text'}))
+            dst_div = (
+                example_div
+                .find('div', {'class': 'trg'})
+                .find('span', {'class': 'text'}))
             yield (_format_html(src_div), _format_html(dst_div))
 
 
