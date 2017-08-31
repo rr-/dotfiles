@@ -2,7 +2,7 @@
 import argparse
 import re
 import urllib.request
-import bs4
+import lxml.etree
 
 
 COLOR_RESET = '\x1B[0m'
@@ -22,7 +22,7 @@ def _parse_args():
 
 
 def _format_html(node):
-    inner_html = ''.join(str(child) for child in node)
+    inner_html = lxml.etree.tostring(node, encoding='unicode')
     inner_html = (
         inner_html
         .replace('<em>', COLOR_HIGHLIGHT)
@@ -39,17 +39,11 @@ def _lookup_context_phrase(language, phrase):
 
     with urllib.request.urlopen(request) as handle:
         content = handle.read()
-        soup = bs4.BeautifulSoup(content, 'lxml')
-        for example_div in soup.find_all('div', {'class': 'example'}):
-            src_div = (
-                example_div
-                .find('div', {'class': 'src'})
-                .find('span', {'class': 'text'}))
-            dst_div = (
-                example_div
-                .find('div', {'class': 'trg'})
-                .find('span', {'class': 'text'}))
-            yield (_format_html(src_div), _format_html(dst_div))
+        doc = lxml.etree.HTML(content)
+        for example_node in doc.cssselect('div.example'):
+            src_node = example_node.cssselect('div.src span.text')[0]
+            dst_node = example_node.cssselect('div.trg span.text')[0]
+            yield (_format_html(src_node), _format_html(dst_node))
 
 
 def main():
