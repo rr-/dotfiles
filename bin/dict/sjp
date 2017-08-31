@@ -6,50 +6,31 @@ import sys
 import urllib.request
 import urllib.parse
 import re
-from bs4 import BeautifulSoup
+import lxml.html
+from itertools import chain
 
 
-def get_first(input_list):
-    ''' Gets the first element from a list, or None if the list is empty. '''
-    return (input_list or [None])[0]
-
-
-def text_with_newlines(elem):
-    text = ''
-    try:
-        for child in elem.recursiveChildGenerator():
-            if isinstance(child, str):
-                text += child.strip()
-            elif child.name == 'br':
-                text += '\n'
-    except AttributeError:
-        return str(elem)
-    return text
+def collect_text(node):
+    doc = lxml.html.document_fromstring(lxml.html.tostring(node))
+    for br in doc.xpath("*//br"):
+        br.tail = "\n" + br.tail if br.tail else "\n"
+    return doc.text_content()
 
 
 def print_word_def(word):
-    ''' Prints a word. '''
-
     url = 'http://sjp.pl/' + urllib.parse.quote(word)
     content = urllib.request.urlopen(url).read().decode('utf8')
 
-    soup = BeautifulSoup(content, 'html.parser')
-    for header in soup.find_all('h1'):
+    doc = lxml.html.fromstring(content)
+    for header in doc.cssselect('h1'):
         print(header.text)
-        node = header.next_sibling
-        while node is not None:
-            if node.name != 'div':
-                text = text_with_newlines(node).strip()
+        for node in header.itersiblings():
+            if re.search('medium.*sans-serif', node.attrib.get('style', '')):
+                text = collect_text(node).strip()
                 text = re.sub(r'\n\s+', '\n', text)
-                if text and 'dopuszczalne w grach' not in text \
-                        and text != header.text:
-                    print(text)
-            node = node.next_sibling
-            if not node \
-                    or node.name == 'hr' \
-                    or node.name == 'h1' \
-                    or getattr(
-                        node, 'text', '').lower().startswith('komentarze:'):
+                print(text)
+            if node.tag == 'hr' \
+            or node.tag == 'h1':
                 break
         print()
 
