@@ -5,7 +5,7 @@ instance=$3
 title=$(xdotool getwindowname "$window_id")
 
 if [ "$instance" = remote_irc ] ; then
-    echo desktop=IM
+    echo desktop=10
 elif [ "$title" = ul-yume ] || [ "$title" = ul-gelbooru ]; then
     compton-trans -c 50 -w "$window_id"
     width=$(xdotool getwindowgeometry --shell "$window_id" | head -4 | tail -1 | sed 's/[^0-9]*//')
