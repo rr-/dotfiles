@@ -1,6 +1,5 @@
 # pylint: disable=invalid-name
 import subprocess
-import alsaaudio
 from PyQt5 import QtCore, QtGui, QtWidgets
 from panel.widgets.widget import Widget
 from panel.colors import Colors
@@ -62,6 +61,9 @@ class VolumeWidget(Widget):
 
     def __init__(self, app, main_window):
         super().__init__(app, main_window)
+
+        import alsaaudio
+
         self.volume = None
 
         self._icon_label = QtWidgets.QLabel()
@@ -70,9 +72,9 @@ class VolumeWidget(Widget):
         container = QtWidgets.QWidget()
         container.mouseReleaseEvent = self.toggle_mute
         container.wheelEvent = self.change_volume
-        container.setLayout(QtWidgets.QHBoxLayout(margin=0, spacing=6))
-        container.layout().addWidget(self._icon_label)
-        container.layout().addWidget(self._volume_control)
+        layout = QtWidgets.QHBoxLayout(self, margin=0, spacing=6)
+        layout.addWidget(self._icon_label)
+        layout.addWidget(self._volume_control)
         main_window[0].layout().addWidget(container)
 
     @property

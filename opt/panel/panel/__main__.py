@@ -134,16 +134,16 @@ def main():
     main_window = MainWindow(workspaces_updater.monitors)
     main_window.setWindowTitle('panel')
 
-    widgets = [
-        WorkspacesWidget(app, main_window, workspaces_updater),
-        WindowTitleWidget(app, main_window, workspaces_updater),
-        StretchWidget(app, main_window),
-        MpvmdWidget(app, main_window),
-        NetworkUsageWidget(app, main_window),
-        BatteryWidget(app, main_window),
-        CpuWidget(app, main_window),
-        VolumeWidget(app, main_window),
-        TimeWidget(app, main_window)
+    widget_factories = [
+        lambda: WorkspacesWidget(app, main_window, workspaces_updater),
+        lambda: WindowTitleWidget(app, main_window, workspaces_updater),
+        lambda: StretchWidget(app, main_window),
+        lambda: MpvmdWidget(app, main_window),
+        lambda: NetworkUsageWidget(app, main_window),
+        lambda: BatteryWidget(app, main_window),
+        lambda: CpuWidget(app, main_window),
+        lambda: VolumeWidget(app, main_window),
+        lambda: TimeWidget(app, main_window)
     ]
 
     def worker(widget, trigger):
@@ -161,10 +161,12 @@ def main():
             '-m', monitor.name,
             'top_padding', str(physical_height)])
 
-    for widget in widgets:
-        widget.refresh()
-        main_window.trigger.emit(widget.render)
-
+    for widget_factory in widget_factories:
+        try:
+            widget = widget_factory()
+        except ImportError as ex:
+            print(ex, file=sys.stderr)
+            continue
         thread = threading.Thread(
             target=worker, args=(widget, main_window.trigger), daemon=True)
         thread.start()
