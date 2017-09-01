@@ -13,6 +13,7 @@ setup(
     install_requires=[
         'PyQT5',
         'python-xlib',
-        'pyalsaaudio',
         'psutil',
-    ])
+    ], extras_require={
+        'alsa': ['pyalsaaudio'],
+    })
