@@ -1,32 +1,27 @@
 #!/usr/bin/env python3
 import argparse
 import hashlib
-import os
 import subprocess
 import time
 from datetime import datetime
 from typing import List
+from pathlib import Path
 
 
-def _get_paths(target_paths: List[str]) -> List[str]:
-    paths: List[str] = []
+def _get_paths(target_paths: List[Path]) -> List[str]:
     for target_path in target_paths:
-        if os.path.isdir(target_path):
-            for root, _subdirs, files in os.walk(target_path):
-                for file in files:
-                    paths.append(os.path.join(root, file))
-        else:
-            paths.append(target_path)
-    paths.sort()
-    return paths
+        for path in target_path.iterdir():
+            if path.is_dir():
+                yield from _get_paths([path])
+            elif path.is_file():
+                yield path
 
 
 def _get_checksum(paths: List[str]) -> str:
     digest = hashlib.md5()
     for path in paths:
         try:
-            with open(path, 'rb') as handle:
-                digest.update(handle.read())
+            digest.update(path.read_bytes())
         except FileNotFoundError:
             pass
     return digest.hexdigest()
@@ -43,13 +38,13 @@ def _parse_args() -> argparse.Namespace:
 
 def main() -> None:
     args = _parse_args()
-    target_dirs: List[str] = args.target_dir
+    target_dirs: List[Path] = [Path(path) for path in args.target_dir]
     command_line: List[str] = [args.cmd] + args.cmd_args
     sleep_time: int = args.sleep
     last_checksum = None
 
     while True:
-        paths = _get_paths(target_dirs)
+        paths = list(sorted(_get_paths(target_dirs)))
         try:
             current_checksum = _get_checksum(paths)
         except Exception:
