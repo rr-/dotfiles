@@ -8,11 +8,13 @@ from typing import List
 from pathlib import Path
 
 
-def _get_paths(target_paths: List[Path]) -> List[str]:
+def _get_paths(target_paths: List[Path], exclude: List[str]) -> List[str]:
     for target_path in target_paths:
         for path in target_path.iterdir():
-            if path.is_dir():
-                yield from _get_paths([path])
+            if path.name in exclude:
+                continue
+            elif path.is_dir():
+                yield from _get_paths([path], exclude)
             elif path.is_file():
                 yield path
 
@@ -30,6 +32,7 @@ def _get_checksum(paths: List[str]) -> str:
 def _parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser('Monitor filesystem for changes')
     parser.add_argument('--sleep', default=1, type=int)
+    parser.add_argument('--exclude', nargs='*')
     parser.add_argument('-t', '--target-dir', nargs='*')
     parser.add_argument('cmd', metavar='cmd')
     parser.add_argument('cmd_args', metavar='cmd_arg', nargs='*')
@@ -38,13 +41,14 @@ def _parse_args() -> argparse.Namespace:
 
 def main() -> None:
     args = _parse_args()
+    exclude: List[str] = args.exclude or []
     target_dirs: List[Path] = [Path(path) for path in args.target_dir]
     command_line: List[str] = [args.cmd] + args.cmd_args
     sleep_time: int = args.sleep
     last_checksum = None
 
     while True:
-        paths = list(sorted(_get_paths(target_dirs)))
+        paths = list(sorted(_get_paths(target_dirs, exclude)))
         try:
             current_checksum = _get_checksum(paths)
         except Exception:
