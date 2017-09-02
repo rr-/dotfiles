@@ -1,0 +1,39 @@
+#!/usr/bin/env python3
+import argparse
+import json
+import requests
+
+
+CURRENCIES = [
+    'AUD', 'BGN', 'BRL', 'CAD', 'CHF', 'CNY', 'CZK', 'DKK',
+    'GBP', 'HKD', 'HRK', 'HUF', 'IDR', 'ILS', 'INR', 'JPY',
+    'KRW', 'MXN', 'MYR', 'NOK', 'NZD', 'PHP', 'PLN', 'RON',
+    'RUB', 'SEK', 'SGD', 'THB', 'TRY', 'USD', 'ZAR'
+]
+
+
+def parse_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('num', type=float)
+    parser.add_argument('src', type=str.upper, choices=CURRENCIES)
+    parser.add_argument('dst', type=str.upper, choices=CURRENCIES)
+    return parser.parse_args()
+
+
+def main():
+    args = parse_args()
+    src_price = args.num
+    src_currency = args.src
+    dst_currency = args.dst
+
+    response = requests.get(f'http://api.fixer.io/latest?base={src_currency}')
+    result = json.loads(response.text)
+    rate = result['rates'][args.dst]
+
+    dst_price = src_price * rate
+
+    print(f'{src_price:.02f} {src_currency} = {dst_price:.02f} {dst_currency}')
+
+
+if __name__ == '__main__':
+    main()
