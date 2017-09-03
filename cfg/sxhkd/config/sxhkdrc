@@ -174,7 +174,8 @@ alt + F12
     killall -SIGUSR1 sxhkd
 
 alt + shift + F12
-    bash -c '~/.config/bspwm/bspwmrc'
+    bash -c '~/.config/bspwm/bspwmrc'; \
+    bash -c '~/.config/x/start-panel.sh'
 
 # screenshots
 super + i

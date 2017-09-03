@@ -1,5 +1,4 @@
-# pylint: disable=invalid-name
-from collections import defaultdict
+from contextlib import contextmanager
 from PyQt5 import QtCore, QtGui, QtWidgets
 import Xlib
 import Xlib.display
@@ -9,78 +8,94 @@ from panel.widgets.widget import Widget
 class WindowTitleWidget(Widget):
     delay = 0
 
-    def __init__(self, app, main_window, workspaces_updater):
+    def __init__(self, app, main_window):
         super().__init__(app, main_window)
-        self._updater = workspaces_updater
-        self._labels = []
-        for i, _ in enumerate(main_window):
-            label = QtWidgets.QLabel()
-            label.setProperty('class', 'wintitle')
-            main_window[i].layout().addWidget(label)
-            self._labels.append(label)
-            self._max_width = main_window[i].width() * 0.8
-        self._font_metrics = QtGui.QFontMetrics(self._labels[0].font())
-        self._desktop_id_to_window_title = defaultdict(str)
+        self._label = QtWidgets.QLabel(main_window)
+        self._label.setProperty('class', 'wintitle')
+
+        self._max_width = main_window.width() * 0.8
+        self._font_metrics = QtGui.QFontMetrics(self._label.font())
 
         self._disp = Xlib.display.Display()
         self._root = self._disp.screen().root
+        self._root.change_attributes(event_mask=Xlib.X.PropertyChangeMask)
+        self._WM_NAME = self._disp.intern_atom('WM_NAME')
         self._NET_WM_NAME = self._disp.intern_atom('_NET_WM_NAME')
         self._NET_WM_DESKTOP = self._disp.intern_atom('_NET_WM_DESKTOP')
+        self._NET_ACTIVE_WINDOW = self._disp.intern_atom('_NET_ACTIVE_WINDOW')
 
-        self._desktop_id_to_monitor = {}
-        for i, monitor in enumerate(
-                sorted(self._updater.monitors, key=lambda m: m.original_id)):
-            for _ in monitor.workspaces:
-                self._desktop_id_to_monitor[len(self._desktop_id_to_monitor)] \
-                    = monitor.display_id
+        self._last_seen = {'xid': None, 'title': None}
 
-        self._update_titles(self._root)
+        win_id, _focus_changed = self._active_window_changed()
+        self._update_window_name(win_id)
+        self._render_impl()
 
-    def refresh_impl(self):
+    @property
+    def container(self):
+        return self._label
+
+    def _refresh_impl(self):
         event = self._disp.next_event()
-        event_type = getattr(event, 'type', None)
-        event_atom = getattr(event, 'atom', None)
+        if event.type != Xlib.X.PropertyNotify:
+            return
 
-        if event_atom == self._NET_WM_NAME \
-                or event_type in [Xlib.X.FocusIn, Xlib.X.FocusOut]:
-            self._update_titles(self._root)
+        if event.atom == self._NET_ACTIVE_WINDOW:
+            win_id, focus_changed = self._active_window_changed()
+            if focus_changed:
+                self._update_window_name(win_id)
+        elif event.atom in (self._NET_WM_NAME, self._WM_NAME):
+            self._update_window_name(self._last_seen['xid'])
 
-    def render_impl(self):
-        for i, monitor in enumerate(self._updater.monitors):
-            focused_desktops = [ws for ws in monitor.workspaces if ws.focused]
-            if not focused_desktops:
-                continue
-            focused_desktop_id = focused_desktops[0].original_id
-            self._labels[i].setText(
-                self._font_metrics.elidedText(
-                    self._desktop_id_to_window_title[focused_desktop_id] or '',
-                    QtCore.Qt.ElideRight,
-                    self._max_width))
+    def _render_impl(self):
+        self._label.setText(
+            self._font_metrics.elidedText(
+                self._last_seen['title'] or '-',
+                QtCore.Qt.ElideRight,
+                self._max_width))
 
-    def _update_titles(self, root_window):
-        desktop_id_to_window_title = defaultdict(str)
-        windows = [root_window]
-        while windows:
-            window = windows.pop()
+    @contextmanager
+    def _window_obj(self, win_id):
+        ret = None
+        if win_id:
             try:
-                event_mask = (
-                    Xlib.X.FocusChangeMask | Xlib.X.PropertyChangeMask)
-                window.change_attributes(event_mask=event_mask)
-
-                result = window.get_full_property(self._NET_WM_DESKTOP, 0)
-                desktop_id = result.value[0] if result else None
-                if desktop_id is not None:
-                    result = window.get_full_property(self._NET_WM_NAME, 0)
-                    window_title = result.value if result else ''
-                    if isinstance(window_title, bytes):
-                        window_title = window_title.decode('utf8')
-                    if desktop_id not in desktop_id_to_window_title:
-                        desktop_id_to_window_title[desktop_id] = window_title
-
-                for child in window.query_tree().children:
-                    windows.append(child)
-            except Xlib.error.BadWindow:
+                ret = self._disp.create_resource_object('window', win_id)
+            except Xlib.error.XError:
                 pass
+        yield ret
 
-        if self._desktop_id_to_window_title != desktop_id_to_window_title:
-            self._desktop_id_to_window_title = desktop_id_to_window_title
+    def _get_active_window(self):
+        return self._root.get_full_property(
+            self._NET_ACTIVE_WINDOW, Xlib.X.AnyPropertyType).value[0]
+
+    def _active_window_changed(self):
+        win_id = self._get_active_window()
+
+        focus_changed = win_id != self._last_seen['xid']
+        if focus_changed:
+            with self._window_obj(self._last_seen['xid']) as old_win:
+                if old_win:
+                    old_win.change_attributes(event_mask=Xlib.X.NoEventMask)
+
+            self._last_seen['xid'] = win_id
+            with self._window_obj(win_id) as new_win:
+                if new_win:
+                    new_win.change_attributes(
+                        event_mask=Xlib.X.PropertyChangeMask)
+
+        return win_id, focus_changed
+
+    def _get_window_name(self, window_obj):
+        for atom in (self._NET_WM_NAME, self._WM_NAME):
+            window_name = window_obj.get_full_property(atom, 0)
+            return (window_name.value or b'').decode()
+        return 'XID: {}'.format(window_obj.id)
+
+    def _update_window_name(self, win_id):
+        if not win_id:
+            self._last_seen['title'] = '<no window id>'
+            return self._last_seen['title']
+
+        with self._window_obj(win_id) as window_obj:
+            if window_obj:
+                win_title = self._get_window_name(window_obj)
+                self._last_seen['title'] = win_title

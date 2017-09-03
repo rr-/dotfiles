@@ -1,4 +1,5 @@
 from panel.widgets.widget import Widget
+from PyQt5 import QtWidgets
 
 
 class StretchWidget(Widget):
@@ -6,10 +7,18 @@ class StretchWidget(Widget):
 
     def __init__(self, app, main_window):
         super().__init__(app, main_window)
-        main_window[0].layout().addStretch()
+        self._container = QtWidgets.QWidget()
+        self._container.setProperty('class', 'stretch')
+        self._container.setSizePolicy(
+            QtWidgets.QSizePolicy.Expanding,
+            QtWidgets.QSizePolicy.Minimum)
 
-    def refresh_impl(self):
+    @property
+    def container(self):
+        return self._container
+
+    def _refresh_impl(self):
         pass
 
-    def render_impl(self):
+    def _render_impl(self):
         pass
