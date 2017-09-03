@@ -3,6 +3,10 @@ import subprocess
 from PyQt5 import QtCore, QtGui, QtWidgets
 from panel.widgets.widget import Widget
 from panel.colors import Colors
+try:
+    import alsaaudio
+except ImportError:
+    alsaaudio = None
 
 
 class VolumeControl(QtWidgets.QWidget):
@@ -62,9 +66,10 @@ class VolumeWidget(Widget):
     def __init__(self, app, main_window):
         super().__init__(app, main_window)
 
-        import alsaaudio
-
         self.volume = None
+
+        if not alsaaudio:
+            return
 
         self._icon_label = QtWidgets.QLabel()
         self._volume_control = VolumeControl(QtCore.QSize(50, 10))
@@ -72,13 +77,15 @@ class VolumeWidget(Widget):
         container = QtWidgets.QWidget()
         container.mouseReleaseEvent = self.toggle_mute
         container.wheelEvent = self.change_volume
-        layout = QtWidgets.QHBoxLayout(self, margin=0, spacing=6)
+        layout = QtWidgets.QHBoxLayout(container, margin=0, spacing=6)
         layout.addWidget(self._icon_label)
         layout.addWidget(self._volume_control)
         main_window[0].layout().addWidget(container)
 
     @property
     def mixer(self):
+        if not alsaaudio:
+            return None
         return alsaaudio.Mixer(device='pulse')
 
     def change_volume(self, event):
@@ -97,10 +104,14 @@ class VolumeWidget(Widget):
             self.render()
 
     def refresh_impl(self):
+        if not alsaaudio:
+            return
         self.volume = self.mixer.getvolume()[0]
         self.muted = self.mixer.getmute()[0]
 
     def render_impl(self):
+        if not alsaaudio:
+            return
         self.set_icon(
             self._icon_label,
             'volume-off' if self.mixer.getmute()[0] else 'volume-on')
