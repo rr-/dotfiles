@@ -48,7 +48,7 @@ else
 fi
 
 pkill -f panel
-( cd ~/.local/bin && nohup python3 -m panel </dev/null &>/tmp/panel.log & )
+( nohup panel </dev/null &>/tmp/panel.log & )
 
 # enable transparency manager
 # this is also supposed to eliminate problems with tearing.
