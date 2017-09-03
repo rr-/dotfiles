@@ -11,29 +11,32 @@ class CpuWidget(Widget):
     def __init__(self, app, main_window):
         super().__init__(app, main_window)
         self.percentage = None
-        self._icon_label = QtWidgets.QLabel()
-        self._text_label = QtWidgets.QLabel()
+        self._container = QtWidgets.QWidget(main_window)
+        self._icon_label = QtWidgets.QLabel(self._container)
+        self._text_label = QtWidgets.QLabel(self._container)
+        self._chart = Chart(self._container, 80)
+
+        layout = QtWidgets.QHBoxLayout(self._container, margin=0, spacing=6)
+        layout.addWidget(self._icon_label)
+        layout.addWidget(self._text_label)
+        layout.addWidget(self._chart)
+
         self._text_label.setFixedWidth(45)
         self._text_label.setAlignment(
             QtCore.Qt.AlignCenter | QtCore.Qt.AlignVCenter)
-        self._chart = Chart(80)
+        self._set_icon(self._icon_label, 'chip')
 
-        self.set_icon(self._icon_label, 'chip')
+    @property
+    def container(self):
+        return self._container
 
-        container = QtWidgets.QWidget()
-        container.setLayout(QtWidgets.QHBoxLayout(margin=0, spacing=6))
-        container.layout().addWidget(self._icon_label)
-        container.layout().addWidget(self._text_label)
-        container.layout().addWidget(self._chart)
-        main_window[0].layout().addWidget(container)
-
-    def refresh_impl(self):
+    def _refresh_impl(self):
         if self.percentage is None:
             self.percentage = psutil.cpu_percent(interval=0.1)
         else:
             self.percentage = psutil.cpu_percent(interval=1)
 
-    def render_impl(self):
+    def _render_impl(self):
         self._text_label.setText('{:.1f}%'.format(self.percentage))
         self._chart.addPoint(Colors.cpu_chart_line, self.percentage)
         self._chart.repaint()

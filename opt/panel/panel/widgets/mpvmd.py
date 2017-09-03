@@ -21,24 +21,33 @@ class MpvmdWidget(Widget):
         self._socket = None
         self._info = None
 
-        self._status_icon_label = QtWidgets.QLabel()
-        self._song_label = QtWidgets.QLabel()
-        self._shuffle_icon_label = QtWidgets.QLabel()
+        self._container = QtWidgets.QWidget()
+        self._status_icon_label = QtWidgets.QLabel(self._container)
+        self._song_label = QtWidgets.QLabel(self._container)
+        self._shuffle_icon_label = QtWidgets.QLabel(self._container)
 
-        self._status_icon_label.mouseReleaseEvent = self.play_pause_clicked
-        self._song_label.mouseReleaseEvent = self.play_pause_clicked
-        self._shuffle_icon_label.mouseReleaseEvent = self.shuffle_clicked
-        self._status_icon_label.wheelEvent = self.prev_or_next_track
-        self._song_label.wheelEvent = self.prev_or_next_track
+        layout = QtWidgets.QHBoxLayout(self._container, margin=0, spacing=6)
+        layout.addWidget(self._status_icon_label)
+        layout.addWidget(self._song_label)
+        layout.addWidget(self._shuffle_icon_label)
 
-        container = QtWidgets.QWidget()
-        container.setLayout(QtWidgets.QHBoxLayout(margin=0, spacing=6))
-        container.layout().addWidget(self._status_icon_label)
-        container.layout().addWidget(self._song_label)
-        container.layout().addWidget(self._shuffle_icon_label)
-        main_window[0].layout().addWidget(container)
+        self._status_icon_label.mouseReleaseEvent = self._play_pause_clicked
+        self._song_label.mouseReleaseEvent = self._play_pause_clicked
+        self._shuffle_icon_label.mouseReleaseEvent = self._shuffle_clicked
+        self._status_icon_label.wheelEvent = self._prev_or_next_track
+        self._song_label.wheelEvent = self._prev_or_next_track
 
-    def play_pause_clicked(self, _event):
+        self._refresh_impl()
+
+    @property
+    def container(self):
+        return self._container
+
+    @property
+    def available(self):
+        return self._info
+
+    def _play_pause_clicked(self, _event):
         with self.exception_guard():
             if self._info['paused']:
                 self._send({'msg': 'play'})
@@ -48,7 +57,7 @@ class MpvmdWidget(Widget):
             self.refresh()
             self.render()
 
-    def prev_or_next_track(self, event):
+    def _prev_or_next_track(self, event):
         with self.exception_guard():
             if event.angleDelta().y() > 0:
                 self._send({'msg': 'playlist-next'})
@@ -58,14 +67,14 @@ class MpvmdWidget(Widget):
             self.refresh()
             self.render()
 
-    def shuffle_clicked(self, _event):
+    def _shuffle_clicked(self, _event):
         with self.exception_guard():
             self._send({'msg': 'random', 'random': not self._info['random']})
             self._recv()
             self.refresh()
             self.render()
 
-    def refresh_impl(self):
+    def _refresh_impl(self):
         if not self._socket:
             self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             try:
@@ -84,14 +93,11 @@ class MpvmdWidget(Widget):
             self.delay = min(60, self.delay + 1)
             raise
 
-    def render_impl(self):
-        if not self._info:
-            return
-
+    def _render_impl(self):
         if self._info['paused']:
-            self.set_icon(self._status_icon_label, 'pause')
+            self._set_icon(self._status_icon_label, 'pause')
         else:
-            self.set_icon(self._status_icon_label, 'play')
+            self._set_icon(self._status_icon_label, 'play')
 
         metadata = {k.lower(): v for k, v in self._info['metadata'].items()}
 
@@ -119,9 +125,9 @@ class MpvmdWidget(Widget):
         if self._shuffle_icon_label.property('active') != shuffle:
             self._shuffle_icon_label.setProperty('active', shuffle)
             if shuffle:
-                self.set_icon(self._shuffle_icon_label, 'shuffle-on')
+                self._set_icon(self._shuffle_icon_label, 'shuffle-on')
             else:
-                self.set_icon(self._shuffle_icon_label, 'shuffle-off')
+                self._set_icon(self._shuffle_icon_label, 'shuffle-off')
 
     def _recv(self) -> Optional[Dict]:
         data_size_raw = self._socket.recv(4)

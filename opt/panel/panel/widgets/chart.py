@@ -5,8 +5,8 @@ from panel.colors import Colors
 
 
 class Chart(QtWidgets.QWidget):
-    def __init__(self, min_width):
-        super().__init__()
+    def __init__(self, parent, min_width):
+        super().__init__(parent)
         self.setMinimumSize(QtCore.QSize(min_width, 0))
         self.points = collections.defaultdict(list)
         self.setProperty('class', 'chart')

@@ -10,8 +10,8 @@ except ImportError:
 
 
 class VolumeControl(QtWidgets.QWidget):
-    def __init__(self, size):
-        super().__init__()
+    def __init__(self, parent, size):
+        super().__init__(parent)
         self.setMinimumSize(size)
         self.value = 0
         self.max = 100
@@ -71,16 +71,21 @@ class VolumeWidget(Widget):
         if not alsaaudio:
             return
 
-        self._icon_label = QtWidgets.QLabel()
-        self._volume_control = VolumeControl(QtCore.QSize(50, 10))
+        self._container = QtWidgets.QWidget(main_window)
+        self._container.mouseReleaseEvent = self.toggle_mute
+        self._container.wheelEvent = self.change_volume
+        self._icon_label = QtWidgets.QLabel(self._container)
+        self._volume_control = VolumeControl(
+            self._container, QtCore.QSize(50, 10))
 
-        container = QtWidgets.QWidget()
-        container.mouseReleaseEvent = self.toggle_mute
-        container.wheelEvent = self.change_volume
-        layout = QtWidgets.QHBoxLayout(container, margin=0, spacing=6)
+        layout = QtWidgets.QHBoxLayout(
+            self._container, margin=0, spacing=6)
         layout.addWidget(self._icon_label)
         layout.addWidget(self._volume_control)
-        main_window[0].layout().addWidget(container)
+
+    @property
+    def container(self):
+        return self._container
 
     @property
     def mixer(self):
@@ -103,16 +108,15 @@ class VolumeWidget(Widget):
             self.refresh()
             self.render()
 
-    def refresh_impl(self):
+    def _refresh_impl(self):
         if not alsaaudio:
             return
         self.volume = self.mixer.getvolume()[0]
-        self.muted = self.mixer.getmute()[0]
 
-    def render_impl(self):
+    def _render_impl(self):
         if not alsaaudio:
             return
-        self.set_icon(
+        self._set_icon(
             self._icon_label,
             'volume-off' if self.mixer.getmute()[0] else 'volume-on')
         self._volume_control.set(self.volume)

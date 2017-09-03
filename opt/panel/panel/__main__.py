@@ -21,6 +21,48 @@ from panel.widgets.stretch import StretchWidget
 from panel.colors import Colors
 
 
+STYLESHEET_TEMPLATE = '''
+#central {{
+    background: {colors.background};
+}}
+QWidget {{
+    color: {colors.foreground};
+    font-family: 'DejaVu Sans';
+    font-weight: 500;
+    font-size: 12px;
+}}
+QWidget[class=workspace] {{
+    height: 20px;
+    width: 20px;
+    margin: 0 3px 0 0;
+    padding: 0;
+    background: {colors.workspace_background};
+    color: {colors.workspace_foreground};
+    border: 0;
+}}
+QWidget[class=workspace][ws_free=False] {{
+    background: {colors.workspace_full_background};
+    color: {colors.workspace_full_foreground};
+}}
+QWidget[class=workspace][ws_focused=True][ws_free=True] {{
+    background: {colors.workspace_focused_background};
+    color: {colors.workspace_focused_foreground};
+}}
+QWidget[class=workspace][ws_focused=True][ws_free=False] {{
+    background: {colors.workspace_focused_full_background};
+    color: {colors.workspace_focused_full_foreground};
+}}
+QWidget[class=workspace][ws_urgent=True] {{
+    background: {colors.workspace_urgent_background};
+    color: {colors.workspace_urgent_foreground};
+}}
+QWidget[class=chart] {{
+    height: 16px;
+    margin: 2px;
+}}
+'''
+
+
 class MainWindow(QtWidgets.QMainWindow):
     trigger = QtCore.pyqtSignal(object)
 
@@ -32,8 +74,7 @@ class MainWindow(QtWidgets.QMainWindow):
             | QtCore.Qt.WindowStaysOnTopHint
             | QtCore.Qt.X11BypassWindowManagerHint)
         self.setFixedSize(
-            sum([int(m.width) for m in monitors]) / self.devicePixelRatioF(),
-            settings.HEIGHT)
+            monitors[0].width / self.devicePixelRatioF(), settings.HEIGHT)
         self.move(0, 0)
         self.show()
 
@@ -44,87 +85,21 @@ class MainWindow(QtWidgets.QMainWindow):
         content_margin = (
             (window_gap + window_border) / self.devicePixelRatioF())
 
-        self.setStyleSheet('''
-        QMainWindow QWidget {{
-            background: {colors.background};
-        }}
-        QWidget {{
-            color: {colors.foreground};
-            font-family: 'DejaVu Sans';
-            font-weight: 500;
-            font-size: 12px;
-        }}
-        [class=right] QWidget {{
-            margin: 1px 0 3px 3px;
-        }}
-        #workspaces {{
-            padding-left: {content_margin}px;
-        }}
-        #time {{
-            padding-right: {content_margin}px;
-        }}
-        QWidget[class=workspace] {{
-            height: 20px;
-            width: 20px;
-            margin: 0 3px 0 0;
-            padding: 0;
-            color: black;
-            background: {colors.workspace_background};
-            color: {colors.workspace_foreground};
-            border: 0;
-        }}
-        QWidget[class=workspace][ws_free=False] {{
-            background: {colors.workspace_full_background};
-            color: {colors.workspace_full_foreground};
-        }}
-        QWidget[class=workspace][ws_focused=True][ws_free=True] {{
-            background: {colors.workspace_focused_background};
-            color: {colors.workspace_focused_foreground};
-        }}
-        QWidget[class=workspace][ws_focused=True][ws_free=False] {{
-            background: {colors.workspace_focused_full_background};
-            color: {colors.workspace_focused_full_foreground};
-        }}
-        QWidget[class=workspace][ws_urgent=True] {{
-            background: {colors.workspace_urgent_background};
-            color: {colors.workspace_urgent_foreground};
-        }}
-        QWidget[class=chart] {{
-            background: orange;
-            height: 16px;
-            margin: 2px;
-            border: 4px solid red;
-        }}
-        '''.format(content_margin=content_margin, colors=Colors))
+        self.setStyleSheet(STYLESHEET_TEMPLATE.format(colors=Colors))
 
-        central_widget = QtWidgets.QWidget()
-        central_widget.setLayout(QtWidgets.QHBoxLayout(margin=0, spacing=0))
+        central_widget = QtWidgets.QWidget(self, objectName='central')
+        layout = QtWidgets.QHBoxLayout(central_widget, margin=0, spacing=12)
+        layout.setContentsMargins(content_margin, 0, content_margin, 0)
         self.setCentralWidget(central_widget)
-
-        self.monitor_widgets = []
-        for monitor in monitors:
-            monitor_widget = QtWidgets.QWidget(size=QtCore.QSize(
-                monitor.width / self.devicePixelRatioF(), 0))
-            monitor_widget.setLayout(
-                QtWidgets.QHBoxLayout(margin=0, spacing=12))
-            central_widget.layout().addWidget(monitor_widget)
-            self.monitor_widgets.append(monitor_widget)
-
         self.trigger.connect(self.render)
 
     def render(self, renderer):
         renderer()
 
-    def reloadStyleSheet(self):
+    def reload_style_sheet(self):
         old_stylesheet = self.styleSheet()
         self.setStyleSheet('')
         self.setStyleSheet(old_stylesheet)
-
-    def __len__(self):
-        return len(self.monitor_widgets)
-
-    def __getitem__(self, index):
-        return self.monitor_widgets[index]
 
 
 def main():
@@ -134,16 +109,16 @@ def main():
     main_window = MainWindow(workspaces_updater.monitors)
     main_window.setWindowTitle('panel')
 
-    widget_factories = [
-        lambda: WorkspacesWidget(app, main_window, workspaces_updater),
-        lambda: WindowTitleWidget(app, main_window, workspaces_updater),
-        lambda: StretchWidget(app, main_window),
-        lambda: MpvmdWidget(app, main_window),
-        lambda: NetworkUsageWidget(app, main_window),
-        lambda: BatteryWidget(app, main_window),
-        lambda: CpuWidget(app, main_window),
-        lambda: VolumeWidget(app, main_window),
-        lambda: TimeWidget(app, main_window)
+    widgets = [
+        WorkspacesWidget(app, main_window, workspaces_updater),
+        WindowTitleWidget(app, main_window),
+        StretchWidget(app, main_window),
+        MpvmdWidget(app, main_window),
+        NetworkUsageWidget(app, main_window),
+        BatteryWidget(app, main_window),
+        CpuWidget(app, main_window),
+        VolumeWidget(app, main_window),
+        TimeWidget(app, main_window)
     ]
 
     def worker(widget, trigger):
@@ -161,12 +136,11 @@ def main():
             '-m', monitor.name,
             'top_padding', str(physical_height)])
 
-    for widget_factory in widget_factories:
-        try:
-            widget = widget_factory()
-        except ImportError as ex:
-            print(ex, file=sys.stderr)
+    for widget in widgets:
+        if not widget.available:
+            print(f'{widget.__class__} is not available on this system')
             continue
+        main_window.centralWidget().layout().addWidget(widget.container)
         thread = threading.Thread(
             target=worker, args=(widget, main_window.trigger), daemon=True)
         thread.start()

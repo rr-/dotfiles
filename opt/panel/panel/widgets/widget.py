@@ -1,4 +1,3 @@
-import os
 import time
 import logging
 import pathlib
@@ -20,21 +19,33 @@ class Widget:
             logging.exception(ex)
             time.sleep(sleep_time)
 
+    @property
+    def container(self):
+        raise NotImplementedError('Not implemented')
+
+    @property
+    def available(self):
+        return True
+
     def refresh(self):
         with self.exception_guard(sleep_time=1):
-            self.refresh_impl()
+            if not self.available:
+                return
+            self._refresh_impl()
 
     def render(self):
         with self.exception_guard():
-            self.render_impl()
+            if not self.available:
+                return
+            self._render_impl()
 
-    def refresh_impl(self):
-        raise NotImplementedError()
+    def _refresh_impl(self):
+        raise NotImplementedError('Not implemented')
 
-    def render_impl(self):
-        raise NotImplementedError()
+    def _render_impl(self):
+        raise NotImplementedError('Not implemented')
 
-    def set_icon(self, widget, icon_name):
+    def _set_icon(self, widget, icon_name):
         if widget.property('icon_name') == icon_name:
             return
         widget.setProperty('icon_name', icon_name)
