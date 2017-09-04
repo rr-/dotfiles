@@ -68,9 +68,6 @@ class VolumeWidget(Widget):
 
         self.volume = None
 
-        if not alsaaudio:
-            return
-
         self._container = QtWidgets.QWidget(main_window)
         self._container.mouseReleaseEvent = self.toggle_mute
         self._container.wheelEvent = self.change_volume
@@ -82,6 +79,10 @@ class VolumeWidget(Widget):
             self._container, margin=0, spacing=6)
         layout.addWidget(self._icon_label)
         layout.addWidget(self._volume_control)
+
+    @property
+    def available(self):
+        return alsaaudio is not None
 
     @property
     def container(self):
