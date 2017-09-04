@@ -37,7 +37,7 @@ class MpvmdWidget(Widget):
         self._status_icon_label.wheelEvent = self._prev_or_next_track
         self._song_label.wheelEvent = self._prev_or_next_track
 
-        self._refresh_impl()
+        self.refresh()
 
     @property
     def container(self):
