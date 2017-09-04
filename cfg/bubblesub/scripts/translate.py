@@ -15,9 +15,7 @@ async def _work(language, api, logger, line):
         # don't clog the UI thread
         result = await asyncio.get_event_loop().run_in_executor(None, recognize)
 
-    except sr.UnknownValueError:
-        logger.warn('line #{}: not recognized'.format(line.number))
-    except sr.RequestError as ex:
+    except Exception as ex:
         logger.error('line #{}: error ({})'.format(line.number, ex))
     else:
         logger.info('line #{}: OK'.format(line.number))
