@@ -1,0 +1,40 @@
+#!/usr/bin/env python3
+import email
+import argparse
+import pathlib
+import eml_parser
+
+
+def parse_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('path', type=pathlib.Path)
+    return parser.parse_args()
+
+
+def get_body_text(parsed):
+    for attachment in parsed['body']:
+        if attachment['content_type'] == 'text/plain':
+            return attachment['content']
+    for attachment in parsed['body']:
+        if attachment['content_type'] == 'text/html':
+            return attachment['content']
+    return None
+
+
+def main():
+    args = parse_args()
+    path = args.path
+
+    raw_email = path.read_bytes()
+    message = email.message_from_bytes(raw_email)
+    parsed = eml_parser.eml_parser.parse_email(message, include_raw_body=True)
+
+    print('From:    ' + parsed['header']['from'])
+    print('To:      ' + ', '.join(parsed['header']['to']))
+    print('Subject: ' + parsed['header']['subject'])
+    print()
+    print(get_body_text(parsed))
+
+
+if __name__ == '__main__':
+    main()
