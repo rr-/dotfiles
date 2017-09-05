@@ -1,4 +1,4 @@
-# basic
+# basic -----------------------------------------------------------------------
 set editor=`echo \$EDITOR`
 set mail_check=30
 set timeout=30
@@ -10,14 +10,27 @@ set header_cache="~/.mutt/cache/headers"
 set message_cachedir="~/.mutt/cache/bodies"
 set certificate_file="~/.mutt/certificates"
 
-# account
+# keep the connection to prevent 'Mailbox closed.'
+set imap_passive=no
+set imap_idle=yes
+set imap_keepalive=60
+
+# colors
+source ~/.mutt/colors.muttrc
+
+# prefer plaintext to html
+auto_view text/html
+alternative_order text/plain text/html
+
+
+# account ---------------------------------------------------------------------
 source ~/.mutt/identify.muttrc
-set realname='Marcin Kurczewski'
-#set from="GMAIL_USER@gmail.com"
-#set imap_user="GMAIL_USER@gmail.com"
-#set smtp_url="smtps://GMAIL_USER@smtp.gmail.com:465/"
-#set imap_pass="GMAIL_PASS"
-#set smtp_pass="GMAIL_PASS"
+# set realname="name surname"
+# set from="GMAIL_USER@gmail.com"
+# set imap_user="GMAIL_USER@gmail.com"
+# set smtp_url="smtps://GMAIL_USER@smtp.gmail.com:465/"
+# set imap_pass="GMAIL_PASS"
+# set smtp_pass="GMAIL_PASS"
 
 set folder='imaps://imap.mailbox.org/'
 set spoolfile='+INBOX'
@@ -28,25 +41,14 @@ set ssl_starttls=yes
 set ssl_force_tls=yes
 set move=no
 
-#keep the fucking connection to prevent 'Mailbox closed.'
-set imap_passive=no
-set imap_idle=yes
-set imap_keepalive=60
+# reply using the address the message was sent to
+set reverse_name=yes
+# set alternates "^contact@example.com$" "^contact@example.org$"
+# send-hook "~f contact@example.com" 'set realname="Sales Department"'
 
-#folder-hook . 'unset trash'
-#folder-hook imaps://imap.gmail.com 'set trash="=[Gmail]/Trash"'
 
-# colors
-source ~/.mutt/colors.muttrc
-
+# bindings --------------------------------------------------------------------
 # save mail to file
 macro index,pager s "| ~/.mutt/file_email ~/text/saved-mail/<enter>"
-
 # save attachment to ~/hub/mail/
 macro attach s <save-entry><bol>~/hub/mail/<enter>
-
-# prefer plaintext to html
-auto_view text/html
-alternative_order text/plain text/html
-
-set reverse_name
