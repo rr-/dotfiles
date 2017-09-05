@@ -48,6 +48,25 @@ set reverse_name=yes
 
 
 # bindings --------------------------------------------------------------------
+bind attach,browser,index       g   noop
+bind attach,browser,index       gg  first-entry
+bind attach,browser,index       G   last-entry
+bind browser,pager,index        N   search-opposite
+bind pager                      g  noop
+bind pager                      gg  top
+bind pager                      G   bottom
+bind pager                      k   previous-line
+bind pager                      j   next-line
+
+bind attach,browser,pager,index \CF next-page
+bind attach,browser,pager,index \CB previous-page
+bind attach,browser,pager,index \Cu half-up
+bind attach,browser,pager,index \Cd half-down
+bind browser,pager              \Ce next-line
+bind browser,pager              \Cy previous-line
+bind index                      \Ce next-line
+bind index                      \Cy previous-line
+
 # save mail to file
 macro index,pager s "| ~/.mutt/file_email ~/text/saved-mail/<enter>"
 # save attachment to ~/hub/mail/
