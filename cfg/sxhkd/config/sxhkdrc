@@ -109,7 +109,7 @@ super + q
 # send active window to given another workspace
 super + shift + {grave,1-9,0,minus}
     TARGET={IM,1-9,10,IM}; \
-    ID=$(xdo id); \
+    ID=$(xdotool getactivewindow); \
     bspc node -d $TARGET && bspc node -f $ID
 
 # focus workspace
