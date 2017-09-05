@@ -37,7 +37,10 @@ class MpvmdWidget(Widget):
         self._status_icon_label.wheelEvent = self._prev_or_next_track
         self._song_label.wheelEvent = self._prev_or_next_track
 
-        self.refresh()
+        try:
+            self._refresh_impl()
+        except Exception:
+            return
 
     @property
     def container(self):
@@ -45,7 +48,7 @@ class MpvmdWidget(Widget):
 
     @property
     def available(self):
-        return self._info
+        return self._info is not None
 
     def _play_pause_clicked(self, _event):
         with self.exception_guard():
