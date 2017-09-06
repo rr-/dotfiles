@@ -29,6 +29,7 @@ class NetworkUsageWidget(Widget):
         self.net_in = 0
         self.net_out = 0
 
+        available = False
         try:
             self._rx_path = None
             self._tx_path = None
@@ -39,11 +40,11 @@ class NetworkUsageWidget(Widget):
                         interface, 'statistics', 'rx_bytes')
                     self._tx_path = os.path.join(
                         interface, 'statistics', 'tx_bytes')
-                    self._available = True
+                    available = True
         except Exception:
             pass
 
-        if self._available:
+        if available:
             self._old_rx_bytes = int(read_file(self._rx_path))
             self._old_tx_bytes = int(read_file(self._tx_path))
         else:
