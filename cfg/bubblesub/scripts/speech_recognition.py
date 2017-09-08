@@ -39,7 +39,7 @@ class SpeechRecognitionCommand:
 
     @bubblesub.util.classproperty
     def name(self):
-        return 'grid/google-speech-' + self.language
+        return 'grid/speech-' + self.language
 
     @property
     def menu_name(self):
