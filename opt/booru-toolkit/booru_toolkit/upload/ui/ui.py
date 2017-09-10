@@ -15,13 +15,13 @@ _PALETTE = [
     ('f-match',       'light green', 'default'),
     ('f-e-match',     'light green', 'default'),
     ('tag',           'default',     'default',  None, None,   None),
-    ('new-tag',       'light red',   'default',  None, None,   '#FF0'),
-    ('implied-tag',   'light green', 'default',  None, None,   '#DFD'),
-    ('initial-tag',   'dark blue',   'default',  None, None,   '#DDF'),
-    ('f-tag',         'black',       'white',    None, '#FFF', '#000'),
-    ('f-new-tag',     'black',       'white',    None, '#FFF', '#000'),
-    ('f-implied-tag', 'black',       'white',    None, '#FFF', '#000'),
-    ('f-initial-tag', 'black',       'white',    None, '#FFF', '#000'),
+    ('new-tag',       'light red',   'default',  None, 'h229',   'h202'),
+    ('implied-tag',   'light green', 'default',  None, None,   'h22'),
+    ('initial-tag',   'dark blue',   'default',  None, 'h255',   'h25'),
+    ('f-tag',         'black',       'white',    None, 'h255', 'h235'),
+    ('f-new-tag',     'black',       'white',    None, 'h255', 'h235'),
+    ('f-implied-tag', 'black',       'white',    None, 'h255', 'h235'),
+    ('f-initial-tag', 'black',       'white',    None, 'h255', 'h235'),
 ]
 
 
