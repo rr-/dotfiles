@@ -49,9 +49,9 @@ class History(set):
 
     def __enter__(self):
         self.handle = None
+        self.lock = lockfile.LockFile(self.path)
+        self.lock.acquire(timeout=-1)
         if self.path and os.path.exists(self.path):
-            self.lock = lockfile.LockFile(self.path)
-            self.lock.acquire(timeout=-1)
             self.handle = open(self.path, 'r+b')
             self.update(pickle.load(self.handle))
             print('Loaded %d URLs from history file' % len(self))
@@ -59,9 +59,10 @@ class History(set):
 
     def __exit__(self, *args):
         if not self.handle:
-            return
-        self.handle.truncate(0)
-        self.handle.seek(0)
+            self.handle = open(self.path, 'wb')
+        else:
+            self.handle.truncate(0)
+            self.handle.seek(0)
         copy = self.copy()
         pickle.dump(copy, self.handle)
         self.handle.close()
