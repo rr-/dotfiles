@@ -202,7 +202,6 @@ def _check_malformed_tags(logger, line):
                     line.number, tag))
 
         elif tag in ('pos', 'move', 'org', 'fad', 'fade'):
-            print(arg)
             if not arg.startswith('(') or not arg.endswith(')'):
                 logger.info(
                     '#{}: malformed {} tag (missing braces)'.format(
