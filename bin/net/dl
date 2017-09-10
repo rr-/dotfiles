@@ -143,6 +143,10 @@ class DownloadCommand(Command):
             help='set regex indicating which URLs to crawl')
 
         parser.add_argument(
+            '--reject', metavar='REGEX', default='',
+            help='set regex indicating which URLs not to crawl (overrides -a)')
+
+        parser.add_argument(
             '-H', '--history', metavar='FILE',
             help='set path to the history file')
 
@@ -170,6 +174,7 @@ class DownloadCommand(Command):
 
     def run(self, args):
         args.accept = re.compile(args.accept)
+        args.reject = re.compile(args.reject) if args.reject else None
         visited = set()
         with History(args.history) as history:
             queue = LifoQueue()
@@ -207,8 +212,11 @@ class DownloadCommand(Command):
                     urllib.parse.urljoin(response.url, link['href'])).url
                 with self.lock:
                     if self.args.accept.search(child_url) \
-                            and child_url not in self.visited \
-                            and child_url not in self.history:
+                    and not (
+                        self.args.reject
+                        and self.args.reject.search(child_url)) \
+                    and child_url not in self.visited \
+                    and child_url not in self.history:
                         child_urls.add(child_url)
                         self.visited.add(child_url)
             with self.lock:
