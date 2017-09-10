@@ -159,7 +159,7 @@ class DownloadCommand(Command):
             help='set retry count for failed downloads')
 
         parser.add_argument(
-            '--retry_wait', metavar='NUM', type=int, default=3,
+            '--retry-wait', metavar='NUM', type=int, default=3,
             help='set retry timeout for failed downloads')
 
         parser.add_argument(
