@@ -41,7 +41,7 @@ color121:   #00AF5F
 color122:   #00AF87
 color123:   #00AFAF
 color081:   #00AFD7
-color039:   #00AFFF
+color039:   #009FFF
 color083:   #00D700
 color084:   #00D75F
 color085:   #00D787
