@@ -1,0 +1,111 @@
+#!/usr/bin/env python3
+import sys
+import json
+import argparse
+import requests
+from tqdm import tqdm
+
+
+_TARGET_URL = 'https://www3.onlinevideoconverter.com/webservice'
+
+
+def _parse_args():
+    parser = argparse.ArgumentParser(
+        description='Downloads video via onlinevideoconverter.com')
+    parser.add_argument('url')
+    return parser.parse_args()
+
+
+def _request(data):
+    return json.loads(requests.post(_TARGET_URL, data=data).text)['result']
+
+
+def _validate(video_url):
+    return _request({
+        'function': 'validate',
+        'args[dummy]': 1,
+        'args[urlEntryUser]': video_url,
+        'args[fromConvert]': 'urlconverter',
+        'args[requestExt]': 'mp4',
+        'args[nbRetry]': 0,
+        'args[videoResolution]': -1,
+        'args[audioBitrate]': 0,
+        'args[audioFrequency]': 0,
+        'args[channel]': 'stereo',
+        'args[volume]': 0,
+        'args[startFrom]': -1,
+        'args[endTo]': -1,
+        'args[custom_resx]': -1,
+        'args[custom_resy]': -1,
+        'args[advSettings]': False,
+        'args[aspectRatio]': -1,
+    })
+
+
+def _process(validation_result, video_url):
+    return _request({
+        'function': 'processVideo',
+        'args[dummy]': 1,
+        'args[urlEntryUser]': video_url,
+        'args[fromConvert]': 'urlconverter',
+        'args[requestExt]': 'mp4',
+        'args[serverId]': validation_result['serverId'],
+        'args[nbRetry]': 0,
+        'args[title]': validation_result['title'],
+        'args[keyHash]': validation_result['keyHash'],
+        'args[serverUrl]': validation_result['serverUrl'],
+        'args[id_process]': validation_result['id_process'],
+        'args[videoResolution]': -1,
+        'args[audioBitrate]': 0,
+        'args[audioFrequency]': 0,
+        'args[channel]': 'stereo',
+        'args[volume]': 0,
+        'args[startFrom]': -1,
+        'args[endTo]': -1,
+        'args[custom_resx]': -1,
+        'args[custom_resy]': -1,
+        'args[advSettings]': False,
+        'args[aspectRatio]': -1,
+    })
+
+
+def _download(validation_result, processing_result):
+    url = (
+        '{}/download?file={}'.format(
+            validation_result['serverUrl'],
+            processing_result['id_process']))
+    target_path = '{}.mp4'.format(validation_result['title'])
+
+    response = requests.get(url, stream=True)
+    buffer_size = 32 * 1024
+    total_size = int(response.headers.get('content-length', 0))
+
+    with open(target_path, 'wb') as handle:
+        with tqdm(total=total_size, unit='B', unit_scale=True) as bar:
+            for chunk in response.iter_content(buffer_size):
+                handle.write(chunk)
+                bar.update(len(chunk))
+
+
+def main():
+    args = _parse_args()
+    video_url = args.url
+
+    print('Validating...')
+    validation_result = _validate(video_url)
+    if validation_result['status'] == 'failed':
+        print('Failed, try again')
+        sys.exit(1)
+
+    print('Processing...')
+    processing_result = _process(validation_result, video_url)
+    if processing_result['status'] == 'failed':
+        print('Failed, try again')
+        sys.exit(1)
+
+    print('Downloading...')
+    _download(validation_result, processing_result)
+
+
+if __name__ == '__main__':
+    main()
