@@ -12,8 +12,19 @@ _TARGET_URL = 'https://www3.onlinevideoconverter.com/webservice'
 def _parse_args():
     parser = argparse.ArgumentParser(
         description='Downloads video via onlinevideoconverter.com')
+    parser.add_argument('--retry-count', type=int, default=5)
     parser.add_argument('url')
     return parser.parse_args()
+
+
+def _retry(retry_count, process, verify):
+    for attempt in range(retry_count):
+        ret = process()
+        if verify(ret):
+            return ret
+        print('Retry #{}'.format(attempt + 1))
+    print('Retry limit reached, aborting')
+    sys.exit(1)
 
 
 def _request(data):
@@ -90,18 +101,19 @@ def _download(validation_result, processing_result):
 def main():
     args = _parse_args()
     video_url = args.url
+    retry_count = args.retry_count
 
     print('Validating...')
-    validation_result = _validate(video_url)
-    if validation_result['status'] == 'failed':
-        print('Failed, try again')
-        sys.exit(1)
+    validation_result = _retry(
+        retry_count,
+        lambda: _validate(video_url),
+        lambda result: result['status'] != 'failed')
 
     print('Processing...')
-    processing_result = _process(validation_result, video_url)
-    if processing_result['status'] == 'failed':
-        print('Failed, try again')
-        sys.exit(1)
+    processing_result = _retry(
+        retry_count,
+        lambda: _process(validation_result, video_url),
+        lambda result: result['status'] != 'failed')
 
     print('Downloading...')
     _download(validation_result, processing_result)
