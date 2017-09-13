@@ -4,8 +4,11 @@ window_class=$2
 instance=$3
 title=$(xdotool getwindowname "$window_id")
 
-if [ "$instance" = remote_irc ] ; then
-    echo desktop=10
+if [ "$window_class" = URxvt ]; then
+    compton-trans -c 95 -w "$window_id"
+    if [ "$instance" = remote_irc ] ; then
+        echo desktop=10
+    fi
 elif [ "$title" = ul-yume ] || [ "$title" = ul-gelbooru ]; then
     compton-trans -c 50 -w "$window_id"
     width=$(xdotool getwindowgeometry --shell "$window_id" | head -4 | tail -1 | sed 's/[^0-9]*//')
@@ -17,8 +20,6 @@ elif [ "$title" = ul-yume ] || [ "$title" = ul-gelbooru ]; then
     xdotool windowsize "$window_id" $newWidth $newHeight
     xdotool windowmove "$window_id" --relative -- $x $y
     echo 'state=floating layer=above'
-elif [ "$window_class" = URxvt ]; then
-    compton-trans -c 95 -w "$window_id"
 elif [[ "$instance" =~ Diablo.* ]]; then
     bspc config -n "$window_id" border_width 0
     echo border=off
