@@ -97,6 +97,8 @@ def _download(validation_result, processing_result):
                 handle.write(chunk)
                 bar.update(len(chunk))
 
+    return target_path
+
 
 def main():
     args = _parse_args()
@@ -116,7 +118,8 @@ def main():
         lambda result: result['status'] != 'failed')
 
     print('Downloading...')
-    _download(validation_result, processing_result)
+    path = _download(validation_result, processing_result)
+    print('Saved to {}'.format(path))
 
 
 if __name__ == '__main__':
