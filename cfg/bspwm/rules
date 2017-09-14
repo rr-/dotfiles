@@ -9,17 +9,18 @@ if [ "$window_class" = URxvt ]; then
     if [ "$instance" = remote_irc ] ; then
         echo desktop=10
     fi
-elif [ "$title" = ul-yume ] || [ "$title" = ul-gelbooru ]; then
-    compton-trans -c 50 -w "$window_id"
-    width=$(xdotool getwindowgeometry --shell "$window_id" | head -4 | tail -1 | sed 's/[^0-9]*//')
-    height=$(xdotool getwindowgeometry --shell "$window_id" | head -5 | tail -1 | sed 's/[^0-9]*//')
-    newWidth=1000
-    newHeight=750
-    x=$(((width-newWidth)/2))
-    y=$(((height-newHeight)/2))
-    xdotool windowsize "$window_id" $newWidth $newHeight
-    xdotool windowmove "$window_id" --relative -- $x $y
-    echo 'state=floating layer=above'
+    if [ "$title" = ul-yume ] || [ "$title" = ul-gelbooru ]; then
+        compton-trans -c 50 -w "$window_id"
+        width=$(xdotool getwindowgeometry --shell "$window_id" | head -4 | tail -1 | sed 's/[^0-9]*//')
+        height=$(xdotool getwindowgeometry --shell "$window_id" | head -5 | tail -1 | sed 's/[^0-9]*//')
+        newWidth=1000
+        newHeight=750
+        x=$(((width-newWidth)/2))
+        y=$(((height-newHeight)/2))
+        xdotool windowsize "$window_id" $newWidth $newHeight
+        xdotool windowmove "$window_id" --relative -- $x $y
+        echo 'state=floating layer=above'
+    fi
 elif [[ "$instance" =~ Diablo.* ]]; then
     bspc config -n "$window_id" border_width 0
     echo border=off
