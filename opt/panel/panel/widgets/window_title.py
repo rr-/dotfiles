@@ -64,8 +64,11 @@ class WindowTitleWidget(Widget):
         yield ret
 
     def _get_active_window(self):
-        return self._root.get_full_property(
-            self._NET_ACTIVE_WINDOW, Xlib.X.AnyPropertyType).value[0]
+        response = self._root.get_full_property(
+            self._NET_ACTIVE_WINDOW, Xlib.X.AnyPropertyType)
+        if response:
+            return response.value[0]
+        return None
 
     def _active_window_changed(self):
         win_id = self._get_active_window()
