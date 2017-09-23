@@ -1,5 +1,3 @@
-SendEnv LIGHTNESS
-
 Host *
     ServerAliveInterval 15
     ServerAliveCountMax 2
@@ -10,9 +8,6 @@ Host cyclone
     Port 65000
     ForwardX11 yes
     ForwardX11Trusted yes
-
-Host 10.60.1.9
-    IdentityFile ~/.ssh/id_perspectiv
 
 Host tornado
     HostName tornado
