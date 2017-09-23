@@ -15,6 +15,7 @@ def run():
     util.create_symlink('./trigger.conf', '~/.weechat/')
     util.create_symlink('./weechat.conf', '~/.weechat/')
     util.create_symlink('./buffers.conf', '~/.weechat/')
+    util.create_symlink('./buffer_autoset.conf', '~/.weechat/')
     util.create_symlink('./python/custom_hotlist.py', '~/.weechat/python/')
     util.create_symlink(
         './python/custom_hotlist.py', '~/.weechat/python/autoload/')
