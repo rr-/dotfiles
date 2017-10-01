@@ -8,7 +8,7 @@ import lxml.etree
 COLOR_RESET = '\x1B[0m'
 COLOR_HIGHLIGHT = '\x1B[38;5;%dm\x1B[48;5;%dm' % (229, 58)
 
-
+BASE_URL = 'http://context.reverso.net/translation/'
 USER_AGENT = (
     'Mozilla/5.0 (X11; Linux x86_64; rv:10.0) Gecko/20100101 Firefox/10.0')
 
@@ -16,6 +16,8 @@ USER_AGENT = (
 def _parse_args():
     parser = argparse.ArgumentParser(
         description='Looks up phrases on reverso.net')
+    parser.add_argument(
+        '-n', '--no-conjugations', action='store_false', dest='conjugate')
     parser.add_argument('-l', '--language', default='polish')
     parser.add_argument('phrase', nargs='+')
     return parser.parse_args()
@@ -30,12 +32,14 @@ def _format_html(node):
     return re.sub('<[^>]*>', '', inner_html).strip()
 
 
-def _lookup_context_phrase(language, phrase):
-    URL = 'http://context.reverso.net/translation/english-{language}/{phrase}'
+def _lookup_context_phrase(language, conjugate, phrase):
+    url = BASE_URL + 'english-{language}/{phrase}?d={conjugate:d}'.format(
+        language=language,
+        phrase=urllib.parse.quote(phrase),
+        conjugate=conjugate)
 
     request = urllib.request.Request(
-        url=URL.format(language=language, phrase=urllib.parse.quote(phrase)),
-        headers={'User-Agent': USER_AGENT})
+        url=url, headers={'User-Agent': USER_AGENT})
 
     with urllib.request.urlopen(request) as handle:
         content = handle.read()
@@ -48,7 +52,8 @@ def _lookup_context_phrase(language, phrase):
 
 def main():
     args = _parse_args()
-    results = _lookup_context_phrase(args.language, ' '.join(args.phrase))
+    results = _lookup_context_phrase(
+        args.language, args.conjugate, ' '.join(args.phrase))
     for src, dst in results:
         print(src)
         print(dst)
