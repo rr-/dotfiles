@@ -18,7 +18,10 @@ def _parse_args():
         description='Looks up phrases on reverso.net')
     parser.add_argument(
         '-n', '--no-conjugations', action='store_false', dest='conjugate')
-    parser.add_argument('-l', '--language', default='polish')
+    parser.add_argument(
+        '-s', '--source-language', default='english', dest='src_lang')
+    parser.add_argument(
+        '-t', '--target-language', default='polish', dest='dst_lang')
     parser.add_argument('phrase', nargs='+')
     return parser.parse_args()
 
@@ -32,11 +35,12 @@ def _format_html(node):
     return re.sub('<[^>]*>', '', inner_html).strip()
 
 
-def _lookup_context_phrase(language, conjugate, phrase):
-    url = BASE_URL + 'english-{language}/{phrase}?d={conjugate:d}'.format(
-        language=language,
-        phrase=urllib.parse.quote(phrase),
-        conjugate=conjugate)
+def _lookup_context_phrase(src_language, dst_language, conjugate, phrase):
+    url = (
+        BASE_URL
+        + f'{src_language}-{dst_language}/'
+        + f'{urllib.parse.quote(phrase)}'
+        + f'?d={conjugate:d}')
 
     request = urllib.request.Request(
         url=url, headers={'User-Agent': USER_AGENT})
@@ -52,8 +56,13 @@ def _lookup_context_phrase(language, conjugate, phrase):
 
 def main():
     args = _parse_args()
+
     results = _lookup_context_phrase(
-        args.language, args.conjugate, ' '.join(args.phrase))
+        args.src_lang,
+        args.dst_lang,
+        args.conjugate,
+        ' '.join(args.phrase))
+
     for src, dst in results:
         print(src)
         print(dst)
