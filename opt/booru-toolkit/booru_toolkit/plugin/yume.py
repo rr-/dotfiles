@@ -26,7 +26,7 @@ def _result_to_post(result: Json) -> Post:
     post = Post(
         post_id=result['id'],
         safety=_SAFETY_MAP.inverse[result['safety']][0],
-        tags=result['tags'],
+        tags=[tag['names'][0] for tag in result['tags']],
         site_url='https://yume.pl/post/{}'.format(result['id']),
         content_url=result['contentUrl'],
         width=result['canvasWidth'],
