@@ -214,7 +214,7 @@ def _get_sync_info(
         post: Post,
         sanitized_third_party_tags: List[_ThirdPartyTag]) -> _SyncInfo:
     sync_info = _SyncInfo()
-    sync_info.source_tags = [tag.lower() for tag in post['tags']]
+    sync_info.source_tags = [tag['names'][0].lower() for tag in post['tags']]
     sync_info.target_tags = sync_info.source_tags[:]
 
     for third_party_tag in sanitized_third_party_tags:

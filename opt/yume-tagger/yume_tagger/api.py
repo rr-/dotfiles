@@ -51,10 +51,11 @@ class Api:
                 tag = None
             if tag:
                 for implication in tag['implications']:
-                    if implication not in visited:
-                        yield implication
-                        visited.add(implication)
-                        to_check.append(implication)
+                    implication_name = implication['names'][0]
+                    if implication_name not in visited:
+                        yield implication_name
+                        visited.add(implication_name)
+                        to_check.append(implication_name)
 
     def find_tags(self, query: str) -> Iterable[Tag]:
         offset = 0
