@@ -22,6 +22,14 @@ source ~/.mutt/colors.muttrc
 auto_view text/html
 alternative_order text/plain text/html
 
+# group messages by threads
+set sort=threads
+set sort_browser="reverse-date"
+set sort_aux="last-date-received"
+unset collapse_unread
+# t tags messages
+# & joins message threads
+# # unjoins message threads
 
 # account ---------------------------------------------------------------------
 source ~/.mutt/identify.muttrc
@@ -66,6 +74,9 @@ bind browser,pager              \Ce next-line
 bind browser,pager              \Cy previous-line
 bind index                      \Ce next-line
 bind index                      \Cy previous-line
+
+bind index - collapse-thread
+bind index _ collapse-all
 
 # save mail to file
 macro index,pager s "| ~/.mutt/file_email ~/text/saved-mail/<enter>"
