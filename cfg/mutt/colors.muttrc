@@ -5,7 +5,6 @@ color index      default      default     ~A
 color index      brightred    default     ~D  # === Deleted
 color index      brightblue   default     ~U  # === Unread
 color index      red          default     ~F  # === Flagged
-color index      magenta      default     "~z >100K" # === Large
 color index      yellow       default     ~T  # === Tagged
 
 color hdrdefault magenta      default
