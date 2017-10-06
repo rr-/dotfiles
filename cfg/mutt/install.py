@@ -5,6 +5,8 @@ from dotinstall import util
 def run():
     packages.try_install('neomutt')
     packages.try_install('w3m')
+    packages.try_install('lynx')
+    packages.try_install('docbook-xsl')
     util.create_file('~/.mutt/certificates')
     util.create_dir('~/.mutt/cache/bodies')
     util.create_dir('~/.mutt/cache/headers')
