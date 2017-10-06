@@ -29,6 +29,7 @@ set index_format="%4C %Z %{%b %d} %-15.15L (%?l?%4l&%4c?) %s%* %y"
 set sort=threads
 set sort_browser="reverse-date"
 set sort_aux="last-date-received"
+set hide_thread_subject=no
 unset collapse_unread
 # t tags messages
 # & joins message threads
