@@ -22,6 +22,9 @@ source ~/.mutt/colors.muttrc
 auto_view text/html
 alternative_order text/plain text/html
 
+# add labels in index
+set index_format="%4C %Z %{%b %d} %-15.15L (%?l?%4l&%4c?) %s%* %y"
+
 # group messages by threads
 set sort=threads
 set sort_browser="reverse-date"
@@ -65,6 +68,7 @@ bind pager                      gg  top
 bind pager                      G   bottom
 bind pager                      k   previous-line
 bind pager                      j   next-line
+bind index,pager                K   edit-label
 
 bind attach,browser,pager,index \CF next-page
 bind attach,browser,pager,index \CB previous-page
