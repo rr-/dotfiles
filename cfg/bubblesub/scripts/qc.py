@@ -39,6 +39,9 @@ def _check_durations(logger, line):
 def _check_punctuation(logger, line):
     text = bubblesub.util.ass_to_plaintext(line.text)
 
+    if text.endswith('\\N'):
+        logger.info(f'#{line.number}: extra line break')
+
     if ' \\N' in text:
         logger.info(f'#{line.number}: space before line break')
 
@@ -47,9 +50,8 @@ def _check_punctuation(logger, line):
 
     if '...' in text:
         logger.info(f'#{line.number}: bad ellipsis (expected …)')
-
-    if re.search('… *[,.]', text):
-        logger.info(f'#{line.number}: extra comma or dot after ellipsis')
+    elif re.search('[…,.!?] *[,.]', text):
+        logger.info(f'#{line.number}: extra comma or dot')
 
     if PUNCTUATION_INSIDE_QUOTES == 1:
         if re.search('[^.][.,]"', line.text):
