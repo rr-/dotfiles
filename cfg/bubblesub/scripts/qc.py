@@ -11,7 +11,7 @@ PUNCTUATION_INSIDE_QUOTES = 2  # 1: "inside." 2: "outside".
 
 def _check_durations(logger, line):
     text = bubblesub.util.ass_to_plaintext(line.text)
-    if not text:
+    if not text or line.is_comment:
         return
 
     if line.duration < MIN_DURATION:
