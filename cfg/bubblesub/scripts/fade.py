@@ -21,7 +21,7 @@ class FadeFromBlackCommand(PluginCommand):
                 r'\1c&H101010&'
                 r'\3c&H101010&'
                 r'\t(0,2000,'
-                rf'\1c&H{c1[0]:02X}{c1[1]:02X}{c1[2]:02X}'
-                rf'\3c&H{c3[0]:02X}{c3[1]:02X}{c3[2]:02X}'
+                rf'\1c&H{c1[2]:02X}{c1[1]:02X}{c1[0]:02X}'
+                rf'\3c&H{c3[2]:02X}{c3[1]:02X}{c3[0]:02X}'
                 '}'
             ) + line.text
