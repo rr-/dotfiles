@@ -5,11 +5,15 @@
 "correct .lst filetype from assembler to text
 au BufRead,BufNewFile *.lst set filetype=text
 
+"screw buggy markdown syntax highlighting
+au BufRead,BufNewFile *.md set filetype=text
+
 "strip trailing whitespace for common source code
 au FileType c,cc,cxx,cpp,h,hpp,java,php,python,ruby,vim
   \ au BufWritePre <buffer> :StripWhitespace
 
 "enable spellcheck and hard wrapping for text files
+
 au FileType text,markdown setlocal spell textwidth=79
 
 "enable spellcheck and double gutter in git commit messages
