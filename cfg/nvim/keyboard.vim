@@ -80,4 +80,8 @@ if has("digraphs")
   digraph xx 215 " ×
 endif
 
+"highlight search inplace
+map <Leader>* :let @/ = '\<'.expand('<cword>').'\>'\|set hlsearch<C-M>
+map <Leader>g* :let @/ = expand('<cword>')\|set hlsearch<C-M>
+
 inoreabbr <expr> ts# strftime("%Y-%m-%d")
