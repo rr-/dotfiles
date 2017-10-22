@@ -1,6 +1,7 @@
 import re
 import bubblesub.util
 import bubblesub.api.cmd
+import ass_tag_parser
 
 
 MIN_DURATION = 250  # milliseconds
@@ -83,157 +84,20 @@ def _check_punctuation(logger, line):
 
 
 def _check_malformed_tags(logger, line):
-    tags3 = {'pos', 'move', 'org', 'fad'}
+    try:
+        result = ass_tag_parser.parse_ass(line.text)
+    except ass_tag_parser.ParsingError as ex:
+        logger.info(f'#{line.number}: invalid syntax (%r)' % str(ex))
+        return
 
-    def _validate_color(text):
-        return re.match('^&H[0-9A-Fa-f]{6}&$', text)
-
-    def _validate_opacity(text):
-        return re.match('^&H[0-9A-Fa-f]{2}&$', text)
-
-    def _validate_boolean(text):
-        return text in '01'
-
-    def _validate_integer(text, allow_negative):
-        if allow_negative:
-            return re.match(r'^\d+$', text)
-        return re.match(r'^\d+$', text)
-
-    def _validate_float(text, allow_negative):
-        if allow_negative:
-            return re.match(r'^-?\d+(\.\d+)?$', text)
-        return re.match(r'^\d+(\.\d+)?$', text)
-
-    if r'\}' in line.text:
-        logger.info(f'#{line.number}: malformed tag (slash before brace)')
-
-    if r'{\\' in line.text:
-        logger.info(f'#{line.number}: malformed tag (double slash)')
-
-    if re.match('{[^}]+$', line.text):
-        logger.info(f'#{line.number}: malformed tag (unterminated brace)')
-
-    for match in re.finditer(r'\\([0-9]*[a-z]+)([^\\}]*)[\\}]', line.text):
-        tag = match.group(1)
-        arg = match.group(2)
-        if tag in (
-            'n',  # soft line break
-            'N',  # hard line break
-            'h',  # hard space
-        ):
-            if arg:
-                logger.info(
-                    f'#{line.number}: '
-                    f'malformed {tag} tag (expected no arguments)')
-
-        elif tag in (
-            'i',  # italics
-            'u',  # underline
-            's',  # strike-through
-        ):
-            if _validate_boolean(arg):
-                logger.info(
-                    f'#{line.number}: malformed {tag} tag (not a boolean)')
-
-        elif tag == 'an':  # new style anchors
-            if arg not in '123456789':
-                logger.info(
-                    f'#{line.number}: malformed {tag} tag (bad alignment)')
-
-        elif tag == 'a':  # old style anchors
-            if arg not in ('1', '2', '3', '5', '6', '7', '9', '10', '11'):
-                logger.info(
-                    f'#{line.number}: malformed {tag} tag (bad alignment)')
-
-        elif tag == 'q':  # wrap style
-            if arg not in ('1', '2', '3', '4'):
-                logger.info(
-                    f'#{line.number}: malformed {tag} tag (bad wrap style)')
-
-        elif tag in (
-            'b'      # bold (weights)
-            'be',    # blur edges
-            'fs',    # font scale
-            'fscx',  # font scale x
-            'fscy',  # font scale y
-            'fe',    # font encoding
-            'k',     # karaoke
-            'K',     # karaoke (sweep)
-            'ko',    # karaoke (sweep)
-            'kf',    # karaoke (sweep + hide borders)
-        ):
-            if not _validate_integer(arg, allow_negative=False):
-                logger.info(
-                    f'#{line.number}: malformed {tag} tag (not an integer)')
-
-        elif tag in (
-            'shad',   # shadow
-            'blur',   # blur
-            'bord',   # border
-            'xbord',  # border x
-            'ybord',  # border y
-        ):
-            if not _validate_float(arg, allow_negative=False):
-                logger.info(
-                    f'#{line.number}: malformed {tag} tag (not a number)')
-
-        elif tag in (
-            'xshad',  # shadow x
-            'yshad',  # shadow y
-            'fsp',    # font kerning
-            'frx',    # font rotation x
-            'fry',    # font rotation y
-            'frz',    # font rotation z
-            'fax',    # font shear x
-            'fay',    # font shear y
-        ):
-            if not _validate_float(arg, allow_negative=True):
-                logger.info(
-                    f'#{line.number}: malformed {tag} tag (not a number)')
-
-        elif tag in ('c', '1c', '2c', '3c', '4c'):  # colors
-            if not _validate_color(arg):
-                logger.info(
-                    f'#{line.number}: malformed {tag} tag (not a color)')
-
-        elif tag in ('alpha', '1a', '2a', '3a', '4a'):  # alpha
-            if not _validate_opacity(arg):
-                logger.info(
-                    f'#{line.number}: malformed {tag} tag (not an opacity)')
-
-        elif tag in ('pos', 'move', 'org', 'fad', 'fade'):
-            if not arg.startswith('(') or not arg.endswith(')'):
-                logger.info(
-                    f'#{line.number}: malformed {tag} tag (missing braces)')
-            else:
-                arg = arg[1:-1]
-                parts = arg.split(',')
-                if not all(
-                        _validate_integer(part, allow_negative=True)
-                        for part in parts):
-                    logger.info(
-                        f'#{line.number}: '
-                        f'malformed {tag} tag (not an integer)')
-                if tag == 'fade':
-                    expected_part_count = (7,)
-                elif tag == 'move':
-                    expected_part_count = (4, 6)
-                else:
-                    expected_part_count = (2,)
-                if len(parts) not in expected_part_count:
-                    logger.info(
-                        f'#{line.number}: '
-                        f'malformed {tag} tag (invalid part count)')
-
-        elif tag not in (
-            'fn',     # font name
-            'r',      # reset style
-            't',      # animated transform
-            'clip',   # clip path
-            'iclip',  # mask path (inverse clip)
-            # TODO: drawing tags
-        ):
-            logger.info(f'#{line.number}: unknown tag ({tag})')
+    for item in result:
+        if item['type'] != 'tags':
+            continue
+        for subitem in item['children']:
+            if subitem['type'] == 'alignment' and subitem['legacy']:
+                logger.info(f'#{line.number}: using legacy alignment tag')
+            if subitem['type'] == 'comment' and len(subitem['children']) != 1:
+                logger.info(f'#{line.number}: mixing comments with tags')
 
 
 def _check_disjointed_tags(logger, line):
