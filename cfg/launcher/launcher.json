@@ -1,3 +1,4 @@
+.*\.(mkv|mp4|webm)          :: mpv
 (https?|file)://.*          :: qutebrowser
 .*\.html?                   :: qutebrowser
 about:blank                 :: qutebrowser
