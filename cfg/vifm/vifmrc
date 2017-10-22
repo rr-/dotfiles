@@ -16,6 +16,9 @@ set trash
 " number of directories to store in the directory history
 set history=100
 
+" show numbers before each file
+set number
+
 " follow links on enter or l.
 set followlinks
 
