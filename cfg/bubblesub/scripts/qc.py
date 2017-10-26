@@ -96,7 +96,7 @@ def _check_malformed_tags(logger, line):
         for subitem in item['children']:
             if subitem['type'] == 'alignment' and subitem['legacy']:
                 logger.info(f'#{line.number}: using legacy alignment tag')
-            if subitem['type'] == 'comment' and len(subitem['children']) != 1:
+            if subitem['type'] == 'comment' and len(item['children']) != 1:
                 logger.info(f'#{line.number}: mixing comments with tags')
 
 
