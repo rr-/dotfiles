@@ -1,6 +1,6 @@
 # vim syntax=config
 
-vo=opengl
+vo=gpu
 stop-screensaver=yes
 image-display-duration=inf
 
