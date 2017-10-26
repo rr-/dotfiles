@@ -2,9 +2,8 @@
 
 fullscreen
 
-profile=opengl-hq
 vo=gpu,drm
-gpu-api=opengl
+profile=opengl-hq
 script-opts=osc-layout=slimbox
 stop-screensaver=yes
 osd-fractions=yes
