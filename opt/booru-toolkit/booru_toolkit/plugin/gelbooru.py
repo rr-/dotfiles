@@ -68,7 +68,7 @@ class PluginGelbooru(PluginBase):
                         site_url=(
                             'https://gelbooru.com/index.php?page=post&s=view'
                             '&id=' + post.getAttribute('id')),
-                        content_url='https:' + post.getAttribute('file_url'),
+                        content_url=post.getAttribute('file_url'),
                         width=int(post.getAttribute('width')),
                         height=int(post.getAttribute('height')),
                         source=post.getAttribute('source'),
