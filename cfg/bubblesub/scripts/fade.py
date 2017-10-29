@@ -6,7 +6,8 @@ class FadeFromBlackCommand(PluginCommand):
     name = 'grid/fade-from-black'
     menu_name = 'Fade from black'
 
-    def enabled(self):
+    @property
+    def is_enabled(self):
         return self.api.subs.has_selection
 
     async def run(self):
