@@ -38,7 +38,8 @@ class GoogleTranslateCommand:
     def menu_name(self):
         return 'Google Translate ({})'.format(self.language)
 
-    def enabled(self):
+    @property
+    def is_enabled(self):
         return self.api.subs.has_selection
 
     async def run(self):

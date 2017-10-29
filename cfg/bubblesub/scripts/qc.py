@@ -126,7 +126,8 @@ class QualityCheckCommand(bubblesub.api.cmd.PluginCommand):
     name = 'grid/quality-check'
     menu_name = 'Quality check'
 
-    def enabled(self):
+    @property
+    def is_enabled(self):
         return self.api.subs.has_selection
 
     async def run(self):

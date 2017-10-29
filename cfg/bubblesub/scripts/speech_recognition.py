@@ -45,7 +45,8 @@ class SpeechRecognitionCommand:
     def menu_name(self):
         return 'Speech recognition ({})'.format(self.language)
 
-    def enabled(self):
+    @property
+    def is_enabled(self):
         return self.api.subs.has_selection and self.api.audio.has_audio_source
 
     async def run(self):
