@@ -65,8 +65,6 @@ set nohlsearch
 set incsearch
 " try to leave some space from cursor to upper/lower border in lists
 set scrolloff=4
-" don't do too many requests to slow file systems
-set slowfs=curlftpfs
 " set custom status line look
 set statusline=" %t%= %A %10u:%-7g %15s %20d  "
 
@@ -78,8 +76,6 @@ mark h ~/
 " custom commands
 command! df df -h %m 2> /dev/null
 command! diff nvim -d %f %F
-command! zip zip -r %f.zip %f
-command! vgrep nvim "+grep %a"
 command! reload :write | restart
 command! extract for x in %"f; do 7z x -o"${${x##*/}%%.*}" "$x"; done
 command! extracth for x in %"f; do 7z x -o. "$x"; done
