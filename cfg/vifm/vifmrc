@@ -2,7 +2,7 @@
 let $COLORED_LOGS = 1
 let $VIFM_SERVER_NAME = v:servername
 
-" don't confirm file removals
+" don't confirm file removals if they're using trash
 set confirm=permdelete
 
 " the command to start vi
@@ -13,7 +13,7 @@ endif
 " vifm tells not to change this, so I leave it
 set trash
 
-" number of directories to store in the directory history
+" number of commands to store in the command history
 set history=100
 
 " show numbers before each file
@@ -90,34 +90,14 @@ command! ln for x in %"f; do ln -s %d/"$x" %D; done
 " ------------------------------------------------------------------------------
 " how to open and preview certain file types
 
-" Audio
-filetype *.wav,*.mp3,*.flac,*.ogg,*.m4a,*.wma,*.ape,*.ac3 ffplay -nodisp %f
-
-" Video
-filetype *.avi,*.mp4,*.wmv,*.dat,*.3gp,*.ogv,*.mkv,*.mpg,*.vob,*.flv,*.m2v,*.mov,*.ts,*.m4v mpv %f
-fileviewer *.avi,*.mp4,*.wmv,*.dat,*.3gp,*.ogv,*.mkv,*.mpg,*.vob,*.flv,*.m2v,*.mov,*.ts,*.m4v ffprobe -pretty %c 2>&1
-
-" Web
-filextype *.html,*.htm firefox %f &
-filetype *.html,*.htm links, lynx
-
-" Torrent
-filetype *.torrent qbittorrent %f &
+filextype *.bmp,*.jpg,*.jpeg,*.png,*.gif,*.webm mpi %d --select=%f 2>/dev/null &
+filextype * xdg-open %c || nvim %c
 
 " 7z and 7z archives
 fileviewer *.7z,*.zip,*.rar,*.iso,*.mdf 7z l %c
 
 " Images
-filextype *.bmp,*.jpg,*.jpeg,*.png,*.gif,*.webm mpi %d --select=%f 2>/dev/null &
-fileviewer *.bmp,*.jpg,*.jpeg,*.png,*.gif,*.webm ./custom_viewer
 fileviewer *.bmp,*.jpg,*.jpeg,*.png,*.gif,*.webm convert -identify %f -verbose /dev/null
-
-" Rich text documents
-filextype *.pdf evince %c %i &
-fileviewer *.pdf pdftotext -nopgbrk %c -
-filextype *.odt,*.doc,*.docx,*.xls,*.xlsx,*.odp,*.pptx libreoffice %f &
-fileviewer *.doc catdoc %c
-fileviewer *.docx, docx2txt.pl %f -
 
 " Directories
 fileviewer .*/,*/ tree %f
