@@ -28,8 +28,6 @@ nnoremap <silent> <C-q> :q<CR>
 "ctrl+w ctrl+m = open new file vertically
 nnoremap <silent> <C-w><C-m> :vne<CR>
 nnoremap <silent> <C-w>m :vne<CR>
-"make motion search easier to access
-nmap <leader>z <Plug>(easymotion-s)
 "save with sudo
 cnoremap w!! w !sudo tee >/dev/null %
 "disable stupid manual pages
