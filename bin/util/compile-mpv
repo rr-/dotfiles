@@ -1,0 +1,5 @@
+#!/bin/sh
+set -x
+./waf configure --enable-libmpv-shared
+./waf -j4
+sudo ./waf install

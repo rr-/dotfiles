@@ -1,0 +1,43 @@
+#!/bin/sh
+set -x
+./configure \
+    --disable-debug \
+    --disable-static \
+    --disable-stripping \
+    --enable-avisynth \
+    --enable-avresample \
+    --enable-fontconfig \
+    --enable-gmp \
+    --enable-gnutls \
+    --enable-gpl \
+    --enable-ladspa \
+    --enable-libass \
+    --enable-libbluray \
+    --enable-libfreetype \
+    --enable-libfribidi \
+    --enable-libgsm \
+    --enable-libiec61883 \
+    --enable-libmodplug \
+    --enable-libmp3lame \
+    --enable-libopencore_amrnb \
+    --enable-libopencore_amrwb \
+    --enable-libopenjpeg \
+    --enable-libopus \
+    --enable-libpulse \
+    --enable-libsoxr \
+    --enable-libspeex \
+    --enable-libssh \
+    --enable-libtheora \
+    --enable-libv4l2 \
+    --enable-libvidstab \
+    --enable-libvorbis \
+    --enable-libvpx \
+    --enable-libwebp \
+    --enable-libx264 \
+    --enable-libx265 \
+    --enable-libxcb \
+    --enable-libxvid \
+    --enable-shared \
+    --enable-version3
+make -j4
+sudo make install
