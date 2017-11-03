@@ -29,19 +29,19 @@ alt + ctrl + shift + bracketleft
 
 # focus or spawn remote terminal
 alt + ctrl + bracketright
-    run_or_raise -cn remote_terminal -p "urxvt -name remote_terminal -e zsh -ilc 'ssh cyclone -t "'"zsh -ilc tmux\ new-session\ -As\ work"'"'"
+    run_or_raise -cn remote_terminal -p "urxvt -name remote_terminal -e zsh -ilc 'ssh sakuya.pl -t "'"zsh -ilc tmux\ new-session\ -As\ work"'"'"
 
 # spawn plain remote terminal
 alt + ctrl + shift + bracketright
-    urxvt -e zsh -ilc 'ssh cyclone'
+    urxvt -e zsh -ilc 'ssh sakuya.pl'
 
 # focus or spawn irc
 alt + ctrl + m
-    run_or_raise -cn remote_irc -p "urxvt -name remote_irc -e zsh -ilc 'ssh cyclone -t "'"zsh -ilc tmux\ a\ -t\ irc"'"'"
+    run_or_raise -cn remote_irc -p "urxvt -name remote_irc -e zsh -ilc 'ssh sakuya.pl -t "'"zsh -ilc tmux\ a\ -t\ irc"'"'"
 
 # focus or spawn irc, and detach all other sessions
 alt + ctrl + shift + m
-    run_or_raise -cn remote_irc -p "urxvt -name remote_irc -e zsh -ilc 'ssh cyclone -t "'"zsh -ilc tmux\ a\ -d\ -t\ irc"'"'"
+    run_or_raise -cn remote_irc -p "urxvt -name remote_irc -e zsh -ilc 'ssh sakuya.pl -t "'"zsh -ilc tmux\ a\ -d\ -t\ irc"'"'"
 
 # spawn web browser
 alt + ctrl + semicolon
