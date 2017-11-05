@@ -55,11 +55,11 @@ def _check_punctuation(logger, line):
         logger.info(f'#{line.number}: extra comma or dot')
 
     if PUNCTUATION_INSIDE_QUOTES == 1:
-        if re.search('[^.][.,]"', line.text):
-            logger.info(f'#{line.number}: period/comma inside quotation mark')
-    elif PUNCTUATION_INSIDE_QUOTES == 1:
-        if re.search('"[.,][^.]', line.text) or re.search('"[.,]$', line.text):
+        if re.search(r'"[\.,…?!]', line.text):
             logger.info(f'#{line.number}: period/comma outside quotation mark')
+    elif PUNCTUATION_INSIDE_QUOTES == 2:
+        if re.search(r'[\.,…?!]"', line.text):
+            logger.info(f'#{line.number}: period/comma inside quotation mark')
 
     context = re.split(r'\W+', re.sub('[.,?!"]', '', line.text.lower()))
     for word in (
@@ -81,6 +81,12 @@ def _check_punctuation(logger, line):
 
     if re.search(r'(^|\\N)[A-Z][a-z]{,3}-[a-z]', text):
         logger.info(f'#{line.number}: possible wrong stutter capitalization')
+
+    if re.search(r'[\.,?!][A-Za-z]|[a-zA-Z]…[A-Za-z]', text):
+        logger.info(f'#{line.number}: missing space after punctuation mark')
+
+    if re.search(r'[\.!?]\s+[a-z]', text):
+        logger.info(f'#{line.number}: lowercase letter after sentence end')
 
 
 def _check_malformed_tags(logger, line):
