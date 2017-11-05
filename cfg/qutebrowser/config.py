@@ -5,6 +5,7 @@ c.colors.tabs.selected.even.bg = '#015B82'
 c.colors.tabs.selected.even.fg = '#CDE'
 c.colors.tabs.selected.odd.bg = '#015B82'
 c.colors.tabs.selected.odd.fg = '#CDE'
+c.downloads.remove_finished = 10000
 c.downloads.position = 'bottom'
 c.fonts.hints = 'bold 12px monospace'
 c.fonts.monospace = 'Input Mono'
