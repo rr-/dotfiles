@@ -86,4 +86,4 @@ bind index _ collapse-all
 # save mail to file
 macro index,pager s "| ~/.mutt/file_email ~/text/saved-mail/<enter>"
 # save attachment to ~/hub/mail/
-macro attach s <save-entry><bol>~/hub/mail/<enter>
+macro attach s "<enter-command>unset wait_key<enter><save-entry><bol>~/hub/mail/<enter>o<shell-escape>chmod 0644 ~/hub/mail/*<enter><enter-command>set wait_key<enter>"
