@@ -4,6 +4,8 @@ from dotinstall import util
 
 
 def run():
+    packages.install('yajl', method='pacman')
+
     os.chdir('/tmp')
     util.run_verbose(['git', 'clone', 'https://aur.archlinux.org/cower.git'])
     os.chdir('/tmp/cower')
