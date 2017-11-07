@@ -43,6 +43,24 @@ class PacmanPackageInstaller(object):
         return util.run_verbose(['sudo', '-S', 'pacman', '-S', package])
 
 
+class PacaurPackageInstaller(object):
+    name = 'pacaur'
+
+    @property
+    def supported(self):
+        return util.has_executable('pacaur')
+
+    def has_installed(self, package):
+        return util.run_silent(['pacaur', '-Q', package])[0]
+
+    def is_available(self, package):
+        return util.run_silent(['pacaur', '-Ss', package])[0]
+
+    def install(self, package):
+        return util.run_verbose([
+            'pacaur', '-S', package, '--noconfirm', '--noedit'])
+
+
 class YaourtPackageInstaller(object):
     name = 'yaourt'
 
@@ -103,6 +121,7 @@ class PipPackageInstaller(object):
 INSTALLERS = [
     CygwinPackageInstaller(),
     PacmanPackageInstaller(),
+    PacaurPackageInstaller(),
     YaourtPackageInstaller(),
     PipPackageInstaller(),
 ]
