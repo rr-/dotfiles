@@ -5,7 +5,13 @@ Host *
 Host cyclone
     HostName sakuya.pl
     User rr-
-    Port 65000
+    Port 465
+    ForwardX11 yes
+    ForwardX11Trusted yes
+
+Host sakuya.pl
+    User rr-
+    Port 465
     ForwardX11 yes
     ForwardX11Trusted yes
 
