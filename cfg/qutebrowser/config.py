@@ -13,7 +13,8 @@ c.hints.auto_follow_timeout = 300
 c.hints.mode = 'number'
 
 c.url.searchengines = {
-    'DEFAULT': 'https://www.startpage.com/do/search?lui=english&language=english&cat=web&nj=0&query={}'
+    'DEFAULT': 'https://www.startpage.com/do/search?lui=english&language=english&cat=web&nj=0&query={}',
+    'google': 'https://google.com/search?hl=en&q={}'
 }
 
 config.bind(';m', 'hint links spawn mpv {hint-url}')
