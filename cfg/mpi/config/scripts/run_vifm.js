@@ -28,10 +28,10 @@ function get_vifm_info(callback) {
     args = args.concat([
         '--remote',
         '-c', 'execute "!echo " paneisat("left") ">' + tmp_file + '"',
-        '-c', 'execute "!echo " expand("%c") ">>' + tmp_file + '"',
-        '-c', 'execute "!echo " expand("%C") ">>' + tmp_file + '"',
-        '-c', 'execute "!echo " expand("%d") ">>' + tmp_file + '"',
-        '-c', 'execute "!echo " expand("%D") ">>' + tmp_file + '"',
+        '-c', '!echo %c >>' + tmp_file,
+        '-c', '!echo %C >>' + tmp_file,
+        '-c', '!echo %d >>' + tmp_file,
+        '-c', '!echo %D >>' + tmp_file,
     ]);
     var result = mp.utils.subprocess({args: args, cancellable: false});
 
@@ -56,9 +56,6 @@ function run_vifm() {
 
     var vifm_server_name = get_vifm_server_name();
     get_vifm_info(function(vifm_info) {
-        print(vifm_info.current_file);
-        print(vifm_info.other_file);
-
         var args = ['vifm'];
         if (vifm_server_name) {
             args.push('--server-name');
@@ -66,19 +63,10 @@ function run_vifm() {
         }
         args.push('--remote');
         if (vifm_info.selected_pane === 1) {
-            print('mode2');
             args.push('--select');
             args.push(last_known_path);
-            // omitting the other argument leaves the other pane intact
         } else {
-            print('mode1');
-            // provide the first pane
-            args.push('--select');
-            if (vifm_info.other_file.match(/\.\.$/)) {
-                args.push(vifm_info.other_file.replace(/\.\./, ''));
-            } else {
-                args.push(vifm_info.other_file);
-            }
+            args.push(vifm_info.other_dir);
             args.push('--select');
             args.push(last_known_path);
         }
