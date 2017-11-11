@@ -13,6 +13,12 @@ class ApiError(RuntimeError):
     pass
 
 
+def _simplify_tag_relations(tag: Dict) -> Dict:
+    for key in ['suggestions', 'implications']:
+        tag[key] = [rel['names'][0] for rel in tag[key]]
+    return tag
+
+
 def _process_response(response: requests.Response) -> Dict:
     if response.status_code != 200:
         raise ApiError(json.loads(response.text)['description'])
@@ -38,7 +44,9 @@ class Api:
 
     @functools.lru_cache()
     def get_tag(self, tag_name: str) -> Tag:
-        return self._get('/tag/' + tag_name)
+        ret = self._get('/tag/' + tag_name)
+        _simplify_tag_relations(ret)
+        return ret
 
     def get_tag_implications(self, tag_name: str) -> Iterable[str]:
         to_check = [tag_name]
@@ -51,11 +59,10 @@ class Api:
                 tag = None
             if tag:
                 for implication in tag['implications']:
-                    implication_name = implication['names'][0]
-                    if implication_name not in visited:
-                        yield implication_name
-                        visited.add(implication_name)
-                        to_check.append(implication_name)
+                    if implication not in visited:
+                        yield implication
+                        visited.add(implication)
+                        to_check.append(implication)
 
     def find_tags(self, query: str) -> Iterable[Tag]:
         offset = 0
@@ -67,6 +74,7 @@ class Api:
                 break
             offset += len(response['results'])
             for result in response['results']:
+                _simplify_tag_relations(result)
                 yield result
 
     def get_last_post_id(self) -> Optional[int]:
@@ -77,13 +85,17 @@ class Api:
         return results[0]['id']
 
     def create_tag(self, tag: Tag) -> Tag:
-        return self._post('/tags', data=tag)
+        ret = self._post('/tags', data=tag)
+        _simplify_tag_relations(ret)
+        return ret
 
     def delete_tag(self, tag: Tag) -> None:
         self._delete('/tag/{}'.format(tag['names'][0]), data=tag)
 
     def update_tag(self, old_tag_name: str, new_tag_data: Tag) -> Tag:
-        return self._put('/tag/{}'.format(old_tag_name), data=new_tag_data)
+        ret = self._put('/tag/{}'.format(old_tag_name), data=new_tag_data)
+        _simplify_tag_relations(ret)
+        return ret
 
     def merge_tags(self, old_tag: Tag, new_tag: Tag) -> Tag:
         return self._post('/tag-merge', data={
