@@ -1,5 +1,5 @@
 #!/bin/sh
 set -x
-./waf configure --enable-libmpv-shared
+./waf configure --enable-libmpv-shared --disable-vulkan
 ./waf -j4
 sudo ./waf install
