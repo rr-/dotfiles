@@ -65,7 +65,10 @@ def main():
         push_info = repo.remote().push(force=True)[0]
         print(push_info.summary.strip())
 
-    except (Warning, RuntimeError) as ex:
+    except RuntimeError as ex:
+        print(ex)
+        sys.exit(1)
+    except Warning as ex:
         print(ex)
 
 
