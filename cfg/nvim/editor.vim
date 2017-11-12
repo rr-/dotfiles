@@ -58,7 +58,6 @@ set hidden                    "don't purge undo history when changing buffers
 let g:netrw_banner=0          "disable useless banner in :Explore
 let g:netrw_sort_sequence='[\/]$,*' "disable weird sort order
 let g:netrw_silent=1          "disable prompts when editing 'scp://...'
-let g:netrw_list_hide = '\(^\|\s\s\)\zs\.\S\+'  " hide dotfiles by default
 
 "miscellaneous
 set noeb vb t_vb=             "disable beeping
