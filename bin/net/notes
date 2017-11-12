@@ -34,8 +34,7 @@ def main():
             repo = git.Repo(repo_path)
 
         if repo.is_dirty():
-            print('Repo is dirty, bailing out')
-            sys.exit(1)
+            raise RuntimeError('Repo is dirty, bailing out')
 
         if repo.active_branch.name != 'master':
             raise RuntimeError('Invalid branch, bailing out')
