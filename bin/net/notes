@@ -39,6 +39,8 @@ def main():
         if repo.active_branch.name != 'master':
             raise RuntimeError('Invalid branch, bailing out')
 
+        repo.remote().pull()[0]
+
         path = os.path.join(repo_path, args.file)
 
         if not os.path.exists(path):
