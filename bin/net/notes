@@ -25,7 +25,7 @@ def edit_interactively(path):
 def main():
     try:
         args = parse_args()
-        repo_path = os.path.join(tempfile.gettempdir(), 'notes.git')
+        repo_path = os.path.join(tempfile.gettempdir(), f'{args.gist_id}.git')
 
         if not os.path.exists(repo_path):
             url = f'git@github.com:{args.gist_id}.git'
