@@ -33,13 +33,13 @@ def main():
         else:
             repo = git.Repo(repo_path)
 
-        if repo.is_dirty():
-            raise RuntimeError('Repo is dirty, bailing out')
+            if repo.is_dirty():
+                raise RuntimeError('Repo is dirty, bailing out')
 
-        if repo.active_branch.name != 'master':
-            raise RuntimeError('Invalid branch, bailing out')
+            if repo.active_branch.name != 'master':
+                raise RuntimeError('Invalid branch, bailing out')
 
-        repo.remote().pull()[0]
+            repo.remote().pull()[0]
 
         path = os.path.join(repo_path, args.file)
 
