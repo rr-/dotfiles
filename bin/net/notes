@@ -63,7 +63,7 @@ def main():
             repo.index.add(changed)
 
         repo.index.commit('update')
-        push_info = repo.remote().push(force=True)[0]
+        push_info = repo.remote().push()[0]
         print(push_info.summary.strip())
 
     except RuntimeError as ex:
