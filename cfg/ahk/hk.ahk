@@ -148,19 +148,6 @@ return
         return
     }
 
-    ;text editor - activate/run
-    +^!N::
-    {
-        If WinExist("ahk_class Vim") {
-            WinShow
-            WinActivate
-        } else {
-            Run(CygPath . "\\bin\\mintty.exe --class Vim --exec /bin/zsh -l -i -c /bin/vim", CygPath . "/bin")
-            WinWait("ahk_class Vim")
-        }
-        return
-    }
-
     ;vifm - activate/run
     #e::
     {
