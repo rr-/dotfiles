@@ -1,5 +1,5 @@
 import glob
-from PyQt5 import QtWidgets
+from PyQt5 import QtCore, QtWidgets
 from panel.widgets.widget import Widget
 
 
@@ -14,6 +14,18 @@ class BatteryWidget(Widget):
     def __init__(self, app, main_window):
         super().__init__(app, main_window)
         self.percentage = None
+        self._container = QtWidgets.QWidget(main_window)
+        self._icon_label = QtWidgets.QLabel(self._container)
+        self._text_label = QtWidgets.QLabel(self._container)
+
+        layout = QtWidgets.QHBoxLayout(self._container, margin=0, spacing=6)
+        layout.addWidget(self._icon_label)
+        layout.addWidget(self._text_label)
+
+        self._text_label.setFixedWidth(50)
+        self._text_label.setAlignment(
+            QtCore.Qt.AlignCenter | QtCore.Qt.AlignVCenter)
+        self._set_icon(self._icon_label, 'battery')
 
         try:
             self._charge_now_path = glob.glob(
@@ -24,11 +36,9 @@ class BatteryWidget(Widget):
             self._charge_now_path = None
             self._charge_max_path = None
 
-        self._label = QtWidgets.QLabel(main_window)
-
     @property
     def container(self):
-        return self._label
+        return self._container
 
     @property
     def available(self):
@@ -40,4 +50,4 @@ class BatteryWidget(Widget):
         self.percentage = current_value * 100.0 / max_value
 
     def _render_impl(self):
-        self._label.setText('Battery: %5.02f%%' % self.percentage)
+        self._text_label.setText('%5.02f%%' % self.percentage)
