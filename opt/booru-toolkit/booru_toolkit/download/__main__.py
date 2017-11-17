@@ -17,8 +17,6 @@ from booru_toolkit.plugin import PluginYume
 
 
 PLUGINS: List[PluginBase] = [PluginGelbooru(), PluginPixiv(), PluginYume()]
-MAX_ATTEMPTS = 3
-MAX_CONCURRENT_DOWNLOADS = 10
 
 
 class DownloadHistory:
@@ -76,11 +74,17 @@ class Downloader:
             plugin: PluginBase,
             target_dir: Path,
             history: Optional[DownloadHistory],
-            force: bool) -> None:
+            force: bool,
+            max_attempts: int,
+            max_concurrent_downloads: int,
+            sleep: float) -> None:
         self._plugin = plugin
         self._target_dir = target_dir
         self._history = history
         self._force = force
+        self._max_attempts = max_attempts
+        self._max_concurrent_downloads = max_concurrent_downloads
+        self._sleep = sleep
         self._stats = DownloadStats()
 
     def get_target_path(self, post: Post) -> Path:
@@ -122,7 +126,7 @@ class Downloader:
                     content = await self._plugin.get_post_content(post)
                     break
                 except Exception:
-                    if attempt > MAX_ATTEMPTS:
+                    if attempt > self._max_attempts:
                         raise
 
         target_path.parent.mkdir(parents=True, exist_ok=True)
@@ -138,7 +142,7 @@ class Downloader:
     async def run(self, query: str, limit: Optional[int]) -> None:
         downloaded = 0
 
-        queue = asyncio.Queue(maxsize=MAX_CONCURRENT_DOWNLOADS)
+        queue = asyncio.Queue(maxsize=self._max_concurrent_downloads)
 
         async def consumer():
             nonlocal downloaded
@@ -146,12 +150,13 @@ class Downloader:
                 post = await queue.get()
                 result = await self.download_file(post)
                 if result:
+                    await asyncio.sleep(self._sleep)
                     downloaded += 1
                 queue.task_done()
 
         consumers = [
             asyncio.ensure_future(consumer())
-            for i in range(MAX_CONCURRENT_DOWNLOADS)]
+            for i in range(self._max_concurrent_downloads)]
 
         try:
             async for post in self._plugin.find_posts(query):
@@ -177,6 +182,15 @@ def parse_args() -> configargparse.Namespace:
         '-l', '--limit', default=None, type=int,
         help='limit how many files to download')
     parser.add(
+        '-n', '--num', default=10, type=int,
+        help='simultaneous jobs')
+    parser.add(
+        '--max-attempts', default=3, type=int,
+        help='max attempts before abandoning download')
+    parser.add(
+        '-s', '--sleep', default=0, type=float,
+        help='pause between uploads (in seconds)')
+    parser.add(
         '--target-dir', default='~/{plugin}/{query}',
         help='where to put the files')
     parser.add(
@@ -197,6 +211,9 @@ def main() -> None:
     password: str = args.password
 
     force: bool = args.force
+    max_attempts: int = args.max_attempts
+    max_concurrent_downloads: int = args.num
+    sleep: float = args.sleep
     limit: Optional[int] = args.limit
     query: str = args.query
 
@@ -214,7 +231,14 @@ def main() -> None:
     try:
         loop = asyncio.get_event_loop()
         loop.run_until_complete(plugin.login(user_name, password))
-        downloader = Downloader(plugin, target_dir, history, force)
+        downloader = Downloader(
+            plugin,
+            target_dir,
+            history,
+            force,
+            max_attempts,
+            max_concurrent_downloads,
+            sleep)
         loop.run_until_complete(downloader.run(query, limit))
     except KeyboardInterrupt:
         print('Aborted.')
