@@ -95,7 +95,7 @@ class Downloader:
         file_name = (
             '_'.join(
                 str(part)
-                for part in [self._plugin.name, stem, post.title]
+                for part in [self._plugin.name, stem]
                 if part)
             + '.' + ext.lstrip('.'))
         return self._target_dir.joinpath(util.sanitize_file_name(file_name))
