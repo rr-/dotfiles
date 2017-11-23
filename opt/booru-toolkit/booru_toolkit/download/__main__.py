@@ -148,10 +148,14 @@ class Downloader:
             nonlocal downloaded
             while True:
                 post = await queue.get()
-                result = await self.download_file(post)
-                if result:
+                try:
+                    result = await self.download_file(post)
+                    if result:
+                        await asyncio.sleep(self._sleep)
+                        downloaded += 1
+                except Exception as ex:
+                    print('{}: {}'.format(post.content_url, ex))
                     await asyncio.sleep(self._sleep)
-                    downloaded += 1
                 queue.task_done()
 
         consumers = [
