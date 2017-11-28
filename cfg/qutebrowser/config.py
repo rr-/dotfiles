@@ -13,8 +13,8 @@ c.hints.auto_follow_timeout = 300
 c.hints.mode = 'number'
 
 c.url.searchengines = {
-    'DEFAULT': 'https://www.startpage.com/do/search?lui=english&language=english&cat=web&nj=0&query={}',
-    'google': 'https://google.com/search?hl=en&q={}'
+    'DEFAULT': 'https://google.com/search?hl=en&q={}',
+    'startpage': 'https://www.startpage.com/do/search?lui=english&language=english&cat=web&nj=0&query={}',
 }
 
 config.bind(';m', 'hint links spawn sh -c "LD_LIBRARY_PATH=/usr/local/lib mpv {hint-url}"')
