@@ -1,0 +1,144 @@
+#!/usr/bin/env python3
+import argparse
+import os
+import pathlib
+import tempfile
+import shelve
+import zlib
+import re
+import json
+import urllib.parse
+import requests
+import tqdm
+import dateutil.parser
+import lxml.html
+import xdg
+
+
+BUFFER_SIZE = 32 * 1024
+SHELVE_PATH = pathlib.Path(xdg.XDG_CACHE_HOME) / 'dl-bandcamp.dat'
+
+
+def download_page(url, cache=True):
+    with shelve.open(str(SHELVE_PATH)) as db:
+        if url in db and cache:
+            return zlib.decompress(db[url]).decode()
+        response = requests.get(url)
+        response.raise_for_status()
+        ret = response.text
+        db[url] = zlib.compress(ret.encode())
+        return ret
+
+
+def uniq(seq):
+    seen = set()
+    seen_add = seen.add
+    return [x for x in seq if not (x in seen or seen_add(x))]
+
+
+def parse_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('url')
+    parser.add_argument('--directory', default='.', type=pathlib.Path)
+    return parser.parse_args()
+
+
+def is_artist_page(url):
+    return len(get_artist_album_links(url)) > 0
+
+
+def is_album_page(url):
+    return len(get_album_track_links(url)) > 0
+
+
+def download_album(album_url, target_directory):
+    print('Downloading album', album_url)
+    for track_link in get_album_track_links(album_url):
+        download_track(track_link, target_directory)
+
+
+def download_track(track_url, target_directory):
+    response_text = download_page(track_url)
+
+    json_code = re.search(r'trackinfo: (.+),\s*?\n', response_text).group(1)
+    data = json.loads(json_code)[0]
+    track_url = data['file']['mp3-128']
+
+    artist = re.search(r'artist\s*:\s*"([^"]+)"', response_text).group(1)
+    album_title = re.search(
+        r'album_title\s*:\s*"([^"]+)"', response_text).group(1)
+    release_date = dateutil.parser.parse(
+        re.search(
+            r'album_release_date\s*:\s*"([^"]+)"', response_text).group(1))
+    track_title = data.get('title')
+    track_number = int(data.get('track_num'))
+
+    # print(f'Track URL: {track_url}')
+    # print(f'Artist: {artist}')
+    # print(f'Album title: {album_title}')
+    # print(f'Release date: {release_date}')
+    # print(f'Track title: {track_title}')
+    # print(f'Track number: {track_number}')
+
+    target_path = (
+        target_directory
+        / f'{artist} - {release_date:%Y-%m-%d} - {album_title}'
+        / f'{track_number:02d}. {track_title}.mp3')
+
+    if target_path.exists():
+        print(f'"{target_path}" already exists, skipping')
+        return
+
+    response = requests.get(track_url, stream=True)
+    total_size = int(response.headers.get('content-length', 0))
+    target_path.parent.mkdir(exist_ok=True, parents=True)
+
+    with tempfile.NamedTemporaryFile(dir=target_path.parent) as handle, \
+            tqdm.tqdm(total=total_size, unit='B', unit_scale=True) as bar:
+        for chunk in response.iter_content(BUFFER_SIZE):
+            handle.write(chunk)
+            bar.update(len(chunk))
+        os.link(handle.name, target_path)
+
+
+def get_album_track_links(album_url):
+    response_text = download_page(album_url)
+    document = lxml.html.fromstring(response_text)
+    document.make_links_absolute(base_url=album_url)
+    return uniq([
+        urllib.parse.splitquery(link)[0]
+        for link in document.xpath('//a/@href')
+        if '/track/' in link
+    ])
+
+
+def get_artist_album_links(artist_url):
+    response_text = download_page(artist_url, cache=False)
+    document = lxml.html.fromstring(response_text)
+    document.make_links_absolute(base_url=artist_url)
+    return [
+        link
+        for link in document.xpath('//a/@href')
+        if '/album/' in link
+    ]
+
+
+def main():
+    args = parse_args()
+    args.directory = args.directory.expanduser()
+    if is_album_page(args.url):
+        download_album(args.url, args.directory)
+    elif is_artist_page(args.url):
+        for album_link in get_artist_album_links(args.url):
+            download_album(album_link, args.directory)
+    else:
+        raise RuntimeError('Neither an artist nor an album page')
+
+
+if __name__ == '__main__':
+    try:
+        main()
+        exit(0)
+    except RuntimeError as ex:
+        print(ex)
+        exit(1)
