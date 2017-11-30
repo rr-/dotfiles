@@ -1,19 +1,20 @@
 #!/usr/bin/env python3
 import argparse
+import json
 import os
 import pathlib
-import tempfile
 import shelve
-import zlib
-import json
+import tempfile
 import urllib.parse
-import requests
-import tqdm
-import regex
+import zlib
+
+import _jsonnet
 import dateutil.parser
 import lxml.html
+import regex
+import requests
+import tqdm
 import xdg
-import _jsonnet
 
 
 BUFFER_SIZE = 32 * 1024
@@ -30,21 +31,21 @@ def download_file(source_url, target_path):
     target_path.parent.mkdir(exist_ok=True, parents=True)
 
     with tempfile.NamedTemporaryFile(dir=target_path.parent) as handle, \
-            tqdm.tqdm(total=total_size, unit='B', unit_scale=True) as bar:
+            tqdm.tqdm(total=total_size, unit='B', unit_scale=True) as pbar:
         for chunk in response.iter_content(BUFFER_SIZE):
             handle.write(chunk)
-            bar.update(len(chunk))
+            pbar.update(len(chunk))
         os.link(handle.name, target_path)
 
 
-def download_page(url, cache=True):
-    with shelve.open(str(SHELVE_PATH)) as db:
-        if url in db and cache:
-            return zlib.decompress(db[url]).decode()
+def download_page(url, use_cache=True):
+    with shelve.open(str(SHELVE_PATH)) as cache:
+        if use_cache and url in cache:
+            return zlib.decompress(cache[url]).decode()
         response = requests.get(url)
         response.raise_for_status()
         ret = response.text
-        db[url] = zlib.compress(ret.encode())
+        cache[url] = zlib.compress(ret.encode())
         return ret
 
 
@@ -112,7 +113,7 @@ def get_album_track_links(album_url):
 
 
 def get_artist_album_links(artist_url):
-    response_text = download_page(artist_url, cache=False)
+    response_text = download_page(artist_url, use_cache=False)
     document = lxml.html.fromstring(response_text)
     document.make_links_absolute(base_url=artist_url)
     return [
