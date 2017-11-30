@@ -5,14 +5,15 @@ import pathlib
 import tempfile
 import shelve
 import zlib
-import re
 import json
 import urllib.parse
 import requests
 import tqdm
+import regex
 import dateutil.parser
 import lxml.html
 import xdg
+import _jsonnet
 
 
 BUFFER_SIZE = 32 * 1024
@@ -53,38 +54,32 @@ def is_album_page(url):
 
 def download_album(album_url, target_directory):
     print('Downloading album', album_url)
-    for track_link in get_album_track_links(album_url):
-        download_track(track_link, target_directory)
+    response_text = download_page(album_url)
+
+    json_code = regex.search(
+        r'(?:TralbumData = )(\{(?>[^}{]*(?1)?)*\})',
+        response_text,
+        regex.M).group(1)
+    data = json.loads(_jsonnet.evaluate_snippet('snippet', json_code))
+
+    album_artist = data['artist']
+    album_title = data['current']['title']
+    album_release_date = dateutil.parser.parse(data['album_release_date'])
+
+    for track_data in data['trackinfo']:
+        track_link = track_data['file']['mp3-128']
+        track_title = track_data['title']
+        track_number = int(track_data['track_num'])
+
+        target_path = (
+            target_directory
+            / f'{album_artist} - {album_release_date:%Y-%m-%d} - {album_title}'
+            / f'{track_number:02d}. {track_title}.mp3')
+
+        download_track(track_link, target_path)
 
 
-def download_track(track_url, target_directory):
-    response_text = download_page(track_url)
-
-    json_code = re.search(r'trackinfo: (.+),\s*?\n', response_text).group(1)
-    data = json.loads(json_code)[0]
-    track_url = data['file']['mp3-128']
-
-    artist = re.search(r'artist\s*:\s*"([^"]+)"', response_text).group(1)
-    album_title = re.search(
-        r'album_title\s*:\s*"([^"]+)"', response_text).group(1)
-    release_date = dateutil.parser.parse(
-        re.search(
-            r'album_release_date\s*:\s*"([^"]+)"', response_text).group(1))
-    track_title = data.get('title')
-    track_number = int(data.get('track_num'))
-
-    # print(f'Track URL: {track_url}')
-    # print(f'Artist: {artist}')
-    # print(f'Album title: {album_title}')
-    # print(f'Release date: {release_date}')
-    # print(f'Track title: {track_title}')
-    # print(f'Track number: {track_number}')
-
-    target_path = (
-        target_directory
-        / f'{artist} - {release_date:%Y-%m-%d} - {album_title}'
-        / f'{track_number:02d}. {track_title}.mp3')
-
+def download_track(track_url, target_path):
     if target_path.exists():
         print(f'"{target_path}" already exists, skipping')
         return
