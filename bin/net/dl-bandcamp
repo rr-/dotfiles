@@ -20,6 +20,23 @@ BUFFER_SIZE = 32 * 1024
 SHELVE_PATH = pathlib.Path(xdg.XDG_CACHE_HOME) / 'dl-bandcamp.dat'
 
 
+def download_file(source_url, target_path):
+    if target_path.exists():
+        print(f'"{target_path}" already exists, skipping')
+        return
+
+    response = requests.get(source_url, stream=True)
+    total_size = int(response.headers.get('content-length', 0))
+    target_path.parent.mkdir(exist_ok=True, parents=True)
+
+    with tempfile.NamedTemporaryFile(dir=target_path.parent) as handle, \
+            tqdm.tqdm(total=total_size, unit='B', unit_scale=True) as bar:
+        for chunk in response.iter_content(BUFFER_SIZE):
+            handle.write(chunk)
+            bar.update(len(chunk))
+        os.link(handle.name, target_path)
+
+
 def download_page(url, cache=True):
     with shelve.open(str(SHELVE_PATH)) as db:
         if url in db and cache:
@@ -55,6 +72,8 @@ def is_album_page(url):
 def download_album(album_url, target_directory):
     print('Downloading album', album_url)
     response_text = download_page(album_url)
+    document = lxml.html.fromstring(response_text)
+    album_cover_url = document.xpath('//link[@rel="image_src"]/@href')[0]
 
     json_code = regex.search(
         r'(?:TralbumData = )(\{(?>[^}{]*(?1)?)*\})',
@@ -66,34 +85,19 @@ def download_album(album_url, target_directory):
     album_title = data['current']['title']
     album_release_date = dateutil.parser.parse(data['album_release_date'])
 
+    album_directory = (
+        target_directory
+        / f'{album_artist} - {album_release_date:%Y-%m-%d} - {album_title}')
+
+    download_file(album_cover_url, album_directory / 'cover.jpg')
+
     for track_data in data['trackinfo']:
-        track_link = track_data['file']['mp3-128']
+        track_url = track_data['file']['mp3-128']
         track_title = track_data['title']
         track_number = int(track_data['track_num'])
 
-        target_path = (
-            target_directory
-            / f'{album_artist} - {album_release_date:%Y-%m-%d} - {album_title}'
-            / f'{track_number:02d}. {track_title}.mp3')
-
-        download_track(track_link, target_path)
-
-
-def download_track(track_url, target_path):
-    if target_path.exists():
-        print(f'"{target_path}" already exists, skipping')
-        return
-
-    response = requests.get(track_url, stream=True)
-    total_size = int(response.headers.get('content-length', 0))
-    target_path.parent.mkdir(exist_ok=True, parents=True)
-
-    with tempfile.NamedTemporaryFile(dir=target_path.parent) as handle, \
-            tqdm.tqdm(total=total_size, unit='B', unit_scale=True) as bar:
-        for chunk in response.iter_content(BUFFER_SIZE):
-            handle.write(chunk)
-            bar.update(len(chunk))
-        os.link(handle.name, target_path)
+        track_path = album_directory / f'{track_number:02d}. {track_title}.mp3'
+        download_file(track_url, track_path)
 
 
 def get_album_track_links(album_url):
