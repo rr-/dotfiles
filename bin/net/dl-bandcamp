@@ -93,9 +93,13 @@ def download_album(album_url, target_directory):
     download_file(album_cover_url, album_directory / 'cover.jpg')
 
     for track_data in data['trackinfo']:
-        track_url = track_data['file']['mp3-128']
         track_title = track_data['title']
         track_number = int(track_data['track_num'])
+
+        if track_data['file'] is None:
+            print(f'Track "{track_number:02d}. {track_title}" is unavailable')
+            continue
+        track_url = track_data['file']['mp3-128']
 
         track_path = album_directory / f'{track_number:02d}. {track_title}.mp3'
         download_file(track_url, track_path)
