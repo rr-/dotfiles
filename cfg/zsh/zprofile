@@ -9,6 +9,8 @@ path=($DIR/bin/* $path)                 # PATH for all the goodies in this repo
 export PATH                             # export modified var for subprocesses
 
 export LD_LIBRARY_PATH=/usr/local/lib
+export INCLUDE_PATH=/usr/local/include
+export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig
 
 typeset -T PYTHONPATH pythonpath :      # turn PYTHONPATH into zsh list
 if [ -d $DIR/lib ]; then                # shared libraries for Python scripts

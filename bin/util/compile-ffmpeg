@@ -4,6 +4,8 @@ set -ex
     --disable-debug \
     --disable-static \
     --disable-stripping \
+    --disable-libdrm \
+    --disable-cuda \
     --enable-avisynth \
     --enable-avresample \
     --enable-fontconfig \
