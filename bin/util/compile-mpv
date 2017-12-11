@@ -1,8 +1,12 @@
 #!/bin/sh
 set -ex
-export LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
-export INCLUDE_PATH=/usr/local/include:$INCLUDE_PATH
-export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig:$PKG_CONFIG_PATH
-./waf configure --enable-libmpv-shared --disable-vulkan
+./waf configure \
+    --enable-libmpv-shared \
+    --disable-vdpau \
+    --disable-vulkan \
+    --disable-drm \
+    --disable-drmprime \
+    --disable-egl-drm \
+    --disable-vaapi-drm
 ./waf -j4
 sudo ./waf install
