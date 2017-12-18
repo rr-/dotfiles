@@ -142,20 +142,20 @@ super + shift + f
 
 # toggle window gaps
 super + o
-    if test $(bspc config -d focused window_gap) -eq 0; then; \
-        bspc config -d focused window_gap $(cat /tmp/bspc_window_gap); \
+    if test $(bspc config window_gap) -eq 0; then; \
+        bspc config window_gap $(cat /tmp/bspc_window_gap); \
     else; \
-        bspc config -d focused window_gap >/tmp/bspc_window_gap; \
-        bspc config -d focused window_gap 0; \
+        bspc config window_gap >/tmp/bspc_window_gap; \
+        bspc config window_gap 0; \
     fi
 
 # toggle window borders
 super + shift + o
-    if test $(bspc config -d focused border_width) -eq 0; then; \
-        bspc config -d focused border_width $(cat /tmp/bspc_border_width); \
+    if test $(bspc config border_width) -eq 0; then; \
+        bspc config border_width $(cat /tmp/bspc_border_width); \
     else; \
-        bspc config -d focused border_width >/tmp/bspc_border_width; \
-        bspc config -d focused border_width 0; \
+        bspc config border_width >/tmp/bspc_border_width; \
+        bspc config border_width 0; \
     fi
 
 # focus window with regard to focus history
