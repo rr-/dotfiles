@@ -14,6 +14,8 @@ CACHE_PATH = pathlib.Path(xdg.XDG_CACHE_HOME) / 'dups.dat'
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('dir', type=pathlib.Path)
+    parser.add_argument('-d', '--delete', action='store_true')
+    parser.add_argument('-N', '--no-confirm', action='store_true')
     return parser.parse_args()
 
 
@@ -123,9 +125,34 @@ def main():
     print('Duplicates:')
     for i, group in enumerate(duplicate_groups):
         print(f'-- Group {i} --')
-        for path in group:
-            print(f'- {path}')
+        for j, path in enumerate(group):
+            print(f'[{j}] {path}')
         print()
+
+        if args.delete:
+            if args.no_confirm:
+                for path in group[1:]:
+                    path.unlink()
+                continue
+
+            while True:
+                try:
+                    choice = input('Which file to keep? ').lower()
+                    if choice not in 's' \
+                            and int(choice) not in range(len(group)):
+                        raise ValueError('Invalid number')
+                    break
+                except ValueError:
+                    pass
+            print()
+
+            if choice == 's':
+                continue
+
+            choice = int(choice)
+            for j, path in enumerate(group):
+                if j != choice:
+                    path.unlink()
 
     print('Saving cache...')
     save_cache(cache)
