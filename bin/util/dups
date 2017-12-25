@@ -1,0 +1,135 @@
+#!/usr/bin/env python3
+import argparse
+import hashlib
+import pathlib
+import xdg
+import pickle
+import progress.bar
+import time
+
+
+CACHE_PATH = pathlib.Path(xdg.XDG_CACHE_HOME) / 'dups.dat'
+
+
+def parse_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('dir', type=pathlib.Path)
+    return parser.parse_args()
+
+
+def load_cache():
+    if CACHE_PATH.exists():
+        return pickle.loads(CACHE_PATH.read_bytes())
+    return {}
+
+
+def save_cache(cache):
+    CACHE_PATH.parent.mkdir(parents=True, exist_ok=True)
+    CACHE_PATH.write_bytes(pickle.dumps(cache))
+
+
+def get_file_hash(path):
+    hash = hashlib.md5()
+    hash.update(path.read_bytes())
+    return hash.digest()
+
+
+def collect_files(dir):
+    for path in dir.iterdir():
+        if path.is_file():
+            yield path
+        elif path.is_dir():
+            yield from collect_files(path)
+
+
+def construct_size_to_path_dict(paths):
+    ret = {}
+    for path in paths:
+        size = path.stat().st_size
+        if not size in ret:
+            ret[size] = []
+        ret[size].append(path)
+    return ret
+
+
+def construct_hash_to_path_dict(paths, cache, progress_callback):
+    ret = {}
+    for path in paths:
+        cache_key = str(path.resolve())
+        if cache_key in cache:
+            hash = cache[cache_key]
+        else:
+            hash = get_file_hash(path)
+            cache[cache_key] = hash
+        progress_callback()
+
+        if not hash in ret:
+            ret[hash] = []
+        ret[hash].append(path)
+    return ret
+
+
+class ProgressBar(progress.bar.IncrementalBar):
+    def __init__(self, **kwargs):
+        super().__init__(
+            'Working',
+            suffix='%(percent).1f%% - %(eta_td)s',
+            sma_window=1000,
+            **kwargs)
+
+    # @property
+    # def eta(self):
+    #     now_ts = time.time()
+    #     return self.remaining * (now_ts - self.start_ts) / max(1, self.index)
+
+
+def main():
+    args = parse_args()
+    if not args.dir.exists():
+        raise RuntimeError(f'Directory "{args.dir}" does not exist')
+    if not args.dir.is_dir():
+        raise RuntimeError(f'Selected path "{args.dir}" is not a directory')
+
+    print('Loading cache...')
+    cache = load_cache()
+
+    print('Collecting files...')
+    all_files = list(collect_files(args.dir))
+
+    print('Constructing size-path dictionary...')
+    size_to_path = construct_size_to_path_dict(all_files)
+    size_to_path = {
+        size: files
+        for size, files in size_to_path.items()
+        if len(files) > 1}
+
+    print('Checking for duplicates...')
+    duplicate_groups = []
+
+    bar = ProgressBar(
+        max=sum(len(files) for _size, files in size_to_path.items()))
+    for size, files in size_to_path.items():
+        def update():
+            bar.next()
+            if bar.index % 1000 == 999:
+                save_cache(cache)
+
+        hash_to_path = construct_hash_to_path_dict(files, cache, update)
+        for duplicate_paths in hash_to_path.values():
+            if len(duplicate_paths) > 1:
+                duplicate_groups.append(duplicate_paths)
+    bar.finish()
+
+    print('Duplicates:')
+    for i, group in enumerate(duplicate_groups):
+        print(f'-- Group {i} --')
+        for path in group:
+            print(f'- {path}')
+        print()
+
+    print('Saving cache...')
+    save_cache(cache)
+
+
+if __name__ == '__main__':
+    main()
