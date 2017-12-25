@@ -25,3 +25,4 @@ osd-blur=2
 osd-font='InputMono Light'
 osd-font-size=16
 sws-scaler=lanczos
+osd-bar=no
