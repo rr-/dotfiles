@@ -62,5 +62,9 @@ class GermanCommand(SpeechRecognitionCommand, PluginCommand):
     language = 'de'
 
 
+class FrenchCommand(SpeechRecognitionCommand, PluginCommand):
+    language = 'fr'
+
+
 class AutoCommand(SpeechRecognitionCommand, PluginCommand):
     language = 'auto'
