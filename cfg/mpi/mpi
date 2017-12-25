@@ -46,9 +46,10 @@ def gather_playlist(paths, recursive):
             if recursive or not depth:
                 for subpath in path.iterdir():
                     yield from scan(subpath, depth + 1)
-        elif path.is_file() \
-                and path.suffix.lower().lstrip('.') in MANAGED_EXTENSIONS:
-            yield path
+        elif path.is_file():
+            ext = path.suffix.lower().lstrip('.')
+            if ext in MANAGED_EXTENSIONS or not depth:
+                yield path
 
     for path in paths:
         yield from scan(path)
