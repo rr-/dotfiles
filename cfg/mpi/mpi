@@ -18,6 +18,9 @@ def parse_args():
     parser.add_argument(
         '-s', '--select', dest='selected_path', help='Which file to preselect')
     parser.add_argument(
+        '-r', '--recursive', action='store_true',
+        help='Scan directories recursively')
+    parser.add_argument(
         metavar='PATH', nargs='*', dest='paths',
         help='path to the image or a directory', default=None)
     args, unknown_args = parser.parse_known_args()
@@ -37,17 +40,18 @@ def parse_args():
     return args, unknown_args
 
 
-def gather_playlist(paths, selected_path):
-    for path in paths:
+def gather_playlist(paths, recursive):
+    def scan(path, depth=0):
         if path.is_dir():
-            for entry in path.iterdir():
-                if entry.is_file() \
-                and entry.suffix.lower().lstrip('.') in MANAGED_EXTENSIONS:
-                    yield entry
-        elif path.is_file():
+            if recursive or not depth:
+                for subpath in path.iterdir():
+                    yield from scan(subpath, depth + 1)
+        elif path.is_file() \
+                and path.suffix.lower().lstrip('.') in MANAGED_EXTENSIONS:
             yield path
-    if selected_path:
-        yield selected_path
+
+    for path in paths:
+        yield from scan(path)
 
 
 def sort_playlist(playlist):
@@ -61,8 +65,17 @@ def sort_playlist(playlist):
 def main():
     args, unknown_args = parse_args()
 
-    playlist = list(gather_playlist(args.paths, args.selected_path))
-    playlist = list(set(playlist))  # remove duplicates
+    playlist = list(
+        gather_playlist(
+            args.paths if args.paths is not None else ['.'],
+            args.recursive))
+
+    if args.selected_path:
+        playlist.append(args.selected_path)
+
+    # remove duplicates
+    playlist = list(set(playlist))
+
     sort_playlist(playlist)
 
     playlist_pos = (
