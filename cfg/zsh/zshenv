@@ -9,6 +9,7 @@ if whence -p dircolors >/dev/null; then
 fi
 
 # aliases
+alias cal="cal -m"
 alias ls="ls $LS_OPTIONS -vF1"
 alias ll="ls $LS_OPTIONS -lX"
 alias la="ls $LS_OPTIONS -lXA"
