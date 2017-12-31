@@ -108,6 +108,7 @@ fileviewer .*/,*/ tree %f
 nnoremap gU <nop>
 nnoremap gu :cd ../<CR>
 nnoremap gh :cd ~/<CR>
+nnoremap g/ :cd /<CR>
 
 " Start shell in current directory
 nnoremap s :shell<cr>
