@@ -103,8 +103,8 @@ fileviewer .*/,*/ tree %f
 " ------------------------------------------------------------------------------
 " Key mappings
 
-" emulate vimperator's vertical directory navigation
-" (sacrificing easy case converions)
+" emulate qutebrowser's vertical directory navigation
+" (sacrificing easy case conversion)
 nnoremap gU <nop>
 nnoremap gu :cd ../<CR>
 nnoremap gh :cd ~/<CR>

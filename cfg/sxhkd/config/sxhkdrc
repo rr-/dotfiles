@@ -45,7 +45,7 @@ alt + ctrl + shift + m
 
 # spawn web browser
 alt + ctrl + semicolon
-    run_or_raise -n 'Mozilla Firefox|Vimperator|Qutebrowser' -p "xdg-open 'about:blank'"
+    run_or_raise -n 'Qutebrowser' -p "xdg-open 'about:blank'"
 
 # spawn file manager within local terminal
 super + e
