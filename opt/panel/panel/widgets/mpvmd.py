@@ -81,8 +81,8 @@ class MpvmdWidget(Widget):
         if not self._socket:
             self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             try:
-                self._socket.connect(('localhost', 36934))
                 self._socket.settimeout(3)
+                self._socket.connect(('localhost', 36934))
             except ConnectionRefusedError:
                 self.delay = min(60, self.delay + 1)
                 raise
