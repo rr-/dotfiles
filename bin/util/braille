@@ -1,0 +1,96 @@
+#!/usr/bin/env python3
+import argparse
+import numpy
+import skimage.io
+import skimage.transform
+import skimage.color
+import skimage.util
+import shutil
+
+
+INDICES = [
+    (0, 0), (1, 0), (2, 0), (0, 1),
+    (1, 1), (2, 1), (3, 0), (3, 1),
+]
+
+
+def parse_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('path', help='image to convert')
+    parser.add_argument(
+        '--width', default=None, type=int,
+        help='maximum output width (in terminal columns)')
+    parser.add_argument(
+        '--height', default=None, type=int,
+        help='maximum output height (in terminal lines)')
+    parser.add_argument(
+        '--threshold', default=0.5, type=float, help='output "brightness"')
+    parser.add_argument(
+        '--invert', action='store_true',
+        help='output is meant to be viewed on a dark terminal')
+    parser.add_argument(
+        '--font-ar', default=0.5, type=float, metavar='RATIO',
+        dest='font_aspect_ratio', help='adjust font aspect ratio')
+    return parser.parse_args()
+
+
+def fit_inside(w1, h1, w2, h2):
+    fatness1 = w1 / h1
+    fatness2 = w2 / h2
+    if fatness2 < fatness1:
+        scale_ratio = w2 / w1
+    else:
+        scale_ratio = h2 / h1
+    w3 = int(w1 * scale_ratio)
+    h3 = int(h1 * scale_ratio)
+    return (w3, h3)
+
+
+def img_to_braille(img, threshold):
+    width, height = img.shape[1], img.shape[0]
+    padded_height = ((height + 3) >> 2) << 2
+    padded_width = ((width + 1) >> 1) << 1
+    img = numpy.pad(
+        img,
+        ((0, padded_height - height), (0, padded_width - width)),
+        mode='constant',
+        constant_values=1)
+
+    output = ''
+    for row in numpy.vsplit(img, padded_height >> 2):
+        for col in numpy.split(row, padded_width >> 1, axis=1):
+            idx = 0
+            for i in range(8):
+                y, x = INDICES[i]
+                idx |= (1 if col[y, x] < threshold else 0) << i
+            output += chr(0x2800 + idx)
+        output += '\n'
+    return output
+
+
+def main():
+    args = parse_args()
+    if args.width is None:
+        args.width = shutil.get_terminal_size().columns - 1
+    if args.height is None:
+        args.height = shutil.get_terminal_size().lines - 1
+    bbox_width = args.width << 1
+    bbox_height = args.height << 2
+
+    img = skimage.io.imread(args.path, as_grey=True)
+    width, height = img.shape[1], img.shape[0]
+    width, height = fit_inside(
+        width * (args.font_aspect_ratio / 0.5),  # 4:2 in Braille characters
+        height,
+        bbox_width,
+        bbox_height)
+
+    img = skimage.transform.resize(img, (height, width), mode='constant')
+    if args.invert:
+        img = skimage.util.invert(img)
+
+    print(img_to_braille(img, args.threshold), end='')
+
+
+if __name__ == '__main__':
+    main()
