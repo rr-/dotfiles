@@ -2,6 +2,8 @@ import re
 import bubblesub.util
 import bubblesub.api.cmd
 import ass_tag_parser
+import fontTools.ttLib as font_tools
+from collections import defaultdict
 
 
 MIN_DURATION = 250  # milliseconds
@@ -128,6 +130,98 @@ def _check_double_words(logger, line):
         logger.info(f'#{line.number}: double word ({word})')
 
 
+def _check_fonts(logger, api):
+    TT_NAME_ID_FONT_FAMILY = 1
+    TT_NAME_ID_FULL_NAME = 4
+    TT_NAME_ID_TYPOGRAPHIC_FAMILY = 16
+    TT_PLATFORM_MICROSOFT = 3
+
+    class StyleInfo:
+        def __init__(self, family, is_bold, is_italic):
+            self.family = family
+            self.is_bold = is_bold
+            self.is_italic = is_italic
+            self.used_chars = []
+
+    class FontInfo:
+        def __init__(self, font_path):
+            font = font_tools.TTFont(font_path)
+
+            self.names = []
+            self.is_bold = bool(font['OS/2'].fsSelection & (1 << 5))
+            self.is_italic = bool(font['OS/2'].fsSelection & 1)
+            self.glyphs = set(
+                chr(y[0])
+                for x in font['cmap'].tables
+                for y in x.cmap.items())
+
+            for record in font['name'].names:
+                if record.nameID in {
+                        TT_NAME_ID_FONT_FAMILY,
+                        TT_NAME_ID_FULL_NAME,
+                        TT_NAME_ID_TYPOGRAPHIC_FAMILY} \
+                    and record.platformID == TT_PLATFORM_MICROSOFT:
+                    self.names.append(record.string.decode('utf-16-be'))
+
+    def get_used_font_styles(api):
+        results = defaultdict(set)
+
+        styles = {style.name: style for style in api.subs.styles}
+        for i, line in enumerate(api.subs.lines):
+            if line.is_comment:
+                continue
+
+            family = styles[line.style].font_name
+            is_bold = styles[line.style].bold
+            is_italic = styles[line.style].italic
+            for chunk in ass_tag_parser.parse_ass(line.text):
+                if chunk['type'] == 'tags':
+                    for ass_tag in chunk['children']:
+                        if ass_tag['type'] == 'bold':
+                            if 'enabled' in ass_tag:
+                                is_bold = ass_tag['enabled']
+                            else:
+                                is_bold = ass_tag['weight'] > 100
+                        elif ass_tag['type'] == 'italics':
+                            is_italic = ass_tag['enabled']
+                        elif ass_tag['type'] == 'font-name':
+                            family = ass_tag['name']
+                elif chunk['type'] == 'text':
+                    for glyph in chunk['text']:
+                        results[(family, is_bold, is_italic)].add(glyph)
+
+        return results
+
+    def get_fonts():
+        return {
+            path: FontInfo(path)
+            for path in (api.subs.path.parent / 'fonts').iterdir()
+        }
+
+    def locate_font(fonts, family, is_bold, is_italic):
+        candidates = []
+        for font_path, font in fonts.items():
+            if family.lower() in [n.lower() for n in font.names]:
+                weight = (
+                    (font.is_bold == is_bold) +
+                    (font.is_italic == is_italic))
+                candidates.append((weight, font_path, font))
+        candidates.sort(key=lambda i: -i[0])
+        return candidates[0]
+
+    results = get_used_font_styles(api)
+    fonts = get_fonts()
+    for font_specs, glyphs in results.items():
+        _, font_path, font = locate_font(fonts, *font_specs)
+
+        logger.info(f'Checking {font_path} for {len(glyphs)} glyphs…')
+        errors = False
+        for glyph in glyphs:
+            if glyph not in font.glyphs:
+                logger.warn(f'glyph not found: {glyph}')
+                errors = True
+
+
 class QualityCheckCommand(bubblesub.api.cmd.PluginCommand):
     name = 'grid/quality-check'
     menu_name = 'Quality check'
@@ -144,3 +238,4 @@ class QualityCheckCommand(bubblesub.api.cmd.PluginCommand):
             _check_disjointed_tags(self, line)
             _check_broken_comments(self, line)
             _check_double_words(self, line)
+        _check_fonts(self, self.api)
