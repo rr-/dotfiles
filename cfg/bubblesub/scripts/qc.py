@@ -195,7 +195,7 @@ def _check_fonts(logger, api):
     def get_fonts():
         return {
             path: FontInfo(path)
-            for path in (api.subs.path.parent / 'fonts').iterdir()
+            for path in (api.subs.path.parent / '../.fonts').iterdir()
         }
 
     def locate_font(fonts, family, is_bold, is_italic):
