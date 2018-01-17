@@ -118,16 +118,12 @@ class Downloader:
             return False
 
         content = None
-        attempt = 0
         with self._stats.download(post.content_url):
-            while True:
-                attempt += 1
-                try:
-                    content = await self._plugin.get_post_content(post)
-                    break
-                except Exception:
-                    if attempt > self._max_attempts:
-                        raise
+            content = await util.retry(
+                self._max_attempts,
+                self._sleep,
+                self._plugin.get_post_content,
+                post)
 
         target_path.parent.mkdir(parents=True, exist_ok=True)
         with target_path.open('wb') as handle:
@@ -151,11 +147,9 @@ class Downloader:
                 try:
                     result = await self.download_file(post)
                     if result:
-                        await asyncio.sleep(self._sleep)
                         downloaded += 1
                 except Exception as ex:
                     print('{}: {}'.format(post.content_url, ex))
-                    await asyncio.sleep(self._sleep)
                 queue.task_done()
 
         consumers = [

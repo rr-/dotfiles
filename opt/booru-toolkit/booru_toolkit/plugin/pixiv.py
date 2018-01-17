@@ -4,6 +4,7 @@ import json
 from typing import Optional, Tuple, List, Dict, AsyncIterable
 import requests
 from booru_toolkit import errors
+from booru_toolkit import util
 from booru_toolkit.plugin.base import PluginBase
 from booru_toolkit.plugin.base import Post
 from booru_toolkit.plugin.base import Safety
@@ -80,7 +81,7 @@ class PluginPixiv(PluginBase):
         page = 1
         page_size = 50
         while page is not None:
-            page_data = await page_getter(page, 50)
+            page_data = await util.retry(5, 1, page_getter, page, 50)
 
             for item in page_data['response']:
                 base_url = item['image_urls']['large']

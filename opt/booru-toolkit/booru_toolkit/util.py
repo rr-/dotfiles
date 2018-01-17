@@ -62,3 +62,17 @@ def async_lru_cache(maxsize=128):
 
 def clamp(number: int, min_value: int, max_value: int) -> int:
     return max(min_value, min(max_value, number))
+
+
+async def retry(max_attempts, sleep, func, *args, **kwargs):
+    attempt = 0
+    while True:
+        attempt += 1
+        try:
+            result = await func(*args, **kwargs)
+            await asyncio.sleep(sleep)
+            break
+        except Exception:
+            if attempt > max_attempts:
+                raise
+    return result
