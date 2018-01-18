@@ -70,6 +70,7 @@ bind pager                      G   bottom
 bind pager                      k   previous-line
 bind pager                      j   next-line
 bind index,pager                K   edit-label
+bind index                      <F5> imap-fetch-mail
 
 bind attach,browser,pager,index \CF next-page
 bind attach,browser,pager,index \CB previous-page
