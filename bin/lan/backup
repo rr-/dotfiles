@@ -33,10 +33,7 @@ def sync(source, target):
 
 def main():
     logging.info('tornado -> cyclone')
-    sync(
-        'tornado:/home/rr-/src',
-        'cyclone:/usb1/backup/tornado/')
-    for directory in ['blob', 'hub', 'img', 'text']:
+    for directory in ['src', 'blob', 'hub', 'img', 'text']:
         sync(
             'tornado:/home/rr-/' + directory,
             'cyclone:/usb1/backup/tornado/')
