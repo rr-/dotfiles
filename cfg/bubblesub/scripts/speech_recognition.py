@@ -54,17 +54,12 @@ class SpeechRecognitionCommand:
             await _work(self.language, self.api, self, line)
 
 
-class JapaneseCommand(SpeechRecognitionCommand, PluginCommand):
-    language = 'ja'
+def define_cmd(cmd_name, language):
+    type(
+        'SpeechRecognition' + str(cmd_name) + 'Command',
+        (SpeechRecognitionCommand, PluginCommand),
+        {'language': language})
 
 
-class GermanCommand(SpeechRecognitionCommand, PluginCommand):
-    language = 'de'
-
-
-class FrenchCommand(SpeechRecognitionCommand, PluginCommand):
-    language = 'fr'
-
-
-class AutoCommand(SpeechRecognitionCommand, PluginCommand):
-    language = 'auto'
+for i, language in enumerate(['ja', 'de', 'fr', 'it', 'auto']):
+    define_cmd(i, language)
