@@ -1,60 +1,37 @@
-#!/bin/sh
-# Computes difference between two dates
-
-# load arguments
-if [ -z "$1" ]; then
-    echo 'No date specified' 1>&2
-    exit 1
-else
-    date1="$1"
-fi
-
-if [ -z "$2" ]; then
-    date2=now
-else
-    date2="$2"
-fi
+#!/usr/bin/env python3
+import argparse
+import dateutil.parser
+import datetime
 
 
-# try to parse dates, abort on failures
-# (error message will be print by `date`)
-ts1=$(date --date="$date1" +'%s')
-[ $? -ne 0 ] && exit 1
-
-ts2=$(date --date="$date2" +'%s')
-[ $? -ne 0 ] && exit 1
+def parse_date(text):
+    text = text.strip().lower()
+    if text == 'yesterday':
+        return datetime.datetime.now() - datetime.timedelta(days=1)
+    return dateutil.parser.parse(text)
 
 
-# compute the difference
-diff=$(( $ts1 - $ts2 ))
+def parse_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('date1')
+    parser.add_argument('date2', default=None, nargs='?')
+    return parser.parse_args()
 
-# ensure the difference is positive
-diff=$(echo ${diff#-})
+
+def main():
+    args = parse_args()
+    date1 = parse_date(args.date1)
+    date2 = parse_date(args.date2) if args.date2 else datetime.datetime.now()
+    diff = abs(date2 - date1)
+    diff_seconds = diff.total_seconds()
+
+    print(f'Seconds: {diff_seconds:.2f}')
+    print(f'Minutes: {diff_seconds / 60:.2f}')
+    print(f'Hours:   {diff_seconds / 3600:.2f}')
+    print(f'Days:    {diff_seconds / 3600 / 24:.2f}')
+    print(f'Months:  {diff_seconds / 3600 / 24 / (365.25 / 12):.2f}')
+    print(f'Years:   {diff_seconds / 3600 / 24 / 365.25:.2f}')
 
 
-if command -v bc &>/dev/null; then
-    year_days=365.25
-    month_days=$(echo "scale = 10; $year_days / 12" | bc)
-    calc () {
-        echo "scale = 2; x=($1); if (x < 1) print 0; if (x > 0) print x" | bc
-        echo
-    }
-    # execute using bc (greater precision)
-    echo -n 'Seconds: '; calc "$diff / 1"
-    echo -n 'Minutes: '; calc "$diff / 60"
-    echo -n 'Hours:   '; calc "$diff / ( 60 * 60 )"
-    echo -n 'Days:    '; calc "$diff / ( 24 * 60 * 60 )"
-    echo -n 'Months:  '; calc "$diff / ( $month_days * 24 * 60 * 60 )"
-    echo -n 'Years:   '; calc "$diff / ( $year_days * 24 * 60 * 60 )"
-else
-    # execute using sh internals
-    month_days=30
-    year_days=365
-    echo 'To have greater precision, please install bc.' 1>&2
-    echo 'Seconds: ' $diff
-    echo 'Minutes: ' $((diff / 60))
-    echo 'Hours:   ' $((diff / ( 60 * 60 ) ))
-    echo 'Days:    ' $((diff / ( 24 * 60 * 60 ) ))
-    echo 'Months:  ' $((diff / ( month_days * 24 * 60 * 60 ) ))
-    echo 'Years:   ' $((diff / ( year_days * 24 * 60 * 60 ) ))
-fi
+if __name__ == '__main__':
+    main()
