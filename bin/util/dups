@@ -127,6 +127,7 @@ def main():
         print(f'-- Group {i} --')
         for j, path in enumerate(group):
             print(f'[{j}] {path}')
+        print('[a] all')
         print()
 
         if args.delete:
@@ -138,7 +139,7 @@ def main():
             while True:
                 try:
                     choice = input('Which file to keep? ').lower()
-                    if choice not in 's' \
+                    if choice not in 'a' \
                             and int(choice) not in range(len(group)):
                         raise ValueError('Invalid number')
                     break
@@ -146,7 +147,7 @@ def main():
                     pass
             print()
 
-            if choice == 's':
+            if choice == 'a':
                 continue
 
             choice = int(choice)
