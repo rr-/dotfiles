@@ -7,7 +7,7 @@ from bubblesub.api.cmd import PluginCommand
 
 class FadeFromBlackCommand(PluginCommand):
     name = 'edit/time'
-    menu_name = 'Auto time'
+    menu_name = '&Auto time'
 
     @property
     def is_enabled(self):
