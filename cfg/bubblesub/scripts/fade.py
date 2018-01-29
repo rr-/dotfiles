@@ -72,11 +72,13 @@ class FadeCommand:
                 line.text = format_ass_tags(
                     format_color(1, self.color),
                     format_color(3, self.color),
+                    format_color(4, self.color),
                     format_animation(
                         0,
                         self.duration,
                         format_color(1, c1),
-                        format_color(3, c3)),
+                        format_color(3, c3),
+                        format_color(4, c4)),
                     close=True) + line.text
             elif self.direction == Direction.Right:
                 line.text = format_ass_tags(
@@ -84,7 +86,8 @@ class FadeCommand:
                         max(0, line.duration - self.duration),
                         line.duration,
                         format_color(1, self.color),
-                        format_color(3, self.color)),
+                        format_color(3, self.color),
+                        format_color(4, self.color)),
                     close=True) + line.text
             else:
                 raise ValueError('Invalid direction')
