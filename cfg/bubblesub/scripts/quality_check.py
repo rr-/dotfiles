@@ -224,7 +224,7 @@ def _check_fonts(logger, api):
 
 class QualityCheckCommand(bubblesub.api.cmd.PluginCommand):
     name = 'grid/quality-check'
-    menu_name = 'Quality check'
+    menu_name = '&Quality check'
 
     @property
     def is_enabled(self):

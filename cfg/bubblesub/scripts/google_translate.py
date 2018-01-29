@@ -27,16 +27,20 @@ async def _work(language, api, logger, line):
 
 class GoogleTranslateCommand:
     @bubblesub.util.classproperty
-    def language(self):
-        raise NotImplementedError('Unknown language')
+    def language_code(self):
+        raise NotImplementedError('Unknown language code')
+
+    @bubblesub.util.classproperty
+    def language_name(self):
+        raise NotImplementedError('Unknown language name')
 
     @bubblesub.util.classproperty
     def name(self):
-        return 'grid/google-translate-' + self.language
+        return 'grid/google-translate-' + self.language_code
 
     @property
     def menu_name(self):
-        return 'Google Translate ({})'.format(self.language)
+        return 'Google Translate (&{})'.format(self.language_name)
 
     @property
     def is_enabled(self):
@@ -44,12 +48,15 @@ class GoogleTranslateCommand:
 
     async def run(self):
         for line in self.api.subs.selected_lines:
-            await _work(self.language, self.api, self, line)
+            await _work(self.language_code, self.api, self, line)
 
 
-class JapaneseCommand(GoogleTranslateCommand, PluginCommand):
-    language = 'ja'
+def define_cmd(language_code, language_name):
+    type(
+        'SpeechRecognition' + str(language_name) + 'Command',
+        (GoogleTranslateCommand, PluginCommand),
+        {'language_code': language_code, 'language_name': language_name})
 
 
-class AutoCommand(GoogleTranslateCommand, PluginCommand):
-    language = 'auto'
+for language_code, language_name in [('auto', 'auto'), ('ja', 'Japanese')]:
+    define_cmd(language_code, language_name)

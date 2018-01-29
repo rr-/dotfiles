@@ -34,16 +34,20 @@ async def _work(language, api, logger, line):
 
 class SpeechRecognitionCommand:
     @bubblesub.util.classproperty
-    def language(self):
-        raise NotImplementedError('Unknown language')
+    def language_code(self):
+        raise NotImplementedError('Unknown language code')
+
+    @bubblesub.util.classproperty
+    def language_name(self):
+        raise NotImplementedError('Unknown language name')
 
     @bubblesub.util.classproperty
     def name(self):
-        return 'grid/speech-' + self.language
+        return 'grid/speech-recognition-' + self.language_code
 
     @property
     def menu_name(self):
-        return 'Speech recognition ({})'.format(self.language)
+        return 'Speech recognition (&{})'.format(self.language_name)
 
     @property
     def is_enabled(self):
@@ -51,15 +55,20 @@ class SpeechRecognitionCommand:
 
     async def run(self):
         for line in self.api.subs.selected_lines:
-            await _work(self.language, self.api, self, line)
+            await _work(self.language_code, self.api, self, line)
 
 
-def define_cmd(cmd_name, language):
+def define_cmd(language_code, language_name):
     type(
-        'SpeechRecognition' + str(cmd_name) + 'Command',
+        'SpeechRecognition' + str(language_name) + 'Command',
         (SpeechRecognitionCommand, PluginCommand),
-        {'language': language})
+        {'language_code': language_code, 'language_name': language_name})
 
 
-for i, language in enumerate(['ja', 'de', 'fr', 'it', 'auto']):
-    define_cmd(i, language)
+for language_code, language_name in [
+        ('ja', 'Japanese'),
+        ('de', 'German'),
+        ('fr', 'French'),
+        ('it', 'Italian'),
+        ('auto', 'auto')]:
+    define_cmd(language_code, language_name)

@@ -30,7 +30,7 @@ def format_ass_tags(*tags, close=True):
 
 class FadeFromBlackCommand(PluginCommand):
     name = 'grid/fade-from-black'
-    menu_name = 'Fade from black'
+    menu_name = '&Fade from black'
 
     @property
     def is_enabled(self):
@@ -56,7 +56,7 @@ class FadeFromBlackCommand(PluginCommand):
 
 class FadeToBlackCommand(PluginCommand):
     name = 'grid/fade-to-black'
-    menu_name = 'Fade to black'
+    menu_name = '&Fade to black'
 
     @property
     def is_enabled(self):
