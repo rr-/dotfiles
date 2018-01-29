@@ -80,8 +80,6 @@ class FadeCommand:
                     close=True) + line.text
             elif self.direction == Direction.Right:
                 line.text = format_ass_tags(
-                    format_color(1, c1),
-                    format_color(3, c3),
                     format_animation(
                         max(0, line.duration - self.duration),
                         line.duration,
