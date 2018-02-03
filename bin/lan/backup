@@ -23,6 +23,7 @@ def sync(source, target):
         '--whole-file',
         '--chmod=D=rwxrxrx,F=rwrr',
         '-vaKR',
+        '-xx',
         '--delete-excluded',
         '--delete-during',
         # '--dry-run',
