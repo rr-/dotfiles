@@ -39,7 +39,7 @@ def main():
             'tornado:/home/rr-/' + directory,
             'cyclone:/usb1/backup/tornado/')
 
-    logging.info('tornado -> cyclone')
+    logging.info('cyclone -> tornado')
     sync('cyclone:/srv/www/', 'tornado:/home/rr-/.backup/cyclone/')
     sync('cyclone:/home/rr-/text/', 'tornado:/home/rr-/.backup/cyclone/')
 
