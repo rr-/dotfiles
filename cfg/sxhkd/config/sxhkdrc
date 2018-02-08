@@ -74,7 +74,7 @@ super + v
 
 # copy current song title to clipboard
 super + V
-    zsh -ilc 'mpc||mpvmc print --format="[[[%artist%|%albumartist%] - ]%title%|%name%]"|head -n1|tr -d "\n"|clip'
+    zsh -ilc 'mpc||mpvmc print --format="[[[[%artist%|%albumartist%] - ]%title%]|%title%|%name%]"|head -n1|tr -d "\n"|clip'
 
 # toggle random
 super + b
