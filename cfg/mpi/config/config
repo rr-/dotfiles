@@ -15,6 +15,7 @@ script-opts=osc-showwindowed=no,osc-showfullscreen=no,images-statusbar=yes,reset
 no-input-default-bindings
 native-keyrepeat
 loop-file=yes
+osd-msg1=${filename} (${width:?} x ${height:?}, ${file-size}) (${playlist-pos-1} of ${playlist-count})
 osd-align-x=right
 osd-align-y=bottom
 osd-margin-x=5
@@ -22,7 +23,6 @@ osd-margin-y=5
 osd-border-size=2
 osd-border-color='#aa000000'
 osd-blur=2
-osd-font='InputMono Light'
 osd-font-size=16
 sws-scaler=lanczos
 osd-bar=no
