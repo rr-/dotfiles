@@ -68,4 +68,5 @@ function toggle_statusbar()
 end
 
 mp.register_event('file-loaded', update_statusbar)
+mp.register_event('playback-restart', update_statusbar)
 mp.register_script_message('toggle-statusbar', toggle_statusbar)
