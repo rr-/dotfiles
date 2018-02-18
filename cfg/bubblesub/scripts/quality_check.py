@@ -207,14 +207,22 @@ def _check_fonts(logger, api):
                     (font.is_italic == is_italic))
                 candidates.append((weight, font_path, font))
         candidates.sort(key=lambda i: -i[0])
+        if not candidates:
+            return None
         return candidates[0]
 
     results = get_used_font_styles(api)
     fonts = get_fonts()
     for font_specs, glyphs in results.items():
-        _, font_path, font = locate_font(fonts, *font_specs)
+        font_family, is_bold, is_italic = font_specs
+        logger.info(f'Checking {font_family} for {len(glyphs)} glyphs…')
 
-        logger.info(f'Checking {font_path} for {len(glyphs)} glyphs…')
+        result = locate_font(fonts, font_family, is_bold, is_italic)
+        if not result:
+            logger.warn(f'Font not found')
+            continue
+
+        _, font_path, font = result
         errors = False
         for glyph in glyphs:
             if glyph not in font.glyphs:
