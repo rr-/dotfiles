@@ -27,6 +27,7 @@ alias plen='tl pl en'
 alias enpl='tl en pl'
 alias enja='tl en ja'
 alias jaen='tl ja en'
+alias pyup='pip install --user --upgrade --no-deps .'
 
 alias dl-gelbooru='dl-booru --config=~/.config/dl-gelbooru.conf'
 alias dl-pixiv='dl-booru --config=~/.config/dl-pixiv.conf'
