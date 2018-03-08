@@ -18,8 +18,13 @@ let g:move_auto_indent = 0              "disable indentation aids
 
 "change tmux-navigator bindings
 let g:tmux_navigator_no_mappings = 1
-nnoremap <silent> <M-h> :TmuxNavigateLeft<cr>
-nnoremap <silent> <M-j> :TmuxNavigateDown<cr>
-nnoremap <silent> <M-k> :TmuxNavigateUp<cr>
-nnoremap <silent> <M-l> :TmuxNavigateRight<cr>
-nnoremap <silent> <M-\> :TmuxNavigatePrevious<cr>
+nnoremap <silent> <M-h> :TmuxNavigateLeft<CR>
+nnoremap <silent> <M-j> :TmuxNavigateDown<CR>
+nnoremap <silent> <M-k> :TmuxNavigateUp<CR>
+nnoremap <silent> <M-l> :TmuxNavigateRight<CR>
+nnoremap <silent> <M-\> :TmuxNavigatePrevious<CR>
+tnoremap <silent> <M-h> <C-\><C-n>:TmuxNavigateLeft<CR>
+tnoremap <silent> <M-j> <C-\><C-n>:TmuxNavigateDown<CR>
+tnoremap <silent> <M-k> <C-\><C-n>:TmuxNavigateUp<CR>
+tnoremap <silent> <M-l> <C-\><C-n>:TmuxNavigateRight<CR>
+tnoremap <silent> <M-\> <C-\><C-n>:TmuxNavigatePrevious<CR>
