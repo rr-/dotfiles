@@ -51,6 +51,9 @@ function! SwitchSourceHeader()
 endfunction
 nnoremap <F4> :call SwitchSourceHeader()<CR>
 
+"terminal
+tnoremap <Esc> <C-\><C-n>
+
 "file explorer
   imap <F3> <Esc><Plug>VinegarUp
   nmap <F3> <Plug>VinegarUp
