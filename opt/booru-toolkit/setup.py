@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 setup(
-    author='Marcin Kurczewski',
+    author='rr-',
     author_email='rr-@sakuya.pl',
     name='booru-toolkit',
     long_description='Various *booru tools',
