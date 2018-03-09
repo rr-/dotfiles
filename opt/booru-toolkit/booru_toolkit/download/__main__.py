@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 import asyncio
 import os
 import sys
