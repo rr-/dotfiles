@@ -30,3 +30,6 @@ au BufWritePost */spell/*.add silent mkspell! %
 au FileType text,markdown syn match UrlNoSpell "\w\+:\/\/[^[:space:]]\+" contains=@NoSpell
 
 au FileType mail setlocal spell textwidth=72 colorcolumn=72,80
+
+au BufRead,BufNewFile *.ass vnoremap <buffer> <F1> y:vnew\|term edict <C-r>0<CR>
+au BufRead,BufNewFile *.ass vnoremap <buffer> <F2> y:vnew\|term trans -s ja -t en "<C-R>0"<CR>
