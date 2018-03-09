@@ -1,4 +1,4 @@
-#!/bin/python3
+#!/usr/bin/env python3
 # Switches between Polish and Japanese keyboard layout for ibus
 # (the default switcher of ibus was too buggy)
 

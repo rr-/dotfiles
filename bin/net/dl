@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 # Downloads things from the Internet with the power of regexes
 
 from queue import Queue, LifoQueue
