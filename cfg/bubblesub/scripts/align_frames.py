@@ -9,11 +9,11 @@ class FadeFromBlackCommand(PluginCommand):
 
     @property
     def is_enabled(self):
-        return self.api.video.is_loaded
+        return self.api.media.is_loaded
 
     async def run(self):
         for line in self.api.subs.selected_lines:
-            idx_start = bisect_left(self.api.video.timecodes, line.start)
-            idx_end = bisect_left(self.api.video.timecodes, line.end)
-            line.start = self.api.video.timecodes[idx_start]
-            line.end = self.api.video.timecodes[idx_end]
+            idx_start = bisect_left(self.api.media.video.timecodes, line.start)
+            idx_end = bisect_left(self.api.media.video.timecodes, line.end)
+            line.start = self.api.media.video.timecodes[idx_start]
+            line.end = self.api.media.video.timecodes[idx_end]

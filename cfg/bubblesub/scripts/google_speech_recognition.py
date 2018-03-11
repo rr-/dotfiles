@@ -11,7 +11,7 @@ async def _work(language, api, logger, line):
     try:
         def recognize():
             with io.BytesIO() as handle:
-                api.audio.save_wav(handle, line.start, line.end)
+                api.media.audio.save_wav(handle, line.start, line.end)
                 handle.seek(0, io.SEEK_SET)
                 with sr.AudioFile(handle) as source:
                     audio = recognizer.record(source)
@@ -51,7 +51,8 @@ class SpeechRecognitionCommand:
 
     @property
     def is_enabled(self):
-        return self.api.subs.has_selection and self.api.audio.has_audio_source
+        return self.api.subs.has_selection \
+            and self.api.media.audio.has_audio_source
 
     async def run(self):
         for line in self.api.subs.selected_lines:
