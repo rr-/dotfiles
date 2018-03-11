@@ -11,11 +11,11 @@ class FadeFromBlackCommand(PluginCommand):
 
     @property
     def is_enabled(self):
-        return self.api.video.is_loaded
+        return self.api.media.is_loaded
 
     async def run(self):
         _, temp_path = tempfile.mkstemp(suffix='.wav')
-        result = run(['ffmpeg', '-y', '-i', self.api.video.path, temp_path])
+        result = run(['ffmpeg', '-y', '-i', self.api.media.path, temp_path])
         if result.returncode != 0:
             self.api.log.error(result.stdout)
             return
@@ -31,11 +31,13 @@ class FadeFromBlackCommand(PluginCommand):
             _line_id, start, end = line.split()
             ms_start = float(start) * 1000
             ms_end = float(end) * 1000
-            idx_start = bisect.bisect_left(self.api.video.timecodes, ms_start)
-            idx_end = bisect.bisect_left(self.api.video.timecodes, ms_end)
+            idx_start = bisect.bisect_left(
+                self.api.media.video.timecodes, ms_start)
+            idx_end = bisect.bisect_left(
+                self.api.media.video.timecodes, ms_end)
             self.api.subs.lines.insert_one(
                 len(self.api.subs.lines),
-                start=self.api.video.timecodes[idx_start],
-                end=self.api.video.timecodes[idx_end])
+                start=self.api.media.video.timecodes[idx_start],
+                end=self.api.media.video.timecodes[idx_end])
 
         os.unlink(temp_path)
