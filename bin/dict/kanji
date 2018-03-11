@@ -290,8 +290,25 @@ def _build():
     return ret
 
 
+def _chunks(source, n):
+    for i in range(0, len(source), n):
+        yield source[i:i + n]
+
+
 def _parse_args():
-    parser = argparse.ArgumentParser(description='Looks up kanji by radical')
+    epilog = 'Radicals:\n'
+    epilog += '\n'.join(
+        ''.join(f'{cell:15s}' for cell in row)
+        for row in _chunks([
+            f'{kanji}: {radicals[0]}'
+            for kanji, radicals in _RADICALS.items()
+            if radicals
+        ], 4))
+
+    parser = argparse.ArgumentParser(
+        description='Looks up kanji by radical',
+        epilog=epilog,
+        formatter_class=argparse.RawTextHelpFormatter)
     parser.add_argument('word', nargs='+')
     return parser.parse_args()
 
