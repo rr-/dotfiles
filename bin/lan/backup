@@ -13,7 +13,7 @@ def sync(source, target):
 
     run(['ssh', target_machine, 'mkdir', '-p', target_path])
 
-    run([
+    status = run([
         'ssh',
         '-A',
         source_machine,
@@ -31,6 +31,10 @@ def sync(source, target):
         source_path,
         target])
 
+    if status.returncode != 0:
+        logging.error('Error during sync, aborting')
+        exit(1)
+
 
 def main():
     logging.info('tornado -> cyclone')
@@ -42,6 +46,8 @@ def main():
     logging.info('cyclone -> tornado')
     for directory in ['/srv/www', '/home/rr-/text', '/home/rr-/.weechat/logs']:
         sync('cyclone:' + directory, 'tornado:/home/rr-/.backup/cyclone/')
+
+    logging.info('Syncing finished without errors')
 
 
 if __name__ == '__main__':
