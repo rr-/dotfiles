@@ -51,6 +51,8 @@ function! SwitchSourceHeader()
 endfunction
 nnoremap <F4> :call SwitchSourceHeader()<CR>
 
+noremap gn :tabnew<CR>
+
 "terminal
 tnoremap <Esc> <C-\><C-n>
 
