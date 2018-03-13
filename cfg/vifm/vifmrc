@@ -136,6 +136,9 @@ nnoremap I cw<c-a>
 nnoremap C cw<c-u>
 nnoremap A cw
 
+" New tab
+nnoremap gn :tabnew<cr>
+
 " Open console in current directory
 nnoremap -t :!urxvt &<cr>
 
