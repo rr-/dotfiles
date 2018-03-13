@@ -40,8 +40,8 @@ def main():
             'cyclone:/usb1/backup/tornado/')
 
     logging.info('cyclone -> tornado')
-    sync('cyclone:/srv/www/', 'tornado:/home/rr-/.backup/cyclone/')
-    sync('cyclone:/home/rr-/text/', 'tornado:/home/rr-/.backup/cyclone/')
+    for directory in ['/srv/www', '/home/rr-/text', '/home/rr-/.weechat/logs']:
+        sync('cyclone:' + directory, 'tornado:/home/rr-/.backup/cyclone/')
 
 
 if __name__ == '__main__':
