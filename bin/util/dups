@@ -124,9 +124,11 @@ def main():
 
     print('Duplicates:')
     for i, group in enumerate(duplicate_groups):
-        print(f'-- Group {i} --')
-        for j, path in enumerate(group):
-            print(f'[{j}] {path}')
+        choices = {j + 1: path for j, path in enumerate(group)}
+
+        print(f'-- Group {i + 1} --')
+        for num, path in choices.items():
+            print(f'[{num}] {path}')
         print('[a] all')
         print()
 
@@ -139,8 +141,7 @@ def main():
             while True:
                 try:
                     choice = input('Which file to keep? ').lower()
-                    if choice not in 'a' \
-                            and int(choice) not in range(len(group)):
+                    if choice not in 'a' and int(choice) not in choices:
                         raise ValueError('Invalid number')
                     break
                 except ValueError:
@@ -151,8 +152,8 @@ def main():
                 continue
 
             choice = int(choice)
-            for j, path in enumerate(group):
-                if j != choice:
+            for num, path in choices.items():
+                if num != choice:
                     path.unlink()
 
     print('Saving cache...')
