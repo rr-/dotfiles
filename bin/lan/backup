@@ -38,13 +38,17 @@ def sync(source, target):
 
 def main():
     logging.info('tornado -> cyclone')
-    for directory in ['src', 'blob', 'hub', 'img', 'text']:
+    for directory in ['src', 'blob', 'hub', 'text']:
         sync(
             'tornado:/home/rr-/' + directory,
             'cyclone:/usb1/backup/tornado/')
 
     logging.info('cyclone -> tornado')
-    for directory in ['/srv/www', '/home/rr-/text', '/home/rr-/.weechat/logs']:
+    for directory in [
+            '/srv/www',
+            '/srv/img',
+            '/home/rr-/text',
+            '/home/rr-/.weechat/logs']:
         sync('cyclone:' + directory, 'tornado:/home/rr-/.backup/cyclone/')
 
     logging.info('Syncing finished without errors')
