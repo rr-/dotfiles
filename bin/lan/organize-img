@@ -1,23 +1,19 @@
 #!/usr/bin/env python3
-# Downloads images crawled by cron on the server to local directory.
+# Moves images crawled by cron to a local directory.
 # Additionally, distributes the images to specific folders, and filters out
 # small images.
 
-import re
 import argparse
-from os import scandir, path, makedirs, rmdir, unlink
-from shutil import move
-from subprocess import run
-from socket import gethostname
+import re
+import subprocess
+from pathlib import Path
+
 from PIL import Image
 from dotfiles import logging
 
-LOCAL_HOST = 'tornado'
-REMOTE_HOST = 'cyclone'
 
-LOCAL_ROOT_DIR = path.expanduser('~/img/net/')
-TRANSIT_ROOT_DIR = path.expanduser('/tmp/img/')
-REMOTE_ROOT_DIR = path.expanduser('~/hub/img/')
+SOURCE_ROOT_DIR = Path('~/hub/img/').expanduser()
+TARGET_ROOT_DIR = Path('~/img/net/').expanduser()
 SMALL_IMAGE_EXTENSIONS = ['png', 'jpg', 'jpeg']
 
 
@@ -40,15 +36,15 @@ def _find_directories_recursive(root_dir):
     while len(stack):
         dir_path = stack.pop(0)
         result.append(dir_path)
-        for entry in scandir(dir_path):
+        for entry in dir_path.iterdir():
             if entry.is_dir():
-                stack.insert(0, entry.path)
+                stack.insert(0, entry)
     while len(result):
         yield result.pop()
 
 
 def _find_files(root_dir):
-    return [entry.path for entry in scandir(root_dir) if entry.is_file()]
+    return [entry for entry in root_dir.iterdir() if entry.is_file()]
 
 
 def _is_image_too_small(source_path, args):
@@ -66,51 +62,42 @@ def _is_image_too_small(source_path, args):
 
 def main():
     args = _parse_args()
-    if gethostname() != LOCAL_HOST:
-        raise RuntimeError('Must be run on %s' % LOCAL_HOST)
 
-    run([
-        'rsync',
-        '--progress',
-        '--whole-file',
-        '-a',
-        '--remove-source-files',
-        '%s:%s' % (REMOTE_HOST, REMOTE_ROOT_DIR),
-        TRANSIT_ROOT_DIR])
+    for source_dir in _find_directories_recursive(SOURCE_ROOT_DIR):
+        target_dir = TARGET_ROOT_DIR / source_dir.relative_to(SOURCE_ROOT_DIR)
+        target_dir = str(target_dir)
+        target_dir = re.sub(r'([^\\/]*)\.2chan\.net', r'2chan/\1', target_dir)
+        target_dir = re.sub(r'[^\\/]*\.(4chan|4cdn)\.org', '4chan', target_dir)
+        target_dir = Path(target_dir)
 
-    source_directories = list(_find_directories_recursive(TRANSIT_ROOT_DIR))
-    for source_directory in source_directories:
-        target_directory = path.join(
-            LOCAL_ROOT_DIR, path.relpath(source_directory, TRANSIT_ROOT_DIR))
-        target_directory = re.sub(
-            r'([^\\/]*)\.2chan\.net', r'2chan/\1', target_directory)
-        target_directory = re.sub(
-            r'[^\\/]*\.(4chan|4cdn)\.org', '4chan', target_directory)
+        target_dir.parent.mkdir(parents=True, exist_ok=True)
 
-        makedirs(target_directory, exist_ok=True)
-
-        source_files = list(_find_files(source_directory))
-        for source_file in source_files:
-            extension = path.splitext(source_file)[1].lower().strip('.')
-            target_file = path.join(
-                target_directory, path.basename(source_file))
+        for source_file in _find_files(source_dir):
+            extension = source_file.suffix.lower().lstrip('.')
+            target_file = target_dir / source_file.name
 
             if extension in SMALL_IMAGE_EXTENSIONS \
                     and _is_image_too_small(source_file, args):
-                logging.warning('%s: too small, ignoring', source_file)
+                logging.warning(f'{source_file}: too small, ignoring')
                 if not args.dry:
-                    unlink(source_file)
+                    source_file.unlink()
                 continue
 
-            logging.info('%s: ok', source_file)
+            logging.info(f'{source_file}: ok (moved to {target_file}')
             if not args.dry:
-                move(source_file, target_file)
+                try:
+                    source_file.rename(target_file)
+                except OSError:
+                    # most probably EXDEV
+                    target_file.write_bytes(source_file.read_bytes())
+                    source_file.unlink()
 
         if not args.dry:
-            run(['distribute-files', target_directory, '--fill-last', '-v'])
+            subprocess.run(
+                ['distribute-files', target_dir, '--fill-last', '-v'])
 
         try:
-            rmdir(source_directory)
+            source_dir.rmdir()
         except OSError:
             pass
 
