@@ -1,165 +1,226 @@
 #!/usr/bin/env python3
-
-import sys, os, subprocess, tempfile, argparse, codecs, shlex
-
-parser = argparse.ArgumentParser(description='xattrvi - modify xattributes of files the simple way')
-
-parser.add_argument('-e', '--encoding', action='store', dest='stdenc', type=str, default='utf-8', help='encoding to be used for value-decoding, defaults to utf-8')
-parser.add_argument('--hide-undecodable', action='store_true', default=False, dest='show_undecodable', help='hide entries whose value could not be decoded properly')
-parser.add_argument('filename', action='store', type=str, default=None, help='file that needs to get modified')
-parser.add_argument('--editor', action='store', type=str, dest='editor', default=os.environ.get('EDITOR') or 'nano', help='use this particular editor')
-
-args = parser.parse_args(sys.argv[1:])
-
-###
-## let's get prepared, check if everything is in workingstate
-###
-
-# test if there is a file supplied at all
-if not args.filename: sys.exit()
-
-# test if that file actually exists
-if not os.path.exists(args.filename):
-	print("cannot find what you gave me", file=sys.stderr)
-	sys.exit(1)
-
-# test if a shitty encoding was supplied
-
-try: codecs.lookup(args.stdenc)
-except LookupError:
-	print("I don't know that encoding", file=sys.stderr)
-	sys.exit(2)
-else:
-	stdenc = args.stdenc
-
-def newline_escape(string):   return string.replace('\n', '\\n')
-def newline_unescape(string): return string.replace('\\n', '\n')
+import os
+import sys
+import argparse
+import subprocess
+import tempfile
+import codecs
+import shlex
 
 
-###
-## now parse xattrvi-config, if there is one
-###
+def parse_args():
+    parser = argparse.ArgumentParser(
+        description='xattrvi - modify xattributes of files the simple way')
 
-ignored_keys = []
-value_encodings = dict()
+    parser.add_argument(
+        '-e', '--encoding', dest='stdenc', type=str, default='utf-8',
+        help='encoding to be used for value-decoding, defaults to utf-8')
 
-if os.path.isfile(os.path.expanduser('~/.config/xattrvi/xattrvirc')):
-	with open(os.path.expanduser('~/.config/xattrvi/xattrvirc')) as f:
-		for line in f:
-			# omit comments and empty lines
-			if line.startswith('#') or line.strip() == "": continue
+    parser.add_argument(
+        '--hide-undecodable', action='store_true', default=False,
+        dest='show_undecodable',
+        help='hide entries whose value could not be decoded properly')
 
-			if line.startswith('ignore:'):
-				ignored_keys.append(line.split(':', 1)[1].strip())
+    parser.add_argument(
+        'filename', type=str, default=None,
+        help='file that needs to get modified')
 
-			if line.startswith('value_encoding:'):
-				_, key, enc = line.strip().split(':', 2)
-				try: codecs.lookup(enc)
-				except LookupError:
-					print("I don't know the encoding {0} in your xattrvirc, adding that key to the ignored ones".format(enc), file=sys.stderr)
-					ignored_keys.append(key)
-				else:
-					value_encodings[key] = enc
+    parser.add_argument(
+        '--editor', type=str, default=os.environ.get('EDITOR') or 'nano',
+        help='use this particular editor')
+
+    return parser.parse_args()
 
 
-###
-## now let's get to the actual action! Let's deal with xattributes
-###
-
-# read out existing xattrs
-xattrs = os.listxattr(args.filename)
-
-def get_decoded_attr(filename, attr):
-	if attr in value_encodings:
-		return os.getxattr(filename, attr, follow_symlinks=True).decode(value_encoding[attr])
-	else:
-		return os.getxattr(filename, attr, follow_symlinks=True).decode(stdenc)
-
-def set_encoded_attr(filename, attr, value):
-	candidate = newline_unescape(value)
-	if attr in value_encodings:
-		encoded_value = candidate.decode(value_encoding[attr])
-	else:
-		encoded_value = candidate.decode(value_encoding[stdenc])
-
-	os.setxattr(args.filename, 'user.' + key, encoded_value)
-
-userxattrs = []
-for attr in xattrs:
-	if attr.startswith('user.') and not attr in ignored_keys:
-		try:
-			userxattrs.append(( attr.split('.', 1)[1], get_decoded_attr(args.filename, attr) ))
-		except UnicodeDecodeError:
-			if args.show_undecodable:
-				userxattrs.append(( "# {0}".format(attr.split('.', 1)[1]), "undecodable" ))
+def newline_escape(string):
+    return string.replace('\n', '\\n')
 
 
-otherxattrs = []
-for attr in xattrs:
-	if not attr.startswith('user.') and not attr in ignored_keys:
-		try:
-			otherxattrs.append(( attr, get_decoded_attr(args.filename, attr) ))
-		except UnicodeDecodeError:
-			if args.show_undecodable:
-				userxattrs.append(( "# {0}".format(attr.split('.', 1)[1]), "undecodable" ))
+def newline_unescape(string):
+    return string.replace('\\n', '\n')
 
 
-tmpfile = tempfile.NamedTemporaryFile()
+def main():
+    args = parse_args()
+    # let's get prepared, check if everything is in workingstate
+
+    # test if there is a file supplied at all
+    if not args.filename:
+        sys.exit()
+
+    # test if that file actually exists
+    if not os.path.exists(args.filename):
+        print('cannot find what you gave me', file=sys.stderr)
+        sys.exit(1)
+
+    # test if a shitty encoding was supplied
+
+    try:
+        codecs.lookup(args.stdenc)
+    except LookupError:
+        print('I don\'t know that encoding', file=sys.stderr)
+        sys.exit(2)
+    else:
+        stdenc = args.stdenc
+
+    # now parse xattrvi-config, if there is one
+
+    ignored_keys = []
+    value_encodings = dict()
+
+    if os.path.isfile(os.path.expanduser('~/.config/xattrvi/xattrvirc')):
+        with open(os.path.expanduser('~/.config/xattrvi/xattrvirc')) as handle:
+            for line in handle:
+                # omit comments and empty lines
+                if line.startswith('#') or not line.strip():
+                    continue
+
+                if line.startswith('ignore:'):
+                    ignored_keys.append(line.split(':', 1)[1].strip())
+
+                if line.startswith('value_encoding:'):
+                    _, key, enc = line.strip().split(':', 2)
+                    try:
+                        codecs.lookup(enc)
+                    except LookupError:
+                        print(
+                            'I don\'t know the encoding {0} in .xattrvirc, '
+                            'adding that key to the ignored ones'.format(enc),
+                            file=sys.stderr)
+                        ignored_keys.append(key)
+                    else:
+                        value_encodings[key] = enc
+
+    # now let's get to the actual action! Let's deal with xattributes
+
+    # read out existing xattrs
+    xattrs = os.listxattr(args.filename)
+
+    def get_decoded_attr(filename, attr):
+        return os.getxattr(
+            filename, attr, follow_symlinks=True).decode(
+                value_encodings[attr] if attr in value_encodings else stdenc)
+
+    def set_encoded_attr(filename, attr, value):
+        candidate = newline_unescape(value)
+        encoded_value = candidate.decode(
+            value_encodings[attr] if attr in value_encodings else stdenc)
+        os.setxattr(args.filename, 'user.' + key, encoded_value)
+
+    userxattrs = []
+    for attr in xattrs:
+        if attr.startswith('user.') and attr not in ignored_keys:
+            try:
+                userxattrs.append(
+                    (
+                        attr.split('.', 1)[1],
+                        get_decoded_attr(args.filename, attr)
+                    ))
+            except UnicodeDecodeError:
+                if args.show_undecodable:
+                    userxattrs.append(
+                        ('# {0}'.format(attr.split('.', 1)[1]), 'undecodable'))
+
+    otherxattrs = []
+    for attr in xattrs:
+        if not attr.startswith('user.') and attr not in ignored_keys:
+            try:
+                otherxattrs.append(
+                    (attr, get_decoded_attr(args.filename, attr)))
+            except UnicodeDecodeError:
+                if args.show_undecodable:
+                    userxattrs.append(
+                        ('# {0}'.format(attr.split('.', 1)[1]), 'undecodable'))
+
+    tmpfile = tempfile.NamedTemporaryFile()
+
+    # present current attributes
+    with open(tmpfile.name, 'w') as handle:
+        handle.write('# attributes in namespace \'user\':\n\n')
+        handle.write('\n'.join([
+            '{0:10}   : {1}'.format(key, newline_escape(value))
+            for key, value in userxattrs
+        ]))
+
+        if len(otherxattrs) > 0:
+            handle.write('\n' * 3)
+            handle.write('# attributes in other namespaces:\n\n')
+            handle.write('\n#'.join([
+                '{0:10}   : {1}'.format(key, value)
+                for key, value in otherxattrs
+            ]))
+
+    args.editor = shlex.split(args.editor)
+    retval = subprocess.call(args.editor + [tmpfile.name])
+
+    if retval != 0:
+        print(
+            '!! Your editor {0} exited nonzero with {1}, '
+            'removing stale tmpfile and aborting'.format(args.editor, retval),
+            file=sys.stderr)
+        sys.exit(1)
+
+    # parse and apply the user's changes
+    with open(tmpfile.name, 'r') as handle:
+        try:
+            # perform simple syntax-check beforehand to print more helpful
+            # errors, just in case
+            malformed_lines = [
+                line.strip()
+                for line in handle
+                if line.strip()
+                and not line.startswith('#')
+                and ':' not in line
+            ]
+
+            if len(malformed_lines) > 0:
+                print('!! aborting, malformed lines in file:', file=sys.stderr)
+                for line in malformed_lines:
+                    print('>> ' + line, file=sys.stderr)
+                    sys.exit(3)
+
+            handle.seek(0)
+
+            # now parse the file
+            newuserxattrlist = [
+                line.strip().split(':', 1)
+                for line in handle
+                if line.strip() and not line.startswith('#')
+            ]
+            newuserxattrs = [
+                (key.strip(), newline_unescape(value.strip()))
+                for key, value in newuserxattrlist
+            ]
+
+        except UnicodeDecodeError:
+            print(
+                'Errors parsing the file, aborting. '
+                'Did you screw up the syntax?',
+                file=sys.stderr)
+            sys.exit(2)
+
+        # now update the changed attributes
+        # remember changed properties for deletion procedure
+        changed = []
+        for key, value in set(newuserxattrs).difference(set(userxattrs)):
+            print(':: updating {0}'.format(key))
+            try:
+                changed.append(key)
+                os.setxattr(
+                    args.filename,
+                    'user.' + key,
+                    newline_unescape(value).encode(stdenc))
+            except UnicodeEncodeError:
+                print('!! error encoding {0} : {1}'.format(key, value))
+
+        # now delete all properties that are left over
+        # set of all changed and removed attributes
+        for key, _ in set(userxattrs).difference(set(newuserxattrs)):
+            # then the attribute vanished or key changed
+            if key not in changed:
+                print(':: removing {0}'.format(key))
+                os.removexattr(args.filename, 'user.' + key)
 
 
-# present current attributes
-with open(tmpfile.name, 'w') as f:
-
-	f.write("# attributes in namespace 'user':\n\n")
-	f.write("\n".join([ "{0:10}   : {1}".format(key, newline_escape(value)) for key, value in userxattrs]))
-
-	if len(otherxattrs) > 0:
-		f.write("\n"*3)
-		f.write("# attributes in other namespaces:\n\n")
-		f.write("\n#".join([ "{0:10}   : {1}".format(key, value) for key, value in otherxattrs]))
-
-args.editor = shlex.split(args.editor)
-retval = subprocess.call(args.editor + [tmpfile.name])
-
-if retval != 0:
-	print("!! Your editor {0} exited nonzero with {1}, removing stale tmpfile and aborting".format(args.editor, retval), file=sys.stderr)
-	sys.exit(1)
-
-
-# parse and apply the user's changes
-with open(tmpfile.name, 'r') as f:
-	try:
-		# perform simple syntax-check beforehand to print more helpful errors, just in case
-		malformedLines = [line.strip() for line in f if line.strip() != "" and not line.startswith('#') and not ':' in line]
-		if len(malformedLines) > 0:
-			print("!! aborting, malformed lines in file:", file=sys.stderr)
-			for line in malformedLines:
-				print(">> " + line, file=sys.stderr)
-				sys.exit(3)
-
-		f.seek(0)
-
-		# now parse the file
-		newuserxattrlist = [line.strip().split(':', 1) for line in f if line.strip() != "" and not line.startswith('#')]
-		newuserxattrs = [( key.strip(), newline_unescape(value.strip()) ) for key, value in newuserxattrlist]
-
-	except UnicodeDecodeError:
-		print("Errors parsing the file, aborting. Did you screw up the syntax?", file=sys.stderr)
-		sys.exit(2)
-
-	# now update the changed attributes
-	changed = [] #remember changed properties for deletion procedure
-	for key, value in set(newuserxattrs).difference(set(userxattrs)):
-		print(":: updating {0}".format(key))
-		try:
-			changed.append(key)
-			os.setxattr(args.filename, 'user.' + key, newline_unescape(value).encode(stdenc))
-		except UnicodeEncodeError:
-			print("!! error encoding {0} : {1}".format(key, value))
-
-	# now delete all properties that are left over
-	for key, _ in set(userxattrs).difference(set(newuserxattrs)): # set of all changed and removed attributes
-		if key not in changed: # then the attribute vanished or key changed
-			print(":: removing {0}".format(key))
-			os.removexattr(args.filename, 'user.' + key)
-
+if __name__ == '__main__':
+    main()
