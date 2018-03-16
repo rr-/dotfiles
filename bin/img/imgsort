@@ -7,7 +7,6 @@ import PIL.Image
 
 def main() -> None:
     source_dir = Path('.').resolve()
-    target_dir = source_dir.joinpath('sorted')
 
     files: List[Tuple[Path, int, int]] = []
     for file in os.scandir('.'):
@@ -23,16 +22,12 @@ def main() -> None:
                 pass
         files.append((Path(file.path), width or -1, height or -1))
 
-    target_dir.mkdir(parents=True, exist_ok=True)
     for i, item in enumerate(
             sorted(files, key=lambda item: item[1] * item[2])):
         path, width, height = item
         source_path = Path(path).resolve()
-        target_path = target_dir.joinpath('{:04}_{}'.format(i, path.name))
-        print('Symlinking {} -> {}'.format(target_path, source_path))
-        if target_path.exists():
-            raise RuntimeError('File already exists.')
-        os.symlink(source_path, target_path)
+        target_path = source_path.parent / f'{i:04}_{path.name}'
+        source_path.rename(target_path)
 
 
 if __name__ == '__main__':
