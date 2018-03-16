@@ -41,7 +41,7 @@ def main():
     for directory in ['src', 'blob', 'hub', 'text']:
         sync(
             'tornado:/home/rr-/' + directory,
-            'cyclone:/usb1/backup/tornado/')
+            'cyclone:/usb2/backup/tornado/')
 
     logging.info('cyclone -> tornado')
     for directory in [
