@@ -4,22 +4,12 @@ import sys
 import argparse
 import subprocess
 import tempfile
-import codecs
 import shlex
 
 
 def parse_args():
     parser = argparse.ArgumentParser(
         description='xattrvi - modify xattributes of files the simple way')
-
-    parser.add_argument(
-        '-e', '--encoding', dest='stdenc', type=str, default='utf-8',
-        help='encoding to be used for value-decoding, defaults to utf-8')
-
-    parser.add_argument(
-        '--hide-undecodable', action='store_true', default=False,
-        dest='show_undecodable',
-        help='hide entries whose value could not be decoded properly')
 
     parser.add_argument(
         'filename', type=str, default=None,
@@ -53,20 +43,9 @@ def main():
         print('cannot find what you gave me', file=sys.stderr)
         sys.exit(1)
 
-    # test if a shitty encoding was supplied
-
-    try:
-        codecs.lookup(args.stdenc)
-    except LookupError:
-        print('I don\'t know that encoding', file=sys.stderr)
-        sys.exit(2)
-    else:
-        stdenc = args.stdenc
-
     # now parse xattrvi-config, if there is one
 
     ignored_keys = []
-    value_encodings = dict()
 
     if os.path.isfile(os.path.expanduser('~/.config/xattrvi/xattrvirc')):
         with open(os.path.expanduser('~/.config/xattrvi/xattrvirc')) as handle:
@@ -78,59 +57,34 @@ def main():
                 if line.startswith('ignore:'):
                     ignored_keys.append(line.split(':', 1)[1].strip())
 
-                if line.startswith('value_encoding:'):
-                    _, key, enc = line.strip().split(':', 2)
-                    try:
-                        codecs.lookup(enc)
-                    except LookupError:
-                        print(
-                            'I don\'t know the encoding {0} in .xattrvirc, '
-                            'adding that key to the ignored ones'.format(enc),
-                            file=sys.stderr)
-                        ignored_keys.append(key)
-                    else:
-                        value_encodings[key] = enc
-
     # now let's get to the actual action! Let's deal with xattributes
 
     # read out existing xattrs
     xattrs = os.listxattr(args.filename)
 
     def get_decoded_attr(filename, attr):
-        return os.getxattr(
-            filename, attr, follow_symlinks=True).decode(
-                value_encodings[attr] if attr in value_encodings else stdenc)
+        encoded_value = os.getxattr(filename, attr, follow_symlinks=True)
+        return encoded_value.decode('utf-8')
 
     def set_encoded_attr(filename, attr, value):
         candidate = newline_unescape(value)
-        encoded_value = candidate.decode(
-            value_encodings[attr] if attr in value_encodings else stdenc)
+        encoded_value = candidate.decode('utf-8')
         os.setxattr(args.filename, 'user.' + key, encoded_value)
 
     userxattrs = []
     for attr in xattrs:
         if attr.startswith('user.') and attr not in ignored_keys:
-            try:
-                userxattrs.append(
-                    (
-                        attr.split('.', 1)[1],
-                        get_decoded_attr(args.filename, attr)
-                    ))
-            except UnicodeDecodeError:
-                if args.show_undecodable:
-                    userxattrs.append(
-                        ('# {0}'.format(attr.split('.', 1)[1]), 'undecodable'))
+            userxattrs.append(
+                (
+                    attr.split('.', 1)[1],
+                    get_decoded_attr(args.filename, attr)
+                ))
 
     otherxattrs = []
     for attr in xattrs:
         if not attr.startswith('user.') and attr not in ignored_keys:
-            try:
-                otherxattrs.append(
-                    (attr, get_decoded_attr(args.filename, attr)))
-            except UnicodeDecodeError:
-                if args.show_undecodable:
-                    userxattrs.append(
-                        ('# {0}'.format(attr.split('.', 1)[1]), 'undecodable'))
+            otherxattrs.append(
+                (attr, get_decoded_attr(args.filename, attr)))
 
     tmpfile = tempfile.NamedTemporaryFile()
 
@@ -209,7 +163,7 @@ def main():
                 os.setxattr(
                     args.filename,
                     'user.' + key,
-                    newline_unescape(value).encode(stdenc))
+                    newline_unescape(value).encode('utf-8'))
             except UnicodeEncodeError:
                 print('!! error encoding {0} : {1}'.format(key, value))
 
