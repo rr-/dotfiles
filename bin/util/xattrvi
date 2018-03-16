@@ -43,21 +43,7 @@ def main():
         print('cannot find what you gave me', file=sys.stderr)
         sys.exit(1)
 
-    # now parse xattrvi-config, if there is one
-
-    ignored_keys = []
-
-    if os.path.isfile(os.path.expanduser('~/.config/xattrvi/xattrvirc')):
-        with open(os.path.expanduser('~/.config/xattrvi/xattrvirc')) as handle:
-            for line in handle:
-                # omit comments and empty lines
-                if line.startswith('#') or not line.strip():
-                    continue
-
-                if line.startswith('ignore:'):
-                    ignored_keys.append(line.split(':', 1)[1].strip())
-
-    # now let's get to the actual action! Let's deal with xattributes
+    # let's get to the actual action! Let's deal with xattributes
 
     # read out existing xattrs
     xattrs = os.listxattr(args.filename)
@@ -73,7 +59,7 @@ def main():
 
     userxattrs = []
     for attr in xattrs:
-        if attr.startswith('user.') and attr not in ignored_keys:
+        if attr.startswith('user.'):
             userxattrs.append(
                 (
                     attr.split('.', 1)[1],
@@ -82,9 +68,8 @@ def main():
 
     otherxattrs = []
     for attr in xattrs:
-        if not attr.startswith('user.') and attr not in ignored_keys:
-            otherxattrs.append(
-                (attr, get_decoded_attr(args.filename, attr)))
+        if not attr.startswith('user.'):
+            otherxattrs.append((attr, get_decoded_attr(args.filename, attr)))
 
     tmpfile = tempfile.NamedTemporaryFile()
 
