@@ -19,7 +19,9 @@ def parse_args():
         '--editor', type=str, default=os.environ.get('EDITOR') or 'nano',
         help='use this particular editor')
 
-    return parser.parse_args()
+    args = parser.parse_args()
+    args.editor = shlex.split(args.editor)
+    return args
 
 
 def newline_escape(string):
@@ -30,135 +32,95 @@ def newline_unescape(string):
     return string.replace('\\n', '\n')
 
 
-def main():
-    args = parse_args()
-    # let's get prepared, check if everything is in workingstate
+def dump(user_xattrs, other_xattrs, file):
+    file.write('# attributes in namespace \'user\'\n')
+    file.write('\n'.join([
+        f'{key + ":":10s} {newline_escape(value)}'
+        for key, value in user_xattrs
+    ]))
 
-    # test if there is a file supplied at all
-    if not args.filename:
-        sys.exit()
-
-    # test if that file actually exists
-    if not os.path.exists(args.filename):
-        print('cannot find what you gave me', file=sys.stderr)
-        sys.exit(1)
-
-    # let's get to the actual action! Let's deal with xattributes
-
-    # read out existing xattrs
-    xattrs = os.listxattr(args.filename)
-
-    def get_decoded_attr(filename, attr):
-        encoded_value = os.getxattr(filename, attr, follow_symlinks=True)
-        return encoded_value.decode('utf-8')
-
-    def set_encoded_attr(filename, attr, value):
-        candidate = newline_unescape(value)
-        encoded_value = candidate.decode('utf-8')
-        os.setxattr(args.filename, 'user.' + key, encoded_value)
-
-    userxattrs = []
-    for attr in xattrs:
-        if attr.startswith('user.'):
-            userxattrs.append(
-                (
-                    attr.split('.', 1)[1],
-                    get_decoded_attr(args.filename, attr)
-                ))
-
-    otherxattrs = []
-    for attr in xattrs:
-        if not attr.startswith('user.'):
-            otherxattrs.append((attr, get_decoded_attr(args.filename, attr)))
-
-    tmpfile = tempfile.NamedTemporaryFile()
-
-    # present current attributes
-    with open(tmpfile.name, 'w') as handle:
-        handle.write('# attributes in namespace \'user\':\n\n')
-        handle.write('\n'.join([
-            '{0:10}   : {1}'.format(key, newline_escape(value))
-            for key, value in userxattrs
+    if other_xattrs:
+        file.write('\n')
+        file.write('# attributes in other namespaces\n')
+        file.write('\n'.join([
+            f'#{key + ":":10s} {newline_escape(value)}'
+            for key, value in other_xattrs
         ]))
 
-        if len(otherxattrs) > 0:
-            handle.write('\n' * 3)
-            handle.write('# attributes in other namespaces:\n\n')
-            handle.write('\n#'.join([
-                '{0:10}   : {1}'.format(key, value)
-                for key, value in otherxattrs
-            ]))
 
-    args.editor = shlex.split(args.editor)
+def parse(file):
+    # perform simple syntax-check beforehand to print more helpful errors,
+    # just in case
+    malformed_lines = [
+        line.strip()
+        for line in file
+        if line.strip()
+        and not line.startswith('#')
+        and ':' not in line
+    ]
+
+    if malformed_lines:
+        print('!! Aborting, malformed lines in file:', file=sys.stderr)
+        for line in malformed_lines:
+            print(f'>> {line}', file=sys.stderr)
+            sys.exit(3)
+
+    file.seek(0)
+
+    return [
+        (key.strip(), newline_unescape(value.strip()))
+        for key, value in [
+            line.strip().split(':', 1)
+            for line in file
+            if line.strip() and not line.startswith('#')
+        ]
+    ]
+
+
+def main():
+    args = parse_args()
+
+    user_xattrs = []
+    other_xattrs = []
+    for attr in os.listxattr(args.filename):
+        value = os.getxattr(args.filename, attr, follow_symlinks=True).decode()
+        if attr.startswith('user.'):
+            user_xattrs.append((attr.split('.', 1)[1], value))
+        else:
+            other_xattrs.append((attr, value))
+
+    tmpfile = tempfile.NamedTemporaryFile()
+    with open(tmpfile.name, 'w') as handle:
+        dump(user_xattrs, other_xattrs, file=handle)
+
     retval = subprocess.call(args.editor + [tmpfile.name])
-
     if retval != 0:
         print(
-            '!! Your editor {0} exited nonzero with {1}, '
-            'removing stale tmpfile and aborting'.format(args.editor, retval),
+            f'!! Editor {args.editor} exited nonzero with {retval}. Aborting.',
             file=sys.stderr)
         sys.exit(1)
 
-    # parse and apply the user's changes
     with open(tmpfile.name, 'r') as handle:
-        try:
-            # perform simple syntax-check beforehand to print more helpful
-            # errors, just in case
-            malformed_lines = [
-                line.strip()
-                for line in handle
-                if line.strip()
-                and not line.startswith('#')
-                and ':' not in line
-            ]
+        new_user_xattrs = parse(handle)
 
-            if len(malformed_lines) > 0:
-                print('!! aborting, malformed lines in file:', file=sys.stderr)
-                for line in malformed_lines:
-                    print('>> ' + line, file=sys.stderr)
-                    sys.exit(3)
+    # now update the changed attributes
+    # remember changed properties for deletion procedure
+    changed = []
+    for key, value in set(new_user_xattrs).difference(set(user_xattrs)):
+        print(f':: updating {key}')
+        changed.append(key)
+        os.setxattr(
+            args.filename,
+            'user.' + key,
+            newline_unescape(value).encode('utf-8'))
 
-            handle.seek(0)
-
-            # now parse the file
-            newuserxattrlist = [
-                line.strip().split(':', 1)
-                for line in handle
-                if line.strip() and not line.startswith('#')
-            ]
-            newuserxattrs = [
-                (key.strip(), newline_unescape(value.strip()))
-                for key, value in newuserxattrlist
-            ]
-
-        except UnicodeDecodeError:
-            print(
-                'Errors parsing the file, aborting. '
-                'Did you screw up the syntax?',
-                file=sys.stderr)
-            sys.exit(2)
-
-        # now update the changed attributes
-        # remember changed properties for deletion procedure
-        changed = []
-        for key, value in set(newuserxattrs).difference(set(userxattrs)):
-            print(':: updating {0}'.format(key))
-            try:
-                changed.append(key)
-                os.setxattr(
-                    args.filename,
-                    'user.' + key,
-                    newline_unescape(value).encode('utf-8'))
-            except UnicodeEncodeError:
-                print('!! error encoding {0} : {1}'.format(key, value))
-
-        # now delete all properties that are left over
-        # set of all changed and removed attributes
-        for key, _ in set(userxattrs).difference(set(newuserxattrs)):
-            # then the attribute vanished or key changed
-            if key not in changed:
-                print(':: removing {0}'.format(key))
-                os.removexattr(args.filename, 'user.' + key)
+    # now delete all properties that are left over
+    # set of all changed and removed attributes
+    for key, _ in set(user_xattrs).difference(set(new_user_xattrs)):
+        # then the attribute vanished or key changed
+        if key not in changed:
+            print(f':: removing {key}')
+            os.removexattr(args.filename, 'user.' + key)
 
 
 if __name__ == '__main__':
