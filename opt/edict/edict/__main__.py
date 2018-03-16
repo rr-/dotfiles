@@ -5,13 +5,14 @@ import gzip
 import pathlib
 import typing as t
 from functools import reduce
+import xdg
 import requests
 from edict import parser
 from edict import db
 
 
 _DL_URL = 'http://ftp.monash.edu/pub/nihongo/edict2.gz'
-_RAW_PATH = pathlib.Path('~/.local/cache/edict2.txt').expanduser()
+_RAW_PATH = pathlib.Path(xdg.XDG_CACHE_HOME) / 'edict2.txt'
 
 
 def parse_args() -> argparse.Namespace:

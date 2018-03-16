@@ -2,6 +2,7 @@ import re
 import enum
 import pathlib
 import typing as t
+import xdg
 import sqlalchemy as sa
 import sqlalchemy.orm
 import sqlalchemy.ext.declarative
@@ -9,7 +10,7 @@ from edict import parser
 
 
 _Base: t.Any = sa.ext.declarative.declarative_base()
-_DB_PATH = pathlib.Path('~/.local/cache/edict2.sqlite').expanduser()
+_DB_PATH = pathlib.Path(xdg.XDG_CACHE_HOME) / 'edict2.sqlite'
 _session: t.Any = None
 _regex_cache: t.Dict[str, t.Pattern] = {}
 
