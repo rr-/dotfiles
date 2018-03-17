@@ -70,7 +70,7 @@ def main():
         target_dir = re.sub(r'[^\\/]*\.(4chan|4cdn)\.org', '4chan', target_dir)
         target_dir = Path(target_dir)
 
-        target_dir.parent.mkdir(parents=True, exist_ok=True)
+        target_dir.mkdir(parents=True, exist_ok=True)
 
         for source_file in _find_files(source_dir):
             extension = source_file.suffix.lower().lstrip('.')
