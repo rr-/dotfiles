@@ -1,33 +1,59 @@
 #!/usr/bin/env python3
-import os
+import argparse
 from pathlib import Path
-from typing import Optional, Tuple, List
+from typing import Iterable, Optional
+
 import PIL.Image
 
 
-def main() -> None:
-    source_dir = Path('.').resolve()
+class File:
+    def __init__(
+            self,
+            path: Path,
+            width: Optional[int],
+            height: Optional[int]) -> None:
+        self.path = path
+        self.width = width
+        self.height = height
 
-    files: List[Tuple[Path, int, int]] = []
-    for file in os.scandir('.'):
-        if file.is_dir():
+    @property
+    def rank(self) -> int:
+        return (self.width or -1) * (self.height or -1)
+
+
+def collect_files(source_path: Path) -> Iterable[File]:
+    for path in source_path.iterdir():
+        if path.is_dir():
             continue
         width: Optional[int] = None
         height: Optional[int] = None
-        if file.name.endswith(('png', 'jpg', 'gif')):
-            print('Querying {}...'.format(file.path))
+        if path.name.endswith(('png', 'jpg', 'gif')):
+            print(f'Querying {path.name}...')
             try:
-                width, height = PIL.Image.open(file.path).size
-            except Exception:
+                width, height = PIL.Image.open(str(path)).size
+            except OSError:
                 pass
-        files.append((Path(file.path), width or -1, height or -1))
+        yield File(path, width, height)
 
-    for i, item in enumerate(
-            sorted(files, key=lambda item: item[1] * item[2])):
-        path, width, height = item
-        source_path = Path(path).resolve()
-        target_path = source_path.parent / f'{i:04}_{path.name}'
-        source_path.rename(target_path)
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser()
+    parser.add_argument('source_dir', type=Path, default='.', nargs='?')
+    parser.add_argument('-d', '--dry-run', action='store_true')
+    return parser.parse_args()
+
+
+def main() -> None:
+    args = parse_args()
+
+    files = list(collect_files(args.source_dir.resolve()))
+    files.sort(key=lambda file: file.rank)
+
+    for i, file in enumerate(files):
+        target_path = file.path.parent / f'{i:04}_{file.path.name}'
+        print(f'{file.path} -> {target_path} ({file.rank})')
+        if not args.dry_run:
+            file.path.rename(target_path)
 
 
 if __name__ == '__main__':
