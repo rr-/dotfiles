@@ -8,34 +8,34 @@ import tempfile
 from pathlib import Path
 from subprocess import run
 
-MANAGED_EXTENSIONS = [
+MANAGED_EXTENSIONS = {
     'jpg', 'jpeg', 'jfif', 'gif', 'png', 'tga', 'bmp',
-    'webm', 'mkv', 'mp4']
+    'webm', 'mkv', 'mp4'}
 
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Run mpv as image viewer')
     parser.add_argument(
-        '-s', '--select', dest='selected_path', help='Which file to preselect')
+        '-s', '--select', dest='selected_path', type=Path,
+        help='Which file to preselect')
     parser.add_argument(
         '-r', '--recursive', action='store_true',
         help='Scan directories recursively')
     parser.add_argument(
-        metavar='PATH', nargs='*', dest='paths',
+        metavar='PATH', nargs='*', dest='paths', type=Path,
         help='path to the image or a directory', default=None)
     args, unknown_args = parser.parse_known_args()
 
-    # convert user arguments to absolute pathlib.Path
     if args.selected_path:
-        args.selected_path = Path(args.selected_path).absolute()
+        args.selected_path = args.selected_path.expanduser().resolve()
 
     if args.paths:
-        args.paths = [Path(path).absolute() for path in args.paths]
+        args.paths = [path.expanduser().resolve() for path in args.paths]
     else:
         if args.selected_path is not None:
             args.paths = [args.selected_path.parent]
         else:
-            args.paths = [Path('.').absolute()]
+            args.paths = [Path().resolve()]
 
     return args, unknown_args
 
@@ -65,22 +65,18 @@ def sort_playlist(playlist):
 
 def main():
     args, unknown_args = parse_args()
+    config_dir = Path('~/.config/mpi').expanduser()
 
-    playlist = list(
-        gather_playlist(
-            args.paths if args.paths is not None else ['.'],
-            args.recursive))
-
+    playlist = list(gather_playlist(args.paths, args.recursive))
     if args.selected_path:
         playlist.append(args.selected_path)
-
-    # remove duplicates
-    playlist = list(set(playlist))
-
+    playlist = list(set(playlist))  # remove duplicates
     sort_playlist(playlist)
 
     playlist_pos = (
-        playlist.index(args.selected_path) if args.selected_path else 0)
+        playlist.index(args.selected_path)
+        if args.selected_path
+        else 0)
 
     # write the playlist
     with tempfile.NamedTemporaryFile(
@@ -90,9 +86,9 @@ def main():
     try:
         run([
             'mpv',
-            '--config-dir={}'.format(Path('~/.config/mpi').expanduser()),
-            '--playlist={}'.format(handle.name),
-            '--playlist-start={}'.format(playlist_pos)]
+            f'--config-dir={config_dir}',
+            f'--playlist={handle.name}',
+            f'--playlist-start={playlist_pos}']
             + unknown_args)
     finally:
         os.unlink(handle.name)
