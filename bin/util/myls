@@ -1,0 +1,194 @@
+#!/usr/bin/env python3
+import os
+import sys
+import argparse
+import stat
+from pwd import getpwuid
+from grp import getgrgid
+from datetime import datetime
+from pathlib import Path
+from typing import List, Iterable, Tuple
+
+from colorama import Fore
+
+
+RED = Fore.RED
+GREEN = Fore.GREEN
+BLUE = Fore.BLUE
+RESET = Fore.RESET
+
+
+def tabulate(
+        rows: Iterable[Tuple[str, ...]],
+        headers: Tuple[str, ...],
+        alignments: Tuple[str, ...]) -> str:
+    gap = '  '
+
+    column_widths = [len(column) for column in headers]
+    for row in rows:
+        for i, cell in enumerate(row[:-1]):
+            column_widths[i] = max(len(cell), column_widths[i])
+    column_widths[-1] += len(gap)
+
+    formats = [
+        '{{:{}{}s}}'.format(
+            '<' if alignments[i] == 'left' else '>',
+            column_widths[i])
+        for i in range(len(headers))]
+
+    def print_row(row: Tuple[str, ...]) -> str:
+        return gap.join(formats[i].format(cell) for i, cell in enumerate(row))
+
+    ret = ''
+    ret += print_row(headers) + '\n'
+    ret += gap.join('-' * width for width in column_widths) + '\n'
+    ret += '\n'.join(print_row(row) for row in rows)
+    return ret
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser()
+    parser.add_argument('file', nargs='*', default=[Path('.')], type=Path)
+    parser.add_argument('-a', '--all', action='store_true')
+    parser.add_argument('-l', action='store_true', dest='long')
+    parser.add_argument(
+        '--color', choices=('always', 'auto', 'never'), default='auto')
+    return parser.parse_args()
+
+
+def collect_paths(path: Path) -> Iterable[Path]:
+    if path.is_dir():
+        for sub_path in path.iterdir():
+            yield sub_path
+    else:
+        yield path
+
+
+def format_size(num: int) -> str:
+    units = ['B'] + [x + 'iB' for x in 'KMGTPEZ']
+    for unit in units:
+        if num < 1024.0:
+            return f'{num:3.1f} {unit}'
+        num /= 1024.0
+    return f'{num:.1f} YiB'
+
+
+def format_name(path: Path, color_mode: str) -> str:
+    name = path.name
+
+    if color_mode == 'always':
+        colorize = True
+    elif color_mode == 'never':
+        colorize = False
+    elif color_mode == 'auto':
+        colorize = sys.stdout.isatty()
+
+    if path.is_dir():
+        if colorize:
+            name = BLUE + name + RESET
+    if path.is_symlink():
+        name += ' (-> '
+        if colorize:
+            name += (RED, GREEN)[os.path.exists(os.readlink(path))]
+        name += os.readlink(path)
+        if colorize:
+            name += RESET
+        name += ')'
+    return name
+
+
+def format_chmod(mode: int) -> str:
+    ret = ''
+
+    # stat.S_ISUID set UID bit
+    # stat.S_ISGID set-group-ID bit
+    # stat.S_ISVTX sticky bit
+    if mode & stat.S_IFSOCK == stat.S_IFSOCK:  # socket
+        ret += 's'
+    elif mode & stat.S_IFLNK == stat.S_IFLNK:  # symbolic link
+        ret += 'l'
+    elif mode & stat.S_IFREG == stat.S_IFREG:  # regular file
+        ret += '-'
+    elif mode & stat.S_IFBLK == stat.S_IFBLK:  # block device
+        ret += 'b'
+    elif mode & stat.S_IFDIR == stat.S_IFDIR:  # directory
+        ret += 'd'
+    elif mode & stat.S_IFCHR == stat.S_IFCHR:  # character device
+        ret += 'c'
+    elif mode & stat.S_IFIFO == stat.S_IFIFO:  # FIFO
+        ret += 'p'
+    else:
+        ret += '?'
+
+    ret += '-r'[bool(mode & stat.S_IRUSR)]
+    ret += '-w'[bool(mode & stat.S_IWUSR)]
+    ret += '-x'[bool(mode & stat.S_IXUSR)]
+    ret += '-r'[bool(mode & stat.S_IRGRP)]
+    ret += '-w'[bool(mode & stat.S_IWGRP)]
+    ret += '-x'[bool(mode & stat.S_IXGRP)]
+    ret += '-r'[bool(mode & stat.S_IROTH)]
+    ret += '-w'[bool(mode & stat.S_IWOTH)]
+    ret += '-x'[bool(mode & stat.S_IXOTH)]
+
+    return ret
+
+
+def print_long_listing(
+        paths: Iterable[Path],
+        args: argparse.Namespace) -> None:
+    rows: List[Tuple[str, ...]] = []
+
+    for path in paths:
+        path_stat = path.stat()
+
+        user = getpwuid(path_stat.st_uid).pw_name
+        group = getgrgid(path_stat.st_gid).gr_name
+        size: str = format_size(path_stat.st_size)
+        date = (
+            datetime.fromtimestamp(path_stat.st_mtime)
+            .replace(microsecond=0)
+            .isoformat())
+        name = format_name(path, args.color)
+
+        rows.append((
+            format_chmod(path_stat.st_mode),
+            user + ':' + group,
+            size,
+            date,
+            name))
+
+    print(tabulate(
+        rows,
+        headers=('Mode', 'Owner', 'Size', 'Last modified', 'Name'),
+        alignments=('left', 'left', 'right', 'left', 'left')))
+
+
+def print_short_listing(
+        paths: Iterable[Path],
+        args: argparse.Namespace) -> None:
+    for path in paths:
+        print(format_name(path, args.color))
+
+
+def print_listing(
+        source_path: Path,
+        args: argparse.Namespace) -> None:
+    paths = collect_paths(source_path)
+    paths = sorted(paths, key=lambda path: (path.is_file(), path.name))
+    if not args.all:
+        paths = (path for path in paths if not path.name.startswith('.'))
+
+    if args.long:
+        print_long_listing(paths, args)
+    else:
+        print_short_listing(paths, args)
+
+
+def main() -> None:
+    args = parse_args()
+    for path in args.file:
+        print_listing(path, args)
+
+
+if __name__ == '__main__':
+    main()
