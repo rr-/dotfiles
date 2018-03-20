@@ -1,3 +1,4 @@
+import abc
 import io
 import asyncio
 import speech_recognition as sr
@@ -32,18 +33,20 @@ async def _work(language, api, logger, line):
             line.note = note
 
 
-class SpeechRecognitionCommand:
+class SpeechRecognitionCommand(PluginCommand):
+    @abc.abstractproperty
     @bubblesub.util.classproperty
-    def language_code(self):
+    def language_code(cls):
         raise NotImplementedError('Unknown language code')
 
+    @abc.abstractproperty
     @bubblesub.util.classproperty
-    def language_name(self):
+    def language_name(cls):
         raise NotImplementedError('Unknown language name')
 
     @bubblesub.util.classproperty
-    def name(self):
-        return 'grid/speech-recognition-' + self.language_code
+    def name(cls):
+        return 'grid/speech-recognition-' + cls.language_code
 
     @property
     def menu_name(self):
@@ -61,15 +64,19 @@ class SpeechRecognitionCommand:
 
 def define_cmd(language_code, language_name):
     type(
-        'SpeechRecognition' + str(language_name) + 'Command',
+        'CustomSpeechRecognitionCommand',
         (SpeechRecognitionCommand, PluginCommand),
         {'language_code': language_code, 'language_name': language_name})
 
 
-for language_code, language_name in [
-        ('ja', 'Japanese'),
-        ('de', 'German'),
-        ('fr', 'French'),
-        ('it', 'Italian'),
-        ('auto', 'auto')]:
-    define_cmd(language_code, language_name)
+def define_cmds():
+    for language_code, language_name in [
+            ('ja', 'Japanese'),
+            ('de', 'German'),
+            ('fr', 'French'),
+            ('it', 'Italian'),
+            ('auto', 'auto')]:
+        define_cmd(language_code, language_name)
+
+
+define_cmds()

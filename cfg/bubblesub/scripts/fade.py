@@ -1,4 +1,4 @@
-import re
+import abc
 from enum import Enum
 import bubblesub.util
 from bubblesub.api.cmd import PluginCommand
@@ -36,24 +36,27 @@ def format_ass_tags(*tags, close=True):
     return joined
 
 
-class FadeCommand:
+class FadeCommand(PluginCommand):
     @bubblesub.util.classproperty
-    def name(self):
+    def name(cls):
         ret = 'grid/fade-'
-        ret += str(self.direction) + '-'
-        ret += str(self.color)
+        ret += cls.direction.name.lower() + '-'
+        ret += ''.join(f'{c:02x}' for c in cls.color)
         return ret
 
+    @abc.abstractproperty
     @bubblesub.util.classproperty
-    def duration(self):
+    def duration(cls):
         raise NotImplementedError('Unknown duration')
 
+    @abc.abstractproperty
     @bubblesub.util.classproperty
-    def direction(self):
+    def direction(cls):
         raise NotImplementedError('Unknown direction')
 
+    @abc.abstractproperty
     @bubblesub.util.classproperty
-    def color(self):
+    def color(cls):
         raise NotImplementedError('Unknown color')
 
     @property
@@ -63,10 +66,11 @@ class FadeCommand:
     async def run(self):
         for line in self.api.subs.selected_lines:
             style = self.api.subs.styles.get_by_name(line.style)
-            c1 = style.primary_color
-            c2 = style.secondary_color
-            c3 = style.outline_color
-            c4 = style.back_color
+
+            col1 = style.primary_color
+            # col2 = style.secondary_color
+            col3 = style.outline_color
+            col4 = style.back_color
 
             if self.direction == Direction.Left:
                 line.text = format_ass_tags(
@@ -76,9 +80,9 @@ class FadeCommand:
                     format_animation(
                         0,
                         self.duration,
-                        format_color(1, c1),
-                        format_color(3, c3),
-                        format_color(4, c4)),
+                        format_color(1, col1),
+                        format_color(3, col3),
+                        format_color(4, col4)),
                     close=True) + line.text
             elif self.direction == Direction.Right:
                 line.text = format_ass_tags(
@@ -105,9 +109,13 @@ def define_cmd(menu_name, color, direction):
         })
 
 
-for menu_name, color, direction in [
-        ('Fade from &black', BLACK, Direction.Left),
-        ('Fade from &white', WHITE, Direction.Left),
-        ('Fade to &black', BLACK, Direction.Right),
-        ('Fade to &white', WHITE, Direction.Right)]:
-    define_cmd(menu_name, color, direction)
+def define_cmds():
+    for menu_name, color, direction in [
+            ('Fade from &black', BLACK, Direction.Left),
+            ('Fade from &white', WHITE, Direction.Left),
+            ('Fade to &black', BLACK, Direction.Right),
+            ('Fade to &white', WHITE, Direction.Right)]:
+        define_cmd(menu_name, color, direction)
+
+
+define_cmds()

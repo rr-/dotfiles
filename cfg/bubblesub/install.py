@@ -1,4 +1,3 @@
-import os
 from dotinstall import packages
 from dotinstall import util
 

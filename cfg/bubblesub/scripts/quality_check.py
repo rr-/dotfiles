@@ -1,13 +1,13 @@
 import re
-import bubblesub.util
-import bubblesub.api.cmd
+from collections import defaultdict
 import ass_tag_parser
 import fontTools.ttLib as font_tools
-from collections import defaultdict
+import bubblesub.util
+import bubblesub.api.cmd
 
 
 MIN_DURATION = 250  # milliseconds
-MIN_DURATION_LONG = 500 # milliseconds
+MIN_DURATION_LONG = 500  # milliseconds
 MIN_GAP = 250
 PUNCTUATION_INSIDE_QUOTES = 2  # 1: "inside." 2: "outside".
 
@@ -64,11 +64,11 @@ def _check_punctuation(logger, line):
             logger.info(f'#{line.number}: period/comma inside quotation mark')
 
     context = re.split(r'\W+', re.sub('[.,?!"]', '', line.text.lower()))
-    for word in (
+    for word in {
         'im', 'youre', 'hes', 'shes', 'theyre', 'isnt', 'arent', 'wasnt',
         'werent', 'didnt', 'thats', 'heres', 'theres', 'wheres', 'cant',
         'dont', 'wouldnt', 'couldnt', 'shouldnt', 'hasnt', 'havent', 'ive'
-    ):
+    }:
         if word in context:
             logger.info(f'#{line.number}: missing apostrophe')
 
@@ -136,13 +136,6 @@ def _check_fonts(logger, api):
     TT_NAME_ID_TYPOGRAPHIC_FAMILY = 16
     TT_PLATFORM_MICROSOFT = 3
 
-    class StyleInfo:
-        def __init__(self, family, is_bold, is_italic):
-            self.family = family
-            self.is_bold = is_bold
-            self.is_italic = is_italic
-            self.used_chars = []
-
     class FontInfo:
         def __init__(self, font_path):
             font = font_tools.TTFont(font_path)
@@ -156,18 +149,22 @@ def _check_fonts(logger, api):
                 for y in x.cmap.items())
 
             for record in font['name'].names:
-                if record.nameID in {
+                if record.platformID != TT_PLATFORM_MICROSOFT:
+                    continue
+
+                if record.nameID not in {
                         TT_NAME_ID_FONT_FAMILY,
                         TT_NAME_ID_FULL_NAME,
-                        TT_NAME_ID_TYPOGRAPHIC_FAMILY} \
-                    and record.platformID == TT_PLATFORM_MICROSOFT:
-                    self.names.append(record.string.decode('utf-16-be'))
+                        TT_NAME_ID_TYPOGRAPHIC_FAMILY}:
+                    continue
+
+                self.names.append(record.string.decode('utf-16-be'))
 
     def get_used_font_styles(api):
         results = defaultdict(set)
 
         styles = {style.name: style for style in api.subs.styles}
-        for i, line in enumerate(api.subs.lines):
+        for line in api.subs.lines:
             if line.is_comment:
                 continue
 
@@ -177,7 +174,7 @@ def _check_fonts(logger, api):
 
             try:
                 chunks = ass_tag_parser.parse_ass(line.text)
-            except ass_tag_parser.ParsingError as ex:
+            except ass_tag_parser.ParsingError:
                 # ASS parsing errors are handled elsewhere
                 continue
 
@@ -229,12 +226,10 @@ def _check_fonts(logger, api):
             logger.warn(f'Font not found')
             continue
 
-        _, font_path, font = result
-        errors = False
+        _weight, _font_path, font = result
         for glyph in glyphs:
             if glyph not in font.glyphs:
                 logger.warn(f'glyph not found: {glyph}')
-                errors = True
 
 
 class QualityCheckCommand(bubblesub.api.cmd.PluginCommand):
