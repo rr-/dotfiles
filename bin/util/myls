@@ -139,19 +139,26 @@ def print_long_listing(
     rows: List[Tuple[str, ...]] = []
 
     for path in paths:
-        path_stat = path.stat()
+        try:
+            path_stat = path.stat()
+            chmod = format_chmod(path_stat.st_mode)
+            user = getpwuid(path_stat.st_uid).pw_name
+            group = getgrgid(path_stat.st_gid).gr_name
+            date = (
+                datetime.fromtimestamp(path_stat.st_mtime)
+                .replace(microsecond=0)
+                .isoformat())
+        except OSError:
+            chmod = '?' * 7
+            user = '?'
+            group = '?'
+            date = '?'
 
-        user = getpwuid(path_stat.st_uid).pw_name
-        group = getgrgid(path_stat.st_gid).gr_name
         size: str = format_size(path_stat.st_size)
-        date = (
-            datetime.fromtimestamp(path_stat.st_mtime)
-            .replace(microsecond=0)
-            .isoformat())
         name = format_name(path, args.color)
 
         rows.append((
-            format_chmod(path_stat.st_mode),
+            chmod,
             user + ':' + group,
             size,
             date,
