@@ -5,8 +5,8 @@ from subprocess import run, PIPE
 from bubblesub.api.cmd import PluginCommand
 
 
-class FadeFromBlackCommand(PluginCommand):
-    name = 'edit/time'
+class AutoTimeCommand(PluginCommand):
+    name = 'edit/auto-time'
     menu_name = '&Auto time'
 
     @property
