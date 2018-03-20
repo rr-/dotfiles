@@ -174,7 +174,14 @@ def _check_fonts(logger, api):
             family = styles[line.style].font_name
             is_bold = styles[line.style].bold
             is_italic = styles[line.style].italic
-            for chunk in ass_tag_parser.parse_ass(line.text):
+
+            try:
+                chunks = ass_tag_parser.parse_ass(line.text)
+            except ass_tag_parser.ParsingError as ex:
+                # ASS parsing errors are handled elsewhere
+                continue
+
+            for chunk in chunks:
                 if chunk['type'] == 'tags':
                     for ass_tag in chunk['children']:
                         if ass_tag['type'] == 'bold':
