@@ -28,6 +28,3 @@ def run():
 
     util.create_symlink('./xinitrc', '~/.xinitrc')
     util.create_symlink('./compton.conf', '~/.config/compton.conf')
-
-    if util.has_executable('zsh'):
-        util.create_symlink('./zlogin', '~/.zlogin')
