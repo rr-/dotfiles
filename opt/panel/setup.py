@@ -11,7 +11,6 @@ setup(
     package_dir={'panel': 'panel'},
     package_data={'panel': ['data/**/*']},
     install_requires=[
-        'PyQT5',
         'python-xlib',
         'psutil',
     ], extras_require={
