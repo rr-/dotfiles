@@ -1,11 +1,11 @@
-import io
+import abc
 import asyncio
 import googletrans
 import bubblesub.util
 from bubblesub.api.cmd import PluginCommand
 
 
-async def _work(language, api, logger, line):
+async def _work(language, logger, line):
     logger.info('line #{} - analyzing'.format(line.number))
     try:
         def recognize():
@@ -13,8 +13,8 @@ async def _work(language, api, logger, line):
             return translator.translate(line.note, src=language, dest='en')
 
         # don't clog the UI thread
-        result = await asyncio.get_event_loop().run_in_executor(None, recognize)
-
+        result = (
+            await asyncio.get_event_loop().run_in_executor(None, recognize))
     except Exception as ex:
         logger.error('line #{}: error ({})'.format(line.number, ex))
     else:
@@ -25,18 +25,20 @@ async def _work(language, api, logger, line):
             line.text = result.text
 
 
-class GoogleTranslateCommand:
+class GoogleTranslateCommand(PluginCommand):
+    @abc.abstractproperty
     @bubblesub.util.classproperty
-    def language_code(self):
+    def language_code(cls):
         raise NotImplementedError('Unknown language code')
 
+    @abc.abstractproperty
     @bubblesub.util.classproperty
-    def language_name(self):
+    def language_name(cls):
         raise NotImplementedError('Unknown language name')
 
     @bubblesub.util.classproperty
-    def name(self):
-        return 'grid/google-translate-' + self.language_code
+    def name(cls):
+        return 'grid/google-translate-' + cls.language_code
 
     @property
     def menu_name(self):
@@ -48,15 +50,21 @@ class GoogleTranslateCommand:
 
     async def run(self):
         for line in self.api.subs.selected_lines:
-            await _work(self.language_code, self.api, self, line)
+            await _work(self.language_code, self, line)
 
 
 def define_cmd(language_code, language_name):
     type(
-        'SpeechRecognition' + str(language_name) + 'Command',
+        'CustomGoogleTranslateCommand',
         (GoogleTranslateCommand, PluginCommand),
         {'language_code': language_code, 'language_name': language_name})
 
 
-for language_code, language_name in [('auto', 'auto'), ('ja', 'Japanese')]:
-    define_cmd(language_code, language_name)
+def define_cmds():
+    for language_code, language_name in [
+            ('auto', 'auto'),
+            ('ja', 'Japanese')]:
+        define_cmd(language_code, language_name)
+
+
+define_cmds()

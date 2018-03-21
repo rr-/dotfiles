@@ -1,10 +1,9 @@
-import os
 from bisect import bisect_left
 from bubblesub.api.cmd import PluginCommand
 
 
-class FadeFromBlackCommand(PluginCommand):
-    name = 'edit/align-subtitles-to-video-frames'
+class AlignSubtitlesToVideoFramesCommand(PluginCommand):
+    name = 'edit/align-subs-to-video-frames'
     menu_name = 'Align subtitles to &video frames'
 
     @property

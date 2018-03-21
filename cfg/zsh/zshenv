@@ -1,8 +1,6 @@
 # aliases related to colors
-LS_OPTIONS="--group-directories-first"
 if whence -p dircolors >/dev/null; then
     eval `dircolors`
-    LS_OPTIONS="$LS_OPTIONS --color=auto"
     alias grep='grep --color=auto'
     alias fgrep='fgrep --color=auto'
     alias egrep='egrep --color=auto'
@@ -10,10 +8,9 @@ fi
 
 # aliases
 alias cal="cal -m"
-alias ls="ls $LS_OPTIONS -vF1"
-alias ll="ls $LS_OPTIONS -lX"
-alias la="ls $LS_OPTIONS -lXA"
-alias lc="ls $LS_OPTIONS -lXC"
+alias l="myls"
+alias ll="myls -l"
+alias la="myls -la"
 alias e=vifm
 alias v=nvim
 jisho() { command jisho "$@"|less -rFX }
