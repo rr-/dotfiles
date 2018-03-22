@@ -130,6 +130,28 @@ def _check_double_words(logger, line):
         logger.warn(f'#{line.number}: double word ({word})')
 
 
+def _check_actors(logger, api):
+    logger.info('Actors summary:')
+    actors = defaultdict(int)
+
+    for line in api.subs.lines:
+        actors[line.actor] += 1
+
+    for actor, occurrences in sorted(actors.items(), key=lambda kv: -kv[1]):
+        logger.info(f'– {occurrences} time(s): {actor}')
+
+
+def _check_styles(logger, api):
+    logger.info('Styles summary:')
+    styles = defaultdict(int)
+
+    for line in api.subs.lines:
+        styles[line.style] += 1
+
+    for style, occurrences in sorted(styles.items(), key=lambda kv: -kv[1]):
+        logger.info(f'– {occurrences} time(s): {style}')
+
+
 def _check_fonts(logger, api):
     logger.info('Fonts summary:')
 
@@ -254,4 +276,6 @@ class QualityCheckCommand(bubblesub.api.cmd.PluginCommand):
             _check_disjointed_tags(self, line)
             _check_broken_comments(self, line)
             _check_double_words(self, line)
+        _check_actors(self, self.api)
+        _check_styles(self, self.api)
         _check_fonts(self, self.api)
