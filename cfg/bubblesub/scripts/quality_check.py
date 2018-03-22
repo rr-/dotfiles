@@ -269,7 +269,7 @@ class QualityCheckCommand(bubblesub.api.cmd.PluginCommand):
         return self.api.subs.has_selection
 
     async def run(self):
-        for line in self.api.subs.selected_lines:
+        for line in self.api.subs.lines:
             _check_durations(self, line)
             _check_punctuation(self, line)
             _check_malformed_tags(self, line)
