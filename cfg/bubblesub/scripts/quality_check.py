@@ -18,12 +18,12 @@ def _check_durations(logger, line):
         return
 
     if line.duration < MIN_DURATION:
-        logger.info(
+        logger.warn(
             f'#{line.number}: duration shorter than {MIN_DURATION} ms')
 
     if line.duration < MIN_DURATION_LONG \
             and bubblesub.util.character_count(text) >= 8:
-        logger.info(
+        logger.warn(
             f'#{line.number}: '
             f'duration shorter than {MIN_DURATION_LONG} ms')
 
@@ -32,7 +32,7 @@ def _check_durations(logger, line):
         if bubblesub.util.ass_to_plaintext(next_line.text):
             gap = next_line.start - line.end
             if gap > 0 and gap < MIN_GAP:
-                logger.info(
+                logger.warn(
                     f'#{line.number}+#{next_line.number}: '
                     f'gap shorter than {MIN_GAP} ms ({gap} ms)')
             return
@@ -43,18 +43,18 @@ def _check_punctuation(logger, line):
     text = bubblesub.util.ass_to_plaintext(line.text)
 
     if text.endswith('\\N'):
-        logger.info(f'#{line.number}: extra line break')
+        logger.warn(f'#{line.number}: extra line break')
 
     if ' \\N' in text:
-        logger.info(f'#{line.number}: space before line break')
+        logger.warn(f'#{line.number}: space before line break')
 
     if '  ' in text:
-        logger.info(f'#{line.number}: double space')
+        logger.warn(f'#{line.number}: double space')
 
     if '...' in text:
-        logger.info(f'#{line.number}: bad ellipsis (expected …)')
+        logger.warn(f'#{line.number}: bad ellipsis (expected …)')
     elif re.search('[…,.!?] *[,.]', text):
-        logger.info(f'#{line.number}: extra comma or dot')
+        logger.warn(f'#{line.number}: extra comma or dot')
 
     if PUNCTUATION_INSIDE_QUOTES == 1:
         if re.search(r'"[\.,…?!]', line.text):
@@ -70,32 +70,32 @@ def _check_punctuation(logger, line):
         'dont', 'wouldnt', 'couldnt', 'shouldnt', 'hasnt', 'havent', 'ive'
     }:
         if word in context:
-            logger.info(f'#{line.number}: missing apostrophe')
+            logger.warn(f'#{line.number}: missing apostrophe')
 
     if re.search(r'[-–](\\N|$)', text):
-        logger.info(f'#{line.number}: bad dash (expected —)')
+        logger.warn(f'#{line.number}: bad dash (expected —)')
 
     if re.search(r'(^|\\N)–[^–]*$', text):
-        logger.info(f'#{line.number}: dialog with just one person')
+        logger.warn(f'#{line.number}: dialog with just one person')
 
     if re.search(r'(^|\\N)(- |—)', text):
-        logger.info(f'#{line.number}: bad dash (expected –)')
+        logger.warn(f'#{line.number}: bad dash (expected –)')
 
     if re.search(r'(^|\\N)[A-Z][a-z]{,3}-[a-z]', text):
-        logger.info(f'#{line.number}: possible wrong stutter capitalization')
+        logger.warn(f'#{line.number}: possible wrong stutter capitalization')
 
     if re.search(r'[\.,?!][A-Za-z]|[a-zA-Z]…[A-Za-z]', text):
-        logger.info(f'#{line.number}: missing space after punctuation mark')
+        logger.warn(f'#{line.number}: missing space after punctuation mark')
 
     if re.search(r'[\.!?]\s+[a-z]', text):
-        logger.info(f'#{line.number}: lowercase letter after sentence end')
+        logger.warn(f'#{line.number}: lowercase letter after sentence end')
 
 
 def _check_malformed_tags(logger, line):
     try:
         result = ass_tag_parser.parse_ass(line.text)
     except ass_tag_parser.ParsingError as ex:
-        logger.info(f'#{line.number}: invalid syntax (%r)' % str(ex))
+        logger.error(f'#{line.number}: invalid syntax (%r)' % str(ex))
         return
 
     for item in result:
@@ -103,14 +103,14 @@ def _check_malformed_tags(logger, line):
             continue
         for subitem in item['children']:
             if subitem['type'] == 'alignment' and subitem['legacy']:
-                logger.info(f'#{line.number}: using legacy alignment tag')
+                logger.warn(f'#{line.number}: using legacy alignment tag')
             if subitem['type'] == 'comment' and len(item['children']) != 1:
-                logger.info(f'#{line.number}: mixing comments with tags')
+                logger.warn(f'#{line.number}: mixing comments with tags')
 
 
 def _check_disjointed_tags(logger, line):
     if '}{' in line.text:
-        logger.info(f'#{line.number}: disjointed tags')
+        logger.warn(f'#{line.number}: disjointed tags')
 
 
 def _check_broken_comments(logger, line):
@@ -119,7 +119,7 @@ def _check_broken_comments(logger, line):
             or '}' in striped_text \
             or re.search('}[^{]}', line.text) \
             or re.search('{[^}]{', line.text):
-        logger.info(f'#{line.number}: broken comment')
+        logger.warn(f'#{line.number}: broken comment')
 
 
 def _check_double_words(logger, line):
@@ -127,7 +127,7 @@ def _check_double_words(logger, line):
 
     for pair in re.finditer(r'(?<!\w)(\w+)\s+\1(?!\w)', text):
         word = pair.group(1)
-        logger.info(f'#{line.number}: double word ({word})')
+        logger.warn(f'#{line.number}: double word ({word})')
 
 
 def _check_fonts(logger, api):
