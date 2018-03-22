@@ -131,6 +131,8 @@ def _check_double_words(logger, line):
 
 
 def _check_fonts(logger, api):
+    logger.info('Fonts summary:')
+
     TT_NAME_ID_FONT_FAMILY = 1
     TT_NAME_ID_FULL_NAME = 4
     TT_NAME_ID_TYPOGRAPHIC_FAMILY = 16
@@ -219,17 +221,21 @@ def _check_fonts(logger, api):
     fonts = get_fonts()
     for font_specs, glyphs in results.items():
         font_family, is_bold, is_italic = font_specs
-        logger.info(f'Checking {font_family} for {len(glyphs)} glyphs…')
+        logger.info(f'– {font_family}, {len(glyphs)} glyphs')
 
         result = locate_font(fonts, font_family, is_bold, is_italic)
         if not result:
-            logger.warn(f'Font not found')
+            logger.warn(f'  font file not found')
             continue
 
         _weight, _font_path, font = result
+        missing_glyphs = set()
         for glyph in glyphs:
             if glyph not in font.glyphs:
-                logger.warn(f'glyph not found: {glyph}')
+                missing_glyphs.add(glyph)
+
+        if missing_glyphs:
+            logger.warn(f'  missing glyphs: {"".join(missing_glyphs)}')
 
 
 class QualityCheckCommand(bubblesub.api.cmd.PluginCommand):
