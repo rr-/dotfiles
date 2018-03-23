@@ -32,7 +32,7 @@ def collect_files(source_path: Path) -> Iterable[File]:
 
 
 def fill_file_info(file: File) -> None:
-    print(f'Querying {file.path.name}...')
+    print(f'Querying {file.path.name}…')
     try:
         file.width, file.height = PIL.Image.open(str(file.path)).size
     except OSError:
@@ -60,16 +60,16 @@ def parse_args() -> argparse.Namespace:
 def main() -> None:
     args = parse_args()
 
-    print('Collecting files...')
+    print('Collecting files…')
     files = list(collect_files(args.source_dir.resolve()))
 
-    print('Querying image dimensions...')
+    print('Querying image dimensions…')
     fill_file_infos(files)
 
-    print('Renaming...')
+    print('Renaming…')
     for i, file in enumerate(sorted(files, key=lambda file: file.rank)):
         target_path = file.path.parent / f'{i:04}_{file.path.name}'
-        print(f'{file.path} -> {target_path} ({file.rank})')
+        print(f'{file.path} → {target_path.name} ({file.rank})')
         if not args.dry_run:
             file.path.rename(target_path)
 
