@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import argparse
 import asyncio
+import warnings
 from pathlib import Path
 from typing import Optional, Iterable, Sequence, Generator
 from concurrent.futures import ThreadPoolExecutor
@@ -44,19 +45,22 @@ def fill_file_infos(files: Iterable[File]) -> None:
     loop = asyncio.get_event_loop()
     executor = ThreadPoolExecutor(max_workers=8)
 
-    futures = [
-        loop.run_in_executor(executor, fill_file_info, file)
-        for file in files
-    ]
+    with warnings.catch_warnings():
+        warnings.simplefilter('ignore')
 
-    async def with_progress(tasks: Sequence[Generator]) -> None:
-        for task in tqdm.tqdm(
-                asyncio.as_completed(tasks),
-                total=len(tasks),
-                unit='file'):
-            await task
+        futures = [
+            loop.run_in_executor(executor, fill_file_info, file)
+            for file in files
+        ]
 
-    loop.run_until_complete(with_progress(futures))
+        async def with_progress(tasks: Sequence[Generator]) -> None:
+            for task in tqdm.tqdm(
+                    asyncio.as_completed(tasks),
+                    total=len(tasks),
+                    unit='file'):
+                await task
+
+        loop.run_until_complete(with_progress(futures))
 
 
 def parse_args() -> argparse.Namespace:
