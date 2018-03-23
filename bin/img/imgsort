@@ -2,9 +2,10 @@
 import argparse
 import asyncio
 from pathlib import Path
-from typing import Iterable, Optional
+from typing import Optional, Iterable, Sequence, Generator
 from concurrent.futures import ThreadPoolExecutor
 
+import tqdm
 import PIL.Image
 
 
@@ -32,7 +33,6 @@ def collect_files(source_path: Path) -> Iterable[File]:
 
 
 def fill_file_info(file: File) -> None:
-    print(f'Querying {file.path.name}…')
     try:
         file.width, file.height = PIL.Image.open(str(file.path)).size
     except OSError:
@@ -40,6 +40,7 @@ def fill_file_info(file: File) -> None:
 
 
 def fill_file_infos(files: Iterable[File]) -> None:
+    files = list(files)
     loop = asyncio.get_event_loop()
     executor = ThreadPoolExecutor(max_workers=8)
 
@@ -47,7 +48,15 @@ def fill_file_infos(files: Iterable[File]) -> None:
         loop.run_in_executor(executor, fill_file_info, file)
         for file in files
     ]
-    loop.run_until_complete(asyncio.gather(*futures))
+
+    async def with_progress(tasks: Sequence[Generator]) -> None:
+        for task in tqdm.tqdm(
+                asyncio.as_completed(tasks),
+                total=len(tasks),
+                unit='file'):
+            await task
+
+    loop.run_until_complete(with_progress(futures))
 
 
 def parse_args() -> argparse.Namespace:
