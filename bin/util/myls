@@ -193,8 +193,16 @@ def print_listing(
 
 def main() -> None:
     args = parse_args()
+    exit_code = 0
+
     for path in args.file:
-        print_listing(path, args)
+        if path.exists():
+            print_listing(path, args)
+        else:
+            print(f'"{path}" doesn\'t exist')
+            exit_code = 1
+
+    exit(exit_code)
 
 
 if __name__ == '__main__':
