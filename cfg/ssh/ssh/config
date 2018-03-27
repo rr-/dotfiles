@@ -3,20 +3,13 @@ Host *
     ServerAliveCountMax 2
 
 Host cyclone
-    HostName sakuya.pl
     User rr-
     Port 465
-    ForwardX11 yes
-    ForwardX11Trusted yes
 
 Host sakuya.pl
     User rr-
     Port 465
-    ForwardX11 yes
-    ForwardX11Trusted yes
 
 Host tornado
-    HostName tornado
     User rr-
     Port 22
-    ProxyCommand ssh -q rr-@cyclone nc %h %p
