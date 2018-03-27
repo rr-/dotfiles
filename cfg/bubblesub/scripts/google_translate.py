@@ -1,7 +1,7 @@
 import abc
 import asyncio
 import googletrans
-import bubblesub.util
+from bubblesub.model import classproperty
 from bubblesub.api.cmd import PluginCommand
 
 
@@ -27,16 +27,16 @@ async def _work(language, logger, line):
 
 class GoogleTranslateCommand(PluginCommand):
     @abc.abstractproperty
-    @bubblesub.util.classproperty
+    @classproperty
     def language_code(cls):
         raise NotImplementedError('Unknown language code')
 
     @abc.abstractproperty
-    @bubblesub.util.classproperty
+    @classproperty
     def language_name(cls):
         raise NotImplementedError('Unknown language name')
 
-    @bubblesub.util.classproperty
+    @classproperty
     def name(cls):
         return 'grid/google-translate-' + cls.language_code
 
