@@ -1,6 +1,6 @@
 import abc
 from enum import Enum
-import bubblesub.util
+from bubblesub.model import classproperty
 from bubblesub.api.cmd import PluginCommand
 
 
@@ -37,7 +37,7 @@ def format_ass_tags(*tags, close=True):
 
 
 class FadeCommand(PluginCommand):
-    @bubblesub.util.classproperty
+    @classproperty
     def name(cls):
         ret = 'grid/fade-'
         ret += cls.direction.name.lower() + '-'
@@ -45,17 +45,17 @@ class FadeCommand(PluginCommand):
         return ret
 
     @abc.abstractproperty
-    @bubblesub.util.classproperty
+    @classproperty
     def duration(cls):
         raise NotImplementedError('Unknown duration')
 
     @abc.abstractproperty
-    @bubblesub.util.classproperty
+    @classproperty
     def direction(cls):
         raise NotImplementedError('Unknown direction')
 
     @abc.abstractproperty
-    @bubblesub.util.classproperty
+    @classproperty
     def color(cls):
         raise NotImplementedError('Unknown color')
 

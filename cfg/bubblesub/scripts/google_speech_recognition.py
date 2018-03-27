@@ -2,7 +2,7 @@ import abc
 import io
 import asyncio
 import speech_recognition as sr
-import bubblesub.util
+from bubblesub.model import classproperty
 from bubblesub.api.cmd import PluginCommand
 
 
@@ -35,16 +35,16 @@ async def _work(language, api, logger, line):
 
 class SpeechRecognitionCommand(PluginCommand):
     @abc.abstractproperty
-    @bubblesub.util.classproperty
+    @classproperty
     def language_code(cls):
         raise NotImplementedError('Unknown language code')
 
     @abc.abstractproperty
-    @bubblesub.util.classproperty
+    @classproperty
     def language_name(cls):
         raise NotImplementedError('Unknown language name')
 
-    @bubblesub.util.classproperty
+    @classproperty
     def name(cls):
         return 'grid/speech-recognition-' + cls.language_code
 
