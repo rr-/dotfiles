@@ -7,7 +7,7 @@ from bubblesub.api.cmd import PluginCommand
 
 class AutoTimeCommand(PluginCommand):
     name = 'edit/auto-time'
-    menu_name = '&Auto time'
+    menu_name = 'Auto time'
 
     @property
     def is_enabled(self):
