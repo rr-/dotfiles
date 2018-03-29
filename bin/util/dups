@@ -30,6 +30,12 @@ def save_cache(cache):
     CACHE_PATH.write_bytes(pickle.dumps(cache))
 
 
+def clean_cache(cache):
+    for path, hash in list(cache.items()):
+        if not pathlib.Path(path).exists():
+            del cache[path]
+
+
 def get_file_hash(path):
     hash = hashlib.md5()
     hash.update(path.read_bytes())
@@ -94,9 +100,11 @@ def main():
 
     print('Loading cache...')
     cache = load_cache()
+    print('Loaded', len(cache), 'cache entries')
 
     print('Collecting files...')
     all_files = list(collect_files(args.dir))
+    print('Collected', len(all_files), 'files')
 
     print('Constructing size-path dictionary...')
     size_to_path = construct_size_to_path_dict(all_files)
@@ -156,8 +164,12 @@ def main():
                 if num != choice:
                     path.unlink()
 
+    print('Removing non-existing entries from cache...')
+    clean_cache(cache)
+
     print('Saving cache...')
     save_cache(cache)
+    print('Saved', len(cache), 'cache entries')
 
 
 if __name__ == '__main__':
