@@ -6,3 +6,4 @@
 *.so
 .lvimrc
 .agignore
+.mypy_cache
