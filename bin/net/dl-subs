@@ -1,12 +1,14 @@
 #!/usr/bin/env python3
 # Downloads movie subtitles from Napiprojekt database
+import abc
 import argparse
 import concurrent.futures
+import pathlib
 import hashlib
-import os
 import re
 import subprocess
 import tempfile
+
 import requests
 from dotfiles import logging
 
@@ -22,8 +24,58 @@ URL_TEMPLATE = (
     + '&nick='
     + '&pass='
     + '&napios=posix')
-MOVIE_EXTENSIONS = 'avi,mp4,mpg,mkv'.split(',')
+MOVIE_EXTENSIONS = {'.avi', '.mp4', '.mpg', '.mkv'}
 SUBTITLE_READERS = []
+
+
+class SubtitlesNotFoundError(RuntimeError):
+    def __init__(self):
+        super().__init__('Subtitles not found')
+
+
+class Task(abc.ABC):
+    @property
+    @abc.abstractproperty
+    def canonical_path(self):
+        raise NotImplementedError()
+
+    @abc.abstractmethod
+    def get_file_hash(self):
+        ''' Gets the MD5 of the first 10 megabytes of the movie. '''
+        raise NotImplementedError()
+
+
+class FileTask(Task):
+    def __init__(self, path):
+        self.path = path
+
+    @property
+    def canonical_path(self):
+        return self.path.parent / (self.path.stem + '.srt')
+
+    def get_file_hash(self):
+        with self.path.open('rb') as handle:
+            md5 = hashlib.md5()
+            md5.update(handle.read(1024 * 1024 * 10))
+            return md5.hexdigest()
+
+    def __repr__(self):
+        return str(self.path)
+
+
+class HashTask(Task):
+    def __init__(self, file_hash):
+        self.file_hash = file_hash
+
+    @property
+    def canonical_path(self):
+        return pathlib.Path(self.file_hash + '.srt')
+
+    def get_file_hash(self):
+        return self.file_hash
+
+    def __repr__(self):
+        return self.file_hash
 
 
 class Subtitle:
@@ -208,8 +260,8 @@ def parse_args():
         description='Get movie subtitles using napiprojekt.pl database')
 
     parser.add_argument(
-        metavar='FILE',
-        dest='paths',
+        metavar='FILE|HASH',
+        dest='sources',
         nargs='+',
         help='file to download subtitles for')
 
@@ -235,67 +287,65 @@ def parse_args():
     return parser.parse_args()
 
 
-def flat_walk(top):
+def flat_walk(root_path):
     ''' Returns recursive list of files contained inside the directory. '''
-    for path, _, filenames in os.walk(top):
-        for filename in filenames:
-            yield os.path.join(path, filename)
-
-
-def collect_paths(paths):
-    for path in paths:
-        if not os.path.exists(path):
-            logging.warning('Warning: %s does not exist' % path)
-            continue
-        if os.path.isdir(path):
-            for child_path in flat_walk(path):
-                extension = os.path.splitext(child_path)[1].lower().lstrip('.')
-                if extension in MOVIE_EXTENSIONS:
-                    yield child_path
-        else:
+    for path in root_path.iterdir():
+        if path.is_file():
             yield path
+        elif path.is_dir():
+            yield from flat_walk(path)
+
+
+def collect_tasks(sources):
+    for source in sources:
+        match = re.match('(?:napiprojekt:)?(?P<hash>[0-9A-Fa-f]{32})', source)
+        if match:
+            yield HashTask(match.group('hash'))
+            continue
+
+        path = pathlib.Path(source)
+        if not path.exists():
+            logging.warning(f'Warning: {path} does not exist')
+            continue
+
+        if path.is_file():
+            yield FileTask(path)
+        elif path.is_dir():
+            for child_path in source.iterdir():
+                if child_path.suffix.lower() in MOVIE_EXTENSIONS:
+                    yield FileTask(child_path)
 
 
 def get_fps(_path):
     return 23.976
 
 
-def get_md5(path):
-    ''' Gets the MD5 of the first 10 megabytes. '''
-    with open(path, 'rb') as handle:
-        md5 = hashlib.md5()
-        md5.update(handle.read(1024 * 1024 * 10))
-        return md5.hexdigest()
-
-
-def get_checksum(md5):
+def get_checksum(file_hash):
     ''' Gets the checksum for Napiprojekt basing on the file's MD5. '''
     checksum = ''
     add = (0, 13, 16, 11, 5)
     mul = (2, 2, 5, 4, 3)
     idx = (14, 3, 6, 8, 2)
     for i in range(5):
-        index = int(md5[idx[i]], 16) + add[i]
-        value = int(md5[index:index+2], 16) * mul[i]
+        index = int(file_hash[idx[i]], 16) + add[i]
+        value = int(file_hash[index:index+2], 16) * mul[i]
         checksum += '%x' % (value % 16)
     return checksum
 
 
-def get_raw_subtitles(movie_path, lang):
-    md5 = get_md5(movie_path)
+def get_raw_subtitles(file_hash, lang):
     url = URL_TEMPLATE.format(
         lang=lang.upper(),
-        md5=md5,
-        checksum=get_checksum(md5))
+        md5=file_hash,
+        checksum=get_checksum(file_hash))
 
     response = requests.get(url, timeout=3)
     if response.content[0:3] == b'NPc':
-        logging.error('%r error: subtitles not found.' % (movie_path))
-        return None
+        raise SubtitlesNotFoundError()
 
     with tempfile.NamedTemporaryFile(suffix='.7z', delete=False) as arc_file:
         arc_file.write(response.content)
-        arc_path = arc_file.name
+        arc_path = pathlib.Path(arc_file.name)
 
     try:
         proc = subprocess.Popen(
@@ -305,49 +355,48 @@ def get_raw_subtitles(movie_path, lang):
             stdin=subprocess.PIPE)
         return proc.communicate(response.content)[0]
     finally:
-        if os.path.exists(arc_path):
-            os.unlink(arc_path)
+        if arc_path.exists():
+            arc_path.unlink()
 
 
-def process_path(parser, movie_path, lang, force, debug):
+def process_task(task, parser, lang, force, debug):
     '''
-    Stores subtitles for a single movie path.
+    Stores subtitles for a single task.
     If the target subtitles already exist, bails out, unless force=True.
     '''
-    subs_path = os.path.splitext(movie_path)[0] + '.srt'
-    if os.path.exists(subs_path) and not force:
-        logging.warning('%r has subs, ignoring' % movie_path)
+    subs_path = task.canonical_path
+    if subs_path.exists() and not force:
+        logging.warning(f'{task!r}: has subs, ignoring')
         return
 
     try:
-        output = get_raw_subtitles(movie_path, lang)
+        file_hash = task.get_file_hash()
+        output = get_raw_subtitles(file_hash, lang)
         if not output:
             return
-        fps = get_fps(movie_path)
         lines = output.decode('cp1250').split('\n')
-        subtitles = parser.parse(lines, fps)
+        subtitles = parser.parse(lines, 23.976)
         output = parser.to_srt(subtitles)
 
-        with open(subs_path, 'wb') as sub_file:
-            sub_file.write(output.encode('utf-8'))
-            logging.success('%r saved' % movie_path)
+        subs_path.write_bytes(output.encode('utf-8'))
+        logging.success(f'{task!r}: saved')
     except Exception as ex:
         if debug:
             raise
-        logging.error(ex)
+        logging.error(f'{task!r}: error ({ex})')
 
 
 def main():
     args = parse_args()
-    paths = collect_paths(args.paths)
+    tasks = collect_tasks(args.sources)
     parser = SubtitleParser()
     with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
-        for path in paths:
-            func_args = [parser, path, args.lang, args.force, args.debug]
+        for task in tasks:
+            func_args = [task, parser, args.lang, args.force, args.debug]
             if args.debug:
-                process_path(*func_args)
+                process_task(*func_args)
             else:
-                executor.submit(process_path, *func_args)
+                executor.submit(process_task, *func_args)
 
 
 if __name__ == '__main__':
