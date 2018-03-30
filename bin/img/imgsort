@@ -15,22 +15,25 @@ class File:
     path: Path
     width: T.Optional[int]
     height: T.Optional[int]
+    is_animated: T.Optional[bool]
 
     def __init__(self, path: Path) -> None:
         self.path = path
         self.width = None
         self.height = None
+        self.is_animated = False
 
     @property
-    def rank(self) -> int:
-        return (self.width or 0) * (self.height or 0)
+    def rank(self) -> T.Any:
+        area = (self.width or 0) * (self.height or 0)
+        return (self.is_animated, area)
 
 
 def collect_files(source_path: Path) -> T.Iterable[File]:
     for path in source_path.iterdir():
         if path.is_dir():
             continue
-        if path.suffix.lower() in {'.png', '.jpg', '.gif'}:
+        if path.suffix.lower() in {'.png', '.jpg', '.gif', '.webm'}:
             yield File(path)
 
 
@@ -42,7 +45,7 @@ def fill_file_info(file: File) -> None:
             '-print_format', 'json',
             '-select_streams', 'v:0',
             '-show_entries',
-            'stream=width,height',
+            'stream=width,height,nb_frames,nb_read_frames',
             '-count_frames',
             '-i', file.path,
         ],
@@ -53,6 +56,9 @@ def fill_file_info(file: File) -> None:
     stream_info = json.loads(result.stdout)['streams'][0]
     file.width = stream_info.get('width', None)
     file.height = stream_info.get('height', None)
+    for key in {'nb_frames', 'nb_read_frames'}:
+        if key in stream_info:
+            file.is_animated = int(stream_info[key]) > 1
 
 
 def fill_file_infos(files: T.Iterable[File]) -> None:
