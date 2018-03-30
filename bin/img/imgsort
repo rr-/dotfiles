@@ -2,8 +2,8 @@
 import argparse
 import asyncio
 import warnings
+import typing as T
 from pathlib import Path
-from typing import Optional, Iterable, Sequence, Generator
 from concurrent.futures import ThreadPoolExecutor
 
 import tqdm
@@ -12,8 +12,8 @@ import PIL.Image
 
 class File:
     path: Path
-    width: Optional[int]
-    height: Optional[int]
+    width: T.Optional[int]
+    height: T.Optional[int]
 
     def __init__(self, path: Path) -> None:
         self.path = path
@@ -25,7 +25,7 @@ class File:
         return (self.width or -1) * (self.height or -1)
 
 
-def collect_files(source_path: Path) -> Iterable[File]:
+def collect_files(source_path: Path) -> T.Iterable[File]:
     for path in source_path.iterdir():
         if path.is_dir():
             continue
@@ -40,7 +40,7 @@ def fill_file_info(file: File) -> None:
         pass
 
 
-def fill_file_infos(files: Iterable[File]) -> None:
+def fill_file_infos(files: T.Iterable[File]) -> None:
     files = list(files)
     loop = asyncio.get_event_loop()
     executor = ThreadPoolExecutor(max_workers=8)
@@ -53,7 +53,7 @@ def fill_file_infos(files: Iterable[File]) -> None:
             for file in files
         ]
 
-        async def with_progress(tasks: Sequence[Generator]) -> None:
+        async def with_progress(tasks: T.Sequence[T.Generator]) -> None:
             for task in tqdm.tqdm(
                     asyncio.as_completed(tasks),
                     total=len(tasks),
