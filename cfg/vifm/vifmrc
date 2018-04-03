@@ -168,5 +168,9 @@ nnoremap yd :!echo -n "'"%"d:gs!\!/!"'" %i | clip<cr>
 " Compatibility with vim vinegar
 nnoremap <f3> :cd ..<cr>
 
+" Go to line
+nnoremap <cr> :<C-U>if v:count|exe 'norm! '.v:count.'Gl'|else|exe 'norm! l'|endif<CR>
+nnoremap l :<C-U>if v:count|exe 'norm! '.v:count.'Gl'|else|exe 'norm! l'|endif<CR>
+
 " Hide junk
 filter __pycache__
