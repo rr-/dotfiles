@@ -40,6 +40,9 @@ nnoremap Q gqap
 nnoremap <C-e> :Ag<CR>
 nnoremap <C-p> :Files<CR>
 nnoremap <C-m> :Buffers<CR>
+"convenient new tab
+nnoremap gn :tabnew<CR>
+
 "toggle .h .cpp
 function! SwitchSourceHeader()
   let ext = expand("%:e")
@@ -51,9 +54,7 @@ function! SwitchSourceHeader()
 endfunction
 nnoremap <F4> :call SwitchSourceHeader()<CR>
 
-noremap gn :tabnew<CR>
-
-"terminal
+"exit terminal mode via escape
 tnoremap <Esc> <C-\><C-n>
 
 "file explorer
