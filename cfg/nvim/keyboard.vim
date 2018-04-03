@@ -42,6 +42,8 @@ nnoremap <C-p> :Files<CR>
 nnoremap <C-m> :Buffers<CR>
 "convenient new tab
 nnoremap gn :tabnew<CR>
+"go to line
+nnoremap <expr> <silent> <CR> v:count ? ":<C-U><Esc>" . v:count . "G" : "<CR>"
 
 "toggle .h .cpp
 function! SwitchSourceHeader()
