@@ -10,6 +10,10 @@ super + {r, d}
 super + n
     kb
 
+# lock screen
+alt + ctrl + shift + l
+    i3lock -c 000000
+
 # focus or spawn local terminal with tmux
 alt + ctrl + bracketleft
     run_or_raise -cn local_terminal -p "urxvt -name local_terminal -e zsh -ilc 'tmux new-session -As work'"
