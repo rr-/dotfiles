@@ -19,6 +19,8 @@ c.url.searchengines = {
 }
 
 config.bind(';m', 'hint links spawn sh -c "LD_LIBRARY_PATH=/usr/local/lib mpv {hint-url}"')
+config.bind(';t', 'hint links spawn qbittorrent {hint-url}')
+config.bind(';T', 'hint -r links spawn qbittorrent {hint-url}')
 config.bind('<', 'navigate prev')
 config.bind('>', 'navigate next')
 config.bind('<alt+9>', 'tab-focus 9')
