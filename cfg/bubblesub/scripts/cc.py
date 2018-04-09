@@ -19,18 +19,19 @@ class LoadClosedCaptionsCommand(PluginCommand):
     @staticmethod
     async def _run(api, main_window):
         path = bubblesub.ui.util.load_dialog(
-            main_window,
-            'Subtitles (*.ass *.srt);;All files (*.*)')
+            main_window, 'Subtitles (*.ass *.srt);;All files (*.*)'
+        )
         if not path:
             return
 
         source = pysubs2.load(str(path))
-        for line in source:
-            api.subs.lines.insert_one(
-                len(api.subs.lines),
-                start=line.start,
-                end=line.end,
-                note=line.text)
+        with self.api.undo.capture():
+            for line in source:
+                api.subs.lines.insert_one(
+                    len(api.subs.lines),
+                    start=line.start,
+                    end=line.end,
+                    note=line.text)
 
 
 class CleanClosedCaptionsCommand(PluginCommand):
@@ -46,7 +47,7 @@ class CleanClosedCaptionsCommand(PluginCommand):
 
     @staticmethod
     async def _run(api, _main_window):
-        with api.undo.bulk():
+        with self.api.undo.capture():
             for line in api.subs.selected_lines:
                 note = line.note
                 note = re.sub(r'\\N', '\n', note)
@@ -57,7 +58,7 @@ class CleanClosedCaptionsCommand(PluginCommand):
                 note = re.sub('≪', '', note)  # distant dialogues
                 note = re.sub('[＜＞《》]', '', note)
                 note = re.sub('｡', '。', note)  # half-width period
-                note = re.sub('([…！？])。', r'\1', note)  # superfluous periods
+                note = re.sub('([…！？])。', r'\1', note)  # unneeded periods
                 note = note.rstrip('・')
                 note = re.sub(' ', '', note)  # Japanese doesn't need spaces
                 note = note.strip()

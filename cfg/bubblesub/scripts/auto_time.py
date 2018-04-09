@@ -26,19 +26,23 @@ class AutoTimeCommand(PluginCommand):
             self.api.log.error(result.stdout)
             return
 
-        for line in result.stdout.decode().split('\n'):
-            if not line:
-                continue
-            _line_id, start, end = line.split()
-            ms_start = float(start) * 1000
-            ms_end = float(end) * 1000
-            idx_start = bisect.bisect_left(
-                self.api.media.video.timecodes, ms_start)
-            idx_end = bisect.bisect_left(
-                self.api.media.video.timecodes, ms_end)
-            self.api.subs.lines.insert_one(
-                len(self.api.subs.lines),
-                start=self.api.media.video.timecodes[idx_start],
-                end=self.api.media.video.timecodes[idx_end])
+        with self.api.undo.capture():
+            for line in result.stdout.decode().split('\n'):
+                if not line:
+                    continue
+                _line_id, start, end = line.split()
+                ms_start = float(start) * 1000
+                ms_end = float(end) * 1000
+                idx_start = bisect.bisect_left(
+                    self.api.media.video.timecodes, ms_start
+                )
+                idx_end = bisect.bisect_left(
+                    self.api.media.video.timecodes, ms_end
+                )
+                self.api.subs.lines.insert_one(
+                    len(self.api.subs.lines),
+                    start=self.api.media.video.timecodes[idx_start],
+                    end=self.api.media.video.timecodes[idx_end]
+                )
 
         os.unlink(temp_path)
