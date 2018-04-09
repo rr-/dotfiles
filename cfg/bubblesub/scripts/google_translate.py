@@ -6,7 +6,7 @@ from bubblesub.model import classproperty
 from bubblesub.api.cmd import PluginCommand
 
 
-async def _work(language, logger, line):
+async def _work(language, api, logger, line):
     logger.info('line #{} - analyzing'.format(line.number))
     try:
         def recognize():
@@ -20,10 +20,11 @@ async def _work(language, logger, line):
         logger.error('line #{}: error ({})'.format(line.number, ex))
     else:
         logger.info('line #{}: OK'.format(line.number))
-        if line.text:
-            line.text = line.text + r'\N' + result.text
-        else:
-            line.text = result.text
+        with api.undo.capture():
+            if line.text:
+                line.text = line.text + r'\N' + result.text
+            else:
+                line.text = result.text
 
 
 class GoogleTranslateCommand(PluginCommand):
@@ -51,7 +52,7 @@ class GoogleTranslateCommand(PluginCommand):
 
     async def run(self):
         for line in self.api.subs.selected_lines:
-            await _work(self.language_code, self, line)
+            await _work(self.language_code, self.api, self, line)
 
 
 def define_cmd(language_code, language_name):

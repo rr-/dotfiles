@@ -12,8 +12,11 @@ class AlignSubtitlesToVideoFramesCommand(PluginCommand):
         return self.api.media.is_loaded
 
     async def run(self):
-        for line in self.api.subs.selected_lines:
-            idx_start = bisect_left(self.api.media.video.timecodes, line.start)
-            idx_end = bisect_left(self.api.media.video.timecodes, line.end)
-            line.start = self.api.media.video.timecodes[idx_start]
-            line.end = self.api.media.video.timecodes[idx_end]
+        with self.api.undo.capture():
+            for line in self.api.subs.selected_lines:
+                idx_start = bisect_left(
+                    self.api.media.video.timecodes, line.start
+                )
+                idx_end = bisect_left(self.api.media.video.timecodes, line.end)
+                line.start = self.api.media.video.timecodes[idx_start]
+                line.end = self.api.media.video.timecodes[idx_end]

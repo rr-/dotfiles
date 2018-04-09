@@ -28,10 +28,11 @@ async def _work(language, api, logger, line):
         logger.error('line #{}: error ({})'.format(line.number, ex))
     else:
         logger.info('line #{}: OK'.format(line.number))
-        if line.note:
-            line.note = line.note + r'\N' + note
-        else:
-            line.note = note
+        with api.undo.capture():
+            if line.note:
+                line.note = line.note + r'\N' + note
+            else:
+                line.note = note
 
 
 class SpeechRecognitionCommand(PluginCommand):
