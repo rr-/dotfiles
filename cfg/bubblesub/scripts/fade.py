@@ -1,5 +1,6 @@
 import abc
 from enum import Enum
+
 from bubblesub.model import classproperty
 from bubblesub.api.cmd import PluginCommand
 

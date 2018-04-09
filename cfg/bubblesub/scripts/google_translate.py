@@ -1,5 +1,6 @@
 import abc
 import asyncio
+
 import googletrans
 from bubblesub.model import classproperty
 from bubblesub.api.cmd import PluginCommand

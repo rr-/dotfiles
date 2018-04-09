@@ -1,6 +1,7 @@
 import abc
 import io
 import asyncio
+
 import speech_recognition as sr
 from bubblesub.model import classproperty
 from bubblesub.api.cmd import PluginCommand
