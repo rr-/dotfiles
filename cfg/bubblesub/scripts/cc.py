@@ -1,4 +1,5 @@
 import re
+
 import pysubs2
 import bubblesub.ui.util
 from bubblesub.api.cmd import PluginCommand

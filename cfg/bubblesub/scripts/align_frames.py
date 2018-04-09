@@ -1,4 +1,5 @@
 from bisect import bisect_left
+
 from bubblesub.api.cmd import PluginCommand
 
 

@@ -1,8 +1,9 @@
 import re
 from collections import defaultdict
+
 import ass_tag_parser
 import fontTools.ttLib as font_tools
-import bubblesub.ass
+import bubblesub.ass.util
 import bubblesub.api.cmd
 
 
@@ -13,7 +14,7 @@ PUNCTUATION_INSIDE_QUOTES = 2  # 1: "inside." 2: "outside".
 
 
 def _check_durations(logger, line):
-    text = bubblesub.ass.ass_to_plaintext(line.text)
+    text = bubblesub.ass.util.ass_to_plaintext(line.text)
     if not text or line.is_comment:
         return
 
@@ -22,14 +23,14 @@ def _check_durations(logger, line):
             f'#{line.number}: duration shorter than {MIN_DURATION} ms')
 
     if line.duration < MIN_DURATION_LONG \
-            and bubblesub.ass.character_count(text) >= 8:
+            and bubblesub.ass.util.character_count(text) >= 8:
         logger.warn(
             f'#{line.number}: '
             f'duration shorter than {MIN_DURATION_LONG} ms')
 
     next_line = line.next
     while next_line:
-        if bubblesub.ass.ass_to_plaintext(next_line.text):
+        if bubblesub.ass.util.ass_to_plaintext(next_line.text):
             gap = next_line.start - line.end
             if gap > 0 and gap < MIN_GAP:
                 logger.warn(
@@ -40,7 +41,7 @@ def _check_durations(logger, line):
 
 
 def _check_punctuation(logger, line):
-    text = bubblesub.ass.ass_to_plaintext(line.text)
+    text = bubblesub.ass.util.ass_to_plaintext(line.text)
 
     if text.endswith('\\N'):
         logger.warn(f'#{line.number}: extra line break')
@@ -114,7 +115,7 @@ def _check_disjointed_tags(logger, line):
 
 
 def _check_broken_comments(logger, line):
-    striped_text = bubblesub.ass.ass_to_plaintext(line.text)
+    striped_text = bubblesub.ass.util.ass_to_plaintext(line.text)
     if '{' in striped_text \
             or '}' in striped_text \
             or re.search('}[^{]}', line.text) \
@@ -123,7 +124,7 @@ def _check_broken_comments(logger, line):
 
 
 def _check_double_words(logger, line):
-    text = bubblesub.ass.ass_to_plaintext(line.text)
+    text = bubblesub.ass.util.ass_to_plaintext(line.text)
 
     for pair in re.finditer(r'(?<!\w)(\w+)\s+\1(?!\w)', text):
         word = pair.group(1)

@@ -2,6 +2,7 @@ import os
 import bisect
 import tempfile
 from subprocess import run, PIPE
+
 from bubblesub.api.cmd import PluginCommand
 
 
