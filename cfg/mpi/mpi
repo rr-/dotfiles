@@ -22,7 +22,7 @@ def parse_args():
         '-r', '--recursive', action='store_true',
         help='Scan directories recursively')
     parser.add_argument(
-        metavar='PATH', nargs='*', dest='paths', type=Path,
+        metavar='PATH', nargs='*', dest='paths', type=str,
         help='path to the image or a directory', default=None)
     args, unknown_args = parser.parse_known_args()
 
@@ -30,7 +30,12 @@ def parse_args():
         args.selected_path = args.selected_path.expanduser().resolve()
 
     if args.paths:
-        args.paths = [path.expanduser().resolve() for path in args.paths]
+        args.paths = [
+            path
+            if path.startswith('http') else
+            Path(path).expanduser().resolve()
+            for path in args.paths
+        ]
     else:
         if args.selected_path is not None:
             args.paths = [args.selected_path.parent]
@@ -52,7 +57,10 @@ def gather_playlist(paths, recursive):
                 yield path
 
     for path in paths:
-        yield from scan(path)
+        if isinstance(path, Path):
+            yield from scan(path)
+        else:
+            yield path
 
 
 def sort_playlist(playlist):
