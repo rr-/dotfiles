@@ -6,14 +6,8 @@ set send_charset='utf-8'
 set beep_new=yes
 
 # directories
-set header_cache="~/.mutt/cache/headers"
-set message_cachedir="~/.mutt/cache/bodies"
-set certificate_file="~/.mutt/certificates"
-
-# keep the connection to prevent 'Mailbox closed.'
-set imap_passive=no
-set imap_idle=yes
-set imap_keepalive=60
+set header_cache='~/.mutt/cache/headers'
+set certificate_file='~/.mutt/certificates'
 
 # colors
 source ~/.mutt/colors.muttrc
@@ -23,41 +17,36 @@ auto_view text/html
 alternative_order text/plain text/html
 
 # add labels in index
-set index_format="%4C %Z %{%b %d} %-15.15L (%?l?%4l&%4c?) %s%* %y"
+set index_format='%4C %Z %{%b %d} %-15.15L (%?l?%4l&%4c?) %s%* %y'
 
 # group messages by threads
-set sort=threads
-set sort_browser="reverse-date"
-set sort_aux="last-date-received"
+set sort='threads'
+set sort_browser='reverse-date'
+set sort_aux='last-date-received'
 set hide_thread_subject=no
 unset collapse_unread
 # t tags messages
 # & joins message threads
 # # unjoins message threads
 
-# account ---------------------------------------------------------------------
-source ~/.mutt/identify.muttrc
-# set realname="name surname"
-# set from="GMAIL_USER@gmail.com"
-# set imap_user="GMAIL_USER@gmail.com"
-# set smtp_url="smtps://GMAIL_USER@smtp.gmail.com:465/"
-# set imap_pass="GMAIL_PASS"
-# set smtp_pass="GMAIL_PASS"
+# mail dir config
+set mbox_type=Maildir
 
-set folder='imaps://imap.mailbox.org/'
-set spoolfile='+INBOX'
-set postponed='+Drafts'
-set trash='+Trash'
-set record='+Sent'
-set ssl_starttls=yes
-set ssl_force_tls=yes
-set move=no
+set mask='!^\\.[^.]'
+set mbox='~/mail'
+set spoolfile='~/mail'
+set folder='~/mail'
+set trash='~/mail/trash'
+
+mailboxes = =trash
+
+# smtp config
+source ~/.mutt/smtp.muttrc
 
 # reply using the address the message was sent to
+alternates '^.*@(sakuya.pl|oldcastle.moe)|mkurczew@gmail.com$'
 set reverse_name=yes
-# set alternates "^contact@example.com$" "^contact@example.org$"
-# send-hook "~f contact@example.com" 'set realname="Sales Department"'
-
+set reverse_realname=yes
 
 # bindings --------------------------------------------------------------------
 bind attach,browser,index       g   noop
@@ -70,7 +59,6 @@ bind pager                      G   bottom
 bind pager                      k   previous-line
 bind pager                      j   next-line
 bind index,pager                K   edit-label
-bind index                      <F5> imap-fetch-mail
 
 bind attach,browser,pager,index \CF next-page
 bind attach,browser,pager,index \CB previous-page
@@ -81,10 +69,13 @@ bind browser,pager              \Cy previous-line
 bind index                      \Ce next-line
 bind index                      \Cy previous-line
 
+# delete message bypassin trash
+bind index D purge-message
+
 bind index - collapse-thread
 bind index _ collapse-all
 
 # save mail to file
-macro index,pager s "| ~/.mutt/file_email ~/text/saved-mail/<enter>"
+macro index,pager s '| ~/.mutt/file_email ~/text/saved-mail/<enter>'
 # save attachment to ~/hub/mail/
-macro attach s "<enter-command>unset wait_key<enter><save-entry><bol>~/hub/mail/<enter>o<shell-escape>chmod 0644 ~/hub/mail/*<enter><enter-command>set wait_key<enter>"
+macro attach s '<enter-command>unset wait_key<enter><save-entry><bol>~/hub/mail/<enter>o<shell-escape>chmod 0644 ~/hub/mail/*<enter><enter-command>set wait_key<enter>'
