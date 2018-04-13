@@ -70,7 +70,7 @@
 [diff]
     tool = meld
 [push]
-    default = upstream
+    default = current
     followTags = true
 [status]
     showUntrackedFiles = all
