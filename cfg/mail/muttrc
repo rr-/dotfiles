@@ -37,8 +37,13 @@ set mbox='~/mail'
 set spoolfile='~/mail'
 set folder='~/mail'
 set trash='~/mail/.trash'
+set postponed='~/mail/.postponed'
 
-mailboxes = =.trash
+set sort_browser=desc
+
+mailboxes =
+mailboxes =.trash
+mailboxes =.postponed
 
 # smtp config
 source ~/.mutt/smtp.muttrc
