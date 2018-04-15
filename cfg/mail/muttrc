@@ -36,9 +36,9 @@ set mask='!^\\.[^.]'
 set mbox='~/mail'
 set spoolfile='~/mail'
 set folder='~/mail'
-set trash='~/mail/trash'
+set trash='~/mail/.trash'
 
-mailboxes = =trash
+mailboxes = =.trash
 
 # smtp config
 source ~/.mutt/smtp.muttrc
