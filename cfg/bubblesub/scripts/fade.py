@@ -84,8 +84,10 @@ class FadeCommand(PluginCommand):
                             self.duration,
                             format_color(1, col1),
                             format_color(3, col3),
-                            format_color(4, col4)),
-                        close=True) + line.text
+                            format_color(4, col4)
+                        ),
+                        close=True
+                    ) + line.text
                 elif self.direction == Direction.Right:
                     line.text = format_ass_tags(
                         format_animation(
@@ -93,8 +95,10 @@ class FadeCommand(PluginCommand):
                             line.duration,
                             format_color(1, self.color),
                             format_color(3, self.color),
-                            format_color(4, self.color)),
-                        close=True) + line.text
+                            format_color(4, self.color)
+                        ),
+                        close=True
+                    ) + line.text
                 else:
                     raise ValueError('Invalid direction')
 
@@ -108,7 +112,8 @@ def define_cmd(menu_name, color, direction):
             'color': color,
             'menu_name': menu_name,
             'duration': DURATION,
-        })
+        }
+    )
 
 
 def define_cmds():
@@ -116,7 +121,8 @@ def define_cmds():
             ('Fade from &black', BLACK, Direction.Left),
             ('Fade from &white', WHITE, Direction.Left),
             ('Fade to &black', BLACK, Direction.Right),
-            ('Fade to &white', WHITE, Direction.Right)]:
+            ('Fade to &white', WHITE, Direction.Right)
+    ]:
         define_cmd(menu_name, color, direction)
 
 

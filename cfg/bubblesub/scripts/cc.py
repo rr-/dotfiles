@@ -16,8 +16,7 @@ class LoadClosedCaptionsCommand(PluginCommand):
     async def run(self):
         await self.api.gui.exec(self._run)
 
-    @staticmethod
-    async def _run(api, main_window):
+    async def _run(self, api, main_window):
         path = bubblesub.ui.util.load_dialog(
             main_window, 'Subtitles (*.ass *.srt);;All files (*.*)'
         )
@@ -31,7 +30,8 @@ class LoadClosedCaptionsCommand(PluginCommand):
                     len(api.subs.lines),
                     start=line.start,
                     end=line.end,
-                    note=line.text)
+                    note=line.text
+                )
 
 
 class CleanClosedCaptionsCommand(PluginCommand):
@@ -45,8 +45,7 @@ class CleanClosedCaptionsCommand(PluginCommand):
     async def run(self):
         await self.api.gui.exec(self._run)
 
-    @staticmethod
-    async def _run(api, _main_window):
+    async def _run(self, api, _main_window):
         with self.api.undo.capture():
             for line in api.subs.selected_lines:
                 note = line.note

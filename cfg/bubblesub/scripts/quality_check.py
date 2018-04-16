@@ -20,13 +20,15 @@ def _check_durations(logger, line):
 
     if line.duration < MIN_DURATION:
         logger.warn(
-            f'#{line.number}: duration shorter than {MIN_DURATION} ms')
+            f'#{line.number}: duration shorter than {MIN_DURATION} ms'
+        )
 
     if line.duration < MIN_DURATION_LONG \
             and bubblesub.ass.util.character_count(text) >= 8:
         logger.warn(
             f'#{line.number}: '
-            f'duration shorter than {MIN_DURATION_LONG} ms')
+            f'duration shorter than {MIN_DURATION_LONG} ms'
+        )
 
     next_line = line.next
     while next_line:
@@ -35,7 +37,8 @@ def _check_durations(logger, line):
             if gap > 0 and gap < MIN_GAP:
                 logger.warn(
                     f'#{line.number}+#{next_line.number}: '
-                    f'gap shorter than {MIN_GAP} ms ({gap} ms)')
+                    f'gap shorter than {MIN_GAP} ms ({gap} ms)'
+                )
             return
         next_line = next_line.next
 
@@ -171,7 +174,8 @@ def _check_fonts(logger, api):
             self.glyphs = set(
                 chr(y[0])
                 for x in font['cmap'].tables
-                for y in x.cmap.items())
+                for y in x.cmap.items()
+            )
 
             for record in font['name'].names:
                 if record.platformID != TT_PLATFORM_MICROSOFT:
@@ -233,7 +237,8 @@ def _check_fonts(logger, api):
             if family.lower() in [n.lower() for n in font.names]:
                 weight = (
                     (font.is_bold == is_bold) +
-                    (font.is_italic == is_italic))
+                    (font.is_italic == is_italic)
+                )
                 candidates.append((weight, font_path, font))
         candidates.sort(key=lambda i: -i[0])
         if not candidates:

@@ -7,7 +7,7 @@ from bubblesub.api.cmd import PluginCommand
 
 
 async def _work(language, api, logger, line):
-    logger.info('line #{} - analyzing'.format(line.number))
+    logger.info(f'line #{line.number} - analyzing')
     try:
         def recognize():
             translator = googletrans.Translator()
@@ -15,11 +15,12 @@ async def _work(language, api, logger, line):
 
         # don't clog the UI thread
         result = (
-            await asyncio.get_event_loop().run_in_executor(None, recognize))
+            await asyncio.get_event_loop().run_in_executor(None, recognize)
+        )
     except Exception as ex:
-        logger.error('line #{}: error ({})'.format(line.number, ex))
+        logger.error(f'line #{line.number}: error ({ex})')
     else:
-        logger.info('line #{}: OK'.format(line.number))
+        logger.info(f'line #{line.number}: OK')
         with api.undo.capture():
             if line.text:
                 line.text = line.text + r'\N' + result.text
@@ -44,7 +45,7 @@ class GoogleTranslateCommand(PluginCommand):
 
     @property
     def menu_name(self):
-        return 'Google Translate (&{})'.format(self.language_name)
+        return f'Google Translate (&{self.language_name})'
 
     @property
     def is_enabled(self):
@@ -59,13 +60,15 @@ def define_cmd(language_code, language_name):
     type(
         'CustomGoogleTranslateCommand',
         (GoogleTranslateCommand, PluginCommand),
-        {'language_code': language_code, 'language_name': language_name})
+        {'language_code': language_code, 'language_name': language_name}
+    )
 
 
 def define_cmds():
     for language_code, language_name in [
             ('auto', 'auto'),
-            ('ja', 'Japanese')]:
+            ('ja', 'Japanese')
+    ]:
         define_cmd(language_code, language_name)
 
 
