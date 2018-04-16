@@ -5,7 +5,6 @@ instance=$3
 title=$(xdotool getwindowname "$window_id")
 
 if [ "$window_class" = URxvt ]; then
-    compton-trans -c 95 -w "$window_id"
     if [ "$instance" = remote_irc ] ; then
         echo desktop=10
     fi
