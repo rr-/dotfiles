@@ -8,7 +8,7 @@ from bubblesub.api.cmd import PluginCommand
 
 
 async def _work(language, api, logger, line):
-    logger.info('line #{} - analyzing'.format(line.number))
+    logger.info(f'line #{line.number} - analyzing')
     recognizer = sr.Recognizer()
     try:
         def recognize():
@@ -21,13 +21,12 @@ async def _work(language, api, logger, line):
 
         # don't clog the UI thread
         note = await asyncio.get_event_loop().run_in_executor(None, recognize)
-
     except sr.UnknownValueError:
-        logger.warn('line #{}: not recognized'.format(line.number))
+        logger.warn(f'line #{line.number}: not recognized')
     except sr.RequestError as ex:
-        logger.error('line #{}: error ({})'.format(line.number, ex))
+        logger.error(f'line #{line.number}: error ({ex})')
     else:
-        logger.info('line #{}: OK'.format(line.number))
+        logger.info(f'line #{line.number}: OK')
         with api.undo.capture():
             if line.note:
                 line.note = line.note + r'\N' + note
@@ -48,11 +47,11 @@ class SpeechRecognitionCommand(PluginCommand):
 
     @classproperty
     def name(cls):
-        return 'grid/speech-recognition-' + cls.language_code
+        return f'grid/speech-recognition-{cls.language_code}'
 
     @property
     def menu_name(self):
-        return 'Speech recognition (&{})'.format(self.language_name)
+        return f'Speech recognition (&{self.language_name})'
 
     @property
     def is_enabled(self):
@@ -68,7 +67,8 @@ def define_cmd(language_code, language_name):
     type(
         'CustomSpeechRecognitionCommand',
         (SpeechRecognitionCommand, PluginCommand),
-        {'language_code': language_code, 'language_name': language_name})
+        {'language_code': language_code, 'language_name': language_name}
+    )
 
 
 def define_cmds():
@@ -77,7 +77,8 @@ def define_cmds():
             ('de', 'German'),
             ('fr', 'French'),
             ('it', 'Italian'),
-            ('auto', 'auto')]:
+            ('auto', 'auto')
+    ]:
         define_cmd(language_code, language_name)
 
 
