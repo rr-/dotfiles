@@ -7,3 +7,4 @@
 .lvimrc
 .agignore
 .mypy_cache
+.cache
