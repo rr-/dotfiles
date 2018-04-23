@@ -8,3 +8,6 @@
 .agignore
 .mypy_cache
 .cache
+.pytest_cache
+.tox
+*.egg-info
