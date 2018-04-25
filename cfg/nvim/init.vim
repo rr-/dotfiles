@@ -1,7 +1,7 @@
 call plug#begin()
 Plug 'junegunn/fzf', { 'dir': '~/.fzf', 'do': './install --all' }
 Plug 'junegunn/fzf.vim'                 "open files using fuzzy matching
-Plug 'Yggdroot/indentLine'              "vertical bars showing indent level
+"Plug 'Yggdroot/indentLine'              "vertical bars showing indent level
 Plug 'ntpeters/vim-better-whitespace'   "highlight and strip trailing whitespace
 Plug 'matze/vim-move'                   "move lines up/down with c-k/c-j
 Plug 'rr-/vim-hexdec'                   "convert hex to dec and vice versa
