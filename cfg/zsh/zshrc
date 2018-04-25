@@ -70,20 +70,34 @@ fi
         zle -N zle-line-finish
     fi
 
-# cool command prompt
-if [ -n "$SSH_CLIENT" ] || [ -n "$SSH_TTY" ]; then
-    PS1=$'%{\e[0;36m%}'
-else
-    PS1=$'%{\e[1;31m%}'
-fi
-PS1+='%n@%M'                           # user@host
-PS1+=$'%{\e[0;37m%}:'                  # :
-PS1+=$'%{\e[0;32m%}%~'                 # path relative to $HOME
-PS1+=$'%(?.%{\e[0;37m%}.%{\e[1;31m%})$ ' # colored $ depending on last exit code
-PS1+=$'%{\e[0m%}'                      # reset colors
-if [[ "$TERM" != linux ]]; then
-    PS1+=$'%{\e]0;%n@%M:%~\007%}'          # add titlebar user@host:~/
-fi
+# command prompt
+function make_ps1 () {
+    if [ -n "$SSH_CLIENT" ] || [ -n "$SSH_TTY" ]; then
+        PS1="$(tput setaf 39)"
+    else
+        PS1="$(tput setaf 203)"
+    fi
+    # user@host
+    PS1+='%n@%M'
+
+    # colon
+    PS1+="$(tput setaf 7):"
+
+    # path relative to $HOME
+    PS1+="$(tput setaf 2)%~"
+
+    # colored $ depending on last exit code
+    PS1+=$'%(?.%{\e[0;37m%}.%{\e[38;5;203m%})$ '
+
+    # reset colors
+    PS1+="$(tput sgr0)"
+
+    # add titlebar user@host:~/
+    if [[ "$TERM" != linux ]]; then
+        PS1+=$'%{\e]0;%n@%M:%~\007%}'
+    fi
+}
+make_ps1
 
 # config fzf
 if [ -f ~/.fzf.zsh ]; then
