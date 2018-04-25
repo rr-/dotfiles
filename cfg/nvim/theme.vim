@@ -46,3 +46,5 @@ highlight TabLineSel   term=NONE      cterm=NONE ctermfg=255 ctermbg=232
 
 set cursorline
 set statusline=%f\ %m%r%=Col:%c\ Line:%l/%L
+
+highlight pythonFunction term=NONE cterm=BOLD ctermfg=111 ctermbg=233
