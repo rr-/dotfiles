@@ -34,6 +34,7 @@ highlight SpellBad     term=NONE      ctermbg=52
 highlight SpellCap     term=NONE      ctermbg=58
 highlight SpellRare    term=NONE      ctermbg=23
 highlight SpellLocal   term=NONE      ctermbg=23
+highlight Search       term=NONE      ctermbg=142 ctermfg=255
 highlight CursorLine   term=NONE      cterm=NONE ctermfg=NONE ctermbg=NONE
 highlight CursorLineNr term=NONE      cterm=NONE ctermfg=173
 highlight VertSplit    term=NONE      cterm=NONE ctermfg=235 ctermbg=235
