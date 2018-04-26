@@ -4,6 +4,7 @@ set mail_check=30
 set timeout=30
 set send_charset='utf-8'
 set beep_new=yes
+set help=no  # disable top bar
 
 # directories
 set header_cache='~/.mutt/cache/headers'
