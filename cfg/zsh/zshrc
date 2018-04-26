@@ -73,24 +73,24 @@ fi
 # command prompt
 function make_ps1 () {
     if [ -n "$SSH_CLIENT" ] || [ -n "$SSH_TTY" ]; then
-        PS1="$(tput setaf 39)"
+        PS1='%F{39}'
     else
-        PS1="$(tput setaf 203)"
+        PS1="%F{203}"
     fi
     # user@host
     PS1+='%n@%M'
 
     # colon
-    PS1+="$(tput setaf 7):"
+    PS1+="%F{7}:"
 
     # path relative to $HOME
-    PS1+="$(tput setaf 2)%~"
+    PS1+="%F{2}%~"
 
     # colored $ depending on last exit code
-    PS1+=$'%(?.%{\e[0;37m%}.%{\e[38;5;203m%})$ '
+    PS1+=$'%(?.%F{7}.%F{203})$ '
 
     # reset colors
-    PS1+="$(tput sgr0)"
+    PS1+="%f"
 
     # add titlebar user@host:~/
     if [[ "$TERM" != linux ]]; then
