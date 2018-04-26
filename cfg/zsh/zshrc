@@ -73,7 +73,7 @@ fi
 # command prompt
 function make_ps1 () {
     if [ -n "$SSH_CLIENT" ] || [ -n "$SSH_TTY" ]; then
-        PS1='%F{39}'
+        PS1='%F{75}'
     else
         PS1="%F{203}"
     fi
