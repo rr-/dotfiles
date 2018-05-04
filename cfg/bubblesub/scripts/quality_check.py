@@ -3,8 +3,10 @@ from collections import defaultdict
 
 import ass_tag_parser
 import fontTools.ttLib as font_tools
-import bubblesub.ass.util
+
 import bubblesub.api.cmd
+import bubblesub.ass.util
+import bubblesub.opt.menu
 
 
 MIN_DURATION = 250  # milliseconds
@@ -266,8 +268,8 @@ def _check_fonts(logger, api):
             logger.warn(f'  missing glyphs: {"".join(missing_glyphs)}')
 
 
-class QualityCheckCommand(bubblesub.api.cmd.PluginCommand):
-    name = 'grid/quality-check'
+class QualityCheckCommand(bubblesub.api.cmd.BaseCommand):
+    name = 'plugin/quality-check'
     menu_name = '&Quality check'
 
     @property
@@ -285,3 +287,10 @@ class QualityCheckCommand(bubblesub.api.cmd.PluginCommand):
         _check_actors(self, self.api)
         _check_styles(self, self.api)
         _check_fonts(self, self.api)
+
+
+def register(cmd_api):
+    cmd_api.register_plugin_command(
+        QualityCheckCommand,
+        bubblesub.opt.menu.MenuCommand(QualityCheckCommand.name)
+    )

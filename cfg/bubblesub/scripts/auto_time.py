@@ -3,11 +3,12 @@ import bisect
 import tempfile
 from subprocess import run, PIPE
 
-from bubblesub.api.cmd import PluginCommand
+import bubblesub.api.cmd
+import bubblesub.opt.menu
 
 
-class AutoTimeCommand(PluginCommand):
-    name = 'edit/auto-time'
+class AutoTimeCommand(bubblesub.api.cmd.BaseCommand):
+    name = 'plugin/auto-time'
     menu_name = 'Auto time'
 
     @property
@@ -46,3 +47,10 @@ class AutoTimeCommand(PluginCommand):
                 )
 
         os.unlink(temp_path)
+
+
+def register(cmd_api):
+    cmd_api.register_plugin_command(
+        AutoTimeCommand,
+        bubblesub.opt.menu.MenuCommand(AutoTimeCommand.name)
+    )

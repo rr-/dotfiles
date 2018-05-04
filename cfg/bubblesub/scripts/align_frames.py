@@ -1,10 +1,11 @@
 from bisect import bisect_left
 
-from bubblesub.api.cmd import PluginCommand
+import bubblesub.api.cmd
+import bubblesub.opt.menu
 
 
-class AlignSubtitlesToVideoFramesCommand(PluginCommand):
-    name = 'edit/align-subs-to-video-frames'
+class AlignSubtitlesToVideoFramesCommand(bubblesub.api.cmd.BaseCommand):
+    name = 'plugin/align-subs-to-video-frames'
     menu_name = 'Align subtitles to &video frames'
 
     @property
@@ -20,3 +21,12 @@ class AlignSubtitlesToVideoFramesCommand(PluginCommand):
                 idx_end = bisect_left(self.api.media.video.timecodes, line.end)
                 line.start = self.api.media.video.timecodes[idx_start]
                 line.end = self.api.media.video.timecodes[idx_end]
+
+
+def register(cmd_api):
+    cmd_api.register_plugin_command(
+        AlignSubtitlesToVideoFramesCommand,
+        bubblesub.opt.menu.MenuCommand(
+            AlignSubtitlesToVideoFramesCommand.name
+        )
+    )
