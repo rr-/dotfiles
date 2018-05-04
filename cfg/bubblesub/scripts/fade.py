@@ -1,8 +1,8 @@
-import abc
 from enum import Enum
 
-from bubblesub.model import classproperty
-from bubblesub.api.cmd import PluginCommand
+from bubblesub.opt.menu import SubMenu
+from bubblesub.opt.menu import MenuCommand
+from bubblesub.api.cmd import BaseCommand
 
 
 BLACK = (16, 16, 16)
@@ -10,12 +10,12 @@ WHITE = (255, 255, 255)
 DURATION = 2000
 
 
-class Direction(Enum):
+class _Direction(Enum):
     Left = -1
     Right = 1
 
 
-def format_color(number, color):
+def _format_color(number, color):
     if len(color) == 4:
         red, green, blue, _alpha = color
     elif len(color) == 3:
@@ -25,40 +25,42 @@ def format_color(number, color):
     return rf'\{number}c&H{blue:02X}{green:02X}{red:02X}&'
 
 
-def format_animation(start, end, *tags):
-    text = format_ass_tags(*tags, close=False)
+def _format_animation(start, end, *tags):
+    text = _format_ass_tags(*tags, close=False)
     return rf'\t({start:.0f},{end:.0f},{text})'
 
 
-def format_ass_tags(*tags, close=True):
+def _format_ass_tags(*tags, close=True):
     joined = ''.join(str(t) for t in tags)
     if close:
         return '{' + joined + '}'
     return joined
 
 
-class FadeCommand(PluginCommand):
-    @classproperty
-    def name(cls):
-        ret = 'grid/fade-'
-        ret += cls.direction.name.lower() + '-'
-        ret += ''.join(f'{c:02x}' for c in cls.color)
+class FadeCommand(BaseCommand):
+    name = 'plugin/fade'
+
+    def __init__(
+            self,
+            api,
+            duration: int,
+            direction: _Direction,
+            color: str
+    ) -> None:
+        super().__init__(api)
+        self._duration = duration
+        self._direction = direction
+        self._color = color
+
+    @property
+    def menu_name(self):
+        ret = '&Fade '
+        if self._direction == _Direction.Left:
+            ret += 'from '
+        else:
+            ret += 'to '
+        ret += '#' + ''.join(f'{comp:02X}' for comp in self._color)
         return ret
-
-    @abc.abstractproperty
-    @classproperty
-    def duration(cls):
-        raise NotImplementedError('Unknown duration')
-
-    @abc.abstractproperty
-    @classproperty
-    def direction(cls):
-        raise NotImplementedError('Unknown direction')
-
-    @abc.abstractproperty
-    @classproperty
-    def color(cls):
-        raise NotImplementedError('Unknown color')
 
     @property
     def is_enabled(self):
@@ -74,28 +76,28 @@ class FadeCommand(PluginCommand):
                 col3 = style.outline_color
                 col4 = style.back_color
 
-                if self.direction == Direction.Left:
-                    line.text = format_ass_tags(
-                        format_color(1, self.color),
-                        format_color(3, self.color),
-                        format_color(4, self.color),
-                        format_animation(
+                if self._direction == _Direction.Left:
+                    line.text = _format_ass_tags(
+                        _format_color(1, self._color),
+                        _format_color(3, self._color),
+                        _format_color(4, self._color),
+                        _format_animation(
                             0,
-                            self.duration,
-                            format_color(1, col1),
-                            format_color(3, col3),
-                            format_color(4, col4)
+                            self._duration,
+                            _format_color(1, col1),
+                            _format_color(3, col3),
+                            _format_color(4, col4)
                         ),
                         close=True
                     ) + line.text
-                elif self.direction == Direction.Right:
-                    line.text = format_ass_tags(
-                        format_animation(
-                            max(0, line.duration - self.duration),
+                elif self._direction == _Direction.Right:
+                    line.text = _format_ass_tags(
+                        _format_animation(
+                            max(0, line.duration - self._duration),
                             line.duration,
-                            format_color(1, self.color),
-                            format_color(3, self.color),
-                            format_color(4, self.color)
+                            _format_color(1, self._color),
+                            _format_color(3, self._color),
+                            _format_color(4, self._color)
                         ),
                         close=True
                     ) + line.text
@@ -103,27 +105,24 @@ class FadeCommand(PluginCommand):
                     raise ValueError('Invalid direction')
 
 
-def define_cmd(menu_name, color, direction):
-    type(
-        'CustomFadeCommand',
-        (FadeCommand, PluginCommand),
-        {
-            'direction': direction,
-            'color': color,
-            'menu_name': menu_name,
-            'duration': DURATION,
-        }
+def register(cmd_api):
+    cmd_api.register_plugin_command(
+        FadeCommand,
+        SubMenu(
+            '&Fade from/to…',
+            [
+                MenuCommand(
+                    FadeCommand.name, DURATION, _Direction.Left, BLACK
+                ),
+                MenuCommand(
+                    FadeCommand.name, DURATION, _Direction.Left, WHITE
+                ),
+                MenuCommand(
+                    FadeCommand.name, DURATION, _Direction.Right, BLACK
+                ),
+                MenuCommand(
+                    FadeCommand.name, DURATION, _Direction.Right, WHITE
+                )
+            ]
+        )
     )
-
-
-def define_cmds():
-    for menu_name, color, direction in [
-            ('Fade from &black', BLACK, Direction.Left),
-            ('Fade from &white', WHITE, Direction.Left),
-            ('Fade to &black', BLACK, Direction.Right),
-            ('Fade to &white', WHITE, Direction.Right)
-    ]:
-        define_cmd(menu_name, color, direction)
-
-
-define_cmds()

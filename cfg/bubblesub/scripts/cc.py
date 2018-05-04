@@ -2,11 +2,11 @@ import re
 
 import pysubs2
 import bubblesub.ui.util
-from bubblesub.api.cmd import PluginCommand
+import bubblesub.api.cmd
 
 
-class LoadClosedCaptionsCommand(PluginCommand):
-    name = 'grid/load-closed-captions'
+class LoadClosedCaptionsCommand(bubblesub.api.cmd.BaseCommand):
+    name = 'plugin/load-closed-captions'
     menu_name = '&Load closed captions'
 
     @property
@@ -34,8 +34,8 @@ class LoadClosedCaptionsCommand(PluginCommand):
                 )
 
 
-class CleanClosedCaptionsCommand(PluginCommand):
-    name = 'grid/clean-closed-captions'
+class CleanClosedCaptionsCommand(bubblesub.api.cmd.BaseCommand):
+    name = 'plugin/clean-closed-captions'
     menu_name = '&Clean closed captions'
 
     @property
@@ -62,3 +62,14 @@ class CleanClosedCaptionsCommand(PluginCommand):
                 note = re.sub(' ', '', note)  # Japanese doesn't need spaces
                 note = note.strip()
                 line.note = note
+
+
+def register(cmd_api):
+    cmd_api.register_plugin_command(
+        LoadClosedCaptionsCommand,
+        bubblesub.opt.menu.MenuCommand(LoadClosedCaptionsCommand.name)
+    )
+    cmd_api.register_plugin_command(
+        CleanClosedCaptionsCommand,
+        bubblesub.opt.menu.MenuCommand(CleanClosedCaptionsCommand.name)
+    )

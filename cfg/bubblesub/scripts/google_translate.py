@@ -1,9 +1,9 @@
-import abc
 import asyncio
 
 import googletrans
-from bubblesub.model import classproperty
-from bubblesub.api.cmd import PluginCommand
+from bubblesub.api.cmd import BaseCommand
+from bubblesub.opt.menu import MenuCommand
+from bubblesub.opt.menu import SubMenu
 
 
 async def _work(language, api, logger, line):
@@ -28,24 +28,17 @@ async def _work(language, api, logger, line):
                 line.text = result.text
 
 
-class GoogleTranslateCommand(PluginCommand):
-    @abc.abstractproperty
-    @classproperty
-    def language_code(cls):
-        raise NotImplementedError('Unknown language code')
+class GoogleTranslateCommand(BaseCommand):
+    name = 'plugin/google-translate'
 
-    @abc.abstractproperty
-    @classproperty
-    def language_name(cls):
-        raise NotImplementedError('Unknown language name')
-
-    @classproperty
-    def name(cls):
-        return 'grid/google-translate-' + cls.language_code
+    def __init__(self, api, language_code, language_name):
+        super().__init__(api)
+        self._language_code = language_code
+        self._language_name = language_name
 
     @property
     def menu_name(self):
-        return f'Google Translate (&{self.language_name})'
+        return f'&{self._language_name}'
 
     @property
     def is_enabled(self):
@@ -53,23 +46,20 @@ class GoogleTranslateCommand(PluginCommand):
 
     async def run(self):
         for line in self.api.subs.selected_lines:
-            await _work(self.language_code, self.api, self, line)
+            await _work(self._language_code, self.api, self, line)
 
 
-def define_cmd(language_code, language_name):
-    type(
-        'CustomGoogleTranslateCommand',
-        (GoogleTranslateCommand, PluginCommand),
-        {'language_code': language_code, 'language_name': language_name}
+def register(cmd_api):
+    cmd_api.register_plugin_command(
+        GoogleTranslateCommand,
+        SubMenu(
+            '&Translate',
+            [
+                MenuCommand(GoogleTranslateCommand.name, 'ja', 'Japanese'),
+                MenuCommand(GoogleTranslateCommand.name, 'de', 'German'),
+                MenuCommand(GoogleTranslateCommand.name, 'fr', 'French'),
+                MenuCommand(GoogleTranslateCommand.name, 'it', 'Italian'),
+                MenuCommand(GoogleTranslateCommand.name, 'auto', 'auto')
+            ]
+        )
     )
-
-
-def define_cmds():
-    for language_code, language_name in [
-            ('auto', 'auto'),
-            ('ja', 'Japanese')
-    ]:
-        define_cmd(language_code, language_name)
-
-
-define_cmds()
