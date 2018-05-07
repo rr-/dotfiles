@@ -12,7 +12,7 @@ xrdb -override ~/.config/Xresources-theme
 xsetroot -cursor_name left_ptr
 
 #set Polish keyboard
-kb pl
+setxkbmap pl
 
 clipit -d &
 autocutsel -fork &
