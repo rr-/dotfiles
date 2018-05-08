@@ -14,7 +14,7 @@ class AlignSubtitlesToVideoFramesCommand(bubblesub.api.cmd.BaseCommand):
 
     async def run(self):
         with self.api.undo.capture():
-            for line in self.api.subs.selected_lines:
+            for line in self.api.subs.selected_events:
                 idx_start = bisect_left(
                     self.api.media.video.timecodes, line.start
                 )

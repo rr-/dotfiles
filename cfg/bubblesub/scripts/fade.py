@@ -68,7 +68,7 @@ class FadeCommand(BaseCommand):
 
     async def run(self):
         with self.api.undo.capture():
-            for line in self.api.subs.selected_lines:
+            for line in self.api.subs.selected_events:
                 style = self.api.subs.styles.get_by_name(line.style)
 
                 col1 = style.primary_color

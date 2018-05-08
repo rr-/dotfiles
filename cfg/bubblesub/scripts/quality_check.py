@@ -140,7 +140,7 @@ def _check_actors(logger, api):
     logger.info('Actors summary:')
     actors = defaultdict(int)
 
-    for line in api.subs.lines:
+    for line in api.subs.events:
         actors[line.actor] += 1
 
     for actor, occurrences in sorted(actors.items(), key=lambda kv: -kv[1]):
@@ -151,7 +151,7 @@ def _check_styles(logger, api):
     logger.info('Styles summary:')
     styles = defaultdict(int)
 
-    for line in api.subs.lines:
+    for line in api.subs.events:
         styles[line.style] += 1
 
     for style, occurrences in sorted(styles.items(), key=lambda kv: -kv[1]):
@@ -195,7 +195,7 @@ def _check_fonts(logger, api):
         results = defaultdict(set)
 
         styles = {style.name: style for style in api.subs.styles}
-        for line in api.subs.lines:
+        for line in api.subs.events:
             if line.is_comment:
                 continue
 
@@ -277,7 +277,7 @@ class QualityCheckCommand(bubblesub.api.cmd.BaseCommand):
         return self.api.subs.has_selection
 
     async def run(self):
-        for line in self.api.subs.lines:
+        for line in self.api.subs.events:
             _check_durations(self, line)
             _check_punctuation(self, line)
             _check_malformed_tags(self, line)

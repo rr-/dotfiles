@@ -26,8 +26,8 @@ class LoadClosedCaptionsCommand(bubblesub.api.cmd.BaseCommand):
         source = pysubs2.load(str(path))
         with self.api.undo.capture():
             for line in source:
-                api.subs.lines.insert_one(
-                    len(api.subs.lines),
+                api.subs.events.insert_one(
+                    len(api.subs.events),
                     start=line.start,
                     end=line.end,
                     note=line.text
@@ -47,7 +47,7 @@ class CleanClosedCaptionsCommand(bubblesub.api.cmd.BaseCommand):
 
     async def _run(self, api, _main_window):
         with self.api.undo.capture():
-            for line in api.subs.selected_lines:
+            for line in api.subs.selected_events:
                 note = line.note
                 note = re.sub(r'\\N', '\n', note)
                 note = re.sub(r'\(\(\)\)', '', note)  # retrospection
