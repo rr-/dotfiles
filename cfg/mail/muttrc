@@ -50,7 +50,7 @@ mailboxes =.postponed
 source ~/.mutt/smtp.muttrc
 
 # reply using the address the message was sent to
-alternates '^.*@(sakuya.pl|oldcastle.moe)|mkurczew@gmail.com$'
+alternates '^.*@(sakuya.pl|oldcastle.moe)|mkurczew@gmail.com|marcin.kurczewski@.*$'
 set reverse_name=yes
 set reverse_realname=yes
 
