@@ -40,8 +40,8 @@ class AutoTimeCommand(bubblesub.api.cmd.BaseCommand):
                 idx_end = bisect.bisect_left(
                     self.api.media.video.timecodes, ms_end
                 )
-                self.api.subs.lines.insert_one(
-                    len(self.api.subs.lines),
+                self.api.subs.events.insert_one(
+                    len(self.api.subs.events),
                     start=self.api.media.video.timecodes[idx_start],
                     end=self.api.media.video.timecodes[idx_end]
                 )

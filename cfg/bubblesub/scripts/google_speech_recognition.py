@@ -52,7 +52,7 @@ class SpeechRecognitionCommand(BaseCommand):
             and self.api.media.audio.has_audio_source
 
     async def run(self):
-        for line in self.api.subs.selected_lines:
+        for line in self.api.subs.selected_events:
             await _work(self._language_code, self.api, self, line)
 
 
