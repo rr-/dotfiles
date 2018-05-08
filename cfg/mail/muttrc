@@ -46,6 +46,8 @@ mailboxes =
 mailboxes =.trash
 mailboxes =.postponed
 
+unignore x-label
+
 # smtp config
 source ~/.mutt/smtp.muttrc
 
