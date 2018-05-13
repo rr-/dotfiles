@@ -12,7 +12,6 @@ import bubblesub.opt.menu
 MIN_DURATION = 250  # milliseconds
 MIN_DURATION_LONG = 500  # milliseconds
 MIN_GAP = 250
-PUNCTUATION_INSIDE_QUOTES = 2  # 1: "inside." 2: "outside".
 
 NON_STUTTER_PREFIXES = {'half', 'well'}
 NON_STUTTER_SUFFIXES = {'kun', 'san', 'chan', 'smaa', 'senpai', 'sensei'}
@@ -72,12 +71,10 @@ def _check_punctuation(logger, line):
     elif re.search('[…,.!?] *[,.]', text):
         logger.warn(f'#{line.number}: extra comma or dot')
 
-    if PUNCTUATION_INSIDE_QUOTES == 1:
-        if re.search(r'"[\.,…?!]', line.text):
-            logger.info(f'#{line.number}: period/comma outside quotation mark')
-    elif PUNCTUATION_INSIDE_QUOTES == 2:
-        if re.search(r'[\.,…?!]"', line.text):
-            logger.info(f'#{line.number}: period/comma inside quotation mark')
+    if re.search(r'"[\.,…?!]', line.text):
+        logger.warn(f'#{line.number}: period/comma outside quotation mark')
+    if re.search(r'[\.,…?!]"', line.text):
+        logger.info(f'#{line.number}: period/comma inside quotation mark')
 
     context = re.split(r'\W+', re.sub('[.,?!"]', '', line.text.lower()))
     for word in {
