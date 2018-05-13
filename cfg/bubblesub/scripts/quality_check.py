@@ -48,10 +48,10 @@ def _check_durations(logger, line):
 def _check_punctuation(logger, line):
     text = bubblesub.ass.util.ass_to_plaintext(line.text)
 
-    if text.endswith('\\N'):
+    if text.endswith('\n'):
         logger.warn(f'#{line.number}: extra line break')
 
-    if ' \\N' in text:
+    if ' \n' in text:
         logger.warn(f'#{line.number}: space before line break')
 
     if '  ' in text:
@@ -78,22 +78,22 @@ def _check_punctuation(logger, line):
         if word in context:
             logger.warn(f'#{line.number}: missing apostrophe')
 
-    if re.search(r'[-–](\\N|$)', text):
+    if re.search(r'[-–]$', text, flags=re.M):
         logger.warn(f'#{line.number}: bad dash (expected —)')
 
-    if re.search(r'(^|\\N)–[^–]*$', text):
+    if re.search(r'(^|\n)–[^–]*$', text):
         logger.warn(f'#{line.number}: dialog with just one person')
 
-    if re.search(r'(^|\\N)(- |—)', text):
+    if re.search(r'^(- |—)', text, flags=re.M):
         logger.warn(f'#{line.number}: bad dash (expected –)')
 
-    if re.search(r'(^|\\N)[A-Z][a-z]{,3}-[a-z]', text):
+    if re.search(r'(^|\n)[A-Z][a-z]{,3}-[a-z]', text):
         logger.warn(f'#{line.number}: possible wrong stutter capitalization')
 
     if re.search(r'[\.,?!][A-Za-z]|[a-zA-Z]…[A-Za-z]', text):
         logger.warn(f'#{line.number}: missing space after punctuation mark')
 
-    if re.search(r'[\.!?]\s+[a-z]', text):
+    if re.search(r'[\.!?]\s+[a-z]', text, flags=re.M):
         logger.warn(f'#{line.number}: lowercase letter after sentence end')
 
 
