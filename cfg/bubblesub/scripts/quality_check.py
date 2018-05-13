@@ -51,8 +51,11 @@ def _check_durations(logger, line):
 def _check_punctuation(logger, line):
     text = bubblesub.ass.util.ass_to_plaintext(line.text)
 
-    if text.endswith('\n'):
+    if text.startswith('\n') or text.endswith('\n'):
         logger.warn(f'#{line.number}: extra line break')
+
+    if text.startswith(' ') or text.endswith(' '):
+        logger.warn(f'#{line.number}: extra whitespace')
 
     if text.count('\n') >= 2:
         logger.warn(f'#{line.number}: three or more lines')
