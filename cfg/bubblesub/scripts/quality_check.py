@@ -51,6 +51,9 @@ def _check_punctuation(logger, line):
     if text.endswith('\n'):
         logger.warn(f'#{line.number}: extra line break')
 
+    if text.count('\n') >= 2:
+        logger.warn(f'#{line.number}: three or more lines')
+
     if re.search(r'\n\s|\s\n', text):
         logger.warn(f'#{line.number}: space around line break')
 
