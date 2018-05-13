@@ -84,7 +84,7 @@ def _check_punctuation(logger, line):
     if re.search(r'[-–]$', text, flags=re.M):
         logger.warn(f'#{line.number}: bad dash (expected —)')
 
-    if re.search(r'(^|\n)–[^–]*$', text):
+    if len(re.findall(r'^–', text, flags=re.M)) == 1:
         logger.warn(f'#{line.number}: dialog with just one person')
 
     if re.search(r'^(- |—)', text, flags=re.M):
