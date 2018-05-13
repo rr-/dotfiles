@@ -112,6 +112,9 @@ def _check_punctuation(logger, line):
     if re.search(r'[\.!?]\s+[a-z]', text, flags=re.M):
         logger.warn(f'#{line.number}: lowercase letter after sentence end')
 
+    if re.search(r'\A[a-z]', text, flags=re.M):
+        logger.warn(f'#{line.number}: sentence begins with a lowercase letter')
+
 
 def _check_malformed_tags(logger, line):
     try:
