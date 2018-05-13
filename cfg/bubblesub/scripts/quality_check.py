@@ -14,6 +14,10 @@ MIN_DURATION_LONG = 500  # milliseconds
 MIN_GAP = 250
 PUNCTUATION_INSIDE_QUOTES = 2  # 1: "inside." 2: "outside".
 
+NON_STUTTER_PREFIXES = {'half', 'well'}
+NON_STUTTER_SUFFIXES = {'kun', 'san', 'chan', 'smaa', 'senpai', 'sensei'}
+NON_STUTTER_WORDS = {'bye-bye', 'part-time'}
+
 
 def _check_durations(logger, line):
     text = bubblesub.ass.util.ass_to_plaintext(line.text)
@@ -93,8 +97,14 @@ def _check_punctuation(logger, line):
     if re.search(r'^(- |—)', text, flags=re.M):
         logger.warn(f'#{line.number}: bad dash (expected –)')
 
-    if re.search(r'(^|\n)[A-Z][a-z]{,3}-[a-z]', text):
-        logger.warn(f'#{line.number}: possible wrong stutter capitalization')
+    match = re.search(r'^([A-Z][a-z]{,3})-([a-z]+)', text, flags=re.M)
+    if match:
+        if match.group(0).lower() not in NON_STUTTER_WORDS \
+                and match.group(1).lower() not in NON_STUTTER_PREFIXES \
+                and match.group(2).lower() not in NON_STUTTER_SUFFIXES:
+            logger.warn(
+                f'#{line.number}: possible wrong stutter capitalization'
+            )
 
     if re.search(r'[\.,?!][A-Za-z]|[a-zA-Z]…[A-Za-z]', text):
         logger.warn(f'#{line.number}: missing space after punctuation mark')
