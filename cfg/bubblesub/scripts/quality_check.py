@@ -2,6 +2,7 @@ import re
 from collections import defaultdict
 
 import ass_tag_parser
+import enchant
 import fontTools.ttLib as font_tools
 
 import bubblesub.api.cmd
@@ -16,6 +17,8 @@ MIN_GAP = 250
 NON_STUTTER_PREFIXES = {'half', 'well'}
 NON_STUTTER_SUFFIXES = {'kun', 'san', 'chan', 'smaa', 'senpai', 'sensei'}
 NON_STUTTER_WORDS = {'bye-bye', 'part-time'}
+
+SPELL_CHECK_LANGUAGE = 'en_US'
 
 
 def _check_durations(logger, line):
@@ -153,6 +156,35 @@ def _check_double_words(logger, line):
     for pair in re.finditer(r'(?<!\w)(\w+)\s+\1(?!\w)', text):
         word = pair.group(1)
         logger.warn(f'#{line.number}: double word ({word})')
+
+
+def _check_spelling(logger, api):
+    try:
+        dictionary = enchant.DictWithPWL(
+            SPELL_CHECK_LANGUAGE,
+            pwl=str(api.subs.path.with_name('dict.txt'))
+        )
+    except enchant.errors.DictNotFoundError:
+        logger.warn(f'Dictionary "{SPELL_CHECK_LANGUAGE}" not found')
+        return
+
+    misspelling_map = defaultdict(set)
+    for line in api.subs.events:
+        text = bubblesub.ass.util.ass_to_plaintext(line.text)
+        for start, end, word in bubblesub.ass.util.spell_check_ass_line(
+                dictionary, text
+        ):
+            misspelling_map[word].add(line.number)
+
+    logger.info('Misspelt words:')
+    for word, line_numbers in sorted(
+            misspelling_map.items(),
+            key=lambda item: len(item[1]),
+            reverse=True
+    ):
+        logger.warn(
+            f'- {word}: ' + ', '.join(f'#{num}' for num in line_numbers)
+        )
 
 
 def _check_actors(logger, api):
@@ -303,6 +335,7 @@ class QualityCheckCommand(bubblesub.api.cmd.BaseCommand):
             _check_disjointed_tags(self, line)
             _check_broken_comments(self, line)
             _check_double_words(self, line)
+        _check_spelling(self, self.api)
         _check_actors(self, self.api)
         _check_styles(self, self.api)
         _check_fonts(self, self.api)
