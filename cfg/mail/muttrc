@@ -39,12 +39,14 @@ set spoolfile='~/mail'
 set folder='~/mail'
 set trash='~/mail/.trash'
 set postponed='~/mail/.postponed'
+set record='~/mail/.sent'
 
 set sort_browser=desc
 
 mailboxes =
 mailboxes =.trash
 mailboxes =.postponed
+mailboxes =.sent
 
 unignore x-label
 
