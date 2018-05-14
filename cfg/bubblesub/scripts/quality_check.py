@@ -323,10 +323,6 @@ class QualityCheckCommand(bubblesub.api.cmd.BaseCommand):
     name = 'plugin/quality-check'
     menu_name = '&Quality check'
 
-    @property
-    def is_enabled(self):
-        return self.api.subs.has_selection
-
     async def run(self):
         for line in self.api.subs.events:
             _check_durations(self, line)
