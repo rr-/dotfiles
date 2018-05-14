@@ -4,19 +4,47 @@
 
 import os
 import argparse
+import typing as T
 from subprocess import run, PIPE
+
 import xdg
 
 
-xmodmaps = [
+XMODMAPS: T.List[str] = [
     'keycode 21 = equal plus equal plus dead_macron dead_macron',
+]
+
+LANGUAGES: T.List[T.Tuple[str, str]] = [
+    ('pl', 'xkb:pl::pol'),
+    ('jp', 'anthy'),
 ]
 
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
-    parser.add_argument('lang', nargs='?', choices=['pl', 'jp'])
+    parser.add_argument(
+        'lang', nargs='?', choices=[item[0] for item in LANGUAGES]
+    )
     return parser.parse_args()
+
+
+def get_code_and_engine(lang: str) -> T.Tuple[str, str]:
+    if not lang:
+        current_engine = run(
+            ['ibus', 'engine'], stdout=PIPE
+        ).stdout.decode().strip()
+
+        for i, item in enumerate(LANGUAGES):
+            code, engine = item
+            if engine == current_engine:
+                return LANGUAGES[(i + 1) % len(LANGUAGES)]
+
+    else:
+        for code, engine in LANGUAGES:
+            if code == lang:
+                return (code, engine)
+
+    raise ValueError('Unknown language')
 
 
 def main() -> None:
@@ -26,19 +54,11 @@ def main() -> None:
 
     args = parse_args()
 
-    if args.lang == 'jp':
-        engine = 'anthy'
-    elif args.lang == 'pl':
-        engine = 'xkb:pl::pol'
-    else:
-        engine = run(['ibus', 'engine'], stdout=PIPE).stdout.decode().strip()
-        if engine != 'anthy':
-            engine = 'anthy'
-        else:
-            engine = 'xkb:pl::pol'
-    run(['ibus', 'engine', engine])
+    code, engine = get_code_and_engine(args.lang)
 
-    for expr in xmodmaps:
+    run(['setxkbmap', code])
+    run(['ibus', 'engine', engine])
+    for expr in XMODMAPS:
         run(['xmodmap', '-e', expr])
 
 
