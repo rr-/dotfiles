@@ -71,7 +71,7 @@ def is_artist_page(url):
 
 
 def is_album_page(url):
-    return '/album/' in url
+    return '/album/' in url or '/track' in url
 
 
 def download_album(album_url, target_directory):
@@ -88,7 +88,10 @@ def download_album(album_url, target_directory):
 
     album_artist = data['artist']
     album_title = data['current']['title']
-    album_release_date = dateutil.parser.parse(data['album_release_date'])
+    album_release_date = dateutil.parser.parse(
+        data.get('album_release_date')
+        or data['current'].get('release_date')
+        or data['current'].get('publish_date'))
 
     album_directory = (
         target_directory
@@ -98,7 +101,7 @@ def download_album(album_url, target_directory):
 
     for i, track_data in enumerate(data['trackinfo']):
         track_title = track_data['title']
-        track_number = int(track_data['track_num'])
+        track_number = int(track_data.get('track_num') or '1')
 
         if track_data['file'] is None:
             print(f'Track "{track_number:02d}. {track_title}" is unavailable')
@@ -131,6 +134,7 @@ def get_artist_album_links(artist_url):
         link
         for link in document.xpath('//a/@href')
         if '/album/' in link
+        or '/track/' in link
     ]
 
 
