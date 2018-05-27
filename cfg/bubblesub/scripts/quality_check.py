@@ -169,12 +169,14 @@ def _check_spelling(logger, api):
         return
 
     misspelling_map = defaultdict(set)
-    for line in api.subs.events:
-        text = bubblesub.ass.util.ass_to_plaintext(line.text)
+    for event in api.subs.events:
+        if event.style.lower().startswith(('karaoke', 'lyrics')):
+            continue
+        text = bubblesub.ass.util.ass_to_plaintext(event.text)
         for start, end, word in bubblesub.ass.util.spell_check_ass_line(
                 dictionary, text
         ):
-            misspelling_map[word].add(line.number)
+            misspelling_map[word].add(event.number)
 
     logger.info('Misspelt words:')
     for word, line_numbers in sorted(
