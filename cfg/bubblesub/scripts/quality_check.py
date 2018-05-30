@@ -1,4 +1,5 @@
 import re
+import typing as T
 from collections import defaultdict
 
 import ass_tag_parser
@@ -6,9 +7,12 @@ import enchant
 import fontTools.ttLib as font_tools
 
 import bubblesub.api.cmd
-import bubblesub.ass.util
 import bubblesub.opt.menu
-
+from bubblesub.ass.event import Event
+from bubblesub.ass.event import EventList
+from bubblesub.ass.util import ass_to_plaintext
+from bubblesub.ass.util import character_count
+from bubblesub.ass.util import spell_check_ass_line
 
 MIN_DURATION = 250  # milliseconds
 MIN_DURATION_LONG = 500  # milliseconds
@@ -21,144 +25,171 @@ NON_STUTTER_WORDS = {'bye-bye', 'part-time'}
 SPELL_CHECK_LANGUAGE = 'en_US'
 
 
-def _check_durations(logger, line):
-    text = bubblesub.ass.util.ass_to_plaintext(line.text)
-    if not text or line.is_comment:
+class Violation:
+    def __init__(
+            self,
+            event: T.Union[Event, T.List[Event]],
+            text: str
+    ) -> None:
+        if isinstance(event, list):
+            self.event = event[0]
+            self.additional_events = event[1:]
+        else:
+            self.event = event
+            self.additional_events = []
+        self.text = text
+
+    @property
+    def events(self) -> T.Iterable[Event]:
+        yield self.event
+        yield from self.additional_events
+
+    def __repr__(self) -> str:
+        ids = '+'.join([f'#{event.number or "?"}' for event in self.events])
+        return f'{ids}: {self.text}'
+
+
+def check_durations(event: Event) -> T.Iterable[Violation]:
+    text = ass_to_plaintext(event.text)
+    if not text or event.is_comment:
         return
 
-    if line.duration < MIN_DURATION:
-        logger.warn(
-            f'#{line.number}: duration shorter than {MIN_DURATION} ms'
-        )
+    if event.duration < MIN_DURATION_LONG \
+            and character_count(text) >= 8:
+        yield Violation(event, f'duration shorter than {MIN_DURATION_LONG} ms')
 
-    if line.duration < MIN_DURATION_LONG \
-            and bubblesub.ass.util.character_count(text) >= 8:
-        logger.warn(
-            f'#{line.number}: '
-            f'duration shorter than {MIN_DURATION_LONG} ms'
-        )
+    elif event.duration < MIN_DURATION:
+        yield Violation(event, f'duration shorter than {MIN_DURATION} ms')
 
-    next_line = line.next
-    while next_line:
-        if bubblesub.ass.util.ass_to_plaintext(next_line.text):
-            gap = next_line.start - line.end
-            if gap > 0 and gap < MIN_GAP:
-                logger.warn(
-                    f'#{line.number}+#{next_line.number}: '
-                    f'gap shorter than {MIN_GAP} ms ({gap} ms)'
-                )
-            return
-        next_line = next_line.next
+    next_event = event.next
+    while next_event:
+        if bubblesub.ass.util.ass_to_plaintext(next_event.text) \
+                and not next_event.is_comment:
+            break
+        next_event = next_event.next
+
+    if next_event:
+        gap = next_event.start - event.end
+        if gap > 0 and gap < MIN_GAP:
+            yield Violation(
+                [event, next_event],
+                f'gap shorter than {MIN_GAP} ms ({gap} ms)'
+            )
 
 
-def _check_punctuation(logger, line):
-    text = bubblesub.ass.util.ass_to_plaintext(line.text)
+def check_punctuation(event: Event) -> T.Iterable[Violation]:
+    text = ass_to_plaintext(event.text)
 
     if text.startswith('\n') or text.endswith('\n'):
-        logger.warn(f'#{line.number}: extra line break')
-
-    if text.startswith(' ') or text.endswith(' '):
-        logger.warn(f'#{line.number}: extra whitespace')
+        yield Violation(event, 'extra line break')
+    elif re.search(r'^\s|\s$', text):
+        yield Violation(event, 'extra whitespace')
 
     if text.count('\n') >= 2:
-        logger.warn(f'#{line.number}: three or more lines')
+        yield Violation(event, 'three or more lines')
 
     if re.search(r'\n\s|\s\n', text):
-        logger.warn(f'#{line.number}: space around line break')
+        yield Violation(event, 'whitespace around line break')
 
-    if re.search(r'\s[.,]', text):
-        logger.warn(f'#{line.number}: space before period/comma')
+    if re.search(r'\n[.,?!:;]', text):
+        yield Violation(event, 'line break before punctuation')
+    elif re.search(r'\s[.,?!:;]', text):
+        yield Violation(event, 'whitespace before punctuation')
 
     if '  ' in text:
-        logger.warn(f'#{line.number}: double space')
+        yield Violation(event, 'double space')
 
     if '...' in text:
-        logger.warn(f'#{line.number}: bad ellipsis (expected …)')
-    elif re.search('[…,.!?] *[,.]', text):
-        logger.warn(f'#{line.number}: extra comma or dot')
+        yield Violation(event, 'bad ellipsis (expected …)')
+    elif re.search('[…,.!?:;][,.]', text):
+        yield Violation(event, 'extra comma or dot')
 
-    if re.search(r'"[\.,…?!]', line.text):
-        logger.warn(f'#{line.number}: period/comma outside quotation mark')
-    if re.search(r'[\.,…?!]"', line.text):
-        logger.info(f'#{line.number}: period/comma inside quotation mark')
-
-    context = re.split(r'\W+', re.sub('[.,?!"]', '', line.text.lower()))
+    context = re.split(r'\W+', re.sub('[.,?!"]', '', text.lower()))
     for word in {
         'im', 'youre', 'hes', 'shes', 'theyre', 'isnt', 'arent', 'wasnt',
         'werent', 'didnt', 'thats', 'heres', 'theres', 'wheres', 'cant',
         'dont', 'wouldnt', 'couldnt', 'shouldnt', 'hasnt', 'havent', 'ive'
+        'wouldve', 'youve', 'ive',
     }:
         if word in context:
-            logger.warn(f'#{line.number}: missing apostrophe')
+            yield Violation(event, 'missing apostrophe')
 
     if re.search(r'[-–]$', text, flags=re.M):
-        logger.warn(f'#{line.number}: bad dash (expected —)')
+        yield Violation(event, 'bad dash (expected —)')
 
     if len(re.findall(r'^–', text, flags=re.M)) == 1:
-        logger.warn(f'#{line.number}: dialog with just one person')
+        yield Violation(event, 'dialog with just one person')
 
     if re.search(r'^(- |—)', text, flags=re.M):
-        logger.warn(f'#{line.number}: bad dash (expected –)')
+        yield Violation(event, 'bad dash (expected –)')
+
+    if re.search(r'[\.!?]\s+[a-z]', text, flags=re.M):
+        yield Violation(event, 'lowercase letter after sentence end')
 
     match = re.search(r'^([A-Z][a-z]{,3})-([a-z]+)', text, flags=re.M)
     if match:
         if match.group(0).lower() not in NON_STUTTER_WORDS \
                 and match.group(1).lower() not in NON_STUTTER_PREFIXES \
                 and match.group(2).lower() not in NON_STUTTER_SUFFIXES:
-            logger.warn(
-                f'#{line.number}: possible wrong stutter capitalization'
-            )
+            yield Violation(event, 'possible wrong stutter capitalization')
 
-    if re.search(r'[\.,?!][A-Za-z]|[a-zA-Z]…[A-Za-z]', text):
-        logger.warn(f'#{line.number}: missing space after punctuation mark')
+    if re.search(r'[\.,?!:;][A-Za-z]|[a-zA-Z]…[A-Za-z]', text):
+        yield Violation(event, 'missing whitespace after punctuation mark')
 
-    if re.search(r'[\.!?]\s+[a-z]', text, flags=re.M):
-        logger.warn(f'#{line.number}: lowercase letter after sentence end')
+    if re.search(
+            '\\s|\N{ZERO WIDTH SPACE}',
+            text.replace(' ', '').replace('\n', '')
+    ):
+        yield Violation(event, 'unrecognized whitespace')
+
+
+def check_quotes(event: Event) -> T.Iterable[Violation]:
+    text = ass_to_plaintext(event.text)
+
+    if re.search(r'"[\.,…?!]', text):
+        yield Violation(event, 'period/comma outside quotation mark')
+
+    if re.search(r'[\.,…?!]"', text):
+        yield Violation(event, 'period/comma inside quotation mark')
+
+
+def check_line_continuation(event: Event) -> T.Iterable[Violation]:
+    text = ass_to_plaintext(event.text)
 
     if re.search(r'\A[a-z]', text, flags=re.M):
-        logger.warn(f'#{line.number}: sentence begins with a lowercase letter')
+        yield Violation(event, 'sentence begins with a lowercase letter')
 
 
-def _check_malformed_tags(logger, line):
+def check_ass_tags(event: Event) -> T.Iterable[Violation]:
     try:
-        result = ass_tag_parser.parse_ass(line.text)
+        result = ass_tag_parser.parse_ass(event.text)
     except ass_tag_parser.ParsingError as ex:
-        logger.error(f'#{line.number}: invalid syntax (%r)' % str(ex))
+        yield Violation(event, f'invalid syntax ({ex})')
         return
 
     for item in result:
         if item['type'] != 'tags':
             continue
+        if not item['children']:
+            yield Violation(event, 'pointless ASS tag')
         for subitem in item['children']:
             if subitem['type'] == 'alignment' and subitem['legacy']:
-                logger.warn(f'#{line.number}: using legacy alignment tag')
-            if subitem['type'] == 'comment' and len(item['children']) != 1:
-                logger.warn(f'#{line.number}: mixing comments with tags')
+                yield Violation(event, 'using legacy alignment tag')
+            if subitem['type'] == 'comment':
+                yield Violation(event, 'use notes to make comments')
+    if '}{' in event.text:
+        yield Violation(event, 'disjointed tags')
 
 
-def _check_disjointed_tags(logger, line):
-    if '}{' in line.text:
-        logger.warn(f'#{line.number}: disjointed tags')
-
-
-def _check_broken_comments(logger, line):
-    striped_text = bubblesub.ass.util.ass_to_plaintext(line.text)
-    if '{' in striped_text \
-            or '}' in striped_text \
-            or re.search('}[^{]}', line.text) \
-            or re.search('{[^}]{', line.text):
-        logger.warn(f'#{line.number}: broken comment')
-
-
-def _check_double_words(logger, line):
-    text = bubblesub.ass.util.ass_to_plaintext(line.text)
+def check_double_words(event: Event) -> T.Iterable[Violation]:
+    text = ass_to_plaintext(event.text)
 
     for pair in re.finditer(r'(?<!\w)(\w+)\s+\1(?!\w)', text):
         word = pair.group(1)
-        logger.warn(f'#{line.number}: double word ({word})')
+        yield Violation(event, f'double word ({word})')
 
 
-def _check_spelling(logger, api):
+def check_spelling(logger, api):
     try:
         dictionary = enchant.DictWithPWL(
             SPELL_CHECK_LANGUAGE,
@@ -172,10 +203,8 @@ def _check_spelling(logger, api):
     for event in api.subs.events:
         if event.style.lower().startswith(('karaoke', 'lyrics')):
             continue
-        text = bubblesub.ass.util.ass_to_plaintext(event.text)
-        for start, end, word in bubblesub.ass.util.spell_check_ass_line(
-                dictionary, text
-        ):
+        text = ass_to_plaintext(event.text)
+        for _start, _end, word in spell_check_ass_line(dictionary, text):
             misspelling_map[word].add(event.number)
 
     logger.info('Misspelt words:')
@@ -189,7 +218,7 @@ def _check_spelling(logger, api):
         )
 
 
-def _check_actors(logger, api):
+def check_actors(logger, api):
     logger.info('Actors summary:')
     actors = defaultdict(int)
 
@@ -200,7 +229,7 @@ def _check_actors(logger, api):
         logger.info(f'– {occurrences} time(s): {actor}')
 
 
-def _check_styles(logger, api):
+def check_styles(logger, api):
     logger.info('Styles summary:')
     styles = defaultdict(int)
 
@@ -211,7 +240,7 @@ def _check_styles(logger, api):
         logger.info(f'– {occurrences} time(s): {style}')
 
 
-def _check_fonts(logger, api):
+def check_fonts(logger, api):
     logger.info('Fonts summary:')
 
     TT_NAME_ID_FONT_FAMILY = 1
@@ -321,22 +350,32 @@ def _check_fonts(logger, api):
             logger.warn(f'  missing glyphs: {"".join(missing_glyphs)}')
 
 
+def list_violations(events: EventList) -> T.Iterable[Violation]:
+    for event in events:
+        yield from check_durations(event)
+        yield from check_punctuation(event)
+        yield from check_quotes(event)
+        yield from check_line_continuation(event)
+        yield from check_ass_tags(event)
+        yield from check_double_words(event)
+
+
 class QualityCheckCommand(bubblesub.api.cmd.BaseCommand):
     name = 'plugin/quality-check'
     menu_name = '&Quality check'
 
     async def run(self):
-        for line in self.api.subs.events:
-            _check_durations(self, line)
-            _check_punctuation(self, line)
-            _check_malformed_tags(self, line)
-            _check_disjointed_tags(self, line)
-            _check_broken_comments(self, line)
-            _check_double_words(self, line)
-        _check_spelling(self, self.api)
-        _check_actors(self, self.api)
-        _check_styles(self, self.api)
-        _check_fonts(self, self.api)
+        violations = sorted(
+            list_violations(self.api.subs.events),
+            key=lambda violation: (violation.event.number, violation.text)
+        )
+        for violation in violations:
+            self.warn(repr(violation))
+
+        check_spelling(self, self.api)
+        check_actors(self, self.api)
+        check_styles(self, self.api)
+        check_fonts(self, self.api)
 
 
 def register(cmd_api):
