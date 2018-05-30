@@ -13,7 +13,7 @@ import xdg
 XMODMAPS: T.List[str] = [
     'keysym equal = equal plus equal plus dead_macron dead_macron',
     'keysym semicolon = semicolon colon semicolon colon dead_diaeresis dead_diaeresis',
-    'keysym space = space space space space U200B U200B',
+    'keysym space = space space space space space U200B',
 ]
 
 LANGUAGES: T.List[T.Tuple[str, str]] = [
