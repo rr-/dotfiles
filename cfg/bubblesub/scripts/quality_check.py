@@ -68,6 +68,14 @@ class BaseResult:
         return f'{ids}: {self.text}'
 
 
+class DebugInformation(BaseResult):
+    log_level = LogLevel.Debug
+
+
+class Information(BaseResult):
+    log_level = LogLevel.Info
+
+
 class Violation(BaseResult):
     log_level = LogLevel.Warning
 
@@ -164,11 +172,20 @@ def check_punctuation(event: Event) -> T.Iterable[BaseResult]:
 def check_quotes(event: Event) -> T.Iterable[BaseResult]:
     text = ass_to_plaintext(event.text)
 
-    if re.search(r'"[\.,…?!]', text):
-        yield Violation(event, 'period/comma outside quotation mark')
+    if text.count('"') == 1:
+        yield Information(event, 'partial quote')
+        return
 
-    if re.search(r'[\.,…?!]"', text):
-        yield Violation(event, 'period/comma inside quotation mark')
+    if re.search('".+[:,]"', text):
+        yield Violation(event, 'punctuation inside quotation marks')
+
+    if re.search(r'".+"[\.,…?!]', text, flags=re.M):
+        yield DebugInformation(event, 'punctuation outside quotation marks')
+
+    if re.search(r'[a-z]\s".+[\.…?!]"', text, flags=re.M):
+        yield Violation(event, 'punctuation inside quotation marks')
+    elif re.search(r'".+[\.…?!]"', text, flags=re.M):
+        yield DebugInformation(event, 'punctuation inside quotation marks')
 
 
 def check_line_continuation(event: Event) -> T.Iterable[BaseResult]:
