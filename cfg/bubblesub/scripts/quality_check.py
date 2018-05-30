@@ -25,6 +25,24 @@ NON_STUTTER_WORDS = {'bye-bye', 'part-time'}
 SPELL_CHECK_LANGUAGE = 'en_US'
 
 
+def _get_prev_non_empty_event(event: Event) -> T.Optional[Event]:
+    event = event.prev
+    while event:
+        if ass_to_plaintext(event.text) and not event.is_comment:
+            return event
+        event = event.prev
+    return None
+
+
+def _get_next_non_empty_event(event: Event) -> T.Optional[Event]:
+    event = event.next
+    while event:
+        if ass_to_plaintext(event.text) and not event.is_comment:
+            return event
+        event = event.next
+    return None
+
+
 class Violation:
     def __init__(
             self,
@@ -61,12 +79,7 @@ def check_durations(event: Event) -> T.Iterable[Violation]:
     elif event.duration < MIN_DURATION:
         yield Violation(event, f'duration shorter than {MIN_DURATION} ms')
 
-    next_event = event.next
-    while next_event:
-        if bubblesub.ass.util.ass_to_plaintext(next_event.text) \
-                and not next_event.is_comment:
-            break
-        next_event = next_event.next
+    next_event = _get_next_non_empty_event(event)
 
     if next_event:
         gap = next_event.start - event.end
@@ -131,7 +144,7 @@ def check_punctuation(event: Event) -> T.Iterable[Violation]:
         if match.group(0).lower() not in NON_STUTTER_WORDS \
                 and match.group(1).lower() not in NON_STUTTER_PREFIXES \
                 and match.group(2).lower() not in NON_STUTTER_SUFFIXES:
-            yield Violation(event, 'possible wrong stutter capitalization')
+            yield Violation(event, 'possibly wrong stutter capitalization')
 
     if re.search(r'[\.,?!:;][A-Za-z]|[a-zA-Z]…[A-Za-z]', text):
         yield Violation(event, 'missing whitespace after punctuation mark')
@@ -156,8 +169,26 @@ def check_quotes(event: Event) -> T.Iterable[Violation]:
 def check_line_continuation(event: Event) -> T.Iterable[Violation]:
     text = ass_to_plaintext(event.text)
 
-    if re.search(r'\A[a-z]', text, flags=re.M):
+    prev_event = _get_prev_non_empty_event(event)
+    next_event = _get_next_non_empty_event(event)
+    next_text = ass_to_plaintext(next_event.text) if next_event else ''
+    prev_text = ass_to_plaintext(prev_event.text) if prev_event else ''
+
+    if text.endswith('…') and next_text.startswith('…'):
+        yield Violation([event, next_event], 'old-style line continuation')
+
+    if re.search(r'\A[a-z]', text, flags=re.M) \
+            and not re.search(r'[,:a-z]\Z', prev_text, flags=re.M):
         yield Violation(event, 'sentence begins with a lowercase letter')
+
+    if re.search(r'[,:a-z]\Z', text, flags=re.M) \
+            and not re.search(r'\A[a-z]', next_text, flags=re.M) \
+            and not re.search(r'\AI\s', next_text, flags=re.M):
+        if not event.is_comment \
+                and event.actor != '[karaoke]' \
+                and event.actor != '[title]' \
+                and event.actor != '(sign)':
+            yield Violation(event, 'possibly unended sentence')
 
 
 def check_ass_tags(event: Event) -> T.Iterable[Violation]:
@@ -201,7 +232,7 @@ def check_spelling(logger, api):
 
     misspelling_map = defaultdict(set)
     for event in api.subs.events:
-        if event.style.lower().startswith(('karaoke', 'lyrics')):
+        if event.actor == '[karaoke]':
             continue
         text = ass_to_plaintext(event.text)
         for _start, _end, word in spell_check_ass_line(dictionary, text):

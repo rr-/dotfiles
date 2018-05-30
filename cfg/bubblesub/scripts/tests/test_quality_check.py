@@ -6,6 +6,7 @@ from bubblesub.ass.event import Event
 from bubblesub.ass.event import EventList
 
 from ..quality_check import Violation
+from ..quality_check import check_line_continuation
 from ..quality_check import check_ass_tags
 from ..quality_check import check_double_words
 from ..quality_check import check_durations
@@ -110,7 +111,7 @@ def test_check_durations_good_gap() -> None:
     ('\N{EN DASH} What!', 'dialog with just one person'),
     ('What--', 'bad dash (expected \N{EM DASH})'),
     ('What\N{EN DASH}', 'bad dash (expected \N{EM DASH})'),
-    ('W-what?', 'possible wrong stutter capitalization'),
+    ('W-what?', 'possibly wrong stutter capitalization'),
     ('Ayuhara-san', None),
     ('What! what…', 'lowercase letter after sentence end'),
     ('What. what…', 'lowercase letter after sentence end'),
@@ -166,6 +167,38 @@ def test_check_durations_good_gap() -> None:
 def test_check_punctuation(text: str, violation_text: T.Optional[str]) -> None:
     event = Event(text=text)
     violations = list(check_punctuation(event))
+    if violation_text is None:
+        assert len(violations) == 0
+    else:
+        assert len(violations) == 1
+        assert violations[0].text == violation_text
+
+
+@pytest.mark.parametrize('texts, violation_text', [
+    (['Whatever…'], None),
+    (['Whatever…', 'I don\'t care.'], None),
+    (['…okay.'], None),
+    (['Whatever…', '…you say.'], 'old-style line continuation'),
+    (['Whatever', 'you say.'], None),
+    (['Whatever,', 'we don\'t care.'], None),
+    (['Whatever:', 'we don\'t care.'], None),
+    (['whatever.'], 'sentence begins with a lowercase letter'),
+    (['Whatever.', 'whatever.'], 'sentence begins with a lowercase letter'),
+    (['Whatever'], 'possibly unended sentence'),
+    (['Whatever', 'Whatever.'], 'possibly unended sentence'),
+])
+def test_check_line_continuation(
+        texts: T.List[str],
+        violation_text: T.Optional[str]
+) -> None:
+    event_list = EventList()
+    for i, text in enumerate(texts):
+        event_list.insert_one(i, text=text)
+
+    violations = []
+    for event in event_list:
+        violations += list(check_line_continuation(event))
+
     if violation_text is None:
         assert len(violations) == 0
     else:
