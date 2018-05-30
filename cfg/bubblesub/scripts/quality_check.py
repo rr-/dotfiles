@@ -140,14 +140,20 @@ def check_punctuation(event: Event) -> T.Iterable[BaseResult]:
         if word in context:
             yield Violation(event, 'missing apostrophe')
 
-    if re.search(r'[-–]$', text, flags=re.M):
+    if re.search('^– .* –$', text, flags=re.M):
         yield Violation(event, 'bad dash (expected —)')
+    elif not re.search('^—.*—$', text, flags=re.M):
+        if len(re.findall(r'^–', text, flags=re.M)) == 1:
+            yield Violation(event, 'dialog with just one person')
 
-    if len(re.findall(r'^–', text, flags=re.M)) == 1:
-        yield Violation(event, 'dialog with just one person')
+        if re.search(r'[-–]$', text, flags=re.M):
+            yield Violation(event, 'bad dash (expected —)')
 
-    if re.search(r'^(- |—)', text, flags=re.M):
-        yield Violation(event, 'bad dash (expected –)')
+        if re.search(r'^- |^—', text, flags=re.M):
+            yield Violation(event, 'bad dash (expected –)')
+
+    if re.search(r' —|— ', text):
+        yield Violation(event, 'whitespace around —')
 
     if re.search(r'[\.!?]\s+[a-z]', text, flags=re.M):
         yield Violation(event, 'lowercase letter after sentence end')
