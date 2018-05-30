@@ -2,11 +2,13 @@ import re
 import typing as T
 
 import pytest
+from bubblesub.api.log import LogLevel
 from bubblesub.ass.event import Event
 from bubblesub.ass.event import EventList
 
 from ..quality_check import Violation
 from ..quality_check import check_line_continuation
+from ..quality_check import check_quotes
 from ..quality_check import check_ass_tags
 from ..quality_check import check_double_words
 from ..quality_check import check_durations
@@ -172,6 +174,35 @@ def test_check_punctuation(text: str, violation_text: T.Optional[str]) -> None:
     else:
         assert len(results) == 1
         assert results[0].text == violation_text
+
+
+@pytest.mark.parametrize('text, violation_text_re, log_level', [
+    ('"What…', 'partial quote', LogLevel.Info),
+    ('…what."', 'partial quote', LogLevel.Info),
+    ('"What."', '.*inside.*marks', LogLevel.Debug),
+    ('"What".', '.*outside.*', LogLevel.Debug),
+    ('"What", he said.', '.*outside.*', LogLevel.Debug),
+    ('"What." he said.', '.*inside.*', LogLevel.Debug),
+    ('"What!" he said.', '.*inside.*', LogLevel.Debug),
+    ('"What?" he said.', '.*inside.*', LogLevel.Debug),
+    ('"What…" he said.', '.*inside.*', LogLevel.Debug),
+    ('"What," he said.', '.*inside.*', LogLevel.Warning),
+    ('He said "what."', '.*inside.*', LogLevel.Warning),
+    ('He said "what!"', '.*inside.*', LogLevel.Warning),
+    ('He said "what?"', '.*inside.*', LogLevel.Warning),
+    ('He said "what…"', '.*inside.*', LogLevel.Warning),
+])
+def test_check_quotes(
+        text: str,
+        violation_text_re: str,
+        log_level: LogLevel
+) -> None:
+    event_list = EventList()
+    event_list.insert_one(0, text=text)
+    results = list(check_quotes(event_list[0]))
+    assert len(results) == 1
+    assert re.match(violation_text_re, results[0].text)
+    assert results[0].log_level == log_level
 
 
 @pytest.mark.parametrize('texts, violation_text', [
