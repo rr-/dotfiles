@@ -8,6 +8,7 @@ import fontTools.ttLib as font_tools
 
 import bubblesub.api.cmd
 import bubblesub.opt.menu
+from bubblesub.api.log import LogLevel
 from bubblesub.ass.event import Event
 from bubblesub.ass.event import EventList
 from bubblesub.ass.util import ass_to_plaintext
@@ -43,7 +44,7 @@ def _get_next_non_empty_event(event: Event) -> T.Optional[Event]:
     return None
 
 
-class Violation:
+class BaseResult:
     def __init__(
             self,
             event: T.Union[Event, T.List[Event]],
@@ -67,7 +68,11 @@ class Violation:
         return f'{ids}: {self.text}'
 
 
-def check_durations(event: Event) -> T.Iterable[Violation]:
+class Violation(BaseResult):
+    log_level = LogLevel.Warning
+
+
+def check_durations(event: Event) -> T.Iterable[BaseResult]:
     text = ass_to_plaintext(event.text)
     if not text or event.is_comment:
         return
@@ -90,7 +95,7 @@ def check_durations(event: Event) -> T.Iterable[Violation]:
             )
 
 
-def check_punctuation(event: Event) -> T.Iterable[Violation]:
+def check_punctuation(event: Event) -> T.Iterable[BaseResult]:
     text = ass_to_plaintext(event.text)
 
     if text.startswith('\n') or text.endswith('\n'):
@@ -156,7 +161,7 @@ def check_punctuation(event: Event) -> T.Iterable[Violation]:
         yield Violation(event, 'unrecognized whitespace')
 
 
-def check_quotes(event: Event) -> T.Iterable[Violation]:
+def check_quotes(event: Event) -> T.Iterable[BaseResult]:
     text = ass_to_plaintext(event.text)
 
     if re.search(r'"[\.,…?!]', text):
@@ -166,7 +171,7 @@ def check_quotes(event: Event) -> T.Iterable[Violation]:
         yield Violation(event, 'period/comma inside quotation mark')
 
 
-def check_line_continuation(event: Event) -> T.Iterable[Violation]:
+def check_line_continuation(event: Event) -> T.Iterable[BaseResult]:
     text = ass_to_plaintext(event.text)
 
     prev_event = _get_prev_non_empty_event(event)
@@ -191,7 +196,7 @@ def check_line_continuation(event: Event) -> T.Iterable[Violation]:
             yield Violation(event, 'possibly unended sentence')
 
 
-def check_ass_tags(event: Event) -> T.Iterable[Violation]:
+def check_ass_tags(event: Event) -> T.Iterable[BaseResult]:
     try:
         result = ass_tag_parser.parse_ass(event.text)
     except ass_tag_parser.ParsingError as ex:
@@ -212,7 +217,7 @@ def check_ass_tags(event: Event) -> T.Iterable[Violation]:
         yield Violation(event, 'disjointed tags')
 
 
-def check_double_words(event: Event) -> T.Iterable[Violation]:
+def check_double_words(event: Event) -> T.Iterable[BaseResult]:
     text = ass_to_plaintext(event.text)
 
     for pair in re.finditer(r'(?<!\w)(\w+)\s+\1(?!\w)', text):
@@ -381,7 +386,7 @@ def check_fonts(logger, api):
             logger.warn(f'  missing glyphs: {"".join(missing_glyphs)}')
 
 
-def list_violations(events: EventList) -> T.Iterable[Violation]:
+def list_violations(events: EventList) -> T.Iterable[BaseResult]:
     for event in events:
         yield from check_durations(event)
         yield from check_punctuation(event)
@@ -396,12 +401,12 @@ class QualityCheckCommand(bubblesub.api.cmd.BaseCommand):
     menu_name = '&Quality check'
 
     async def run(self):
-        violations = sorted(
+        results = sorted(
             list_violations(self.api.subs.events),
-            key=lambda violation: (violation.event.number, violation.text)
+            key=lambda result: (result.event.number, result.text)
         )
-        for violation in violations:
-            self.warn(repr(violation))
+        for result in results:
+            self.log(result.log_level, repr(result))
 
         check_spelling(self, self.api)
         check_actors(self, self.api)
