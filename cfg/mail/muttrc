@@ -85,7 +85,5 @@ bind index D purge-message
 bind index - collapse-thread
 bind index _ collapse-all
 
-# save mail to file
-macro index,pager s '| ~/.mutt/file_email ~/text/saved-mail/<enter>'
 # save attachment to ~/hub/share
 macro attach s '<save-entry><bol>~/hub/share/'
