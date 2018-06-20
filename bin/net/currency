@@ -26,11 +26,28 @@ def main():
     src_currency = args.src
     dst_currency = args.dst
 
-    response = requests.get(f'http://api.fixer.io/latest?base={src_currency}')
+    response = requests.get(
+        f'http://api.nbp.pl/api/exchangerates/tables/a'
+    )
     result = json.loads(response.text)
-    rate = result['rates'][args.dst]
 
-    dst_price = src_price * rate
+    rates = result[0]['rates']
+    rates.append(
+        {'currency': 'polski złoty', 'code': 'PLN', 'mid': 1.0}
+    )
+
+    src_rate = next(
+        item['mid']
+        for item in rates
+        if item['code'].lower() == src_currency.lower()
+    )
+    dst_rate = next(
+        item['mid']
+        for item in rates
+        if item['code'].lower() == dst_currency.lower()
+    )
+
+    dst_price = src_price * src_rate / dst_rate
 
     print(f'{src_price:.02f} {src_currency} = {dst_price:.02f} {dst_currency}')
 
