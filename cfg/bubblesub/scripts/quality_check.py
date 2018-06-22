@@ -11,6 +11,7 @@ import bubblesub.opt.menu
 from bubblesub.api.log import LogLevel
 from bubblesub.ass.event import Event
 from bubblesub.ass.event import EventList
+from bubblesub.ass.info import Metadata
 from bubblesub.ass.util import ass_to_plaintext
 from bubblesub.ass.util import character_count
 from bubblesub.ass.util import spell_check_ass_line
@@ -409,14 +410,88 @@ def check_fonts(logger, api):
             logger.warn(f'  missing glyphs: {"".join(missing_glyphs)}')
 
 
-def list_violations(events: EventList) -> T.Iterable[BaseResult]:
-    for event in events:
+def measure_frame_size(
+        renderer: bubblesub.ui.ass_renderer.AssRenderer,
+        event: Event
+) -> T.Tuple[int, int]:
+    layers = list(renderer.render_raw(time=event.start))
+    if not layers:
+        return (0, 0)
+    min_x = min(layer.dst_x for layer in layers)
+    min_y = min(layer.dst_y for layer in layers)
+    max_x = max(layer.dst_x + layer.w for layer in layers)
+    max_y = max(layer.dst_y + layer.h for layer in layers)
+    return (max_x - min_x, max_y - min_y)
+
+
+def get_optimal_line_heights(
+        logger,
+        api: bubblesub.api.Api,
+        renderer: bubblesub.ui.ass_renderer.AssRenderer
+) -> T.Dict[str, float]:
+    TEST_LINE_COUNT = 20
+    TIME_FIDELITY = 100
+    VIDEO_RES_X = 100
+    VIDEO_RES_Y = TEST_LINE_COUNT * 300
+
+    fake_info = Metadata()
+    fake_event_list = EventList()
+    for i, style in enumerate(api.subs.styles):
+        fake_event_list.insert_one(
+            0,
+            start=i * TIME_FIDELITY,
+            end=TIME_FIDELITY + i * TIME_FIDELITY,
+            text='\\N'.join(['.'] * TEST_LINE_COUNT),
+            style=style.name
+        )
+
+    renderer.set_source(
+        api.subs.styles,
+        fake_event_list,
+        fake_info,
+        video_resolution=(VIDEO_RES_X, VIDEO_RES_Y),
+    )
+
+    ret = {}
+    for event in fake_event_list:
+        _frame_width, frame_height = measure_frame_size(renderer, event)
+        line_height = frame_height / TEST_LINE_COUNT
+        ret[event.style] = line_height
+        logger.debug(f'average height for {event.style}: {line_height}')
+    return ret
+
+
+def check_long_line(
+        event: Event,
+        api: bubblesub.api.Api,
+        renderer: bubblesub.ui.ass_renderer.AssRenderer,
+        optimal_line_heights: T.Dict[str, float]
+) -> T.Iterable[BaseResult]:
+    width, height = measure_frame_size(renderer, event)
+    if width >= api.media.video.width * 0.9:
+        yield Violation(event, f'too long line')
+    if height >= optimal_line_heights[event.style] * 2.8:
+        yield Violation(event, f'three lines')
+
+
+def list_violations(logger, api: bubblesub.api.Api) -> T.Iterable[BaseResult]:
+    renderer = bubblesub.ui.ass_renderer.AssRenderer()
+    optimal_line_heights = get_optimal_line_heights(logger, api, renderer)
+    renderer.set_source(
+        api.subs.styles,
+        api.subs.events,
+        info=api.subs.info,
+        video_resolution=(api.media.video.width, api.media.video.height),
+    )
+
+    for event in api.subs.events:
         yield from check_durations(event)
         yield from check_punctuation(event)
         yield from check_quotes(event)
         yield from check_line_continuation(event)
         yield from check_ass_tags(event)
         yield from check_double_words(event)
+        yield from check_long_line(event, api, renderer, optimal_line_heights)
 
 
 class QualityCheckCommand(bubblesub.api.cmd.BaseCommand):
@@ -425,7 +500,7 @@ class QualityCheckCommand(bubblesub.api.cmd.BaseCommand):
 
     async def run(self):
         results = sorted(
-            list_violations(self.api.subs.events),
+            list_violations(self, self.api),
             key=lambda result: (result.event.number, result.text)
         )
         for result in results:
