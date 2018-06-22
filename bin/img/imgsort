@@ -86,6 +86,18 @@ def fill_file_infos(files: T.Iterable[File]) -> None:
         loop.run_until_complete(with_progress(futures))
 
 
+def rename_files(files: T.Iterable[File], dry_run: bool) -> None:
+    tasks = []
+    for i, file in enumerate(sorted(files, key=lambda file: file.rank)):
+        target_path = file.path.parent / f'{i:04}_{file.path.name}'
+        tasks.append((file.path, target_path))
+
+    for task in tqdm.tqdm(tasks, total=len(tasks), unit='file', ncols=100):
+        source_path, target_path = task
+        if not dry_run:
+            source_path.rename(target_path)
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument('source_dir', type=Path, default='.', nargs='?')
@@ -99,15 +111,11 @@ def main() -> None:
     print('Collecting files…')
     files = list(collect_files(args.source_dir.resolve()))
 
-    print('Querying image dimensions…')
+    print('Querying image properties…')
     fill_file_infos(files)
 
-    print('Renaming…')
-    for i, file in enumerate(sorted(files, key=lambda file: file.rank)):
-        target_path = file.path.parent / f'{i:04}_{file.path.name}'
-        print(f'{file.path} → {target_path.name} ({file.rank})')
-        if not args.dry_run:
-            file.path.rename(target_path)
+    print('Renaming files…')
+    rename_files(files, args.dry_run)
 
 
 if __name__ == '__main__':
