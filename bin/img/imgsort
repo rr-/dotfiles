@@ -78,7 +78,9 @@ def fill_file_infos(files: T.Iterable[File]) -> None:
             for task in tqdm.tqdm(
                     asyncio.as_completed(tasks),
                     total=len(tasks),
-                    unit='file'):
+                    unit='file',
+                    ncols=100
+            ):
                 await task
 
         loop.run_until_complete(with_progress(futures))
