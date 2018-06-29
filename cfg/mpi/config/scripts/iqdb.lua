@@ -2,7 +2,7 @@ local mp_utils = require('mp.utils')
 
 function search_iqdb()
     local source = mp.get_property('path')
-    local target1 = os.tmpname()
+    local target1 = os.tmpname() .. '.html'
     local target2 = os.tmpname()
     local handle = io.open(target1, 'w')
 
