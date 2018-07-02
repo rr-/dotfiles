@@ -1,6 +1,7 @@
 import re
 import typing as T
 from collections import defaultdict
+from copy import copy
 
 import ass_tag_parser
 import enchant
@@ -414,6 +415,16 @@ def measure_frame_size(
         renderer: bubblesub.ui.ass_renderer.AssRenderer,
         event: Event
 ) -> T.Tuple[int, int]:
+    fake_event_list = EventList()
+    fake_event_list.insert(0, [copy(event)])
+
+    renderer.set_source(
+        style_list=renderer.style_list,
+        event_list=fake_event_list,
+        info=renderer.info,
+        video_resolution=renderer.video_resolution
+    )
+
     layers = list(renderer.render_raw(time=event.start))
     if not layers:
         return (0, 0)
@@ -430,30 +441,26 @@ def get_optimal_line_heights(
         renderer: bubblesub.ui.ass_renderer.AssRenderer
 ) -> T.Dict[str, float]:
     TEST_LINE_COUNT = 20
-    TIME_FIDELITY = 100
     VIDEO_RES_X = 100
     VIDEO_RES_Y = TEST_LINE_COUNT * 300
 
     fake_info = Metadata()
-    fake_event_list = EventList()
-    for i, style in enumerate(api.subs.styles):
-        fake_event_list.insert_one(
-            0,
-            start=i * TIME_FIDELITY,
-            end=TIME_FIDELITY + i * TIME_FIDELITY,
-            text='\\N'.join(['.'] * TEST_LINE_COUNT),
-            style=style.name
-        )
-
     renderer.set_source(
-        api.subs.styles,
-        fake_event_list,
-        fake_info,
+        style_list=api.subs.styles,
+        event_list=api.subs.events,
+        info=fake_info,
         video_resolution=(VIDEO_RES_X, VIDEO_RES_Y),
     )
 
     ret = {}
-    for event in fake_event_list:
+    for style in api.subs.styles:
+        event = Event(
+            start=0,
+            end=1000,
+            text='\\N'.join(['gjMW'] * TEST_LINE_COUNT),
+            style=style.name
+        )
+
         _frame_width, frame_height = measure_frame_size(renderer, event)
         line_height = frame_height / TEST_LINE_COUNT
         ret[event.style] = line_height
@@ -470,18 +477,19 @@ def check_long_line(
     width, height = measure_frame_size(renderer, event)
     if width >= api.media.video.width * 0.9:
         yield Violation(event, f'too long line')
-    if height >= optimal_line_heights[event.style] * 2.8:
-        yield Violation(event, f'three lines')
+    max_height = optimal_line_heights[event.style] * 2.5
+    if height >= max_height:
+        yield Violation(event, f'three lines ({height} > {max_height})')
 
 
 def list_violations(logger, api: bubblesub.api.Api) -> T.Iterable[BaseResult]:
     renderer = bubblesub.ui.ass_renderer.AssRenderer()
     optimal_line_heights = get_optimal_line_heights(logger, api, renderer)
     renderer.set_source(
-        api.subs.styles,
-        api.subs.events,
+        style_list=api.subs.styles,
+        event_list=api.subs.events,
         info=api.subs.info,
-        video_resolution=(api.media.video.width, api.media.video.height),
+        video_resolution=(api.media.video.width, api.media.video.height)
     )
 
     for event in api.subs.events:
