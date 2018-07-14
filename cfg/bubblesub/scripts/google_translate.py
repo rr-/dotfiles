@@ -1,3 +1,4 @@
+import argparse
 import asyncio
 
 import googletrans
@@ -5,9 +6,17 @@ from bubblesub.api.cmd import BaseCommand
 from bubblesub.opt.menu import MenuCommand
 from bubblesub.opt.menu import SubMenu
 
+_CODE_TO_NAME = {
+    'ja': 'Japanese',
+    'de': 'German',
+    'fr': 'French',
+    'it': 'Italian',
+    'auto': 'Automatic'
+}
 
-async def _work(language, api, logger, line):
-    logger.info(f'line #{line.number} - analyzing')
+
+async def _work(language, api, line):
+    api.log.info(f'line #{line.number} - analyzing')
     try:
         def recognize():
             translator = googletrans.Translator()
@@ -18,9 +27,9 @@ async def _work(language, api, logger, line):
             await asyncio.get_event_loop().run_in_executor(None, recognize)
         )
     except Exception as ex:
-        logger.error(f'line #{line.number}: error ({ex})')
+        api.log.error(f'line #{line.number}: error ({ex})')
     else:
-        logger.info(f'line #{line.number}: OK')
+        api.log.info(f'line #{line.number}: OK')
         with api.undo.capture():
             if line.text:
                 line.text = line.text + r'\N' + result.text
@@ -29,16 +38,12 @@ async def _work(language, api, logger, line):
 
 
 class GoogleTranslateCommand(BaseCommand):
-    name = 'plugin/google-translate'
-
-    def __init__(self, api, language_code, language_name):
-        super().__init__(api)
-        self._language_code = language_code
-        self._language_name = language_name
+    name = 'google-translate'
+    help_text = 'Puts results of Google translation into selected subtitles.'
 
     @property
     def menu_name(self):
-        return f'&{self._language_name}'
+        return '&' + _CODE_TO_NAME[self.args.code]
 
     @property
     def is_enabled(self):
@@ -46,7 +51,15 @@ class GoogleTranslateCommand(BaseCommand):
 
     async def run(self):
         for line in self.api.subs.selected_events:
-            await _work(self._language_code, self.api, self, line)
+            await _work(self.args.code, self.api, line)
+
+    @staticmethod
+    def _decorate_parser(parser: argparse.ArgumentParser) -> None:
+        parser.add_argument(
+            'code',
+            help='language code',
+            choices=list(_CODE_TO_NAME.keys())
+        )
 
 
 def register(cmd_api):
@@ -55,11 +68,11 @@ def register(cmd_api):
         SubMenu(
             '&Translate',
             [
-                MenuCommand(GoogleTranslateCommand.name, 'ja', 'Japanese'),
-                MenuCommand(GoogleTranslateCommand.name, 'de', 'German'),
-                MenuCommand(GoogleTranslateCommand.name, 'fr', 'French'),
-                MenuCommand(GoogleTranslateCommand.name, 'it', 'Italian'),
-                MenuCommand(GoogleTranslateCommand.name, 'auto', 'auto')
+                MenuCommand('/google-translate ja'),
+                MenuCommand('/google-translate de'),
+                MenuCommand('/google-translate fr'),
+                MenuCommand('/google-translate it'),
+                MenuCommand('/google-translate auto')
             ]
         )
     )
