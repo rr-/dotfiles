@@ -8,8 +8,11 @@ import bubblesub.opt.menu
 
 
 class AutoTimeCommand(bubblesub.api.cmd.BaseCommand):
-    name = 'plugin/auto-time'
+    name = 'auto-time'
     menu_name = 'Auto time'
+    help_text = (
+        'Attempts to add empty subtitles on parts of audio containing speech.'
+    )
 
     @property
     def is_enabled(self):
@@ -52,5 +55,5 @@ class AutoTimeCommand(bubblesub.api.cmd.BaseCommand):
 def register(cmd_api):
     cmd_api.register_plugin_command(
         AutoTimeCommand,
-        bubblesub.opt.menu.MenuCommand(AutoTimeCommand.name)
+        bubblesub.opt.menu.MenuCommand('/auto-time')
     )

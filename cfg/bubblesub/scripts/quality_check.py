@@ -250,14 +250,14 @@ def check_double_words(event: Event) -> T.Iterable[BaseResult]:
         yield Violation(event, f'double word ({word})')
 
 
-def check_spelling(logger, api):
+def check_spelling(api):
     try:
         dictionary = enchant.DictWithPWL(
             SPELL_CHECK_LANGUAGE,
             pwl=str(api.subs.path.with_name('dict.txt'))
         )
     except enchant.errors.DictNotFoundError:
-        logger.warn(f'Dictionary "{SPELL_CHECK_LANGUAGE}" not found')
+        api.log.warn(f'Dictionary "{SPELL_CHECK_LANGUAGE}" not found')
         return
 
     misspelling_map = defaultdict(set)
@@ -268,41 +268,41 @@ def check_spelling(logger, api):
         for _start, _end, word in spell_check_ass_line(dictionary, text):
             misspelling_map[word].add(event.number)
 
-    logger.info('Misspelt words:')
+    api.log.info('Misspelt words:')
     for word, line_numbers in sorted(
             misspelling_map.items(),
             key=lambda item: len(item[1]),
             reverse=True
     ):
-        logger.warn(
+        api.log.warn(
             f'- {word}: ' + ', '.join(f'#{num}' for num in line_numbers)
         )
 
 
-def check_actors(logger, api):
-    logger.info('Actors summary:')
+def check_actors(api):
+    api.log.info('Actors summary:')
     actors = defaultdict(int)
 
     for line in api.subs.events:
         actors[line.actor] += 1
 
     for actor, occurrences in sorted(actors.items(), key=lambda kv: -kv[1]):
-        logger.info(f'– {occurrences} time(s): {actor}')
+        api.log.info(f'– {occurrences} time(s): {actor}')
 
 
-def check_styles(logger, api):
-    logger.info('Styles summary:')
+def check_styles(api):
+    api.log.info('Styles summary:')
     styles = defaultdict(int)
 
     for line in api.subs.events:
         styles[line.style] += 1
 
     for style, occurrences in sorted(styles.items(), key=lambda kv: -kv[1]):
-        logger.info(f'– {occurrences} time(s): {style}')
+        api.log.info(f'– {occurrences} time(s): {style}')
 
 
-def check_fonts(logger, api):
-    logger.info('Fonts summary:')
+def check_fonts(api):
+    api.log.info('Fonts summary:')
 
     TT_NAME_ID_FONT_FAMILY = 1
     TT_NAME_ID_FULL_NAME = 4
@@ -394,11 +394,11 @@ def check_fonts(logger, api):
     fonts = get_fonts()
     for font_specs, glyphs in results.items():
         font_family, is_bold, is_italic = font_specs
-        logger.info(f'– {font_family}, {len(glyphs)} glyphs')
+        api.log.info(f'– {font_family}, {len(glyphs)} glyphs')
 
         result = locate_font(fonts, font_family, is_bold, is_italic)
         if not result:
-            logger.warn(f'  font file not found')
+            api.log.warn(f'  font file not found')
             continue
 
         _weight, _font_path, font = result
@@ -408,7 +408,7 @@ def check_fonts(logger, api):
                 missing_glyphs.add(glyph)
 
         if missing_glyphs:
-            logger.warn(f'  missing glyphs: {"".join(missing_glyphs)}')
+            api.log.warn(f'  missing glyphs: {"".join(missing_glyphs)}')
 
 
 def measure_frame_size(
@@ -436,7 +436,6 @@ def measure_frame_size(
 
 
 def get_optimal_line_heights(
-        logger,
         api: bubblesub.api.Api,
         renderer: bubblesub.ui.ass_renderer.AssRenderer
 ) -> T.Dict[str, float]:
@@ -464,7 +463,7 @@ def get_optimal_line_heights(
         _frame_width, frame_height = measure_frame_size(renderer, event)
         line_height = frame_height / TEST_LINE_COUNT
         ret[event.style] = line_height
-        logger.debug(f'average height for {event.style}: {line_height}')
+        api.log.debug(f'average height for {event.style}: {line_height}')
     return ret
 
 
@@ -482,9 +481,9 @@ def check_long_line(
         yield Violation(event, f'three lines ({height} > {max_height})')
 
 
-def list_violations(logger, api: bubblesub.api.Api) -> T.Iterable[BaseResult]:
+def list_violations(api: bubblesub.api.Api) -> T.Iterable[BaseResult]:
     renderer = bubblesub.ui.ass_renderer.AssRenderer()
-    optimal_line_heights = get_optimal_line_heights(logger, api, renderer)
+    optimal_line_heights = get_optimal_line_heights(api, renderer)
     renderer.set_source(
         style_list=api.subs.styles,
         event_list=api.subs.events,
@@ -503,25 +502,26 @@ def list_violations(logger, api: bubblesub.api.Api) -> T.Iterable[BaseResult]:
 
 
 class QualityCheckCommand(bubblesub.api.cmd.BaseCommand):
-    name = 'plugin/quality-check'
+    name = 'quality-check'
     menu_name = '&Quality check'
+    help_text = 'Tries to pinpoint common issues with the subtitles.'
 
     async def run(self):
         results = sorted(
-            list_violations(self, self.api),
+            list_violations(self.api),
             key=lambda result: (result.event.number, result.text)
         )
         for result in results:
-            self.log(result.log_level, repr(result))
+            self.api.log.log(result.log_level, repr(result))
 
-        check_spelling(self, self.api)
-        check_actors(self, self.api)
-        check_styles(self, self.api)
-        check_fonts(self, self.api)
+        check_spelling(self.api)
+        check_actors(self.api)
+        check_styles(self.api)
+        check_fonts(self.api)
 
 
 def register(cmd_api):
     cmd_api.register_plugin_command(
         QualityCheckCommand,
-        bubblesub.opt.menu.MenuCommand(QualityCheckCommand.name)
+        bubblesub.opt.menu.MenuCommand('/quality-check')
     )

@@ -6,8 +6,9 @@ import bubblesub.api.cmd
 
 
 class LoadClosedCaptionsCommand(bubblesub.api.cmd.BaseCommand):
-    name = 'plugin/load-closed-captions'
+    name = 'load-cc'
     menu_name = '&Load closed captions'
+    help_text = 'Loads closed captions from a file.'
 
     @property
     def is_enabled(self):
@@ -35,8 +36,11 @@ class LoadClosedCaptionsCommand(bubblesub.api.cmd.BaseCommand):
 
 
 class CleanClosedCaptionsCommand(bubblesub.api.cmd.BaseCommand):
-    name = 'plugin/clean-closed-captions'
+    name = 'clean-cc'
     menu_name = '&Clean closed captions'
+    help_text = (
+        'Cleans common closed caption punctuation from the selected events.'
+    )
 
     @property
     def is_enabled(self):
@@ -67,9 +71,9 @@ class CleanClosedCaptionsCommand(bubblesub.api.cmd.BaseCommand):
 def register(cmd_api):
     cmd_api.register_plugin_command(
         LoadClosedCaptionsCommand,
-        bubblesub.opt.menu.MenuCommand(LoadClosedCaptionsCommand.name)
+        bubblesub.opt.menu.MenuCommand('/load-cc')
     )
     cmd_api.register_plugin_command(
         CleanClosedCaptionsCommand,
-        bubblesub.opt.menu.MenuCommand(CleanClosedCaptionsCommand.name)
+        bubblesub.opt.menu.MenuCommand('/clean-cc')
     )
