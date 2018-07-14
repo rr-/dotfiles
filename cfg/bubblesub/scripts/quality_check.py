@@ -252,6 +252,9 @@ def check_double_words(event: Event) -> T.Iterable[BaseResult]:
 
 
 def check_spelling(api):
+    if not api.subs.path:
+        return
+
     try:
         dictionary = enchant.DictWithPWL(
             SPELL_CHECK_LANGUAGE,
@@ -343,6 +346,9 @@ def check_fonts(api):
             if line.is_comment:
                 continue
 
+            if line.style not in styles:
+                continue
+
             family = styles[line.style].font_name
             is_bold = styles[line.style].bold
             is_italic = styles[line.style].italic
@@ -372,6 +378,9 @@ def check_fonts(api):
         return results
 
     def get_fonts():
+        if not api.subs.path:
+            return {}
+
         return {
             path: FontInfo(path)
             for path in (api.subs.path.parent / '../.fonts').iterdir()
@@ -477,7 +486,7 @@ def check_long_line(
     width, height = measure_frame_size(renderer, event)
     if width >= api.media.video.width * 0.9:
         yield Violation(event, f'too long line')
-    max_height = optimal_line_heights[event.style] * 2.5
+    max_height = optimal_line_heights.get(event.style, 0) * 2.5
     if height >= max_height:
         yield Violation(event, f'three lines ({height} > {max_height})')
 
