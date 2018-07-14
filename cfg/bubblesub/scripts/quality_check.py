@@ -13,6 +13,7 @@ import bubblesub.ui.ass_renderer
 from bubblesub.api.log import LogLevel
 from bubblesub.ass.event import Event
 from bubblesub.ass.event import EventList
+from bubblesub.ass.style import StyleList
 from bubblesub.ass.info import Metadata
 from bubblesub.ass.util import ass_to_plaintext
 from bubblesub.ass.util import character_count
@@ -81,6 +82,15 @@ class Information(BaseResult):
 
 class Violation(BaseResult):
     log_level = LogLevel.Warning
+
+
+def check_style_validity(
+        event: Event,
+        styles: StyleList
+) -> T.Iterable[BaseResult]:
+    style = styles.get_by_name(event.style)
+    if style is None:
+        yield Violation(event, f'using non-existing style')
 
 
 def check_durations(event: Event) -> T.Iterable[BaseResult]:
@@ -502,6 +512,7 @@ def list_violations(api: bubblesub.api.Api) -> T.Iterable[BaseResult]:
     )
 
     for event in api.subs.events:
+        yield from check_style_validity(event, api.subs.styles)
         yield from check_durations(event)
         yield from check_punctuation(event)
         yield from check_quotes(event)
