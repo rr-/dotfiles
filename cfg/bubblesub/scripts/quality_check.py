@@ -9,6 +9,7 @@ import fontTools.ttLib as font_tools
 
 import bubblesub.api.cmd
 import bubblesub.opt.menu
+import bubblesub.ui.ass_renderer
 from bubblesub.api.log import LogLevel
 from bubblesub.ass.event import Event
 from bubblesub.ass.event import EventList
