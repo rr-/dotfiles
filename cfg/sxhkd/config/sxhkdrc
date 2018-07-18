@@ -14,15 +14,11 @@ super + n
 alt + ctrl + shift + l
     i3lock -c 000000
 
-# focus or spawn local terminal with tmux
+# focus or spawn local tmux
 alt + ctrl + bracketleft
-    run_or_raise -cn local_terminal -p "urxvt -name local_terminal -e zsh -ilc 'tmux new-session -As work'"
-
-# focus and spawn local terminal with tmux
-super + Return
     xdotool search --classname local_terminal windowactivate; \
     if [ $? -ne 0 ]; then; \
-        urxvt -name local_terminal -e zsh -ilc 'if tmux has-session -t work &>/dev/null; then tmux new-window -t work:; tmux attach-session -t work; else tmux new-session -s work; fi'; \
+        urxvt -name local_terminal -e zsh -ilc 'tmux attach-session || tmux new-session'; \
     else; \
         tmux new-window -t work; \
     fi
@@ -31,30 +27,17 @@ super + Return
 alt + ctrl + shift + bracketleft
     urxvt
 
-# focus or spawn remote terminal
-alt + ctrl + bracketright
-    run_or_raise -cn remote_terminal -p "urxvt -name remote_terminal -e zsh -ilc 'ssh sakuya.pl -t "'"zsh -ilc tmux\ new-session\ -As\ work"'"'"
-
-# spawn plain remote terminal
-alt + ctrl + shift + bracketright
-    urxvt -e zsh -ilc 'ssh sakuya.pl'
-
 # focus or spawn irc
 alt + ctrl + m
-    run_or_raise -cn remote_irc -p "urxvt -name remote_irc -e zsh -ilc 'ssh sakuya.pl -t "'"zsh -ilc tmux\ a\ -t\ irc"'"'"
+    run_or_raise -cn remote_irc -p "urxvt -name remote_irc -e zsh -ilc 'ssh sakuya.pl -t "'"zsh -ilc tmux\ attach\ -t\ irc"'"'"
 
 # focus or spawn irc, and detach all other sessions
 alt + ctrl + shift + m
-    run_or_raise -cn remote_irc -p "urxvt -name remote_irc -e zsh -ilc 'ssh sakuya.pl -t "'"zsh -ilc tmux\ a\ -d\ -t\ irc"'"'"
+    run_or_raise -cn remote_irc -p "urxvt -name remote_irc -e zsh -ilc 'ssh sakuya.pl -t "'"zsh -ilc tmux\ attach\ -d\ -t\ irc"'"'"
 
 # spawn web browser
 alt + ctrl + semicolon
     run_or_raise -n 'Qutebrowser' -p "xdg-open 'about:blank'"
-
-# spawn file manager within local terminal
-super + e
-    run_or_raise -cn local_terminal -p "urxvt -name local_terminal -e zsh -ilc 'tmux new-session -As work -n vifm vifm'"; \
-    tmux select-window -t work:vifm || tmux new-window -t work: -n vifm vifm
 
 
 
