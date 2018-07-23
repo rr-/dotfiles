@@ -494,10 +494,14 @@ def check_long_line(
         optimal_line_heights: T.Dict[str, float]
 ) -> T.Iterable[BaseResult]:
     width, height = measure_frame_size(renderer, event)
-    if width >= api.media.video.width * 0.9:
-        yield Violation(event, f'too long line')
-    max_height = optimal_line_heights.get(event.style, 0) * 2.5
-    if height >= max_height:
+    line_count = round(height / optimal_line_heights.get(event.style, 0))
+    if line_count == 1:
+        if width >= api.media.video.width * 0.75:
+            yield Violation(event, f'too long single line')
+    elif line_count == 2:
+        if width >= api.media.video.width * 0.9:
+            yield Violation(event, f'too long double line')
+    elif line_count >= 3:
         yield Violation(event, f'three lines ({height} > {max_height})')
 
 
