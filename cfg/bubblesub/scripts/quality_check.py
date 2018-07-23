@@ -534,7 +534,7 @@ class QualityCheckCommand(bubblesub.api.cmd.BaseCommand):
     async def run(self):
         results = sorted(
             list_violations(self.api),
-            key=lambda result: (result.event.number, result.text)
+            key=lambda result: (result.text, result.event.number)
         )
         for result in results:
             self.api.log.log(result.log_level, repr(result))
