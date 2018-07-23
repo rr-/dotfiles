@@ -142,8 +142,14 @@ def print_long_listing(
         try:
             path_stat = path.stat()
             chmod = format_chmod(path_stat.st_mode)
-            user = getpwuid(path_stat.st_uid).pw_name
-            group = getgrgid(path_stat.st_gid).gr_name
+            try:
+                user = getpwuid(path_stat.st_uid).pw_name
+            except KeyError:
+                user = str(path_stat.st_uid)
+            try:
+                group = getgrgid(path_stat.st_gid).gr_name
+            except KeyError:
+                group = str(path_stat.st_gid)
             date = (
                 datetime.fromtimestamp(path_stat.st_mtime)
                 .replace(microsecond=0)
