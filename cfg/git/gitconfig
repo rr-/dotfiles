@@ -15,6 +15,7 @@
 [merge]
     conflictStyle = diff3
 [alias]
+    set-upstream = !git branch --set-upstream-to=origin/`git symbolic-ref --short HEAD`
     amen = commit --amend
     ramen = commit --amend --all --no-edit
     push-up-to = "!f() { \
