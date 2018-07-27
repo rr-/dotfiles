@@ -494,7 +494,8 @@ def check_long_line(
         optimal_line_heights: T.Dict[str, float]
 ) -> T.Iterable[BaseResult]:
     width, height = measure_frame_size(renderer, event)
-    line_count = round(height / optimal_line_heights.get(event.style, 0))
+    optimal_height = optimal_line_heights.get(event.style, 0)
+    line_count = round(height / optimal_height)
     if line_count == 1:
         if width >= api.media.video.width * 0.75:
             yield Violation(event, f'too long single line')
@@ -502,7 +503,9 @@ def check_long_line(
         if width >= api.media.video.width * 0.9:
             yield Violation(event, f'too long double line')
     elif line_count >= 3:
-        yield Violation(event, f'three lines ({height} > {max_height})')
+        yield Violation(
+            event, f'three lines ({height}/{optimal_height} = {line_count})'
+        )
 
 
 def list_violations(api: bubblesub.api.Api) -> T.Iterable[BaseResult]:
