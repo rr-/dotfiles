@@ -38,7 +38,7 @@ async def _work(language, api, line):
 
 
 class GoogleTranslateCommand(BaseCommand):
-    name = 'google-translate'
+    names = ['google-translate']
     help_text = 'Puts results of Google translation into selected subtitles.'
 
     @property

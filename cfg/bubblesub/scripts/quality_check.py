@@ -530,7 +530,7 @@ def list_violations(api: bubblesub.api.Api) -> T.Iterable[BaseResult]:
 
 
 class QualityCheckCommand(bubblesub.api.cmd.BaseCommand):
-    name = 'quality-check'
+    names = ['quality-check', 'qc']
     menu_name = '&Quality check'
     help_text = 'Tries to pinpoint common issues with the subtitles.'
 
