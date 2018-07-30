@@ -5,7 +5,7 @@ import bubblesub.opt.menu
 
 
 class AlignSubtitlesToVideoFramesCommand(bubblesub.api.cmd.BaseCommand):
-    name = 'align-subs-to-video-frames'
+    names = ['align-subs-to-video-frames']
     menu_name = 'Align subtitles to &video frames'
     help_text = 'Aligns subtitles to video frames.'
 

@@ -44,7 +44,7 @@ async def _work(language, api, line):
 
 
 class SpeechRecognitionCommand(BaseCommand):
-    name = 'google-speech-recognition'
+    names = ['google-speech-recognition']
     help_text = (
         'Puts results of Google speech recognition '
         'for selected subtitles into their notes.'

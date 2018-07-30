@@ -8,7 +8,7 @@ import bubblesub.opt.menu
 
 
 class AutoTimeCommand(bubblesub.api.cmd.BaseCommand):
-    name = 'auto-time'
+    names = ['auto-time']
     menu_name = 'Auto time'
     help_text = (
         'Attempts to add empty subtitles on parts of audio containing speech.'

@@ -49,7 +49,7 @@ def _format_ass_tags(*tags, close=True):
 
 
 class FadeCommand(BaseCommand):
-    name = 'fade'
+    names = ['fade']
     help_text = 'Fades selected subtitles from or into a given color.'
 
     @property
