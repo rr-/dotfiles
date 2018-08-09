@@ -1,9 +1,10 @@
 import argparse
 import re
 
-from bubblesub.opt.menu import SubMenu
-from bubblesub.opt.menu import MenuCommand
+from bubblesub.api import Api
 from bubblesub.api.cmd import BaseCommand
+from bubblesub.opt.menu import MenuCommand
+from bubblesub.opt.menu import SubMenu
 from bubblesub.util import HorizontalDirection
 
 
@@ -105,7 +106,7 @@ class FadeCommand(BaseCommand):
                     raise ValueError('Invalid direction')
 
     @staticmethod
-    def _decorate_parser(parser: argparse.ArgumentParser) -> None:
+    def _decorate_parser(api: Api, parser: argparse.ArgumentParser) -> None:
         parser.add_argument(
             '-d', '--duration',
             help='how long the fade should last',

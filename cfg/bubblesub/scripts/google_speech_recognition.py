@@ -3,6 +3,7 @@ import asyncio
 import io
 
 import speech_recognition as sr
+from bubblesub.api import Api
 from bubblesub.api.cmd import BaseCommand
 from bubblesub.opt.menu import MenuCommand
 from bubblesub.opt.menu import SubMenu
@@ -64,7 +65,7 @@ class SpeechRecognitionCommand(BaseCommand):
             await _work(self.args.code, self.api, line)
 
     @staticmethod
-    def _decorate_parser(parser: argparse.ArgumentParser) -> None:
+    def _decorate_parser(api: Api, parser: argparse.ArgumentParser) -> None:
         parser.add_argument(
             'code',
             help='language code',

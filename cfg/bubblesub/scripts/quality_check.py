@@ -13,8 +13,8 @@ import bubblesub.ui.ass_renderer
 from bubblesub.api.log import LogLevel
 from bubblesub.ass.event import Event
 from bubblesub.ass.event import EventList
-from bubblesub.ass.style import StyleList
 from bubblesub.ass.info import Metadata
+from bubblesub.ass.style import StyleList
 from bubblesub.ass.util import ass_to_plaintext
 from bubblesub.ass.util import character_count
 from bubblesub.ass.util import spell_check_ass_line

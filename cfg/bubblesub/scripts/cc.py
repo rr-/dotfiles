@@ -1,8 +1,8 @@
 import re
 
 import pysubs2
-import bubblesub.ui.util
 import bubblesub.api.cmd
+import bubblesub.ui.util
 
 
 class LoadClosedCaptionsCommand(bubblesub.api.cmd.BaseCommand):
@@ -10,14 +10,10 @@ class LoadClosedCaptionsCommand(bubblesub.api.cmd.BaseCommand):
     menu_name = '&Load closed captions'
     help_text = 'Loads closed captions from a file.'
 
-    @property
-    def is_enabled(self):
-        return True
-
     async def run(self):
         await self.api.gui.exec(self._run)
 
-    async def _run(self, api, main_window):
+    async def _run(self, _api, main_window):
         path = bubblesub.ui.util.load_dialog(
             main_window, 'Subtitles (*.ass *.srt);;All files (*.*)'
         )
@@ -27,8 +23,8 @@ class LoadClosedCaptionsCommand(bubblesub.api.cmd.BaseCommand):
         source = pysubs2.load(str(path))
         with self.api.undo.capture():
             for line in source:
-                api.subs.events.insert_one(
-                    len(api.subs.events),
+                self.api.subs.events.insert_one(
+                    len(self.api.subs.events),
                     start=line.start,
                     end=line.end,
                     note=line.text
@@ -42,14 +38,7 @@ class CleanClosedCaptionsCommand(bubblesub.api.cmd.BaseCommand):
         'Cleans common closed caption punctuation from the selected events.'
     )
 
-    @property
-    def is_enabled(self):
-        return True
-
     async def run(self):
-        await self.api.gui.exec(self._run)
-
-    async def _run(self, api, _main_window):
         with self.api.undo.capture():
             for line in api.subs.selected_events:
                 note = line.note
