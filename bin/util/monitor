@@ -10,13 +10,13 @@ from pathlib import Path
 
 def _get_paths(target_paths: List[Path], exclude: List[str]) -> List[str]:
     for target_path in target_paths:
-        for path in target_path.iterdir():
-            if path.name in exclude:
-                continue
-            elif path.is_dir():
+        if target_path.name in exclude:
+            continue
+        if target_path.is_file():
+            yield target_path
+        elif target_path.is_dir():
+            for path in target_path.iterdir():
                 yield from _get_paths([path], exclude)
-            elif path.is_file():
-                yield path
 
 
 def _get_checksum(paths: List[str]) -> str:
@@ -48,7 +48,7 @@ def main() -> None:
     last_checksum = None
 
     while True:
-        paths = list(sorted(_get_paths(target_dirs, exclude)))
+        paths = list(sorted(set(_get_paths(target_dirs, exclude))))
         try:
             current_checksum = _get_checksum(paths)
         except Exception:
