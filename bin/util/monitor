@@ -7,6 +7,8 @@ from datetime import datetime
 from typing import List
 from pathlib import Path
 
+DEFAULT_EXCLUDE = ['__pycache__']
+
 
 def _get_paths(target_paths: List[Path], exclude: List[str]) -> List[str]:
     for target_path in target_paths:
@@ -42,6 +44,7 @@ def _parse_args() -> argparse.Namespace:
 def main() -> None:
     args = _parse_args()
     exclude: List[str] = args.exclude or []
+    exclude += DEFAULT_EXCLUDE
     target_dirs: List[Path] = [Path(path) for path in args.target_dir]
     command_line: List[str] = [args.cmd] + args.cmd_args
     sleep_time: int = args.sleep
