@@ -17,9 +17,8 @@ class ProgressCommand(bubblesub.api.cmd.BaseCommand):
         total_count = len(self.api.subs.events)
         total_duration = 0
         for line in self.api.subs.events:
-            if line.text:
-                total_duration += line.duration
-            else:
+            total_duration += line.duration
+            if not line.text:
                 empty_duration += line.duration
                 empty_count += 1
 
