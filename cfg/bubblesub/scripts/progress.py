@@ -14,12 +14,15 @@ class ProgressCommand(bubblesub.api.cmd.BaseCommand):
     async def run(self):
         empty_count = 0
         empty_duration = 0
-        total_count = len(self.api.subs.events)
+        total_count = 0
         total_duration = 0
-        for line in self.api.subs.events:
-            total_duration += line.duration
-            if not line.text:
-                empty_duration += line.duration
+        for event in self.api.subs.events:
+            if 'karaoke' in event.actor:
+                continue
+            total_duration += event.duration
+            total_count += 1
+            if not event.text:
+                empty_duration += event.duration
                 empty_count += 1
 
         self.api.log.info(
