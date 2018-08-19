@@ -17,7 +17,7 @@ class ProgressCommand(bubblesub.api.cmd.BaseCommand):
         total_count = 0
         total_duration = 0
         for event in self.api.subs.events:
-            if 'karaoke' in event.actor:
+            if event.actor.startswith('[') and event.actor.endswith(']'):
                 continue
             total_duration += event.duration
             total_count += 1
