@@ -494,18 +494,31 @@ def check_long_line(
         optimal_line_heights: T.Dict[str, float]
 ) -> T.Iterable[BaseResult]:
     width, height = measure_frame_size(renderer, event)
-    optimal_height = optimal_line_heights.get(event.style, 0)
-    line_count = round(height / optimal_height)
-    if line_count == 1:
-        if width >= api.media.video.width * 0.75:
-            yield Violation(event, f'too long single line')
-    elif line_count == 2:
-        if width >= api.media.video.width * 0.9:
-            yield Violation(event, f'too long double line')
-    elif line_count >= 3:
+    average_height = optimal_line_heights.get(event.style, 0)
+    line_count = round(height / average_height)
+    if not line_count:
+        return
+
+    width_multipliers = {
+        1: 0.6,
+        2: 0.9,
+    }
+
+    try:
+        width_multiplier = width_multipliers[line_count]
+    except LookupError:
         yield Violation(
-            event, f'three lines ({height}/{optimal_height} = {line_count})'
+            event,
+            f'too many lines ({height}/{average_height} = {line_count})'
         )
+    else:
+        optimal_width = api.media.video.width * width_multiplier
+        if width > optimal_width:
+            yield Violation(
+                event,
+                f'too long line '
+                f'({width - optimal_width:.02f} beyond {optimal_width:.02f})'
+            )
 
 
 def list_violations(api: bubblesub.api.Api) -> T.Iterable[BaseResult]:
