@@ -8,7 +8,6 @@ def ms_to_str(ms: int) -> str:
 
 class ProgressCommand(bubblesub.api.cmd.BaseCommand):
     names = ['progress']
-    menu_name = 'Show translation &progress'
     help_text = 'How much left'
 
     async def run(self):
@@ -41,5 +40,7 @@ class ProgressCommand(bubblesub.api.cmd.BaseCommand):
 def register(cmd_api):
     cmd_api.register_plugin_command(
         ProgressCommand,
-        bubblesub.opt.menu.MenuCommand('/progress')
+        bubblesub.opt.menu.MenuCommand(
+            'Show translation &progress', '/progress'
+        )
     )

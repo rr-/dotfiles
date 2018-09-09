@@ -544,7 +544,6 @@ def list_violations(api: bubblesub.api.Api) -> T.Iterable[BaseResult]:
 
 class QualityCheckCommand(bubblesub.api.cmd.BaseCommand):
     names = ['quality-check', 'qc']
-    menu_name = '&Quality check'
     help_text = 'Tries to pinpoint common issues with the subtitles.'
 
     async def run(self):
@@ -567,5 +566,5 @@ class QualityCheckCommand(bubblesub.api.cmd.BaseCommand):
 def register(cmd_api):
     cmd_api.register_plugin_command(
         QualityCheckCommand,
-        bubblesub.opt.menu.MenuCommand('/quality-check')
+        bubblesub.opt.menu.MenuCommand('&Quality check', '/quality-check')
     )

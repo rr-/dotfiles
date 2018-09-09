@@ -5,7 +5,6 @@ from bubblesub.api import Api
 from bubblesub.api.cmd import BaseCommand
 from bubblesub.opt.menu import MenuCommand
 from bubblesub.opt.menu import SubMenu
-from bubblesub.util import HorizontalDirection
 
 
 BLACK = (16, 16, 16)
@@ -54,16 +53,6 @@ class FadeCommand(BaseCommand):
     help_text = 'Fades selected subtitles from or into a given color.'
 
     @property
-    def menu_name(self):
-        ret = '&Fade '
-        if self.args.direction == HorizontalDirection.Left:
-            ret += 'from '
-        else:
-            ret += 'to '
-        ret += '#' + ''.join(f'{comp:02X}' for comp in self.args.color)
-        return ret
-
-    @property
     def is_enabled(self):
         return self.api.subs.has_selection
 
@@ -77,11 +66,11 @@ class FadeCommand(BaseCommand):
                 col3 = style.outline_color
                 col4 = style.back_color
 
-                if self.args.direction == HorizontalDirection.Left:
+                if self.args['from']:
                     line.text = _format_ass_tags(
-                        _format_color(1, self.args.color),
-                        _format_color(3, self.args.color),
-                        _format_color(4, self.args.color),
+                        _format_color(1, self.args['from']),
+                        _format_color(3, self.args['from']),
+                        _format_color(4, self.args['from']),
                         _format_animation(
                             0,
                             self.args.duration,
@@ -91,19 +80,17 @@ class FadeCommand(BaseCommand):
                         ),
                         close=True
                     ) + line.text
-                elif self.args.direction == HorizontalDirection.Right:
+                if self.args.to:
                     line.text = _format_ass_tags(
                         _format_animation(
                             max(0, line.duration - self.args.duration),
                             line.duration,
-                            _format_color(1, self.args.color),
-                            _format_color(3, self.args.color),
-                            _format_color(4, self.args.color)
+                            _format_color(1, self.args.to),
+                            _format_color(3, self.args.to),
+                            _format_color(4, self.args.to)
                         ),
                         close=True
                     ) + line.text
-                else:
-                    raise ValueError('Invalid direction')
 
     @staticmethod
     def _decorate_parser(api: Api, parser: argparse.ArgumentParser) -> None:
@@ -114,17 +101,14 @@ class FadeCommand(BaseCommand):
             required=True
         )
         parser.add_argument(
-            '--direction',
-            help='how to fade the subtitle',
-            type=HorizontalDirection.from_string,
-            choices=list(HorizontalDirection),
-            required=True
+            '-f', '--from',
+            help='color to fade from',
+            type=_parse_color
         )
         parser.add_argument(
-            '-c', '--color',
-            help='how to insert the subtitle',
-            type=_parse_color,
-            required=True
+            '-t', '--to',
+            help='color to fade to',
+            type=_parse_color
         )
 
 
@@ -134,10 +118,10 @@ def register(cmd_api):
         SubMenu(
             '&Fade from/to…',
             [
-                MenuCommand('/fade -d 2000 --direction left -c #101010'),
-                MenuCommand('/fade -d 2000 --direction right -c #101010'),
-                MenuCommand('/fade -d 2000 --direction left -c #FFFFFF'),
-                MenuCommand('/fade -d 2000 --direction right -c #FFFFFF'),
+                MenuCommand('&Fade from black', '/fade -d=2000 --from=101010'),
+                MenuCommand('&Fade to black', '/fade -d=2000 --to=101010'),
+                MenuCommand('&Fade from white', '/fade -d=2000 --from=FFFFFF'),
+                MenuCommand('&Fade to white', '/fade -d=2000 --to=FFFFFF'),
             ]
         )
     )
