@@ -7,14 +7,6 @@ from bubblesub.api.cmd import BaseCommand
 from bubblesub.opt.menu import MenuCommand
 from bubblesub.opt.menu import SubMenu
 
-_CODE_TO_NAME = {
-    'ja': 'Japanese',
-    'de': 'German',
-    'fr': 'French',
-    'it': 'Italian',
-    'auto': 'Automatic'
-}
-
 
 async def _work(language, api, line):
     api.log.info(f'line #{line.number} - analyzing')
@@ -43,10 +35,6 @@ class GoogleTranslateCommand(BaseCommand):
     help_text = 'Puts results of Google translation into selected subtitles.'
 
     @property
-    def menu_name(self):
-        return '&' + _CODE_TO_NAME[self.args.code]
-
-    @property
     def is_enabled(self):
         return self.api.subs.has_selection
 
@@ -56,11 +44,7 @@ class GoogleTranslateCommand(BaseCommand):
 
     @staticmethod
     def _decorate_parser(api: Api, parser: argparse.ArgumentParser) -> None:
-        parser.add_argument(
-            'code',
-            help='language code',
-            choices=list(_CODE_TO_NAME.keys())
-        )
+        parser.add_argument('code', help='language code')
 
 
 def register(cmd_api):
@@ -69,11 +53,11 @@ def register(cmd_api):
         SubMenu(
             '&Translate',
             [
-                MenuCommand('/google-translate ja'),
-                MenuCommand('/google-translate de'),
-                MenuCommand('/google-translate fr'),
-                MenuCommand('/google-translate it'),
-                MenuCommand('/google-translate auto')
+                MenuCommand('&Japanese', '/google-translate ja'),
+                MenuCommand('&German', '/google-translate de'),
+                MenuCommand('&French', '/google-translate fr'),
+                MenuCommand('&Italian', '/google-translate it'),
+                MenuCommand('&Auto', '/google-translate auto')
             ]
         )
     )

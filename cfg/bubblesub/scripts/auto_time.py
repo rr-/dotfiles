@@ -1,5 +1,4 @@
 import os
-import bisect
 import tempfile
 from subprocess import run, PIPE
 
@@ -9,7 +8,6 @@ import bubblesub.opt.menu
 
 class AutoTimeCommand(bubblesub.api.cmd.BaseCommand):
     names = ['auto-time']
-    menu_name = 'Auto time'
     help_text = (
         'Attempts to add empty subtitles on parts of audio containing speech.'
     )
@@ -37,16 +35,12 @@ class AutoTimeCommand(bubblesub.api.cmd.BaseCommand):
                 _line_id, start, end = line.split()
                 ms_start = float(start) * 1000
                 ms_end = float(end) * 1000
-                idx_start = bisect.bisect_left(
-                    self.api.media.video.timecodes, ms_start
-                )
-                idx_end = bisect.bisect_left(
-                    self.api.media.video.timecodes, ms_end
-                )
                 self.api.subs.events.insert_one(
                     len(self.api.subs.events),
-                    start=self.api.media.video.timecodes[idx_start],
-                    end=self.api.media.video.timecodes[idx_end]
+                    start=self.api.media.video.align_pts_to_near_frame(
+                        ms_start
+                    ),
+                    end=self.api.media.video.align_pts_to_near_frame(ms_end),
                 )
 
         os.unlink(temp_path)
@@ -55,5 +49,5 @@ class AutoTimeCommand(bubblesub.api.cmd.BaseCommand):
 def register(cmd_api):
     cmd_api.register_plugin_command(
         AutoTimeCommand,
-        bubblesub.opt.menu.MenuCommand('/auto-time')
+        bubblesub.opt.menu.MenuCommand('Auto time', '/auto-time')
     )

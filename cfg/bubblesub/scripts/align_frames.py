@@ -1,12 +1,9 @@
-from bisect import bisect_left
-
 import bubblesub.api.cmd
 import bubblesub.opt.menu
 
 
 class AlignSubtitlesToVideoFramesCommand(bubblesub.api.cmd.BaseCommand):
     names = ['align-subs-to-video-frames']
-    menu_name = 'Align subtitles to &video frames'
     help_text = 'Aligns subtitles to video frames.'
 
     @property
@@ -16,16 +13,18 @@ class AlignSubtitlesToVideoFramesCommand(bubblesub.api.cmd.BaseCommand):
     async def run(self):
         with self.api.undo.capture():
             for line in self.api.subs.selected_events:
-                idx_start = bisect_left(
-                    self.api.media.video.timecodes, line.start
+                line.start = self.api.media.video.align_pts_to_near_frame(
+                    line.start
                 )
-                idx_end = bisect_left(self.api.media.video.timecodes, line.end)
-                line.start = self.api.media.video.timecodes[idx_start]
-                line.end = self.api.media.video.timecodes[idx_end]
+                line.end = self.api.media.video.align_pts_to_near_frame(
+                    line.end
+                )
 
 
 def register(cmd_api):
     cmd_api.register_plugin_command(
         AlignSubtitlesToVideoFramesCommand,
-        bubblesub.opt.menu.MenuCommand('/align-subs-to-video-frames')
+        bubblesub.opt.menu.MenuCommand(
+            'Align subtitles to &video frames', '/align-subs-to-video-frames'
+        )
     )
