@@ -8,8 +8,8 @@ import tempfile
 import urllib.parse
 import zlib
 
-import _jsonnet
 import dateutil.parser
+import demjson
 import lxml.html
 import regex
 import requests
@@ -83,8 +83,11 @@ def download_album(album_url, target_directory):
     json_code = regex.search(
         r'(?:TralbumData = )(\{(?>[^}{]*(?1)?)*\})',
         response_text,
-        regex.M).group(1)
-    data = json.loads(_jsonnet.evaluate_snippet('snippet', json_code))
+        flags=regex.M
+    ).group(1)
+    json_code = json_code.replace('" + "', '')
+
+    data = demjson.decode(json_code)
 
     album_artist = data['artist']
     album_title = data['current']['title']
