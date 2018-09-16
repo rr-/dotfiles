@@ -1,28 +1,63 @@
 #!/usr/bin/env python3
 import argparse
+import tempfile
+import subprocess
+import sys
+from pathlib import Path
+
 import speech_recognition as sr
+
+
+class RecognitionError(RuntimeError):
+    pass
 
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
-    parser.add_argument('-l', '--language')
-    parser.add_argument('file')
+    parser.add_argument('-l', '--language', required=True)
+    parser.add_argument('file', type=Path)
     return parser.parse_args()
+
+
+def recognize(path: Path, language: str) -> str:
+    with tempfile.NamedTemporaryFile(suffix='.wav') as handle:
+        wav_file = handle.name
+        result = subprocess.run(
+            ['ffmpeg', '-y', '-i', str(path), wav_file]
+        )
+        if result.returncode != 0:
+            raise RecognitionError('Error while converting audio')
+
+        r = sr.Recognizer()
+        with sr.AudioFile(wav_file) as source:
+            audio = r.record(source)
+
+    try:
+        return r.recognize_google(audio, language=language)
+    except sr.UnknownValueError:
+        raise RecognitionError(
+            'Google Speech Recognition could not understand audio'
+        )
+    except sr.RequestError as e:
+        raise RecognitionError(
+            f'Could not request results '
+            f'from Google Speech Recognition service; {e}'
+        )
 
 
 def main():
     args = parse_args()
 
-    r = sr.Recognizer()
-    with sr.AudioFile(args.file) as source:
-        audio = r.record(source)
+    if not args.file.exists():
+        print('File doesn\'t exist')
+        sys.exit(1)
 
     try:
-        print(r.recognize_google(audio, language=args.language))
-    except sr.UnknownValueError:
-        print("Google Speech Recognition could not understand audio")
-    except sr.RequestError as e:
-        print("Could not request results from Google Speech Recognition service; {0}".format(e))
+        result = recognize(args.file, args.language)
+        print(result)
+    except RecognitionError as ex:
+        print(file=sys.stderr)
+        sys.exit(1)
 
 
 if __name__ == '__main__':
