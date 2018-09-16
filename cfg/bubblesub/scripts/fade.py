@@ -112,16 +112,15 @@ class FadeCommand(BaseCommand):
         )
 
 
-def register(cmd_api):
-    cmd_api.register_plugin_command(
-        FadeCommand,
-        SubMenu(
-            '&Fade from/to…',
-            [
-                MenuCommand('&Fade from black', '/fade -d=2000 --from=101010'),
-                MenuCommand('&Fade to black', '/fade -d=2000 --to=101010'),
-                MenuCommand('&Fade from white', '/fade -d=2000 --from=FFFFFF'),
-                MenuCommand('&Fade to white', '/fade -d=2000 --to=FFFFFF'),
-            ]
-        )
+COMMANDS = [FadeCommand]
+MENU = [
+    SubMenu(
+        '&Fade from/to…',
+        [
+            MenuCommand('&Fade from black', '/fade -d=2000 --from=101010'),
+            MenuCommand('&Fade to black', '/fade -d=2000 --to=101010'),
+            MenuCommand('&Fade from white', '/fade -d=2000 --from=FFFFFF'),
+            MenuCommand('&Fade to white', '/fade -d=2000 --to=FFFFFF')
+        ]
     )
+]

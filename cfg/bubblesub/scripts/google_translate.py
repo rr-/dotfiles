@@ -4,11 +4,12 @@ import asyncio
 import googletrans
 from bubblesub.api import Api
 from bubblesub.api.cmd import BaseCommand
+from bubblesub.ass.event import Event
 from bubblesub.opt.menu import MenuCommand
 from bubblesub.opt.menu import SubMenu
 
 
-async def _work(language, api, line):
+async def _work(language: str, api: Api, line: Event) -> None:
     api.log.info(f'line #{line.number} - analyzing')
     try:
         def recognize():
@@ -47,17 +48,16 @@ class GoogleTranslateCommand(BaseCommand):
         parser.add_argument('code', help='language code')
 
 
-def register(cmd_api):
-    cmd_api.register_plugin_command(
-        GoogleTranslateCommand,
-        SubMenu(
-            '&Translate',
-            [
-                MenuCommand('&Japanese', '/google-translate ja'),
-                MenuCommand('&German', '/google-translate de'),
-                MenuCommand('&French', '/google-translate fr'),
-                MenuCommand('&Italian', '/google-translate it'),
-                MenuCommand('&Auto', '/google-translate auto')
-            ]
-        )
+COMMANDS = [GoogleTranslateCommand]
+MENU = [
+    SubMenu(
+        '&Translate',
+        [
+            MenuCommand('&Japanese', '/google-translate ja'),
+            MenuCommand('&German', '/google-translate de'),
+            MenuCommand('&French', '/google-translate fr'),
+            MenuCommand('&Italian', '/google-translate it'),
+            MenuCommand('&Auto', '/google-translate auto')
+        ]
     )
+]

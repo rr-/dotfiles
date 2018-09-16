@@ -1,11 +1,12 @@
 import re
 
 import pysubs2
-import bubblesub.api.cmd
 import bubblesub.ui.util
+from bubblesub.api.cmd import BaseCommand
+from bubblesub.opt.menu import MenuCommand
 
 
-class LoadClosedCaptionsCommand(bubblesub.api.cmd.BaseCommand):
+class LoadClosedCaptionsCommand(BaseCommand):
     names = ['load-cc']
     help_text = 'Loads closed captions from a file.'
 
@@ -30,7 +31,7 @@ class LoadClosedCaptionsCommand(bubblesub.api.cmd.BaseCommand):
                 )
 
 
-class CleanClosedCaptionsCommand(bubblesub.api.cmd.BaseCommand):
+class CleanClosedCaptionsCommand(BaseCommand):
     names = ['clean-cc']
     help_text = (
         'Cleans common closed caption punctuation from the selected events.'
@@ -38,7 +39,7 @@ class CleanClosedCaptionsCommand(bubblesub.api.cmd.BaseCommand):
 
     async def run(self):
         with self.api.undo.capture():
-            for line in api.subs.selected_events:
+            for line in self.api.subs.selected_events:
                 note = line.note
                 note = re.sub(r'\\N', '\n', note)
                 note = re.sub(r'\(\(\)\)', '', note)  # retrospection
@@ -55,12 +56,11 @@ class CleanClosedCaptionsCommand(bubblesub.api.cmd.BaseCommand):
                 line.note = note
 
 
-def register(cmd_api):
-    cmd_api.register_plugin_command(
-        LoadClosedCaptionsCommand,
-        bubblesub.opt.menu.MenuCommand('&Load closed captions', '/load-cc')
-    )
-    cmd_api.register_plugin_command(
-        CleanClosedCaptionsCommand,
-        bubblesub.opt.menu.MenuCommand('&Clean closed captions', '/clean-cc')
-    )
+COMMANDS = [
+    LoadClosedCaptionsCommand,
+    CleanClosedCaptionsCommand
+]
+MENU = [
+    MenuCommand('&Load closed captions', '/load-cc'),
+    MenuCommand('&Clean closed captions', '/clean-cc')
+]

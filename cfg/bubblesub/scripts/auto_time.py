@@ -2,11 +2,11 @@ import os
 import tempfile
 from subprocess import run, PIPE
 
-import bubblesub.api.cmd
-import bubblesub.opt.menu
+from bubblesub.api.cmd import BaseCommand
+from bubblesub.opt.menu import MenuCommand
 
 
-class AutoTimeCommand(bubblesub.api.cmd.BaseCommand):
+class AutoTimeCommand(BaseCommand):
     names = ['auto-time']
     help_text = (
         'Attempts to add empty subtitles on parts of audio containing speech.'
@@ -46,8 +46,5 @@ class AutoTimeCommand(bubblesub.api.cmd.BaseCommand):
         os.unlink(temp_path)
 
 
-def register(cmd_api):
-    cmd_api.register_plugin_command(
-        AutoTimeCommand,
-        bubblesub.opt.menu.MenuCommand('Auto time', '/auto-time')
-    )
+COMMANDS = [AutoTimeCommand]
+MENU = [MenuCommand('Auto time', '/auto-time')]
