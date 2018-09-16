@@ -64,7 +64,7 @@ let g:netrw_bufsettings = 'noma nomod nu nobl nowrap ro' "show line numbers
 set noeb vb t_vb=             "disable beeping
 set laststatus=2              "always display status line
 set modeline                  "allow files to embed file-specific vim settings
-set modelines=5               " ...within X lines at the top of that file
+set modelines=1               " ...within X lines at the top of that file
 
 "spellcheck
 set nospell                   "spell checker is off by default
