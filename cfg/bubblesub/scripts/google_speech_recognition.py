@@ -5,17 +5,18 @@ import io
 import speech_recognition as sr
 from bubblesub.api import Api
 from bubblesub.api.cmd import BaseCommand
+from bubblesub.ass.event import Event
 from bubblesub.opt.menu import MenuCommand
 from bubblesub.opt.menu import SubMenu
 
 
-async def _work(language, api, line):
+async def _work(language: str, api: Api, line: Event) -> None:
     api.log.info(f'line #{line.number} - analyzing')
     recognizer = sr.Recognizer()
     try:
         def recognize():
             with io.BytesIO() as handle:
-                api.media.audio.save_wav(handle, line.start, line.end)
+                api.media.audio.save_wav(handle, [(line.start, line.end)])
                 handle.seek(0, io.SEEK_SET)
                 with sr.AudioFile(handle) as source:
                     audio = recognizer.record(source)
@@ -57,17 +58,16 @@ class SpeechRecognitionCommand(BaseCommand):
         parser.add_argument('code', help='language code')
 
 
-def register(cmd_api):
-    cmd_api.register_plugin_command(
-        SpeechRecognitionCommand,
-        SubMenu(
-            '&Speech recognition',
-            [
-                MenuCommand('&Japanese', '/google-speech-recognition ja'),
-                MenuCommand('&German', '/google-speech-recognition de'),
-                MenuCommand('&French', '/google-speech-recognition fr'),
-                MenuCommand('&Italian', '/google-speech-recognition it'),
-                MenuCommand('&Auto', '/google-speech-recognition auto')
-            ]
-        )
+COMMANDS = [SpeechRecognitionCommand]
+MENU = [
+    SubMenu(
+        '&Speech recognition',
+        [
+            MenuCommand('&Japanese', '/google-speech-recognition ja'),
+            MenuCommand('&German', '/google-speech-recognition de'),
+            MenuCommand('&French', '/google-speech-recognition fr'),
+            MenuCommand('&Italian', '/google-speech-recognition it'),
+            MenuCommand('&Auto', '/google-speech-recognition auto')
+        ]
     )
+]

@@ -7,9 +7,8 @@ import ass_tag_parser
 import enchant
 import fontTools.ttLib as font_tools
 
-import bubblesub.api.cmd
-import bubblesub.opt.menu
-import bubblesub.ui.ass_renderer
+from bubblesub.api import Api
+from bubblesub.api.cmd import BaseCommand
 from bubblesub.api.log import LogLevel
 from bubblesub.ass.event import Event
 from bubblesub.ass.event import EventList
@@ -18,6 +17,8 @@ from bubblesub.ass.style import StyleList
 from bubblesub.ass.util import ass_to_plaintext
 from bubblesub.ass.util import character_count
 from bubblesub.ass.util import spell_check_ass_line
+from bubblesub.opt.menu import MenuCommand
+from bubblesub.ui.ass_renderer import AssRenderer
 
 MIN_DURATION = 250  # milliseconds
 MIN_DURATION_LONG = 500  # milliseconds
@@ -109,7 +110,7 @@ def check_durations(event: Event) -> T.Iterable[BaseResult]:
 
     if next_event:
         gap = next_event.start - event.end
-        if gap > 0 and gap < MIN_GAP:
+        if 0 < gap < MIN_GAP:
             yield Violation(
                 [event, next_event],
                 f'gap shorter than {MIN_GAP} ms ({gap} ms)'
@@ -432,7 +433,7 @@ def check_fonts(api):
 
 
 def measure_frame_size(
-        renderer: bubblesub.ui.ass_renderer.AssRenderer,
+        renderer: AssRenderer,
         event: Event
 ) -> T.Tuple[int, int]:
     fake_event_list = EventList()
@@ -456,8 +457,8 @@ def measure_frame_size(
 
 
 def get_optimal_line_heights(
-        api: bubblesub.api.Api,
-        renderer: bubblesub.ui.ass_renderer.AssRenderer
+        api: Api,
+        renderer: AssRenderer
 ) -> T.Dict[str, float]:
     TEST_LINE_COUNT = 20
     VIDEO_RES_X = 100
@@ -489,8 +490,8 @@ def get_optimal_line_heights(
 
 def check_long_line(
         event: Event,
-        api: bubblesub.api.Api,
-        renderer: bubblesub.ui.ass_renderer.AssRenderer,
+        api: Api,
+        renderer: AssRenderer,
         optimal_line_heights: T.Dict[str, float]
 ) -> T.Iterable[BaseResult]:
     width, height = measure_frame_size(renderer, event)
@@ -521,8 +522,8 @@ def check_long_line(
             )
 
 
-def list_violations(api: bubblesub.api.Api) -> T.Iterable[BaseResult]:
-    renderer = bubblesub.ui.ass_renderer.AssRenderer()
+def list_violations(api: Api) -> T.Iterable[BaseResult]:
+    renderer = AssRenderer()
     optimal_line_heights = get_optimal_line_heights(api, renderer)
     renderer.set_source(
         style_list=api.subs.styles,
@@ -542,7 +543,7 @@ def list_violations(api: bubblesub.api.Api) -> T.Iterable[BaseResult]:
         yield from check_long_line(event, api, renderer, optimal_line_heights)
 
 
-class QualityCheckCommand(bubblesub.api.cmd.BaseCommand):
+class QualityCheckCommand(BaseCommand):
     names = ['quality-check', 'qc']
     help_text = 'Tries to pinpoint common issues with the subtitles.'
 
@@ -563,8 +564,5 @@ class QualityCheckCommand(bubblesub.api.cmd.BaseCommand):
         check_fonts(self.api)
 
 
-def register(cmd_api):
-    cmd_api.register_plugin_command(
-        QualityCheckCommand,
-        bubblesub.opt.menu.MenuCommand('&Quality check', '/quality-check')
-    )
+COMMANDS = [QualityCheckCommand]
+MENU = [MenuCommand('&Quality check', '/quality-check')]

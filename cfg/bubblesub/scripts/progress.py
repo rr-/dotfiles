@@ -1,12 +1,12 @@
-import bubblesub.api.cmd
-import bubblesub.opt
+from bubblesub.api.cmd import BaseCommand
+from bubblesub.opt.menu import MenuCommand
 
 
 def ms_to_str(ms: int) -> str:
     return str(ms // 1000)
 
 
-class ProgressCommand(bubblesub.api.cmd.BaseCommand):
+class ProgressCommand(BaseCommand):
     names = ['progress']
     help_text = 'How much left'
 
@@ -37,10 +37,5 @@ class ProgressCommand(bubblesub.api.cmd.BaseCommand):
         )
 
 
-def register(cmd_api):
-    cmd_api.register_plugin_command(
-        ProgressCommand,
-        bubblesub.opt.menu.MenuCommand(
-            'Show translation &progress', '/progress'
-        )
-    )
+COMMANDS = [ProgressCommand]
+MENU = [MenuCommand('Show translation &progress', '/progress')]
