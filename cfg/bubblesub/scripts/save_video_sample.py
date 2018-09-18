@@ -5,7 +5,7 @@ import subprocess
 from bubblesub.api import Api
 from bubblesub.api.cmd import BaseCommand
 from bubblesub.api.cmd import CommandUnavailable
-from bubblesub.cmd.common import AbsolutePts
+from bubblesub.cmd.common import Pts
 from bubblesub.cmd.common import FancyPath
 from bubblesub.opt.menu import MenuCommand
 from bubblesub.util import ms_to_str
@@ -60,20 +60,20 @@ class SaveVideoSampleCommand(BaseCommand):
         parser.add_argument(
             '--start',
             help='where the sample should start',
-            type=lambda value: AbsolutePts(api, value),
-            default='spectrogram-sel-start'
+            type=lambda value: Pts(api, value),
+            default='a.s',
         )
         parser.add_argument(
             '--end',
             help='where the sample should end',
-            type=lambda value: AbsolutePts(api, value),
-            default='spectrogram-sel-end'
+            type=lambda value: Pts(api, value),
+            default='a.e',
         )
         parser.add_argument(
             '-p', '--path',
             help='path to save the sample to',
             type=lambda value: FancyPath(api, value),
-            default=''
+            default='',
         )
 
 
