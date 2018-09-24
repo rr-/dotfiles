@@ -14,7 +14,11 @@ async def _work(language: str, api: Api, line: Event) -> None:
     try:
         def recognize():
             translator = googletrans.Translator()
-            return translator.translate(line.note, src=language, dest='en')
+            return translator.translate(
+                line.note.replace('\\N', '\n'),
+                src=language,
+                dest='en',
+            )
 
         # don't clog the UI thread
         result = (
