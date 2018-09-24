@@ -45,6 +45,7 @@ class SaveVideoSampleCommand(BaseCommand):
             subprocess.run([
                 'ffmpeg',
                 '-i', self.api.media.path,
+                '-y',
                 '-ss', ms_to_str(start),
                 '-to', ms_to_str(end),
                 str(path)
