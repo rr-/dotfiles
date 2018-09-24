@@ -46,6 +46,7 @@ class SaveVideoSampleCommand(BaseCommand):
                 'ffmpeg',
                 '-i', self.api.media.path,
                 '-y',
+                '-lossless', '1',
                 '-ss', ms_to_str(start),
                 '-to', ms_to_str(end),
                 str(path)
