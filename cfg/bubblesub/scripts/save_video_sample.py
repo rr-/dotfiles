@@ -58,7 +58,7 @@ class SaveVideoSampleCommand(BaseCommand):
         self.api.log.info(f'saved video sample to {path}')
 
     @staticmethod
-    def _decorate_parser(api: Api, parser: argparse.ArgumentParser) -> None:
+    def decorate_parser(api: Api, parser: argparse.ArgumentParser) -> None:
         parser.add_argument(
             '--start',
             help='where the sample should start',
