@@ -48,7 +48,7 @@ class GoogleTranslateCommand(BaseCommand):
             await _work(self.args.code, self.api, line)
 
     @staticmethod
-    def _decorate_parser(api: Api, parser: argparse.ArgumentParser) -> None:
+    def decorate_parser(api: Api, parser: argparse.ArgumentParser) -> None:
         parser.add_argument('code', help='language code')
 
 
