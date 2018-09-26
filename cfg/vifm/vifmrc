@@ -80,9 +80,9 @@ mark h ~/
 command! df df -h %m 2> /dev/null
 command! diff nvim -d %f %F
 command! reload :write | restart
-command! extract for x in %"f; do 7z x -o"${${x##*/}%%.*}" "$x"; done
 command! merge :exec '!cat %"f >%"c.merged' | :normal gvdd
 command! xattr :!xattrvi %"f
+command! extract for x in %"f; do 7z x -o"${${x##*/}%%.*}" "$x"; done
 command! extracth for x in %"f; do 7z x -o. "$x"; done
 command! packs for x in %"f; do 7z a "${x##*/}.7z" "$x"; done
 command! packz for x in %"f; do 7z a "${x##*/}.zip" "$x"; done
