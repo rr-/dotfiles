@@ -8,7 +8,9 @@ import eml_parser
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('path', type=pathlib.Path)
+    parser.add_argument(
+        dest='paths', metavar='path', type=pathlib.Path, nargs='+'
+    )
     return parser.parse_args()
 
 
@@ -30,21 +32,25 @@ def get_body_text(parsed):
 
 def main():
     args = parse_args()
-    path = args.path
 
-    raw_email = path.read_bytes()
-    message = email.message_from_bytes(raw_email)
-    parsed = eml_parser.eml_parser.parse_email(
-        message,
-        include_raw_body=True,
-        include_attachment_data=True)
-    text = get_body_text(parsed)
+    for i, path in enumerate(args.paths):
+        if i > 0:
+            print('-' * 79)
+            print()
 
-    print('From:    ' + parsed['header']['from'])
-    print('To:      ' + ', '.join(parsed['header']['to']))
-    print('Subject: ' + parsed['header']['subject'])
-    print()
-    print(text)
+        raw_email = path.read_bytes()
+        message = email.message_from_bytes(raw_email)
+        parsed = eml_parser.eml_parser.parse_email(
+            message,
+            include_raw_body=True,
+            include_attachment_data=True)
+        text = get_body_text(parsed)
+
+        print('From:    ' + parsed['header']['from'])
+        print('To:      ' + ', '.join(parsed['header']['to']))
+        print('Subject: ' + parsed['header']['subject'])
+        print()
+        print(text)
 
 
 if __name__ == '__main__':
