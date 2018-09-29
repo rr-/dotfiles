@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
-import email
 import argparse
 import base64
+import email
 import pathlib
+import re
+
 import eml_parser
 
 
@@ -15,18 +17,30 @@ def parse_args():
 
 
 def get_body_text(parsed):
-    for attachment in parsed['body']:
-        if attachment['content_type'] == 'text/plain':
-            return attachment['content']
-    for attachment in parsed['body']:
-        if attachment['content_type'] == 'text/html':
-            return attachment['content']
-    for attachment in parsed['attachment']:
-        if attachment['mime_type_short'] == 'text/plain':
-            return base64.b64decode(attachment['raw']).decode()
-    for attachment in parsed['attachment']:
-        if attachment['mime_type_short'] == 'text/html':
-            return base64.b64decode(attachment['raw']).decode()
+    # first search for body in the body, then in the attachments
+    for key in ('body', 'attachment'):
+
+        # first look for plain text version, then accept html
+        for mime in ('text/plain', 'text/html'):
+            for attachment in parsed.get(key, []):
+                try:
+                    attachment_mime = attachment['mime_type_short']
+                except LookupError:
+                    try:
+                        attachment_mime = (
+                            attachment['content_header']['content-type'][0]
+                        )
+                    except LookupError:
+                        attachment_mime = 'application/octet-stream'
+
+                attachment_mime = re.sub(';.*', '', attachment_mime)
+
+                if attachment_mime == mime:
+                    try:
+                        return attachment['content']
+                    except LookupError:
+                        return attachment['raw']
+
     return None
 
 
