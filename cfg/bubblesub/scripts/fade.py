@@ -66,11 +66,11 @@ class FadeCommand(BaseCommand):
                 col3 = style.outline_color
                 col4 = style.back_color
 
-                if self.args['from']:
+                if self.args.src:
                     line.text = _format_ass_tags(
-                        _format_color(1, self.args['from']),
-                        _format_color(3, self.args['from']),
-                        _format_color(4, self.args['from']),
+                        _format_color(1, self.args.src),
+                        _format_color(3, self.args.src),
+                        _format_color(4, self.args.src),
                         _format_animation(
                             0,
                             self.args.duration,
@@ -80,14 +80,14 @@ class FadeCommand(BaseCommand):
                         ),
                         close=True
                     ) + line.text
-                if self.args.to:
+                if self.args.dst:
                     line.text = _format_ass_tags(
                         _format_animation(
                             max(0, line.duration - self.args.duration),
                             line.duration,
-                            _format_color(1, self.args.to),
-                            _format_color(3, self.args.to),
-                            _format_color(4, self.args.to)
+                            _format_color(1, self.args.dst),
+                            _format_color(3, self.args.dst),
+                            _format_color(4, self.args.dst)
                         ),
                         close=True
                     ) + line.text
@@ -101,12 +101,12 @@ class FadeCommand(BaseCommand):
             required=True
         )
         parser.add_argument(
-            '-f', '--from',
+            '-f', '--from', dest='src',
             help='color to fade from',
             type=_parse_color
         )
         parser.add_argument(
-            '-t', '--to',
+            '-t', '--to', dest='dst',
             help='color to fade to',
             type=_parse_color
         )
