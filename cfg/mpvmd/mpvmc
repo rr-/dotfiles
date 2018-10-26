@@ -8,6 +8,7 @@ from subprocess import run
 
 CONFIG_DIR = Path('~/.config/mpvmd').expanduser()
 PLAYLISTS_DIR = CONFIG_DIR / 'playlists'
+PLAYLIST_EXT = '.txt'
 
 
 def format_time(value):
@@ -89,7 +90,8 @@ class ShowListsCommand(Command):
 
     def run(self, args):
         for path in PLAYLISTS_DIR.iterdir():
-            print(path.stem)
+            if path.suffix == PLAYLIST_EXT:
+                print(path.stem)
 
 
 class ShowListCommand(Command):
@@ -99,7 +101,7 @@ class ShowListCommand(Command):
         parser.add_argument('name')
 
     def run(self, args):
-        playlist_path = PLAYLISTS_DIR / (args.name + '.txt')
+        playlist_path = PLAYLISTS_DIR / (args.name + PLAYLIST_EXT)
         print(playlist_path.read_text(), end='')
 
 
@@ -110,7 +112,7 @@ class LoadListCommand(Command):
         parser.add_argument('name')
 
     def run(self, args):
-        playlist_path = PLAYLISTS_DIR / (args.name + '.txt')
+        playlist_path = PLAYLISTS_DIR / (args.name + PLAYLIST_EXT)
         send(['loadlist', playlist_path])
 
 
