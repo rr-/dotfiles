@@ -52,25 +52,25 @@ super + {x,X}
 
 # previous and next track
 super + {c,C}
-    CMD={next,prev}; \
-    mpc $CMD || mpvmc $CMD
+    CMD={nextfile,prevfile}; \
+    mpvmc $CMD
 
 # toggle play
 super + v
-    mpc toggle || mpvmc play-pause
+    mpvmc toggle
 
 # copy current song title to clipboard
 super + V
-    zsh -ilc 'mpc||mpvmc print --format="[[[[%artist%|%albumartist%] - ]%title%]|%title%|%name%]"|head -n1|tr -d "\n"|clip'
+    zsh -ilc 'mpvmc info --short|clip'
 
 # toggle random
 super + b
-    mpc random || mpvmc toggle-random
+    mpvmc random toggle
 
 # seek backward and forward
 super + {less,greater}
     NUM={-,+}10; \
-    mpc seek $NUM || mpvmc seek "$NUM"
+    mpvmc seek "$NUM"
 
 
 
