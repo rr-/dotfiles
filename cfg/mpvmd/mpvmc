@@ -122,20 +122,21 @@ class LoadListCommand(Command):
         if not playlist_path.exists():
             raise ClientError(f'playlist {args.name} does not exist')
         send(['loadlist', playlist_path])
+        send(['script-message-to', 'playlist', 'playlist-reset-random'])
 
 
 class PrevFileCommand(Command):
     name = 'prevfile'
 
     def run(self, args):
-        send(['playlist-prev'])
+        send(['script-message-to', 'playlist', 'playlist-prev'])
 
 
 class NextFileCommand(Command):
     name = 'nextfile'
 
     def run(self, args):
-        send(['playlist-next'])
+        send(['script-message-to', 'playlist', 'playlist-next'])
 
 
 class SeekCommand(Command):
@@ -155,6 +156,21 @@ class SeekCommand(Command):
         pos = send(['get_property', 'time-pos'])['data']
         total = send(['get_property', 'duration'])['data']
         print(format_time(pos) + ' / ' + format_time(total))
+
+
+class RandomCommand(Command):
+    name = 'random'
+
+    def decorate_parser(self, parser):
+        parser.add_argument('on', nargs='?', choices={'yes', 'no'})
+
+    def run(self, args):
+        if args.on is not None:
+            data = send(['get_property', 'script-opts'])['data']
+            data['random_playback'] = args.on
+            send(['set_property', 'script-opts', data])
+        data = send(['get_property', 'script-opts'])['data']
+        print(data['random_playback'])
 
 
 def parse_args():
