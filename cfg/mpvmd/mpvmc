@@ -2,6 +2,7 @@
 import abc
 import argparse
 import json
+import os
 import socket
 from pathlib import Path
 
@@ -182,11 +183,26 @@ class RandomCommand(Command):
 class InfoCommand(Command):
     name = "info"
 
+    def decorate_parser(self, parser):
+        parser.add_argument("--short", action="store_true")
+
     def run(self, args):
         pos = send(["get_property", "time-pos"])["data"]
         total = send(["get_property", "duration"])["data"]
         metadata = send(["get_property", "metadata"])["data"]
-        print("Path:", send(["get_property", "path"])["data"])
+        path = send(["get_property", "path"])["data"]
+
+        if args.short:
+            ret = metadata.get('artist') or metadata.get('albumartist') or ''
+            if ret:
+                ret += ' - '
+            ret += metadata.get('title') \
+                or metadata.get('icy-title') \
+                or (os.path.basename(path) if path else '?')
+            print(ret)
+            return
+
+        print("Path:", path)
         print("Time:", format_time(pos) + " / " + format_time(total))
         print()
         if "icy-name" in metadata:
