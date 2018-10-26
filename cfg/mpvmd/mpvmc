@@ -202,6 +202,27 @@ class InfoCommand(Command):
                 )
 
 
+class PlayPauseCommand(Command):
+    name = "toggle"
+
+    def run(self, args):
+        send(["cycle", "pause"])
+
+
+class PauseCommand(Command):
+    name = "pause"
+
+    def run(self, args):
+        send(["set_property", "pause", "yes"])
+
+
+class PauseCommand(Command):
+    name = "unpause"
+
+    def run(self, args):
+        send(["set_property", "pause", "no"])
+
+
 def parse_args():
     parser = argparse.ArgumentParser()
     subparsers = parser.add_subparsers(
