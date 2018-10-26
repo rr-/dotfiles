@@ -161,12 +161,19 @@ class RandomCommand(Command):
     name = "random"
 
     def decorate_parser(self, parser):
-        parser.add_argument("on", nargs="?", choices={"yes", "no"})
+        parser.add_argument("on", nargs="?", choices={"yes", "no", "toggle"})
 
     def run(self, args):
         if args.on is not None:
             data = send(["get_property", "script-opts"])["data"]
-            data["random_playback"] = args.on
+            if args.on in {"yes", "no"}:
+                data["random_playback"] = args.on
+            elif args.on == "toggle":
+                data["random_playback"] = (
+                    "yes" if data["random_playback"] == "no" else "no"
+                )
+            else:
+                raise AssertionError
             send(["set_property", "script-opts", data])
         data = send(["get_property", "script-opts"])["data"]
         print(data["random_playback"])
