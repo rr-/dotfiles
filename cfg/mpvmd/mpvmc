@@ -4,11 +4,10 @@ import argparse
 import json
 import socket
 from pathlib import Path
-from subprocess import run
 
-CONFIG_DIR = Path('~/.config/mpvmd').expanduser()
-PLAYLISTS_DIR = CONFIG_DIR / 'playlists'
-PLAYLIST_EXT = '.txt'
+CONFIG_DIR = Path("~/.config/mpvmd").expanduser()
+PLAYLISTS_DIR = CONFIG_DIR / "playlists"
+PLAYLIST_EXT = ".txt"
 
 
 class ClientError(RuntimeError):
@@ -22,13 +21,13 @@ def format_time(value):
     minute = (int(value) // 60) % 60
     second = int(value) % 60
     nano = str(value - int(value))[2:5]
-    return f'{hour:02d}:{minute:02d}:{second:02d}.{nano}'
+    return f"{hour:02d}:{minute:02d}:{second:02d}.{nano}"
 
 
 def float_between(value, min_, max_):
     value = float(value)
     if value < min_ or value > max_:
-         raise argparse.ArgumentTypeError(
+        raise argparse.ArgumentTypeError(
             f"{value} must be between {min_} and {max_}"
         )
     return value
@@ -36,10 +35,10 @@ def float_between(value, min_, max_):
 
 def send(args):
     sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-    sock.connect('/tmp/mpvmd.socket')
-    sock.send((json.dumps({'command': args}, default=str) + '\n').encode())
+    sock.connect("/tmp/mpvmd.socket")
+    sock.send((json.dumps({"command": args}, default=str) + "\n").encode())
     sock.shutdown(socket.SHUT_WR)
-    response = b''
+    response = b""
     while True:
         chunk = sock.recv(1024)
         if not len(chunk):
@@ -47,8 +46,8 @@ def send(args):
         response += chunk
     sock.close()
     response = json.loads(response.decode())
-    if response['error'] != 'success':
-        raise ClientError(response['error'])
+    if response["error"] != "success":
+        raise ClientError(response["error"])
     return response
 
 
@@ -60,39 +59,39 @@ class Command:
 
     @abc.abstractmethod
     def run(self, args):
-        raise NotImplementedError('not implemented')
+        raise NotImplementedError("not implemented")
 
 
 class VolumeCommand(Command):
-    name = 'volume'
+    name = "volume"
 
     def decorate_parser(self, parser):
         parser.add_argument(
-            'volume',
-            nargs='?',
-            type=lambda value: float_between(value, 0, 100)
+            "volume",
+            nargs="?",
+            type=lambda value: float_between(value, 0, 100),
         )
 
     def run(self, args):
         if args.volume is not None:
-            send(['set_property', 'volume', args.volume])
-        print(send(['get_property', 'volume'])['data'])
+            send(["set_property", "volume", args.volume])
+        print(send(["get_property", "volume"])["data"])
 
 
 class PlaybackSpeedCommand(Command):
-    name = 'speed'
+    name = "speed"
 
     def decorate_parser(self, parser):
-        parser.add_argument('speed', nargs='?', type=float)
+        parser.add_argument("speed", nargs="?", type=float)
 
     def run(self, args):
         if args.speed is not None:
-            send(['set_property', 'speed', args.speed])
-        print(send(['get_property', 'speed'])['data'])
+            send(["set_property", "speed", args.speed])
+        print(send(["get_property", "speed"])["data"])
 
 
 class ShowListsCommand(Command):
-    name = 'showlists'
+    name = "showlists"
 
     def run(self, args):
         for path in PLAYLISTS_DIR.iterdir():
@@ -101,82 +100,82 @@ class ShowListsCommand(Command):
 
 
 class ShowListCommand(Command):
-    name = 'showlist'
+    name = "showlist"
 
     def decorate_parser(self, parser):
-        parser.add_argument('name')
+        parser.add_argument("name")
 
     def run(self, args):
         playlist_path = PLAYLISTS_DIR / (args.name + PLAYLIST_EXT)
-        print(playlist_path.read_text(), end='')
+        print(playlist_path.read_text(), end="")
 
 
 class LoadListCommand(Command):
-    name = 'loadlist'
+    name = "loadlist"
 
     def decorate_parser(self, parser):
-        parser.add_argument('name')
+        parser.add_argument("name")
 
     def run(self, args):
         playlist_path = PLAYLISTS_DIR / (args.name + PLAYLIST_EXT)
         if not playlist_path.exists():
-            raise ClientError(f'playlist {args.name} does not exist')
-        send(['loadlist', playlist_path])
-        send(['script-message-to', 'playlist', 'playlist-reset-random'])
+            raise ClientError(f"playlist {args.name} does not exist")
+        send(["loadlist", playlist_path])
+        send(["script-message-to", "playlist", "playlist-reset-random"])
 
 
 class PrevFileCommand(Command):
-    name = 'prevfile'
+    name = "prevfile"
 
     def run(self, args):
-        send(['script-message-to', 'playlist', 'playlist-prev'])
+        send(["script-message-to", "playlist", "playlist-prev"])
 
 
 class NextFileCommand(Command):
-    name = 'nextfile'
+    name = "nextfile"
 
     def run(self, args):
-        send(['script-message-to', 'playlist', 'playlist-next'])
+        send(["script-message-to", "playlist", "playlist-next"])
 
 
 class SeekCommand(Command):
-    name = 'seek'
+    name = "seek"
 
     def decorate_parser(self, parser):
-        parser.add_argument('pos', nargs='?')
+        parser.add_argument("pos", nargs="?")
 
     def run(self, args):
         if args.pos is not None:
-            if ':' in args.pos:
-                send(['seek', args.pos, 'absolute+exact'])
-            elif args.pos.startswith(('+', '-')):
-                send(['seek', args.pos, 'relative+exact'])
+            if ":" in args.pos:
+                send(["seek", args.pos, "absolute+exact"])
+            elif args.pos.startswith(("+", "-")):
+                send(["seek", args.pos, "relative+exact"])
             else:
-                raise ClientError('unknown time')
-        pos = send(['get_property', 'time-pos'])['data']
-        total = send(['get_property', 'duration'])['data']
-        print(format_time(pos) + ' / ' + format_time(total))
+                raise ClientError("unknown time")
+        pos = send(["get_property", "time-pos"])["data"]
+        total = send(["get_property", "duration"])["data"]
+        print(format_time(pos) + " / " + format_time(total))
 
 
 class RandomCommand(Command):
-    name = 'random'
+    name = "random"
 
     def decorate_parser(self, parser):
-        parser.add_argument('on', nargs='?', choices={'yes', 'no'})
+        parser.add_argument("on", nargs="?", choices={"yes", "no"})
 
     def run(self, args):
         if args.on is not None:
-            data = send(['get_property', 'script-opts'])['data']
-            data['random_playback'] = args.on
-            send(['set_property', 'script-opts', data])
-        data = send(['get_property', 'script-opts'])['data']
-        print(data['random_playback'])
+            data = send(["get_property", "script-opts"])["data"]
+            data["random_playback"] = args.on
+            send(["set_property", "script-opts", data])
+        data = send(["get_property", "script-opts"])["data"]
+        print(data["random_playback"])
 
 
 def parse_args():
     parser = argparse.ArgumentParser()
     subparsers = parser.add_subparsers(
-        help='choose the command', dest='command'
+        help="choose the command", dest="command"
     )
     for cls in Command.__subclasses__():
         instance = cls()
@@ -185,7 +184,7 @@ def parse_args():
         subparser.set_defaults(command=instance)
     args = parser.parse_args()
     if not args.command:
-        parser.error('no command')
+        parser.error("no command")
     return args
 
 
@@ -197,5 +196,5 @@ def main():
         print(ex)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
