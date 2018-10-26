@@ -172,6 +172,36 @@ class RandomCommand(Command):
         print(data["random_playback"])
 
 
+class InfoCommand(Command):
+    name = "info"
+
+    def run(self, args):
+        pos = send(["get_property", "time-pos"])["data"]
+        total = send(["get_property", "duration"])["data"]
+        metadata = send(["get_property", "metadata"])["data"]
+        print("Path:", send(["get_property", "path"])["data"])
+        print("Time:", format_time(pos) + " / " + format_time(total))
+        print()
+        if "icy-name" in metadata:
+            print("URL:", metadata.get("icy-url") or "?")
+            print("Name:", metadata.get("icy-name") or "?")
+            print("Title:", metadata.get("icy-title") or "?")
+        else:
+            print("Artist:", metadata.get("artist") or "?")
+            print("Album:", metadata.get("album") or "?")
+            print("Title:", metadata.get("title") or "?")
+            print("Year:", metadata.get("date") or "?")
+            if "/" in metadata.get("track", ""):
+                print("Track:", metadata.get("track") or "?")
+            else:
+                print(
+                    "Track: {}/{}".format(
+                        metadata.get("track") or "?",
+                        metadata.get("tracktotal") or "?",
+                    )
+                )
+
+
 def parse_args():
     parser = argparse.ArgumentParser()
     subparsers = parser.add_subparsers(
