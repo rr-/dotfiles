@@ -4,12 +4,9 @@ from pathlib import Path
 
 
 def main():
-    config_dir = Path('~/.config/mpvmd').expanduser()
-    run([
-        'mpv',
-        f'--config-dir={config_dir}',
-    ])
+    config_dir = Path("~/.config/mpvmd").expanduser()
+    run(["mpv", f"--config-dir={config_dir}"])
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
