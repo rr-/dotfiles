@@ -1,0 +1,6 @@
+# vim syntax=config
+
+video=no
+idle=yes
+input-ipc-server=/tmp/mpvmd.socket
+loop-playlist=yes

@@ -1,0 +1,15 @@
+#!/usr/bin/env python3
+from subprocess import run
+from pathlib import Path
+
+
+def main():
+    config_dir = Path('~/.config/mpvmd').expanduser()
+    run([
+        'mpv',
+        f'--config-dir={config_dir}',
+    ])
+
+
+if __name__ == '__main__':
+    main()
