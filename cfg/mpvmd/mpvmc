@@ -11,6 +11,10 @@ PLAYLISTS_DIR = CONFIG_DIR / 'playlists'
 PLAYLIST_EXT = '.txt'
 
 
+class ClientError(RuntimeError):
+    pass
+
+
 def format_time(value):
     if not value:
         return "?"
@@ -43,6 +47,8 @@ def send(args):
         response += chunk
     sock.close()
     response = json.loads(response.decode())
+    if response['error'] != 'success':
+        raise ClientError(response['error'])
     return response
 
 
@@ -81,8 +87,8 @@ class PlaybackSpeedCommand(Command):
 
     def run(self, args):
         if args.speed is not None:
-            send(['set_property', 'options/speed', args.speed])
-        print(send(['get_property', 'options/speed'])['data'])
+            send(['set_property', 'speed', args.speed])
+        print(send(['get_property', 'speed'])['data'])
 
 
 class ShowListsCommand(Command):
@@ -113,6 +119,8 @@ class LoadListCommand(Command):
 
     def run(self, args):
         playlist_path = PLAYLISTS_DIR / (args.name + PLAYLIST_EXT)
+        if not playlist_path.exists():
+            raise ClientError(f'playlist {args.name} does not exist')
         send(['loadlist', playlist_path])
 
 
@@ -139,13 +147,11 @@ class SeekCommand(Command):
     def run(self, args):
         if args.pos is not None:
             if ':' in args.pos:
-                response = send(['seek', args.pos, 'absolute+exact'])
+                send(['seek', args.pos, 'absolute+exact'])
             elif args.pos.startswith(('+', '-')):
-                response = send(['seek', args.pos, 'relative+exact'])
+                send(['seek', args.pos, 'relative+exact'])
             else:
-                raise ValueError('unknown time')
-            if response['error'] != 'success':
-                print(response['error'])
+                raise ClientError('unknown time')
         pos = send(['get_property', 'time-pos'])['data']
         total = send(['get_property', 'duration'])['data']
         print(format_time(pos) + ' / ' + format_time(total))
@@ -169,7 +175,10 @@ def parse_args():
 
 def main():
     args = parse_args()
-    args.command.run(args)
+    try:
+        args.command.run(args)
+    except ClientError as ex:
+        print(ex)
 
 
 if __name__ == '__main__':
