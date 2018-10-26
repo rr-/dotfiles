@@ -9,3 +9,4 @@ def run():
     util.create_symlink('./config', '~/.config/mpvmd')
     util.create_symlink('./mpvmd', '~/.local/bin/')
     util.create_symlink('./mpvmc', '~/.local/bin/')
+    util.create_symlink('./mpvmd.service', '~/.config/systemd/user/')
