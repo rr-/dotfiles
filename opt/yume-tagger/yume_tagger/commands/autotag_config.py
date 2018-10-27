@@ -17,7 +17,7 @@ class AutoTagConfigCommand(BaseCommand):
     def run(self, args: configargparse.Namespace) -> None:
         self._autotag_settings.__dict__.update(
             util.run_editor(
-                'settings.txt',
+                "settings.txt",
                 self._autotag_settings,
                 _serialize_autotag_settings,
                 _deserialize_autotag_settings,
@@ -29,5 +29,5 @@ class AutoTagConfigCommand(BaseCommand):
         parent_parser: configargparse.ArgumentParser
     ) -> configargparse.ArgumentParser:
         return parent_parser.add_parser(
-            'autotag-config', help='tweak settings of autotagger'
+            "autotag-config", help="tweak settings of autotagger"
         )

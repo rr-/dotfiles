@@ -16,10 +16,10 @@ class BaseCommand:
         parser.set_defaults(command=cls)
 
     def run(self, args: configargparse.Namespace) -> None:
-        raise NotImplementedError('Not implemented')
+        raise NotImplementedError("Not implemented")
 
     @staticmethod
     def _create_parser(
         parent_parser: configargparse.ArgumentParser
     ) -> configargparse.ArgumentParser:
-        raise NotImplementedError('Not implemented')
+        raise NotImplementedError("Not implemented")

@@ -6,24 +6,24 @@ from pathlib import Path
 from typing import Any, Callable
 
 
-DB_DIR = Path('~/.local/share/yume-tagger/').expanduser()
+DB_DIR = Path("~/.local/share/yume-tagger/").expanduser()
 
 
 def confirm(text: str) -> bool:
     while True:
-        result = input('{} '.format(text.strip())).lower()
-        if result in ['yes', 'yep', 'yeah', 'y', 'true']:
+        result = input("{} ".format(text.strip())).lower()
+        if result in ["yes", "yep", "yeah", "y", "true"]:
             return True
-        if result in ['no', 'nah', 'nay', 'n', 'false']:
+        if result in ["no", "nah", "nay", "n", "false"]:
             return False
 
 
 def sanitize_tag(name: str) -> str:
-    return re.sub(r'\s+', '_', name)
+    return re.sub(r"\s+", "_", name)
 
 
 def capitalize(name: str) -> str:
-    return re.sub(r'(^|[_()])([a-z])', lambda m: m.group(0).upper(), name)
+    return re.sub(r"(^|[_()])([a-z])", lambda m: m.group(0).upper(), name)
 
 
 def run_editor(
@@ -37,13 +37,13 @@ def run_editor(
         path: Path = Path(tmp_dir).joinpath(file_name)
         path.write_text(text)
         while True:
-            subprocess.run([os.getenv('EDITOR') or 'vim', str(path)])
+            subprocess.run([os.getenv("EDITOR") or "vim", str(path)])
             text = path.read_text()
             try:
                 return deserializer(text)
             except ValueError as ex:
                 input(
-                    'Error: {}. Press return to edit again, ^C to abort. '.format(
+                    "Error: {}. Press return to edit again, ^C to abort. ".format(
                         ex
                     )
                 )

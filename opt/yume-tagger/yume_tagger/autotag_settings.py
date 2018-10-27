@@ -4,12 +4,12 @@ from pathlib import Path
 from typing import Optional, Tuple, Set, List, Dict
 
 
-SECTION_TAGGED_POST_IDS = 'Tagged post IDs'
-SECTION_UNTAGGED_POST_IDS = 'Untagged post IDs'
-SECTION_BANNED_TAG_REGEXES = 'Banned tag regexes'
-SECTION_BANNED_TAGS = 'Banned tags'
-SECTION_TAG_MAP = 'Tag translations'
-SECTION_TAG_CATEGORY_MAP = 'Tag category translations'
+SECTION_TAGGED_POST_IDS = "Tagged post IDs"
+SECTION_UNTAGGED_POST_IDS = "Untagged post IDs"
+SECTION_BANNED_TAG_REGEXES = "Banned tag regexes"
+SECTION_BANNED_TAGS = "Banned tags"
+SECTION_TAG_MAP = "Tag translations"
+SECTION_TAG_CATEGORY_MAP = "Tag category translations"
 
 
 def _from_int_set(source: Set[int]) -> List[str]:
@@ -20,8 +20,8 @@ def _from_int_set(source: Set[int]) -> List[str]:
         group = list(group_iter)
         ranges.append((group[0][1], group[-1][1]))
     return [
-        ','.join(
-            (str(low) if low == high else '{}-{}'.format(low, high))
+        ",".join(
+            (str(low) if low == high else "{}-{}".format(low, high))
             for low, high in ranges
         )
     ]
@@ -32,15 +32,15 @@ def _from_str_set(source: Set[str]) -> List[str]:
 
 
 def _from_str_dict(source: Dict[str, str]) -> List[str]:
-    return ['{} -> {}'.format(left, right) for left, right in source.items()]
+    return ["{} -> {}".format(left, right) for left, right in source.items()]
 
 
 def _to_int_set(source_lines: List[str]) -> Set[int]:
     ret: Set[int] = set()
     for line in source_lines:
-        for item in line.split(','):
-            if '-' in item:
-                low, high = item.split('-')
+        for item in line.split(","):
+            if "-" in item:
+                low, high = item.split("-")
                 ret.update(list(range(int(low), int(high) + 1)))
             else:
                 ret.add(int(item))
@@ -54,7 +54,7 @@ def _to_str_set(source_lines: List[str]) -> Set[str]:
 def _to_str_dict(source_lines: List[str]) -> Dict[str, str]:
     ret: Dict[str, str] = {}
     for line in source_lines:
-        key, value = line.split(' -> ')
+        key, value = line.split(" -> ")
         ret[key] = value
     return ret
 
@@ -136,9 +136,9 @@ class AutoTagSettings:
             (SECTION_TAG_CATEGORY_MAP, _from_str_dict(self._tag_category_map)),
         ]
 
-        return '\n\n'.join(
-            '\n'.join(
-                ['--- {} ---'.format(section_title)]
+        return "\n\n".join(
+            "\n".join(
+                ["--- {} ---".format(section_title)]
                 + [line for line in section_lines if line]
             )
             for (section_title, section_lines) in sections
@@ -150,14 +150,14 @@ class AutoTagSettings:
 
 
 def deserialize(text: str) -> AutoTagSettings:
-    iterator = iter(enumerate(text.split('\n')))
+    iterator = iter(enumerate(text.split("\n")))
     sections: Dict[str, List[str]] = {}
     current_section_title: Optional[str] = None
     for i, line in iterator:
         if not line:
             continue
-        if line.startswith('---'):
-            current_section_title = line.strip('-').strip()
+        if line.startswith("---"):
+            current_section_title = line.strip("-").strip()
             sections[current_section_title] = []
         else:
             assert current_section_title is not None
@@ -175,7 +175,7 @@ def deserialize(text: str) -> AutoTagSettings:
             tag_category_map=_to_str_dict(sections[SECTION_TAG_CATEGORY_MAP]),
         )
     except KeyError as ex:
-        raise ValueError('Missing section {}'.format(ex.args[0]))
+        raise ValueError("Missing section {}".format(ex.args[0]))
 
 
 def load(source_path: Path) -> AutoTagSettings:
