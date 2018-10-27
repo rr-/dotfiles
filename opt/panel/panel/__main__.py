@@ -25,7 +25,7 @@ from panel.widgets.workspaces import (
     WorkspacesWidget,
 )
 
-STYLESHEET_TEMPLATE = '''
+STYLESHEET_TEMPLATE = """
 #central {{
     background: {colors.background};
 }}
@@ -64,7 +64,7 @@ QWidget[class=chart] {{
     height: 16px;
     margin: 2px;
 }}
-'''
+"""
 
 
 class MainWindow(QtWidgets.QMainWindow):
@@ -84,15 +84,15 @@ class MainWindow(QtWidgets.QMainWindow):
         self.move(0, 0)
         self.show()
 
-        window_gap = int(run(['bspc', 'config', 'window_gap']).stdout)
-        window_border = int(run(['bspc', 'config', 'border_width']).stdout)
+        window_gap = int(run(["bspc", "config", "window_gap"]).stdout)
+        window_border = int(run(["bspc", "config", "border_width"]).stdout)
         content_margin = (
             window_gap + window_border
         ) / self.devicePixelRatioF()
 
         self.setStyleSheet(STYLESHEET_TEMPLATE.format(colors=Colors))
 
-        central_widget = QtWidgets.QWidget(self, objectName='central')
+        central_widget = QtWidgets.QWidget(self, objectName="central")
         layout = QtWidgets.QHBoxLayout(central_widget, margin=0, spacing=12)
         layout.setContentsMargins(content_margin, 0, content_margin, 0)
         self.setCentralWidget(central_widget)
@@ -103,7 +103,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def reload_style_sheet(self) -> None:
         old_stylesheet = self.styleSheet()
-        self.setStyleSheet('')
+        self.setStyleSheet("")
         self.setStyleSheet(old_stylesheet)
 
 
@@ -112,7 +112,7 @@ def main() -> None:
     app.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling)
     workspaces_updater = WorkspacesUpdater()
     main_window = MainWindow(workspaces_updater.monitors)
-    main_window.setWindowTitle('panel')
+    main_window.setWindowTitle("panel")
 
     widgets = [
         WorkspacesWidget(app, main_window, workspaces_updater),
@@ -137,18 +137,18 @@ def main() -> None:
     for monitor in workspaces_updater.monitors:
         run(
             [
-                'bspc',
-                'config',
-                '-m',
-                monitor.name or '?',
-                'top_padding',
+                "bspc",
+                "config",
+                "-m",
+                monitor.name or "?",
+                "top_padding",
                 str(physical_height),
             ]
         )
 
     for widget in widgets:
         if not widget.available:
-            print(f'{widget.__class__} is not available on this system')
+            print(f"{widget.__class__} is not available on this system")
             continue
         main_window.centralWidget().layout().addWidget(widget.container)
         thread = threading.Thread(
@@ -160,5 +160,5 @@ def main() -> None:
     app.exec_()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

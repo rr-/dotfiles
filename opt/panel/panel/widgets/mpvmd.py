@@ -8,12 +8,12 @@ from PyQt5 import QtGui, QtWidgets
 
 from panel.widgets.widget import Widget
 
-SOCKET_PATH = '/tmp/mpvmd.socket'
+SOCKET_PATH = "/tmp/mpvmd.socket"
 
 
 def _format_time(seconds: int) -> str:
     seconds = math.floor(float(seconds))
-    return '%02d:%02d' % (seconds // 60, seconds % 60)
+    return "%02d:%02d" % (seconds // 60, seconds % 60)
 
 
 class Info:
@@ -22,32 +22,32 @@ class Info:
 
     @property
     def path(self) -> T.Optional[str]:
-        return self.raw.get('path', None)
+        return self.raw.get("path", None)
 
     @property
     def pause(self) -> bool:
-        return self.raw.get('pause', False)
+        return self.raw.get("pause", False)
 
     @property
     def metadata(self) -> T.Dict:
         return {
             key.lower(): value
-            for key, value in (self.raw.get('metadata') or {}).items()
+            for key, value in (self.raw.get("metadata") or {}).items()
         }
 
     @property
     def elapsed(self) -> int:
-        return self.raw.get('time-pos', 0)
+        return self.raw.get("time-pos", 0)
 
     @property
     def duration(self) -> int:
-        return self.raw.get('duration', 0)
+        return self.raw.get("duration", 0)
 
     @property
     def random_playback(self) -> bool:
         return (
-            self.raw.get('script-opts', {}).get('random_playback', 'no')
-        ) == 'yes'
+            self.raw.get("script-opts", {}).get("random_playback", "no")
+        ) == "yes"
 
 
 class Connection:
@@ -77,21 +77,21 @@ class Connection:
         self._request_id = 1
 
         properties = [
-            'pause',
-            'time-pos',
-            'duration',
-            'script-opts',
-            'metadata',
-            'path',
+            "pause",
+            "time-pos",
+            "duration",
+            "script-opts",
+            "metadata",
+            "path",
         ]
         for i, name in enumerate(properties, 1):
-            self.send(['observe_property', i, name])
+            self.send(["observe_property", i, name])
 
     def send(self, command: T.List[T.Any]) -> None:
         if not self.connected:
-            raise RuntimeError('not connected')
+            raise RuntimeError("not connected")
 
-        message = {'command': command, 'request_id': self._request_id}
+        message = {"command": command, "request_id": self._request_id}
         self._send(message)
         self._request_id += 1
 
@@ -100,36 +100,36 @@ class Connection:
             return
 
         for event in self._recv():
-            if event.get('event') != 'property-change':
+            if event.get("event") != "property-change":
                 continue
-            self.info.raw[event['name']] = event['data']
+            self.info.raw[event["name"]] = event["data"]
 
     def _send(self, message: T.Any) -> None:
-        print('out', message)
+        print("out", message)
         assert self._socket is not None
         try:
-            self._socket.send((json.dumps(message) + '\n').encode())
+            self._socket.send((json.dumps(message) + "\n").encode())
         except (BrokenPipeError, ValueError):
             self._socket = None
             raise
 
     def _recv(self) -> T.List[T.Any]:
         assert self._socket is not None
-        data = b''
+        data = b""
         try:
             while True:
                 chunk = self._socket.recv(1024)
                 data += chunk
-                if chunk.endswith(b'\n') or not chunk:
+                if chunk.endswith(b"\n") or not chunk:
                     break
         except (BrokenPipeError, ValueError):
             self._socket = None
             raise
         ret = []
-        for line in data.decode().split('\n'):
+        for line in data.decode().split("\n"):
             if line:
                 ret.append(json.loads(line))
-        print('in', ret)
+        print("in", ret)
         return ret
 
 
@@ -170,9 +170,9 @@ class MpvmdWidget(Widget):
     def _play_pause_clicked(self, _event: QtGui.QMouseEvent) -> None:
         with self.exception_guard():
             if self._info.pause:
-                self._connection.send(['set_property', 'pause', 'no'])
+                self._connection.send(["set_property", "pause", "no"])
             else:
-                self._connection.send(['set_property', 'pause', 'yes'])
+                self._connection.send(["set_property", "pause", "yes"])
             self.refresh()
             self.render()
 
@@ -180,11 +180,11 @@ class MpvmdWidget(Widget):
         with self.exception_guard():
             self._connection.send(
                 [
-                    'script-message-to',
-                    'playlist',
-                    'playlist-next'
+                    "script-message-to",
+                    "playlist",
+                    "playlist-next"
                     if event.angleDelta().y() > 0
-                    else 'playlist-prev',
+                    else "playlist-prev",
                 ]
             )
             self.refresh()
@@ -192,11 +192,11 @@ class MpvmdWidget(Widget):
 
     def _shuffle_clicked(self, _event: QtGui.QMouseEvent) -> None:
         with self.exception_guard():
-            data = self._info.raw['script-opts'].copy()
-            data['random_playback'] = (
-                'no' if self._info.random_playback else 'yes'
+            data = self._info.raw["script-opts"].copy()
+            data["random_playback"] = (
+                "no" if self._info.random_playback else "yes"
             )
-            self._connection.send(['set_property', 'script-opts', data])
+            self._connection.send(["set_property", "script-opts", data])
 
             self.refresh()
             self.render()
@@ -214,27 +214,27 @@ class MpvmdWidget(Widget):
 
     def _render_impl(self) -> None:
         if self._info.pause:
-            self._set_icon(self._status_icon_label, 'pause')
+            self._set_icon(self._status_icon_label, "pause")
         else:
-            self._set_icon(self._status_icon_label, 'play')
+            self._set_icon(self._status_icon_label, "play")
 
-        text = ''
-        if self._info.metadata.get('title'):
-            if self._info.metadata.get('artist'):
+        text = ""
+        if self._info.metadata.get("title"):
+            if self._info.metadata.get("artist"):
                 text = (
-                    self._info.metadata['artist']
-                    + ' - '
-                    + self._info.metadata['title']
+                    self._info.metadata["artist"]
+                    + " - "
+                    + self._info.metadata["title"]
                 )
             else:
-                text = self._info.metadata['title']
-        elif self._info.metadata.get('icy-title'):
-            text = self._info.metadata['icy-title']
+                text = self._info.metadata["title"]
+        elif self._info.metadata.get("icy-title"):
+            text = self._info.metadata["icy-title"]
         else:
-            text = os.path.basename(self._info.path or '')
+            text = os.path.basename(self._info.path or "")
 
         if self._info.elapsed and self._info.duration:
-            text += ' %s / %s' % (
+            text += " %s / %s" % (
                 _format_time(self._info.elapsed),
                 _format_time(self._info.duration),
             )
@@ -242,9 +242,9 @@ class MpvmdWidget(Widget):
         self._song_label.setText(text)
 
         shuffle = self._info.random_playback
-        if self._shuffle_icon_label.property('active') != shuffle:
-            self._shuffle_icon_label.setProperty('active', shuffle)
+        if self._shuffle_icon_label.property("active") != shuffle:
+            self._shuffle_icon_label.setProperty("active", shuffle)
             if shuffle:
-                self._set_icon(self._shuffle_icon_label, 'shuffle-on')
+                self._set_icon(self._shuffle_icon_label, "shuffle-on")
             else:
-                self._set_icon(self._shuffle_icon_label, 'shuffle-off')
+                self._set_icon(self._shuffle_icon_label, "shuffle-off")

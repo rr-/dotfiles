@@ -12,7 +12,7 @@ class Chart(QtWidgets.QWidget):
         super().__init__(parent)
         self.setMinimumSize(QtCore.QSize(min_width, 0))
         self.points: T.Dict[str, T.List[float]] = collections.defaultdict(list)
-        self.setProperty('class', 'chart')
+        self.setProperty("class", "chart")
 
     def addPoint(self, color: str, y: float) -> None:
         self.points[color].append(y)

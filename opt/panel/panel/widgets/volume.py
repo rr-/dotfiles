@@ -36,30 +36,30 @@ class VolumeControl(QtWidgets.QWidget):
         painter.setRenderHint(QtGui.QPainter.Antialiasing)
 
         points = {
-            'zero': QtCore.QPoint(margin_x, height - 1 - margin_y),
-            'vol1': QtCore.QPoint(
+            "zero": QtCore.QPoint(margin_x, height - 1 - margin_y),
+            "vol1": QtCore.QPoint(
                 margin_x + self.value * inner_width / self.max,
                 height - 1 - margin_y,
             ),
-            'vol2': QtCore.QPoint(
+            "vol2": QtCore.QPoint(
                 margin_x + self.value * inner_width / self.max,
                 height - 1 - margin_y - self.value * inner_height / self.max,
             ),
-            'max1': QtCore.QPoint(width - 1, margin_y),
-            'max2': QtCore.QPoint(width - 1, height - 1 - margin_y),
+            "max1": QtCore.QPoint(width - 1, margin_y),
+            "max2": QtCore.QPoint(width - 1, height - 1 - margin_y),
         }
 
-        poly = [points['zero'], points['vol1'], points['vol2']]
+        poly = [points["zero"], points["vol1"], points["vol2"]]
         painter.setPen(QtGui.QPen(0))
         painter.setBrush(QtGui.QColor(Colors.volume_chart_background))
         painter.drawPolygon(QtGui.QPolygon(poly))
 
-        poly = [points['vol1'], points['vol2'], points['max1'], points['max2']]
+        poly = [points["vol1"], points["vol2"], points["max1"], points["max2"]]
         painter.setBrush(QtGui.QColor(Colors.chart_background))
         painter.drawPolygon(QtGui.QPolygon(poly))
 
         painter.setPen(QtGui.QPen(QtGui.QColor(Colors.chart_foreground)))
-        poly = [points['zero'], points['max1'], points['max2']]
+        poly = [points["zero"], points["max1"], points["max2"]]
         painter.setBrush(QtGui.QBrush())
         painter.drawPolygon(QtGui.QPolygon(poly))
 
@@ -97,22 +97,22 @@ class VolumeWidget(Widget):
         return self._container
 
     @property
-    def mixer(self) -> T.Optional['alsaaudio.Mixer']:
+    def mixer(self) -> T.Optional["alsaaudio.Mixer"]:
         if not alsaaudio:
             return None
-        return alsaaudio.Mixer(device='pulse')
+        return alsaaudio.Mixer(device="pulse")
 
     def change_volume(self, event: QtGui.QWheelEvent) -> None:
         with self.exception_guard():
             run(
                 [
-                    'amixer',
-                    '-D',
-                    'pulse',
-                    'set',
-                    'Master',
-                    '1%' + ['-', '+'][event.angleDelta().y() > 0],
-                    'unmute',
+                    "amixer",
+                    "-D",
+                    "pulse",
+                    "set",
+                    "Master",
+                    "1%" + ["-", "+"][event.angleDelta().y() > 0],
+                    "unmute",
                 ]
             )
             self.refresh()
@@ -136,7 +136,7 @@ class VolumeWidget(Widget):
             return
         self._set_icon(
             self._icon_label,
-            'volume-off' if self.mixer.getmute()[0] else 'volume-on',
+            "volume-off" if self.mixer.getmute()[0] else "volume-on",
         )
         self._volume_control.set(self.volume)
         self._volume_control.repaint()

@@ -36,7 +36,7 @@ class WorkspacesUpdater:
         if not WorkspacesUpdater.monitor_names:
             WorkspacesUpdater.monitor_names = [
                 line
-                for line in run(['bspc', 'query', '-M']).stdout.splitlines()
+                for line in run(["bspc", "query", "-M"]).stdout.splitlines()
                 if line
             ]
 
@@ -44,32 +44,32 @@ class WorkspacesUpdater:
         workspace_id = 0
         for monitor_name in WorkspacesUpdater.monitor_names:
             monitor_spec = json.loads(
-                run(['bspc', 'query', '-T', '-m', monitor_name]).stdout
+                run(["bspc", "query", "-T", "-m", monitor_name]).stdout
             )
             monitor = Monitor()
             monitor.name = monitor_name
-            monitor.width = int(monitor_spec['rectangle']['width'])
-            monitor.height = int(monitor_spec['rectangle']['height'])
-            monitor.x = int(monitor_spec['rectangle']['x'])
-            monitor.y = int(monitor_spec['rectangle']['y'])
-            for desktop_spec in monitor_spec['desktops']:
+            monitor.width = int(monitor_spec["rectangle"]["width"])
+            monitor.height = int(monitor_spec["rectangle"]["height"])
+            monitor.x = int(monitor_spec["rectangle"]["x"])
+            monitor.y = int(monitor_spec["rectangle"]["y"])
+            for desktop_spec in monitor_spec["desktops"]:
                 workspace = Workspace()
-                workspace.name = desktop_spec['name']
+                workspace.name = desktop_spec["name"]
                 workspace.focused = (
-                    desktop_spec['id'] == monitor_spec['focusedDesktopId']
+                    desktop_spec["id"] == monitor_spec["focusedDesktopId"]
                 )
-                workspace.free = desktop_spec['root'] is None
+                workspace.free = desktop_spec["root"] is None
                 workspace.urgent = False
                 workspace_id += 1
-                children = [desktop_spec['root']]
+                children = [desktop_spec["root"]]
                 while children:
                     child = children.pop()
                     if child is None:
                         continue
-                    children.append(child['firstChild'])
-                    children.append(child['secondChild'])
-                    if child['client']:
-                        if bool(child['client']['urgent']):
+                    children.append(child["firstChild"])
+                    children.append(child["secondChild"])
+                    if child["client"]:
+                        if bool(child["client"]["urgent"]):
                             workspace.urgent = True
                 monitor.workspaces.append(workspace)
             monitors.append(monitor)
@@ -91,11 +91,11 @@ class WorkspacesWidget(Widget):
         self._updater = workspaces_updater
 
         self._bspc_process = subprocess.Popen(
-            ['bspc', 'subscribe'], stdout=subprocess.PIPE
+            ["bspc", "subscribe"], stdout=subprocess.PIPE
         )
 
         self._container = QtWidgets.QWidget(
-            main_window, objectName='workspaces'
+            main_window, objectName="workspaces"
         )
 
         self._container.wheelEvent = self._wheel
@@ -106,9 +106,9 @@ class WorkspacesWidget(Widget):
                 workspace_widget = QtWidgets.QPushButton(
                     workspace.name, self._container
                 )
-                workspace_widget.setProperty('class', 'workspace')
-                workspace_widget.setProperty('monitor', i)
-                workspace_widget.setProperty('workspace', j)
+                workspace_widget.setProperty("class", "workspace")
+                workspace_widget.setProperty("monitor", i)
+                workspace_widget.setProperty("workspace", j)
                 workspace_widget.mousePressEvent = self._click
                 layout.addWidget(workspace_widget)
 
@@ -122,8 +122,8 @@ class WorkspacesWidget(Widget):
             yield self._container.layout().itemAt(i).widget()
 
     def _widget_to_workspace(self, widget: QtWidgets.QWidget) -> Workspace:
-        monitor_idx = widget.property('monitor')
-        workspace_idx = widget.property('workspace')
+        monitor_idx = widget.property("monitor")
+        workspace_idx = widget.property("workspace")
         return self._updater.monitors[monitor_idx].workspaces[workspace_idx]
 
     def _wheel(self, event: QtGui.QWheelEvent) -> None:
@@ -143,13 +143,13 @@ class WorkspacesWidget(Widget):
             focused_workspace = self._widget_to_workspace(
                 workspace_widgets[focused_widget_idx]
             )
-            run(['bspc', 'desktop', '-f', focused_workspace.name or '?'])
+            run(["bspc", "desktop", "-f", focused_workspace.name or "?"])
 
     def _click(self, event: QtGui.QMouseEvent) -> None:
         workspace_widget = self._container.window().childAt(event.globalPos())
         workspace = self._widget_to_workspace(workspace_widget)
         with self.exception_guard():
-            run(['bspc', 'desktop', '-f', workspace.name or '?'])
+            run(["bspc", "desktop", "-f", workspace.name or "?"])
 
     def _refresh_impl(self) -> None:
         self._bspc_process.stdout.readline().decode().strip()
@@ -158,7 +158,7 @@ class WorkspacesWidget(Widget):
     def _render_impl(self) -> None:
         for workspace_widget in self._workspace_widgets:
             workspace = self._widget_to_workspace(workspace_widget)
-            workspace_widget.setProperty('ws_free', '%s' % workspace.free)
-            workspace_widget.setProperty('ws_urgent', '%s' % workspace.urgent)
-            workspace_widget.setProperty('ws_focused', str(workspace.focused))
+            workspace_widget.setProperty("ws_free", "%s" % workspace.free)
+            workspace_widget.setProperty("ws_urgent", "%s" % workspace.urgent)
+            workspace_widget.setProperty("ws_focused", str(workspace.focused))
         self._main_window.reload_style_sheet()

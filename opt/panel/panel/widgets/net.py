@@ -13,10 +13,10 @@ from panel.widgets.widget import Widget
 def convert_speed(speed_bytes: int) -> str:
     suffixes = ("B/s", "KB/s", "MB/s", "GB/s", "TB/s")
     if speed_bytes < 1024:
-        return '{:.0f} {}'.format(speed_bytes, suffixes[0])
+        return "{:.0f} {}".format(speed_bytes, suffixes[0])
     power = int(math.floor(math.log(speed_bytes, 1024)))
     denominator = math.pow(1024, power)
-    return f'{speed_bytes / denominator:.1f} {suffixes[power]}'
+    return f"{speed_bytes / denominator:.1f} {suffixes[power]}"
 
 
 class NetworkUsageWidget(Widget):
@@ -35,12 +35,12 @@ class NetworkUsageWidget(Widget):
         try:
             self._rx_path: T.Optional[Path] = None
             self._tx_path: T.Optional[Path] = None
-            for interface in glob.glob('/sys/class/net/*'):
+            for interface in glob.glob("/sys/class/net/*"):
                 path = Path(interface)
-                state = (path / 'operstate').read_text().strip()
-                if state.lower() == 'up':
-                    self._rx_path = path / 'statistics' / 'rx_bytes'
-                    self._tx_path = path / 'statistics' / 'tx_bytes'
+                state = (path / "operstate").read_text().strip()
+                if state.lower() == "up":
+                    self._rx_path = path / "statistics" / "rx_bytes"
+                    self._tx_path = path / "statistics" / "tx_bytes"
                     available = True
         except Exception:
             pass
@@ -63,8 +63,8 @@ class NetworkUsageWidget(Widget):
         layout.addWidget(self._net_out_text_label)
         layout.addWidget(self._chart)
 
-        self._set_icon(self._net_in_icon_label, 'arrow-down')
-        self._set_icon(self._net_out_icon_label, 'arrow-up')
+        self._set_icon(self._net_in_icon_label, "arrow-down")
+        self._set_icon(self._net_out_icon_label, "arrow-up")
         self._net_in_text_label.setFixedWidth(65)
         self._net_in_text_label.setAlignment(
             QtCore.Qt.AlignCenter | QtCore.Qt.AlignVCenter
