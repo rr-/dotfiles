@@ -1,16 +1,15 @@
 #!/usr/bin/env python3
-import os
-import sys
 import argparse
+import os
 import stat
-from pwd import getpwuid
-from grp import getgrgid
+import sys
+import typing as T
 from datetime import datetime
+from grp import getgrgid
 from pathlib import Path
-from typing import List, Iterable, Tuple
+from pwd import getpwuid
 
 from colorama import Fore
-
 
 RED = Fore.RED
 GREEN = Fore.GREEN
@@ -19,9 +18,10 @@ RESET = Fore.RESET
 
 
 def tabulate(
-        rows: Iterable[Tuple[str, ...]],
-        headers: Tuple[str, ...],
-        alignments: Tuple[str, ...]) -> str:
+        rows: T.Iterable[T.Tuple[str, ...]],
+        headers: T.Tuple[str, ...],
+        alignments: T.Tuple[str, ...],
+) -> str:
     gap = '  '
 
     column_widths = [len(column) for column in headers]
@@ -36,7 +36,7 @@ def tabulate(
             column_widths[i])
         for i in range(len(headers))]
 
-    def print_row(row: Tuple[str, ...]) -> str:
+    def print_row(row: T.Tuple[str, ...]) -> str:
         return gap.join(formats[i].format(cell) for i, cell in enumerate(row))
 
     ret = ''
@@ -56,7 +56,7 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def collect_paths(path: Path) -> Iterable[Path]:
+def collect_paths(path: Path) -> T.Iterable[Path]:
     if path.is_dir():
         for sub_path in path.iterdir():
             yield sub_path
@@ -134,9 +134,9 @@ def format_chmod(mode: int) -> str:
 
 
 def print_long_listing(
-        paths: Iterable[Path],
+        paths: T.Iterable[Path],
         args: argparse.Namespace) -> None:
-    rows: List[Tuple[str, ...]] = []
+    rows: T.List[T.Tuple[str, ...]] = []
 
     for path in paths:
         try:
@@ -177,15 +177,17 @@ def print_long_listing(
 
 
 def print_short_listing(
-        paths: Iterable[Path],
-        args: argparse.Namespace) -> None:
+        paths: T.Iterable[Path],
+        args: argparse.Namespace,
+) -> None:
     for path in paths:
         print(format_name(path, args.color))
 
 
 def print_listing(
         source_path: Path,
-        args: argparse.Namespace) -> None:
+        args: argparse.Namespace,
+) -> None:
     paths = collect_paths(source_path)
     paths = sorted(paths, key=lambda path: (path.is_file(), path.name))
     if not args.all:

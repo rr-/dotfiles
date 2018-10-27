@@ -2,13 +2,12 @@
 # Switches between Polish and Japanese keyboard layout for ibus
 # (the default switcher of ibus was too buggy)
 
-import os
 import argparse
+import os
 import typing as T
-from subprocess import run, PIPE
+from subprocess import PIPE, run
 
 import xdg
-
 
 XMODMAPS: T.List[str] = [
     'keysym equal = equal plus equal plus dead_macron dead_macron',

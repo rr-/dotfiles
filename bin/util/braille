@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 import argparse
-import numpy
-import skimage.io
-import skimage.transform
-import skimage.color
-import skimage.util
 import shutil
 
+import numpy
+
+import skimage.color
+import skimage.io
+import skimage.transform
+import skimage.util
 
 INDICES = [
     (0, 0), (1, 0), (2, 0), (0, 1),

@@ -2,9 +2,9 @@
 # Looks up word definitions on Urban Dictionary.
 
 import argparse
-import urllib.request
 import json
 import re
+import urllib.request
 
 
 def _wrap_long_text(text, length=70):

@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 # Distributes files in equal chunks to subdirectories
 
-import os
-import sys
 import argparse
-import shutil
 import collections
+import os
+import shutil
+import sys
 
 
 class DistributionStyle:

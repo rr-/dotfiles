@@ -3,15 +3,15 @@
 import abc
 import argparse
 import concurrent.futures
-import pathlib
 import hashlib
+import pathlib
 import re
 import subprocess
 import tempfile
 
 import requests
-from dotfiles import logging
 
+from dotfiles import logging
 
 PASSWORD = 'iBlm8NTigvru0Jr0'
 URL_TEMPLATE = (

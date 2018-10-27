@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 import argparse
 import asyncio
-import subprocess
 import json
-import warnings
+import subprocess
 import typing as T
-from pathlib import Path
+import warnings
 from concurrent.futures import ThreadPoolExecutor
+from pathlib import Path
 
 import tqdm
 

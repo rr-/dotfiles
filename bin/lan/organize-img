@@ -9,8 +9,8 @@ import subprocess
 from pathlib import Path
 
 from PIL import Image
-from dotfiles import logging
 
+from dotfiles import logging
 
 SOURCE_ROOT_DIR = Path('~/hub/img/').expanduser()
 TARGET_ROOT_DIR = Path('~/img/net/').expanduser()

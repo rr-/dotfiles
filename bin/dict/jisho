@@ -2,8 +2,8 @@
 # Looks up word definitions on jisho.org.
 
 import argparse
-import urllib.request
 import json
+import urllib.request
 
 
 def _parse_args():

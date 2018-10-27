@@ -5,8 +5,8 @@
 import argparse
 import os
 import sys
-from datetime import datetime
 from calendar import day_name
+from datetime import datetime
 from shutil import which
 from subprocess import run
 

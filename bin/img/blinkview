@@ -1,15 +1,14 @@
 #!/usr/bin/env python3
 import argparse
 import os
-import sys
 import re
-from subprocess import run
+import sys
+import typing as T
 from functools import partial
 from pathlib import Path
-from typing import Optional, List, Dict
-from PyQt5 import Qt
-from PyQt5 import QtCore
-from PyQt5 import QtGui
+from subprocess import run
+
+from PyQt5 import Qt, QtCore, QtGui
 
 PAGE_WIDTH = 2
 PAGE_HEIGHT = 2
@@ -22,7 +21,7 @@ MANAGED_EXTENSIONS = [
 class Label(Qt.QLabel):
     def __init__(self):
         super(Label, self).__init__()
-        self.pixmap: Optional[QtGui.QPixmap] = None
+        self.pixmap: T.Optional[QtGui.QPixmap] = None
 
     def changePixmap(self, img):
         self.pixmap = QtGui.QPixmap(img)
@@ -44,7 +43,7 @@ class Label(Qt.QLabel):
 
 
 class ImageViewer(Qt.QMainWindow):
-    def __init__(self, image_paths: List[Path], target_path: Path) -> None:
+    def __init__(self, image_paths: T.List[Path], target_path: Path) -> None:
         super(ImageViewer, self).__init__()
 
         self._image_paths = image_paths
@@ -96,7 +95,7 @@ class ImageViewer(Qt.QMainWindow):
         Qt.QShortcut(Qt.QKeySequence('j'), self, self.nextPage)
         Qt.QShortcut(Qt.QKeySequence('f'), self, self.toggleFullscreen)
 
-        index_to_key: Dict[int, str] = {
+        index_to_key: T.Dict[int, str] = {
             0: '1',
             1: '2',
             2: '3',
@@ -181,8 +180,8 @@ class ImageViewer(Qt.QMainWindow):
         self.mainWidget.setUpdatesEnabled(True)
 
 
-def collect_images(source_paths: List[Path]) -> List[Path]:
-    ret: List[Path] = []
+def collect_images(source_paths: T.List[Path]) -> T.List[Path]:
+    ret: T.List[Path] = []
     for path in source_paths:
         if path.is_dir():
             for entry in os.scandir(path):
@@ -226,7 +225,7 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> None:
     args = parse_args()
-    source_paths: List[Path] = args.source_paths
+    source_paths: T.List[Path] = args.source_paths
     target_path: Path = args.target_path
 
     image_paths = collect_images(source_paths)

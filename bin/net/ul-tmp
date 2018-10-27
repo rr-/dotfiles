@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 # Uploads files to tmp.sakuya.pl via SSH and outputs copyable links
 
+import io
 import os
-import sys
 import shlex
+import subprocess
+import sys
 import tarfile
 import urllib.parse
-import subprocess
-import io
 
 BASE_DIR = '/srv/www/tmp.sakuya.pl/f/'
 BASE_URL = 'https://tmp.sakuya.pl/f/'
