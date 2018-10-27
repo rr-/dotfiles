@@ -2,17 +2,18 @@
 # Looks up kanji by radical.
 
 import argparse
-import pathlib
 import functools
 import itertools
-import urllib.parse
-import urllib.request
 import json
+import pathlib
 import sys
 import typing as t
-import colored
+import urllib.parse
+import urllib.request
+
 import xdg
 
+import colored
 
 _CACHE_PATH = pathlib.Path(xdg.XDG_CACHE_HOME) / 'kanji.json'
 

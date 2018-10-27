@@ -1,21 +1,23 @@
 #!/usr/bin/env python3
-import os
 import argparse
+import os
+import typing as T
 from os.path import expanduser
-from typing import Any, List
-from drillsrs import db, cmd, util
-from drillsrs.cmd.command_base import CommandBase
-from drillsrs.__main__ import (
-    create_arg_parser, parse_args, execute_command_with_args)
+
 import xdg
 
+from drillsrs import cmd, db, util
+from drillsrs.__main__ import (
+    create_arg_parser, execute_command_with_args, parse_args
+)
+from drillsrs.cmd.command_base import CommandBase
 
 DECK_NAME = 'kotoba'
 REPORT_PATH = os.path.join(xdg.XDG_DATA_HOME, 'drillsrs/kotoba.htm')
 
 
 def _remove_argparse_options(
-        parser: argparse.ArgumentParser, options: List[str]):
+        parser: argparse.ArgumentParser, options: T.List[str]):
     for option in options:
         for action in parser._actions:
             if option == action.dest:
@@ -80,11 +82,11 @@ class StudyCommand(cmd.StudyCommand):
 
 
 def _create_card(
-        session: Any,
+        session: T.Any,
         deck: db.Deck,
         question: str,
-        answers: List[str],
-        tags: List[str]) -> None:
+        answers: T.List[str],
+        tags: T.List[str]) -> None:
     if not answers:
         return None
     card = db.Card()
@@ -97,7 +99,7 @@ def _create_card(
     return card
 
 
-def _sync_card_answers(answers: List[str], card: db.Card) -> None:
+def _sync_card_answers(answers: T.List[str], card: db.Card) -> None:
     for answer in answers:
         if answer.lower() not in [a.lower() for a in card.answers]:
             print('%s not in %r' % (answer, card.answers))
@@ -115,8 +117,8 @@ class AddCommand(CommandBase):
 
     def run(self, args: argparse.Namespace) -> None:
         question: str = args.question
-        meanings: List[str] = args.meaning
-        readings: List[str] = args.reading
+        meanings: T.List[str] = args.meaning
+        readings: T.List[str] = args.reading
 
         with db.session_scope() as session:
             deck = db.get_deck_by_name(session, DECK_NAME)

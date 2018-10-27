@@ -2,11 +2,11 @@
 import argparse
 import hashlib
 import pathlib
-import xdg
 import pickle
-import progress.bar
 import time
 
+import progress.bar
+import xdg
 
 CACHE_PATH = pathlib.Path(xdg.XDG_CACHE_HOME) / 'dups.dat'
 

@@ -3,14 +3,17 @@ import argparse
 import hashlib
 import subprocess
 import time
+import typing as T
 from datetime import datetime
-from typing import List
 from pathlib import Path
 
 DEFAULT_EXCLUDE = ['__pycache__']
 
 
-def _get_paths(target_paths: List[Path], exclude: List[str]) -> List[str]:
+def _get_paths(
+        target_paths: T.List[Path],
+        exclude: T.List[str],
+) -> T.List[str]:
     for target_path in target_paths:
         if target_path.name in exclude:
             continue
@@ -21,7 +24,7 @@ def _get_paths(target_paths: List[Path], exclude: List[str]) -> List[str]:
                 yield from _get_paths([path], exclude)
 
 
-def _get_checksum(paths: List[str]) -> str:
+def _get_checksum(paths: T.List[str]) -> str:
     digest = hashlib.md5()
     for path in paths:
         try:
@@ -43,10 +46,10 @@ def _parse_args() -> argparse.Namespace:
 
 def main() -> None:
     args = _parse_args()
-    exclude: List[str] = args.exclude or []
+    exclude: T.List[str] = args.exclude or []
     exclude += DEFAULT_EXCLUDE
-    target_dirs: List[Path] = [Path(path) for path in args.target_dir]
-    command_line: List[str] = [args.cmd] + args.cmd_args
+    target_dirs: T.List[Path] = [Path(path) for path in args.target_dir]
+    command_line: T.List[str] = [args.cmd] + args.cmd_args
     sleep_time: int = args.sleep
     last_checksum = None
 
