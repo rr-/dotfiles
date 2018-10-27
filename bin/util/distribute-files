@@ -17,63 +17,100 @@ class DistributionStyle:
 
 def parse_args():
     help = (
-        'Distribute files in given directory to subdirectories.\n\n' +
-        'Subdirectories have numeric names starting at 1. Names are *not* ' +
-        'padded with 0 to avoid the need to rename existing subdirectories ' +
-        'whenever the digit count changes. Only files are distributed - all ' +
-        'directories are ignored.')
+        'Distribute files in given directory to subdirectories.\n\n'
+        + 'Subdirectories have numeric names starting at 1. Names are *not* '
+        + 'padded with 0 to avoid the need to rename existing subdirectories '
+        + 'whenever the digit count changes. Only files are distributed - all '
+        + 'directories are ignored.'
+    )
 
     parser = argparse.ArgumentParser(description=help.strip())
 
     parser.add_argument(
-        '-m', '--max', metavar='MAX', type=int, default=1000,
+        '-m',
+        '--max',
+        metavar='MAX',
+        type=int,
+        default=1000,
         help=(
-            'set upper limit how many files a subdirectory should contain' +
-            ' (default: 1000)'))
+            'set upper limit how many files a subdirectory should contain'
+            + ' (default: 1000)'
+        ),
+    )
 
     parser.add_argument(
-        'base_dir', metavar='DIR', help='directory to organize')
+        'base_dir', metavar='DIR', help='directory to organize'
+    )
 
     group = parser.add_mutually_exclusive_group()
     group.set_defaults(style=DistributionStyle.FILL_LAST, verbosity=0)
     group.add_argument(
-        '--fill-last', action='store_const', dest='style',
+        '--fill-last',
+        action='store_const',
+        dest='style',
         const=DistributionStyle.FILL_LAST,
-        help='try to fill last subdirectory available (default)')
+        help='try to fill last subdirectory available (default)',
+    )
     group.add_argument(
-        '--fill-first', action='store_const', dest='style',
+        '--fill-first',
+        action='store_const',
+        dest='style',
         const=DistributionStyle.FILL_FIRST,
         help=(
-            'try to fill first subdirectory available ' +
-            '(will recreate missing subdirectories starting at 1)'))
+            'try to fill first subdirectory available '
+            + '(will recreate missing subdirectories starting at 1)'
+        ),
+    )
     group.add_argument(
-        '--fill-first-available', action='store_const', dest='style',
+        '--fill-first-available',
+        action='store_const',
+        dest='style',
         const=DistributionStyle.FILL_FIRST_AVAILABLE,
         help=(
-            'try to fill first existing subdirectory ' +
-            '(won\'t recreate missing subdirectories starting at 1)'))
+            'try to fill first existing subdirectory '
+            + '(won\'t recreate missing subdirectories starting at 1)'
+        ),
+    )
     group.add_argument(
         '--always-create',
-        action='store_const', dest='style',
+        action='store_const',
+        dest='style',
         const=DistributionStyle.ALWAYS_CREATE,
         help=(
-            'don\'t fill existing subdirectories ' +
-            '(will create new subdirectory after the last one available)'))
+            'don\'t fill existing subdirectories '
+            + '(will create new subdirectory after the last one available)'
+        ),
+    )
 
     parser.add_argument(
-        '--dry-run', action='store_true',
-        help='don\'t do anything (simulation)')
+        '--dry-run',
+        action='store_true',
+        help='don\'t do anything (simulation)',
+    )
 
     parser.set_defaults(verbosity=0)
     parser.add_argument(
-        '-v', '--verbose', action='store_const', dest='verbosity', const=1,
-        help='print basic movement statistics')
+        '-v',
+        '--verbose',
+        action='store_const',
+        dest='verbosity',
+        const=1,
+        help='print basic movement statistics',
+    )
     parser.add_argument(
-        '--very-verbose', action='store_const', dest='verbosity', const=2,
-        help='print every single movement operation')
+        '--very-verbose',
+        action='store_const',
+        dest='verbosity',
+        const=2,
+        help='print every single movement operation',
+    )
     parser.add_argument(
-        '--silent', action='store_const', dest='verbosity', const=0,
-        help='print only errors')
+        '--silent',
+        action='store_const',
+        dest='verbosity',
+        const=0,
+        help='print only errors',
+    )
 
     return parser.parse_args()
 
@@ -123,20 +160,24 @@ def main():
     numeric_dirs = sorted(numeric_dirs)
     dir_gen = (
         (int(dir), len(os.listdir(os.path.join(args.base_dir, dir))))
-        for dir in numeric_dirs)
+        for dir in numeric_dirs
+    )
     dir_gen = sorted(dir_gen, key=lambda dir: int(dir[0]))
     dir_map = collections.OrderedDict(dir_gen)
 
     while files:
-        dir_number, avail_files = \
-            next_dir_number(dir_map, args.style, args.max)
+        dir_number, avail_files = next_dir_number(
+            dir_map, args.style, args.max
+        )
         dir = '%d' % dir_number
         files_to_move = files[0:avail_files]
 
         target_path = os.path.join(args.base_dir, dir)
         if args.verbosity > 0:
-            print('Using directory %s to distribute %d files' % (
-                target_path, len(files_to_move)))
+            print(
+                'Using directory %s to distribute %d files'
+                % (target_path, len(files_to_move))
+            )
         if not args.dry_run:
             os.makedirs(target_path, exist_ok=True)
 

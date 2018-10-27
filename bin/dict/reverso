@@ -10,28 +10,32 @@ COLOR_HIGHLIGHT = '\x1B[38;5;%dm\x1B[48;5;%dm' % (229, 58)
 
 BASE_URL = 'http://context.reverso.net/translation/'
 USER_AGENT = (
-    'Mozilla/5.0 (X11; Linux x86_64; rv:10.0) Gecko/20100101 Firefox/10.0')
+    'Mozilla/5.0 (X11; Linux x86_64; rv:10.0) Gecko/20100101 Firefox/10.0'
+)
 
 
 def _parse_args():
     parser = argparse.ArgumentParser(
-        description='Looks up phrases on reverso.net')
+        description='Looks up phrases on reverso.net'
+    )
     parser.add_argument(
-        '-n', '--no-conjugations', action='store_false', dest='conjugate')
+        '-n', '--no-conjugations', action='store_false', dest='conjugate'
+    )
     parser.add_argument(
-        '-s', '--source-language', default='english', dest='src_lang')
+        '-s', '--source-language', default='english', dest='src_lang'
+    )
     parser.add_argument(
-        '-t', '--target-language', default='polish', dest='dst_lang')
+        '-t', '--target-language', default='polish', dest='dst_lang'
+    )
     parser.add_argument('phrase', nargs='+')
     return parser.parse_args()
 
 
 def _format_html(node):
     inner_html = lxml.etree.tostring(node, encoding='unicode')
-    inner_html = (
-        inner_html
-        .replace('<em>', COLOR_HIGHLIGHT)
-        .replace('</em>', COLOR_RESET))
+    inner_html = inner_html.replace('<em>', COLOR_HIGHLIGHT).replace(
+        '</em>', COLOR_RESET
+    )
     return re.sub('<[^>]*>', '', inner_html).strip()
 
 
@@ -40,10 +44,12 @@ def _lookup_context_phrase(src_language, dst_language, conjugate, phrase):
         BASE_URL
         + f'{src_language}-{dst_language}/'
         + f'{urllib.parse.quote(phrase)}'
-        + f'?d={conjugate:d}')
+        + f'?d={conjugate:d}'
+    )
 
     request = urllib.request.Request(
-        url=url, headers={'User-Agent': USER_AGENT})
+        url=url, headers={'User-Agent': USER_AGENT}
+    )
 
     with urllib.request.urlopen(request) as handle:
         content = handle.read()
@@ -58,10 +64,8 @@ def main():
     args = _parse_args()
 
     results = _lookup_context_phrase(
-        args.src_lang,
-        args.dst_lang,
-        args.conjugate,
-        ' '.join(args.phrase))
+        args.src_lang, args.dst_lang, args.conjugate, ' '.join(args.phrase)
+    )
 
     for src, dst in results:
         print(src)

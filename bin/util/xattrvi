@@ -13,14 +13,18 @@ def parse_args():
     )
 
     parser.add_argument(
-        'filename', type=str, default=None,
+        'filename',
+        type=str,
+        default=None,
         help='file that needs to get modified',
-        nargs='+'
+        nargs='+',
     )
 
     parser.add_argument(
-        '--editor', type=str, default=os.environ.get('EDITOR') or 'nano',
-        help='use this particular editor'
+        '--editor',
+        type=str,
+        default=os.environ.get('EDITOR') or 'nano',
+        help='use this particular editor',
     )
 
     args = parser.parse_args()
@@ -41,18 +45,26 @@ def dump(path, user_xattrs, other_xattrs, handle):
     handle.write('# attributes in namespace \'user\'\n')
 
     if user_xattrs:
-        handle.write('\n'.join([
-            f'{key + ":":10s} {newline_escape(value)}'
-            for key, value in user_xattrs.items()
-        ]))
+        handle.write(
+            '\n'.join(
+                [
+                    f'{key + ":":10s} {newline_escape(value)}'
+                    for key, value in user_xattrs.items()
+                ]
+            )
+        )
         handle.write('\n')
 
     if other_xattrs:
         handle.write('# attributes in other namespaces\n')
-        handle.write('\n'.join([
-            f'#{key + ":":10s} {newline_escape(value)}'
-            for key, value in other_xattrs
-        ]))
+        handle.write(
+            '\n'.join(
+                [
+                    f'#{key + ":":10s} {newline_escape(value)}'
+                    for key, value in other_xattrs
+                ]
+            )
+        )
         handle.write('\n')
 
     handle.write('\n')
@@ -77,7 +89,7 @@ def parse(handle):
             if not path:
                 print(
                     f'!! Expected file marker before line {i + 1}',
-                    file=sys.stderr
+                    file=sys.stderr,
                 )
                 print(f'>> {line}', file=sys.stderr)
                 sys.exit(3)
@@ -111,17 +123,13 @@ def set_user_xattrs(path, new_user_xattrs):
         if key not in user_xattrs:
             print(f':: adding key "{key}" for path "{path}"')
             os.setxattr(
-                path,
-                'user.' + key,
-                newline_unescape(value).encode('utf-8')
+                path, 'user.' + key, newline_unescape(value).encode('utf-8')
             )
 
         elif user_xattrs[key] != value:
             print(f':: updating key "{key}" for path "{path}"')
             os.setxattr(
-                path,
-                'user.' + key,
-                newline_unescape(value).encode('utf-8')
+                path, 'user.' + key, newline_unescape(value).encode('utf-8')
             )
 
     for key in set(user_xattrs.keys()).difference(new_user_xattrs.keys()):
@@ -142,7 +150,7 @@ def main():
     if retval != 0:
         print(
             f'!! Editor {args.editor} exited nonzero with {retval}. Aborting.',
-            file=sys.stderr
+            file=sys.stderr,
         )
         sys.exit(1)
 

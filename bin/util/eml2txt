@@ -27,9 +27,9 @@ def get_body_text(parsed):
                     attachment_mime = attachment['mime_type_short']
                 except LookupError:
                     try:
-                        attachment_mime = (
-                            attachment['content_header']['content-type'][0]
-                        )
+                        attachment_mime = attachment['content_header'][
+                            'content-type'
+                        ][0]
                     except LookupError:
                         attachment_mime = 'application/octet-stream'
 
@@ -55,9 +55,8 @@ def main():
         raw_email = path.read_bytes()
         message = email.message_from_bytes(raw_email)
         parsed = eml_parser.eml_parser.parse_email(
-            message,
-            include_raw_body=True,
-            include_attachment_data=True)
+            message, include_raw_body=True, include_attachment_data=True
+        )
         text = get_body_text(parsed)
 
         print('From:    ' + parsed['header']['from'])

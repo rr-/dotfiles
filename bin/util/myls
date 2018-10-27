@@ -18,9 +18,9 @@ RESET = Fore.RESET
 
 
 def tabulate(
-        rows: T.Iterable[T.Tuple[str, ...]],
-        headers: T.Tuple[str, ...],
-        alignments: T.Tuple[str, ...],
+    rows: T.Iterable[T.Tuple[str, ...]],
+    headers: T.Tuple[str, ...],
+    alignments: T.Tuple[str, ...],
 ) -> str:
     gap = '  '
 
@@ -32,9 +32,10 @@ def tabulate(
 
     formats = [
         '{{:{}{}s}}'.format(
-            '<' if alignments[i] == 'left' else '>',
-            column_widths[i])
-        for i in range(len(headers))]
+            '<' if alignments[i] == 'left' else '>', column_widths[i]
+        )
+        for i in range(len(headers))
+    ]
 
     def print_row(row: T.Tuple[str, ...]) -> str:
         return gap.join(formats[i].format(cell) for i, cell in enumerate(row))
@@ -52,7 +53,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument('-a', '--all', action='store_true')
     parser.add_argument('-l', action='store_true', dest='long')
     parser.add_argument(
-        '--color', choices=('always', 'auto', 'never'), default='auto')
+        '--color', choices=('always', 'auto', 'never'), default='auto'
+    )
     return parser.parse_args()
 
 
@@ -134,8 +136,8 @@ def format_chmod(mode: int) -> str:
 
 
 def print_long_listing(
-        paths: T.Iterable[Path],
-        args: argparse.Namespace) -> None:
+    paths: T.Iterable[Path], args: argparse.Namespace
+) -> None:
     rows: T.List[T.Tuple[str, ...]] = []
 
     for path in paths:
@@ -153,7 +155,8 @@ def print_long_listing(
             date = (
                 datetime.fromtimestamp(path_stat.st_mtime)
                 .replace(microsecond=0)
-                .isoformat())
+                .isoformat()
+            )
         except OSError:
             chmod = '?' * 7
             user = '?'
@@ -163,31 +166,25 @@ def print_long_listing(
         size: str = format_size(path_stat.st_size)
         name = format_name(path, args.color)
 
-        rows.append((
-            chmod,
-            user + ':' + group,
-            size,
-            date,
-            name))
+        rows.append((chmod, user + ':' + group, size, date, name))
 
-    print(tabulate(
-        rows,
-        headers=('Mode', 'Owner', 'Size', 'Last modified', 'Name'),
-        alignments=('left', 'left', 'right', 'left', 'left')))
+    print(
+        tabulate(
+            rows,
+            headers=('Mode', 'Owner', 'Size', 'Last modified', 'Name'),
+            alignments=('left', 'left', 'right', 'left', 'left'),
+        )
+    )
 
 
 def print_short_listing(
-        paths: T.Iterable[Path],
-        args: argparse.Namespace,
+    paths: T.Iterable[Path], args: argparse.Namespace
 ) -> None:
     for path in paths:
         print(format_name(path, args.color))
 
 
-def print_listing(
-        source_path: Path,
-        args: argparse.Namespace,
-) -> None:
+def print_listing(source_path: Path, args: argparse.Namespace) -> None:
     paths = collect_paths(source_path)
     paths = sorted(paths, key=lambda path: (path.is_file(), path.name))
     if not args.all:

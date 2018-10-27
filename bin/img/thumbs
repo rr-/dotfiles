@@ -13,9 +13,9 @@ from tempfile import NamedTemporaryFile
 
 def natural_sort_key(text, _nsre=re.compile('([0-9]+)')):
     return [
-        int(term)
-        if term.isdigit() else term.lower()
-        for term in re.split(_nsre, text)]
+        int(term) if term.isdigit() else term.lower()
+        for term in re.split(_nsre, text)
+    ]
 
 
 MANAGED_EXTENSIONS = ['jpg', 'jpeg', 'jfif', 'gif', 'png', 'tga', 'bmp']
@@ -175,7 +175,8 @@ const pager = new Pager(pagerDiv, collection, pageSize, showPage);
 
 def _parse_args():
     parser = argparse.ArgumentParser(
-        description='Generates thumbnails using a HTML page.')
+        description='Generates thumbnails using a HTML page.'
+    )
     parser.add_argument('paths', metavar='path', nargs='+')
     return parser.parse_args()
 

@@ -29,19 +29,19 @@ _RADICALS: t.Dict[str, t.List[str]] = {
     '二': ['two'],
     '亠': ['lid'],
     '人': ['person'],
-    '化': ['leader'],   # ⺅
-    '个': ['hat'],   # 𠆢
+    '化': ['leader'],  # ⺅
+    '个': ['hat'],  # 𠆢
     '儿': ['legs'],
     '入': ['enter'],
     'ハ': ['fins'],
-    '并': ['horns'],   # 丷
+    '并': ['horns'],  # 丷
     '冂': ['head'],
     '冖': ['forehead'],
     '冫': ['ice'],
     '几': ['table'],
     '凵': ['box'],
     '刀': ['sword'],
-    '刈': ['ribs'],   # ⺉
+    '刈': ['ribs'],  # ⺉
     '力': ['power'],
     '勹': ['enclosure'],
     '匕': ['spoon'],
@@ -56,8 +56,8 @@ _RADICALS: t.Dict[str, t.List[str]] = {
     '九': ['nine'],
     'ユ': ['hook'],
     '乃': ['stairs'],
-    '乞': ['gun'],   # 𠂉
-    '込': ['water slide'],   # 込
+    '乞': ['gun'],  # 𠂉
+    '込': ['water slide'],  # 込
     '口': ['mouth'],
     '囗': ['mouth'],
     '土': ['grave'],
@@ -71,7 +71,7 @@ _RADICALS: t.Dict[str, t.List[str]] = {
     '宀': ['helmet'],
     '寸': ['glue'],
     '小': ['small'],
-    '尚': ['triceratops'],   # ⺌
+    '尚': ['triceratops'],  # ⺌
     '尢': [],
     '尸': ['flag'],
     '屮': [],
@@ -92,18 +92,18 @@ _RADICALS: t.Dict[str, t.List[str]] = {
     '彑': [],
     '彡': ['hair'],
     '彳': ['loiter'],
-    '忙': ['fish stick'],   # ⺖
-    '扎': ['nailbat'],   # ⺘
-    '汁': ['tsunami'],   # ⺡
-    '犯': ['animal'],   # ⺨
-    '艾': ['flower', 'flowers'],   # ⺾
-    '邦': ['butcher'],   # ⻏
-    '阡': ['butcher'],   # ⻖
+    '忙': ['fish stick'],  # ⺖
+    '扎': ['nailbat'],  # ⺘
+    '汁': ['tsunami'],  # ⺡
+    '犯': ['animal'],  # ⺨
+    '艾': ['flower', 'flowers'],  # ⺾
+    '邦': ['butcher'],  # ⻏
+    '阡': ['butcher'],  # ⻖
     '也': ['alligator'],
     '亡': ['death'],
     '及': ['escalator'],
     '久': ['raptor cage'],
-    '老': ['coffin'],   # ⺹
+    '老': ['coffin'],  # ⺹
     '心': ['heart'],
     '戈': ['drunkard'],
     '戸': ['door'],
@@ -128,7 +128,7 @@ _RADICALS: t.Dict[str, t.List[str]] = {
     '气': ['energy'],
     '水': ['water'],
     '火': ['fire'],
-    '杰': ['fish tail'],   # ⺣
+    '杰': ['fish tail'],  # ⺣
     '爪': [],
     '父': ['father'],
     '爻': [],
@@ -152,7 +152,7 @@ _RADICALS: t.Dict[str, t.List[str]] = {
     '用': ['elephant'],
     '田': ['rice paddy'],
     '疋': ['determine'],
-    '疔': ['sick'],   # 疒
+    '疔': ['sick'],  # 疒
     '癶': ['tent'],
     '白': ['white'],
     '皮': ['skin'],
@@ -162,17 +162,17 @@ _RADICALS: t.Dict[str, t.List[str]] = {
     '矢': ['arrow'],
     '石': ['stone'],
     '示': [],
-    '禹': [],   # 禸
+    '禹': [],  # 禸
     '禾': ['pine'],
     '穴': ['hole'],
     '立': ['stand'],
-    '礼': ['pelican'],   # ⻂
-    '初': ['pelican'],   # ⺭
+    '礼': ['pelican'],  # ⻂
+    '初': ['pelican'],  # ⺭
     '世': ['generation'],
     '巨': [],
     '冊': ['books'],
     '母': ['drawer'],
-    '買': ['sauron'],   # ⺲
+    '買': ['sauron'],  # ⺲
     '牙': ['tusk', 'fang'],
     '瓜': [],
     '竹': ['bamboo'],
@@ -259,7 +259,7 @@ _RADICALS: t.Dict[str, t.List[str]] = {
     '鹿': [],
     '麻': [],
     '亀': [],
-    '滴': [],   # 啇
+    '滴': [],  # 啇
     '黄': ['yellow'],
     '黒': ['black'],
     '黍': [],
@@ -284,7 +284,8 @@ def _build():
         with urllib.request.urlopen(url) as handle:
             response = json.loads(handle.read().decode())
             ret['radicals'][radical] = ''.join(
-                item['kanji'] for item in response['kanji'])
+                item['kanji'] for item in response['kanji']
+            )
             for item in response['kanji']:
                 ret['strokes'][item['kanji']] = item['strokes']
                 ret['grade'][item['kanji']] = item['grade']
@@ -293,23 +294,28 @@ def _build():
 
 def _chunks(source, n):
     for i in range(0, len(source), n):
-        yield source[i:i + n]
+        yield source[i : i + n]
 
 
 def _parse_args():
     epilog = 'Radicals:\n'
     epilog += '\n'.join(
         ''.join(f'{cell:15s}' for cell in row)
-        for row in _chunks([
-            f'{kanji}: {radicals[0]}'
-            for kanji, radicals in _RADICALS.items()
-            if radicals
-        ], 4))
+        for row in _chunks(
+            [
+                f'{kanji}: {radicals[0]}'
+                for kanji, radicals in _RADICALS.items()
+                if radicals
+            ],
+            4,
+        )
+    )
 
     parser = argparse.ArgumentParser(
         description='Looks up kanji by radical',
         epilog=epilog,
-        formatter_class=argparse.RawTextHelpFormatter)
+        formatter_class=argparse.RawTextHelpFormatter,
+    )
     parser.add_argument('word', nargs='+')
     return parser.parse_args()
 
@@ -320,7 +326,8 @@ def main() -> None:
 
     if not _CACHE_PATH.exists():
         _CACHE_PATH.write_text(
-            json.dumps(_build(), ensure_ascii=False, indent=4))
+            json.dumps(_build(), ensure_ascii=False, indent=4)
+        )
     cache = json.loads(_CACHE_PATH.read_text())
 
     choices = {
@@ -342,9 +349,12 @@ def main() -> None:
         results = list(
             functools.reduce(
                 set.intersection,
-                map(set, (
-                    cache['radicals'][radical]
-                    for radical in combination))))
+                map(
+                    set,
+                    (cache['radicals'][radical] for radical in combination),
+                ),
+            )
+        )
         if not results:
             continue
 
@@ -354,19 +364,23 @@ def main() -> None:
         found_anything = True
         print('Radicals: {}'.format(' + '.join(combination)))
 
-        kanjis = sum([
-            [key] +
-            list(values)
-            for key, values in itertools.groupby(
-                sorted(results, key=sort_order), sort_order)],
-            [])
+        kanjis = sum(
+            [
+                [key] + list(values)
+                for key, values in itertools.groupby(
+                    sorted(results, key=sort_order), sort_order
+                )
+            ],
+            [],
+        )
 
         for i, kanji_or_number in enumerate(kanjis):
             if isinstance(kanji_or_number, int):
                 text = colored.stylize(
-                    ' {:2} '.format(kanji_or_number), colored.fg(240))
+                    ' {:2} '.format(kanji_or_number), colored.fg(240)
+                )
             else:
-                text = (' {} '.format(kanji_or_number))
+                text = ' {} '.format(kanji_or_number)
             print(text, end='')
             if i % 20 == 19:
                 print()

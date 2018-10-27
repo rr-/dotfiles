@@ -14,8 +14,8 @@ PAGE_WIDTH = 2
 PAGE_HEIGHT = 2
 IMAGES_PER_PAGE = PAGE_WIDTH * PAGE_HEIGHT
 MANAGED_EXTENSIONS = [
-    'jpg', 'jpeg', 'jfif', 'gif', 'png', 'tga', 'bmp',
-    'webm', 'mkv', 'mp4']
+    'bmp', 'gif', 'jfif', 'jpeg', 'jpg', 'mkv', 'mp4', 'png', 'tga', 'webm'
+]
 
 
 class Label(Qt.QLabel):
@@ -35,10 +35,12 @@ class Label(Qt.QLabel):
         scaled_pixmap = self.pixmap.scaled(
             size,
             QtCore.Qt.KeepAspectRatio,
-            transformMode=QtCore.Qt.SmoothTransformation)
+            transformMode=QtCore.Qt.SmoothTransformation,
+        )
         point = QtCore.QPoint(
             (size.width() - scaled_pixmap.width()) / 2,
-            (size.height() - scaled_pixmap.height()) / 2)
+            (size.height() - scaled_pixmap.height()) / 2,
+        )
         painter.drawPixmap(point, scaled_pixmap)
 
 
@@ -138,7 +140,8 @@ class ImageViewer(Qt.QMainWindow):
             self._index = 0
         if self._index > len(self._image_paths):
             self._index = (
-                len(self._image_paths) // IMAGES_PER_PAGE) * IMAGES_PER_PAGE
+                len(self._image_paths) // IMAGES_PER_PAGE
+            ) * IMAGES_PER_PAGE
         self.updateImageLabels()
 
     def showText(self, text: str) -> None:
@@ -163,7 +166,9 @@ class ImageViewer(Qt.QMainWindow):
                 self._index,
                 self._index + IMAGES_PER_PAGE - 1,
                 len(self._image_paths),
-                self._index / len(self._image_paths)))
+                self._index / len(self._image_paths),
+            )
+        )
 
         for i in range(IMAGES_PER_PAGE):
             try:
@@ -201,7 +206,8 @@ def collect_images(source_paths: T.List[Path]) -> T.List[Path]:
         return int(text) if text.isdigit() else text.lower()
 
     ret.sort(
-        key=lambda key: [convert(c) for c in re.split('([0-9]+)', key.name)])
+        key=lambda key: [convert(c) for c in re.split('([0-9]+)', key.name)]
+    )
 
     return ret
 
@@ -209,16 +215,25 @@ def collect_images(source_paths: T.List[Path]) -> T.List[Path]:
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description='Run mpv as image viewer')
     parser.add_argument(
-        metavar='SOURCE_PATH', nargs='*', dest='source_paths',
-        help='path to the image or a directory', default=['.'])
+        metavar='SOURCE_PATH',
+        nargs='*',
+        dest='source_paths',
+        help='path to the image or a directory',
+        default=['.'],
+    )
     parser.add_argument(
-        '-t', '--target-dir', metavar='TARGET_PATH', dest='target_path',
-        help='path where to put the saved images', default='~')
+        '-t',
+        '--target-dir',
+        metavar='TARGET_PATH',
+        dest='target_path',
+        help='path where to put the saved images',
+        default='~',
+    )
 
     args = parser.parse_args()
     args.source_paths = [
-        Path(path).expanduser().resolve()
-        for path in args.source_paths]
+        Path(path).expanduser().resolve() for path in args.source_paths
+    ]
     args.target_path = Path(args.target_path).expanduser().resolve()
     return args
 

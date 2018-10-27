@@ -12,7 +12,7 @@ from subprocess import run
 
 
 def _parse_args():
-    description = ('Backups PostgreSQL database to selected directory.')
+    description = 'Backups PostgreSQL database to selected directory.'
     parser = argparse.ArgumentParser(description=description)
     parser.add_argument('db_name')
     parser.add_argument('dir')

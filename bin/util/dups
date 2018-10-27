@@ -83,7 +83,8 @@ class ProgressBar(progress.bar.IncrementalBar):
             'Working',
             suffix='%(percent).1f%% - %(eta_td)s',
             sma_window=1000,
-            **kwargs)
+            **kwargs,
+        )
 
     # @property
     # def eta(self):
@@ -109,16 +110,17 @@ def main():
     print('Constructing size-path dictionary...')
     size_to_path = construct_size_to_path_dict(all_files)
     size_to_path = {
-        size: files
-        for size, files in size_to_path.items()
-        if len(files) > 1}
+        size: files for size, files in size_to_path.items() if len(files) > 1
+    }
 
     print('Checking for duplicates...')
     duplicate_groups = []
 
     bar = ProgressBar(
-        max=sum(len(files) for _size, files in size_to_path.items()))
+        max=sum(len(files) for _size, files in size_to_path.items())
+    )
     for size, files in size_to_path.items():
+
         def update():
             bar.next()
             if bar.index % 1000 == 999:

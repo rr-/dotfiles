@@ -23,7 +23,8 @@ URL_TEMPLATE = (
     + '&kolejka=false'
     + '&nick='
     + '&pass='
-    + '&napios=posix')
+    + '&napios=posix'
+)
 MOVIE_EXTENSIONS = {'.avi', '.mp4', '.mpg', '.mkv'}
 SUBTITLE_READERS = []
 
@@ -124,7 +125,8 @@ class Sub2SubtitleReader(SubtitleReader):
     def __init__(self):
         super().__init__()
         self._regex = re.compile(
-            r'^(\d+):(\d+):(\d+)\.(\d+)\s*\,\s*(\d+):(\d+):(\d+)\.(\d+).*$')
+            r'^(\d+):(\d+):(\d+)\.(\d+)\s*\,\s*(\d+):(\d+):(\d+)\.(\d+).*$'
+        )
 
     def read(self, lines, _fps):
         lines_it = iter(lines)
@@ -135,12 +137,14 @@ class Sub2SubtitleReader(SubtitleReader):
                     int(match.group(1)) * 3600
                     + int(match.group(2)) * 60
                     + int(match.group(3))
-                    + int(match.group(4)) / 100.0)
+                    + int(match.group(4)) / 100.0
+                )
                 time_end = (
                     int(match.group(5)) * 3600
                     + int(match.group(6)) * 60
                     + int(match.group(7))
-                    + int(match.group(8)) / 100.0)
+                    + int(match.group(8)) / 100.0
+                )
                 text = next(lines_it).strip().split('[br]')
                 yield Subtitle(time_start, time_end, text)
 
@@ -153,7 +157,8 @@ class SrtSubtitleReader(SubtitleReader):
     def read(self, lines, _fps):
         re1 = re.compile(r'^(\d+)\s*$')
         re2 = re.compile(
-            r'^(\d+):(\d+):(\d+),(\d+)\s*-->\s*(\d+):(\d+):(\d+),(\d+).*$')
+            r'^(\d+):(\d+):(\d+),(\d+)\s*-->\s*(\d+):(\d+):(\d+),(\d+).*$'
+        )
         re3 = re.compile(r'^\s*$')
         lines_it = iter(lines)
         for line in lines_it:
@@ -166,12 +171,14 @@ class SrtSubtitleReader(SubtitleReader):
                 int(match.group(1)) * 3600
                 + int(match.group(2)) * 60
                 + int(match.group(3))
-                + int(match.group(4)) / 1000.0)
+                + int(match.group(4)) / 1000.0
+            )
             time_end = (
                 int(match.group(5)) * 3600
                 + int(match.group(6)) * 60
                 + int(match.group(7))
-                + int(match.group(8)) / 1000.0)
+                + int(match.group(8)) / 1000.0
+            )
             text_lines = []
             text = next(lines_it)
             while not re3.match(text, 0):
@@ -193,7 +200,8 @@ class TmpSubtitleReader(SubtitleReader):
                 time = (
                     int(match.group(1)) * 3600
                     + int(match.group(2)) * 60
-                    + int(match.group(3)))
+                    + int(match.group(3))
+                )
                 text = match.group(4).strip().split('|')
                 if time in subs:
                     subs[time].extend(text)
@@ -211,7 +219,8 @@ class Mpl2SubtitleReader(SubtitleReader):
     def __init__(self):
         super().__init__()
         self._regex = re.compile(
-            r'\[(?P<start>\d+)\]\[(?P<stop>\d+)\](?P<line>.*)', re.S)
+            r'\[(?P<start>\d+)\]\[(?P<stop>\d+)\](?P<line>.*)', re.S
+        )
 
     def read(self, lines, _fps):
         for line in lines:
@@ -239,50 +248,50 @@ class SubtitleParser:
         for i, subtitle in enumerate(subtitles):
             out += self.TEMPLATE % (
                 i + 1,
-
                 int(subtitle.time_start / 3600),
                 int(int(subtitle.time_start % 3600) / 60),
                 int(subtitle.time_start % 60),
                 (subtitle.time_start - int(subtitle.time_start)) * 1000,
-
                 int(subtitle.time_end / 3600),
                 int(int(subtitle.time_end % 3600) / 60),
                 int(subtitle.time_end % 60),
                 (subtitle.time_end - int(subtitle.time_end)) * 1000,
-
-                '\n'.join(subtitle.text))
+                '\n'.join(subtitle.text),
+            )
 
         return out
 
 
 def parse_args():
     parser = argparse.ArgumentParser(
-        description='Get movie subtitles using napiprojekt.pl database')
+        description='Get movie subtitles using napiprojekt.pl database'
+    )
 
     parser.add_argument(
         metavar='FILE|HASH',
         dest='sources',
         nargs='+',
-        help='file to download subtitles for')
+        help='file to download subtitles for',
+    )
 
     parser.add_argument(
         '--lang',
         metavar='LANG',
         help='language to download subtitles in',
         default='pl',
-        choices=('pl', 'en'))
+        choices=('pl', 'en'),
+    )
 
     parser.add_argument(
         '-f',
         '--force',
         action='store_true',
-        help='overwrite existing subtitles')
+        help='overwrite existing subtitles',
+    )
 
     parser.add_argument(
-        '-d',
-        '--debug',
-        action='store_true',
-        help='show stacktraces')
+        '-d', '--debug', action='store_true', help='show stacktraces'
+    )
 
     return parser.parse_args()
 
@@ -328,16 +337,15 @@ def get_checksum(file_hash):
     idx = (14, 3, 6, 8, 2)
     for i in range(5):
         index = int(file_hash[idx[i]], 16) + add[i]
-        value = int(file_hash[index:index+2], 16) * mul[i]
+        value = int(file_hash[index : index + 2], 16) * mul[i]
         checksum += '%x' % (value % 16)
     return checksum
 
 
 def get_raw_subtitles(file_hash, lang):
     url = URL_TEMPLATE.format(
-        lang=lang.upper(),
-        md5=file_hash,
-        checksum=get_checksum(file_hash))
+        lang=lang.upper(), md5=file_hash, checksum=get_checksum(file_hash)
+    )
 
     response = requests.get(url, timeout=3)
     if response.content[0:3] == b'NPc':
@@ -352,7 +360,8 @@ def get_raw_subtitles(file_hash, lang):
             ['7z', 'x', '-so', '-p' + PASSWORD, arc_path],
             stderr=subprocess.PIPE,
             stdout=subprocess.PIPE,
-            stdin=subprocess.PIPE)
+            stdin=subprocess.PIPE,
+        )
         return proc.communicate(response.content)[0]
     finally:
         if arc_path.exists():

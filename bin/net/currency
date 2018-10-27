@@ -26,15 +26,11 @@ def main():
     src_currency = args.src
     dst_currency = args.dst
 
-    response = requests.get(
-        f'http://api.nbp.pl/api/exchangerates/tables/a'
-    )
+    response = requests.get(f'http://api.nbp.pl/api/exchangerates/tables/a')
     result = json.loads(response.text)
 
     rates = result[0]['rates']
-    rates.append(
-        {'currency': 'polski złoty', 'code': 'PLN', 'mid': 1.0}
-    )
+    rates.append({'currency': 'polski złoty', 'code': 'PLN', 'mid': 1.0})
 
     src_rate = next(
         item['mid']

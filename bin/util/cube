@@ -297,7 +297,9 @@ CUBE_256 = '''
 #a8a#888#8a8#8aa       #d66#d68#d6a#d6d
   #a88#aa8#aaa#88a
         #a88#a8a
-'''.strip('\n')
+'''.strip(
+    '\n'
+)
 
 
 def strip_escape_codes(text):
@@ -336,6 +338,7 @@ def render_color_cube():
     ''' Renders the XTerm 216 color cube. '''
     templates = []
     for fgbg in [48, 38]:
+
         def _replace_callback(match, fgbg=fgbg):
             color = [int(x, 16) * 16 + int(x, 16) for x in match.group(1)]
             min_diff = None

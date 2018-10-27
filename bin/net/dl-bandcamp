@@ -30,12 +30,11 @@ def download_file(source_url, target_path, desc):
     total_size = int(response.headers.get('content-length', 0))
     target_path.parent.mkdir(exist_ok=True, parents=True)
 
-    with tempfile.NamedTemporaryFile(dir=target_path.parent) as handle, \
-            tqdm.tqdm(
-                desc=desc,
-                total=total_size,
-                unit='B',
-                unit_scale=True) as pbar:
+    with tempfile.NamedTemporaryFile(
+        dir=target_path.parent
+    ) as handle, tqdm.tqdm(
+        desc=desc, total=total_size, unit='B', unit_scale=True
+    ) as pbar:
         for chunk in response.iter_content(BUFFER_SIZE):
             handle.write(chunk)
             pbar.update(len(chunk))
@@ -83,7 +82,7 @@ def download_album(album_url, target_directory):
     json_code = regex.search(
         r'(?:TralbumData = )(\{(?>[^}{]*(?1)?)*\})',
         response_text,
-        flags=regex.M
+        flags=regex.M,
     ).group(1)
     json_code = json_code.replace('" + "', '')
 
@@ -94,11 +93,13 @@ def download_album(album_url, target_directory):
     album_release_date = dateutil.parser.parse(
         data.get('album_release_date')
         or data['current'].get('release_date')
-        or data['current'].get('publish_date'))
+        or data['current'].get('publish_date')
+    )
 
     album_directory = (
         target_directory
-        / f'{album_artist} - {album_release_date:%Y-%m-%d} - {album_title}')
+        / f'{album_artist} - {album_release_date:%Y-%m-%d} - {album_title}'
+    )
 
     download_file(album_cover_url, album_directory / 'cover.jpg', desc='cover')
 
@@ -115,18 +116,21 @@ def download_album(album_url, target_directory):
         download_file(
             track_url,
             track_path,
-            desc=f'{i + 1:02d}/{len(data["trackinfo"]):02d}')
+            desc=f'{i + 1:02d}/{len(data["trackinfo"]):02d}',
+        )
 
 
 def get_album_track_links(album_url):
     response_text = download_page(album_url)
     document = lxml.html.fromstring(response_text)
     document.make_links_absolute(base_url=album_url)
-    return uniq([
-        urllib.parse.splitquery(link)[0]
-        for link in document.xpath('//a/@href')
-        if '/track/' in link
-    ])
+    return uniq(
+        [
+            urllib.parse.splitquery(link)[0]
+            for link in document.xpath('//a/@href')
+            if '/track/' in link
+        ]
+    )
 
 
 def get_artist_album_links(artist_url):
@@ -136,8 +140,7 @@ def get_artist_album_links(artist_url):
     return [
         link
         for link in document.xpath('//a/@href')
-        if '/album/' in link
-        or '/track/' in link
+        if '/album/' in link or '/track/' in link
     ]
 
 
