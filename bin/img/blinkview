@@ -27,7 +27,7 @@ class Label(Qt.QLabel):
         self.pixmap = QtGui.QPixmap(img)
         self.repaint()
 
-    def paintEvent(self, event):
+    def paintEvent(self, _event):
         size = self.size()
         painter = QtGui.QPainter(self)
         if self.pixmap is None:
@@ -98,8 +98,7 @@ class ImageViewer(Qt.QMainWindow):
         Qt.QShortcut(Qt.QKeySequence("f"), self, self.toggleFullscreen)
 
         index_to_key: T.Dict[int, str] = {
-            i: str((i + 1) % 10)
-            for i in range(10)
+            i: str((i + 1) % 10) for i in range(10)
         }
         for i in range(IMAGES_PER_PAGE):
             try:

@@ -3,7 +3,6 @@ import argparse
 import hashlib
 import pathlib
 import pickle
-import time
 
 import progress.bar
 import xdg
@@ -31,19 +30,19 @@ def save_cache(cache):
 
 
 def clean_cache(cache):
-    for path, hash in list(cache.items()):
+    for path, checksum in list(cache.items()):
         if not pathlib.Path(path).exists():
             del cache[path]
 
 
 def get_file_hash(path):
-    hash = hashlib.md5()
-    hash.update(path.read_bytes())
-    return hash.digest()
+    hash_obj = hashlib.md5()
+    hash_obj.update(path.read_bytes())
+    return hash_obj.digest()
 
 
-def collect_files(dir):
-    for path in dir.iterdir():
+def collect_files(root_dir):
+    for path in root_dir.iterdir():
         if path.is_file():
             yield path
         elif path.is_dir():
@@ -65,15 +64,15 @@ def construct_hash_to_path_dict(paths, cache, progress_callback):
     for path in paths:
         cache_key = str(path.resolve())
         if cache_key in cache:
-            hash = cache[cache_key]
+            checksum = cache[cache_key]
         else:
-            hash = get_file_hash(path)
-            cache[cache_key] = hash
+            checksum = get_file_hash(path)
+            cache[cache_key] = checksum
         progress_callback()
 
-        if not hash in ret:
-            ret[hash] = []
-        ret[hash].append(path)
+        if checksum not in ret:
+            ret[checksum] = []
+        ret[checksum].append(path)
     return ret
 
 

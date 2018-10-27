@@ -306,7 +306,7 @@ def strip_escape_codes(text):
     return re.sub("\x1B.*?m", "", text)
 
 
-def join_templates(templates, separator=" "):
+def join_templates(templates):
     """ Merges text templates side by side. """
     return "\n\n".join(templates)
 

@@ -3,7 +3,6 @@ import argparse
 import shutil
 
 import numpy
-
 import skimage.color
 import skimage.io
 import skimage.transform

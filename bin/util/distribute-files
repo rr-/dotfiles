@@ -16,7 +16,7 @@ class DistributionStyle:
 
 
 def parse_args():
-    help = (
+    help_text = (
         "Distribute files in given directory to subdirectories.\n\n"
         + "Subdirectories have numeric names starting at 1. Names are *not* "
         + "padded with 0 to avoid the need to rename existing subdirectories "
@@ -24,7 +24,7 @@ def parse_args():
         + "directories are ignored."
     )
 
-    parser = argparse.ArgumentParser(description=help.strip())
+    parser = argparse.ArgumentParser(description=help_text.strip())
 
     parser.add_argument(
         "-m",
@@ -121,24 +121,24 @@ def next_dir_number(dir_map, style, max_file_count):
         for i in range(1, max_dir_number + 1):
             if i not in dir_map:
                 return i, max_file_count
-            elif dir_map[i] < max_file_count:
-                return dir, max_file_count - dir_map[i]
+            if dir_map[i] < max_file_count:
+                return i, max_file_count - dir_map[i]
         return next_dir_number, max_file_count
 
-    elif style == DistributionStyle.FILL_FIRST_AVAILABLE:
-        for dir, file_count in dir_map.items():
+    if style == DistributionStyle.FILL_FIRST_AVAILABLE:
+        for i, file_count in dir_map.items():
             if file_count < max_file_count:
-                return dir, max_file_count - file_count
+                return i, max_file_count - file_count
         return next_dir_number, max_file_count
 
-    elif style == DistributionStyle.FILL_LAST:
-        for dir, file_count in reversed(dir_map.items()):
+    if style == DistributionStyle.FILL_LAST:
+        for i, file_count in reversed(dir_map.items()):
             if file_count < max_file_count:
-                return dir, max_file_count - file_count
+                return i, max_file_count - file_count
             break
         return next_dir_number, max_file_count
 
-    elif style == DistributionStyle.ALWAYS_CREATE:
+    if style == DistributionStyle.ALWAYS_CREATE:
         return next_dir_number, max_file_count
 
     raise AssertionError()
@@ -154,23 +154,23 @@ def main():
     _, dirs, files = next(os.walk(args.base_dir))
     files = sorted(files)
 
-    numeric_dirs = [dir for dir in dirs if dir.isdigit()]
+    numeric_dirs = [dir_name for dir_name in dirs if dir_name.isdigit()]
     numeric_dirs = sorted(numeric_dirs)
     dir_gen = (
-        (int(dir), len(os.listdir(os.path.join(args.base_dir, dir))))
-        for dir in numeric_dirs
+        (int(dir_name), len(os.listdir(os.path.join(args.base_dir, dir_name))))
+        for dir_name in numeric_dirs
     )
-    dir_gen = sorted(dir_gen, key=lambda dir: int(dir[0]))
+    dir_gen = sorted(dir_gen, key=lambda pair: int(pair[0]))
     dir_map = collections.OrderedDict(dir_gen)
 
     while files:
         dir_number, avail_files = next_dir_number(
             dir_map, args.style, args.max
         )
-        dir = "%d" % dir_number
+        dir_name = "%d" % dir_number
         files_to_move = files[0:avail_files]
 
-        target_path = os.path.join(args.base_dir, dir)
+        target_path = os.path.join(args.base_dir, dir_name)
         if args.verbosity > 0:
             print(
                 "Using directory %s to distribute %d files"
@@ -181,7 +181,7 @@ def main():
 
         for file in files_to_move:
             source_path = os.path.join(args.base_dir, file)
-            target_path = os.path.join(args.base_dir, dir, file)
+            target_path = os.path.join(args.base_dir, dir_name, file)
             if args.verbosity > 1:
                 print("Moving", source_path, "to", target_path)
             if not args.dry_run:
