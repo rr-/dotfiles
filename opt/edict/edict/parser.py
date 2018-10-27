@@ -11,46 +11,153 @@ import typing as t
 import re
 
 # Part of speech codes
-VALID_POS_CODES = list(set((
-    'adj-i', 'adj-na', 'adj-no', 'adj-pn', 'adj-t', 'adj-f', 'adj', 'adv',
-    'adv-to', 'aux', 'aux-v', 'aux-adj', 'conj', 'ctr', 'exp', 'int', 'iv',
-    'n', 'n-adv', 'n-suf', 'n-pref', 'n-t', 'num', 'pn', 'pref', 'prt', 'suf',
-    'v1', 'v2a-s', 'v4h', 'v4r', 'v5', 'v5aru', 'v5b', 'v5g', 'v5k', 'v5k-s',
-    'v5m', 'v5n', 'v5r', 'v5r-i', 'v5s', 'v5t', 'v5u', 'v5u-s', 'v5uru', 'v5z',
-    'vz', 'vi', 'vk', 'vn', 'vr', 'vs', 'vs-s', 'vs-i', 'vt')))
+VALID_POS_CODES = [
+    'adj-i',
+    'adj-na',
+    'adj-no',
+    'adj-pn',
+    'adj-t',
+    'adj-f',
+    'adj',
+    'adv',
+    'adv-to',
+    'aux',
+    'aux-v',
+    'aux-adj',
+    'conj',
+    'ctr',
+    'exp',
+    'int',
+    'iv',
+    'n',
+    'n-adv',
+    'n-suf',
+    'n-pref',
+    'n-t',
+    'num',
+    'pn',
+    'pref',
+    'prt',
+    'suf',
+    'v1',
+    'v2a-s',
+    'v4h',
+    'v4r',
+    'v5',
+    'v5aru',
+    'v5b',
+    'v5g',
+    'v5k',
+    'v5k-s',
+    'v5m',
+    'v5n',
+    'v5r',
+    'v5r-i',
+    'v5s',
+    'v5t',
+    'v5u',
+    'v5u-s',
+    'v5uru',
+    'v5z',
+    'vz',
+    'vi',
+    'vk',
+    'vn',
+    'vr',
+    'vs',
+    'vs-s',
+    'vs-i',
+    'vt',
+]
 
 # Field of application codes
-VALID_FOA_CODES = list(set((
-    'Buddh', 'MA', 'comp', 'food', 'geom', 'ling', 'math', 'mil', 'physics',
-    'chem', 'biol')))
+VALID_FOA_CODES = [
+    'Buddh',
+    'MA',
+    'comp',
+    'food',
+    'geom',
+    'ling',
+    'math',
+    'mil',
+    'physics',
+    'chem',
+    'biol',
+]
 
 # Miscellaneous marking codes
-VALID_MISC_CODES = list(set((
-    'X', 'abbr', 'arch', 'ateji', 'chn', 'col', 'derog', 'eK', 'ek', 'fam',
-    'fem', 'gikun', 'hon', 'hum', 'iK', 'id', 'ik', 'io', 'm-sl', 'male',
-    'male-sl', 'oK', 'obs', 'obsc', 'ok', 'on-mim', 'poet', 'pol', 'rare',
-    'sens', 'sl', 'uK', 'uk', 'vulg', 'P')))
+VALID_MISC_CODES = [
+    'X',
+    'abbr',
+    'arch',
+    'ateji',
+    'chn',
+    'col',
+    'derog',
+    'eK',
+    'ek',
+    'fam',
+    'fem',
+    'gikun',
+    'hon',
+    'hum',
+    'iK',
+    'id',
+    'ik',
+    'io',
+    'm-sl',
+    'male',
+    'male-sl',
+    'oK',
+    'obs',
+    'obsc',
+    'ok',
+    'on-mim',
+    'poet',
+    'pol',
+    'rare',
+    'sens',
+    'sl',
+    'uK',
+    'uk',
+    'vulg',
+    'P',
+]
+
 
 # Dialect codes
-VALID_DIALECT_CODES = list(set((
-    'kyb', 'osb', 'ksb', 'ktb', 'tsb', 'thb', 'tsug', 'kyu', 'rkb', 'nab')))
+VALID_DIALECT_CODES = [
+    'kyb',
+    'osb',
+    'ksb',
+    'ktb',
+    'tsb',
+    'thb',
+    'tsug',
+    'kyu',
+    'rkb',
+    'nab',
+]
 
 _RE_KANA = re.compile(r'\[(.+)\]')
 _RE_FIELD_TAGS = re.compile(r'\{(%s)\}' % '|'.join(VALID_FOA_CODES))
 _RE_NUMBER_TAG = re.compile(r'\((\d+)\)')
 _RE_ANY_TAG = re.compile(r'\(([^)]*)\)')
 _RE_RELATED_TAG = re.compile(r'\(See ([^)]*)\)', re.IGNORECASE)
-_RE_TAGS = re.compile(r'\(((?:%s|[,]+)+)\:?\)' % '|'.join(
-    VALID_POS_CODES + VALID_MISC_CODES + VALID_DIALECT_CODES))
+_RE_TAGS = re.compile(
+    r'\(((?:%s|[,]+)+)\:?\)'
+    % '|'.join(VALID_POS_CODES + VALID_MISC_CODES + VALID_DIALECT_CODES)
+)
 
 
 class EdictJapanese:
     def __init__(
-            self,
-            kanji: str,
-            kana: str,
-            kanji_tags: t.Sequence[str],
-            kana_tags: t.Sequence[str]) -> None:
+        self,
+        kanji: str,
+        kana: str,
+        kanji_tags: t.Sequence[str],
+        kana_tags: t.Sequence[str],
+    ) -> None:
         self.kanji = kanji
         self.kana = kana
         self.kanji_tags = kanji_tags
@@ -59,12 +166,13 @@ class EdictJapanese:
 
 class EdictGlossary:
     def __init__(
-            self,
-            english: str,
-            tags: t.Sequence[str],
-            field: t.Optional[str],
-            related: t.List[str],
-            common: bool = False) -> None:
+        self,
+        english: str,
+        tags: t.Sequence[str],
+        field: t.Optional[str],
+        related: t.List[str],
+        common: bool = False,
+    ) -> None:
         self.english = english
         self.tags = tags
         self.field = field
@@ -76,12 +184,13 @@ class EdictGlossary:
 
 class EdictEntry:
     def __init__(
-            self,
-            glossaries: t.List[EdictGlossary],
-            japanese: t.List[EdictJapanese],
-            tags: t.Sequence[str],
-            ent_seq: t.Optional[str],
-            has_audio: bool) -> None:
+        self,
+        glossaries: t.List[EdictGlossary],
+        japanese: t.List[EdictJapanese],
+        tags: t.Sequence[str],
+        ent_seq: t.Optional[str],
+        has_audio: bool,
+    ) -> None:
         self.glossaries = glossaries
         self.japanese = japanese
         self.tags = tags
@@ -90,7 +199,8 @@ class EdictEntry:
 
 
 def _extract_tags(
-        word: str, expression: t.Pattern) -> t.Tuple[str, t.Sequence[str]]:
+    word: str, expression: t.Pattern
+) -> t.Tuple[str, t.Sequence[str]]:
     match = expression.search(word)
     tags: t.List[str] = []
     if match:
@@ -159,10 +269,14 @@ def _get_entry(raw_entry: str) -> EdictEntry:
         field = fields[0] if fields else None
         clean_gloss = clean_gloss.strip()
         if clean_gloss:
-            glossaries.append(EdictGlossary(
-                english=clean_gloss,
-                tags=tags,
-                field=field, related=related_words))
+            glossaries.append(
+                EdictGlossary(
+                    english=clean_gloss,
+                    tags=tags,
+                    field=field,
+                    related=related_words,
+                )
+            )
 
     ent_seq = raw_entry.split('/')[-2]
 
@@ -185,17 +299,17 @@ def _get_entry(raw_entry: str) -> EdictEntry:
             if not matching_kanji or kanji in matching_kanji:
                 japanese.append(
                     EdictJapanese(
-                        kanji=kanji,
-                        kana=kana,
-                        kanji_tags=jtag,
-                        kana_tags=ktag))
+                        kanji=kanji, kana=kana, kanji_tags=jtag, kana_tags=ktag
+                    )
+                )
 
     return EdictEntry(
         japanese=japanese,
         glossaries=glossaries,
         tags=main_tags,
         ent_seq=ent_seq,
-        has_audio=has_audio)
+        has_audio=has_audio,
+    )
 
 
 def parse(lines: t.Iterable[str]) -> t.Iterable[EdictEntry]:
