@@ -7,8 +7,8 @@
 #    KANJI-1;KANJI-2 [KANA-1;KANA-2] /(general information) (see xxxx) gloss/gloss/.../
 #    垜;安土;堋 [あずち] /(n) mound on which targets are placed (in archery)/firing mound/EntL2542010/
 
-import typing as t
 import re
+import typing as T
 
 # Part of speech codes
 VALID_POS_CODES = [
@@ -155,8 +155,8 @@ class EdictJapanese:
         self,
         kanji: str,
         kana: str,
-        kanji_tags: t.Sequence[str],
-        kana_tags: t.Sequence[str],
+        kanji_tags: T.Sequence[str],
+        kana_tags: T.Sequence[str],
     ) -> None:
         self.kanji = kanji
         self.kana = kana
@@ -168,9 +168,9 @@ class EdictGlossary:
     def __init__(
         self,
         english: str,
-        tags: t.Sequence[str],
-        field: t.Optional[str],
-        related: t.List[str],
+        tags: T.Sequence[str],
+        field: T.Optional[str],
+        related: T.List[str],
         common: bool = False,
     ) -> None:
         self.english = english
@@ -185,10 +185,10 @@ class EdictGlossary:
 class EdictEntry:
     def __init__(
         self,
-        glossaries: t.List[EdictGlossary],
-        japanese: t.List[EdictJapanese],
-        tags: t.Sequence[str],
-        ent_seq: t.Optional[str],
+        glossaries: T.List[EdictGlossary],
+        japanese: T.List[EdictJapanese],
+        tags: T.Sequence[str],
+        ent_seq: T.Optional[str],
         has_audio: bool,
     ) -> None:
         self.glossaries = glossaries
@@ -199,10 +199,10 @@ class EdictEntry:
 
 
 def _extract_tags(
-    word: str, expression: t.Pattern
-) -> t.Tuple[str, t.Sequence[str]]:
+    word: str, expression: T.Pattern
+) -> T.Tuple[str, T.Sequence[str]]:
     match = expression.search(word)
-    tags: t.List[str] = []
+    tags: T.List[str] = []
     if match:
         groups = match.groups()
         for group in groups:
@@ -211,11 +211,11 @@ def _extract_tags(
     return word, tuple(tags)
 
 
-def _extract_related(glossaries: str) -> t.Tuple[str, t.Sequence[str]]:
+def _extract_related(glossaries: str) -> T.Tuple[str, T.Sequence[str]]:
     return _extract_tags(word=glossaries, expression=_RE_RELATED_TAG)
 
 
-def _extract_fields(glossaries: str) -> t.Tuple[str, t.Sequence[str]]:
+def _extract_fields(glossaries: str) -> T.Tuple[str, T.Sequence[str]]:
     return _extract_tags(word=glossaries, expression=_RE_FIELD_TAGS)
 
 
@@ -241,7 +241,7 @@ def _get_entry(raw_entry: str) -> EdictEntry:
         english = english[:-1]
 
     # join numbered entries:
-    joined_english: t.List[str] = []
+    joined_english: T.List[str] = []
     has_numbers = False
     for word in english:
         clean, number = _extract_tags(word, _RE_NUMBER_TAG)
@@ -288,7 +288,7 @@ def _get_entry(raw_entry: str) -> EdictEntry:
     if has_audio:
         ent_seq = ent_seq[:-1]
 
-    japanese: t.List[EdictJapanese] = []
+    japanese: T.List[EdictJapanese] = []
     for kana, ktag in kana_tagged:
         # special case for kana like this: おくび(噯,噯気);あいき(噯気,噫気,噯木)
         kana, matching_kanji = _extract_tags(kana, _RE_ANY_TAG)
@@ -312,7 +312,7 @@ def _get_entry(raw_entry: str) -> EdictEntry:
     )
 
 
-def parse(lines: t.Iterable[str]) -> t.Iterable[EdictEntry]:
+def parse(lines: T.Iterable[str]) -> T.Iterable[EdictEntry]:
     for line in lines:
         if line and line[0] != "#":
             yield _get_entry(line)
