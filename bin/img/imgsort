@@ -33,23 +33,23 @@ def collect_files(source_path: Path) -> T.Iterable[File]:
     for path in source_path.iterdir():
         if path.is_dir():
             continue
-        if path.suffix.lower() in {'.png', '.jpg', '.gif', '.webm'}:
+        if path.suffix.lower() in {".png", ".jpg", ".gif", ".webm"}:
             yield File(path)
 
 
 def fill_file_info(file: File) -> None:
     result = subprocess.run(
         [
-            'ffprobe',
-            '-hide_banner',
-            '-print_format',
-            'json',
-            '-select_streams',
-            'v:0',
-            '-show_entries',
-            'stream=width,height,nb_frames,nb_read_frames',
-            '-count_frames',
-            '-i',
+            "ffprobe",
+            "-hide_banner",
+            "-print_format",
+            "json",
+            "-select_streams",
+            "v:0",
+            "-show_entries",
+            "stream=width,height,nb_frames,nb_read_frames",
+            "-count_frames",
+            "-i",
             file.path,
         ],
         stderr=subprocess.PIPE,
@@ -57,10 +57,10 @@ def fill_file_info(file: File) -> None:
     )
     if result.returncode != 0:
         return
-    stream_info = json.loads(result.stdout)['streams'][0]
-    file.width = stream_info.get('width', None)
-    file.height = stream_info.get('height', None)
-    for key in {'nb_frames', 'nb_read_frames'}:
+    stream_info = json.loads(result.stdout)["streams"][0]
+    file.width = stream_info.get("width", None)
+    file.height = stream_info.get("height", None)
+    for key in {"nb_frames", "nb_read_frames"}:
         if key in stream_info:
             file.is_animated = int(stream_info[key]) > 1
 
@@ -71,7 +71,7 @@ def fill_file_infos(files: T.Iterable[File]) -> None:
     executor = ThreadPoolExecutor(max_workers=8)
 
     with warnings.catch_warnings():
-        warnings.simplefilter('ignore')
+        warnings.simplefilter("ignore")
 
         futures = [
             loop.run_in_executor(executor, fill_file_info, file)
@@ -82,7 +82,7 @@ def fill_file_infos(files: T.Iterable[File]) -> None:
             for task in tqdm.tqdm(
                 asyncio.as_completed(tasks),
                 total=len(tasks),
-                unit='file',
+                unit="file",
                 ncols=100,
             ):
                 await task
@@ -93,10 +93,10 @@ def fill_file_infos(files: T.Iterable[File]) -> None:
 def rename_files(files: T.Iterable[File], dry_run: bool) -> None:
     tasks = []
     for i, file in enumerate(sorted(files, key=lambda file: file.rank)):
-        target_path = file.path.parent / f'{i:04}_{file.path.name}'
+        target_path = file.path.parent / f"{i:04}_{file.path.name}"
         tasks.append((file.path, target_path))
 
-    for task in tqdm.tqdm(tasks, total=len(tasks), unit='file', ncols=100):
+    for task in tqdm.tqdm(tasks, total=len(tasks), unit="file", ncols=100):
         source_path, target_path = task
         if not dry_run:
             source_path.rename(target_path)
@@ -104,23 +104,23 @@ def rename_files(files: T.Iterable[File], dry_run: bool) -> None:
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
-    parser.add_argument('source_dir', type=Path, default='.', nargs='?')
-    parser.add_argument('-d', '--dry-run', action='store_true')
+    parser.add_argument("source_dir", type=Path, default=".", nargs="?")
+    parser.add_argument("-d", "--dry-run", action="store_true")
     return parser.parse_args()
 
 
 def main() -> None:
     args = parse_args()
 
-    print('Collecting files…')
+    print("Collecting files…")
     files = list(collect_files(args.source_dir.resolve()))
 
-    print('Querying image properties…')
+    print("Querying image properties…")
     fill_file_infos(files)
 
-    print('Renaming files…')
+    print("Renaming files…")
     rename_files(files, args.dry_run)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

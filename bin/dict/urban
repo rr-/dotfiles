@@ -8,21 +8,21 @@ import urllib.request
 
 
 def _wrap_long_text(text, length=70):
-    return '\n'.join(
-        line.strip() for line in re.findall(r'.{1,%d}(?:\s+|$)' % length, text)
+    return "\n".join(
+        line.strip() for line in re.findall(r".{1,%d}(?:\s+|$)" % length, text)
     )
 
 
 def _parse_args():
     parser = argparse.ArgumentParser(
-        description='Looks up word definitions on Urban Dictionary'
+        description="Looks up word definitions on Urban Dictionary"
     )
-    parser.add_argument('word', nargs='+')
+    parser.add_argument("word", nargs="+")
     return parser.parse_args()
 
 
 def _lookup_word(word):
-    url = 'http://api.urbandictionary.com/v0/define?term=%s' % (
+    url = "http://api.urbandictionary.com/v0/define?term=%s" % (
         urllib.parse.quote(word)
     )
     with urllib.request.urlopen(url) as handle:
@@ -30,18 +30,18 @@ def _lookup_word(word):
 
 
 def _print_definition(definition):
-    if not definition['list']:
-        print('Nothing found')
+    if not definition["list"]:
+        print("Nothing found")
         return
-    for entry in definition['list'][0:3]:
-        print('Definition:')
-        print(_wrap_long_text(entry['definition']))
+    for entry in definition["list"][0:3]:
+        print("Definition:")
+        print(_wrap_long_text(entry["definition"]))
         print()
-        print('Example:')
-        print(_wrap_long_text(entry['example']))
-        print('+%d -%d' % (entry['thumbs_up'], entry['thumbs_down']))
+        print("Example:")
+        print(_wrap_long_text(entry["example"]))
+        print("+%d -%d" % (entry["thumbs_up"], entry["thumbs_down"]))
         print()
-        print('-' * 50)
+        print("-" * 50)
         print()
 
 
@@ -52,5 +52,5 @@ def main():
         _print_definition(definition)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

@@ -15,280 +15,280 @@ import xdg
 
 import colored
 
-_CACHE_PATH = pathlib.Path(xdg.XDG_CACHE_HOME) / 'kanji.json'
+_CACHE_PATH = pathlib.Path(xdg.XDG_CACHE_HOME) / "kanji.json"
 
 
 # Radicals as I was taught by wanikani
 _RADICALS: t.Dict[str, t.List[str]] = {
-    '一': ['ground'],
-    '｜': ['stick'],
-    '丶': ['drop'],
-    'ノ': ['slide'],
-    '乙': ['nose'],
-    '亅': ['barb'],
-    '二': ['two'],
-    '亠': ['lid'],
-    '人': ['person'],
-    '化': ['leader'],  # ⺅
-    '个': ['hat'],  # 𠆢
-    '儿': ['legs'],
-    '入': ['enter'],
-    'ハ': ['fins'],
-    '并': ['horns'],  # 丷
-    '冂': ['head'],
-    '冖': ['forehead'],
-    '冫': ['ice'],
-    '几': ['table'],
-    '凵': ['box'],
-    '刀': ['sword'],
-    '刈': ['ribs'],  # ⺉
-    '力': ['power'],
-    '勹': ['enclosure'],
-    '匕': ['spoon'],
-    '匚': ['cage'],
-    '十': ['cross'],
-    '卜': ['toe'],
-    '卩': ['stamp'],
-    '厂': ['cliff'],
-    '厶': ['pile'],
-    '又': ['stool'],
-    'マ': ['mama'],
-    '九': ['nine'],
-    'ユ': ['hook'],
-    '乃': ['stairs'],
-    '乞': ['gun'],  # 𠂉
-    '込': ['water slide'],  # 込
-    '口': ['mouth'],
-    '囗': ['mouth'],
-    '土': ['grave'],
-    '士': ['samurai'],
-    '夂': ['winter'],
-    '攵': ['winter'],
-    '夕': ['evening'],
-    '大': ['big'],
-    '女': ['woman'],
-    '子': ['child'],
-    '宀': ['helmet'],
-    '寸': ['glue'],
-    '小': ['small'],
-    '尚': ['triceratops'],  # ⺌
-    '尢': [],
-    '尸': ['flag'],
-    '屮': [],
-    '山': ['mountain'],
-    '川': ['river'],
-    '巛': ['arrows'],
-    '工': ['construction'],
-    '已': ['cobra'],
-    '巾': ['two face', 'two-face'],
-    '干': ['antenna'],
-    '幺': ['poop'],
-    '广': ['mullet'],
-    '廴': ['big bird'],
-    '廾': ['twenty'],
-    '弋': ['substitute'],
-    '弓': ['spring'],
-    'ヨ': ['wolverine'],
-    '彑': [],
-    '彡': ['hair'],
-    '彳': ['loiter'],
-    '忙': ['fish stick'],  # ⺖
-    '扎': ['nailbat'],  # ⺘
-    '汁': ['tsunami'],  # ⺡
-    '犯': ['animal'],  # ⺨
-    '艾': ['flower', 'flowers'],  # ⺾
-    '邦': ['butcher'],  # ⻏
-    '阡': ['butcher'],  # ⻖
-    '也': ['alligator'],
-    '亡': ['death'],
-    '及': ['escalator'],
-    '久': ['raptor cage'],
-    '老': ['coffin'],  # ⺹
-    '心': ['heart'],
-    '戈': ['drunkard'],
-    '戸': ['door'],
-    '手': ['hand'],
-    '支': ['frog'],
-    '文': ['doll'],
-    '斗': ['chopsticks'],
-    '斤': ['axe'],
-    '方': ['direction'],
-    '无': [],
-    '日': ['sun'],
-    '曰': [],
-    '月': ['moon'],
-    '木': ['tree'],
-    '欠': ['lack'],
-    '止': ['stop'],
-    '歹': [],
-    '殳': ['ikea'],
-    '比': ['compare'],
-    '毛': ['fur'],
-    '氏': ['duck'],
-    '气': ['energy'],
-    '水': ['water'],
-    '火': ['fire'],
-    '杰': ['fish tail'],  # ⺣
-    '爪': [],
-    '父': ['father'],
-    '爻': [],
-    '爿': [],
-    '片': ['waiter'],
-    '牛': ['cow'],
-    '犬': ['dog'],
-    '王': ['king'],
-    '元': ['origin'],
-    '井': ['well'],
-    '勿': ['thing'],
-    '尤': [],
-    '五': ['five'],
-    '屯': [],
-    '巴': ['bed'],
-    '毋': ['window'],
-    '玄': [],
-    '瓦': [],
-    '甘': [],
-    '生': ['life'],
-    '用': ['elephant'],
-    '田': ['rice paddy'],
-    '疋': ['determine'],
-    '疔': ['sick'],  # 疒
-    '癶': ['tent'],
-    '白': ['white'],
-    '皮': ['skin'],
-    '皿': ['plate'],
-    '目': ['eye'],
-    '矛': ['soldier'],
-    '矢': ['arrow'],
-    '石': ['stone'],
-    '示': [],
-    '禹': [],  # 禸
-    '禾': ['pine'],
-    '穴': ['hole'],
-    '立': ['stand'],
-    '礼': ['pelican'],  # ⻂
-    '初': ['pelican'],  # ⺭
-    '世': ['generation'],
-    '巨': [],
-    '冊': ['books'],
-    '母': ['drawer'],
-    '買': ['sauron'],  # ⺲
-    '牙': ['tusk', 'fang'],
-    '瓜': [],
-    '竹': ['bamboo'],
-    '米': ['rice'],
-    '糸': ['thread'],
-    '缶': [],
-    '羊': ['sheep'],
-    '羽': ['feathers'],
-    '而': [],
-    '耒': [],
-    '耳': ['ear'],
-    '聿': ['brush'],
-    '肉': ['inside'],
-    '自': ['self'],
-    '至': [],
-    '臼': ['grenade'],
-    '舌': ['tongue'],
-    '舟': ['sail'],
-    '艮': ['good'],
-    '色': ['color'],
-    '虍': [],
-    '虫': ['bug'],
-    '血': ['blood'],
-    '行': ['go'],
-    '衣': ['clothes'],
-    '西': ['west'],
-    '臣': ['servant'],
-    '見': ['see'],
-    '角': ['angle'],
-    '言': ['say'],
-    '谷': ['valley'],
-    '豆': ['bean'],
-    '豕': ['gravity'],
-    '豸': [],
-    '貝': ['clam'],
-    '赤': ['red'],
-    '走': ['run'],
-    '足': ['foot'],
-    '身': ['somebody'],
-    '車': ['car'],
-    '辛': ['happiness'],
-    '辰': ['superman'],
-    '酉': ['sake'],
-    '釆': ['sickle'],
-    '里': ['sunflower'],
-    '舛': [],
-    '麦': [],
-    '金': ['gold', 'money'],
-    '長': ['long'],
-    '門': ['gate'],
-    '隶': [],
-    '隹': ['turkey'],
-    '雨': ['rain'],
-    '青': ['blue'],
-    '非': ['injustice'],
-    '奄': [],
-    '岡': ['hill'],
-    '免': ['excuse'],
-    '斉': ['stilts'],
-    '面': ['robot'],
-    '革': [],
-    '韭': [],
-    '音': ['sound'],
-    '頁': ['neck'],
-    '風': ['wind'],
-    '飛': ['fly'],
-    '食': ['eat'],
-    '首': ['neck'],
-    '香': [],
-    '品': ['product'],
-    '馬': ['horse'],
-    '骨': ['bone'],
-    '高': ['high'],
-    '髟': [],
-    '鬥': [],
-    '鬯': [],
-    '鬲': [],
-    '鬼': [],
-    '竜': [],
-    '韋': [],
-    '魚': ['fish'],
-    '鳥': ['bird'],
-    '鹵': [],
-    '鹿': [],
-    '麻': [],
-    '亀': [],
-    '滴': [],  # 啇
-    '黄': ['yellow'],
-    '黒': ['black'],
-    '黍': [],
-    '黹': [],
-    '無': ['no'],
-    '歯': ['tooth'],
-    '黽': [],
-    '鼎': [],
-    '鼓': [],
-    '鼠': [],
-    '鼻': ['nose'],
-    '齊': [],
-    '龠': [],
+    "一": ["ground"],
+    "｜": ["stick"],
+    "丶": ["drop"],
+    "ノ": ["slide"],
+    "乙": ["nose"],
+    "亅": ["barb"],
+    "二": ["two"],
+    "亠": ["lid"],
+    "人": ["person"],
+    "化": ["leader"],  # ⺅
+    "个": ["hat"],  # 𠆢
+    "儿": ["legs"],
+    "入": ["enter"],
+    "ハ": ["fins"],
+    "并": ["horns"],  # 丷
+    "冂": ["head"],
+    "冖": ["forehead"],
+    "冫": ["ice"],
+    "几": ["table"],
+    "凵": ["box"],
+    "刀": ["sword"],
+    "刈": ["ribs"],  # ⺉
+    "力": ["power"],
+    "勹": ["enclosure"],
+    "匕": ["spoon"],
+    "匚": ["cage"],
+    "十": ["cross"],
+    "卜": ["toe"],
+    "卩": ["stamp"],
+    "厂": ["cliff"],
+    "厶": ["pile"],
+    "又": ["stool"],
+    "マ": ["mama"],
+    "九": ["nine"],
+    "ユ": ["hook"],
+    "乃": ["stairs"],
+    "乞": ["gun"],  # 𠂉
+    "込": ["water slide"],  # 込
+    "口": ["mouth"],
+    "囗": ["mouth"],
+    "土": ["grave"],
+    "士": ["samurai"],
+    "夂": ["winter"],
+    "攵": ["winter"],
+    "夕": ["evening"],
+    "大": ["big"],
+    "女": ["woman"],
+    "子": ["child"],
+    "宀": ["helmet"],
+    "寸": ["glue"],
+    "小": ["small"],
+    "尚": ["triceratops"],  # ⺌
+    "尢": [],
+    "尸": ["flag"],
+    "屮": [],
+    "山": ["mountain"],
+    "川": ["river"],
+    "巛": ["arrows"],
+    "工": ["construction"],
+    "已": ["cobra"],
+    "巾": ["two face", "two-face"],
+    "干": ["antenna"],
+    "幺": ["poop"],
+    "广": ["mullet"],
+    "廴": ["big bird"],
+    "廾": ["twenty"],
+    "弋": ["substitute"],
+    "弓": ["spring"],
+    "ヨ": ["wolverine"],
+    "彑": [],
+    "彡": ["hair"],
+    "彳": ["loiter"],
+    "忙": ["fish stick"],  # ⺖
+    "扎": ["nailbat"],  # ⺘
+    "汁": ["tsunami"],  # ⺡
+    "犯": ["animal"],  # ⺨
+    "艾": ["flower", "flowers"],  # ⺾
+    "邦": ["butcher"],  # ⻏
+    "阡": ["butcher"],  # ⻖
+    "也": ["alligator"],
+    "亡": ["death"],
+    "及": ["escalator"],
+    "久": ["raptor cage"],
+    "老": ["coffin"],  # ⺹
+    "心": ["heart"],
+    "戈": ["drunkard"],
+    "戸": ["door"],
+    "手": ["hand"],
+    "支": ["frog"],
+    "文": ["doll"],
+    "斗": ["chopsticks"],
+    "斤": ["axe"],
+    "方": ["direction"],
+    "无": [],
+    "日": ["sun"],
+    "曰": [],
+    "月": ["moon"],
+    "木": ["tree"],
+    "欠": ["lack"],
+    "止": ["stop"],
+    "歹": [],
+    "殳": ["ikea"],
+    "比": ["compare"],
+    "毛": ["fur"],
+    "氏": ["duck"],
+    "气": ["energy"],
+    "水": ["water"],
+    "火": ["fire"],
+    "杰": ["fish tail"],  # ⺣
+    "爪": [],
+    "父": ["father"],
+    "爻": [],
+    "爿": [],
+    "片": ["waiter"],
+    "牛": ["cow"],
+    "犬": ["dog"],
+    "王": ["king"],
+    "元": ["origin"],
+    "井": ["well"],
+    "勿": ["thing"],
+    "尤": [],
+    "五": ["five"],
+    "屯": [],
+    "巴": ["bed"],
+    "毋": ["window"],
+    "玄": [],
+    "瓦": [],
+    "甘": [],
+    "生": ["life"],
+    "用": ["elephant"],
+    "田": ["rice paddy"],
+    "疋": ["determine"],
+    "疔": ["sick"],  # 疒
+    "癶": ["tent"],
+    "白": ["white"],
+    "皮": ["skin"],
+    "皿": ["plate"],
+    "目": ["eye"],
+    "矛": ["soldier"],
+    "矢": ["arrow"],
+    "石": ["stone"],
+    "示": [],
+    "禹": [],  # 禸
+    "禾": ["pine"],
+    "穴": ["hole"],
+    "立": ["stand"],
+    "礼": ["pelican"],  # ⻂
+    "初": ["pelican"],  # ⺭
+    "世": ["generation"],
+    "巨": [],
+    "冊": ["books"],
+    "母": ["drawer"],
+    "買": ["sauron"],  # ⺲
+    "牙": ["tusk", "fang"],
+    "瓜": [],
+    "竹": ["bamboo"],
+    "米": ["rice"],
+    "糸": ["thread"],
+    "缶": [],
+    "羊": ["sheep"],
+    "羽": ["feathers"],
+    "而": [],
+    "耒": [],
+    "耳": ["ear"],
+    "聿": ["brush"],
+    "肉": ["inside"],
+    "自": ["self"],
+    "至": [],
+    "臼": ["grenade"],
+    "舌": ["tongue"],
+    "舟": ["sail"],
+    "艮": ["good"],
+    "色": ["color"],
+    "虍": [],
+    "虫": ["bug"],
+    "血": ["blood"],
+    "行": ["go"],
+    "衣": ["clothes"],
+    "西": ["west"],
+    "臣": ["servant"],
+    "見": ["see"],
+    "角": ["angle"],
+    "言": ["say"],
+    "谷": ["valley"],
+    "豆": ["bean"],
+    "豕": ["gravity"],
+    "豸": [],
+    "貝": ["clam"],
+    "赤": ["red"],
+    "走": ["run"],
+    "足": ["foot"],
+    "身": ["somebody"],
+    "車": ["car"],
+    "辛": ["happiness"],
+    "辰": ["superman"],
+    "酉": ["sake"],
+    "釆": ["sickle"],
+    "里": ["sunflower"],
+    "舛": [],
+    "麦": [],
+    "金": ["gold", "money"],
+    "長": ["long"],
+    "門": ["gate"],
+    "隶": [],
+    "隹": ["turkey"],
+    "雨": ["rain"],
+    "青": ["blue"],
+    "非": ["injustice"],
+    "奄": [],
+    "岡": ["hill"],
+    "免": ["excuse"],
+    "斉": ["stilts"],
+    "面": ["robot"],
+    "革": [],
+    "韭": [],
+    "音": ["sound"],
+    "頁": ["neck"],
+    "風": ["wind"],
+    "飛": ["fly"],
+    "食": ["eat"],
+    "首": ["neck"],
+    "香": [],
+    "品": ["product"],
+    "馬": ["horse"],
+    "骨": ["bone"],
+    "高": ["high"],
+    "髟": [],
+    "鬥": [],
+    "鬯": [],
+    "鬲": [],
+    "鬼": [],
+    "竜": [],
+    "韋": [],
+    "魚": ["fish"],
+    "鳥": ["bird"],
+    "鹵": [],
+    "鹿": [],
+    "麻": [],
+    "亀": [],
+    "滴": [],  # 啇
+    "黄": ["yellow"],
+    "黒": ["black"],
+    "黍": [],
+    "黹": [],
+    "無": ["no"],
+    "歯": ["tooth"],
+    "黽": [],
+    "鼎": [],
+    "鼓": [],
+    "鼠": [],
+    "鼻": ["nose"],
+    "齊": [],
+    "龠": [],
 }
 
 
 def _build():
-    ret: t.Dict[str, t.Dict] = {'radicals': {}, 'strokes': {}, 'grade': {}}
+    ret: t.Dict[str, t.Dict] = {"radicals": {}, "strokes": {}, "grade": {}}
     for radical in _RADICALS:
-        print('Creating cache for {}...'.format(radical), file=sys.stderr)
-        url = 'http://jisho.org/radicals/' + urllib.parse.quote(radical)
+        print("Creating cache for {}...".format(radical), file=sys.stderr)
+        url = "http://jisho.org/radicals/" + urllib.parse.quote(radical)
         with urllib.request.urlopen(url) as handle:
             response = json.loads(handle.read().decode())
-            ret['radicals'][radical] = ''.join(
-                item['kanji'] for item in response['kanji']
+            ret["radicals"][radical] = "".join(
+                item["kanji"] for item in response["kanji"]
             )
-            for item in response['kanji']:
-                ret['strokes'][item['kanji']] = item['strokes']
-                ret['grade'][item['kanji']] = item['grade']
+            for item in response["kanji"]:
+                ret["strokes"][item["kanji"]] = item["strokes"]
+                ret["grade"][item["kanji"]] = item["grade"]
     return ret
 
 
@@ -298,12 +298,12 @@ def _chunks(source, n):
 
 
 def _parse_args():
-    epilog = 'Radicals:\n'
-    epilog += '\n'.join(
-        ''.join(f'{cell:15s}' for cell in row)
+    epilog = "Radicals:\n"
+    epilog += "\n".join(
+        "".join(f"{cell:15s}" for cell in row)
         for row in _chunks(
             [
-                f'{kanji}: {radicals[0]}'
+                f"{kanji}: {radicals[0]}"
                 for kanji, radicals in _RADICALS.items()
                 if radicals
             ],
@@ -312,11 +312,11 @@ def _parse_args():
     )
 
     parser = argparse.ArgumentParser(
-        description='Looks up kanji by radical',
+        description="Looks up kanji by radical",
         epilog=epilog,
         formatter_class=argparse.RawTextHelpFormatter,
     )
-    parser.add_argument('word', nargs='+')
+    parser.add_argument("word", nargs="+")
     return parser.parse_args()
 
 
@@ -351,7 +351,7 @@ def main() -> None:
                 set.intersection,
                 map(
                     set,
-                    (cache['radicals'][radical] for radical in combination),
+                    (cache["radicals"][radical] for radical in combination),
                 ),
             )
         )
@@ -359,10 +359,10 @@ def main() -> None:
             continue
 
         def sort_order(kanji):
-            return cache['strokes'][kanji]
+            return cache["strokes"][kanji]
 
         found_anything = True
-        print('Radicals: {}'.format(' + '.join(combination)))
+        print("Radicals: {}".format(" + ".join(combination)))
 
         kanjis = sum(
             [
@@ -377,18 +377,18 @@ def main() -> None:
         for i, kanji_or_number in enumerate(kanjis):
             if isinstance(kanji_or_number, int):
                 text = colored.stylize(
-                    ' {:2} '.format(kanji_or_number), colored.fg(240)
+                    " {:2} ".format(kanji_or_number), colored.fg(240)
                 )
             else:
-                text = ' {} '.format(kanji_or_number)
-            print(text, end='')
+                text = " {} ".format(kanji_or_number)
+            print(text, end="")
             if i % 20 == 19:
                 print()
-        print('\n')
+        print("\n")
 
     if not found_anything:
-        print('Nothing found.')
+        print("Nothing found.")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

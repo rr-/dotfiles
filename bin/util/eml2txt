@@ -11,35 +11,35 @@ import eml_parser
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        dest='paths', metavar='path', type=pathlib.Path, nargs='+'
+        dest="paths", metavar="path", type=pathlib.Path, nargs="+"
     )
     return parser.parse_args()
 
 
 def get_body_text(parsed):
     # first search for body in the body, then in the attachments
-    for key in ('body', 'attachment'):
+    for key in ("body", "attachment"):
 
         # first look for plain text version, then accept html
-        for mime in ('text/plain', 'text/html'):
+        for mime in ("text/plain", "text/html"):
             for attachment in parsed.get(key, []):
                 try:
-                    attachment_mime = attachment['mime_type_short']
+                    attachment_mime = attachment["mime_type_short"]
                 except LookupError:
                     try:
-                        attachment_mime = attachment['content_header'][
-                            'content-type'
+                        attachment_mime = attachment["content_header"][
+                            "content-type"
                         ][0]
                     except LookupError:
-                        attachment_mime = 'application/octet-stream'
+                        attachment_mime = "application/octet-stream"
 
-                attachment_mime = re.sub(';.*', '', attachment_mime)
+                attachment_mime = re.sub(";.*", "", attachment_mime)
 
                 if attachment_mime == mime:
                     try:
-                        return attachment['content']
+                        return attachment["content"]
                     except LookupError:
-                        return attachment['raw']
+                        return attachment["raw"]
 
     return None
 
@@ -49,7 +49,7 @@ def main():
 
     for i, path in enumerate(args.paths):
         if i > 0:
-            print('-' * 79)
+            print("-" * 79)
             print()
 
         raw_email = path.read_bytes()
@@ -59,12 +59,12 @@ def main():
         )
         text = get_body_text(parsed)
 
-        print('From:    ' + parsed['header']['from'])
-        print('To:      ' + ', '.join(parsed['header']['to']))
-        print('Subject: ' + parsed['header']['subject'])
+        print("From:    " + parsed["header"]["from"])
+        print("To:      " + ", ".join(parsed["header"]["to"]))
+        print("Subject: " + parsed["header"]["subject"])
         print()
         print(text)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

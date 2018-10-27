@@ -14,17 +14,17 @@ class RecognitionError(RuntimeError):
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
-    parser.add_argument('-l', '--language', required=True)
-    parser.add_argument('file', type=Path)
+    parser.add_argument("-l", "--language", required=True)
+    parser.add_argument("file", type=Path)
     return parser.parse_args()
 
 
 def recognize(path: Path, language: str) -> str:
-    with tempfile.NamedTemporaryFile(suffix='.wav') as handle:
+    with tempfile.NamedTemporaryFile(suffix=".wav") as handle:
         wav_file = handle.name
-        result = subprocess.run(['ffmpeg', '-y', '-i', str(path), wav_file])
+        result = subprocess.run(["ffmpeg", "-y", "-i", str(path), wav_file])
         if result.returncode != 0:
-            raise RecognitionError('Error while converting audio')
+            raise RecognitionError("Error while converting audio")
 
         r = sr.Recognizer()
         with sr.AudioFile(wav_file) as source:
@@ -34,12 +34,12 @@ def recognize(path: Path, language: str) -> str:
         return r.recognize_google(audio, language=language)
     except sr.UnknownValueError:
         raise RecognitionError(
-            'Google Speech Recognition could not understand audio'
+            "Google Speech Recognition could not understand audio"
         )
     except sr.RequestError as e:
         raise RecognitionError(
-            f'Could not request results '
-            f'from Google Speech Recognition service; {e}'
+            f"Could not request results "
+            f"from Google Speech Recognition service; {e}"
         )
 
 
@@ -47,7 +47,7 @@ def main():
     args = parse_args()
 
     if not args.file.exists():
-        print('File doesn\'t exist')
+        print("File doesn't exist")
         sys.exit(1)
 
     try:
@@ -58,5 +58,5 @@ def main():
         sys.exit(1)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

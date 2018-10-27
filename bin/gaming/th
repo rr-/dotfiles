@@ -5,27 +5,27 @@ import re
 import sys
 from subprocess import run
 
-TH_ROOT_DIR = os.path.expanduser('~/blob/games/Touhou Project/')
+TH_ROOT_DIR = os.path.expanduser("~/blob/games/Touhou Project/")
 
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument(metavar='NUM', dest='num', help='which game to play')
+    parser.add_argument(metavar="NUM", dest="num", help="which game to play")
     return parser.parse_args()
 
 
 def get_game_dir(num):
-    pattern = r'^TH0*{0}\s.*$'.format(num)
+    pattern = r"^TH0*{0}\s.*$".format(num)
     all_dirs = os.listdir(TH_ROOT_DIR)
     filtered_dirs = [dir for dir in all_dirs if re.match(pattern, dir)]
     if not filtered_dirs:
-        raise RuntimeError('Game directory not found')
+        raise RuntimeError("Game directory not found")
     return os.path.join(TH_ROOT_DIR, filtered_dirs[0])
 
 
 def get_executable(dir):
-    en_pattern = '^th.*e.exe$'
-    any_pattern = '^th.*.exe$'
+    en_pattern = "^th.*e.exe$"
+    any_pattern = "^th.*.exe$"
     all_files = os.listdir(dir)
     en_exes = [n for n in all_files if re.match(en_pattern, n, re.I)]
     any_exes = [n for n in all_files if re.match(any_pattern, n, re.I)]
@@ -33,7 +33,7 @@ def get_executable(dir):
         return en_exes[0]
     if any_exes:
         return any_exes[0]
-    raise RuntimeError('Game executable not found (directory=%s)' % dir)
+    raise RuntimeError("Game executable not found (directory=%s)" % dir)
 
 
 def main(args):
@@ -44,8 +44,8 @@ def main(args):
         print(ex, file=sys.stderr)
         sys.exit(1)
     os.chdir(dir)
-    run(['wine', exe])
+    run(["wine", exe])
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main(parse_args())

@@ -14,7 +14,7 @@ PAGE_WIDTH = 2
 PAGE_HEIGHT = 2
 IMAGES_PER_PAGE = PAGE_WIDTH * PAGE_HEIGHT
 MANAGED_EXTENSIONS = [
-    'bmp', 'gif', 'jfif', 'jpeg', 'jpg', 'mkv', 'mp4', 'png', 'tga', 'webm'
+    "bmp", "gif", "jfif", "jpeg", "jpg", "mkv", "mp4", "png", "tga", "webm"
 ]
 
 
@@ -53,7 +53,7 @@ class ImageViewer(Qt.QMainWindow):
         self._index = 0
 
         self.imageLabels = [Label() for i in range(IMAGES_PER_PAGE)]
-        self.setWindowTitle('blinkview')
+        self.setWindowTitle("blinkview")
         self.resize(500, 400)
 
         imageGrid = Qt.QWidget()
@@ -91,23 +91,15 @@ class ImageViewer(Qt.QMainWindow):
             self.showFullScreen()
 
     def setupShortcuts(self) -> None:
-        Qt.QShortcut(Qt.QKeySequence('ctrl+q'), self, self.close)
-        Qt.QShortcut(Qt.QKeySequence('q'), self, self.close)
-        Qt.QShortcut(Qt.QKeySequence('k'), self, self.prevPage)
-        Qt.QShortcut(Qt.QKeySequence('j'), self, self.nextPage)
-        Qt.QShortcut(Qt.QKeySequence('f'), self, self.toggleFullscreen)
+        Qt.QShortcut(Qt.QKeySequence("ctrl+q"), self, self.close)
+        Qt.QShortcut(Qt.QKeySequence("q"), self, self.close)
+        Qt.QShortcut(Qt.QKeySequence("k"), self, self.prevPage)
+        Qt.QShortcut(Qt.QKeySequence("j"), self, self.nextPage)
+        Qt.QShortcut(Qt.QKeySequence("f"), self, self.toggleFullscreen)
 
         index_to_key: T.Dict[int, str] = {
-            0: '1',
-            1: '2',
-            2: '3',
-            3: '4',
-            4: '5',
-            5: '6',
-            6: '7',
-            7: '8',
-            8: '9',
-            9: '0',
+            i: str((i + 1) % 10)
+            for i in range(10)
         }
         for i in range(IMAGES_PER_PAGE):
             try:
@@ -120,8 +112,8 @@ class ImageViewer(Qt.QMainWindow):
         try:
             source_path = self._image_paths[self._index + image_index]
         except IndexError:
-            self.showText('Bad image selected')
-        run(['mpi', '--select', str(source_path)])
+            self.showText("Bad image selected")
+        run(["mpi", "--select", str(source_path)])
         # target_path = self._target_path.joinpath(source_path.name)
         # self.showText('Saved to {}'.format(target_path))
         # target_path.write_bytes(source_path.read_bytes())
@@ -162,7 +154,7 @@ class ImageViewer(Qt.QMainWindow):
 
         self.mainWidget.setUpdatesEnabled(False)
         self.statusLabel.setText(
-            'Showing: {}..{} / {} ({:.02%})'.format(
+            "Showing: {}..{} / {} ({:.02%})".format(
                 self._index,
                 self._index + IMAGES_PER_PAGE - 1,
                 len(self._image_paths),
@@ -179,7 +171,7 @@ class ImageViewer(Qt.QMainWindow):
 
             image = QtGui.QImage(str(file_path))
             if image.isNull():
-                self.showText('Cannot load {}.'.format(file_path))
+                self.showText("Cannot load {}.".format(file_path))
                 break
             self.imageLabels[i].changePixmap(QtGui.QPixmap.fromImage(image))
         self.mainWidget.setUpdatesEnabled(True)
@@ -192,7 +184,7 @@ def collect_images(source_paths: T.List[Path]) -> T.List[Path]:
             for entry in os.scandir(path):
                 if not entry.is_file:
                     continue
-                ext = os.path.splitext(entry.path)[1].lstrip('.').lower()
+                ext = os.path.splitext(entry.path)[1].lstrip(".").lower()
                 if ext in MANAGED_EXTENSIONS:
                     ret.append(Path(entry.path))
         elif os.path.isfile(path):
@@ -206,28 +198,28 @@ def collect_images(source_paths: T.List[Path]) -> T.List[Path]:
         return int(text) if text.isdigit() else text.lower()
 
     ret.sort(
-        key=lambda key: [convert(c) for c in re.split('([0-9]+)', key.name)]
+        key=lambda key: [convert(c) for c in re.split("([0-9]+)", key.name)]
     )
 
     return ret
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description='Run mpv as image viewer')
+    parser = argparse.ArgumentParser(description="Run mpv as image viewer")
     parser.add_argument(
-        metavar='SOURCE_PATH',
-        nargs='*',
-        dest='source_paths',
-        help='path to the image or a directory',
-        default=['.'],
+        metavar="SOURCE_PATH",
+        nargs="*",
+        dest="source_paths",
+        help="path to the image or a directory",
+        default=["."],
     )
     parser.add_argument(
-        '-t',
-        '--target-dir',
-        metavar='TARGET_PATH',
-        dest='target_path',
-        help='path where to put the saved images',
-        default='~',
+        "-t",
+        "--target-dir",
+        metavar="TARGET_PATH",
+        dest="target_path",
+        help="path where to put the saved images",
+        default="~",
     )
 
     args = parser.parse_args()
@@ -251,5 +243,5 @@ def main() -> None:
     sys.exit(app.exec_())
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

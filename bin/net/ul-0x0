@@ -5,7 +5,7 @@ import sys
 
 import requests
 
-BASE_URL = 'https://0x0.st/'
+BASE_URL = "https://0x0.st/"
 
 
 def collect_single_file(arg):
@@ -25,7 +25,7 @@ def collect_files_from_dir(top):
 def collect_files(args):
     for arg in args:
         if not os.path.exists(arg):
-            print('File does not exist: %s' % arg, file=sys.stderr)
+            print("File does not exist: %s" % arg, file=sys.stderr)
             continue
         if os.path.isfile(arg):
             yield collect_single_file(arg)
@@ -36,14 +36,14 @@ def collect_files(args):
 
 def send(src_paths):
     if not src_paths:
-        print('Nothing to send.', file=sys.stderr)
+        print("Nothing to send.", file=sys.stderr)
         return
 
     urls = []
     try:
         for src_path, _ in src_paths:
-            with open(src_path, 'rb') as handle:
-                response = requests.post(BASE_URL, files={'file': handle})
+            with open(src_path, "rb") as handle:
+                response = requests.post(BASE_URL, files={"file": handle})
                 response.raise_for_status()
                 urls.append(response.text)
     except Exception as ex:
@@ -58,5 +58,5 @@ def main():
     send(list(collect_files(sys.argv[1:])))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

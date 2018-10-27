@@ -9,8 +9,8 @@ from pathlib import Path
 
 from PIL import Image
 
-SOURCE_DIR = 'big'
-TARGET_DIR = 'big-sorted'
+SOURCE_DIR = "big"
+TARGET_DIR = "big-sorted"
 Color = T.Tuple[float, float, float]
 
 
@@ -42,7 +42,7 @@ def remove_symlinks(dir: str) -> None:
 
 
 def worker(path):
-    logging.info('Getting average color for %s' % path)
+    logging.info("Getting average color for %s" % path)
     try:
         with Image.open(path) as image:
             color = average_color(image)
@@ -52,7 +52,7 @@ def worker(path):
 
 
 def get_paths_sorted_by_avg_color(dir: str) -> T.List[str]:
-    logging.info('Computing average colors...')
+    logging.info("Computing average colors...")
     paths = [os.path.abspath(file.path) for file in os.scandir(SOURCE_DIR)]
     paths = paths
     pool = multiprocessing.Pool()
@@ -64,9 +64,9 @@ def get_paths_sorted_by_avg_color(dir: str) -> T.List[str]:
 def make_symlinks(source_paths: T.List[str], target_dir: str) -> None:
     for i, source_path in enumerate(source_paths):
         target_path = os.path.join(
-            target_dir, '%d_%s' % (i, os.path.basename(source_path))
+            target_dir, "%d_%s" % (i, os.path.basename(source_path))
         )
-        logging.info('%s -> %s', source_path, target_path)
+        logging.info("%s -> %s", source_path, target_path)
         os.symlink(source_path, target_path)
 
 
@@ -77,6 +77,6 @@ def main() -> None:
     make_symlinks(sorted_source_paths, TARGET_DIR)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     logging.getLogger().setLevel(logging.INFO)
     main()

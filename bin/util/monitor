@@ -7,7 +7,7 @@ import typing as T
 from datetime import datetime
 from pathlib import Path
 
-DEFAULT_EXCLUDE = ['__pycache__']
+DEFAULT_EXCLUDE = ["__pycache__"]
 
 
 def _get_paths(
@@ -34,12 +34,12 @@ def _get_checksum(paths: T.List[str]) -> str:
 
 
 def _parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser('Monitor filesystem for changes')
-    parser.add_argument('--sleep', default=1, type=int)
-    parser.add_argument('--exclude', nargs='*')
-    parser.add_argument('-t', '--target-dir', nargs='*')
-    parser.add_argument('cmd', metavar='cmd')
-    parser.add_argument('cmd_args', metavar='cmd_arg', nargs='*')
+    parser = argparse.ArgumentParser("Monitor filesystem for changes")
+    parser.add_argument("--sleep", default=1, type=int)
+    parser.add_argument("--exclude", nargs="*")
+    parser.add_argument("-t", "--target-dir", nargs="*")
+    parser.add_argument("cmd", metavar="cmd")
+    parser.add_argument("cmd_args", metavar="cmd_arg", nargs="*")
     return parser.parse_args()
 
 
@@ -59,22 +59,22 @@ def main() -> None:
         except Exception:
             pass
         if current_checksum != last_checksum:
-            print('Change detected.')
+            print("Change detected.")
             start = datetime.now()
             try:
                 subprocess.run(command_line)
                 print(
-                    '%s: finished in %.02fs'
+                    "%s: finished in %.02fs"
                     % (
-                        ' '.join(command_line),
+                        " ".join(command_line),
                         (datetime.now() - start).total_seconds(),
                     )
                 )
             except Exception as ex:
                 print(
-                    '%s: error (%s) in %.02fs'
+                    "%s: error (%s) in %.02fs"
                     % (
-                        ' '.join(command_line),
+                        " ".join(command_line),
                         ex,
                         (datetime.now() - start).total_seconds(),
                     )
@@ -84,5 +84,5 @@ def main() -> None:
         time.sleep(sleep_time)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

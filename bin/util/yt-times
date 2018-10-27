@@ -3,13 +3,13 @@ import datetime
 import re
 import sys
 
-STRIP = ' -\N{EN DASH}\N{EM DASH}'
+STRIP = " -\N{EN DASH}\N{EM DASH}"
 REGEX = (
-    r'(?P<before>.*)'
-    + r'((?P<hour>\d+):)?'
-    + r'(?P<minute>\d+):'
-    + r'(?P<second>\d+)'
-    + r'(?P<after>.*)'
+    r"(?P<before>.*)"
+    + r"((?P<hour>\d+):)?"
+    + r"(?P<minute>\d+):"
+    + r"(?P<second>\d+)"
+    + r"(?P<after>.*)"
 )
 
 
@@ -25,21 +25,21 @@ def main():
         print(
             re.sub(
                 REGEX,
-                '%s: %s %s'
+                "%s: %s %s"
                 % (
                     datetime.timedelta(seconds=seconds),
-                    results['before'].rstrip(STRIP),
-                    results['after'].lstrip(STRIP),
+                    results["before"].rstrip(STRIP),
+                    results["after"].lstrip(STRIP),
                 ),
                 line,
             )
         )
-        seconds += int(results['hour'] or '0') * 3600
-        seconds += int(results['minute'] or '0') * 60
-        seconds += int(results['second'] or '0')
+        seconds += int(results["hour"] or "0") * 3600
+        seconds += int(results["minute"] or "0") * 60
+        seconds += int(results["second"] or "0")
 
     print(datetime.timedelta(seconds=seconds))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

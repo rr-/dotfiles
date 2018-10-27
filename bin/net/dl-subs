@@ -13,25 +13,25 @@ import requests
 
 from dotfiles import logging
 
-PASSWORD = 'iBlm8NTigvru0Jr0'
+PASSWORD = "iBlm8NTigvru0Jr0"
 URL_TEMPLATE = (
-    'http://napiprojekt.pl/unit_napisy/dl.php'
-    + '?l={lang}'
-    + '&f={md5}'
-    + '&t={checksum}'
-    + '&v=other'
-    + '&kolejka=false'
-    + '&nick='
-    + '&pass='
-    + '&napios=posix'
+    "http://napiprojekt.pl/unit_napisy/dl.php"
+    + "?l={lang}"
+    + "&f={md5}"
+    + "&t={checksum}"
+    + "&v=other"
+    + "&kolejka=false"
+    + "&nick="
+    + "&pass="
+    + "&napios=posix"
 )
-MOVIE_EXTENSIONS = {'.avi', '.mp4', '.mpg', '.mkv'}
+MOVIE_EXTENSIONS = {".avi", ".mp4", ".mpg", ".mkv"}
 SUBTITLE_READERS = []
 
 
 class SubtitlesNotFoundError(RuntimeError):
     def __init__(self):
-        super().__init__('Subtitles not found')
+        super().__init__("Subtitles not found")
 
 
 class Task(abc.ABC):
@@ -42,7 +42,7 @@ class Task(abc.ABC):
 
     @abc.abstractmethod
     def get_file_hash(self):
-        ''' Gets the MD5 of the first 10 megabytes of the movie. '''
+        """ Gets the MD5 of the first 10 megabytes of the movie. """
         raise NotImplementedError()
 
 
@@ -52,10 +52,10 @@ class FileTask(Task):
 
     @property
     def canonical_path(self):
-        return self.path.parent / (self.path.stem + '.srt')
+        return self.path.parent / (self.path.stem + ".srt")
 
     def get_file_hash(self):
-        with self.path.open('rb') as handle:
+        with self.path.open("rb") as handle:
             md5 = hashlib.md5()
             md5.update(handle.read(1024 * 1024 * 10))
             return md5.hexdigest()
@@ -70,7 +70,7 @@ class HashTask(Task):
 
     @property
     def canonical_path(self):
-        return pathlib.Path(self.file_hash + '.srt')
+        return pathlib.Path(self.file_hash + ".srt")
 
     def get_file_hash(self):
         return self.file_hash
@@ -106,7 +106,7 @@ class SubtitleReader:
 class MdvdSubtitleReader(SubtitleReader):
     def __init__(self):
         super().__init__()
-        self._regex = re.compile(r'^\{(\d+)\}\{(\d*)\}\s*(.*)')
+        self._regex = re.compile(r"^\{(\d+)\}\{(\d*)\}\s*(.*)")
 
     def read(self, lines, fps):
         for line in lines:
@@ -117,7 +117,7 @@ class MdvdSubtitleReader(SubtitleReader):
                     time_end = int(match.group(2)) / float(fps)
                 else:
                     time_end = int(match.group(1)) / float(fps) + 3
-                text = match.group(3).strip().split('|')
+                text = match.group(3).strip().split("|")
                 yield Subtitle(time_start, time_end, text)
 
 
@@ -125,7 +125,7 @@ class Sub2SubtitleReader(SubtitleReader):
     def __init__(self):
         super().__init__()
         self._regex = re.compile(
-            r'^(\d+):(\d+):(\d+)\.(\d+)\s*\,\s*(\d+):(\d+):(\d+)\.(\d+).*$'
+            r"^(\d+):(\d+):(\d+)\.(\d+)\s*\,\s*(\d+):(\d+):(\d+)\.(\d+).*$"
         )
 
     def read(self, lines, _fps):
@@ -145,21 +145,21 @@ class Sub2SubtitleReader(SubtitleReader):
                     + int(match.group(7))
                     + int(match.group(8)) / 100.0
                 )
-                text = next(lines_it).strip().split('[br]')
+                text = next(lines_it).strip().split("[br]")
                 yield Subtitle(time_start, time_end, text)
 
 
 class SrtSubtitleReader(SubtitleReader):
     def __init__(self):
         super().__init__()
-        self._regex = re.compile(r'^(\d+):(\d+):(\d+),\d+\s*-->.*')
+        self._regex = re.compile(r"^(\d+):(\d+):(\d+),\d+\s*-->.*")
 
     def read(self, lines, _fps):
-        re1 = re.compile(r'^(\d+)\s*$')
+        re1 = re.compile(r"^(\d+)\s*$")
         re2 = re.compile(
-            r'^(\d+):(\d+):(\d+),(\d+)\s*-->\s*(\d+):(\d+):(\d+),(\d+).*$'
+            r"^(\d+):(\d+):(\d+),(\d+)\s*-->\s*(\d+):(\d+):(\d+),(\d+).*$"
         )
-        re3 = re.compile(r'^\s*$')
+        re3 = re.compile(r"^\s*$")
         lines_it = iter(lines)
         for line in lines_it:
             if not re1.match(line):
@@ -190,7 +190,7 @@ class SrtSubtitleReader(SubtitleReader):
 class TmpSubtitleReader(SubtitleReader):
     def __init__(self):
         super().__init__()
-        self._regex = re.compile(r'^(\d+):(\d+):(\d+):(.*)')
+        self._regex = re.compile(r"^(\d+):(\d+):(\d+):(.*)")
 
     def read(self, lines, _fps):
         subs = {}
@@ -202,7 +202,7 @@ class TmpSubtitleReader(SubtitleReader):
                     + int(match.group(2)) * 60
                     + int(match.group(3))
                 )
-                text = match.group(4).strip().split('|')
+                text = match.group(4).strip().split("|")
                 if time in subs:
                     subs[time].extend(text)
                 else:
@@ -219,7 +219,7 @@ class Mpl2SubtitleReader(SubtitleReader):
     def __init__(self):
         super().__init__()
         self._regex = re.compile(
-            r'\[(?P<start>\d+)\]\[(?P<stop>\d+)\](?P<line>.*)', re.S
+            r"\[(?P<start>\d+)\]\[(?P<stop>\d+)\](?P<line>.*)", re.S
         )
 
     def read(self, lines, _fps):
@@ -228,14 +228,14 @@ class Mpl2SubtitleReader(SubtitleReader):
             if not match:
                 continue
             group = match.groupdict()
-            start = float(group['start']) * 0.1
-            stop = float(group['stop']) * 0.1
-            text = group['line'].split('|')
+            start = float(group["start"]) * 0.1
+            stop = float(group["stop"]) * 0.1
+            text = group["line"].split("|")
             yield Subtitle(start, stop, text)
 
 
 class SubtitleParser:
-    TEMPLATE = '%d\n%.2d:%.2d:%.2d,%.3d --> %.2d:%.2d:%.2d,%.3d\n%s\n\n'
+    TEMPLATE = "%d\n%.2d:%.2d:%.2d,%.3d --> %.2d:%.2d:%.2d,%.3d\n%s\n\n"
 
     def parse(self, lines, fps):
         for reader in SUBTITLE_READERS:
@@ -244,7 +244,7 @@ class SubtitleParser:
         return []
 
     def to_srt(self, subtitles):
-        out = ''
+        out = ""
         for i, subtitle in enumerate(subtitles):
             out += self.TEMPLATE % (
                 i + 1,
@@ -256,7 +256,7 @@ class SubtitleParser:
                 int(int(subtitle.time_end % 3600) / 60),
                 int(subtitle.time_end % 60),
                 (subtitle.time_end - int(subtitle.time_end)) * 1000,
-                '\n'.join(subtitle.text),
+                "\n".join(subtitle.text),
             )
 
         return out
@@ -264,40 +264,40 @@ class SubtitleParser:
 
 def parse_args():
     parser = argparse.ArgumentParser(
-        description='Get movie subtitles using napiprojekt.pl database'
+        description="Get movie subtitles using napiprojekt.pl database"
     )
 
     parser.add_argument(
-        metavar='FILE|HASH',
-        dest='sources',
-        nargs='+',
-        help='file to download subtitles for',
+        metavar="FILE|HASH",
+        dest="sources",
+        nargs="+",
+        help="file to download subtitles for",
     )
 
     parser.add_argument(
-        '--lang',
-        metavar='LANG',
-        help='language to download subtitles in',
-        default='pl',
-        choices=('pl', 'en'),
+        "--lang",
+        metavar="LANG",
+        help="language to download subtitles in",
+        default="pl",
+        choices=("pl", "en"),
     )
 
     parser.add_argument(
-        '-f',
-        '--force',
-        action='store_true',
-        help='overwrite existing subtitles',
+        "-f",
+        "--force",
+        action="store_true",
+        help="overwrite existing subtitles",
     )
 
     parser.add_argument(
-        '-d', '--debug', action='store_true', help='show stacktraces'
+        "-d", "--debug", action="store_true", help="show stacktraces"
     )
 
     return parser.parse_args()
 
 
 def flat_walk(root_path):
-    ''' Returns recursive list of files contained inside the directory. '''
+    """ Returns recursive list of files contained inside the directory. """
     for path in root_path.iterdir():
         if path.is_file():
             yield path
@@ -307,14 +307,14 @@ def flat_walk(root_path):
 
 def collect_tasks(sources):
     for source in sources:
-        match = re.match('(?:napiprojekt:)?(?P<hash>[0-9A-Fa-f]{32})', source)
+        match = re.match("(?:napiprojekt:)?(?P<hash>[0-9A-Fa-f]{32})", source)
         if match:
-            yield HashTask(match.group('hash'))
+            yield HashTask(match.group("hash"))
             continue
 
         path = pathlib.Path(source)
         if not path.exists():
-            logging.warning(f'Warning: {path} does not exist')
+            logging.warning(f"Warning: {path} does not exist")
             continue
 
         if path.is_file():
@@ -330,15 +330,15 @@ def get_fps(_path):
 
 
 def get_checksum(file_hash):
-    ''' Gets the checksum for Napiprojekt basing on the file's MD5. '''
-    checksum = ''
+    """ Gets the checksum for Napiprojekt basing on the file's MD5. """
+    checksum = ""
     add = (0, 13, 16, 11, 5)
     mul = (2, 2, 5, 4, 3)
     idx = (14, 3, 6, 8, 2)
     for i in range(5):
         index = int(file_hash[idx[i]], 16) + add[i]
         value = int(file_hash[index : index + 2], 16) * mul[i]
-        checksum += '%x' % (value % 16)
+        checksum += "%x" % (value % 16)
     return checksum
 
 
@@ -348,16 +348,16 @@ def get_raw_subtitles(file_hash, lang):
     )
 
     response = requests.get(url, timeout=3)
-    if response.content[0:3] == b'NPc':
+    if response.content[0:3] == b"NPc":
         raise SubtitlesNotFoundError()
 
-    with tempfile.NamedTemporaryFile(suffix='.7z', delete=False) as arc_file:
+    with tempfile.NamedTemporaryFile(suffix=".7z", delete=False) as arc_file:
         arc_file.write(response.content)
         arc_path = pathlib.Path(arc_file.name)
 
     try:
         proc = subprocess.Popen(
-            ['7z', 'x', '-so', '-p' + PASSWORD, arc_path],
+            ["7z", "x", "-so", "-p" + PASSWORD, arc_path],
             stderr=subprocess.PIPE,
             stdout=subprocess.PIPE,
             stdin=subprocess.PIPE,
@@ -369,13 +369,13 @@ def get_raw_subtitles(file_hash, lang):
 
 
 def process_task(task, parser, lang, force, debug):
-    '''
+    """
     Stores subtitles for a single task.
     If the target subtitles already exist, bails out, unless force=True.
-    '''
+    """
     subs_path = task.canonical_path
     if subs_path.exists() and not force:
-        logging.warning(f'{task!r}: has subs, ignoring')
+        logging.warning(f"{task!r}: has subs, ignoring")
         return
 
     try:
@@ -383,16 +383,16 @@ def process_task(task, parser, lang, force, debug):
         output = get_raw_subtitles(file_hash, lang)
         if not output:
             return
-        lines = output.decode('cp1250').split('\n')
+        lines = output.decode("cp1250").split("\n")
         subtitles = parser.parse(lines, 23.976)
         output = parser.to_srt(subtitles)
 
-        subs_path.write_bytes(output.encode('utf-8'))
-        logging.success(f'{task!r}: saved')
+        subs_path.write_bytes(output.encode("utf-8"))
+        logging.success(f"{task!r}: saved")
     except Exception as ex:
         if debug:
             raise
-        logging.error(f'{task!r}: error ({ex})')
+        logging.error(f"{task!r}: error ({ex})")
 
 
 def main():
@@ -408,5 +408,5 @@ def main():
                 executor.submit(process_task, *func_args)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

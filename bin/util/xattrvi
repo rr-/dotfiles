@@ -9,22 +9,22 @@ import tempfile
 
 def parse_args():
     parser = argparse.ArgumentParser(
-        description='xattrvi - modify xattributes of files the simple way'
+        description="xattrvi - modify xattributes of files the simple way"
     )
 
     parser.add_argument(
-        'filename',
+        "filename",
         type=str,
         default=None,
-        help='file that needs to get modified',
-        nargs='+',
+        help="file that needs to get modified",
+        nargs="+",
     )
 
     parser.add_argument(
-        '--editor',
+        "--editor",
         type=str,
-        default=os.environ.get('EDITOR') or 'nano',
-        help='use this particular editor',
+        default=os.environ.get("EDITOR") or "nano",
+        help="use this particular editor",
     )
 
     args = parser.parse_args()
@@ -33,41 +33,41 @@ def parse_args():
 
 
 def newline_escape(string):
-    return string.replace('\n', '\\n')
+    return string.replace("\n", "\\n")
 
 
 def newline_unescape(string):
-    return string.replace('\\n', '\n')
+    return string.replace("\\n", "\n")
 
 
 def dump(path, user_xattrs, other_xattrs, handle):
-    handle.write(f'# file {path}\n')
-    handle.write('# attributes in namespace \'user\'\n')
+    handle.write(f"# file {path}\n")
+    handle.write("# attributes in namespace 'user'\n")
 
     if user_xattrs:
         handle.write(
-            '\n'.join(
+            "\n".join(
                 [
                     f'{key + ":":10s} {newline_escape(value)}'
                     for key, value in user_xattrs.items()
                 ]
             )
         )
-        handle.write('\n')
+        handle.write("\n")
 
     if other_xattrs:
-        handle.write('# attributes in other namespaces\n')
+        handle.write("# attributes in other namespaces\n")
         handle.write(
-            '\n'.join(
+            "\n".join(
                 [
                     f'#{key + ":":10s} {newline_escape(value)}'
                     for key, value in other_xattrs
                 ]
             )
         )
-        handle.write('\n')
+        handle.write("\n")
 
-    handle.write('\n')
+    handle.write("\n")
 
 
 def parse(handle):
@@ -75,26 +75,26 @@ def parse(handle):
 
     path = None
     for i, line in enumerate(handle):
-        if line.startswith('# file '):
+        if line.startswith("# file "):
             path = line[7:].strip()
-        elif line.startswith('#'):
+        elif line.startswith("#"):
             continue
         elif not line.strip():
             continue
         else:
-            if ':' not in line:
-                print(f'!! Expected colon at line {i + 1}', file=sys.stderr)
-                print(f'>> {line}', file=sys.stderr)
+            if ":" not in line:
+                print(f"!! Expected colon at line {i + 1}", file=sys.stderr)
+                print(f">> {line}", file=sys.stderr)
                 sys.exit(3)
             if not path:
                 print(
-                    f'!! Expected file marker before line {i + 1}',
+                    f"!! Expected file marker before line {i + 1}",
                     file=sys.stderr,
                 )
-                print(f'>> {line}', file=sys.stderr)
+                print(f">> {line}", file=sys.stderr)
                 sys.exit(3)
 
-            key, value = line.split(':', 1)
+            key, value = line.split(":", 1)
 
             if path not in ret:
                 ret[path] = {}
@@ -108,8 +108,8 @@ def get_xattrs(path):
     other_xattrs = {}
     for full_key in os.listxattr(path):
         value = os.getxattr(path, full_key, follow_symlinks=True).decode()
-        namespace, key = full_key.split('.', 1)
-        if namespace == 'user':
+        namespace, key = full_key.split(".", 1)
+        if namespace == "user":
             user_xattrs[key] = value
         else:
             other_xattrs[full_key] = value
@@ -123,25 +123,25 @@ def set_user_xattrs(path, new_user_xattrs):
         if key not in user_xattrs:
             print(f':: adding key "{key}" for path "{path}"')
             os.setxattr(
-                path, 'user.' + key, newline_unescape(value).encode('utf-8')
+                path, "user." + key, newline_unescape(value).encode("utf-8")
             )
 
         elif user_xattrs[key] != value:
             print(f':: updating key "{key}" for path "{path}"')
             os.setxattr(
-                path, 'user.' + key, newline_unescape(value).encode('utf-8')
+                path, "user." + key, newline_unescape(value).encode("utf-8")
             )
 
     for key in set(user_xattrs.keys()).difference(new_user_xattrs.keys()):
         print(f':: removing key "{key}" for "{path}"')
-        os.removexattr(path, 'user.' + key)
+        os.removexattr(path, "user." + key)
 
 
 def main():
     args = parse_args()
 
     tmpfile = tempfile.NamedTemporaryFile()
-    with open(tmpfile.name, 'w') as handle:
+    with open(tmpfile.name, "w") as handle:
         for path in args.filename:
             user_xattrs, other_xattrs = get_xattrs(path)
             dump(path, user_xattrs, other_xattrs, handle=handle)
@@ -149,17 +149,17 @@ def main():
     retval = subprocess.call(args.editor + [tmpfile.name])
     if retval != 0:
         print(
-            f'!! Editor {args.editor} exited nonzero with {retval}. Aborting.',
+            f"!! Editor {args.editor} exited nonzero with {retval}. Aborting.",
             file=sys.stderr,
         )
         sys.exit(1)
 
-    with open(tmpfile.name, 'r') as handle:
+    with open(tmpfile.name, "r") as handle:
         parsed = parse(handle)
         for path in args.filename:
             new_user_xattrs = parsed.get(path, {})
             set_user_xattrs(path, new_user_xattrs)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

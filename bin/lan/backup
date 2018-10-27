@@ -7,26 +7,26 @@ from dotfiles import logging
 
 
 def sync(source, target):
-    source_machine, source_path = source.split(':', 1)
-    target_machine, target_path = target.split(':', 1)
+    source_machine, source_path = source.split(":", 1)
+    target_machine, target_path = target.split(":", 1)
 
-    logging.info('%s -> %s', source, target)
+    logging.info("%s -> %s", source, target)
 
-    run(['ssh', target_machine, 'mkdir', '-p', target_path])
+    run(["ssh", target_machine, "mkdir", "-p", target_path])
 
     status = run(
         [
-            'ssh',
-            '-A',
+            "ssh",
+            "-A",
             source_machine,
-            'rsync',
-            '--progress',
-            '--whole-file',
-            '--chmod=D=rwxrxrx,F=rwrr',
-            '-vaKR',
-            '-xx',
-            '--delete-excluded',
-            '--delete-during',
+            "rsync",
+            "--progress",
+            "--whole-file",
+            "--chmod=D=rwxrxrx,F=rwrr",
+            "-vaKR",
+            "-xx",
+            "--delete-excluded",
+            "--delete-during",
             # '--dry-run',
             source_path,
             target,
@@ -34,26 +34,26 @@ def sync(source, target):
     )
 
     if status.returncode != 0:
-        logging.error('Error during sync, aborting')
+        logging.error("Error during sync, aborting")
         exit(1)
 
 
 def main():
-    logging.info('tornado -> cyclone')
-    for directory in ['src', 'blob', 'hub', 'text']:
-        sync('tornado:/home/rr-/' + directory, 'cyclone:/srv/backup/tornado/')
+    logging.info("tornado -> cyclone")
+    for directory in ["src", "blob", "hub", "text"]:
+        sync("tornado:/home/rr-/" + directory, "cyclone:/srv/backup/tornado/")
 
-    logging.info('cyclone -> tornado')
+    logging.info("cyclone -> tornado")
     for directory in [
-        '/srv/www',
-        '/srv/img',
-        '/home/rr-/text',
-        '/home/rr-/.weechat/logs',
+        "/srv/www",
+        "/srv/img",
+        "/home/rr-/text",
+        "/home/rr-/.weechat/logs",
     ]:
-        sync('cyclone:' + directory, 'tornado:/home/rr-/.backup/cyclone/')
+        sync("cyclone:" + directory, "tornado:/home/rr-/.backup/cyclone/")
 
-    logging.info('Syncing finished without errors')
+    logging.info("Syncing finished without errors")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

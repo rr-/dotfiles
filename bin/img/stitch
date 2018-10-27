@@ -5,9 +5,9 @@ from subprocess import run
 
 
 def _parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser('Stitch images vertically')
-    parser.add_argument('-o', '--output', default='stitched.jpg')
-    parser.add_argument('input', nargs='+')
+    parser = argparse.ArgumentParser("Stitch images vertically")
+    parser.add_argument("-o", "--output", default="stitched.jpg")
+    parser.add_argument("input", nargs="+")
     return parser.parse_args()
 
 
@@ -17,11 +17,11 @@ def main() -> None:
     target_file: str = args.output
 
     run(
-        ['convert', '-border', '0x1', '-bordercolor', 'black']
+        ["convert", "-border", "0x1", "-bordercolor", "black"]
         + source_files
-        + ['-append', '-trim', target_file]
+        + ["-append", "-trim", target_file]
     )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
