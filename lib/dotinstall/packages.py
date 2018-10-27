@@ -66,23 +66,6 @@ class PacaurPackageInstaller:
         )
 
 
-class YaourtPackageInstaller:
-    name = "yaourt"
-
-    @property
-    def supported(self):
-        return util.has_executable("yaourt") and util.has_executable("sudo")
-
-    def has_installed(self, package):
-        return util.run_silent(["yaourt", "-Q", package])[0]
-
-    def is_available(self, package):
-        return util.run_silent(["yaourt", "-Ss", package])[0]
-
-    def install(self, package):
-        return util.run_verbose(["yaourt", "-S", package])
-
-
 class PipPackageInstaller:
     name = "pip"
     cache_dir = tempfile.gettempdir()
@@ -146,7 +129,6 @@ INSTALLERS = [
     CygwinPackageInstaller(),
     PacmanPackageInstaller(),
     PacaurPackageInstaller(),
-    YaourtPackageInstaller(),
     PipPackageInstaller(),
 ]
 
