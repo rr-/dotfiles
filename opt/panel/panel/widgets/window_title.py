@@ -14,9 +14,7 @@ class WindowTitleWidget(Widget):
     delay = 0
 
     def __init__(
-            self,
-            app: QtWidgets.QApplication,
-            main_window: QtWidgets.QWidget,
+        self, app: QtWidgets.QApplication, main_window: QtWidgets.QWidget
     ) -> None:
         super().__init__(app, main_window)
         self._label = QtWidgets.QLabel(main_window)
@@ -59,9 +57,7 @@ class WindowTitleWidget(Widget):
     def _render_impl(self) -> None:
         self._label.setText(
             self._font_metrics.elidedText(
-                self._last_seen_title,
-                QtCore.Qt.ElideRight,
-                self._max_width,
+                self._last_seen_title, QtCore.Qt.ElideRight, self._max_width
             )
         )
 
@@ -96,7 +92,8 @@ class WindowTitleWidget(Widget):
             with self._window_obj(win_id) as new_win:
                 if new_win:
                     new_win.change_attributes(
-                        event_mask=Xlib.X.PropertyChangeMask)
+                        event_mask=Xlib.X.PropertyChangeMask
+                    )
 
         return win_id, focus_changed
 

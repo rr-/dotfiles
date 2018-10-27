@@ -18,9 +18,7 @@ class BatteryWidget(Widget):
     delay = 3
 
     def __init__(
-            self,
-            app: QtWidgets.QApplication,
-            main_window: QtWidgets.QWidget,
+        self, app: QtWidgets.QApplication, main_window: QtWidgets.QWidget
     ) -> None:
         super().__init__(app, main_window)
         self.percentage = 0.0
@@ -52,8 +50,8 @@ class BatteryWidget(Widget):
     @property
     def available(self) -> bool:
         return (
-            self._charge_now_path is not None and
-            self._charge_max_path is not None
+            self._charge_now_path is not None
+            and self._charge_max_path is not None
         )
 
     def _refresh_impl(self) -> None:

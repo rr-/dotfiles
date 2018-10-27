@@ -13,7 +13,6 @@ except ImportError:
     alsaaudio = None
 
 
-
 class VolumeControl(QtWidgets.QWidget):
     def __init__(self, parent: QtWidgets.QWidget, size: QtCore.QSize) -> None:
         super().__init__(parent)
@@ -71,9 +70,7 @@ class VolumeWidget(Widget):
     delay = 1
 
     def __init__(
-            self,
-            app: QtWidgets.QApplication,
-            main_window: QtWidgets.QWidget,
+        self, app: QtWidgets.QApplication, main_window: QtWidgets.QWidget
     ) -> None:
         super().__init__(app, main_window)
 
@@ -110,8 +107,10 @@ class VolumeWidget(Widget):
             run(
                 [
                     'amixer',
-                    '-D', 'pulse',
-                    'set', 'Master',
+                    '-D',
+                    'pulse',
+                    'set',
+                    'Master',
                     '1%' + ['-', '+'][event.angleDelta().y() > 0],
                     'unmute',
                 ]

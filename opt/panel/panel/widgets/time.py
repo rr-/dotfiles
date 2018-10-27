@@ -9,9 +9,7 @@ class TimeWidget(Widget):
     delay = 1
 
     def __init__(
-            self,
-            app: QtWidgets.QApplication,
-            main_window: QtWidgets.QWidget,
+        self, app: QtWidgets.QApplication, main_window: QtWidgets.QWidget
     ) -> None:
         super().__init__(app, main_window)
         self.date = datetime.now()

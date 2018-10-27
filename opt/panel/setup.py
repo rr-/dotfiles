@@ -9,11 +9,6 @@ setup(
     entry_points={'console_scripts': ['panel = panel.__main__:main']},
     package_dir={'panel': 'panel'},
     package_data={'panel': ['data/**/*']},
-    install_requires=[
-        'python-xlib',
-        'psutil',
-    ],
-    extras_require={
-        'alsa': ['pyalsaaudio'],
-    },
+    install_requires=['python-xlib', 'psutil'],
+    extras_require={'alsa': ['pyalsaaudio']},
 )

@@ -13,9 +13,7 @@ ROOT_DIR = Path(__file__).parent.parent
 
 class Widget:
     def __init__(
-            self,
-            app: QtWidgets.QApplication,
-            main_window: QtWidgets.QWidget,
+        self, app: QtWidgets.QApplication, main_window: QtWidgets.QWidget
     ) -> None:
         self.app = app
         self.main_window = main_window

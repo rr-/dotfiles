@@ -81,10 +81,10 @@ class WorkspacesWidget(Widget):
     delay = 0
 
     def __init__(
-            self,
-            app: QtWidgets.QApplication,
-            main_window: QtWidgets.QWidget,
-            workspaces_updater: WorkspacesUpdater,
+        self,
+        app: QtWidgets.QApplication,
+        main_window: QtWidgets.QWidget,
+        workspaces_updater: WorkspacesUpdater,
     ) -> None:
         super().__init__(app, main_window)
         self._main_window = main_window
@@ -160,7 +160,5 @@ class WorkspacesWidget(Widget):
             workspace = self._widget_to_workspace(workspace_widget)
             workspace_widget.setProperty('ws_free', '%s' % workspace.free)
             workspace_widget.setProperty('ws_urgent', '%s' % workspace.urgent)
-            workspace_widget.setProperty(
-                'ws_focused', str(workspace.focused)
-            )
+            workspace_widget.setProperty('ws_focused', str(workspace.focused))
         self._main_window.reload_style_sheet()
