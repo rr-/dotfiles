@@ -17,7 +17,7 @@ class ChosenTagsListBox(VimListBox):
         self.schedule_update()
 
     def keypress(self, size: Tuple[int, int], key: str) -> Optional[str]:
-        keymap = {'d': self._delete_selected, 'delete': self._delete_selected}
+        keymap = {"d": self._delete_selected, "delete": self._delete_selected}
         if key in keymap:
             keymap[key]()
             self._cancel_num()
@@ -31,13 +31,13 @@ class ChosenTagsListBox(VimListBox):
         new_list: List[urwid.Widget] = []
         for tag in self._chosen_tags.get_all():
             if tag.source == common.TagSource.Implication:
-                attr_name = 'implied-tag'
+                attr_name = "implied-tag"
             elif tag.source == common.TagSource.Initial:
-                attr_name = 'initial-tag'
+                attr_name = "initial-tag"
             elif not await self._plugin.tag_exists(tag.name):
-                attr_name = 'new-tag'
+                attr_name = "new-tag"
             else:
-                attr_name = 'tag'
+                attr_name = "tag"
             tag_usage_count = await self._plugin.get_tag_usage_count(tag.name)
 
             columns_widget = urwid.Columns(
@@ -54,9 +54,9 @@ class ChosenTagsListBox(VimListBox):
                 ],
                 dividechars=1,
             )
-            setattr(columns_widget, 'tag', tag)
+            setattr(columns_widget, "tag", tag)
             new_list.append(
-                urwid.AttrWrap(columns_widget, attr_name, 'f-' + attr_name)
+                urwid.AttrWrap(columns_widget, attr_name, "f-" + attr_name)
             )
         list.clear(self.body)
         self.body.extend(new_list)

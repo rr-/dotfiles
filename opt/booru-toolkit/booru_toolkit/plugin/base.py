@@ -36,7 +36,7 @@ class Post:
 class PluginBase:
     @property
     def name(self) -> str:
-        raise NotImplementedError('Not implemented')
+        raise NotImplementedError("Not implemented")
 
     def __init__(self):
         self._tag_cache = TagCache(self.name)
@@ -46,21 +46,21 @@ class PluginBase:
         await self._update_tag_cache()
 
     async def _login(self, user_name: str, password: str) -> None:
-        raise NotImplementedError('Not implemented')
+        raise NotImplementedError("Not implemented")
 
     async def find_exact_post(self, content: bytes) -> Optional[Post]:
-        raise NotImplementedError('Not implemented')
+        raise NotImplementedError("Not implemented")
 
     async def find_similar_posts(
         self, content: bytes
     ) -> List[Tuple[float, Post]]:
-        raise NotImplementedError('Not implemented')
+        raise NotImplementedError("Not implemented")
 
     async def find_posts(self, query: str) -> AsyncIterable[Post]:
-        raise NotImplementedError('Not implemented')
+        raise NotImplementedError("Not implemented")
 
     async def get_post_content(self, post: Post) -> bytes:
-        raise NotImplementedError('Not implemented')
+        raise NotImplementedError("Not implemented")
 
     async def upload_post(
         self,
@@ -70,12 +70,12 @@ class PluginBase:
         tags: List[str],
         anonymous: bool,
     ) -> Optional[Post]:
-        raise NotImplementedError('Not implemented')
+        raise NotImplementedError("Not implemented")
 
     async def update_post(
         self, post_id: int, safety: Safety, tags: List[str]
     ) -> None:
-        raise NotImplementedError('Not implemented')
+        raise NotImplementedError("Not implemented")
 
     async def find_tags(self, query: str) -> List[str]:
         return await self._tag_cache.find_tags(query)
@@ -94,4 +94,4 @@ class PluginBase:
             yield tag
 
     async def _update_tag_cache(self) -> None:
-        raise NotImplementedError('Not implemented')
+        raise NotImplementedError("Not implemented")

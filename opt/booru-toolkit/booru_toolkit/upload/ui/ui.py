@@ -10,18 +10,18 @@ from booru_toolkit.upload.ui.ellipsis_text_layout import EllipsisTextLayout
 
 
 _PALETTE = [
-    ('match', 'default', 'default'),
-    ('e-match', 'light gray', 'default'),
-    ('f-match', 'light green', 'default'),
-    ('f-e-match', 'light green', 'default'),
-    ('tag', 'default', 'default', None, None, None),
-    ('new-tag', 'light red', 'default', None, 'h229', 'h202'),
-    ('implied-tag', 'light green', 'default', None, None, 'h22'),
-    ('initial-tag', 'dark blue', 'default', None, 'h255', 'h25'),
-    ('f-tag', 'black', 'white', None, 'h255', 'h235'),
-    ('f-new-tag', 'black', 'white', None, 'h255', 'h235'),
-    ('f-implied-tag', 'black', 'white', None, 'h255', 'h235'),
-    ('f-initial-tag', 'black', 'white', None, 'h255', 'h235'),
+    ("match", "default", "default"),
+    ("e-match", "light gray", "default"),
+    ("f-match", "light green", "default"),
+    ("f-e-match", "light green", "default"),
+    ("tag", "default", "default", None, None, None),
+    ("new-tag", "light red", "default", None, "h229", "h202"),
+    ("implied-tag", "light green", "default", None, None, "h22"),
+    ("initial-tag", "dark blue", "default", None, "h255", "h25"),
+    ("f-tag", "black", "white", None, "h255", "h235"),
+    ("f-new-tag", "black", "white", None, "h255", "h235"),
+    ("f-implied-tag", "black", "white", None, "h255", "h235"),
+    ("f-initial-tag", "black", "white", None, "h255", "h235"),
 ]
 
 
@@ -59,14 +59,14 @@ class Ui:
             FuzzyInput(
                 plugin, self._loop, self._upload_settings.tags.contains
             ),
-            title='Tag input',
+            title="Tag input",
         )
         urwid.connect_signal(
-            input_box.original_widget, 'accept', self._on_tag_accept
+            input_box.original_widget, "accept", self._on_tag_accept
         )
 
         self._chosen_tags_box = urwid.LineBox(
-            ChosenTagsListBox(upload_settings.tags, plugin), title=''
+            ChosenTagsListBox(upload_settings.tags, plugin), title=""
         )
         self._on_tags_change()
 
@@ -80,15 +80,15 @@ class Ui:
         def button_click(*args) -> None:
             self._loop.widget = original_widget
 
-        button = urwid.Button('OK')
-        urwid.connect_signal(button, 'click', button_click)
+        button = urwid.Button("OK")
+        urwid.connect_signal(button, "click", button_click)
 
         self._loop.widget = urwid.Overlay(
             urwid.LineBox(urwid.Pile([urwid.Text(message), button])),
             original_widget,
-            'center',
+            "center",
             (urwid.RELATIVE, 40),
-            'middle',
+            "middle",
             (urwid.PACK),
         )
 
@@ -102,11 +102,11 @@ class Ui:
 
     def _keypress(self, key: str) -> None:
         keymap = {
-            'meta i': self._cycle_anonymity,
-            'meta s': self._cycle_safety,
-            'ctrl q': self._confirm,
-            'ctrl x': self._toggle_focus,
-            'ctrl r': self._undo_tag,
+            "meta i": self._cycle_anonymity,
+            "meta s": self._cycle_safety,
+            "ctrl q": self._confirm,
+            "ctrl x": self._toggle_focus,
+            "ctrl r": self._undo_tag,
         }
         if key in keymap:
             keymap[key]()
@@ -141,7 +141,7 @@ class Ui:
 
     def _on_tags_change(self) -> None:
         self._chosen_tags_box.set_title(
-            'Chosen tags ({})'.format(len(self._upload_settings.tag_names))
+            "Chosen tags ({})".format(len(self._upload_settings.tag_names))
         )
 
     def _on_tag_accept(self, _widget: urwid.Widget, text: str) -> None:
@@ -185,10 +185,10 @@ class Ui:
                     urwid.PACK,
                     TableColumn(
                         [
-                            (urwid.Text('Plugin:')),
-                            (urwid.Text('Anonymity:')),
-                            (urwid.Text('Safety:')),
-                            (urwid.Text('Path:')),
+                            (urwid.Text("Plugin:")),
+                            (urwid.Text("Anonymity:")),
+                            (urwid.Text("Safety:")),
+                            (urwid.Text("Path:")),
                         ]
                     ),
                 ),
@@ -196,15 +196,15 @@ class Ui:
                     [
                         urwid.Text(self._plugin.name),
                         urwid.Text(
-                            {False: 'off', True: 'on'}[
+                            {False: "off", True: "on"}[
                                 self._upload_settings.anonymous
                             ]
                         ),
                         urwid.Text(
                             {
-                                Safety.Safe: 'safe',
-                                Safety.Questionable: 'questionable',
-                                Safety.Explicit: 'explicit',
+                                Safety.Safe: "safe",
+                                Safety.Questionable: "questionable",
+                                Safety.Explicit: "explicit",
                             }[self._upload_settings.safety]
                         ),
                         urwid.Text(

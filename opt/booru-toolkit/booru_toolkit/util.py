@@ -24,7 +24,7 @@ class bidict(dict):
 
 
 def sanitize_file_name(name: str) -> str:
-    return re.sub(r'[\\\/:*?"<>|]', '_', name)
+    return re.sub(r'[\\\/:*?"<>|]', "_", name)
 
 
 # credit: http://stackoverflow.com/a/39628789

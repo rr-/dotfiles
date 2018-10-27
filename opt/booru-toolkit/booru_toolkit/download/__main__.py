@@ -24,7 +24,7 @@ class DownloadHistory:
         self._downloaded_urls: Dict[str, bool] = {}
         self._buffered_urls: List[str] = []
         if self._path.exists():
-            for line in self._path.open('r'):
+            for line in self._path.open("r"):
                 self._downloaded_urls[line.strip()] = True
 
     def add(self, url: str) -> None:
@@ -35,7 +35,7 @@ class DownloadHistory:
 
     def flush(self) -> None:
         self._path.parent.mkdir(parents=True, exist_ok=True)
-        with self._path.open('a') as handle:
+        with self._path.open("a") as handle:
             for url in self._buffered_urls:
                 print(url, file=handle)
         self._buffered_urls = []
@@ -51,18 +51,18 @@ class DownloadStats:
         self.downloaded = 0
 
     def ignore(self, url: str, reason: str) -> None:
-        print('{}: ignored ({})'.format(url, reason))
+        print("{}: ignored ({})".format(url, reason))
         self.ignored += 1
 
     @contextlib.contextmanager
     def download(self, url: str) -> Generator:
         try:
-            print('{}: downloading...'.format(url))
+            print("{}: downloading...".format(url))
             yield
             self.downloaded += 1
-            print('{}: saved'.format(url))
+            print("{}: saved".format(url))
         except Exception as ex:
-            print('error: {}'.format(ex))
+            print("error: {}".format(ex))
             self.errors += 1
             raise
 
@@ -90,12 +90,12 @@ class Downloader:
     def get_target_path(self, post: Post) -> Path:
         stem, ext = os.path.splitext(os.path.basename(post.content_url))
         if not stem.startswith(str(post.id)):
-            stem = str(post.id) + '_' + stem
+            stem = str(post.id) + "_" + stem
 
         file_name = (
-            '_'.join(str(part) for part in [self._plugin.name, stem] if part)
-            + '.'
-            + ext.lstrip('.')
+            "_".join(str(part) for part in [self._plugin.name, stem] if part)
+            + "."
+            + ext.lstrip(".")
         )
         return self._target_dir.joinpath(util.sanitize_file_name(file_name))
 
@@ -103,10 +103,10 @@ class Downloader:
         target_path = self.get_target_path(post)
 
         stem, _ = os.path.splitext(os.path.basename(post.content_url))
-        history_key = '{}/{}/{}'.format(self._plugin.name, post.id, stem)
+        history_key = "{}/{}/{}".format(self._plugin.name, post.id, stem)
 
         if target_path.exists():
-            self._stats.ignore(post.content_url, 'already exists')
+            self._stats.ignore(post.content_url, "already exists")
             return False
 
         if (
@@ -114,7 +114,7 @@ class Downloader:
             and not self._force
             and self._history.is_downloaded(history_key)
         ):
-            self._stats.ignore(post.content_url, 'already downloaded')
+            self._stats.ignore(post.content_url, "already downloaded")
             return False
 
         content = None
@@ -127,7 +127,7 @@ class Downloader:
             )
 
         target_path.parent.mkdir(parents=True, exist_ok=True)
-        with target_path.open('wb') as handle:
+        with target_path.open("wb") as handle:
             handle.write(content)
 
         if self._history:
@@ -150,7 +150,7 @@ class Downloader:
                     if result:
                         downloaded += 1
                 except Exception as ex:
-                    print('{}: {}'.format(post.content_url, ex))
+                    print("{}: {}".format(post.content_url, ex))
                 queue.task_done()
 
         consumers = [
@@ -170,53 +170,53 @@ class Downloader:
             for consumer in consumers:
                 consumer.cancel()
 
-        print('Downloaded: {}'.format(self._stats.downloaded))
-        print('Ignored: {}'.format(self._stats.ignored))
-        print('Errors: {}'.format(self._stats.errors))
+        print("Downloaded: {}".format(self._stats.downloaded))
+        print("Ignored: {}".format(self._stats.ignored))
+        print("Errors: {}".format(self._stats.errors))
 
 
 def parse_args() -> configargparse.Namespace:
     parser = cli.make_arg_parser(
-        'Downloads posts from various boorus.', PLUGINS
+        "Downloads posts from various boorus.", PLUGINS
     )
     parser.add(
-        '-l',
-        '--limit',
+        "-l",
+        "--limit",
         default=None,
         type=int,
-        help='limit how many files to download',
+        help="limit how many files to download",
     )
-    parser.add('-n', '--num', default=10, type=int, help='simultaneous jobs')
+    parser.add("-n", "--num", default=10, type=int, help="simultaneous jobs")
     parser.add(
-        '--max-attempts',
+        "--max-attempts",
         default=3,
         type=int,
-        help='max attempts before abandoning download',
+        help="max attempts before abandoning download",
     )
     parser.add(
-        '-s',
-        '--sleep',
+        "-s",
+        "--sleep",
         default=0,
         type=float,
-        help='pause between uploads (in seconds)',
+        help="pause between uploads (in seconds)",
     )
     parser.add(
-        '--target-dir',
-        default='~/{plugin}/{query}',
-        help='where to put the files',
+        "--target-dir",
+        default="~/{plugin}/{query}",
+        help="where to put the files",
     )
     parser.add(
-        '--history-file',
-        default='~/.cache/dl-booru.log',
-        help='path to the history file',
+        "--history-file",
+        default="~/.cache/dl-booru.log",
+        help="path to the history file",
     )
     parser.add(
-        '-f',
-        '--force',
-        action='store_true',
-        help='redownload even if present in the history file',
+        "-f",
+        "--force",
+        action="store_true",
+        help="redownload even if present in the history file",
     )
-    parser.add('query', help='query to filter the posts with')
+    parser.add("query", help="query to filter the posts with")
     return parser.parse_args()
 
 
@@ -260,10 +260,10 @@ def main() -> None:
         )
         loop.run_until_complete(downloader.run(query, limit))
     except KeyboardInterrupt:
-        print('Aborted.')
+        print("Aborted.")
     except errors.ApiError as ex:
-        print('Error: %s' % str(ex), file=sys.stderr)
+        print("Error: %s" % str(ex), file=sys.stderr)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

@@ -12,13 +12,13 @@ Base: Any = sa.ext.declarative.declarative_base()
 
 
 class CachedTag(Base):
-    __tablename__ = 'tag'
+    __tablename__ = "tag"
 
-    id: int = sa.Column('id', sa.Integer, primary_key=True)
-    name: str = sa.Column('name', sa.Text, nullable=False, index=True)
-    importance: int = sa.Column('importance', sa.Integer, nullable=False)
+    id: int = sa.Column("id", sa.Integer, primary_key=True)
+    name: str = sa.Column("name", sa.Text, nullable=False, index=True)
+    importance: int = sa.Column("importance", sa.Integer, nullable=False)
     implications: List[str] = sa.Column(
-        'implications',
+        "implications",
         sa.ext.mutable.MutableList.as_mutable(sa.PickleType),
         nullable=False,
     )
@@ -28,13 +28,13 @@ class TagCache:
     def __init__(self, cache_name: str) -> None:
         self._cache: Dict[str, CachedTag] = {}
         self._path = Path(
-            '~/.cache/tags-{}.sqlite'.format(cache_name)
+            "~/.cache/tags-{}.sqlite".format(cache_name)
         ).expanduser()
 
         self._path.parent.mkdir(parents=True, exist_ok=True)
         engine: Any = sa.create_engine(
-            'sqlite:///%s' % str(self._path),
-            connect_args={'check_same_thread': False},
+            "sqlite:///%s" % str(self._path),
+            connect_args={"check_same_thread": False},
             poolclass=sa.pool.StaticPool,
         )
         Base.metadata.create_all(bind=engine)
@@ -60,7 +60,7 @@ class TagCache:
         ret: List[str] = []
         for tag in (
             self._session.query(CachedTag)
-            .filter(CachedTag.name.ilike('%{}%'.format('%'.join(query))))
+            .filter(CachedTag.name.ilike("%{}%".format("%".join(query))))
             .order_by(CachedTag.importance.desc())
             .limit(100)
             .all()
