@@ -1,5 +1,4 @@
-from setuptools import setup, find_packages
-
+from setuptools import find_packages, setup
 
 setup(
     author='rr-',
@@ -13,6 +12,8 @@ setup(
     install_requires=[
         'python-xlib',
         'psutil',
-    ], extras_require={
+    ],
+    extras_require={
         'alsa': ['pyalsaaudio'],
-    })
+    },
+)

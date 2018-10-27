@@ -1,25 +1,27 @@
 #!/usr/bin/env python3
 import os
+import signal
 import sys
 import threading
 import time
-import signal
-from subprocess import run, PIPE
-from PyQt5 import QtWidgets
-from PyQt5 import QtCore
+import typing as T
+
+from PyQt5 import QtCore, QtWidgets
 
 from panel import settings
-from panel.widgets.workspaces import WorkspacesWidget, WorkspacesUpdater
-from panel.widgets.window_title import WindowTitleWidget
+from panel.colors import Colors
+from panel.util import run
+from panel.widgets.battery import BatteryWidget
+from panel.widgets.cpu import CpuWidget
+from panel.widgets.mpvmd import MpvmdWidget
+from panel.widgets.net import NetworkUsageWidget
+from panel.widgets.stretch import StretchWidget
 from panel.widgets.time import TimeWidget
 from panel.widgets.volume import VolumeWidget
-from panel.widgets.cpu import CpuWidget
-from panel.widgets.net import NetworkUsageWidget
-from panel.widgets.battery import BatteryWidget
-from panel.widgets.mpvmd import MpvmdWidget
-from panel.widgets.stretch import StretchWidget
-from panel.colors import Colors
-
+from panel.widgets.window_title import WindowTitleWidget
+from panel.widgets.workspaces import (
+    Monitor, WorkspacesUpdater, WorkspacesWidget
+)
 
 STYLESHEET_TEMPLATE = '''
 #central {{
@@ -66,24 +68,26 @@ QWidget[class=chart] {{
 class MainWindow(QtWidgets.QMainWindow):
     trigger = QtCore.pyqtSignal(object)
 
-    def __init__(self, monitors):
+    def __init__(self, monitors: T.List[Monitor]) -> None:
         super().__init__(flags=QtCore.Qt.FramelessWindowHint)
         self.setAttribute(QtCore.Qt.WA_TranslucentBackground, True)
         self.setWindowFlags(
-            QtCore.Qt.SplashScreen
-            | QtCore.Qt.WindowStaysOnTopHint
-            | QtCore.Qt.X11BypassWindowManagerHint)
+            QtCore.Qt.SplashScreen |
+            QtCore.Qt.WindowStaysOnTopHint |
+            QtCore.Qt.X11BypassWindowManagerHint
+        )
         self.setFixedSize(
-            monitors[0].width / self.devicePixelRatioF(), settings.HEIGHT)
+            monitors[0].width / self.devicePixelRatioF(),
+            settings.HEIGHT,
+        )
         self.move(0, 0)
         self.show()
 
-        window_gap = int(
-            run(['bspc', 'config', 'window_gap'], stdout=PIPE).stdout)
-        window_border = int(
-            run(['bspc', 'config', 'border_width'], stdout=PIPE).stdout)
+        window_gap = int(run(['bspc', 'config', 'window_gap']).stdout)
+        window_border = int(run(['bspc', 'config', 'border_width']).stdout)
         content_margin = (
-            (window_gap + window_border) / self.devicePixelRatioF())
+            (window_gap + window_border) / self.devicePixelRatioF()
+        )
 
         self.setStyleSheet(STYLESHEET_TEMPLATE.format(colors=Colors))
 
@@ -93,16 +97,16 @@ class MainWindow(QtWidgets.QMainWindow):
         self.setCentralWidget(central_widget)
         self.trigger.connect(self.render)
 
-    def render(self, renderer):
+    def render(self, renderer: T.Callable[[], None]) -> None:
         renderer()
 
-    def reload_style_sheet(self):
+    def reload_style_sheet(self) -> None:
         old_stylesheet = self.styleSheet()
         self.setStyleSheet('')
         self.setStyleSheet(old_stylesheet)
 
 
-def main():
+def main() -> None:
     app = QtWidgets.QApplication([os.fsencode(arg) for arg in sys.argv])
     app.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling)
     workspaces_updater = WorkspacesUpdater()
@@ -118,10 +122,10 @@ def main():
         BatteryWidget(app, main_window),
         CpuWidget(app, main_window),
         VolumeWidget(app, main_window),
-        TimeWidget(app, main_window)
+        TimeWidget(app, main_window),
     ]
 
-    def worker(widget, trigger):
+    def worker(widget: QtWidgets.QWidget, trigger: QtCore.pyqtSignal) -> None:
         while True:
             widget.refresh()
             trigger.emit(widget.render)
@@ -133,8 +137,9 @@ def main():
         run([
             'bspc',
             'config',
-            '-m', monitor.name,
-            'top_padding', str(physical_height)])
+            '-m', monitor.name or '?',
+            'top_padding', str(physical_height),
+        ])
 
     for widget in widgets:
         if not widget.available:
@@ -142,7 +147,10 @@ def main():
             continue
         main_window.centralWidget().layout().addWidget(widget.container)
         thread = threading.Thread(
-            target=worker, args=(widget, main_window.trigger), daemon=True)
+            target=worker,
+            args=(widget, main_window.trigger),
+            daemon=True,
+        )
         thread.start()
 
     signal.signal(signal.SIGINT, signal.SIG_DFL)

@@ -1,48 +1,50 @@
-import os
-import math
 import json
+import math
+import os
 import socket
-from typing import List, Any
-from PyQt5 import QtWidgets
+import typing as T
+
+from PyQt5 import QtGui, QtWidgets
+
 from panel.widgets.widget import Widget
 
 SOCKET_PATH = '/tmp/mpvmd.socket'
 
 
-def _format_time(seconds):
+def _format_time(seconds: int) -> str:
     seconds = math.floor(float(seconds))
     return '%02d:%02d' % (seconds // 60, seconds % 60)
 
 
 class Info:
-    def __init__(self):
-        self.raw = {}
+    def __init__(self) -> None:
+        self.raw: T.Dict = {}
 
     @property
-    def path(self):
+    def path(self) -> T.Optional[str]:
         return self.raw.get('path', None)
 
     @property
-    def pause(self):
+    def pause(self) -> bool:
         return self.raw.get('pause', False)
 
     @property
-    def metadata(self):
+    def metadata(self) -> T.Dict:
         return {
             key.lower(): value
             for key, value in (self.raw.get('metadata') or {}).items()
         }
 
     @property
-    def elapsed(self):
+    def elapsed(self) -> int:
         return self.raw.get('time-pos', 0)
 
     @property
-    def duration(self):
+    def duration(self) -> int:
         return self.raw.get('duration', 0)
 
     @property
-    def random_playback(self):
+    def random_playback(self) -> bool:
         return (
             self.raw
             .get('script-opts', {})
@@ -51,16 +53,16 @@ class Info:
 
 
 class Connection:
-    def __init__(self):
+    def __init__(self) -> None:
         self._request_id = 0
-        self._socket = None
+        self._socket: T.Optional[socket.socket] = None
         self.info = Info()
 
     @property
-    def connected(self):
+    def connected(self) -> bool:
         return self._socket is not None
 
-    def connect(self):
+    def connect(self) -> None:
         if self.connected:
             return
 
@@ -76,25 +78,26 @@ class Connection:
 
         self._request_id = 1
 
-        for i, name in enumerate(
-            [
-                'pause',
-                'time-pos',
-                'duration',
-                'script-opts',
-                'metadata',
-                'path',
-            ],
-            1,
-        ):
+        properties = [
+            'pause',
+            'time-pos',
+            'duration',
+            'script-opts',
+            'metadata',
+            'path',
+        ]
+        for i, name in enumerate(properties, 1):
             self.send(['observe_property', i, name])
 
-    def send(self, command: List[str]) -> None:
+    def send(self, command: T.List[T.Any]) -> None:
+        if not self.connected:
+            raise RuntimeError('not connected')
+
         message = {'command': command, 'request_id': self._request_id}
         self._send(message)
         self._request_id += 1
 
-    def process(self):
+    def process(self) -> None:
         if not self.connected:
             return
 
@@ -103,15 +106,17 @@ class Connection:
                 continue
             self.info.raw[event['name']] = event['data']
 
-    def _send(self, message: Any) -> None:
+    def _send(self, message: T.Any) -> None:
         print('out', message)
+        assert self._socket is not None
         try:
             self._socket.send((json.dumps(message) + '\n').encode())
         except (BrokenPipeError, ValueError):
             self._socket = None
             raise
 
-    def _recv(self) -> List[Any]:
+    def _recv(self) -> T.List[T.Any]:
+        assert self._socket is not None
         data = b''
         try:
             while True:
@@ -133,7 +138,11 @@ class Connection:
 class MpvmdWidget(Widget):
     delay = 0
 
-    def __init__(self, app, main_window):
+    def __init__(
+            self,
+            app: QtWidgets.QApplication,
+            main_window: QtWidgets.QWidget,
+    ) -> None:
         super().__init__(app, main_window)
         self._connection = Connection()
         self._info = self._connection.info
@@ -155,14 +164,14 @@ class MpvmdWidget(Widget):
         self._song_label.wheelEvent = self._prev_or_next_track
 
     @property
-    def container(self):
+    def container(self) -> QtWidgets.QWidget:
         return self._container
 
     @property
-    def available(self):
+    def available(self) -> bool:
         return os.path.exists(SOCKET_PATH)
 
-    def _play_pause_clicked(self, _event):
+    def _play_pause_clicked(self, _event: QtGui.QMouseEvent) -> None:
         with self.exception_guard():
             if self._info.pause:
                 self._connection.send(['set_property', 'pause', 'no'])
@@ -171,7 +180,7 @@ class MpvmdWidget(Widget):
             self.refresh()
             self.render()
 
-    def _prev_or_next_track(self, event):
+    def _prev_or_next_track(self, event: QtGui.QWheelEvent) -> None:
         with self.exception_guard():
             self._connection.send(
                 [
@@ -185,7 +194,7 @@ class MpvmdWidget(Widget):
             self.refresh()
             self.render()
 
-    def _shuffle_clicked(self, _event):
+    def _shuffle_clicked(self, _event: QtGui.QMouseEvent) -> None:
         with self.exception_guard():
             data = self._info.raw['script-opts'].copy()
             data['random_playback'] = (
@@ -196,7 +205,7 @@ class MpvmdWidget(Widget):
             self.refresh()
             self.render()
 
-    def _refresh_impl(self):
+    def _refresh_impl(self) -> None:
         try:
             if not self._connection.connected:
                 self._connection.connect()
@@ -207,7 +216,7 @@ class MpvmdWidget(Widget):
         else:
             self.delay = 0
 
-    def _render_impl(self):
+    def _render_impl(self) -> None:
         if self._info.pause:
             self._set_icon(self._status_icon_label, 'pause')
         else:
@@ -217,9 +226,9 @@ class MpvmdWidget(Widget):
         if self._info.metadata.get('title'):
             if self._info.metadata.get('artist'):
                 text = (
-                    self._info.metadata['artist']
-                    + ' - '
-                    + self._info.metadata['title']
+                    self._info.metadata['artist'] +
+                    ' - ' +
+                    self._info.metadata['title']
                 )
             else:
                 text = self._info.metadata['title']

@@ -1,11 +1,16 @@
-from panel.widgets.widget import Widget
 from PyQt5 import QtWidgets
+
+from panel.widgets.widget import Widget
 
 
 class StretchWidget(Widget):
     delay = 1000
 
-    def __init__(self, app, main_window):
+    def __init__(
+            self,
+            app: QtWidgets.QApplication,
+            main_window: QtWidgets.QWidget,
+    ) -> None:
         super().__init__(app, main_window)
         self._container = QtWidgets.QWidget()
         self._container.setProperty('class', 'stretch')
@@ -14,11 +19,11 @@ class StretchWidget(Widget):
             QtWidgets.QSizePolicy.Minimum)
 
     @property
-    def container(self):
+    def container(self) -> QtWidgets.QWidget:
         return self._container
 
-    def _refresh_impl(self):
+    def _refresh_impl(self) -> None:
         pass
 
-    def _render_impl(self):
+    def _render_impl(self) -> None:
         pass
