@@ -20,11 +20,14 @@ class AutoTagConfigCommand(BaseCommand):
                 'settings.txt',
                 self._autotag_settings,
                 _serialize_autotag_settings,
-                _deserialize_autotag_settings).__dict__)
+                _deserialize_autotag_settings,
+            ).__dict__
+        )
 
     @staticmethod
     def _create_parser(
-            parent_parser: configargparse.ArgumentParser
+        parent_parser: configargparse.ArgumentParser
     ) -> configargparse.ArgumentParser:
         return parent_parser.add_parser(
-            'autotag-config', help='tweak settings of autotagger')
+            'autotag-config', help='tweak settings of autotagger'
+        )

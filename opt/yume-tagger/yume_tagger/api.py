@@ -69,7 +69,9 @@ class Api:
         while True:
             response = self._get(
                 '/tags?query={}&offset={}'.format(
-                    urllib.parse.quote(query), offset))
+                    urllib.parse.quote(query), offset
+                )
+            )
             if not response['results']:
                 break
             offset += len(response['results'])
@@ -98,12 +100,15 @@ class Api:
         return ret
 
     def merge_tags(self, old_tag: Tag, new_tag: Tag) -> Tag:
-        return self._post('/tag-merge', data={
-            'removeVersion': old_tag['version'],
-            'remove': old_tag['names'][0],
-            'mergeToVersion': new_tag['version'],
-            'mergeTo': new_tag['names'][0],
-        })
+        return self._post(
+            '/tag-merge',
+            data={
+                'removeVersion': old_tag['version'],
+                'remove': old_tag['names'][0],
+                'mergeToVersion': new_tag['version'],
+                'mergeTo': new_tag['names'][0],
+            },
+        )
 
     def _bump_login(self, user_name: str) -> None:
         self._get('/user/{}?bump-login=true'.format(user_name))
@@ -114,14 +119,20 @@ class Api:
     def _post(self, url: str, data: Any) -> Dict:
         return _process_response(
             self._session.post(
-                self._api_url + url, data=json.dumps(data).encode('utf-8')))
+                self._api_url + url, data=json.dumps(data).encode('utf-8')
+            )
+        )
 
     def _put(self, url: str, data: Any) -> Dict:
         return _process_response(
             self._session.put(
-                self._api_url + url, data=json.dumps(data).encode('utf-8')))
+                self._api_url + url, data=json.dumps(data).encode('utf-8')
+            )
+        )
 
     def _delete(self, url: str, data: Any = None) -> Dict:
         return _process_response(
             self._session.delete(
-                self._api_url + url, data=json.dumps(data).encode('utf-8')))
+                self._api_url + url, data=json.dumps(data).encode('utf-8')
+            )
+        )

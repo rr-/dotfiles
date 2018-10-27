@@ -10,7 +10,8 @@ class BaseCommand:
 
     @classmethod
     def decorate_parser(
-            cls, parent_parser: configargparse.ArgumentParser) -> None:
+        cls, parent_parser: configargparse.ArgumentParser
+    ) -> None:
         parser = cls._create_parser(parent_parser)
         parser.set_defaults(command=cls)
 
@@ -19,6 +20,6 @@ class BaseCommand:
 
     @staticmethod
     def _create_parser(
-            parent_parser: configargparse.ArgumentParser
+        parent_parser: configargparse.ArgumentParser
     ) -> configargparse.ArgumentParser:
         raise NotImplementedError('Not implemented')
