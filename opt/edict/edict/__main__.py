@@ -11,30 +11,30 @@ from edict import parser
 from edict import db
 
 
-_DL_URL = 'http://ftp.monash.edu/pub/nihongo/edict2.gz'
-_RAW_PATH = pathlib.Path(xdg.XDG_CACHE_HOME) / 'edict2.txt'
+_DL_URL = "http://ftp.monash.edu/pub/nihongo/edict2.gz"
+_RAW_PATH = pathlib.Path(xdg.XDG_CACHE_HOME) / "edict2.txt"
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser('Look up words in edict2 dictionary')
-    parser.add_argument('pattern', nargs='+', help='regex to search for')
-    parser.add_argument('--tags', nargs='*', help='regex to search tags for')
+    parser = argparse.ArgumentParser("Look up words in edict2 dictionary")
+    parser.add_argument("pattern", nargs="+", help="regex to search for")
+    parser.add_argument("--tags", nargs="*", help="regex to search tags for")
     group = parser.add_mutually_exclusive_group()
-    group.add_argument('--kana', action='store_true', help='search only kana')
+    group.add_argument("--kana", action="store_true", help="search only kana")
     group.add_argument(
-        '--kanji', action='store_true', help='search only kanji'
+        "--kanji", action="store_true", help="search only kanji"
     )
     group.add_argument(
-        '--english', action='store_true', help='search only English'
+        "--english", action="store_true", help="search only English"
     )
     return parser.parse_args()
 
 
 def download() -> str:
-    print('Downloading dictionary file...', flush=True)
+    print("Downloading dictionary file...", flush=True)
     data = requests.get(_DL_URL).content
     data = gzip.decompress(data)
-    return data.decode('euc-jp')
+    return data.decode("euc-jp")
 
 
 def create_db_if_needed() -> None:
@@ -44,8 +44,8 @@ def create_db_if_needed() -> None:
         _RAW_PATH.write_text(data)
     db.init()
     if not db.exists():
-        print('Recreating SQLite database...', flush=True)
-        with _RAW_PATH.open('r') as handle:
+        print("Recreating SQLite database...", flush=True)
+        with _RAW_PATH.open("r") as handle:
             db.put_entries(entry for entry in parser.parse(list(handle)))
 
 
@@ -75,13 +75,13 @@ def main() -> None:
     ]
 
     for entry in entries:
-        print('({})'.format(','.join(entry.tags)))
+        print("({})".format(",".join(entry.tags)))
         for kanji in entry.kanji:
-            print('{} ({})'.format(kanji.kanji, kanji.kana))
+            print("{} ({})".format(kanji.kanji, kanji.kana))
         for glossary in entry.glossaries:
             print(glossary.english)
         print()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

@@ -10,7 +10,7 @@ from edict import parser
 
 
 _Base: t.Any = sa.ext.declarative.declarative_base()
-_DB_PATH = pathlib.Path(xdg.XDG_CACHE_HOME) / 'edict2.sqlite'
+_DB_PATH = pathlib.Path(xdg.XDG_CACHE_HOME) / "edict2.sqlite"
 _session: t.Any = None
 _regex_cache: t.Dict[str, t.Pattern] = {}
 
@@ -22,54 +22,54 @@ class SearchSource(enum.Flag):
 
 
 class EdictKanji(_Base):
-    __tablename__ = 'kanji'
+    __tablename__ = "kanji"
 
-    id: int = sa.Column('id', sa.Integer, primary_key=True)
+    id: int = sa.Column("id", sa.Integer, primary_key=True)
     entry_id: int = sa.Column(
-        'entry_id',
+        "entry_id",
         sa.Integer,
-        sa.ForeignKey('entry.id'),
+        sa.ForeignKey("entry.id"),
         nullable=False,
         index=True,
     )
 
-    kanji: str = sa.Column('kanji', sa.String, index=True)
-    kana: str = sa.Column('kana', sa.String, index=True)
-    kanji_tags: t.Sequence[str] = sa.Column('kanji_tags', sa.PickleType)
-    kana_tags: t.Sequence[str] = sa.Column('kana_tags', sa.PickleType)
+    kanji: str = sa.Column("kanji", sa.String, index=True)
+    kana: str = sa.Column("kana", sa.String, index=True)
+    kanji_tags: t.Sequence[str] = sa.Column("kanji_tags", sa.PickleType)
+    kana_tags: t.Sequence[str] = sa.Column("kana_tags", sa.PickleType)
 
 
 class EdictGlossary(_Base):
-    __tablename__ = 'glossary'
+    __tablename__ = "glossary"
 
-    id: int = sa.Column('id', sa.Integer, primary_key=True)
+    id: int = sa.Column("id", sa.Integer, primary_key=True)
     entry_id: int = sa.Column(
-        'entry_id',
+        "entry_id",
         sa.Integer,
-        sa.ForeignKey('entry.id'),
+        sa.ForeignKey("entry.id"),
         nullable=False,
         index=True,
     )
 
-    english: str = sa.Column('english', sa.String, index=True)
-    tags: t.Sequence[str] = sa.Column('tags', sa.PickleType)
-    field: t.Optional[str] = sa.Column('field', sa.String)
-    related: t.List[str] = sa.Column('related', sa.PickleType)
-    common: bool = sa.Column('common', sa.Boolean)
+    english: str = sa.Column("english", sa.String, index=True)
+    tags: t.Sequence[str] = sa.Column("tags", sa.PickleType)
+    field: t.Optional[str] = sa.Column("field", sa.String)
+    related: t.List[str] = sa.Column("related", sa.PickleType)
+    common: bool = sa.Column("common", sa.Boolean)
 
 
 class EdictEntry(_Base):
-    __tablename__ = 'entry'
+    __tablename__ = "entry"
 
-    id: int = sa.Column('id', sa.Integer, primary_key=True)
+    id: int = sa.Column("id", sa.Integer, primary_key=True)
     glossaries: t.List[EdictGlossary] = sa.orm.relationship(
-        EdictGlossary, backref='entry'
+        EdictGlossary, backref="entry"
     )
     kanji: t.List[EdictKanji] = sa.orm.relationship(
-        EdictKanji, backref='entry'
+        EdictKanji, backref="entry"
     )
-    tags: t.Sequence[str] = sa.Column('tags', sa.PickleType)
-    ent_seq: t.Optional[str] = sa.Column('ent_seq', sa.String)
+    tags: t.Sequence[str] = sa.Column("tags", sa.PickleType)
+    ent_seq: t.Optional[str] = sa.Column("ent_seq", sa.String)
 
 
 def _re_fn(regex: str, value: str) -> bool:
@@ -78,14 +78,14 @@ def _re_fn(regex: str, value: str) -> bool:
     return _regex_cache[regex].search(value) is not None
 
 
-@sa.event.listens_for(sa.engine.Engine, 'begin')
+@sa.event.listens_for(sa.engine.Engine, "begin")
 def _do_begin(conn):
-    conn.connection.create_function('regexp', 2, _re_fn)
+    conn.connection.create_function("regexp", 2, _re_fn)
 
 
 def init() -> None:
     _DB_PATH.parent.mkdir(parents=True, exist_ok=True)
-    engine: t.Any = sa.create_engine('sqlite:///%s' % str(_DB_PATH))
+    engine: t.Any = sa.create_engine("sqlite:///%s" % str(_DB_PATH))
 
     _Base.metadata.create_all(bind=engine)
     global _session
@@ -137,7 +137,7 @@ def search_entries_by_regex(
     if sources & SearchSource.KANJI:
         kanjis = _session.query(EdictKanji).filter(
             sa.and_(
-                EdictKanji.kanji.op('regexp')(pattern) for pattern in patterns
+                EdictKanji.kanji.op("regexp")(pattern) for pattern in patterns
             )
         )
         for kanji in kanjis:
@@ -146,7 +146,7 @@ def search_entries_by_regex(
     if sources & SearchSource.KANA:
         kanjis = _session.query(EdictKanji).filter(
             sa.and_(
-                EdictKanji.kana.op('regexp')(pattern) for pattern in patterns
+                EdictKanji.kana.op("regexp")(pattern) for pattern in patterns
             )
         )
         for kanji in kanjis:
@@ -155,7 +155,7 @@ def search_entries_by_regex(
     if sources & SearchSource.ENGLISH:
         glossaries = _session.query(EdictGlossary).filter(
             sa.and_(
-                EdictGlossary.english.op('regexp')(pattern)
+                EdictGlossary.english.op("regexp")(pattern)
                 for pattern in patterns
             )
         )
