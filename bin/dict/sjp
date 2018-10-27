@@ -6,7 +6,6 @@ import re
 import sys
 import urllib.parse
 import urllib.request
-from itertools import chain
 
 import lxml.html
 

@@ -17,33 +17,35 @@ def parse_args():
 def get_game_dir(num):
     pattern = r"^TH0*{0}\s.*$".format(num)
     all_dirs = os.listdir(TH_ROOT_DIR)
-    filtered_dirs = [dir for dir in all_dirs if re.match(pattern, dir)]
+    filtered_dirs = [
+        dir_name for dir_name in all_dirs if re.match(pattern, dir_name)
+    ]
     if not filtered_dirs:
         raise RuntimeError("Game directory not found")
     return os.path.join(TH_ROOT_DIR, filtered_dirs[0])
 
 
-def get_executable(dir):
+def get_executable(dir_name):
     en_pattern = "^th.*e.exe$"
     any_pattern = "^th.*.exe$"
-    all_files = os.listdir(dir)
+    all_files = os.listdir(dir_name)
     en_exes = [n for n in all_files if re.match(en_pattern, n, re.I)]
     any_exes = [n for n in all_files if re.match(any_pattern, n, re.I)]
     if en_exes:
         return en_exes[0]
     if any_exes:
         return any_exes[0]
-    raise RuntimeError("Game executable not found (directory=%s)" % dir)
+    raise RuntimeError("Game executable not found (directory=%s)" % dir_name)
 
 
 def main(args):
     try:
-        dir = get_game_dir(args.num)
-        exe = get_executable(dir)
+        dir_name = get_game_dir(args.num)
+        exe = get_executable(dir_name)
     except Exception as ex:
         print(ex, file=sys.stderr)
         sys.exit(1)
-    os.chdir(dir)
+    os.chdir(dir_name)
     run(["wine", exe])
 
 

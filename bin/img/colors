@@ -32,9 +32,9 @@ def average_color(image: Image) -> Color:
     return T.cast(Color, tuple(colour_tuple))
 
 
-def remove_symlinks(dir: str) -> None:
-    if os.path.exists(dir):
-        root, directories, files = next(os.walk(dir, followlinks=False))
+def remove_symlinks(root_dir: str) -> None:
+    if os.path.exists(root_dir):
+        root, directories, files = next(os.walk(root_dir, followlinks=False))
         paths = [os.path.join(root, file) for file in files]
         symlinks = [path for path in paths if Path(path).is_symlink()]
         for path in symlinks:
@@ -51,9 +51,9 @@ def worker(path):
         return (0, 0, 0)
 
 
-def get_paths_sorted_by_avg_color(dir: str) -> T.List[str]:
+def get_paths_sorted_by_avg_color(root_dir: str) -> T.List[str]:
     logging.info("Computing average colors...")
-    paths = [os.path.abspath(file.path) for file in os.scandir(SOURCE_DIR)]
+    paths = [os.path.abspath(file.path) for file in os.scandir(root_dir)]
     paths = paths
     pool = multiprocessing.Pool()
     colors = pool.map(worker, paths)

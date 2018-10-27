@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 import argparse
-import json
 import os
 import pathlib
 import shelve
@@ -9,13 +8,12 @@ import urllib.parse
 import zlib
 
 import dateutil.parser
+import demjson
 import lxml.html
 import regex
 import requests
 import tqdm
 import xdg
-
-import demjson
 
 BUFFER_SIZE = 32 * 1024
 SHELVE_PATH = pathlib.Path(xdg.XDG_CACHE_HOME) / "dl-bandcamp.dat"
