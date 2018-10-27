@@ -1,18 +1,27 @@
-import time
 import logging
-import pathlib
+import time
+import typing as T
 from contextlib import contextmanager
-from PyQt5 import QtCore, QtGui, QtSvg
+from pathlib import Path
+
+from PyQt5 import QtCore, QtGui, QtSvg, QtWidgets
+
 from panel.colors import Colors
+
+ROOT_DIR = Path(__file__).parent.parent
 
 
 class Widget:
-    def __init__(self, app, main_window):
+    def __init__(
+            self,
+            app: QtWidgets.QApplication,
+            main_window: QtWidgets.QWidget,
+    ) -> None:
         self.app = app
         self.main_window = main_window
 
     @contextmanager
-    def exception_guard(self, sleep_time=0):
+    def exception_guard(self, sleep_time: int = 0) -> T.Generator:
         try:
             yield
         except Exception as ex:
@@ -20,45 +29,42 @@ class Widget:
             time.sleep(sleep_time)
 
     @property
-    def container(self):
+    def container(self) -> QtWidgets.QWidget:
         raise NotImplementedError('Not implemented')
 
     @property
-    def available(self):
+    def available(self) -> bool:
         return True
 
-    def refresh(self):
+    def refresh(self) -> None:
         with self.exception_guard(sleep_time=1):
             if not self.available:
                 return
             self._refresh_impl()
 
-    def render(self):
+    def render(self) -> None:
         with self.exception_guard():
             if not self.available:
                 return
             self._render_impl()
 
-    def _refresh_impl(self):
+    def _refresh_impl(self) -> None:
         raise NotImplementedError('Not implemented')
 
-    def _render_impl(self):
+    def _render_impl(self) -> None:
         raise NotImplementedError('Not implemented')
 
-    def _set_icon(self, widget, icon_name):
+    def _set_icon(self, widget: QtWidgets.QWidget, icon_name: str) -> None:
         if widget.property('icon_name') == icon_name:
             return
         widget.setProperty('icon_name', icon_name)
 
-        icon_path = (
-            pathlib.Path(__file__).parent.parent
-            / 'data' / 'icons' / (icon_name + '.svg'))
+        icon_path = ROOT_DIR / 'data' / 'icons' / (icon_name + '.svg')
         target_size = QtCore.QSize(18, 18)
-
         icon_content = icon_path.read_bytes()
-
         icon_content = icon_content.replace(
-            b'<svg', b'<svg fill="%s"' % Colors.foreground.encode('ascii'))
+            b'<svg', b'<svg fill="%s"' % Colors.foreground.encode('ascii')
+        )
 
         svg_renderer = QtSvg.QSvgRenderer(icon_content)
         image = QtGui.QPixmap(target_size * self.app.devicePixelRatio())
