@@ -44,9 +44,7 @@ def main(args):
         print(ex, file=sys.stderr)
         sys.exit(1)
     os.chdir(dir)
-    run(['arrows', 'on'])
     run(['wine', exe])
-    run(['arrows', 'off'])
 
 
 if __name__ == '__main__':
