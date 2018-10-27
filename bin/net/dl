@@ -18,7 +18,7 @@ from bs4 import BeautifulSoup
 
 
 def run_workers(queue, count, worker_factory):
-    ''' Executes all the given workers and blocks until the queue's empty. '''
+    """ Executes all the given workers and blocks until the queue's empty. """
     for _ in range(count):
         worker = worker_factory()
         thread = threading.Thread(target=worker.run)
@@ -29,7 +29,7 @@ def run_workers(queue, count, worker_factory):
 
 
 class Flow:
-    ''' Used to control the lifetime of the script. '''
+    """ Used to control the lifetime of the script. """
 
     terminated = False
 
@@ -39,10 +39,10 @@ class Flow:
 
 
 class History(set):
-    '''
+    """
     Keeps history of downloaded files so that the script doesn't download
     the same thing twice between runs.
-    '''
+    """
 
     def __init__(self, path):
         super().__init__()
@@ -55,14 +55,14 @@ class History(set):
         self.lock = lockfile.LockFile(self.path)
         self.lock.acquire(timeout=-1)
         if self.path and os.path.exists(self.path):
-            self.handle = open(self.path, 'r+b')
+            self.handle = open(self.path, "r+b")
             self.update(pickle.load(self.handle))
-            print('Loaded %d URLs from history file' % len(self))
+            print("Loaded %d URLs from history file" % len(self))
         return self
 
     def __exit__(self, *args):
         if not self.handle:
-            self.handle = open(self.path, 'wb')
+            self.handle = open(self.path, "wb")
         else:
             self.handle.truncate(0)
             self.handle.seek(0)
@@ -70,14 +70,14 @@ class History(set):
         pickle.dump(copy, self.handle)
         self.handle.close()
         self.lock.release()
-        print('Saved %d URLs to history file' % len(copy))
+        print("Saved %d URLs to history file" % len(copy))
 
 
 class BaseWorker:
-    '''
+    """
     A base for all the workers that contains basic execution flow, outlined to
     fulfill DRY.
-    '''
+    """
 
     num = 0
 
@@ -88,10 +88,10 @@ class BaseWorker:
         BaseWorker.num += 1
 
     def run(self):
-        '''
+        """
         Tries to take items from the queue and process them, handling
         gracefully possible errors.
-        '''
+        """
         while not Flow.terminated:
             item = self.queue.get()
             try:
@@ -102,7 +102,7 @@ class BaseWorker:
                 self.queue.task_done()
             with self.lock:
                 print(
-                    '[T%d ~%5d queued] %s'
+                    "[T%d ~%5d queued] %s"
                     % (
                         self.num,
                         self.queue.qsize(),
@@ -121,94 +121,94 @@ class BaseWorker:
 
 
 class Command:
-    ''' The action to undertake, chosen via CLI '''
+    """ The action to undertake, chosen via CLI """
 
     @staticmethod
     def decorate_parser(parent_parser, fmt):
-        '''
+        """
         Used to collect any extra CLI arguments specific to this command.
-        '''
+        """
         raise NotImplementedError()
 
     def run(self, args):
-        ''' Executed when the user chooses given command via CLI '''
+        """ Executed when the user chooses given command via CLI """
         raise NotImplementedError()
 
 
 class DownloadCommand(Command):
-    '''
+    """
     This command contains implementation details on how to actually
     download things.
-    '''
+    """
 
     @staticmethod
     def decorate_parser(parent_parser, fmt):
         parser = parent_parser.add_parser(
-            'download',
-            help='download files',
+            "download",
+            help="download files",
             formatter_class=fmt,
-            aliases=['dl'],
+            aliases=["dl"],
         )
 
         parser.add_argument(
-            '-a',
-            '--accept',
-            metavar='REGEX',
-            default='.*',
-            help='set regex indicating which URLs to crawl',
+            "-a",
+            "--accept",
+            metavar="REGEX",
+            default=".*",
+            help="set regex indicating which URLs to crawl",
         )
 
         parser.add_argument(
-            '--reject',
-            metavar='REGEX',
-            default='',
-            help='set regex indicating which URLs not to crawl (overrides -a)',
+            "--reject",
+            metavar="REGEX",
+            default="",
+            help="set regex indicating which URLs not to crawl (overrides -a)",
         )
 
         parser.add_argument(
-            '-H',
-            '--history',
-            metavar='FILE',
-            help='set path to the history file',
+            "-H",
+            "--history",
+            metavar="FILE",
+            help="set path to the history file",
         )
 
         parser.add_argument(
-            '-t',
-            '--target',
-            metavar='DIR',
-            default='.',
-            help='set base target directory',
+            "-t",
+            "--target",
+            metavar="DIR",
+            default=".",
+            help="set base target directory",
         )
 
         parser.add_argument(
-            '-r',
-            '--retries',
-            metavar='NUM',
+            "-r",
+            "--retries",
+            metavar="NUM",
             type=int,
             default=3,
-            help='set retry count for failed downloads',
+            help="set retry count for failed downloads",
         )
 
         parser.add_argument(
-            '--retry-wait',
-            metavar='NUM',
+            "--retry-wait",
+            metavar="NUM",
             type=int,
             default=3,
-            help='set retry timeout for failed downloads',
+            help="set retry timeout for failed downloads",
         )
 
         parser.add_argument(
-            '-n',
-            '--num',
-            dest='workers',
-            metavar='NUMBER',
+            "-n",
+            "--num",
+            dest="workers",
+            metavar="NUMBER",
             type=int,
             default=1,
-            help='set worker count',
+            help="set worker count",
         )
 
         parser.add_argument(
-            'url', metavar='URL', nargs='+', help='initial URLs to retrieve'
+            "url", metavar="URL", nargs="+", help="initial URLs to retrieve"
         )
 
         parser.set_defaults(command=DownloadCommand)
@@ -241,18 +241,18 @@ class DownloadCommand(Command):
         def process(self, item):
             response = requests.get(item.url, timeout=(3, 3))
             if response.status_code != 200:
-                raise RuntimeError('HTTP error %d' % response.status_code)
-            mime = response.headers['content-type'].split(';')[0].lower()
-            if mime == 'text/html':
+                raise RuntimeError("HTTP error %d" % response.status_code)
+            mime = response.headers["content-type"].split(";")[0].lower()
+            if mime == "text/html":
                 return self._process_html(response)
             return self._process_nonhtml(response)
 
         def _process_html(self, response):
-            soup = BeautifulSoup(response.text, 'html.parser')
+            soup = BeautifulSoup(response.text, "html.parser")
             child_urls = set()
-            for link in soup.find_all('a', href=True):
+            for link in soup.find_all("a", href=True):
                 child_url = urllib.parse.urldefrag(
-                    urllib.parse.urljoin(response.url, link['href'])
+                    urllib.parse.urljoin(response.url, link["href"])
                 ).url
                 with self.lock:
                     if (
@@ -277,11 +277,11 @@ class DownloadCommand(Command):
             target_path = os.path.join(
                 self.args.target,
                 parsed_url.netloc,
-                re.sub(r'^[\/]*', '', parsed_url.path),
+                re.sub(r"^[\/]*", "", parsed_url.path),
             )
             target_dir = os.path.dirname(target_path)
             os.makedirs(target_dir, exist_ok=True)
-            with open(target_path, 'wb') as handle:
+            with open(target_path, "wb") as handle:
                 handle.write(response.content)
             with self.lock:
                 self.history.add(response.url)
@@ -297,14 +297,14 @@ class DownloadCommand(Command):
         def format_status(self, item, status):
             messages = []
             if status.error:
-                messages.append('error: %s' % status.error)
+                messages.append("error: %s" % status.error)
             if status.download_path:
-                messages.append('saved to %s' % status.download_path)
+                messages.append("saved to %s" % status.download_path)
             if status.urls_added is not None:
-                messages.append('added %d URLs' % status.urls_added)
+                messages.append("added %d URLs" % status.urls_added)
             if item.retries > 1:
-                messages.append('retry #%d' % item.retries)
-            return '%s: %s' % (item.url, '; '.join(messages))
+                messages.append("retry #%d" % item.retries)
+            return "%s: %s" % (item.url, "; ".join(messages))
 
         class Result:
             def __init__(
@@ -321,35 +321,35 @@ class DownloadCommand(Command):
 
 
 class PruneCommand(Command):
-    '''
+    """
     This command optimizes the history file, by checking for each URL if it
     returns 404. Such entries are removed from the history. All other entries
     are kept (even if they report errors such as 503).
-    '''
+    """
 
     @staticmethod
     def decorate_parser(parent_parser, fmt):
         parser = parent_parser.add_parser(
-            'prune',
-            help='prune old entries in history file',
+            "prune",
+            help="prune old entries in history file",
             formatter_class=fmt,
         )
 
         parser.add_argument(
-            '-H',
-            '--history',
-            metavar='FILE',
-            help='set path to the history file',
+            "-H",
+            "--history",
+            metavar="FILE",
+            help="set path to the history file",
         )
 
         parser.add_argument(
-            '-n',
-            '--num',
-            dest='workers',
-            metavar='NUMBER',
+            "-n",
+            "--num",
+            dest="workers",
+            metavar="NUMBER",
             type=int,
             default=1,
-            help='set worker count',
+            help="set worker count",
         )
 
         parser.set_defaults(command=PruneCommand)
@@ -376,27 +376,27 @@ class PruneCommand(Command):
             if response.status_code == 404:
                 with self.lock:
                     self.history.remove(item)
-                return 'pruned (404)'
-            return 'spared (%d)' % response.status_code
+                return "pruned (404)"
+            return "spared (%d)" % response.status_code
 
         def on_error(self, item, ex):
-            return 'error: %s' % str(ex)
+            return "error: %s" % str(ex)
 
         def format_status(self, item, status):
-            return '%s: %s' % (item.strip(), status)
+            return "%s: %s" % (item.strip(), status)
 
 
 def parse_args():
-    ''' Collects all the option from the CLI arguments '''
+    """ Collects all the option from the CLI arguments """
 
     def fmt(prog):
         return argparse.HelpFormatter(prog, max_help_position=40, width=80)
 
     parser = argparse.ArgumentParser(
-        description='Fetch things from the Internet', formatter_class=fmt
+        description="Fetch things from the Internet", formatter_class=fmt
     )
     subparsers = parser.add_subparsers(
-        help='choose the command', dest='command'
+        help="choose the command", dest="command"
     )
     DownloadCommand.decorate_parser(subparsers, fmt)
     PruneCommand.decorate_parser(subparsers, fmt)
@@ -409,7 +409,7 @@ def main():
 
     def signal_handler(_signal, _frame):
         if not Flow.terminated:
-            sys.stdout.write('Exiting due to user abort\n')
+            sys.stdout.write("Exiting due to user abort\n")
             Flow.terminate()
 
     signal.signal(signal.SIGINT, signal_handler)
@@ -418,5 +418,5 @@ def main():
     command.run(args)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

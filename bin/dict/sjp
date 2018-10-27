@@ -19,18 +19,18 @@ def collect_text(node):
 
 
 def print_word_def(word):
-    url = 'http://sjp.pl/' + urllib.parse.quote(word)
-    content = urllib.request.urlopen(url).read().decode('utf8')
+    url = "http://sjp.pl/" + urllib.parse.quote(word)
+    content = urllib.request.urlopen(url).read().decode("utf8")
 
     doc = lxml.html.fromstring(content)
-    for header in doc.cssselect('h1'):
+    for header in doc.cssselect("h1"):
         print(header.text)
         for node in header.itersiblings():
-            if re.search('medium.*sans-serif', node.attrib.get('style', '')):
+            if re.search("medium.*sans-serif", node.attrib.get("style", "")):
                 text = collect_text(node).strip()
-                text = re.sub(r'\n\s+', '\n', text)
+                text = re.sub(r"\n\s+", "\n", text)
                 print(text)
-            if node.tag == 'hr' or node.tag == 'h1':
+            if node.tag == "hr" or node.tag == "h1":
                 break
         print()
 
@@ -40,5 +40,5 @@ def main():
         print_word_def(arg)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

@@ -12,27 +12,25 @@ from PIL import Image
 
 from dotfiles import logging
 
-SOURCE_ROOT_DIR = Path('~/hub/img/').expanduser()
-TARGET_ROOT_DIR = Path('~/img/net/').expanduser()
-SMALL_IMAGE_EXTENSIONS = ['png', 'jpg', 'jpeg']
+SOURCE_ROOT_DIR = Path("~/hub/img/").expanduser()
+TARGET_ROOT_DIR = Path("~/img/net/").expanduser()
+SMALL_IMAGE_EXTENSIONS = ["png", "jpg", "jpeg"]
 
 
 def _parse_args():
     description = (
-        'Downloads, filters and organizes into directories '
-        + 'images crawled by cron job.'
+        "Downloads, filters and organizes into directories "
+        + "images crawled by cron job."
     )
     parser = argparse.ArgumentParser(description=description)
-    parser.add_argument(
-        '--dry', action='store_true', help='don\'t do anything'
-    )
-    parser.add_argument('--min-image-width', default=300, type=int)
-    parser.add_argument('--min-image-height', default=300, type=int)
+    parser.add_argument("--dry", action="store_true", help="don't do anything")
+    parser.add_argument("--min-image-width", default=300, type=int)
+    parser.add_argument("--min-image-height", default=300, type=int)
     return parser.parse_args()
 
 
 def _find_directories_recursive(root_dir):
-    ''' Returns all sub directories in DFS order '''
+    """ Returns all sub directories in DFS order """
     stack = [root_dir]
     result = []
     while len(stack):
@@ -68,25 +66,25 @@ def main():
     for source_dir in _find_directories_recursive(SOURCE_ROOT_DIR):
         target_dir = TARGET_ROOT_DIR / source_dir.relative_to(SOURCE_ROOT_DIR)
         target_dir = str(target_dir)
-        target_dir = re.sub(r'([^\\/]*)\.2chan\.net', r'2chan/\1', target_dir)
-        target_dir = re.sub(r'[^\\/]*\.(4chan|4cdn)\.org', '4chan', target_dir)
+        target_dir = re.sub(r"([^\\/]*)\.2chan\.net", r"2chan/\1", target_dir)
+        target_dir = re.sub(r"[^\\/]*\.(4chan|4cdn)\.org", "4chan", target_dir)
         target_dir = Path(target_dir)
 
         target_dir.mkdir(parents=True, exist_ok=True)
 
         for source_file in _find_files(source_dir):
-            extension = source_file.suffix.lower().lstrip('.')
+            extension = source_file.suffix.lower().lstrip(".")
             target_file = target_dir / source_file.name
 
             if extension in SMALL_IMAGE_EXTENSIONS and _is_image_too_small(
                 source_file, args
             ):
-                logging.warning(f'{source_file}: too small, ignoring')
+                logging.warning(f"{source_file}: too small, ignoring")
                 if not args.dry:
                     source_file.unlink()
                 continue
 
-            logging.info(f'{source_file}: ok (moved to {target_file}')
+            logging.info(f"{source_file}: ok (moved to {target_file}")
             if not args.dry:
                 try:
                     source_file.rename(target_file)
@@ -97,7 +95,7 @@ def main():
 
         if not args.dry:
             subprocess.run(
-                ['distribute-files', target_dir, '--fill-last', '-v']
+                ["distribute-files", target_dir, "--fill-last", "-v"]
             )
 
         try:
@@ -106,5 +104,5 @@ def main():
             pass
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

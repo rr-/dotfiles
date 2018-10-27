@@ -8,14 +8,14 @@ import time
 import progress.bar
 import xdg
 
-CACHE_PATH = pathlib.Path(xdg.XDG_CACHE_HOME) / 'dups.dat'
+CACHE_PATH = pathlib.Path(xdg.XDG_CACHE_HOME) / "dups.dat"
 
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('dir', type=pathlib.Path)
-    parser.add_argument('-d', '--delete', action='store_true')
-    parser.add_argument('-N', '--no-confirm', action='store_true')
+    parser.add_argument("dir", type=pathlib.Path)
+    parser.add_argument("-d", "--delete", action="store_true")
+    parser.add_argument("-N", "--no-confirm", action="store_true")
     return parser.parse_args()
 
 
@@ -80,8 +80,8 @@ def construct_hash_to_path_dict(paths, cache, progress_callback):
 class ProgressBar(progress.bar.IncrementalBar):
     def __init__(self, **kwargs):
         super().__init__(
-            'Working',
-            suffix='%(percent).1f%% - %(eta_td)s',
+            "Working",
+            suffix="%(percent).1f%% - %(eta_td)s",
             sma_window=1000,
             **kwargs,
         )
@@ -99,21 +99,21 @@ def main():
     if not args.dir.is_dir():
         raise RuntimeError(f'Selected path "{args.dir}" is not a directory')
 
-    print('Loading cache...')
+    print("Loading cache...")
     cache = load_cache()
-    print('Loaded', len(cache), 'cache entries')
+    print("Loaded", len(cache), "cache entries")
 
-    print('Collecting files...')
+    print("Collecting files...")
     all_files = list(collect_files(args.dir))
-    print('Collected', len(all_files), 'files')
+    print("Collected", len(all_files), "files")
 
-    print('Constructing size-path dictionary...')
+    print("Constructing size-path dictionary...")
     size_to_path = construct_size_to_path_dict(all_files)
     size_to_path = {
         size: files for size, files in size_to_path.items() if len(files) > 1
     }
 
-    print('Checking for duplicates...')
+    print("Checking for duplicates...")
     duplicate_groups = []
 
     bar = ProgressBar(
@@ -132,14 +132,14 @@ def main():
                 duplicate_groups.append(duplicate_paths)
     bar.finish()
 
-    print('Duplicates:')
+    print("Duplicates:")
     for i, group in enumerate(duplicate_groups):
         choices = {j + 1: path for j, path in enumerate(group)}
 
-        print(f'-- Group {i + 1} --')
+        print(f"-- Group {i + 1} --")
         for num, path in choices.items():
-            print(f'[{num}] {path}')
-        print('[a] all')
+            print(f"[{num}] {path}")
+        print("[a] all")
         print()
 
         if args.delete:
@@ -150,15 +150,15 @@ def main():
 
             while True:
                 try:
-                    choice = input('Which file to keep? ').lower()
-                    if choice not in 'a' and int(choice) not in choices:
-                        raise ValueError('Invalid number')
+                    choice = input("Which file to keep? ").lower()
+                    if choice not in "a" and int(choice) not in choices:
+                        raise ValueError("Invalid number")
                     break
                 except ValueError:
                     pass
             print()
 
-            if choice == 'a':
+            if choice == "a":
                 continue
 
             choice = int(choice)
@@ -166,13 +166,13 @@ def main():
                 if num != choice:
                     path.unlink()
 
-    print('Removing non-existing entries from cache...')
+    print("Removing non-existing entries from cache...")
     clean_cache(cache)
 
-    print('Saving cache...')
+    print("Saving cache...")
     save_cache(cache)
-    print('Saved', len(cache), 'cache entries')
+    print("Saved", len(cache), "cache entries")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

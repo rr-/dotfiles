@@ -5,18 +5,18 @@ import json
 import requests
 
 CURRENCIES = [
-    'AUD', 'BGN', 'BRL', 'CAD', 'CHF', 'CNY', 'CZK', 'DKK',
-    'GBP', 'HKD', 'HRK', 'HUF', 'IDR', 'ILS', 'INR', 'JPY',
-    'KRW', 'MXN', 'MYR', 'NOK', 'NZD', 'PHP', 'PLN', 'RON',
-    'RUB', 'SEK', 'SGD', 'THB', 'TRY', 'USD', 'ZAR', 'EUR',
+    "AUD", "BGN", "BRL", "CAD", "CHF", "CNY", "CZK", "DKK",
+    "GBP", "HKD", "HRK", "HUF", "IDR", "ILS", "INR", "JPY",
+    "KRW", "MXN", "MYR", "NOK", "NZD", "PHP", "PLN", "RON",
+    "RUB", "SEK", "SGD", "THB", "TRY", "USD", "ZAR", "EUR",
 ]
 
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('num', type=float)
-    parser.add_argument('src', type=str.upper, choices=CURRENCIES)
-    parser.add_argument('dst', type=str.upper, choices=CURRENCIES)
+    parser.add_argument("num", type=float)
+    parser.add_argument("src", type=str.upper, choices=CURRENCIES)
+    parser.add_argument("dst", type=str.upper, choices=CURRENCIES)
     return parser.parse_args()
 
 
@@ -26,27 +26,27 @@ def main():
     src_currency = args.src
     dst_currency = args.dst
 
-    response = requests.get(f'http://api.nbp.pl/api/exchangerates/tables/a')
+    response = requests.get(f"http://api.nbp.pl/api/exchangerates/tables/a")
     result = json.loads(response.text)
 
-    rates = result[0]['rates']
-    rates.append({'currency': 'polski złoty', 'code': 'PLN', 'mid': 1.0})
+    rates = result[0]["rates"]
+    rates.append({"currency": "polski złoty", "code": "PLN", "mid": 1.0})
 
     src_rate = next(
-        item['mid']
+        item["mid"]
         for item in rates
-        if item['code'].lower() == src_currency.lower()
+        if item["code"].lower() == src_currency.lower()
     )
     dst_rate = next(
-        item['mid']
+        item["mid"]
         for item in rates
-        if item['code'].lower() == dst_currency.lower()
+        if item["code"].lower() == dst_currency.lower()
     )
 
     dst_price = src_price * src_rate / dst_rate
 
-    print(f'{src_price:.02f} {src_currency} = {dst_price:.02f} {dst_currency}')
+    print(f"{src_price:.02f} {src_currency} = {dst_price:.02f} {dst_currency}")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

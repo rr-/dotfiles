@@ -12,27 +12,27 @@ from subprocess import run
 
 
 def _parse_args():
-    description = 'Backups PostgreSQL database to selected directory.'
+    description = "Backups PostgreSQL database to selected directory."
     parser = argparse.ArgumentParser(description=description)
-    parser.add_argument('db_name')
-    parser.add_argument('dir')
+    parser.add_argument("db_name")
+    parser.add_argument("dir")
     return parser.parse_args()
 
 
 def main():
     args = _parse_args()
 
-    if not which('pg_dump'):
-        print('pg_dump not found. Aborting.', file=sys.stderr)
+    if not which("pg_dump"):
+        print("pg_dump not found. Aborting.", file=sys.stderr)
         sys.exit(1)
 
     day_of_week = day_name[datetime.today().weekday()].lower()
-    path = os.path.join(args.dir, '%s_%s.sql' % (args.db_name, day_of_week))
+    path = os.path.join(args.dir, "%s_%s.sql" % (args.db_name, day_of_week))
     os.makedirs(os.path.dirname(path), exist_ok=True)
 
-    with open(path, 'wb') as handle:
-        run(['pg_dump', '-U', 'postgres', '-d', args.db_name], stdout=handle)
+    with open(path, "wb") as handle:
+        run(["pg_dump", "-U", "postgres", "-d", args.db_name], stdout=handle)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

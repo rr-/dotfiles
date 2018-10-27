@@ -10,20 +10,17 @@ from subprocess import PIPE, run
 import xdg
 
 XMODMAPS: T.List[str] = [
-    'keysym equal = equal plus equal plus dead_macron dead_macron',
-    'keysym space = space space space space space U200B',
+    "keysym equal = equal plus equal plus dead_macron dead_macron",
+    "keysym space = space space space space space U200B",
 ]
 
-LANGUAGES: T.List[T.Tuple[str, str]] = [
-    ('pl', 'xkb:pl::pol'),
-    ('jp', 'anthy'),
-]
+LANGUAGES: T.List[T.Tuple[str, str]] = [("pl", "xkb:pl::pol"), ("jp", "anthy")]
 
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        'lang', nargs='?', choices=[item[0] for item in LANGUAGES]
+        "lang", nargs="?", choices=[item[0] for item in LANGUAGES]
     )
     return parser.parse_args()
 
@@ -31,7 +28,7 @@ def parse_args() -> argparse.Namespace:
 def get_code_and_engine(lang: str) -> T.Tuple[str, str]:
     if not lang:
         current_engine = (
-            run(['ibus', 'engine'], stdout=PIPE).stdout.decode().strip()
+            run(["ibus", "engine"], stdout=PIPE).stdout.decode().strip()
         )
 
         for i, item in enumerate(LANGUAGES):
@@ -44,23 +41,23 @@ def get_code_and_engine(lang: str) -> T.Tuple[str, str]:
             if code == lang:
                 return (code, engine)
 
-    raise ValueError('Unknown language')
+    raise ValueError("Unknown language")
 
 
 def main() -> None:
-    if run(['pgrep', 'ibus-daemon'], stdout=PIPE).returncode != 0:
-        print('starting daemon')
-        run(os.path.join(xdg.XDG_CONFIG_HOME, 'ibus/start'))
+    if run(["pgrep", "ibus-daemon"], stdout=PIPE).returncode != 0:
+        print("starting daemon")
+        run(os.path.join(xdg.XDG_CONFIG_HOME, "ibus/start"))
 
     args = parse_args()
 
     code, engine = get_code_and_engine(args.lang)
 
-    run(['setxkbmap', code])
-    run(['ibus', 'engine', engine])
+    run(["setxkbmap", code])
+    run(["ibus", "engine", engine])
     for expr in XMODMAPS:
-        run(['xmodmap', '-e', expr])
+        run(["xmodmap", "-e", expr])
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

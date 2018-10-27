@@ -22,7 +22,7 @@ def tabulate(
     headers: T.Tuple[str, ...],
     alignments: T.Tuple[str, ...],
 ) -> str:
-    gap = '  '
+    gap = "  "
 
     column_widths = [len(column) for column in headers]
     for row in rows:
@@ -31,8 +31,8 @@ def tabulate(
     column_widths[-1] += len(gap)
 
     formats = [
-        '{{:{}{}s}}'.format(
-            '<' if alignments[i] == 'left' else '>', column_widths[i]
+        "{{:{}{}s}}".format(
+            "<" if alignments[i] == "left" else ">", column_widths[i]
         )
         for i in range(len(headers))
     ]
@@ -40,20 +40,20 @@ def tabulate(
     def print_row(row: T.Tuple[str, ...]) -> str:
         return gap.join(formats[i].format(cell) for i, cell in enumerate(row))
 
-    ret = ''
-    ret += print_row(headers) + '\n'
-    ret += gap.join('-' * width for width in column_widths) + '\n'
-    ret += '\n'.join(print_row(row) for row in rows)
+    ret = ""
+    ret += print_row(headers) + "\n"
+    ret += gap.join("-" * width for width in column_widths) + "\n"
+    ret += "\n".join(print_row(row) for row in rows)
     return ret
 
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
-    parser.add_argument('file', nargs='*', default=[Path('.')], type=Path)
-    parser.add_argument('-a', '--all', action='store_true')
-    parser.add_argument('-l', action='store_true', dest='long')
+    parser.add_argument("file", nargs="*", default=[Path(".")], type=Path)
+    parser.add_argument("-a", "--all", action="store_true")
+    parser.add_argument("-l", action="store_true", dest="long")
     parser.add_argument(
-        '--color', choices=('always', 'auto', 'never'), default='auto'
+        "--color", choices=("always", "auto", "never"), default="auto"
     )
     return parser.parse_args()
 
@@ -67,70 +67,70 @@ def collect_paths(path: Path) -> T.Iterable[Path]:
 
 
 def format_size(num: int) -> str:
-    units = ['B'] + [x + 'iB' for x in 'KMGTPEZ']
+    units = ["B"] + [x + "iB" for x in "KMGTPEZ"]
     for unit in units:
         if num < 1024.0:
-            return f'{num:3.1f} {unit}'
+            return f"{num:3.1f} {unit}"
         num /= 1024.0
-    return f'{num:.1f} YiB'
+    return f"{num:.1f} YiB"
 
 
 def format_name(path: Path, color_mode: str) -> str:
     name = path.name
 
-    if color_mode == 'always':
+    if color_mode == "always":
         colorize = True
-    elif color_mode == 'never':
+    elif color_mode == "never":
         colorize = False
-    elif color_mode == 'auto':
+    elif color_mode == "auto":
         colorize = sys.stdout.isatty()
 
     if path.is_dir():
         if colorize:
             name = BLUE + name + RESET
     if path.is_symlink():
-        name += ' (-> '
+        name += " (-> "
         if colorize:
             name += (RED, GREEN)[os.path.exists(os.readlink(path))]
         name += os.readlink(path)
         if colorize:
             name += RESET
-        name += ')'
+        name += ")"
     return name
 
 
 def format_chmod(mode: int) -> str:
-    ret = ''
+    ret = ""
 
     # stat.S_ISUID set UID bit
     # stat.S_ISGID set-group-ID bit
     # stat.S_ISVTX sticky bit
     if mode & stat.S_IFSOCK == stat.S_IFSOCK:  # socket
-        ret += 's'
+        ret += "s"
     elif mode & stat.S_IFLNK == stat.S_IFLNK:  # symbolic link
-        ret += 'l'
+        ret += "l"
     elif mode & stat.S_IFREG == stat.S_IFREG:  # regular file
-        ret += '-'
+        ret += "-"
     elif mode & stat.S_IFBLK == stat.S_IFBLK:  # block device
-        ret += 'b'
+        ret += "b"
     elif mode & stat.S_IFDIR == stat.S_IFDIR:  # directory
-        ret += 'd'
+        ret += "d"
     elif mode & stat.S_IFCHR == stat.S_IFCHR:  # character device
-        ret += 'c'
+        ret += "c"
     elif mode & stat.S_IFIFO == stat.S_IFIFO:  # FIFO
-        ret += 'p'
+        ret += "p"
     else:
-        ret += '?'
+        ret += "?"
 
-    ret += '-r'[bool(mode & stat.S_IRUSR)]
-    ret += '-w'[bool(mode & stat.S_IWUSR)]
-    ret += '-x'[bool(mode & stat.S_IXUSR)]
-    ret += '-r'[bool(mode & stat.S_IRGRP)]
-    ret += '-w'[bool(mode & stat.S_IWGRP)]
-    ret += '-x'[bool(mode & stat.S_IXGRP)]
-    ret += '-r'[bool(mode & stat.S_IROTH)]
-    ret += '-w'[bool(mode & stat.S_IWOTH)]
-    ret += '-x'[bool(mode & stat.S_IXOTH)]
+    ret += "-r"[bool(mode & stat.S_IRUSR)]
+    ret += "-w"[bool(mode & stat.S_IWUSR)]
+    ret += "-x"[bool(mode & stat.S_IXUSR)]
+    ret += "-r"[bool(mode & stat.S_IRGRP)]
+    ret += "-w"[bool(mode & stat.S_IWGRP)]
+    ret += "-x"[bool(mode & stat.S_IXGRP)]
+    ret += "-r"[bool(mode & stat.S_IROTH)]
+    ret += "-w"[bool(mode & stat.S_IWOTH)]
+    ret += "-x"[bool(mode & stat.S_IXOTH)]
 
     return ret
 
@@ -158,21 +158,21 @@ def print_long_listing(
                 .isoformat()
             )
         except OSError:
-            chmod = '?' * 7
-            user = '?'
-            group = '?'
-            date = '?'
+            chmod = "?" * 7
+            user = "?"
+            group = "?"
+            date = "?"
 
         size: str = format_size(path_stat.st_size)
         name = format_name(path, args.color)
 
-        rows.append((chmod, user + ':' + group, size, date, name))
+        rows.append((chmod, user + ":" + group, size, date, name))
 
     print(
         tabulate(
             rows,
-            headers=('Mode', 'Owner', 'Size', 'Last modified', 'Name'),
-            alignments=('left', 'left', 'right', 'left', 'left'),
+            headers=("Mode", "Owner", "Size", "Last modified", "Name"),
+            alignments=("left", "left", "right", "left", "left"),
         )
     )
 
@@ -188,7 +188,7 @@ def print_listing(source_path: Path, args: argparse.Namespace) -> None:
     paths = collect_paths(source_path)
     paths = sorted(paths, key=lambda path: (path.is_file(), path.name))
     if not args.all:
-        paths = (path for path in paths if not path.name.startswith('.'))
+        paths = (path for path in paths if not path.name.startswith("."))
 
     if args.long:
         print_long_listing(paths, args)
@@ -210,5 +210,5 @@ def main() -> None:
     exit(exit_code)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

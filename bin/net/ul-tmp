@@ -9,9 +9,9 @@ import sys
 import tarfile
 import urllib.parse
 
-BASE_DIR = '/srv/www/tmp.sakuya.pl/f/'
-BASE_URL = 'https://tmp.sakuya.pl/f/'
-REMOTE_HOST = 'cyclone'
+BASE_DIR = "/srv/www/tmp.sakuya.pl/f/"
+BASE_URL = "https://tmp.sakuya.pl/f/"
+REMOTE_HOST = "cyclone"
 
 
 def collect_single_file(arg):
@@ -31,7 +31,7 @@ def collect_files_from_dir(top):
 def collect_files(args):
     for arg in args:
         if not os.path.exists(arg):
-            print('File does not exist: %s' % arg, file=sys.stderr)
+            print("File does not exist: %s" % arg, file=sys.stderr)
             continue
         if os.path.isfile(arg):
             yield collect_single_file(arg)
@@ -42,11 +42,11 @@ def collect_files(args):
 
 def send(src_paths):
     if not src_paths:
-        print('Nothing to send.', file=sys.stderr)
+        print("Nothing to send.", file=sys.stderr)
         return
 
     tar_stream = io.BytesIO()
-    tar = tarfile.open(mode='w', fileobj=tar_stream)
+    tar = tarfile.open(mode="w", fileobj=tar_stream)
 
     urls = []
     commands = []
@@ -56,20 +56,20 @@ def send(src_paths):
         dirs.add(os.path.dirname(os.path.join(BASE_DIR, target_name)))
 
     for dir_name in dirs:
-        commands.append('mkdir -p %s' % shlex.quote(dir_name))
-        commands.append('chmod 0755 %s' % shlex.quote(dir_name))
+        commands.append("mkdir -p %s" % shlex.quote(dir_name))
+        commands.append("chmod 0755 %s" % shlex.quote(dir_name))
 
-    commands.append('tar x -C %s' % shlex.quote(BASE_DIR))
+    commands.append("tar x -C %s" % shlex.quote(BASE_DIR))
 
     for src_path, target_name in src_paths:
         dst_path = os.path.join(BASE_DIR, target_name)
         tar.add(src_path, arcname=target_name)
-        commands.append('chmod 0644 %s' % shlex.quote(dst_path))
+        commands.append("chmod 0644 %s" % shlex.quote(dst_path))
         urls.append(
-            BASE_URL + urllib.parse.quote(target_name.replace('\\', '/'))
+            BASE_URL + urllib.parse.quote(target_name.replace("\\", "/"))
         )
 
-    cmdline = ['ssh', REMOTE_HOST, ';'.join(commands)]
+    cmdline = ["ssh", REMOTE_HOST, ";".join(commands)]
 
     proc = subprocess.Popen(
         cmdline,
@@ -81,7 +81,7 @@ def send(src_paths):
     for url in urls:
         print(url)
     if err:
-        print(err.decode('utf8'), file=sys.stderr)
+        print(err.decode("utf8"), file=sys.stderr)
         sys.exit(1)
 
 
@@ -89,5 +89,5 @@ def main():
     send(list(collect_files(sys.argv[1:])))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

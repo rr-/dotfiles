@@ -11,16 +11,16 @@ from subprocess import run
 from tempfile import NamedTemporaryFile
 
 
-def natural_sort_key(text, _nsre=re.compile('([0-9]+)')):
+def natural_sort_key(text, _nsre=re.compile("([0-9]+)")):
     return [
         int(term) if term.isdigit() else term.lower()
         for term in re.split(_nsre, text)
     ]
 
 
-MANAGED_EXTENSIONS = ['jpg', 'jpeg', 'jfif', 'gif', 'png', 'tga', 'bmp']
+MANAGED_EXTENSIONS = ["jpg", "jpeg", "jfif", "gif", "png", "tga", "bmp"]
 
-HTML_TEMPLATE = '''<!DOCTYPE html>
+HTML_TEMPLATE = """<!DOCTYPE html>
 <html>
 <head>
     <meta charset="utf-8"/>
@@ -170,14 +170,14 @@ const pager = new Pager(pagerDiv, collection, pageSize, showPage);
 </script>
 </body>
 </html>
-'''
+"""
 
 
 def _parse_args():
     parser = argparse.ArgumentParser(
-        description='Generates thumbnails using a HTML page.'
+        description="Generates thumbnails using a HTML page."
     )
-    parser.add_argument('paths', metavar='path', nargs='+')
+    parser.add_argument("paths", metavar="path", nargs="+")
     return parser.parse_args()
 
 
@@ -187,7 +187,7 @@ def _collect_files(paths):
             for entry in os.scandir(path):
                 if not entry.is_file:
                     continue
-                ext = os.path.splitext(entry.path)[1].lstrip('.').lower()
+                ext = os.path.splitext(entry.path)[1].lstrip(".").lower()
                 if ext in MANAGED_EXTENSIONS:
                     yield entry.path
         elif os.path.isfile(path):
@@ -199,21 +199,21 @@ def main():
 
     paths = sorted(_collect_files(args.paths), key=natural_sort_key)
     if not paths:
-        print('No images to show', file=sys.stderr)
+        print("No images to show", file=sys.stderr)
         return
 
-    with NamedTemporaryFile(delete=False, prefix='thumbs', mode='w') as handle:
+    with NamedTemporaryFile(delete=False, prefix="thumbs", mode="w") as handle:
         images = [
             {
-                'link': pathlib.Path(os.path.abspath(path)).as_uri(),
-                'name': path,
+                "link": pathlib.Path(os.path.abspath(path)).as_uri(),
+                "name": path,
             }
             for path in paths
         ]
-        handle.write(HTML_TEMPLATE.replace('%JSON%', json.dumps(images)))
+        handle.write(HTML_TEMPLATE.replace("%JSON%", json.dumps(images)))
         handle.flush()
-        run(['firefox', handle.name])
+        run(["firefox", handle.name])
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

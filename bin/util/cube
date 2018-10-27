@@ -272,7 +272,7 @@ PALETTE_GRAYSCALE = {
     0xFF: [0xEE, 0xEE, 0xEE],
 }
 
-CUBE_256 = '''
+CUBE_256 = """
               #00f#06f#08f#0af#0df#0ff
             #60f#00d#06d#08d#0ad#0dd#0fd
           #80f#60d#00a#06a#08a#0aa#0da#0fa
@@ -297,52 +297,52 @@ CUBE_256 = '''
 #a8a#888#8a8#8aa       #d66#d68#d6a#d6d
   #a88#aa8#aaa#88a
         #a88#a8a
-'''.strip(
-    '\n'
+""".strip(
+    "\n"
 )
 
 
 def strip_escape_codes(text):
-    return re.sub('\x1B.*?m', '', text)
+    return re.sub("\x1B.*?m", "", text)
 
 
-def join_templates(templates, separator=' '):
-    ''' Merges text templates side by side. '''
-    return '\n\n'.join(templates)
+def join_templates(templates, separator=" "):
+    """ Merges text templates side by side. """
+    return "\n\n".join(templates)
 
 
 def render_system_colors():
-    ''' Renders basic system color (i.e. the 16 color palette) ramp. '''
+    """ Renders basic system color (i.e. the 16 color palette) ramp. """
     templates = []
     for fgbg in [48, 38]:
-        template = ''
+        template = ""
         for color in range(16):
             template += SYSTEM_TEMPLATE.format(fgbg=fgbg, color=color)
-            template += '\n' if color % 8 == 7 else ''
+            template += "\n" if color % 8 == 7 else ""
         templates.append(template.strip())
     print(join_templates(templates))
     print()
 
 
 def render_grayscale_ramp():
-    ''' Renders basic grayscale ramp. '''
+    """ Renders basic grayscale ramp. """
     for fgbg in [48, 38]:
-        print('', end='')
+        print("", end="")
         for color in range(232, 256):
-            print(RAMP_TEMPLATE.format(fgbg=fgbg, color=color), end='')
-        print('')
-    print('')
+            print(RAMP_TEMPLATE.format(fgbg=fgbg, color=color), end="")
+        print("")
+    print("")
 
 
 def render_color_cube():
-    ''' Renders the XTerm 216 color cube. '''
+    """ Renders the XTerm 216 color cube. """
     templates = []
     for fgbg in [48, 38]:
 
         def _replace_callback(match, fgbg=fgbg):
             color = [int(x, 16) * 16 + int(x, 16) for x in match.group(1)]
             min_diff = None
-            ret = ''
+            ret = ""
             for key, other_color in PALETTE_256.items():
                 diff = sum(abs(other_color[i] - color[i]) for i in range(3))
                 if min_diff is None or diff < min_diff:
@@ -350,7 +350,7 @@ def render_color_cube():
                     min_diff = diff
             return ret
 
-        template = re.sub(r'#([0-9a-fA-F]{3})', _replace_callback, CUBE_256)
+        template = re.sub(r"#([0-9a-fA-F]{3})", _replace_callback, CUBE_256)
         templates.append(template)
 
     print(join_templates(templates))
@@ -362,5 +362,5 @@ def main():
     render_color_cube()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
