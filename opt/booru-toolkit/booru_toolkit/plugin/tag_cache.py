@@ -18,24 +18,29 @@ class CachedTag(Base):
     name: str = sa.Column('name', sa.Text, nullable=False, index=True)
     importance: int = sa.Column('importance', sa.Integer, nullable=False)
     implications: List[str] = sa.Column(
-        'implications', sa.ext.mutable.MutableList.as_mutable(sa.PickleType),
-        nullable=False)
+        'implications',
+        sa.ext.mutable.MutableList.as_mutable(sa.PickleType),
+        nullable=False,
+    )
 
 
 class TagCache:
     def __init__(self, cache_name: str) -> None:
         self._cache: Dict[str, CachedTag] = {}
         self._path = Path(
-            '~/.cache/tags-{}.sqlite'.format(cache_name)).expanduser()
+            '~/.cache/tags-{}.sqlite'.format(cache_name)
+        ).expanduser()
 
         self._path.parent.mkdir(parents=True, exist_ok=True)
         engine: Any = sa.create_engine(
             'sqlite:///%s' % str(self._path),
             connect_args={'check_same_thread': False},
-            poolclass=sa.pool.StaticPool)
+            poolclass=sa.pool.StaticPool,
+        )
         Base.metadata.create_all(bind=engine)
         self._session = sa.orm.scoped_session(
-            sa.orm.session.sessionmaker(bind=engine, autoflush=False))
+            sa.orm.session.sessionmaker(bind=engine, autoflush=False)
+        )
 
     def exists(self) -> bool:
         return self._session.query(sa.func.count(CachedTag.id)).scalar() > 0
@@ -54,12 +59,12 @@ class TagCache:
             return []
         ret: List[str] = []
         for tag in (
-                self._session
-                .query(CachedTag)
-                .filter(CachedTag.name.ilike('%{}%'.format('%'.join(query))))
-                .order_by(CachedTag.importance.desc())
-                .limit(100)
-                .all()):
+            self._session.query(CachedTag)
+            .filter(CachedTag.name.ilike('%{}%'.format('%'.join(query))))
+            .order_by(CachedTag.importance.desc())
+            .limit(100)
+            .all()
+        ):
             self._cache[tag.name] = tag
             ret.append(tag.name)
         return ret
@@ -70,10 +75,10 @@ class TagCache:
 
         def work():
             ret = (
-                self._session
-                .query(CachedTag)
+                self._session.query(CachedTag)
                 .filter(sa.func.lower(CachedTag.name) == tag_name.lower())
-                .one_or_none())
+                .one_or_none()
+            )
             if ret:
                 self._session.expunge(ret)
             return ret

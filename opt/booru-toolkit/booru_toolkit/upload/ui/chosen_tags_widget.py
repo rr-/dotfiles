@@ -9,19 +9,15 @@ from booru_toolkit.upload.ui.ellipsis_text_layout import EllipsisTextLayout
 
 class ChosenTagsListBox(VimListBox):
     def __init__(
-            self,
-            chosen_tags: common.TagList,
-            plugin: PluginBase) -> None:
+        self, chosen_tags: common.TagList, plugin: PluginBase
+    ) -> None:
         super().__init__(urwid.SimpleListWalker([]))
         self._chosen_tags = chosen_tags
         self._plugin = plugin
         self.schedule_update()
 
     def keypress(self, size: Tuple[int, int], key: str) -> Optional[str]:
-        keymap = {
-            'd':      self._delete_selected,
-            'delete': self._delete_selected,
-        }
+        keymap = {'d': self._delete_selected, 'delete': self._delete_selected}
         if key in keymap:
             keymap[key]()
             self._cancel_num()
@@ -44,17 +40,24 @@ class ChosenTagsListBox(VimListBox):
                 attr_name = 'tag'
             tag_usage_count = await self._plugin.get_tag_usage_count(tag.name)
 
-            columns_widget = urwid.Columns([
-                (urwid.Text(
-                    common.box_to_ui(tag.name),
-                    align=urwid.LEFT,
-                    wrap=urwid.CLIP,
-                    layout=EllipsisTextLayout())),
-                (urwid.PACK, urwid.Text(str(tag_usage_count))),
-            ], dividechars=1)
+            columns_widget = urwid.Columns(
+                [
+                    (
+                        urwid.Text(
+                            common.box_to_ui(tag.name),
+                            align=urwid.LEFT,
+                            wrap=urwid.CLIP,
+                            layout=EllipsisTextLayout(),
+                        )
+                    ),
+                    (urwid.PACK, urwid.Text(str(tag_usage_count))),
+                ],
+                dividechars=1,
+            )
             setattr(columns_widget, 'tag', tag)
             new_list.append(
-                urwid.AttrWrap(columns_widget, attr_name, 'f-' + attr_name))
+                urwid.AttrWrap(columns_widget, attr_name, 'f-' + attr_name)
+            )
         list.clear(self.body)
         self.body.extend(new_list)
 

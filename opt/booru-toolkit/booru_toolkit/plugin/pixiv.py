@@ -36,16 +36,20 @@ class PluginPixiv(PluginBase):
         }
         response = _process_response(self._session.post(url, data=data))
         access_token = response['response']['access_token']
-        self._session.headers.update({
-            # 'User-Agent': 'PixivIOSApp/6.4.0',
-            'Referer': 'http://www.pixiv.net/',
-            'Authorization': 'Bearer {}'.format(access_token)})
+        self._session.headers.update(
+            {
+                # 'User-Agent': 'PixivIOSApp/6.4.0',
+                'Referer': 'http://www.pixiv.net/',
+                'Authorization': 'Bearer {}'.format(access_token),
+            }
+        )
 
     async def find_exact_post(self, content: bytes) -> Optional[Post]:
         return None
 
     async def find_similar_posts(
-            self, content: bytes) -> List[Tuple[float, Post]]:
+        self, content: bytes
+    ) -> List[Tuple[float, Post]]:
         return []
 
     async def find_posts(self, query: str) -> AsyncIterable[Post]:
@@ -64,19 +68,24 @@ class PluginPixiv(PluginBase):
                         'include_sanity_level': True,
                         'image_sizes': ','.join(['small', 'medium', 'large']),
                         'profile_image_sizes': ','.join([]),
-                    })
+                    },
+                )
 
         else:
+
             async def page_getter(page: int, page_size: int) -> Dict:
-                return await self._get('/v1/search/works.json', params={
-                    'q': query,
-                    'page': page,
-                    'per_page': page_size,
-                    'include_stats': True,
-                    'include_sanity_level': True,
-                    'image_sizes': ','.join(['small', 'medium', 'large']),
-                    'profile_image_sizes': ','.join([]),
-                })
+                return await self._get(
+                    '/v1/search/works.json',
+                    params={
+                        'q': query,
+                        'page': page,
+                        'per_page': page_size,
+                        'include_stats': True,
+                        'include_sanity_level': True,
+                        'image_sizes': ','.join(['small', 'medium', 'large']),
+                        'profile_image_sizes': ','.join([]),
+                    },
+                )
 
         page = 1
         page_size = 50
@@ -95,38 +104,41 @@ class PluginPixiv(PluginBase):
                             (
                                 'http://www.pixiv.net/member_illust.php'
                                 '?mode=medium&illust_id={}'
-                            ).format(item['id'])),
+                            ).format(item['id'])
+                        ),
                         content_url=url,
                         width=item['width'],
                         height=item['height'],
                         source=None,
-                        title=item['title'])
+                        title=item['title'],
+                    )
 
             page_size = min(page_size, len(page_data['response']))
             page = page_data['pagination']['next']
 
     async def get_post_content(self, post: Post) -> bytes:
-        return (await asyncio.get_event_loop().run_in_executor(
-            None,
-            lambda: self._session.get(post.content_url))).content
+        return (
+            await asyncio.get_event_loop().run_in_executor(
+                None, lambda: self._session.get(post.content_url)
+            )
+        ).content
 
     async def upload_post(
-            self,
-            content: bytes,
-            source: Optional[str],
-            safety: Safety,
-            tags: List[str],
-            anonymous: bool) -> Optional[Post]:
+        self,
+        content: bytes,
+        source: Optional[str],
+        safety: Safety,
+        tags: List[str],
+        anonymous: bool,
+    ) -> Optional[Post]:
         raise NotImplementedError('Not implemented')
 
     async def _update_tag_cache(self) -> None:
         pass
 
     async def update_post(
-            self,
-            post_id: int,
-            safety: Safety,
-            tags: List[str]) -> None:
+        self, post_id: int, safety: Safety, tags: List[str]
+    ) -> None:
         raise NotImplementedError('Not implemented')
 
     async def _get(self, url: str, params: Dict) -> Dict:
@@ -135,4 +147,7 @@ class PluginPixiv(PluginBase):
                 None,
                 lambda: self._session.get(
                     'https://public-api.secure.pixiv.net/' + url.lstrip('/'),
-                    params=params)))
+                    params=params,
+                ),
+            )
+        )

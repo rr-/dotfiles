@@ -12,10 +12,11 @@ class FuzzyInput(urwid.ListBox):
     signals = ['accept']
 
     def __init__(
-            self,
-            plugin: PluginBase,
-            main_loop: urwid.MainLoop,
-            is_tag_used: Callable[[str], bool]) -> None:
+        self,
+        plugin: PluginBase,
+        main_loop: urwid.MainLoop,
+        is_tag_used: Callable[[str], bool],
+    ) -> None:
         self._plugin = plugin
         self._main_loop = main_loop
         self._is_tag_used = is_tag_used
@@ -27,7 +28,8 @@ class FuzzyInput(urwid.ListBox):
         self._update_alarm = None
         self._input_box = ReadlineEdit('', wrap=urwid.CLIP)
         urwid.signals.connect_signal(
-            self._input_box, 'change', self._on_text_change)
+            self._input_box, 'change', self._on_text_change
+        )
 
         super().__init__(urwid.SimpleListWalker([]))
         self._update_widgets()
@@ -37,8 +39,8 @@ class FuzzyInput(urwid.ListBox):
 
     def keypress(self, size: Tuple[int, int], key: str) -> Optional[str]:
         keymap: Dict[str, Callable[[Tuple[int, int]], None]] = {
-            'enter':     self._accept,
-            'tab':       self._select_prev,
+            'enter': self._accept,
+            'tab': self._select_prev,
             'shift tab': self._select_next,
         }
         if key in keymap:
@@ -73,16 +75,20 @@ class FuzzyInput(urwid.ListBox):
         if self._update_alarm:
             self._main_loop.remove_alarm(self._update_alarm)
         self._update_alarm = self._main_loop.set_alarm_in(
-            0.05, lambda *_: self._schedule_update_matches())
+            0.05, lambda *_: self._schedule_update_matches()
+        )
 
     def _on_results_focus_change(self, *_args: Any, **_kwargs: Any) -> None:
         urwid.signals.disconnect_signal(
-            self._input_box, 'change', self._on_text_change)
+            self._input_box, 'change', self._on_text_change
+        )
         self._input_box.set_edit_text(
-            common.box_to_ui(self._matches[self._focus][0]))
+            common.box_to_ui(self._matches[self._focus][0])
+        )
         self._input_box.set_edit_pos(len(self._input_box.text))
         urwid.signals.connect_signal(
-            self._input_box, 'change', self._on_text_change)
+            self._input_box, 'change', self._on_text_change
+        )
 
     def _schedule_update_matches(self) -> None:
         asyncio.ensure_future(self._update_matches())
@@ -98,8 +104,7 @@ class FuzzyInput(urwid.ListBox):
 
         matches = []
         for tag_name in tag_names:
-            tag_usage_count = (
-                await self._plugin.get_tag_usage_count(tag_name))
+            tag_usage_count = await self._plugin.get_tag_usage_count(tag_name)
             matches.append((tag_name, tag_usage_count))
 
         self._matches = matches
@@ -114,14 +119,20 @@ class FuzzyInput(urwid.ListBox):
                 attr_name = 'e-' + attr_name
             if i == self._focus:
                 attr_name = 'f-' + attr_name
-            columns_widget = urwid.Columns([
-                (urwid.Text(
-                    common.box_to_ui(tag_name),
-                    align=urwid.LEFT,
-                    wrap=urwid.CLIP,
-                    layout=EllipsisTextLayout())),
-                (urwid.PACK, urwid.Text(str(tag_usage_count))),
-            ], dividechars=1)
+            columns_widget = urwid.Columns(
+                [
+                    (
+                        urwid.Text(
+                            common.box_to_ui(tag_name),
+                            align=urwid.LEFT,
+                            wrap=urwid.CLIP,
+                            layout=EllipsisTextLayout(),
+                        )
+                    ),
+                    (urwid.PACK, urwid.Text(str(tag_usage_count))),
+                ],
+                dividechars=1,
+            )
             new_list.append(urwid.AttrWrap(columns_widget, attr_name))
         list.clear(self.body)
         self.body.extend(new_list)

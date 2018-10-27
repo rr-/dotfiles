@@ -31,19 +31,29 @@ SAFETY_MAP = {
 def parse_args() -> configargparse.Namespace:
     parser = cli.make_arg_parser('Sends post to various boorus.', PLUGINS)
     parser.add(
-        '-s', '--safety', metavar='SAFETY', default='safe', required=False,
+        '-s',
+        '--safety',
+        metavar='SAFETY',
+        default='safe',
+        required=False,
         choices=SAFETY_MAP.keys(),
-        help='post safety ({safe,questionable,explicit})')
+        help='post safety ({safe,questionable,explicit})',
+    )
     parser.add('--source', default='', help='post source')
     parser.add(
-        '-t', '--tags', nargs='*', metavar='TAG',
-        help='list of post tags')
+        '-t', '--tags', nargs='*', metavar='TAG', help='list of post tags'
+    )
     parser.add(
-        '--anonymous', action='store_true',
-        help='upload anonimously if possible')
+        '--anonymous',
+        action='store_true',
+        help='upload anonimously if possible',
+    )
     parser.add(
-        '-i', '--interactive', action='store_true',
-        help='open up interactive editor')
+        '-i',
+        '--interactive',
+        action='store_true',
+        help='open up interactive editor',
+    )
     parser.add(metavar='POST_PATH', dest='path', help='path to the post')
     return parser.parse_args()
 
@@ -54,11 +64,10 @@ async def confirm_similar_posts(plugin: PluginBase, content: bytes) -> None:
         return
     print('Similar posts found:')
     for similarity, post in similar_posts:
-        print('%.02f: %s (%dx%d)' % (
-            similarity,
-            post.site_url,
-            post.width,
-            post.height))
+        print(
+            '%.02f: %s (%dx%d)'
+            % (similarity, post.site_url, post.width, post.height)
+        )
     await aioconsole.ainput('Hit enter to continue, ^C to abort\n')
 
 
@@ -74,7 +83,8 @@ async def run(args: configargparse.Namespace) -> int:
         safety=SAFETY_MAP[args.safety],
         source=args.source,
         tags=args.tags or [],
-        anonymous=args.anonymous)
+        anonymous=args.anonymous,
+    )
 
     try:
         content = upload_settings.read_content()
@@ -106,11 +116,13 @@ async def run(args: configargparse.Namespace) -> int:
             if post:
                 if upload_settings.anonymous:
                     raise errors.ApiError(
-                        'Anonymous post updates are not supported.')
+                        'Anonymous post updates are not supported.'
+                    )
                 await plugin.update_post(
                     post.id,
                     safety=upload_settings.safety,
-                    tags=upload_settings.tag_names)
+                    tags=upload_settings.tag_names,
+                )
                 print('Updated.')
             else:
                 post = await plugin.upload_post(
@@ -118,7 +130,8 @@ async def run(args: configargparse.Namespace) -> int:
                     source=upload_settings.source,
                     safety=upload_settings.safety,
                     tags=upload_settings.tag_names,
-                    anonymous=upload_settings.anonymous)
+                    anonymous=upload_settings.anonymous,
+                )
                 print('Uploaded.')
 
             if post:

@@ -23,26 +23,26 @@ class EllipsisTextLayout(urwid.TextLayout):
         offset = 1
         if align == urwid.LEFT:
             while True:
-                part = text[0:len(text) - len(ELLIPSIS) - offset] + ELLIPSIS
+                part = text[0 : len(text) - len(ELLIPSIS) - offset] + ELLIPSIS
                 if urwid.util.calc_width(part, 0, len(part)) <= width:
                     break
                 offset += 1
             text_segment = (
                 len(text) - offset - len(ELLIPSIS),
                 0,
-                len(text) - offset - len(ELLIPSIS)
+                len(text) - offset - len(ELLIPSIS),
             )
             return [[text_segment, ellipsis_segment]]
         elif align == urwid.RIGHT:
             while True:
-                part = ELLIPSIS + text[len(ELLIPSIS) + offset:]
+                part = ELLIPSIS + text[len(ELLIPSIS) + offset :]
                 if urwid.util.calc_width(part, 0, len(part)) <= width:
                     break
                 offset += 1
             text_segment = (
                 len(text) - offset - len(ELLIPSIS),
                 offset + len(ELLIPSIS),
-                len(text)
+                len(text),
             )
             return [[ellipsis_segment, text_segment]]
         else:
