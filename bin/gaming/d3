@@ -1,4 +1,0 @@
-#!/bin/sh
-DIR="$HOME/.wine/drive_c/Program Files (x86)/Diablo III"
-cd "$DIR"
-wine "$DIR/Diablo III.exe" -w -launch
