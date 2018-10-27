@@ -23,9 +23,7 @@ class NetworkUsageWidget(Widget):
     delay = 1
 
     def __init__(
-            self,
-            app: QtWidgets.QApplication,
-            main_window: QtWidgets.QWidget,
+        self, app: QtWidgets.QApplication, main_window: QtWidgets.QWidget
     ) -> None:
         super().__init__(app, main_window)
         self.net_in = 0
@@ -82,10 +80,7 @@ class NetworkUsageWidget(Widget):
 
     @property
     def available(self) -> bool:
-        return (
-            self._rx_path is not None and
-            self._tx_path is not None
-        )
+        return self._rx_path is not None and self._tx_path is not None
 
     def _refresh_impl(self) -> None:
         rx_bytes = int(self._rx_path.read_text().strip())

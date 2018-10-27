@@ -12,9 +12,7 @@ class CpuWidget(Widget):
     delay = 0
 
     def __init__(
-            self,
-            app: QtWidgets.QApplication,
-            main_window: QtWidgets.QWidget,
+        self, app: QtWidgets.QApplication, main_window: QtWidgets.QWidget
     ) -> None:
         super().__init__(app, main_window)
         self.percentage: T.Optional[float] = None

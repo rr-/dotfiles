@@ -20,7 +20,9 @@ from panel.widgets.time import TimeWidget
 from panel.widgets.volume import VolumeWidget
 from panel.widgets.window_title import WindowTitleWidget
 from panel.widgets.workspaces import (
-    Monitor, WorkspacesUpdater, WorkspacesWidget
+    Monitor,
+    WorkspacesUpdater,
+    WorkspacesWidget,
 )
 
 STYLESHEET_TEMPLATE = '''
@@ -72,13 +74,12 @@ class MainWindow(QtWidgets.QMainWindow):
         super().__init__(flags=QtCore.Qt.FramelessWindowHint)
         self.setAttribute(QtCore.Qt.WA_TranslucentBackground, True)
         self.setWindowFlags(
-            QtCore.Qt.SplashScreen |
-            QtCore.Qt.WindowStaysOnTopHint |
-            QtCore.Qt.X11BypassWindowManagerHint
+            QtCore.Qt.SplashScreen
+            | QtCore.Qt.WindowStaysOnTopHint
+            | QtCore.Qt.X11BypassWindowManagerHint
         )
         self.setFixedSize(
-            monitors[0].width / self.devicePixelRatioF(),
-            settings.HEIGHT,
+            monitors[0].width / self.devicePixelRatioF(), settings.HEIGHT
         )
         self.move(0, 0)
         self.show()
@@ -86,8 +87,8 @@ class MainWindow(QtWidgets.QMainWindow):
         window_gap = int(run(['bspc', 'config', 'window_gap']).stdout)
         window_border = int(run(['bspc', 'config', 'border_width']).stdout)
         content_margin = (
-            (window_gap + window_border) / self.devicePixelRatioF()
-        )
+            window_gap + window_border
+        ) / self.devicePixelRatioF()
 
         self.setStyleSheet(STYLESHEET_TEMPLATE.format(colors=Colors))
 
@@ -134,12 +135,16 @@ def main() -> None:
 
     physical_height = main_window.height() * app.devicePixelRatio()
     for monitor in workspaces_updater.monitors:
-        run([
-            'bspc',
-            'config',
-            '-m', monitor.name or '?',
-            'top_padding', str(physical_height),
-        ])
+        run(
+            [
+                'bspc',
+                'config',
+                '-m',
+                monitor.name or '?',
+                'top_padding',
+                str(physical_height),
+            ]
+        )
 
     for widget in widgets:
         if not widget.available:
@@ -147,9 +152,7 @@ def main() -> None:
             continue
         main_window.centralWidget().layout().addWidget(widget.container)
         thread = threading.Thread(
-            target=worker,
-            args=(widget, main_window.trigger),
-            daemon=True,
+            target=worker, args=(widget, main_window.trigger), daemon=True
         )
         thread.start()
 

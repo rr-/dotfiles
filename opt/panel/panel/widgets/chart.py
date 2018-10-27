@@ -23,7 +23,8 @@ class Chart(QtWidgets.QWidget):
 
         highest = (
             max(p for points in self.points.values() for p in points)
-            if len(self.points) else 0
+            if len(self.points)
+            else 0
         )
 
         def x_transform(x: float) -> float:

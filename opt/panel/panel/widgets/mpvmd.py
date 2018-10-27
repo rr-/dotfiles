@@ -46,9 +46,7 @@ class Info:
     @property
     def random_playback(self) -> bool:
         return (
-            self.raw
-            .get('script-opts', {})
-            .get('random_playback', 'no')
+            self.raw.get('script-opts', {}).get('random_playback', 'no')
         ) == 'yes'
 
 
@@ -139,9 +137,7 @@ class MpvmdWidget(Widget):
     delay = 0
 
     def __init__(
-            self,
-            app: QtWidgets.QApplication,
-            main_window: QtWidgets.QWidget,
+        self, app: QtWidgets.QApplication, main_window: QtWidgets.QWidget
     ) -> None:
         super().__init__(app, main_window)
         self._connection = Connection()
@@ -226,9 +222,9 @@ class MpvmdWidget(Widget):
         if self._info.metadata.get('title'):
             if self._info.metadata.get('artist'):
                 text = (
-                    self._info.metadata['artist'] +
-                    ' - ' +
-                    self._info.metadata['title']
+                    self._info.metadata['artist']
+                    + ' - '
+                    + self._info.metadata['title']
                 )
             else:
                 text = self._info.metadata['title']
