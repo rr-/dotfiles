@@ -30,7 +30,8 @@ class EdictKanji(_Base):
         sa.Integer,
         sa.ForeignKey('entry.id'),
         nullable=False,
-        index=True)
+        index=True,
+    )
 
     kanji: str = sa.Column('kanji', sa.String, index=True)
     kana: str = sa.Column('kana', sa.String, index=True)
@@ -47,7 +48,8 @@ class EdictGlossary(_Base):
         sa.Integer,
         sa.ForeignKey('entry.id'),
         nullable=False,
-        index=True)
+        index=True,
+    )
 
     english: str = sa.Column('english', sa.String, index=True)
     tags: t.Sequence[str] = sa.Column('tags', sa.PickleType)
@@ -61,9 +63,11 @@ class EdictEntry(_Base):
 
     id: int = sa.Column('id', sa.Integer, primary_key=True)
     glossaries: t.List[EdictGlossary] = sa.orm.relationship(
-        EdictGlossary, backref='entry')
+        EdictGlossary, backref='entry'
+    )
     kanji: t.List[EdictKanji] = sa.orm.relationship(
-        EdictKanji, backref='entry')
+        EdictKanji, backref='entry'
+    )
     tags: t.Sequence[str] = sa.Column('tags', sa.PickleType)
     ent_seq: t.Optional[str] = sa.Column('ent_seq', sa.String)
 
@@ -86,7 +90,8 @@ def init() -> None:
     _Base.metadata.create_all(bind=engine)
     global _session
     _session = sa.orm.scoped_session(
-        sa.orm.session.sessionmaker(bind=engine, autoflush=False))
+        sa.orm.session.sessionmaker(bind=engine, autoflush=False)
+    )
 
 
 def exists() -> bool:
@@ -125,43 +130,41 @@ def put_entries(parsed_entries: t.Iterable[parser.EdictEntry]) -> None:
 
 
 def search_entries_by_regex(
-        patterns: t.List[str], sources: enum.Flag) -> t.List[EdictEntry]:
+    patterns: t.List[str], sources: enum.Flag
+) -> t.List[EdictEntry]:
     entries: t.Dict[int, t.Tuple[int, EdictEntry]] = {}
 
     if sources & SearchSource.KANJI:
-        kanjis = (
-            _session
-            .query(EdictKanji)
-            .filter(
-                sa.and_(
-                    EdictKanji.kanji.op('regexp')(pattern)
-                    for pattern in patterns)))
+        kanjis = _session.query(EdictKanji).filter(
+            sa.and_(
+                EdictKanji.kanji.op('regexp')(pattern) for pattern in patterns
+            )
+        )
         for kanji in kanjis:
             entries[kanji.entry.id] = (len(kanji.kanji), kanji.entry)
 
     if sources & SearchSource.KANA:
-        kanjis = (
-            _session
-            .query(EdictKanji)
-            .filter(
-                sa.and_(
-                    EdictKanji.kana.op('regexp')(pattern)
-                    for pattern in patterns)))
+        kanjis = _session.query(EdictKanji).filter(
+            sa.and_(
+                EdictKanji.kana.op('regexp')(pattern) for pattern in patterns
+            )
+        )
         for kanji in kanjis:
             entries[kanji.entry.id] = (len(kanji.kana), kanji.entry)
 
     if sources & SearchSource.ENGLISH:
-        glossaries = (
-            _session
-            .query(EdictGlossary)
-            .filter(sa.and_(
+        glossaries = _session.query(EdictGlossary).filter(
+            sa.and_(
                 EdictGlossary.english.op('regexp')(pattern)
-                for pattern in patterns)))
+                for pattern in patterns
+            )
+        )
         for glossary in glossaries:
             entries[glossary.entry.id] = (
-                len(glossary.english), glossary.entry)
+                len(glossary.english),
+                glossary.entry,
+            )
 
     return [
-        item[1]
-        for item in sorted(entries.values(), key=lambda item: item[0])
+        item[1] for item in sorted(entries.values(), key=lambda item: item[0])
     ]

@@ -20,12 +20,13 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument('pattern', nargs='+', help='regex to search for')
     parser.add_argument('--tags', nargs='*', help='regex to search tags for')
     group = parser.add_mutually_exclusive_group()
+    group.add_argument('--kana', action='store_true', help='search only kana')
     group.add_argument(
-        '--kana', action='store_true', help='search only kana')
+        '--kanji', action='store_true', help='search only kanji'
+    )
     group.add_argument(
-        '--kanji', action='store_true', help='search only kanji')
-    group.add_argument(
-        '--english', action='store_true', help='search only English')
+        '--english', action='store_true', help='search only English'
+    )
     return parser.parse_args()
 
 
@@ -52,7 +53,9 @@ def main() -> None:
     args = parse_args()
     patterns: t.List[str] = args.pattern
     tag_patterns: t.List[str] = args.tags or []
-    sources: db.SearchSource = reduce(lambda x, y: x | y, list(db.SearchSource))
+    sources: db.SearchSource = reduce(
+        lambda x, y: x | y, list(db.SearchSource)
+    )
     if args.kanji:
         sources = db.SearchSource.KANJI
     elif args.kana:
@@ -67,7 +70,9 @@ def main() -> None:
         for entry in entries
         if all(
             any(re.match(tag_pattern, tag, re.I) for tag in entry.tags)
-            for tag_pattern in tag_patterns)]
+            for tag_pattern in tag_patterns
+        )
+    ]
 
     for entry in entries:
         print('({})'.format(','.join(entry.tags)))
