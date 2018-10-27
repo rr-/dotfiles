@@ -13,23 +13,23 @@ def _serialize_tags(tags: Dict[int, Tag]) -> str:
         [
             [
                 tag_id,
-                ' '.join(tag['names']),
-                ' '.join(tag['implications']),
-                ' '.join(tag['suggestions']),
-                tag['category'],
-                tag['usages'],
+                " ".join(tag["names"]),
+                " ".join(tag["implications"]),
+                " ".join(tag["suggestions"]),
+                tag["category"],
+                tag["usages"],
             ]
             for tag_id, tag in tags.items()
         ],
         headers=[
-            'ID',
-            'Names',
-            'Implications',
-            'Suggestions',
-            'Category',
-            'Usages',
+            "ID",
+            "Names",
+            "Implications",
+            "Suggestions",
+            "Category",
+            "Usages",
         ],
-        tablefmt='pipe',
+        tablefmt="pipe",
     )
 
 
@@ -37,21 +37,21 @@ def _deserialize_tags(text: str) -> Dict[int, Tag]:
     ret: Dict[int, Tag] = {}
 
     past_header = False
-    for i, line in enumerate(text.split('\n')):
+    for i, line in enumerate(text.split("\n")):
         try:
             if not line:
                 continue
-            if not line.startswith('|') or not line.endswith('|'):
+            if not line.startswith("|") or not line.endswith("|"):
                 raise ValueError('Line should start and end with "|"')
 
-            if ' ' not in line.strip():
+            if " " not in line.strip():
                 past_header = True
             elif past_header:
-                row = [cell.strip() for cell in line.strip('|').split('|')]
+                row = [cell.strip() for cell in line.strip("|").split("|")]
 
-                if '->' in row[0]:
+                if "->" in row[0]:
                     tag_id, target_tag_id = [
-                        int(x.strip()) for x in row[0].split('->')
+                        int(x.strip()) for x in row[0].split("->")
                     ]
                 else:
                     tag_id = int(row[0])
@@ -64,56 +64,56 @@ def _deserialize_tags(text: str) -> Dict[int, Tag]:
                 tag_usages = int(row[5])
 
                 if tag_id in ret:
-                    raise ValueError('Tag {} appears twice'.format(tag_id))
+                    raise ValueError("Tag {} appears twice".format(tag_id))
 
                 ret[tag_id] = {
-                    'names': tag_names,
-                    'implications': tag_implications,
-                    'suggestions': tag_suggestions,
-                    'category': tag_category,
-                    'merge-to': target_tag_id,
+                    "names": tag_names,
+                    "implications": tag_implications,
+                    "suggestions": tag_suggestions,
+                    "category": tag_category,
+                    "merge-to": target_tag_id,
                 }
 
         except (ValueError, IndexError) as ex:
-            raise ValueError('Syntax error near line {}: {}'.format(i + 1, ex))
+            raise ValueError("Syntax error near line {}: {}".format(i + 1, ex))
 
     for tag in ret.values():
-        if tag['merge-to'] and tag['merge-to'] not in ret:
+        if tag["merge-to"] and tag["merge-to"] not in ret:
             raise ValueError(
-                'Merging to non-existing tag {}'.format(tag['merge-to'])
+                "Merging to non-existing tag {}".format(tag["merge-to"])
             )
 
     if not past_header:
-        raise ValueError('Syntax error: header not found')
+        raise ValueError("Syntax error: header not found")
 
     return ret
 
 
 def _confirm_relations(api: Api, request: Dict):
     for implication in set(
-        request.get('implications', []) + request.get('suggestions', [])
+        request.get("implications", []) + request.get("suggestions", [])
     ):
         try:
             api.get_tag(implication)
         except ApiError:
-            print('Warning: tag {} does not exist.'.format(implication))
+            print("Warning: tag {} does not exist.".format(implication))
 
 
 def _edit_tags_interactively(tags: Dict[int, Tag]) -> Dict[int, Tag]:
     return util.run_editor(
-        'tags.txt', tags, _serialize_tags, _deserialize_tags
+        "tags.txt", tags, _serialize_tags, _deserialize_tags
     )
 
 
 def _delete_tag(
     api: Api, autotag_settings: AutoTagSettings, tag: Tag, dry_run: bool
 ) -> None:
-    if util.confirm('Delete tag {}?'.format(tag['names'][0])):
+    if util.confirm("Delete tag {}?".format(tag["names"][0])):
         if not dry_run:
             api.delete_tag(tag)
-    for tag_name in tag['names']:
+    for tag_name in tag["names"]:
         if not autotag_settings.is_tag_banned(tag_name):
-            if util.confirm('Ban autotagging {}?'.format(tag_name)):
+            if util.confirm("Ban autotagging {}?".format(tag_name)):
                 if not dry_run:
                     autotag_settings.ban_tag(tag_name)
 
@@ -122,36 +122,36 @@ def _create_tag(
     api: Api, autotag_settings: AutoTagSettings, tag: Tag, dry_run: bool
 ) -> Tag:
     _confirm_relations(api, tag)
-    if util.confirm('Create tag {}?'.format(tag['names'][0])):
+    if util.confirm("Create tag {}?".format(tag["names"][0])):
         if not dry_run:
             tag = api.create_tag(tag)
-    for tag_name in tag['names']:
+    for tag_name in tag["names"]:
         if autotag_settings.is_tag_banned(tag_name):
-            if util.confirm('Unban autotagging {}?'.format(tag_name)):
+            if util.confirm("Unban autotagging {}?".format(tag_name)):
                 if not dry_run:
                     autotag_settings.unban_tag(tag_name)
     return tag
 
 
 def _update_tag(api: Api, old_tag: Tag, new_tag: Tag, dry_run: bool) -> Tag:
-    if not 'version' in new_tag:
-        new_tag['version'] = old_tag['version']
+    if not "version" in new_tag:
+        new_tag["version"] = old_tag["version"]
 
     request: Dict = {}
-    for key in ['names', 'implications', 'suggestions']:
+    for key in ["names", "implications", "suggestions"]:
         if sorted(old_tag[key]) != sorted(new_tag[key]):
             request[key] = new_tag[key]
-    if old_tag['category'] != new_tag['category']:
-        request['category'] = new_tag['category']
+    if old_tag["category"] != new_tag["category"]:
+        request["category"] = new_tag["category"]
 
     if request:
         _confirm_relations(api, request)
         if util.confirm(
-            'Update tag {} ({})?'.format(new_tag['names'][0], request)
+            "Update tag {} ({})?".format(new_tag["names"][0], request)
         ):
-            request['version'] = old_tag['version']
+            request["version"] = old_tag["version"]
             if not dry_run:
-                return api.update_tag(old_tag['names'][0], request)
+                return api.update_tag(old_tag["names"][0], request)
     return new_tag
 
 
@@ -163,15 +163,15 @@ def _merge_tags(
     dry_run: bool,
 ) -> Tag:
     if util.confirm(
-        'Merge tag {} to {}?'.format(old_tag['names'][0], new_tag['names'][0])
+        "Merge tag {} to {}?".format(old_tag["names"][0], new_tag["names"][0])
     ):
         if not dry_run:
             new_tag = api.merge_tags(old_tag, new_tag)
-    for tag_name in old_tag['names']:
-        if util.confirm('Set up autotagging alias {}?'.format(tag_name)):
+    for tag_name in old_tag["names"]:
+        if util.confirm("Set up autotagging alias {}?".format(tag_name)):
             if not dry_run:
-                autotag_settings.set_tag_alias(tag_name, new_tag['names'][0])
-        elif util.confirm('Ban autotagging {}?'.format(tag_name)):
+                autotag_settings.set_tag_alias(tag_name, new_tag["names"][0])
+        elif util.confirm("Ban autotagging {}?".format(tag_name)):
             if not dry_run:
                 autotag_settings.ban_tag(tag_name)
     return new_tag
@@ -198,8 +198,8 @@ def _update_tags(
             else:
                 old_tag = old_tags[new_tag_id]
                 new_tag.update(_update_tag(api, old_tag, new_tag, dry_run))
-                if new_tag['merge-to']:
-                    target_tag = old_tags[new_tag['merge-to']]
+                if new_tag["merge-to"]:
+                    target_tag = old_tags[new_tag["merge-to"]]
                     resulting_tag = _merge_tags(
                         api, autotag_settings, new_tag, target_tag, dry_run
                     )
@@ -227,10 +227,10 @@ class EditTagsCommand(BaseCommand):
         parent_parser: configargparse.ArgumentParser
     ) -> configargparse.ArgumentParser:
         parser = parent_parser.add_parser(
-            'edit', help='edit tags interactively'
+            "edit", help="edit tags interactively"
         )
-        parser.add('query', help='query to filter the tags with')
+        parser.add("query", help="query to filter the tags with")
         parser.add_argument(
-            '--dry-run', action='store_true', help='Don\'t do anything.'
+            "--dry-run", action="store_true", help="Don't do anything."
         )
         return parser
