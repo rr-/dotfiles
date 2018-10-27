@@ -20,20 +20,19 @@ class UploadTooBigIqdbError(IqdbError):
 
 
 def _query(path):
-    data = {
-        'service': list(range(100)),  # all services, present and future
-    }
+    data = {'service': list(range(100))}  # all services, present and future
     if path.startswith('http'):
         data['url'] = path
         response = requests.post(IQDB_URL, data=data)
     else:
         with open(path, 'rb') as handle:
             response = requests.post(
-                IQDB_URL, files={'file': handle}, data=data)
+                IQDB_URL, files={'file': handle}, data=data
+            )
     return response.text
 
 
-class IqdbResult():
+class IqdbResult:
     def __init__(self, url, thumbnail_url):
         self.url = url
         self.thumbnail_url = thumbnail_url
@@ -64,7 +63,8 @@ def search(path):
             a_elements = table_element.select('a')
 
             thumbnail_url = urllib.parse.urljoin(
-                IQDB_URL, table_element.select('.image img')[0]['src'])
+                IQDB_URL, table_element.select('.image img')[0]['src']
+            )
 
             similarity = None
             width = None

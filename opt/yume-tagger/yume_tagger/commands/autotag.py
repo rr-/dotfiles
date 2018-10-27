@@ -67,7 +67,8 @@ def _get_tags_from_danbooru(url: str) -> Iterable[_ThirdPartyTag]:
     post_id = int(match.group(1))
     session = requests.Session()
     response = session.get(
-        'http://danbooru.donmai.us/posts/{}.json'.format(post_id))
+        'http://danbooru.donmai.us/posts/{}.json'.format(post_id)
+    )
     post = json.loads(response.text)
     for category in ['artist', 'character', 'copyright', 'general']:
         for name in post['tag_string_' + category].split(' '):
@@ -97,7 +98,8 @@ def _get_third_party_tag_sources(post_url: str) -> List[str]:
         return [
             result.url
             for result in iqdb.search(post_url)
-            if result.similarity >= 0.90]
+            if result.similarity >= 0.90
+        ]
     except iqdb.NothingFoundIqdbError:
         return []
     except iqdb.UploadTooBigIqdbError:
@@ -105,12 +107,15 @@ def _get_third_party_tag_sources(post_url: str) -> List[str]:
 
 
 def _get_post(
-        api: Api,
-        autotag_settings: AutoTagSettings,
-        post_id: int,
-        skip_history: bool) -> Optional[Post]:
-    if post_id in autotag_settings.get_processed_post_ids() \
-            and not skip_history:
+    api: Api,
+    autotag_settings: AutoTagSettings,
+    post_id: int,
+    skip_history: bool,
+) -> Optional[Post]:
+    if (
+        post_id in autotag_settings.get_processed_post_ids()
+        and not skip_history
+    ):
         print('Skipping post {} - already processed'.format(post_id))
         return None
 
@@ -122,9 +127,8 @@ def _get_post(
 
 
 def _collect_third_party_tags(
-        post: Post,
-        source: Optional[str],
-        skip_cache: bool) -> List[_ThirdPartyTag]:
+    post: Post, source: Optional[str], skip_cache: bool
+) -> List[_ThirdPartyTag]:
     print('Collecting third party tags...')
 
     cache_path = CACHE_PATH.joinpath('autotagger-{}.dat'.format(post['id']))
@@ -133,7 +137,8 @@ def _collect_third_party_tags(
         sources = result['sources']
         third_party_tags = [
             _ThirdPartyTag(
-                name=item[0], category=item[1], source=sources[item[2]])
+                name=item[0], category=item[1], source=sources[item[2]]
+            )
             for item in result['tags']
         ]
     else:
@@ -147,13 +152,18 @@ def _collect_third_party_tags(
         third_party_tags = _get_third_party_tags(sources)
 
         cache_path.parent.mkdir(parents=True, exist_ok=True)
-        cache_path.write_text(json.dumps({
-            'sources': sources,
-            'tags': [
-                (tag.name, tag.category, sources.index(tag.source))
-                for tag in third_party_tags
-            ],
-        }, separators=(',', ':')))
+        cache_path.write_text(
+            json.dumps(
+                {
+                    'sources': sources,
+                    'tags': [
+                        (tag.name, tag.category, sources.index(tag.source))
+                        for tag in third_party_tags
+                    ],
+                },
+                separators=(',', ':'),
+            )
+        )
 
     sources.sort()
 
@@ -168,16 +178,16 @@ def _collect_third_party_tags(
 
     print('Tags:')
     for tag in third_party_tags:
-        print('- (#{}) {}'.format(
-            sources.index(tag.source) + 1, tag.name))
+        print('- (#{}) {}'.format(sources.index(tag.source) + 1, tag.name))
     print()
     return third_party_tags
 
 
 def _sanitize_third_party_tags(
-        api: Api,
-        autotag_settings: AutoTagSettings,
-        third_party_tags: List[_ThirdPartyTag]) -> Iterable[_ThirdPartyTag]:
+    api: Api,
+    autotag_settings: AutoTagSettings,
+    third_party_tags: List[_ThirdPartyTag],
+) -> Iterable[_ThirdPartyTag]:
     print('Sanitizing third party tags...')
     for tag in third_party_tags:
         if autotag_settings.is_tag_banned(tag.name):
@@ -205,14 +215,14 @@ def _sanitize_third_party_tags(
         yield _ThirdPartyTag(
             name=sanitized_name,
             category=autotag_settings.translate_tag_category(tag.category),
-            source=tag.source)
+            source=tag.source,
+        )
     print()
 
 
 def _get_sync_info(
-        api: Api,
-        post: Post,
-        sanitized_third_party_tags: List[_ThirdPartyTag]) -> _SyncInfo:
+    api: Api, post: Post, sanitized_third_party_tags: List[_ThirdPartyTag]
+) -> _SyncInfo:
     sync_info = _SyncInfo()
     sync_info.source_tags = [tag['names'][0].lower() for tag in post['tags']]
     sync_info.target_tags = sync_info.source_tags[:]
@@ -244,8 +254,8 @@ def _get_sync_info(
 
 
 def _create_new_tags(
-        api: Optional[Api],
-        tags_to_create: List[_ThirdPartyTag]) -> None:
+    api: Optional[Api], tags_to_create: List[_ThirdPartyTag]
+) -> None:
     print('Creating new tags...')
     if not tags_to_create:
         print('(no tags to create.)')
@@ -255,59 +265,66 @@ def _create_new_tags(
                 new_tag.name = util.capitalize(new_tag.name)
             print('- {}'.format(new_tag.name))
             if api:
-                api.create_tag({
-                    'names': [new_tag.name],
-                    'category': new_tag.category,
-                })
+                api.create_tag(
+                    {'names': [new_tag.name], 'category': new_tag.category}
+                )
         print('Created {} new tags.'.format(len(tags_to_create)))
     print()
 
 
 def _update_post_tags(
-        api: Optional[Api],
-        post: Post,
-        source_tags: List[str],
-        target_tags: List[str]) -> None:
+    api: Optional[Api],
+    post: Post,
+    source_tags: List[str],
+    target_tags: List[str],
+) -> None:
     print('Updating post tags...')
     if target_tags == source_tags:
         print('(nothing to be done.)')
     else:
         for tag_name in target_tags:
-            print('- {}{}'.format(
-                '(new) ' if tag_name not in source_tags else '',
-                tag_name))
+            print(
+                '- {}{}'.format(
+                    '(new) ' if tag_name not in source_tags else '', tag_name
+                )
+            )
         if api:
             api.update_post(
                 post['id'],
                 {
                     'tags': [tag_name for tag_name in target_tags],
                     'version': post['version'],
-                })
+                },
+            )
         print('Added {} new tags.'.format(len(target_tags) - len(source_tags)))
     print()
 
 
 def _sync(
-        api: Api,
-        autotag_settings: AutoTagSettings,
-        post_id: int,
-        source: Optional[str],
-        force: Force,
-        dry_run: bool) -> None:
+    api: Api,
+    autotag_settings: AutoTagSettings,
+    post_id: int,
+    source: Optional[str],
+    force: Force,
+    dry_run: bool,
+) -> None:
     post = _get_post(api, autotag_settings, post_id, force >= Force.TagAgain)
     if not post:
         return
     third_party_tags = _collect_third_party_tags(
-        post, source, force >= Force.DownloadAgain)
-    sanitized_third_party_tags = list(_sanitize_third_party_tags(
-        api, autotag_settings, third_party_tags))
+        post, source, force >= Force.DownloadAgain
+    )
+    sanitized_third_party_tags = list(
+        _sanitize_third_party_tags(api, autotag_settings, third_party_tags)
+    )
     sync_info = _get_sync_info(api, post, sanitized_third_party_tags)
     _create_new_tags(None if dry_run else api, sync_info.tags_to_create)
     _update_post_tags(
         None if dry_run else api,
         post,
         sync_info.source_tags,
-        sync_info.target_tags)
+        sync_info.target_tags,
+    )
 
 
 class AutoTagChosenPostCommand(BaseCommand):
@@ -324,7 +341,8 @@ class AutoTagChosenPostCommand(BaseCommand):
                 post_id,
                 source,
                 force,
-                dry_run)
+                dry_run,
+            )
             if not dry_run:
                 self._autotag_settings.mark_as_tagged(post_id)
         except Exception as ex:
@@ -334,25 +352,35 @@ class AutoTagChosenPostCommand(BaseCommand):
 
     @staticmethod
     def _create_parser(
-            parent_parser: configargparse.ArgumentParser
+        parent_parser: configargparse.ArgumentParser
     ) -> configargparse.ArgumentParser:
         parser = parent_parser.add_parser(
-            'autotag-chosen', help='fetch tags for chosen posts')
+            'autotag-chosen', help='fetch tags for chosen posts'
+        )
         parser.set_defaults(force=Force.NoForce)
         parser.add_argument(
-            'post_id', type=int, help='ID of the post to edit the tags for.')
+            'post_id', type=int, help='ID of the post to edit the tags for.'
+        )
         parser.add_argument(
-            '-f', dest='force',
-            action='store_const', const=Force.TagAgain, help=(
-                'Force tagging even if the post was processed earlier.'))
+            '-f',
+            dest='force',
+            action='store_const',
+            const=Force.TagAgain,
+            help=('Force tagging even if the post was processed earlier.'),
+        )
         parser.add_argument(
-            '-ff', dest='force',
-            action='store_const', const=Force.DownloadAgain, help=(
-                'Same as -f, but ignores IQDB cache.'))
+            '-ff',
+            dest='force',
+            action='store_const',
+            const=Force.DownloadAgain,
+            help=('Same as -f, but ignores IQDB cache.'),
+        )
         parser.add_argument(
-            '--source', help='Source URL where to get tags from.')
+            '--source', help='Source URL where to get tags from.'
+        )
         parser.add_argument(
-            '--dry-run', action='store_true', help='Don\'t do anything.')
+            '--dry-run', action='store_true', help='Don\'t do anything.'
+        )
         return parser
 
 
@@ -371,7 +399,8 @@ class AutoTagNewestPostCommand(BaseCommand):
                 post_id,
                 None,
                 Force.NoForce,
-                dry_run)
+                dry_run,
+            )
             if not dry_run:
                 self._autotag_settings.mark_as_tagged(post_id)
         except Exception as ex:
@@ -381,12 +410,14 @@ class AutoTagNewestPostCommand(BaseCommand):
 
     @staticmethod
     def _create_parser(
-            parent_parser: configargparse.ArgumentParser
+        parent_parser: configargparse.ArgumentParser
     ) -> configargparse.ArgumentParser:
         parser = parent_parser.add_parser(
-            'autotag-newest', help='fetch tags for newest posts')
+            'autotag-newest', help='fetch tags for newest posts'
+        )
         parser.add_argument(
-            '--dry-run', action='store_true', help='Don\'t do anything.')
+            '--dry-run', action='store_true', help='Don\'t do anything.'
+        )
         return parser
 
     def _get_last_post_id(self) -> Optional[int]:

@@ -27,10 +27,11 @@ def capitalize(name: str) -> str:
 
 
 def run_editor(
-        file_name: str,
-        source: Any,
-        serializer: Callable[[Any], str],
-        deserializer: Callable[[str], Any]) -> Any:
+    file_name: str,
+    source: Any,
+    serializer: Callable[[Any], str],
+    deserializer: Callable[[str], Any],
+) -> Any:
     text = serializer(source)
     with tempfile.TemporaryDirectory() as tmp_dir:
         path: Path = Path(tmp_dir).joinpath(file_name)
@@ -42,5 +43,7 @@ def run_editor(
                 return deserializer(text)
             except ValueError as ex:
                 input(
-                    'Error: {}. Press return to edit again, ^C to abort. '
-                    .format(ex))
+                    'Error: {}. Press return to edit again, ^C to abort. '.format(
+                        ex
+                    )
+                )

@@ -29,7 +29,8 @@ def _serialize_tags(tags: Dict[int, Tag]) -> str:
             'Category',
             'Usages',
         ],
-        tablefmt='pipe')
+        tablefmt='pipe',
+    )
 
 
 def _deserialize_tags(text: str) -> Dict[int, Tag]:
@@ -50,7 +51,8 @@ def _deserialize_tags(text: str) -> Dict[int, Tag]:
 
                 if '->' in row[0]:
                     tag_id, target_tag_id = [
-                        int(x.strip()) for x in row[0].split('->')]
+                        int(x.strip()) for x in row[0].split('->')
+                    ]
                 else:
                     tag_id = int(row[0])
                     target_tag_id = None
@@ -78,7 +80,8 @@ def _deserialize_tags(text: str) -> Dict[int, Tag]:
     for tag in ret.values():
         if tag['merge-to'] and tag['merge-to'] not in ret:
             raise ValueError(
-                'Merging to non-existing tag {}'.format(tag['merge-to']))
+                'Merging to non-existing tag {}'.format(tag['merge-to'])
+            )
 
     if not past_header:
         raise ValueError('Syntax error: header not found')
@@ -88,8 +91,8 @@ def _deserialize_tags(text: str) -> Dict[int, Tag]:
 
 def _confirm_relations(api: Api, request: Dict):
     for implication in set(
-            request.get('implications', []) +
-            request.get('suggestions', [])):
+        request.get('implications', []) + request.get('suggestions', [])
+    ):
         try:
             api.get_tag(implication)
         except ApiError:
@@ -98,14 +101,13 @@ def _confirm_relations(api: Api, request: Dict):
 
 def _edit_tags_interactively(tags: Dict[int, Tag]) -> Dict[int, Tag]:
     return util.run_editor(
-        'tags.txt', tags, _serialize_tags, _deserialize_tags)
+        'tags.txt', tags, _serialize_tags, _deserialize_tags
+    )
 
 
 def _delete_tag(
-        api: Api,
-        autotag_settings: AutoTagSettings,
-        tag: Tag,
-        dry_run: bool) -> None:
+    api: Api, autotag_settings: AutoTagSettings, tag: Tag, dry_run: bool
+) -> None:
     if util.confirm('Delete tag {}?'.format(tag['names'][0])):
         if not dry_run:
             api.delete_tag(tag)
@@ -117,10 +119,8 @@ def _delete_tag(
 
 
 def _create_tag(
-        api: Api,
-        autotag_settings: AutoTagSettings,
-        tag: Tag,
-        dry_run: bool) -> Tag:
+    api: Api, autotag_settings: AutoTagSettings, tag: Tag, dry_run: bool
+) -> Tag:
     _confirm_relations(api, tag)
     if util.confirm('Create tag {}?'.format(tag['names'][0])):
         if not dry_run:
@@ -146,8 +146,9 @@ def _update_tag(api: Api, old_tag: Tag, new_tag: Tag, dry_run: bool) -> Tag:
 
     if request:
         _confirm_relations(api, request)
-        if util.confirm('Update tag {} ({})?'.format(
-                new_tag['names'][0], request)):
+        if util.confirm(
+            'Update tag {} ({})?'.format(new_tag['names'][0], request)
+        ):
             request['version'] = old_tag['version']
             if not dry_run:
                 return api.update_tag(old_tag['names'][0], request)
@@ -155,20 +156,21 @@ def _update_tag(api: Api, old_tag: Tag, new_tag: Tag, dry_run: bool) -> Tag:
 
 
 def _merge_tags(
-        api: Api,
-        autotag_settings: AutoTagSettings,
-        old_tag: Tag,
-        new_tag: Tag,
-        dry_run: bool) -> Tag:
-    if util.confirm('Merge tag {} to {}?'.format(
-            old_tag['names'][0], new_tag['names'][0])):
+    api: Api,
+    autotag_settings: AutoTagSettings,
+    old_tag: Tag,
+    new_tag: Tag,
+    dry_run: bool,
+) -> Tag:
+    if util.confirm(
+        'Merge tag {} to {}?'.format(old_tag['names'][0], new_tag['names'][0])
+    ):
         if not dry_run:
             new_tag = api.merge_tags(old_tag, new_tag)
     for tag_name in old_tag['names']:
         if util.confirm('Set up autotagging alias {}?'.format(tag_name)):
             if not dry_run:
-                autotag_settings.set_tag_alias(
-                    tag_name, new_tag['names'][0])
+                autotag_settings.set_tag_alias(tag_name, new_tag['names'][0])
         elif util.confirm('Ban autotagging {}?'.format(tag_name)):
             if not dry_run:
                 autotag_settings.ban_tag(tag_name)
@@ -176,11 +178,12 @@ def _merge_tags(
 
 
 def _update_tags(
-        api: Api,
-        autotag_settings: AutoTagSettings,
-        old_tags: Dict[int, Tag],
-        new_tags: Dict[int, Tag],
-        dry_run: bool) -> None:
+    api: Api,
+    autotag_settings: AutoTagSettings,
+    old_tags: Dict[int, Tag],
+    new_tags: Dict[int, Tag],
+    dry_run: bool,
+) -> None:
     for old_tag_id, old_tag in old_tags.items():
         try:
             if old_tag_id not in new_tags:
@@ -198,7 +201,8 @@ def _update_tags(
                 if new_tag['merge-to']:
                     target_tag = old_tags[new_tag['merge-to']]
                     resulting_tag = _merge_tags(
-                        api, autotag_settings, new_tag, target_tag, dry_run)
+                        api, autotag_settings, new_tag, target_tag, dry_run
+                    )
                     target_tag.update(resulting_tag)
                     new_tag.update(resulting_tag)
         except ApiError as ex:
@@ -215,15 +219,18 @@ class EditTagsCommand(BaseCommand):
         }
         new_tags = _edit_tags_interactively(old_tags)
         _update_tags(
-            self._api, self._autotag_settings, old_tags, new_tags, dry_run)
+            self._api, self._autotag_settings, old_tags, new_tags, dry_run
+        )
 
     @staticmethod
     def _create_parser(
-            parent_parser: configargparse.ArgumentParser
+        parent_parser: configargparse.ArgumentParser
     ) -> configargparse.ArgumentParser:
         parser = parent_parser.add_parser(
-            'edit', help='edit tags interactively')
+            'edit', help='edit tags interactively'
+        )
         parser.add('query', help='query to filter the tags with')
         parser.add_argument(
-            '--dry-run', action='store_true', help='Don\'t do anything.')
+            '--dry-run', action='store_true', help='Don\'t do anything.'
+        )
         return parser

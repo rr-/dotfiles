@@ -15,13 +15,15 @@ SECTION_TAG_CATEGORY_MAP = 'Tag category translations'
 def _from_int_set(source: Set[int]) -> List[str]:
     ranges: List[Tuple[int, int]] = []
     for _, group_iter in itertools.groupby(
-            enumerate(sorted(source)), lambda i: i[1] - i[0]):
+        enumerate(sorted(source)), lambda i: i[1] - i[0]
+    ):
         group = list(group_iter)
         ranges.append((group[0][1], group[-1][1]))
     return [
         ','.join(
             (str(low) if low == high else '{}-{}'.format(low, high))
-            for low, high in ranges)
+            for low, high in ranges
+        )
     ]
 
 
@@ -59,13 +61,13 @@ def _to_str_dict(source_lines: List[str]) -> Dict[str, str]:
 
 class AutoTagSettings:
     def __init__(
-            self,
-            tagged_post_ids: Set[int] = None,
-            untagged_post_ids: Set[int] = None,
-            banned_tags: Set[str] = None,
-            banned_tag_regexes: Set[str] = None,
-            tag_map: Dict[str, str] = None,
-            tag_category_map: Dict[str, str] = None,
+        self,
+        tagged_post_ids: Set[int] = None,
+        untagged_post_ids: Set[int] = None,
+        banned_tags: Set[str] = None,
+        banned_tag_regexes: Set[str] = None,
+        tag_map: Dict[str, str] = None,
+        tag_category_map: Dict[str, str] = None,
     ) -> None:
         self._tagged_post_ids = tagged_post_ids or set()
         self._untagged_post_ids = untagged_post_ids or set()
@@ -92,9 +94,7 @@ class AutoTagSettings:
         self._tagged_post_ids.discard(post_id)
 
     def get_processed_post_ids(self) -> Set[int]:
-        return (
-            self._tagged_post_ids |
-            self._untagged_post_ids)
+        return self._tagged_post_ids | self._untagged_post_ids
 
     def get_tagged_post_ids(self) -> Set[int]:
         return self._tagged_post_ids
@@ -123,21 +123,26 @@ class AutoTagSettings:
     def serialize(self) -> str:
         sections = [
             (SECTION_TAGGED_POST_IDS, _from_int_set(self._tagged_post_ids)),
-            (SECTION_UNTAGGED_POST_IDS, _from_int_set(
-                self._untagged_post_ids)),
-            (SECTION_BANNED_TAG_REGEXES, _from_str_set(
-                self._banned_tag_regexes)),
+            (
+                SECTION_UNTAGGED_POST_IDS,
+                _from_int_set(self._untagged_post_ids),
+            ),
+            (
+                SECTION_BANNED_TAG_REGEXES,
+                _from_str_set(self._banned_tag_regexes),
+            ),
             (SECTION_BANNED_TAGS, _from_str_set(self._banned_tags)),
             (SECTION_TAG_MAP, _from_str_dict(self._tag_map)),
             (SECTION_TAG_CATEGORY_MAP, _from_str_dict(self._tag_category_map)),
         ]
 
-        return (
-            '\n\n'.join(
-                '\n'.join(
-                    ['--- {} ---'.format(section_title)] +
-                    [line for line in section_lines if line])
-                for (section_title, section_lines) in sections))
+        return '\n\n'.join(
+            '\n'.join(
+                ['--- {} ---'.format(section_title)]
+                + [line for line in section_lines if line]
+            )
+            for (section_title, section_lines) in sections
+        )
 
     def save(self, target_path: Path) -> None:
         target_path.parent.mkdir(parents=True, exist_ok=True)
@@ -163,10 +168,12 @@ def deserialize(text: str) -> AutoTagSettings:
             tagged_post_ids=_to_int_set(sections[SECTION_TAGGED_POST_IDS]),
             untagged_post_ids=_to_int_set(sections[SECTION_UNTAGGED_POST_IDS]),
             banned_tag_regexes=(
-                _to_str_set(sections[SECTION_BANNED_TAG_REGEXES])),
+                _to_str_set(sections[SECTION_BANNED_TAG_REGEXES])
+            ),
             banned_tags=_to_str_set(sections[SECTION_BANNED_TAGS]),
             tag_map=_to_str_dict(sections[SECTION_TAG_MAP]),
-            tag_category_map=_to_str_dict(sections[SECTION_TAG_CATEGORY_MAP]))
+            tag_category_map=_to_str_dict(sections[SECTION_TAG_CATEGORY_MAP]),
+        )
     except KeyError as ex:
         raise ValueError('Missing section {}'.format(ex.args[0]))
 
