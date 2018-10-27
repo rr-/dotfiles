@@ -55,6 +55,7 @@ def async_lru_cache(maxsize=128):
             result = await asyncio.wait_for(task, timeout=None)
             del awaiting[key]
             return result
+
         return wrapper
 
     return decorator

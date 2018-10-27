@@ -69,14 +69,15 @@ class DownloadStats:
 
 class Downloader:
     def __init__(
-            self,
-            plugin: PluginBase,
-            target_dir: Path,
-            history: Optional[DownloadHistory],
-            force: bool,
-            max_attempts: int,
-            max_concurrent_downloads: int,
-            sleep: float) -> None:
+        self,
+        plugin: PluginBase,
+        target_dir: Path,
+        history: Optional[DownloadHistory],
+        force: bool,
+        max_attempts: int,
+        max_concurrent_downloads: int,
+        sleep: float,
+    ) -> None:
         self._plugin = plugin
         self._target_dir = target_dir
         self._history = history
@@ -92,11 +93,10 @@ class Downloader:
             stem = str(post.id) + '_' + stem
 
         file_name = (
-            '_'.join(
-                str(part)
-                for part in [self._plugin.name, stem]
-                if part)
-            + '.' + ext.lstrip('.'))
+            '_'.join(str(part) for part in [self._plugin.name, stem] if part)
+            + '.'
+            + ext.lstrip('.')
+        )
         return self._target_dir.joinpath(util.sanitize_file_name(file_name))
 
     async def download_file(self, post: Post) -> bool:
@@ -110,9 +110,10 @@ class Downloader:
             return False
 
         if (
-                self._history
-                and not self._force
-                and self._history.is_downloaded(history_key)):
+            self._history
+            and not self._force
+            and self._history.is_downloaded(history_key)
+        ):
             self._stats.ignore(post.content_url, 'already downloaded')
             return False
 
@@ -122,7 +123,8 @@ class Downloader:
                 self._max_attempts,
                 self._sleep,
                 self._plugin.get_post_content,
-                post)
+                post,
+            )
 
         target_path.parent.mkdir(parents=True, exist_ok=True)
         with target_path.open('wb') as handle:
@@ -153,7 +155,8 @@ class Downloader:
 
         consumers = [
             asyncio.ensure_future(consumer())
-            for i in range(self._max_concurrent_downloads)]
+            for i in range(self._max_concurrent_downloads)
+        ]
 
         try:
             async for post in self._plugin.find_posts(query):
@@ -174,28 +177,45 @@ class Downloader:
 
 def parse_args() -> configargparse.Namespace:
     parser = cli.make_arg_parser(
-        'Downloads posts from various boorus.', PLUGINS)
+        'Downloads posts from various boorus.', PLUGINS
+    )
     parser.add(
-        '-l', '--limit', default=None, type=int,
-        help='limit how many files to download')
+        '-l',
+        '--limit',
+        default=None,
+        type=int,
+        help='limit how many files to download',
+    )
+    parser.add('-n', '--num', default=10, type=int, help='simultaneous jobs')
     parser.add(
-        '-n', '--num', default=10, type=int,
-        help='simultaneous jobs')
+        '--max-attempts',
+        default=3,
+        type=int,
+        help='max attempts before abandoning download',
+    )
     parser.add(
-        '--max-attempts', default=3, type=int,
-        help='max attempts before abandoning download')
+        '-s',
+        '--sleep',
+        default=0,
+        type=float,
+        help='pause between uploads (in seconds)',
+    )
     parser.add(
-        '-s', '--sleep', default=0, type=float,
-        help='pause between uploads (in seconds)')
+        '--target-dir',
+        default='~/{plugin}/{query}',
+        help='where to put the files',
+    )
     parser.add(
-        '--target-dir', default='~/{plugin}/{query}',
-        help='where to put the files')
+        '--history-file',
+        default='~/.cache/dl-booru.log',
+        help='path to the history file',
+    )
     parser.add(
-        '--history-file', default='~/.cache/dl-booru.log',
-        help='path to the history file')
-    parser.add(
-        '-f', '--force', action='store_true',
-        help='redownload even if present in the history file')
+        '-f',
+        '--force',
+        action='store_true',
+        help='redownload even if present in the history file',
+    )
     parser.add('query', help='query to filter the posts with')
     return parser.parse_args()
 
@@ -216,14 +236,15 @@ def main() -> None:
 
     target_dir = Path(
         args.target_dir.format(
-            plugin=plugin.name,
-            query=util.sanitize_file_name(query))
-        ).expanduser()
+            plugin=plugin.name, query=util.sanitize_file_name(query)
+        )
+    ).expanduser()
 
     history = (
         DownloadHistory(Path(args.history_file).expanduser())
         if args.history_file
-        else None)
+        else None
+    )
 
     try:
         loop = asyncio.get_event_loop()
@@ -235,7 +256,8 @@ def main() -> None:
             force,
             max_attempts,
             max_concurrent_downloads,
-            sleep)
+            sleep,
+        )
         loop.run_until_complete(downloader.run(query, limit))
     except KeyboardInterrupt:
         print('Aborted.')

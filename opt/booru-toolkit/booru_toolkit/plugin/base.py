@@ -11,16 +11,17 @@ class Safety(Enum):
 
 class Post:
     def __init__(
-            self,
-            post_id: int,
-            safety: Safety,
-            tags: List[str],
-            site_url: str,
-            content_url: str,
-            width: int,
-            height: int,
-            source: Optional[str],
-            title: Optional[str] = None) -> None:
+        self,
+        post_id: int,
+        safety: Safety,
+        tags: List[str],
+        site_url: str,
+        content_url: str,
+        width: int,
+        height: int,
+        source: Optional[str],
+        title: Optional[str] = None,
+    ) -> None:
         self.id = post_id
         self.safety = safety
         self.tags = tags
@@ -51,7 +52,8 @@ class PluginBase:
         raise NotImplementedError('Not implemented')
 
     async def find_similar_posts(
-            self, content: bytes) -> List[Tuple[float, Post]]:
+        self, content: bytes
+    ) -> List[Tuple[float, Post]]:
         raise NotImplementedError('Not implemented')
 
     async def find_posts(self, query: str) -> AsyncIterable[Post]:
@@ -61,19 +63,18 @@ class PluginBase:
         raise NotImplementedError('Not implemented')
 
     async def upload_post(
-            self,
-            content: bytes,
-            source: Optional[str],
-            safety: Safety,
-            tags: List[str],
-            anonymous: bool) -> Optional[Post]:
+        self,
+        content: bytes,
+        source: Optional[str],
+        safety: Safety,
+        tags: List[str],
+        anonymous: bool,
+    ) -> Optional[Post]:
         raise NotImplementedError('Not implemented')
 
     async def update_post(
-            self,
-            post_id: int,
-            safety: Safety,
-            tags: List[str]) -> None:
+        self, post_id: int, safety: Safety, tags: List[str]
+    ) -> None:
         raise NotImplementedError('Not implemented')
 
     async def find_tags(self, query: str) -> List[str]:

@@ -57,12 +57,13 @@ class TagList:
 
 class UploadSettings:
     def __init__(
-            self,
-            path: Path,
-            safety: Safety,
-            source: Optional[str],
-            tags: List[str],
-            anonymous: bool) -> None:
+        self,
+        path: Path,
+        safety: Safety,
+        source: Optional[str],
+        tags: List[str],
+        anonymous: bool,
+    ) -> None:
         self.path = path
         self.safety = safety
         self.source = source
