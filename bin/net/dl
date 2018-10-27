@@ -28,8 +28,9 @@ def run_workers(queue, count, worker_factory):
         time.sleep(1)
 
 
-class Flow():
+class Flow:
     ''' Used to control the lifetime of the script. '''
+
     terminated = False
 
     @staticmethod
@@ -42,6 +43,7 @@ class History(set):
     Keeps history of downloaded files so that the script doesn't download
     the same thing twice between runs.
     '''
+
     def __init__(self, path):
         super().__init__()
         self.path = path
@@ -71,11 +73,12 @@ class History(set):
         print('Saved %d URLs to history file' % len(copy))
 
 
-class BaseWorker():
+class BaseWorker:
     '''
     A base for all the workers that contains basic execution flow, outlined to
     fulfill DRY.
     '''
+
     num = 0
 
     def __init__(self, queue, lock):
@@ -98,10 +101,14 @@ class BaseWorker():
             finally:
                 self.queue.task_done()
             with self.lock:
-                print('[T%d ~%5d queued] %s' % (
-                    self.num,
-                    self.queue.qsize(),
-                    self.format_status(item, status)))
+                print(
+                    '[T%d ~%5d queued] %s'
+                    % (
+                        self.num,
+                        self.queue.qsize(),
+                        self.format_status(item, status),
+                    )
+                )
 
     def process(self, item):
         raise NotImplementedError()
@@ -113,7 +120,7 @@ class BaseWorker():
         raise NotImplementedError()
 
 
-class Command():
+class Command:
     ''' The action to undertake, chosen via CLI '''
 
     @staticmethod
@@ -137,40 +144,72 @@ class DownloadCommand(Command):
     @staticmethod
     def decorate_parser(parent_parser, fmt):
         parser = parent_parser.add_parser(
-            'download', help='download files',
-            formatter_class=fmt, aliases=['dl'])
+            'download',
+            help='download files',
+            formatter_class=fmt,
+            aliases=['dl'],
+        )
 
         parser.add_argument(
-            '-a', '--accept', metavar='REGEX', default='.*',
-            help='set regex indicating which URLs to crawl')
+            '-a',
+            '--accept',
+            metavar='REGEX',
+            default='.*',
+            help='set regex indicating which URLs to crawl',
+        )
 
         parser.add_argument(
-            '--reject', metavar='REGEX', default='',
-            help='set regex indicating which URLs not to crawl (overrides -a)')
+            '--reject',
+            metavar='REGEX',
+            default='',
+            help='set regex indicating which URLs not to crawl (overrides -a)',
+        )
 
         parser.add_argument(
-            '-H', '--history', metavar='FILE',
-            help='set path to the history file')
+            '-H',
+            '--history',
+            metavar='FILE',
+            help='set path to the history file',
+        )
 
         parser.add_argument(
-            '-t', '--target', metavar='DIR', default='.',
-            help='set base target directory')
+            '-t',
+            '--target',
+            metavar='DIR',
+            default='.',
+            help='set base target directory',
+        )
 
         parser.add_argument(
-            '-r', '--retries', metavar='NUM', type=int, default=3,
-            help='set retry count for failed downloads')
+            '-r',
+            '--retries',
+            metavar='NUM',
+            type=int,
+            default=3,
+            help='set retry count for failed downloads',
+        )
 
         parser.add_argument(
-            '--retry-wait', metavar='NUM', type=int, default=3,
-            help='set retry timeout for failed downloads')
+            '--retry-wait',
+            metavar='NUM',
+            type=int,
+            default=3,
+            help='set retry timeout for failed downloads',
+        )
 
         parser.add_argument(
-            '-n', '--num', dest='workers', metavar='NUMBER', type=int,
-            default=1, help='set worker count')
+            '-n',
+            '--num',
+            dest='workers',
+            metavar='NUMBER',
+            type=int,
+            default=1,
+            help='set worker count',
+        )
 
         parser.add_argument(
-            'url', metavar='URL', nargs='+',
-            help='initial URLs to retrieve')
+            'url', metavar='URL', nargs='+', help='initial URLs to retrieve'
+        )
 
         parser.set_defaults(command=DownloadCommand)
 
@@ -188,7 +227,9 @@ class DownloadCommand(Command):
                 queue,
                 args.workers,
                 lambda: DownloadCommand._Worker(
-                    queue, lock, args, visited, history))
+                    queue, lock, args, visited, history
+                ),
+            )
 
     class _Worker(BaseWorker):
         def __init__(self, queue, lock, args, visited, history):
@@ -211,14 +252,18 @@ class DownloadCommand(Command):
             child_urls = set()
             for link in soup.find_all('a', href=True):
                 child_url = urllib.parse.urldefrag(
-                    urllib.parse.urljoin(response.url, link['href'])).url
+                    urllib.parse.urljoin(response.url, link['href'])
+                ).url
                 with self.lock:
-                    if self.args.accept.search(child_url) \
-                    and not (
-                        self.args.reject
-                        and self.args.reject.search(child_url)) \
-                    and child_url not in self.visited \
-                    and child_url not in self.history:
+                    if (
+                        self.args.accept.search(child_url)
+                        and not (
+                            self.args.reject
+                            and self.args.reject.search(child_url)
+                        )
+                        and child_url not in self.visited
+                        and child_url not in self.history
+                    ):
                         child_urls.add(child_url)
                         self.visited.add(child_url)
             with self.lock:
@@ -232,7 +277,8 @@ class DownloadCommand(Command):
             target_path = os.path.join(
                 self.args.target,
                 parsed_url.netloc,
-                re.sub(r'^[\/]*', '', parsed_url.path))
+                re.sub(r'^[\/]*', '', parsed_url.path),
+            )
             target_dir = os.path.dirname(target_path)
             os.makedirs(target_dir, exist_ok=True)
             with open(target_path, 'wb') as handle:
@@ -260,14 +306,15 @@ class DownloadCommand(Command):
                 messages.append('retry #%d' % item.retries)
             return '%s: %s' % (item.url, '; '.join(messages))
 
-        class Result():
+        class Result:
             def __init__(
-                    self, download_path=None, urls_added=None, error=None):
+                self, download_path=None, urls_added=None, error=None
+            ):
                 self.download_path = download_path
                 self.urls_added = urls_added
                 self.error = error
 
-    class Item():
+    class Item:
         def __init__(self, url):
             self.url = url
             self.retries = 0
@@ -283,16 +330,27 @@ class PruneCommand(Command):
     @staticmethod
     def decorate_parser(parent_parser, fmt):
         parser = parent_parser.add_parser(
-            'prune', help='prune old entries in history file',
-            formatter_class=fmt)
+            'prune',
+            help='prune old entries in history file',
+            formatter_class=fmt,
+        )
 
         parser.add_argument(
-            '-H', '--history', metavar='FILE',
-            help='set path to the history file')
+            '-H',
+            '--history',
+            metavar='FILE',
+            help='set path to the history file',
+        )
 
         parser.add_argument(
-            '-n', '--num', dest='workers', metavar='NUMBER', type=int,
-            default=1, help='set worker count')
+            '-n',
+            '--num',
+            dest='workers',
+            metavar='NUMBER',
+            type=int,
+            default=1,
+            help='set worker count',
+        )
 
         parser.set_defaults(command=PruneCommand)
 
@@ -305,7 +363,8 @@ class PruneCommand(Command):
             run_workers(
                 queue,
                 args.workers,
-                lambda: PruneCommand._Worker(queue, lock, history))
+                lambda: PruneCommand._Worker(queue, lock, history),
+            )
 
     class _Worker(BaseWorker):
         def __init__(self, queue, lock, history):
@@ -329,13 +388,16 @@ class PruneCommand(Command):
 
 def parse_args():
     ''' Collects all the option from the CLI arguments '''
+
     def fmt(prog):
         return argparse.HelpFormatter(prog, max_help_position=40, width=80)
 
     parser = argparse.ArgumentParser(
-        description='Fetch things from the Internet', formatter_class=fmt)
+        description='Fetch things from the Internet', formatter_class=fmt
+    )
     subparsers = parser.add_subparsers(
-        help='choose the command', dest='command')
+        help='choose the command', dest='command'
+    )
     DownloadCommand.decorate_parser(subparsers, fmt)
     PruneCommand.decorate_parser(subparsers, fmt)
     subparsers.required = True
@@ -349,6 +411,7 @@ def main():
         if not Flow.terminated:
             sys.stdout.write('Exiting due to user abort\n')
             Flow.terminate()
+
     signal.signal(signal.SIGINT, signal_handler)
 
     command = args.command()

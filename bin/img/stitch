@@ -19,7 +19,8 @@ def main() -> None:
     run(
         ['convert', '-border', '0x1', '-bordercolor', 'black']
         + source_files
-        + ['-append', '-trim', target_file])
+        + ['-append', '-trim', target_file]
+    )
 
 
 if __name__ == '__main__':

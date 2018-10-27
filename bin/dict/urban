@@ -9,20 +9,22 @@ import urllib.request
 
 def _wrap_long_text(text, length=70):
     return '\n'.join(
-        line.strip()
-        for line in re.findall(r'.{1,%d}(?:\s+|$)' % length, text))
+        line.strip() for line in re.findall(r'.{1,%d}(?:\s+|$)' % length, text)
+    )
 
 
 def _parse_args():
     parser = argparse.ArgumentParser(
-        description='Looks up word definitions on Urban Dictionary')
+        description='Looks up word definitions on Urban Dictionary'
+    )
     parser.add_argument('word', nargs='+')
     return parser.parse_args()
 
 
 def _lookup_word(word):
     url = 'http://api.urbandictionary.com/v0/define?term=%s' % (
-        urllib.parse.quote(word))
+        urllib.parse.quote(word)
+    )
     with urllib.request.urlopen(url) as handle:
         return json.loads(handle.read().decode())
 

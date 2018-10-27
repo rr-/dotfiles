@@ -11,8 +11,7 @@ DEFAULT_EXCLUDE = ['__pycache__']
 
 
 def _get_paths(
-        target_paths: T.List[Path],
-        exclude: T.List[str],
+    target_paths: T.List[Path], exclude: T.List[str]
 ) -> T.List[str]:
     for target_path in target_paths:
         if target_path.name in exclude:
@@ -64,14 +63,22 @@ def main() -> None:
             start = datetime.now()
             try:
                 subprocess.run(command_line)
-                print('%s: finished in %.02fs' % (
-                    ' '.join(command_line),
-                    (datetime.now() - start).total_seconds()))
+                print(
+                    '%s: finished in %.02fs'
+                    % (
+                        ' '.join(command_line),
+                        (datetime.now() - start).total_seconds(),
+                    )
+                )
             except Exception as ex:
-                print('%s: error (%s) in %.02fs' % (
-                    ' '.join(command_line),
-                    ex,
-                    (datetime.now() - start).total_seconds()))
+                print(
+                    '%s: error (%s) in %.02fs'
+                    % (
+                        ' '.join(command_line),
+                        ex,
+                        (datetime.now() - start).total_seconds(),
+                    )
+                )
             last_checksum = current_checksum
 
         time.sleep(sleep_time)

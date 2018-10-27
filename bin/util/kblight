@@ -14,9 +14,11 @@ def parse_args():
 def set_brightness(brightness):
     bus = dbus.SystemBus()
     kbd_backlight_proxy = bus.get_object(
-        'org.freedesktop.UPower', '/org/freedesktop/UPower/KbdBacklight')
+        'org.freedesktop.UPower', '/org/freedesktop/UPower/KbdBacklight'
+    )
     kbd_backlight = dbus.Interface(
-        kbd_backlight_proxy, 'org.freedesktop.UPower.KbdBacklight')
+        kbd_backlight_proxy, 'org.freedesktop.UPower.KbdBacklight'
+    )
 
     kbd_backlight.SetBrightness(brightness)
     current = kbd_backlight.GetBrightness()

@@ -14,23 +14,24 @@ def sync(source, target):
 
     run(['ssh', target_machine, 'mkdir', '-p', target_path])
 
-    status = run([
-        'ssh',
-        '-A',
-        source_machine,
-
-        'rsync',
-        '--progress',
-        '--whole-file',
-        '--chmod=D=rwxrxrx,F=rwrr',
-        '-vaKR',
-        '-xx',
-        '--delete-excluded',
-        '--delete-during',
-        # '--dry-run',
-
-        source_path,
-        target])
+    status = run(
+        [
+            'ssh',
+            '-A',
+            source_machine,
+            'rsync',
+            '--progress',
+            '--whole-file',
+            '--chmod=D=rwxrxrx,F=rwrr',
+            '-vaKR',
+            '-xx',
+            '--delete-excluded',
+            '--delete-during',
+            # '--dry-run',
+            source_path,
+            target,
+        ]
+    )
 
     if status.returncode != 0:
         logging.error('Error during sync, aborting')
@@ -40,16 +41,15 @@ def sync(source, target):
 def main():
     logging.info('tornado -> cyclone')
     for directory in ['src', 'blob', 'hub', 'text']:
-        sync(
-            'tornado:/home/rr-/' + directory,
-            'cyclone:/srv/backup/tornado/')
+        sync('tornado:/home/rr-/' + directory, 'cyclone:/srv/backup/tornado/')
 
     logging.info('cyclone -> tornado')
     for directory in [
-            '/srv/www',
-            '/srv/img',
-            '/home/rr-/text',
-            '/home/rr-/.weechat/logs']:
+        '/srv/www',
+        '/srv/img',
+        '/home/rr-/text',
+        '/home/rr-/.weechat/logs',
+    ]:
         sync('cyclone:' + directory, 'tornado:/home/rr-/.backup/cyclone/')
 
     logging.info('Syncing finished without errors')

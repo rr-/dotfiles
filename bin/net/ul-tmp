@@ -65,8 +65,9 @@ def send(src_paths):
         dst_path = os.path.join(BASE_DIR, target_name)
         tar.add(src_path, arcname=target_name)
         commands.append('chmod 0644 %s' % shlex.quote(dst_path))
-        urls.append(BASE_URL + urllib.parse.quote(
-            target_name.replace('\\', '/')))
+        urls.append(
+            BASE_URL + urllib.parse.quote(target_name.replace('\\', '/'))
+        )
 
     cmdline = ['ssh', REMOTE_HOST, ';'.join(commands)]
 
@@ -74,7 +75,8 @@ def send(src_paths):
         cmdline,
         stdin=subprocess.PIPE,
         stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE)
+        stderr=subprocess.PIPE,
+    )
     _, err = proc.communicate(input=tar_stream.getvalue())
     for url in urls:
         print(url)

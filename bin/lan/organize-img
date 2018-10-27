@@ -19,11 +19,13 @@ SMALL_IMAGE_EXTENSIONS = ['png', 'jpg', 'jpeg']
 
 def _parse_args():
     description = (
-        'Downloads, filters and organizes into directories ' +
-        'images crawled by cron job.')
+        'Downloads, filters and organizes into directories '
+        + 'images crawled by cron job.'
+    )
     parser = argparse.ArgumentParser(description=description)
     parser.add_argument(
-        '--dry', action='store_true', help='don\'t do anything')
+        '--dry', action='store_true', help='don\'t do anything'
+    )
     parser.add_argument('--min-image-width', default=300, type=int)
     parser.add_argument('--min-image-height', default=300, type=int)
     return parser.parse_args()
@@ -76,8 +78,9 @@ def main():
             extension = source_file.suffix.lower().lstrip('.')
             target_file = target_dir / source_file.name
 
-            if extension in SMALL_IMAGE_EXTENSIONS \
-                    and _is_image_too_small(source_file, args):
+            if extension in SMALL_IMAGE_EXTENSIONS and _is_image_too_small(
+                source_file, args
+            ):
                 logging.warning(f'{source_file}: too small, ignoring')
                 if not args.dry:
                     source_file.unlink()
@@ -94,7 +97,8 @@ def main():
 
         if not args.dry:
             subprocess.run(
-                ['distribute-files', target_dir, '--fill-last', '-v'])
+                ['distribute-files', target_dir, '--fill-last', '-v']
+            )
 
         try:
             source_dir.rmdir()

@@ -22,9 +22,7 @@ def parse_args() -> argparse.Namespace:
 def recognize(path: Path, language: str) -> str:
     with tempfile.NamedTemporaryFile(suffix='.wav') as handle:
         wav_file = handle.name
-        result = subprocess.run(
-            ['ffmpeg', '-y', '-i', str(path), wav_file]
-        )
+        result = subprocess.run(['ffmpeg', '-y', '-i', str(path), wav_file])
         if result.returncode != 0:
             raise RecognitionError('Error while converting audio')
 

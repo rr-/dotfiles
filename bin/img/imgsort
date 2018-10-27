@@ -42,15 +42,19 @@ def fill_file_info(file: File) -> None:
         [
             'ffprobe',
             '-hide_banner',
-            '-print_format', 'json',
-            '-select_streams', 'v:0',
+            '-print_format',
+            'json',
+            '-select_streams',
+            'v:0',
             '-show_entries',
             'stream=width,height,nb_frames,nb_read_frames',
             '-count_frames',
-            '-i', file.path,
+            '-i',
+            file.path,
         ],
         stderr=subprocess.PIPE,
-        stdout=subprocess.PIPE)
+        stdout=subprocess.PIPE,
+    )
     if result.returncode != 0:
         return
     stream_info = json.loads(result.stdout)['streams'][0]
@@ -76,10 +80,10 @@ def fill_file_infos(files: T.Iterable[File]) -> None:
 
         async def with_progress(tasks: T.Sequence[T.Generator]) -> None:
             for task in tqdm.tqdm(
-                    asyncio.as_completed(tasks),
-                    total=len(tasks),
-                    unit='file',
-                    ncols=100
+                asyncio.as_completed(tasks),
+                total=len(tasks),
+                unit='file',
+                ncols=100,
             ):
                 await task
 

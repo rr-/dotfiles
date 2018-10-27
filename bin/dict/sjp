@@ -30,8 +30,7 @@ def print_word_def(word):
                 text = collect_text(node).strip()
                 text = re.sub(r'\n\s+', '\n', text)
                 print(text)
-            if node.tag == 'hr' \
-            or node.tag == 'h1':
+            if node.tag == 'hr' or node.tag == 'h1':
                 break
         print()
 
