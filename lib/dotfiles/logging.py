@@ -22,15 +22,15 @@ def _add_custom_level(number, name):
     return (number, function)
 
 
-SUCCESS, success = _add_custom_level(29, 'success')
+SUCCESS, success = _add_custom_level(29, "success")
 
 coloredlogs.install(
-    fmt='%(message)s',
+    fmt="%(message)s",
     level_styles={
-        'warning': {'color': 'yellow'},
-        'success': {'color': 'green', 'bold': True},
-        'error': {'color': 'red', 'bold': True},
-        'info': {'color': 'blue', 'bold': True},
+        "warning": {"color": "yellow"},
+        "success": {"color": "green", "bold": True},
+        "error": {"color": "red", "bold": True},
+        "info": {"color": "blue", "bold": True},
     },
-    isatty=True if 'COLORED_LOGS' in os.environ else None,
+    isatty=True if "COLORED_LOGS" in os.environ else None,
 )
