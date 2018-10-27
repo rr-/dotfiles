@@ -34,13 +34,13 @@ class BatteryWidget(Widget):
         self._text_label.setAlignment(
             QtCore.Qt.AlignCenter | QtCore.Qt.AlignVCenter
         )
-        self._set_icon(self._icon_label, 'battery')
+        self._set_icon(self._icon_label, "battery")
 
         self._charge_now_path = glob_path(
-            '/sys/class/power_supply/*/energy_now'
+            "/sys/class/power_supply/*/energy_now"
         )
         self._charge_max_path = glob_path(
-            '/sys/class/power_supply/*/energy_full'
+            "/sys/class/power_supply/*/energy_full"
         )
 
     @property
@@ -62,4 +62,4 @@ class BatteryWidget(Widget):
         self.percentage = current_value * 100.0 / max_value
 
     def _render_impl(self) -> None:
-        self._text_label.setText('%5.02f%%' % self.percentage)
+        self._text_label.setText("%5.02f%%" % self.percentage)

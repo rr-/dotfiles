@@ -11,7 +11,7 @@ class StretchWidget(Widget):
     ) -> None:
         super().__init__(app, main_window)
         self._container = QtWidgets.QWidget()
-        self._container.setProperty('class', 'stretch')
+        self._container.setProperty("class", "stretch")
         self._container.setSizePolicy(
             QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum
         )

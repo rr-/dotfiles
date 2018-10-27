@@ -28,7 +28,7 @@ class Widget:
 
     @property
     def container(self) -> QtWidgets.QWidget:
-        raise NotImplementedError('Not implemented')
+        raise NotImplementedError("Not implemented")
 
     @property
     def available(self) -> bool:
@@ -47,21 +47,21 @@ class Widget:
             self._render_impl()
 
     def _refresh_impl(self) -> None:
-        raise NotImplementedError('Not implemented')
+        raise NotImplementedError("Not implemented")
 
     def _render_impl(self) -> None:
-        raise NotImplementedError('Not implemented')
+        raise NotImplementedError("Not implemented")
 
     def _set_icon(self, widget: QtWidgets.QWidget, icon_name: str) -> None:
-        if widget.property('icon_name') == icon_name:
+        if widget.property("icon_name") == icon_name:
             return
-        widget.setProperty('icon_name', icon_name)
+        widget.setProperty("icon_name", icon_name)
 
-        icon_path = ROOT_DIR / 'data' / 'icons' / (icon_name + '.svg')
+        icon_path = ROOT_DIR / "data" / "icons" / (icon_name + ".svg")
         target_size = QtCore.QSize(18, 18)
         icon_content = icon_path.read_bytes()
         icon_content = icon_content.replace(
-            b'<svg', b'<svg fill="%s"' % Colors.foreground.encode('ascii')
+            b"<svg", b'<svg fill="%s"' % Colors.foreground.encode("ascii")
         )
 
         svg_renderer = QtSvg.QSvgRenderer(icon_content)

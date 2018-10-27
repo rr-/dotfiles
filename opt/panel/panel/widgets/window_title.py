@@ -7,7 +7,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 
 from panel.widgets.widget import Widget
 
-DEFAULT_TITLE = '<no window id>'
+DEFAULT_TITLE = "<no window id>"
 
 
 class WindowTitleWidget(Widget):
@@ -18,7 +18,7 @@ class WindowTitleWidget(Widget):
     ) -> None:
         super().__init__(app, main_window)
         self._label = QtWidgets.QLabel(main_window)
-        self._label.setProperty('class', 'wintitle')
+        self._label.setProperty("class", "wintitle")
 
         self._max_width = main_window.width() * 0.8
         self._font_metrics = QtGui.QFontMetrics(self._label.font())
@@ -26,10 +26,10 @@ class WindowTitleWidget(Widget):
         self._disp = Xlib.display.Display()
         self._root = self._disp.screen().root
         self._root.change_attributes(event_mask=Xlib.X.PropertyChangeMask)
-        self._WM_NAME = self._disp.intern_atom('WM_NAME')
-        self._NET_WM_NAME = self._disp.intern_atom('_NET_WM_NAME')
-        self._NET_WM_DESKTOP = self._disp.intern_atom('_NET_WM_DESKTOP')
-        self._NET_ACTIVE_WINDOW = self._disp.intern_atom('_NET_ACTIVE_WINDOW')
+        self._WM_NAME = self._disp.intern_atom("WM_NAME")
+        self._NET_WM_NAME = self._disp.intern_atom("_NET_WM_NAME")
+        self._NET_WM_DESKTOP = self._disp.intern_atom("_NET_WM_DESKTOP")
+        self._NET_ACTIVE_WINDOW = self._disp.intern_atom("_NET_ACTIVE_WINDOW")
 
         self._last_seen_xid = -1
         self._last_seen_title = DEFAULT_TITLE
@@ -66,7 +66,7 @@ class WindowTitleWidget(Widget):
         ret = None
         if win_id != -1:
             try:
-                ret = self._disp.create_resource_object('window', win_id)
+                ret = self._disp.create_resource_object("window", win_id)
             except Xlib.error.XError:
                 pass
         yield ret
@@ -100,8 +100,8 @@ class WindowTitleWidget(Widget):
     def _get_window_name(self, window_obj: T.Any) -> str:
         for atom in (self._NET_WM_NAME, self._WM_NAME):
             window_name = window_obj.get_full_property(atom, 0)
-            return (window_name.value or b'').decode()
-        return 'XID: {}'.format(window_obj.id)
+            return (window_name.value or b"").decode()
+        return "XID: {}".format(window_obj.id)
 
     def _update_window_name(self, win_id: int) -> None:
         if not win_id:
