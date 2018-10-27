@@ -1,18 +1,19 @@
-import re
 import enum
 import pathlib
-import typing as t
-import xdg
+import re
+import typing as T
+
 import sqlalchemy as sa
-import sqlalchemy.orm
 import sqlalchemy.ext.declarative
+import sqlalchemy.orm
+import xdg
+
 from edict import parser
 
-
-_Base: t.Any = sa.ext.declarative.declarative_base()
+_Base: T.Any = sa.ext.declarative.declarative_base()
 _DB_PATH = pathlib.Path(xdg.XDG_CACHE_HOME) / "edict2.sqlite"
-_session: t.Any = None
-_regex_cache: t.Dict[str, t.Pattern] = {}
+_session: T.Any = None
+_regex_cache: T.Dict[str, T.Pattern] = {}
 
 
 class SearchSource(enum.Flag):
@@ -35,8 +36,8 @@ class EdictKanji(_Base):
 
     kanji: str = sa.Column("kanji", sa.String, index=True)
     kana: str = sa.Column("kana", sa.String, index=True)
-    kanji_tags: t.Sequence[str] = sa.Column("kanji_tags", sa.PickleType)
-    kana_tags: t.Sequence[str] = sa.Column("kana_tags", sa.PickleType)
+    kanji_tags: T.Sequence[str] = sa.Column("kanji_tags", sa.PickleType)
+    kana_tags: T.Sequence[str] = sa.Column("kana_tags", sa.PickleType)
 
 
 class EdictGlossary(_Base):
@@ -52,9 +53,9 @@ class EdictGlossary(_Base):
     )
 
     english: str = sa.Column("english", sa.String, index=True)
-    tags: t.Sequence[str] = sa.Column("tags", sa.PickleType)
-    field: t.Optional[str] = sa.Column("field", sa.String)
-    related: t.List[str] = sa.Column("related", sa.PickleType)
+    tags: T.Sequence[str] = sa.Column("tags", sa.PickleType)
+    field: T.Optional[str] = sa.Column("field", sa.String)
+    related: T.List[str] = sa.Column("related", sa.PickleType)
     common: bool = sa.Column("common", sa.Boolean)
 
 
@@ -62,14 +63,14 @@ class EdictEntry(_Base):
     __tablename__ = "entry"
 
     id: int = sa.Column("id", sa.Integer, primary_key=True)
-    glossaries: t.List[EdictGlossary] = sa.orm.relationship(
+    glossaries: T.List[EdictGlossary] = sa.orm.relationship(
         EdictGlossary, backref="entry"
     )
-    kanji: t.List[EdictKanji] = sa.orm.relationship(
+    kanji: T.List[EdictKanji] = sa.orm.relationship(
         EdictKanji, backref="entry"
     )
-    tags: t.Sequence[str] = sa.Column("tags", sa.PickleType)
-    ent_seq: t.Optional[str] = sa.Column("ent_seq", sa.String)
+    tags: T.Sequence[str] = sa.Column("tags", sa.PickleType)
+    ent_seq: T.Optional[str] = sa.Column("ent_seq", sa.String)
 
 
 def _re_fn(regex: str, value: str) -> bool:
@@ -85,7 +86,7 @@ def _do_begin(conn):
 
 def init() -> None:
     _DB_PATH.parent.mkdir(parents=True, exist_ok=True)
-    engine: t.Any = sa.create_engine("sqlite:///%s" % str(_DB_PATH))
+    engine: T.Any = sa.create_engine("sqlite:///%s" % str(_DB_PATH))
 
     _Base.metadata.create_all(bind=engine)
     global _session
@@ -121,7 +122,7 @@ def put_entry(parsed_entry: parser.EdictEntry) -> None:
     _session.add(entry)
 
 
-def put_entries(parsed_entries: t.Iterable[parser.EdictEntry]) -> None:
+def put_entries(parsed_entries: T.Iterable[parser.EdictEntry]) -> None:
     for i, parsed_entry in enumerate(parsed_entries):
         put_entry(parsed_entry)
         if i % 1000 == 0:
@@ -130,9 +131,9 @@ def put_entries(parsed_entries: t.Iterable[parser.EdictEntry]) -> None:
 
 
 def search_entries_by_regex(
-    patterns: t.List[str], sources: enum.Flag
-) -> t.List[EdictEntry]:
-    entries: t.Dict[int, t.Tuple[int, EdictEntry]] = {}
+    patterns: T.List[str], sources: enum.Flag
+) -> T.List[EdictEntry]:
+    entries: T.Dict[int, T.Tuple[int, EdictEntry]] = {}
 
     if sources & SearchSource.KANJI:
         kanjis = _session.query(EdictKanji).filter(

@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
 import argparse
-import re
 import gzip
 import pathlib
-import typing as t
+import re
+import typing as T
 from functools import reduce
-import xdg
-import requests
-from edict import parser
-from edict import db
 
+import requests
+import xdg
+
+from edict import db, parser
 
 _DL_URL = "http://ftp.monash.edu/pub/nihongo/edict2.gz"
 _RAW_PATH = pathlib.Path(xdg.XDG_CACHE_HOME) / "edict2.txt"
@@ -51,8 +51,8 @@ def create_db_if_needed() -> None:
 
 def main() -> None:
     args = parse_args()
-    patterns: t.List[str] = args.pattern
-    tag_patterns: t.List[str] = args.tags or []
+    patterns: T.List[str] = args.pattern
+    tag_patterns: T.List[str] = args.tags or []
     sources: db.SearchSource = reduce(
         lambda x, y: x | y, list(db.SearchSource)
     )
