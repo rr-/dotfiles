@@ -6,11 +6,11 @@ from booru_toolkit.plugin import Safety
 
 
 def box_to_ui(text: str) -> str:
-    return text.replace('_', ' ')
+    return text.replace("_", " ")
 
 
 def unbox_from_ui(text: str) -> str:
-    return text.replace(' ', '_')
+    return text.replace(" ", "_")
 
 
 class TagSource(Enum):

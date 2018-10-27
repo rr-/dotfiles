@@ -16,9 +16,9 @@ from booru_toolkit.plugin.tag_cache import CachedTag
 Json = Any
 _SAFETY_MAP = bidict(
     {
-        Safety.Safe: 'safe',
-        Safety.Questionable: 'sketchy',
-        Safety.Explicit: 'unsafe',
+        Safety.Safe: "safe",
+        Safety.Questionable: "sketchy",
+        Safety.Explicit: "unsafe",
     }
 )
 _version_cache: Dict[int, int] = {}
@@ -26,81 +26,81 @@ _version_cache: Dict[int, int] = {}
 
 def _result_to_post(result: Json) -> Post:
     post = Post(
-        post_id=result['id'],
-        safety=_SAFETY_MAP.inverse[result['safety']][0],
-        tags=[tag['names'][0] for tag in result['tags']],
-        site_url='https://yume.pl/post/{}'.format(result['id']),
-        content_url=result['contentUrl'],
-        width=result['canvasWidth'],
-        height=result['canvasHeight'],
-        source=result['source'],
+        post_id=result["id"],
+        safety=_SAFETY_MAP.inverse[result["safety"]][0],
+        tags=[tag["names"][0] for tag in result["tags"]],
+        site_url="https://yume.pl/post/{}".format(result["id"]),
+        content_url=result["contentUrl"],
+        width=result["canvasWidth"],
+        height=result["canvasHeight"],
+        source=result["source"],
         title=None,
     )
-    _version_cache[post.id] = result['version']
+    _version_cache[post.id] = result["version"]
     return post
 
 
 def _process_response(response: requests.Response) -> Json:
     result = json.loads(response.text)
     if response.status_code == 404:
-        raise errors.NotFoundError(result['description'])
+        raise errors.NotFoundError(result["description"])
     if response.status_code != 200:
-        raise errors.ApiError(result['description'])
+        raise errors.ApiError(result["description"])
     return result
 
 
 class PluginYume(PluginBase):
-    name = 'yume'
+    name = "yume"
 
     def __init__(self) -> None:
         super().__init__()
         self._session = requests.Session()
-        self._session.headers['Accept'] = 'application/json'
+        self._session.headers["Accept"] = "application/json"
 
     async def _login(self, user_name: str, password: str) -> None:
         self._session.auth = (user_name, password)
-        await self._get('/user/' + user_name + '?bump-login=true')
+        await self._get("/user/" + user_name + "?bump-login=true")
 
     async def find_exact_post(self, content: bytes) -> Optional[Post]:
         result = await self._get_similar_posts(content)
-        if not result['exactPost']:
+        if not result["exactPost"]:
             return None
-        return _result_to_post(result['exactPost'])
+        return _result_to_post(result["exactPost"])
 
     async def find_similar_posts(
         self, content: bytes
     ) -> List[Tuple[float, Post]]:
         result = await self._get_similar_posts(content)
         return [
-            (item['distance'], _result_to_post(item['post']))
-            for item in result['similarPosts']
+            (item["distance"], _result_to_post(item["post"]))
+            for item in result["similarPosts"]
         ]
 
     async def find_posts(self, query: str) -> AsyncIterable[Post]:
         offset = 0
         while True:
             response = await self._get(
-                '/posts?query={}&fields={}&offset={}'.format(
+                "/posts?query={}&fields={}&offset={}".format(
                     urllib.parse.quote(query),
-                    ','.join(
+                    ",".join(
                         [
-                            'id',
-                            'source',
-                            'safety',
-                            'tags',
-                            'contentUrl',
-                            'canvasWidth',
-                            'canvasHeight',
-                            'version',
+                            "id",
+                            "source",
+                            "safety",
+                            "tags",
+                            "contentUrl",
+                            "canvasWidth",
+                            "canvasHeight",
+                            "version",
                         ]
                     ),
                     offset,
                 )
             )
-            if not response['results']:
+            if not response["results"]:
                 break
-            offset += len(response['results'])
-            for result in response['results']:
+            offset += len(response["results"])
+            for result in response["results"]:
                 yield _result_to_post(result)
 
     async def get_post_content(self, post: Post) -> bytes:
@@ -122,15 +122,15 @@ class PluginYume(PluginBase):
             handle.write(content)
             handle.seek(0)
             result = await self._post(
-                '/posts',
+                "/posts",
                 files={
-                    'content': handle,
-                    'metadata': json.dumps(
+                    "content": handle,
+                    "metadata": json.dumps(
                         {
-                            'source': source,
-                            'safety': _SAFETY_MAP[safety],
-                            'anonymous': anonymous,
-                            'tags': tags,
+                            "source": source,
+                            "safety": _SAFETY_MAP[safety],
+                            "anonymous": anonymous,
+                            "tags": tags,
                         }
                     ),
                 },
@@ -141,11 +141,11 @@ class PluginYume(PluginBase):
         self, post_id: int, safety: Safety, tags: List[str]
     ) -> None:
         response = await self._put(
-            '/post/{}'.format(post_id),
+            "/post/{}".format(post_id),
             data={
-                'version': _version_cache[post_id],
-                'safety': _SAFETY_MAP[safety],
-                'tags': tags,
+                "version": _version_cache[post_id],
+                "safety": _SAFETY_MAP[safety],
+                "tags": tags,
             },
         )
         _result_to_post(response)
@@ -156,24 +156,24 @@ class PluginYume(PluginBase):
         offset = 0
         limit = 100
         while True:
-            print('Downloading tag cache... page {}'.format(offset // limit))
+            print("Downloading tag cache... page {}".format(offset // limit))
             response = await self._get(
-                '/tags?offset={offset}&limit={limit}&fields={fields}'.format(
+                "/tags?offset={offset}&limit={limit}&fields={fields}".format(
                     offset=offset,
                     limit=limit,
-                    fields=','.join(['names', 'usages', 'implications']),
+                    fields=",".join(["names", "usages", "implications"]),
                 )
             )
-            if not response['results']:
+            if not response["results"]:
                 break
-            offset += len(response['results'])
-            for tag in response['results']:
-                for name in tag['names']:
+            offset += len(response["results"])
+            for tag in response["results"]:
+                for name in tag["names"]:
                     self._tag_cache.add(
                         CachedTag(
                             name=name,
-                            importance=tag['usages'],
-                            implications=tag.get('implications', []),
+                            importance=tag["usages"],
+                            implications=tag.get("implications", []),
                         )
                     )
         self._tag_cache.save()
@@ -184,7 +184,7 @@ class PluginYume(PluginBase):
             handle.write(content)
             handle.seek(0)
             return await self._post(
-                '/posts/reverse-search', files={'content': handle}
+                "/posts/reverse-search", files={"content": handle}
             )
 
     async def _get(self, url: str) -> Json:
@@ -192,7 +192,7 @@ class PluginYume(PluginBase):
             await asyncio.get_event_loop().run_in_executor(
                 None,
                 lambda: self._session.get(
-                    'https://yume.pl/api/' + url.lstrip('/')
+                    "https://yume.pl/api/" + url.lstrip("/")
                 ),
             )
         )
@@ -207,9 +207,9 @@ class PluginYume(PluginBase):
             await asyncio.get_event_loop().run_in_executor(
                 None,
                 lambda: self._session.put(
-                    'https://yume.pl/api/' + url.lstrip('/'),
+                    "https://yume.pl/api/" + url.lstrip("/"),
                     data=(
-                        json.dumps(data).encode('utf-8')
+                        json.dumps(data).encode("utf-8")
                         if data is not None
                         else None
                     ),
@@ -228,9 +228,9 @@ class PluginYume(PluginBase):
             await asyncio.get_event_loop().run_in_executor(
                 None,
                 lambda: self._session.post(
-                    'https://yume.pl/api/' + url.lstrip('/'),
+                    "https://yume.pl/api/" + url.lstrip("/"),
                     data=(
-                        json.dumps(data).encode('utf-8')
+                        json.dumps(data).encode("utf-8")
                         if data is not None
                         else None
                     ),

@@ -13,12 +13,12 @@ class VimListBox(urwid.ListBox):
 
     def keypress(self, _size: Tuple[int, int], key: str) -> Optional[str]:
         keymap = {
-            'j': self._select_prev,
-            'k': self._select_next,
-            'g': self._select_first,
-            'G': self._select_last,
+            "j": self._select_prev,
+            "k": self._select_next,
+            "g": self._select_first,
+            "G": self._select_last,
         }
-        if key in '0123456789':
+        if key in "0123456789":
             self.num = (0 if self.num is None else self.num) * 10 + int(key)
             return None
         elif key in keymap:

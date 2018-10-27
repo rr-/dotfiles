@@ -2,7 +2,7 @@ from typing import Any
 import urwid
 
 
-ELLIPSIS = '...'
+ELLIPSIS = "..."
 
 
 class EllipsisTextLayout(urwid.TextLayout):
@@ -17,9 +17,9 @@ class EllipsisTextLayout(urwid.TextLayout):
             return [[(len(text), 0, len(text))]]
 
         if width <= len(ELLIPSIS):
-            return [[(width, 1, b'.' * width)]]
+            return [[(width, 1, b"." * width)]]
 
-        ellipsis_segment = (len(ELLIPSIS), 1, ELLIPSIS.encode('utf-8'))
+        ellipsis_segment = (len(ELLIPSIS), 1, ELLIPSIS.encode("utf-8"))
         offset = 1
         if align == urwid.LEFT:
             while True:
