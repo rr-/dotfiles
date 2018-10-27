@@ -1,10 +1,10 @@
+import glob
+import logging
 import os
 import pathlib
 import shutil
-import logging
-import glob
-from subprocess import Popen, call, PIPE
 import urllib.request
+from subprocess import PIPE, Popen, call
 
 logger = logging.getLogger(__name__)
 root_dir = pathlib.Path(__file__).parent.parent.parent
@@ -105,7 +105,8 @@ def create_symlink(source, target):
     _remove_symlink(target)
     if os.path.exists(target):
         raise RuntimeError(
-            'Target file %r exists and is not a symlink.', target)
+            'Target file %r exists and is not a symlink.', target
+        )
     logger.info('Linking %r to %r...', source, target)
     create_dir(os.path.dirname(target))
     os.symlink(source, target)
