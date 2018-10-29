@@ -1,6 +1,7 @@
 import argparse
 import concurrent.futures
 import dataclasses
+import os
 import re
 import typing as T
 import urllib.parse
@@ -135,22 +136,37 @@ class Crawler:
 
     def _download_url(self, url: str, visited_urls: T.Set[str]) -> Path:
         Flow.check()
-
-        parsed_url = urllib.parse.urlparse(url)
-        target_path = (
-            self.args.target
-            / parsed_url.netloc
-            / re.sub(r"^[\/]*", "", parsed_url.path)
-        )
-        target_path.parent.mkdir(parents=True, exist_ok=True)
+        target_path = self._get_target_path(url)
 
         if not target_path.exists():
             response = requests.get(url, timeout=3)
             response.raise_for_status()
+
+            target_path.parent.mkdir(parents=True, exist_ok=True)
             target_path.write_bytes(response.content)
             visited_urls.add(url)
 
         return target_path
+
+    def _get_target_path(self, url: str) -> Path:
+        parsed_url = urllib.parse.urlparse(url)
+
+        if self.args.parent and url in self.linkings:
+            for parent_url in self.linkings[url]:
+                if self.args.parent.search(parent_url):
+                    parsed_parent_url = urllib.parse.urlparse(parent_url)
+                    return (
+                        self.args.target
+                        / parsed_parent_url.netloc
+                        / re.sub(r"^[\/]*", "", parsed_parent_url.path)
+                        / os.path.basename(parsed_url.path)
+                    )
+
+        return (
+            self.args.target
+            / parsed_url.netloc
+            / re.sub(r"^[\/]*", "", parsed_url.path)
+        )
 
 
 def _collect_links(response: requests.Response) -> T.Set[str]:
@@ -196,10 +212,19 @@ class DownloadCommand(BaseCommand):
             help="set path to the history file",
         )
         parser.add_argument(
-            "-r", "--reject", help="what urls not to download", type=re.compile
+            "-r", "--reject", type=re.compile, help="what urls not to download"
         )
         parser.add_argument(
-            "-a", "--accept", help="what urls to download", type=re.compile
+            "-a", "--accept", type=re.compile, help="what urls to download"
+        )
+        parser.add_argument(
+            "-p",
+            "--parent",
+            type=re.compile,
+            help=(
+                "reparents downloaded files to "
+                "a source url that matches this regex"
+            ),
         )
         parser.add_argument("url", nargs="+", help="initial urls to download")
 
