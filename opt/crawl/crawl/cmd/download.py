@@ -4,6 +4,7 @@ import dataclasses
 import re
 import typing as T
 import urllib.parse
+from pathlib import Path
 
 import requests
 from bs4 import BeautifulSoup
@@ -25,21 +26,49 @@ class ProbeResult:
 class Crawler:
     def __init__(self, args: argparse.Namespace) -> None:
         self.args = args
-        self.visited_urls: T.Set[str] = set()
+
         self.media_urls: T.Set[str] = set()
         self.linkings: T.Dict[str, T.Set[str]] = {}
+
         self.executor = concurrent.futures.ThreadPoolExecutor(
             max_workers=args.num
         )
 
+    # phase 1
+    # modifies media_urls and linkings
     def initial_scan(self) -> None:
+        visited_urls: T.Set[str] = set()
         urls_to_fetch: T.Set[str] = set(self.args.url)
         while urls_to_fetch:
-            urls_to_fetch = set(self._probe_batch_urls(urls_to_fetch))
+            urls_to_fetch = set(
+                self._probe_batch_urls(urls_to_fetch, visited_urls)
+            )
 
-    def _probe_batch_urls(self, urls: T.Iterable[str]) -> T.Iterable[str]:
+    # phase 2
+    def download_media(self) -> int:
+        visited_urls = set()
         futures = [
-            self.executor.submit(self._probe_url, url) for url in sorted(urls)
+            self.executor.submit(self._download_url, url, visited_urls)
+            for url in sorted(self.media_urls)
+            if url not in visited_urls
+        ]
+        downloaded = 0
+        for future in tqdm(
+            concurrent.futures.as_completed(futures), total=len(futures)
+        ):
+            if future.exception():
+                print(future.exception())
+            else:
+                downloaded += 1
+        return downloaded
+
+    def _probe_batch_urls(
+        self, urls: T.Iterable[str], visited_urls: T.Set[str]
+    ) -> T.Iterable[str]:
+        futures = [
+            self.executor.submit(self._probe_url, url, visited_urls)
+            for url in sorted(urls)
+            if url not in visited_urls
         ]
         for future in tqdm(
             concurrent.futures.as_completed(futures), total=len(futures)
@@ -49,8 +78,8 @@ class Crawler:
             probe_result = future.result()
             yield from self._process_probe_result(probe_result)
 
-    def _probe_url(self, url: str) -> ProbeResult:
-        self.visited_urls.add(url)
+    def _probe_url(self, url: str, visited_urls: T.Set[str]) -> ProbeResult:
+        visited_urls.add(url)
 
         if not url.endswith(tuple(MEDIA_EXTENSIONS)):
             response = requests.head(url, timeout=3)
@@ -82,12 +111,27 @@ class Crawler:
                 if self._can_visit(child_url):
                     yield child_url
 
+    def _download_url(self, url: str, visited_urls: T.Set[str]) -> Path:
+        parsed_url = urllib.parse.urlparse(url)
+        target_path = (
+            self.args.target /
+            parsed_url.netloc /
+            re.sub(r"^[\/]*", "", parsed_url.path)
+        )
+        target_path.parent.mkdir(parents=True, exist_ok=True)
+
+        if not target_path.exists():
+            response = requests.get(url, timeout=3)
+            response.raise_for_status()
+            target_path.write_bytes(response.content)
+            visited_urls.add(url)
+
+        return target_path
+
     def _can_visit(self, url: str) -> bool:
         if not self.args.accept.search(url):
             return False
         if self.args.reject and self.args.reject.search(url):
-            return False
-        if url in self.visited_urls:
             return False
         return True
 
@@ -120,6 +164,14 @@ class DownloadCommand(BaseCommand):
         )
 
         parser.add_argument(
+            "-t",
+            "--target",
+            metavar="DIR",
+            default=".",
+            type=Path,
+            help="set base target directory",
+        )
+        parser.add_argument(
             "-r", "--reject", help="what urls not to download", type=re.compile
         )
         parser.add_argument(
@@ -128,9 +180,11 @@ class DownloadCommand(BaseCommand):
         parser.add_argument("url", nargs="+", help="initial urls to download")
 
     def run(self, args: argparse.Namespace) -> None:
-        crawl_state = Crawler(args)
+        crawler = Crawler(args)
 
         print("initial html scan")
-        crawl_state.initial_scan()
+        crawler.initial_scan()
 
         print("media download")
+        downloaded = crawler.download_media()
+        print("downloaded", downloaded, "media files")
