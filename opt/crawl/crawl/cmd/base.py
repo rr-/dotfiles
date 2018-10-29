@@ -2,6 +2,8 @@ import argparse
 
 
 class BaseCommand:
+    name = "..."
+
     def decorate_parser(self, parser: argparse.ArgumentParser) -> None:
         pass
 

@@ -1,25 +1,18 @@
 import argparse
-import asyncio
+import concurrent.futures
 import dataclasses
 import re
 import typing as T
 import urllib.parse
-from concurrent.futures import ThreadPoolExecutor
 
 import requests
 from bs4 import BeautifulSoup
+from tqdm import tqdm
 
 from crawl.cmd.base import BaseCommand
 
-SURE_MEDIA_EXTENSIONS = [".jpg", ".gif", ".png", ".webm"]
-
-
-@dataclasses.dataclass
-class CrawlState:
-    args: argparse.Namespace
-    visited_urls: T.Set[str] = dataclasses.field(default_factory=set)
-    media_urls: T.Set[str] = dataclasses.field(default_factory=set)
-    linkings: T.Dict[str, T.Set[str]] = dataclasses.field(default_factory=dict)
+# urls suffixes that can be assumed to be media files
+MEDIA_EXTENSIONS = [".jpg", ".gif", ".png", ".webm"]
 
 
 @dataclasses.dataclass
@@ -29,32 +22,77 @@ class ProbeResult:
     child_urls: T.Set[str] = dataclasses.field(default_factory=set)
 
 
-def _probe_url(url: str, crawl_state: CrawlState) -> ProbeResult:
-    crawl_state.visited_urls.add(url)
+class Crawler:
+    def __init__(self, args: argparse.Namespace) -> None:
+        self.args = args
+        self.visited_urls: T.Set[str] = set()
+        self.media_urls: T.Set[str] = set()
+        self.linkings: T.Dict[str, T.Set[str]] = {}
+        self.executor = concurrent.futures.ThreadPoolExecutor(
+            max_workers=args.num
+        )
 
-    if not url.endswith(tuple(SURE_MEDIA_EXTENSIONS)):
-        print("probing", url)
+    def initial_scan(self) -> None:
+        urls_to_fetch: T.Set[str] = set(self.args.url)
+        while urls_to_fetch:
+            urls_to_fetch = set(self._probe_batch_urls(urls_to_fetch))
 
-        # TODO: retry mechanism
-        response = requests.head(url, timeout=3)
-        response.raise_for_status()
+    def _probe_batch_urls(self, urls: T.Iterable[str]) -> T.Iterable[str]:
+        futures = [
+            self.executor.submit(self._probe_url, url) for url in sorted(urls)
+        ]
+        for future in tqdm(
+            concurrent.futures.as_completed(futures), total=len(futures)
+        ):
+            if future.exception():
+                continue
+            probe_result = future.result()
+            yield from self._process_probe_result(probe_result)
 
-        mime = response.headers["content-type"].split(";")[0].lower()
-        if mime == "text/html":
-            response = requests.get(url, timeout=3)
+    def _probe_url(self, url: str) -> ProbeResult:
+        self.visited_urls.add(url)
+
+        if not url.endswith(tuple(MEDIA_EXTENSIONS)):
+            response = requests.head(url, timeout=3)
             response.raise_for_status()
-            return ProbeResult(
-                url=url,
-                is_media=False,
-                child_urls=_collect_links(response, crawl_state),
-            )
 
-    return ProbeResult(url=url, is_media=True)
+            mime = response.headers["content-type"].split(";")[0].lower()
+            if mime == "text/html":
+                response = requests.get(url, timeout=3)
+                response.raise_for_status()
+                return ProbeResult(
+                    url=url,
+                    is_media=False,
+                    child_urls=_collect_links(response),
+                )
+
+        return ProbeResult(url=url, is_media=True)
+
+    def _process_probe_result(
+        self, probe_result: ProbeResult
+    ) -> T.Iterable[str]:
+        if probe_result.is_media:
+            self.media_urls.add(probe_result.url)
+        else:
+            for child_url in sorted(probe_result.child_urls):
+                if child_url not in self.linkings:
+                    self.linkings[child_url] = set()
+                self.linkings[child_url].add(probe_result.url)
+
+                if self._can_visit(child_url):
+                    yield child_url
+
+    def _can_visit(self, url: str) -> bool:
+        if not self.args.accept.search(url):
+            return False
+        if self.args.reject and self.args.reject.search(url):
+            return False
+        if url in self.visited_urls:
+            return False
+        return True
 
 
-def _collect_links(
-    response: requests.Response, crawl_state: CrawlState
-) -> T.Set[str]:
+def _collect_links(response: requests.Response) -> T.Set[str]:
     ret: T.Set[str] = set()
     soup = BeautifulSoup(response.text, "html.parser")
 
@@ -89,52 +127,10 @@ class DownloadCommand(BaseCommand):
         )
         parser.add_argument("url", nargs="+", help="initial urls to download")
 
-    async def run(self, args: argparse.Namespace) -> None:
-        crawl_state = CrawlState(args)
-        await self._initial_scan(args, crawl_state)
+    def run(self, args: argparse.Namespace) -> None:
+        crawl_state = Crawler(args)
 
-    async def _initial_scan(
-        self, args: argparse.Namespace, crawl_state: CrawlState
-    ) -> None:
-        urls_to_fetch: T.Set[str] = set(args.url)
+        print("initial html scan")
+        crawl_state.initial_scan()
 
-        loop = asyncio.get_event_loop()
-        executor = ThreadPoolExecutor(max_workers=args.num)
-        while urls_to_fetch:
-            futures = [
-                loop.run_in_executor(executor, _probe_url, url, crawl_state)
-                for url in sorted(urls_to_fetch)
-            ]
-            probe_results = await asyncio.gather(
-                *futures, return_exceptions=True
-            )
-
-            urls_to_fetch.clear()
-
-            for probe_result in probe_results:
-                if isinstance(probe_result, Exception):
-                    continue
-
-                if probe_result.is_media:
-                    crawl_state.media_urls.add(child_url)
-                    continue
-
-                for child_url in sorted(probe_result.child_urls):
-                    if child_url not in crawl_state.linkings:
-                        crawl_state.linkings[child_url] = set()
-                    crawl_state.linkings[child_url].add(probe_result.url)
-
-                    if not crawl_state.args.accept.search(child_url):
-                        continue
-                    if (
-                        crawl_state.args.reject
-                        and crawl_state.args.reject.search(child_url)
-                    ):
-                        continue
-                    if child_url in crawl_state.visited_urls:
-                        continue
-
-                    urls_to_fetch.add(child_url)
-
-        print(crawl_state.linkings)
-        print("done")
+        print("media download")
