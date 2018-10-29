@@ -11,6 +11,7 @@ from bs4 import BeautifulSoup
 from tqdm import tqdm
 
 from crawl.cmd.base import BaseCommand
+from crawl.flow import Flow
 
 # urls suffixes that can be assumed to be media files
 MEDIA_EXTENSIONS = [".jpg", ".gif", ".png", ".webm"]
@@ -38,11 +39,13 @@ class Crawler:
     # modifies media_urls and linkings
     def initial_scan(self) -> None:
         visited_urls: T.Set[str] = set()
-        urls_to_fetch: T.Set[str] = set(self.args.url)
-        while urls_to_fetch:
-            urls_to_fetch = set(
-                self._probe_batch_urls(urls_to_fetch, visited_urls)
-            )
+
+        with Flow.guard(self.executor):
+            urls_to_fetch: T.Set[str] = set(self.args.url)
+            while urls_to_fetch:
+                urls_to_fetch = set(
+                    self._probe_batch_urls(urls_to_fetch, visited_urls)
+                )
 
     # phase 2
     def download_media(self) -> int:
@@ -52,19 +55,22 @@ class Crawler:
             visited_urls = set(self.args.history.read_text().split("\n"))
 
         try:
-            futures = [
-                self.executor.submit(self._download_url, url, visited_urls)
-                for url in sorted(self.media_urls)
-                if url not in visited_urls
-            ]
-            downloaded = 0
-            for future in tqdm(
-                concurrent.futures.as_completed(futures), total=len(futures)
-            ):
-                if future.exception():
-                    print(future.exception())
-                else:
-                    downloaded += 1
+            with Flow.guard(self.executor):
+                futures = [
+                    self.executor.submit(self._download_url, url, visited_urls)
+                    for url in sorted(self.media_urls)
+                    if url not in visited_urls
+                ]
+
+                downloaded = 0
+                for future in tqdm(
+                    concurrent.futures.as_completed(futures),
+                    total=len(futures),
+                ):
+                    if future.exception():
+                        print(future.exception())
+                    else:
+                        downloaded += 1
         finally:
             if self.args.history:
                 self.args.history.write_text("\n".join(visited_urls))
@@ -83,11 +89,14 @@ class Crawler:
             concurrent.futures.as_completed(futures), total=len(futures)
         ):
             if future.exception():
+                print(future.exception())
                 continue
             probe_result = future.result()
             yield from self._process_probe_result(probe_result)
 
     def _probe_url(self, url: str, visited_urls: T.Set[str]) -> ProbeResult:
+        Flow.check()
+
         visited_urls.add(url)
 
         if not url.endswith(tuple(MEDIA_EXTENSIONS)):
@@ -125,6 +134,8 @@ class Crawler:
                 yield child_url
 
     def _download_url(self, url: str, visited_urls: T.Set[str]) -> Path:
+        Flow.check()
+
         parsed_url = urllib.parse.urlparse(url)
         target_path = (
             self.args.target

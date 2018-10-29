@@ -20,7 +20,10 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> None:
     args = parse_args()
-    args.command.run(args)
+    try:
+        args.command.run(args)
+    except InterruptedError:
+        print("exiting due to user interrupt")
 
 
 if __name__ == "__main__":
