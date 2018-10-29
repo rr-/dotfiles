@@ -47,19 +47,28 @@ class Crawler:
     # phase 2
     def download_media(self) -> int:
         visited_urls = set()
-        futures = [
-            self.executor.submit(self._download_url, url, visited_urls)
-            for url in sorted(self.media_urls)
-            if url not in visited_urls
-        ]
-        downloaded = 0
-        for future in tqdm(
-            concurrent.futures.as_completed(futures), total=len(futures)
-        ):
-            if future.exception():
-                print(future.exception())
-            else:
-                downloaded += 1
+
+        if self.args.history and self.args.history.exists():
+            visited_urls = set(self.args.history.read_text().split("\n"))
+
+        try:
+            futures = [
+                self.executor.submit(self._download_url, url, visited_urls)
+                for url in sorted(self.media_urls)
+                if url not in visited_urls
+            ]
+            downloaded = 0
+            for future in tqdm(
+                concurrent.futures.as_completed(futures), total=len(futures)
+            ):
+                if future.exception():
+                    print(future.exception())
+                else:
+                    downloaded += 1
+        finally:
+            if self.args.history:
+                self.args.history.write_text("\n".join(visited_urls))
+
         return downloaded
 
     def _probe_batch_urls(
@@ -108,15 +117,19 @@ class Crawler:
                     self.linkings[child_url] = set()
                 self.linkings[child_url].add(probe_result.url)
 
-                if self._can_visit(child_url):
-                    yield child_url
+                if not self.args.accept.search(child_url):
+                    continue
+                if self.args.reject and self.args.reject.search(child_url):
+                    continue
+
+                yield child_url
 
     def _download_url(self, url: str, visited_urls: T.Set[str]) -> Path:
         parsed_url = urllib.parse.urlparse(url)
         target_path = (
-            self.args.target /
-            parsed_url.netloc /
-            re.sub(r"^[\/]*", "", parsed_url.path)
+            self.args.target
+            / parsed_url.netloc
+            / re.sub(r"^[\/]*", "", parsed_url.path)
         )
         target_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -127,13 +140,6 @@ class Crawler:
             visited_urls.add(url)
 
         return target_path
-
-    def _can_visit(self, url: str) -> bool:
-        if not self.args.accept.search(url):
-            return False
-        if self.args.reject and self.args.reject.search(url):
-            return False
-        return True
 
 
 def _collect_links(response: requests.Response) -> T.Set[str]:
@@ -170,6 +176,13 @@ class DownloadCommand(BaseCommand):
             default=".",
             type=Path,
             help="set base target directory",
+        )
+        parser.add_argument(
+            "-H",
+            "--history",
+            metavar="FILE",
+            type=Path,
+            help="set path to the history file",
         )
         parser.add_argument(
             "-r", "--reject", help="what urls not to download", type=re.compile
