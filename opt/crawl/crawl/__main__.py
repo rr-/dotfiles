@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 import argparse
-import asyncio
 
 import crawl.cmd
 
@@ -21,9 +20,7 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> None:
     args = parse_args()
-    loop = asyncio.get_event_loop()
-    loop.run_until_complete(args.command.run(args))
-    loop.close()
+    args.command.run(args)
 
 
 if __name__ == "__main__":
