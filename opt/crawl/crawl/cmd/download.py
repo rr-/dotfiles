@@ -26,148 +26,170 @@ class ProbeResult:
     child_urls: T.Set[str] = dataclasses.field(default_factory=set)
 
 
-class Crawler:
-    def __init__(self, args: argparse.Namespace) -> None:
-        self.args = args
+@dataclasses.dataclass
+class LinkScanResult:
+    errors: T.List[str] = dataclasses.field(default_factory=list)
+    document_urls: T.Set[str] = dataclasses.field(default_factory=set)
+    media_urls: T.Set[str] = dataclasses.field(default_factory=set)
+    linkings: T.Dict[str, T.Set[str]] = dataclasses.field(default_factory=dict)
 
-        self.media_urls: T.Set[str] = set()
-        self.linkings: T.Dict[str, T.Set[str]] = {}
+    @property
+    def total(self) -> int:
+        return len(self.document_urls) + len(self.media_urls)
 
-        self.executor = concurrent.futures.ThreadPoolExecutor(
-            max_workers=args.num
-        )
 
-    # phase 1
-    # modifies media_urls and linkings
-    def initial_scan(self) -> None:
-        history = History()
+@dataclasses.dataclass
+class DownloadStats:
+    total: int = 0
+    downloaded: int = 0
+    errors: T.List[str] = dataclasses.field(default_factory=list)
 
-        with Flow.guard(self.executor):
-            urls_to_fetch: T.Set[str] = set(self.args.url)
-            while urls_to_fetch:
-                urls_to_fetch = set(
-                    self._probe_batch_urls(urls_to_fetch, history)
-                )
+    @property
+    def skipped(self) -> int:
+        return self.total - self.processed
 
-    # phase 2
-    def download_media(self) -> int:
-        history = History()
+    @property
+    def processed(self) -> int:
+        return self.downloaded + len(self.errors)
 
-        if self.args.history_path and self.args.history_path.exists():
-            history.load(self.args.history_path)
 
-        try:
-            with Flow.guard(self.executor):
-                futures = [
-                    self.executor.submit(self._download_url, url, history)
-                    for url in sorted(self.media_urls)
-                    if url not in history
-                ]
+def _link_scan(args: argparse.Namespace, result: LinkScanResult) -> None:
+    history = History()
 
-                downloaded = 0
-                for future in tqdm(
-                    concurrent.futures.as_completed(futures),
-                    total=len(futures),
-                ):
-                    if future.exception():
-                        print(future.exception())
-                    else:
-                        downloaded += 1
-        finally:
-            if self.args.history_path:
-                history.save(self.args.history_path)
+    executor = concurrent.futures.ThreadPoolExecutor(max_workers=args.num)
+    with Flow.guard(executor):
+        urls_to_fetch: T.Set[str] = set(args.url)
 
-        return downloaded
+        while urls_to_fetch:
+            futures = [
+                executor.submit(_probe_url, url, history)
+                for url in sorted(urls_to_fetch)
+                if url not in history
+            ]
 
-    def _probe_batch_urls(
-        self, urls: T.Iterable[str], history: History
-    ) -> T.Iterable[str]:
-        futures = [
-            self.executor.submit(self._probe_url, url, history)
-            for url in sorted(urls)
-            if url not in history
-        ]
-        for future in tqdm(
-            concurrent.futures.as_completed(futures), total=len(futures)
-        ):
-            if future.exception():
-                print(future.exception())
-                continue
-            probe_result = future.result()
-            yield from self._process_probe_result(probe_result)
+            urls_to_fetch.clear()
 
-    def _probe_url(self, url: str, history: History) -> ProbeResult:
-        Flow.check()
-
-        history.add(url)
-
-        if not url.endswith(tuple(MEDIA_EXTENSIONS)):
-            response = requests.head(url, timeout=3)
-            response.raise_for_status()
-
-            mime = response.headers["content-type"].split(";")[0].lower()
-            if mime == "text/html":
-                response = requests.get(url, timeout=3)
-                response.raise_for_status()
-                return ProbeResult(
-                    url=url,
-                    is_media=False,
-                    child_urls=_collect_links(response),
-                )
-
-        return ProbeResult(url=url, is_media=True)
-
-    def _process_probe_result(
-        self, probe_result: ProbeResult
-    ) -> T.Iterable[str]:
-        if probe_result.is_media:
-            self.media_urls.add(probe_result.url)
-        else:
-            for child_url in sorted(probe_result.child_urls):
-                if child_url not in self.linkings:
-                    self.linkings[child_url] = set()
-                self.linkings[child_url].add(probe_result.url)
-
-                if not self.args.accept.search(child_url):
-                    continue
-                if self.args.reject and self.args.reject.search(child_url):
+            for future in tqdm(
+                concurrent.futures.as_completed(futures), total=len(futures)
+            ):
+                if future.exception():
+                    result.errors.append(future.exception())
                     continue
 
-                yield child_url
+                probe_result = future.result()
+                if probe_result.is_media:
+                    result.media_urls.add(probe_result.url)
+                    continue
 
-    def _download_url(self, url: str, history: History) -> Path:
-        Flow.check()
-        target_path = self._get_target_path(url)
+                result.document_urls.add(probe_result.url)
+                for child_url in sorted(probe_result.child_urls):
+                    if child_url not in result.linkings:
+                        result.linkings[child_url] = set()
+                    result.linkings[child_url].add(probe_result.url)
 
-        if not target_path.exists():
+                    if not args.accept.search(child_url):
+                        continue
+                    if args.reject and args.reject.search(child_url):
+                        continue
+
+                    urls_to_fetch.add(child_url)
+
+
+def _download_media(
+    args: argparse.Namespace,
+    link_scan_result: LinkScanResult,
+    stats: DownloadStats,
+) -> None:
+    history = History()
+    if args.history_path and args.history_path.exists():
+        history.load(args.history_path)
+
+    urls_to_fetch = sorted(set(link_scan_result.media_urls) - set(history))
+    stats.total = len(urls_to_fetch)
+
+    executor = concurrent.futures.ThreadPoolExecutor(max_workers=args.num)
+    try:
+        with Flow.guard(executor):
+            futures = [
+                executor.submit(
+                    _download_url, url, history, args, link_scan_result
+                )
+                for url in urls_to_fetch
+            ]
+
+            for future in tqdm(
+                concurrent.futures.as_completed(futures), total=len(futures)
+            ):
+                if future.exception():
+                    stats.errors.append(future.exception())
+                else:
+                    stats.downloaded += 1
+    finally:
+        if args.history_path:
+            history.save(args.history_path)
+
+
+def _probe_url(url: str, history: History) -> ProbeResult:
+    Flow.check()
+
+    history.add(url)
+
+    if not url.endswith(tuple(MEDIA_EXTENSIONS)):
+        response = requests.head(url, timeout=3)
+        response.raise_for_status()
+
+        mime = response.headers["content-type"].split(";")[0].lower()
+        if mime == "text/html":
             response = requests.get(url, timeout=3)
             response.raise_for_status()
+            return ProbeResult(
+                url=url, is_media=False, child_urls=_collect_links(response)
+            )
 
-            target_path.parent.mkdir(parents=True, exist_ok=True)
-            target_path.write_bytes(response.content)
-            history.add(url)
+    return ProbeResult(url=url, is_media=True)
 
-        return target_path
 
-    def _get_target_path(self, url: str) -> Path:
-        parsed_url = urllib.parse.urlparse(url)
+def _download_url(
+    url: str,
+    history: History,
+    args: argparse.Namespace,
+    link_scan_result: LinkScanResult,
+) -> Path:
+    Flow.check()
+    target_path = _get_target_path(url, args, link_scan_result)
 
-        if self.args.parent and url in self.linkings:
-            for parent_url in self.linkings[url]:
-                if self.args.parent.search(parent_url):
-                    parsed_parent_url = urllib.parse.urlparse(parent_url)
-                    return (
-                        self.args.target_dir
-                        / parsed_parent_url.netloc
-                        / re.sub(r"^[\/]*", "", parsed_parent_url.path)
-                        / os.path.basename(parsed_url.path)
-                    )
+    if not target_path.exists():
+        response = requests.get(url, timeout=3)
+        response.raise_for_status()
 
-        return (
-            self.args.target_dir
-            / parsed_url.netloc
-            / re.sub(r"^[\/]*", "", parsed_url.path)
-        )
+        target_path.parent.mkdir(parents=True, exist_ok=True)
+        target_path.write_bytes(response.content)
+        history.add(url)
+
+    return target_path
+
+
+def _get_target_path(
+    url: str, args: argparse.Namespace, link_scan_result: LinkScanResult
+) -> Path:
+    parsed_url = urllib.parse.urlparse(url)
+
+    if args.parent and url in link_scan_result.linkings:
+        for parent_url in link_scan_result.linkings[url]:
+            if args.parent.search(parent_url):
+                parsed_parent_url = urllib.parse.urlparse(parent_url)
+                return (
+                    args.target_dir
+                    / parsed_parent_url.netloc
+                    / re.sub(r"^[\/]*", "", parsed_parent_url.path)
+                    / os.path.basename(parsed_url.path)
+                )
+
+    return (
+        args.target_dir
+        / parsed_url.netloc
+        / re.sub(r"^[\/]*", "", parsed_url.path)
+    )
 
 
 def _collect_links(response: requests.Response) -> T.Set[str]:
@@ -232,11 +254,27 @@ class DownloadCommand(BaseCommand):
         parser.add_argument("url", nargs="+", help="initial urls to download")
 
     def run(self, args: argparse.Namespace) -> None:
-        crawler = Crawler(args)
+        print("scanning for links...")
+        try:
+            link_scan_result = LinkScanResult()
+            _link_scan(args, link_scan_result)
+        finally:
+            print("total:", link_scan_result.total)
+            print("documents:", len(link_scan_result.document_urls))
+            print("media:", len(link_scan_result.media_urls))
+            if link_scan_result.errors:
+                print("errors:", len(link_scan_result.errors))
 
-        print("initial html scan")
-        crawler.initial_scan()
-
-        print("media download")
-        downloaded = crawler.download_media()
-        print("downloaded", downloaded, "media files")
+        print("downloading media...")
+        try:
+            stats = DownloadStats()
+            _download_media(args, link_scan_result, stats)
+        finally:
+            print("total:", stats.total)
+            if stats.skipped:
+                print("skipped:", stats.skipped)
+            print("downloaded:", stats.downloaded)
+            if stats.errors:
+                print("errors:", len(stats.errors))
+                for error in stats.errors:
+                    print(error)

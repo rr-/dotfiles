@@ -16,7 +16,7 @@ MEDIA_EXTENSIONS = [".jpg", ".gif", ".png", ".webm"]
 
 
 @dataclasses.dataclass
-class Stats:
+class PruneStats:
     total: int = 0
     removed: int = 0
     kept: int = 0
@@ -35,6 +35,29 @@ class Stats:
 class CheckResult:
     url: str
     is_dead: bool
+
+
+def _prune(
+    args: argparse.Namespace, history: History, stats: PruneStats
+) -> None:
+    executor = concurrent.futures.ThreadPoolExecutor(max_workers=args.num)
+
+    with Flow.guard(executor):
+        futures = [
+            executor.submit(_check_url_is_dead, url) for url in sorted(history)
+        ]
+        for future in tqdm(
+            concurrent.futures.as_completed(futures), total=len(futures)
+        ):
+            if future.exception():
+                stats.errors.append(future.exception())
+                continue
+            check_result = future.result()
+            if check_result.is_dead:
+                history.remove(check_result.url)
+                stats.removed += 1
+            else:
+                stats.kept += 1
 
 
 def _check_url_is_dead(url: str) -> CheckResult:
@@ -69,30 +92,13 @@ class PruneCommand(BaseCommand):
         history = History()
         history.load(args.history_path)
 
-        stats = Stats(total=len(history))
-        executor = concurrent.futures.ThreadPoolExecutor(max_workers=args.num)
-
+        print("pruning...")
         try:
-            with Flow.guard(executor):
-                futures = [
-                    executor.submit(_check_url_is_dead, url)
-                    for url in sorted(history)
-                ]
-                for future in tqdm(
-                    concurrent.futures.as_completed(futures),
-                    total=len(futures),
-                ):
-                    if future.exception():
-                        stats.errors.append(future.exception())
-                        continue
-                    check_result = future.result()
-                    if check_result.is_dead:
-                        history.remove(check_result.url)
-                        stats.removed += 1
-                    else:
-                        stats.kept += 1
+            stats = PruneStats(total=len(history))
+            _prune(args, history, stats)
         finally:
             history.save(args.history_path)
+
             print("total:", stats.total)
             if stats.skipped:
                 print("skipped:", stats.skipped)
