@@ -13,6 +13,7 @@ from tqdm import tqdm
 
 from crawl.cmd.base import BaseCommand
 from crawl.flow import Flow
+from crawl.history import History
 
 # urls suffixes that can be assumed to be media files
 MEDIA_EXTENSIONS = [".jpg", ".gif", ".png", ".webm"]
@@ -39,28 +40,28 @@ class Crawler:
     # phase 1
     # modifies media_urls and linkings
     def initial_scan(self) -> None:
-        visited_urls: T.Set[str] = set()
+        history = History()
 
         with Flow.guard(self.executor):
             urls_to_fetch: T.Set[str] = set(self.args.url)
             while urls_to_fetch:
                 urls_to_fetch = set(
-                    self._probe_batch_urls(urls_to_fetch, visited_urls)
+                    self._probe_batch_urls(urls_to_fetch, history)
                 )
 
     # phase 2
     def download_media(self) -> int:
-        visited_urls = set()
+        history = History()
 
-        if self.args.history and self.args.history.exists():
-            visited_urls = set(self.args.history.read_text().split("\n"))
+        if self.args.history_path and self.args.history_path.exists():
+            history.load(self.args.history_path)
 
         try:
             with Flow.guard(self.executor):
                 futures = [
-                    self.executor.submit(self._download_url, url, visited_urls)
+                    self.executor.submit(self._download_url, url, history)
                     for url in sorted(self.media_urls)
-                    if url not in visited_urls
+                    if url not in history
                 ]
 
                 downloaded = 0
@@ -73,18 +74,18 @@ class Crawler:
                     else:
                         downloaded += 1
         finally:
-            if self.args.history:
-                self.args.history.write_text("\n".join(visited_urls))
+            if self.args.history_path:
+                history.save(self.args.history_path)
 
         return downloaded
 
     def _probe_batch_urls(
-        self, urls: T.Iterable[str], visited_urls: T.Set[str]
+        self, urls: T.Iterable[str], history: History
     ) -> T.Iterable[str]:
         futures = [
-            self.executor.submit(self._probe_url, url, visited_urls)
+            self.executor.submit(self._probe_url, url, history)
             for url in sorted(urls)
-            if url not in visited_urls
+            if url not in history
         ]
         for future in tqdm(
             concurrent.futures.as_completed(futures), total=len(futures)
@@ -95,10 +96,10 @@ class Crawler:
             probe_result = future.result()
             yield from self._process_probe_result(probe_result)
 
-    def _probe_url(self, url: str, visited_urls: T.Set[str]) -> ProbeResult:
+    def _probe_url(self, url: str, history: History) -> ProbeResult:
         Flow.check()
 
-        visited_urls.add(url)
+        history.add(url)
 
         if not url.endswith(tuple(MEDIA_EXTENSIONS)):
             response = requests.head(url, timeout=3)
@@ -134,7 +135,7 @@ class Crawler:
 
                 yield child_url
 
-    def _download_url(self, url: str, visited_urls: T.Set[str]) -> Path:
+    def _download_url(self, url: str, history: History) -> Path:
         Flow.check()
         target_path = self._get_target_path(url)
 
@@ -144,7 +145,7 @@ class Crawler:
 
             target_path.parent.mkdir(parents=True, exist_ok=True)
             target_path.write_bytes(response.content)
-            visited_urls.add(url)
+            history.add(url)
 
         return target_path
 
@@ -156,14 +157,14 @@ class Crawler:
                 if self.args.parent.search(parent_url):
                     parsed_parent_url = urllib.parse.urlparse(parent_url)
                     return (
-                        self.args.target
+                        self.args.target_dir
                         / parsed_parent_url.netloc
                         / re.sub(r"^[\/]*", "", parsed_parent_url.path)
                         / os.path.basename(parsed_url.path)
                     )
 
         return (
-            self.args.target
+            self.args.target_dir
             / parsed_url.netloc
             / re.sub(r"^[\/]*", "", parsed_url.path)
         )
@@ -199,6 +200,7 @@ class DownloadCommand(BaseCommand):
         parser.add_argument(
             "-t",
             "--target",
+            dest="target_dir",
             metavar="DIR",
             default=".",
             type=Path,
@@ -207,6 +209,7 @@ class DownloadCommand(BaseCommand):
         parser.add_argument(
             "-H",
             "--history",
+            dest="history_path",
             metavar="FILE",
             type=Path,
             help="set path to the history file",

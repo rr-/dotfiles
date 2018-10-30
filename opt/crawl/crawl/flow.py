@@ -17,6 +17,6 @@ class Flow:
             raise InterruptedError
 
     @staticmethod
-    def check():
+    def check() -> None:
         if Flow.shutdown:
             raise InterruptedError
