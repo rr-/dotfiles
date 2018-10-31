@@ -1,5 +1,6 @@
 # vim syntax=config
 
+quiet
 video=no
 idle=yes
 input-default-bindings=no
