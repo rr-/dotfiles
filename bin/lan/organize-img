@@ -93,11 +93,6 @@ def main():
                     target_file.write_bytes(source_file.read_bytes())
                     source_file.unlink()
 
-        if not args.dry:
-            subprocess.run(
-                ["distribute-files", target_dir, "--fill-last", "-v"]
-            )
-
         try:
             source_dir.rmdir()
         except OSError:
