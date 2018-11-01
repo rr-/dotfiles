@@ -14,7 +14,7 @@ from dotfiles import logging
 
 SOURCE_ROOT_DIR = Path("~/hub/img/").expanduser()
 TARGET_ROOT_DIR = Path("~/img/net/").expanduser()
-SMALL_IMAGE_EXTENSIONS = ["png", "jpg", "jpeg"]
+SMALL_IMAGE_EXTENSIONS = {".png", ".jpg", ".jpeg"}
 
 
 def _parse_args():
@@ -48,6 +48,9 @@ def _find_files(root_dir):
 
 
 def _is_image_too_small(source_path, args):
+    if not source_path.suffix.lower() in SMALL_IMAGE_EXTENSIONS:
+        return False
+
     min_image_area = args.min_image_width * args.min_image_height
     try:
         with Image.open(source_path) as image:
@@ -57,6 +60,7 @@ def _is_image_too_small(source_path, args):
                 return True
     except Exception:
         pass
+
     return False
 
 
@@ -70,28 +74,27 @@ def main():
         target_dir = re.sub(r"[^\\/]*\.(4chan|4cdn)\.org", "4chan", target_dir)
         target_dir = Path(target_dir)
 
-        target_dir.mkdir(parents=True, exist_ok=True)
+        source_files = _find_files(source_dir)
+        if source_files:
+            target_dir.mkdir(parents=True, exist_ok=True)
 
-        for source_file in _find_files(source_dir):
-            extension = source_file.suffix.lower().lstrip(".")
-            target_file = target_dir / source_file.name
+            for source_file in source_files:
+                target_file = target_dir / source_file.name
 
-            if extension in SMALL_IMAGE_EXTENSIONS and _is_image_too_small(
-                source_file, args
-            ):
-                logging.warning(f"{source_file}: too small, ignoring")
+                if _is_image_too_small(source_file, args):
+                    logging.warning(f"{source_file}: too small, ignoring")
+                    if not args.dry:
+                        source_file.unlink()
+                    continue
+
+                logging.info(f"{source_file}: ok (moving to {target_file}")
                 if not args.dry:
-                    source_file.unlink()
-                continue
-
-            logging.info(f"{source_file}: ok (moved to {target_file}")
-            if not args.dry:
-                try:
-                    source_file.rename(target_file)
-                except OSError:
-                    # most probably EXDEV
-                    target_file.write_bytes(source_file.read_bytes())
-                    source_file.unlink()
+                    try:
+                        source_file.rename(target_file)
+                    except OSError:
+                        # most probably EXDEV
+                        target_file.write_bytes(source_file.read_bytes())
+                        source_file.unlink()
 
         try:
             source_dir.rmdir()
