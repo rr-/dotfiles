@@ -1,3 +1,5 @@
+import argparse
+import bisect
 import re
 import typing as T
 from collections import defaultdict
@@ -547,7 +549,43 @@ class QualityCheckCommand(BaseCommand):
     names = ['quality-check', 'qc']
     help_text = 'Tries to pinpoint common issues with the subtitles.'
 
+    @staticmethod
+    def decorate_parser(api: Api, parser: argparse.ArgumentParser) -> None:
+        parser.add_argument('-p', '--focus-prev', action='store_true')
+        parser.add_argument('-n', '--focus-next', action='store_true')
+
     async def run(self):
+        if self.args.focus_prev or self.args.focus_next:
+            violations = [
+                result for result in list_violations(self.api)
+                if result.log_level in {LogLevel.Warning, LogLevel.Error}
+            ]
+            violated_indexes = sorted(
+                violation.event.index for violation in violations
+            )
+
+            if self.args.focus_prev:
+                selected_index = self.api.subs.selected_indexes[0]
+                next_index = violated_indexes[
+                    bisect.bisect_left(violated_indexes, selected_index) - 1
+                ]
+
+            elif self.args.focus_next:
+                selected_index = self.api.subs.selected_indexes[-1]
+                next_index = violated_indexes[
+                    bisect.bisect_right(violated_indexes, selected_index)
+                    % len(violated_indexes)
+                ]
+
+            else:
+                raise AssertionError
+
+            self.api.subs.selected_indexes = [next_index]
+            for result in violations:
+                if result.event.index == next_index:
+                    self.api.log.log(result.log_level, repr(result))
+            return
+
         results = sorted(
             list_violations(self.api),
             key=lambda result: (
