@@ -7,13 +7,14 @@ import typing as T
 import urllib.parse
 from pathlib import Path
 
-import requests
 from bs4 import BeautifulSoup
+from requests import Response
 from tqdm import tqdm
 
 from crawl.cmd.base import BaseCommand
 from crawl.flow import Flow
 from crawl.history import History
+from crawl.requests import requests_with_retry
 
 # urls suffixes that can be assumed to be media files
 MEDIA_EXTENSIONS = [".jpg", ".gif", ".png", ".webm"]
@@ -135,12 +136,12 @@ def _probe_url(url: str, history: History) -> ProbeResult:
     history.add(url)
 
     if not url.endswith(tuple(MEDIA_EXTENSIONS)):
-        response = requests.head(url, timeout=3)
+        response = requests_with_retry().head(url, timeout=3)
         response.raise_for_status()
 
         mime = response.headers["content-type"].split(";")[0].lower()
         if mime == "text/html":
-            response = requests.get(url, timeout=3)
+            response = requests_with_retry().get(url, timeout=3)
             response.raise_for_status()
             return ProbeResult(
                 url=url, is_media=False, child_urls=_collect_links(response)
@@ -159,7 +160,7 @@ def _download_url(
     target_path = _get_target_path(url, args, link_scan_result)
 
     if not target_path.exists():
-        response = requests.get(url, timeout=3)
+        response = requests_with_retry().get(url, timeout=3)
         response.raise_for_status()
 
         target_path.parent.mkdir(parents=True, exist_ok=True)
@@ -192,7 +193,7 @@ def _get_target_path(
     )
 
 
-def _collect_links(response: requests.Response) -> T.Set[str]:
+def _collect_links(response: Response) -> T.Set[str]:
     ret: T.Set[str] = set()
     soup = BeautifulSoup(response.text, "html.parser")
 

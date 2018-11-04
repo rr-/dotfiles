@@ -4,12 +4,12 @@ import dataclasses
 import typing as T
 from pathlib import Path
 
-import requests
 from tqdm import tqdm
 
 from crawl.cmd.base import BaseCommand
 from crawl.flow import Flow
 from crawl.history import History
+from crawl.requests import requests_with_retry
 
 # urls suffixes that can be assumed to be media files
 MEDIA_EXTENSIONS = [".jpg", ".gif", ".png", ".webm"]
@@ -62,7 +62,7 @@ def _prune(
 
 def _check_url_is_dead(url: str) -> CheckResult:
     Flow.check()
-    response = requests.head(url, timeout=3)
+    response = requests_with_retry().head(url, timeout=3)
     return CheckResult(url=url, is_dead=response.status_code == 404)
 
 
