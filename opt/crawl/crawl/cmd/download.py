@@ -265,6 +265,8 @@ class DownloadCommand(BaseCommand):
             print("media:", len(link_scan_result.media_urls))
             if link_scan_result.errors:
                 print("errors:", len(link_scan_result.errors))
+                for error in link_scan_result.errors:
+                    print(error)
 
         print("downloading media...")
         try:
