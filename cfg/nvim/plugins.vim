@@ -28,3 +28,6 @@ tnoremap <silent> <M-j> <C-\><C-n>:TmuxNavigateDown<CR>
 tnoremap <silent> <M-k> <C-\><C-n>:TmuxNavigateUp<CR>
 tnoremap <silent> <M-l> <C-\><C-n>:TmuxNavigateRight<CR>
 tnoremap <silent> <M-\> <C-\><C-n>:TmuxNavigatePrevious<CR>
+
+"set black line length
+let g:black_linelength = 79

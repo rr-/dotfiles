@@ -10,6 +10,7 @@ Plug 'bronson/vim-visual-star-search'   "enable * and # in visual mode
 Plug 'duggiefresh/vim-easydir'          "create directories on save
 Plug 'christoomey/vim-tmux-navigator'   "integration with tmux
 Plug 'tpope/vim-vinegar'                "better netrw
+Plug 'ambv/black'                       "format python source code
 call plug#end()
 
 runtime editor.vim
