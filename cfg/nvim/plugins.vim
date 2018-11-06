@@ -13,8 +13,15 @@ if has('nvim')
 endif
 
 "config vim-move
+let g:move_map_keys = 0
 let g:move_key_modifier = 'C'           "c-j and c-k rather than default binding
 let g:move_auto_indent = 0              "disable indentation aids
+vmap <C-j> <Plug>MoveBlockDown
+vmap <C-k> <Plug>MoveBlockUp
+vmap <C-h> <Plug>MoveBlockLeft
+vmap <C-l> <Plug>MoveBlockRight
+nmap <C-j> <Plug>MoveLineDown
+nmap <C-k> <Plug>MoveLineUp
 
 "change tmux-navigator bindings
 let g:tmux_navigator_no_mappings = 1
