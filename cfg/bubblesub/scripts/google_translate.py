@@ -61,6 +61,7 @@ MENU = [
             MenuCommand('&German', '/google-translate de'),
             MenuCommand('&French', '/google-translate fr'),
             MenuCommand('&Italian', '/google-translate it'),
+            MenuCommand('&Polish', '/google-translate pl'),
             MenuCommand('&Auto', '/google-translate auto')
         ]
     )
