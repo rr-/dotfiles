@@ -80,4 +80,4 @@ class SaveVideoSampleCommand(BaseCommand):
 
 
 COMMANDS = [SaveVideoSampleCommand]
-MENU = [MenuCommand('&Create video sample', '/save-video-sample')]
+MENU = [MenuCommand('&Create video sample', 'save-video-sample')]

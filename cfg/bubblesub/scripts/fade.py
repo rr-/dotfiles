@@ -117,10 +117,10 @@ MENU = [
     SubMenu(
         '&Fade from/to…',
         [
-            MenuCommand('&Fade from black', '/fade -d=2000 --from=101010'),
-            MenuCommand('&Fade to black', '/fade -d=2000 --to=101010'),
-            MenuCommand('&Fade from white', '/fade -d=2000 --from=FFFFFF'),
-            MenuCommand('&Fade to white', '/fade -d=2000 --to=FFFFFF')
+            MenuCommand('&Fade from black', 'fade -d=2000 --from=101010'),
+            MenuCommand('&Fade to black', 'fade -d=2000 --to=101010'),
+            MenuCommand('&Fade from white', 'fade -d=2000 --from=FFFFFF'),
+            MenuCommand('&Fade to white', 'fade -d=2000 --to=FFFFFF')
         ]
     )
 ]

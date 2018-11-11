@@ -36,7 +36,7 @@ async def _work(language: str, api: Api, line: Event) -> None:
 
 
 class GoogleTranslateCommand(BaseCommand):
-    names = ['google-translate']
+    names = ['tl', 'google-translate']
     help_text = 'Puts results of Google translation into selected subtitles.'
 
     @property
@@ -57,12 +57,12 @@ MENU = [
     SubMenu(
         '&Translate',
         [
-            MenuCommand('&Japanese', '/google-translate ja'),
-            MenuCommand('&German', '/google-translate de'),
-            MenuCommand('&French', '/google-translate fr'),
-            MenuCommand('&Italian', '/google-translate it'),
-            MenuCommand('&Polish', '/google-translate pl'),
-            MenuCommand('&Auto', '/google-translate auto')
+            MenuCommand('&Japanese', 'tl ja'),
+            MenuCommand('&German', 'tl de'),
+            MenuCommand('&French', 'tl fr'),
+            MenuCommand('&Italian', 'tl it'),
+            MenuCommand('&Polish', 'tl pl'),
+            MenuCommand('&Auto', 'tl auto')
         ]
     )
 ]
