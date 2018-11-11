@@ -36,8 +36,8 @@ def _get_checksum(paths: T.List[str]) -> str:
 def _parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser("Monitor filesystem for changes")
     parser.add_argument("--sleep", default=1, type=int)
-    parser.add_argument("--exclude", nargs="*")
-    parser.add_argument("-t", "--target-dir", nargs="*")
+    parser.add_argument("--exclude", nargs="*", default=[".git"])
+    parser.add_argument("-t", "--target-dir", nargs="*", default=".")
     parser.add_argument("cmd", metavar="cmd")
     parser.add_argument("cmd_args", metavar="cmd_arg", nargs="*")
     return parser.parse_args()
