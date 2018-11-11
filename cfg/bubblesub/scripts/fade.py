@@ -14,7 +14,7 @@ DURATION = 2000
 
 def _parse_color(text):
     match = re.match(
-        '#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})', text, flags=re.I
+        "#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})", text, flags=re.I
     )
     if not match:
         raise ValueError(f'Unknown color "{text}"')
@@ -27,25 +27,25 @@ def _format_color(number, color):
     elif len(color) == 3:
         red, green, blue = color
     else:
-        raise ValueError('Unexpected color tuple length')
-    return rf'\{number}c&H{blue:02X}{green:02X}{red:02X}&'
+        raise ValueError("Unexpected color tuple length")
+    return rf"\{number}c&H{blue:02X}{green:02X}{red:02X}&"
 
 
 def _format_animation(start, end, *tags):
     text = _format_ass_tags(*tags, close=False)
-    return rf'\t({start:.0f},{end:.0f},{text})'
+    return rf"\t({start:.0f},{end:.0f},{text})"
 
 
 def _format_ass_tags(*tags, close=True):
-    joined = ''.join(str(t) for t in tags)
+    joined = "".join(str(t) for t in tags)
     if close:
-        return '{' + joined + '}'
+        return "{" + joined + "}"
     return joined
 
 
 class FadeCommand(BaseCommand):
-    names = ['fade']
-    help_text = 'Fades selected subtitles from or into a given color.'
+    names = ["fade"]
+    help_text = "Fades selected subtitles from or into a given color."
 
     @property
     def is_enabled(self):
@@ -96,24 +96,24 @@ class FadeCommand(BaseCommand):
     @staticmethod
     def decorate_parser(api: Api, parser: argparse.ArgumentParser) -> None:
         parser.add_argument(
-            '-d',
-            '--duration',
-            help='how long the fade should last',
+            "-d",
+            "--duration",
+            help="how long the fade should last",
             type=int,
             required=True,
         )
         parser.add_argument(
-            '-f',
-            '--from',
-            dest='src',
-            help='color to fade from',
+            "-f",
+            "--from",
+            dest="src",
+            help="color to fade from",
             type=_parse_color,
         )
         parser.add_argument(
-            '-t',
-            '--to',
-            dest='dst',
-            help='color to fade to',
+            "-t",
+            "--to",
+            dest="dst",
+            help="color to fade to",
             type=_parse_color,
         )
 
@@ -121,12 +121,12 @@ class FadeCommand(BaseCommand):
 COMMANDS = [FadeCommand]
 MENU = [
     SubMenu(
-        '&Fade from/to…',
+        "&Fade from/to…",
         [
-            MenuCommand('&Fade from black', 'fade -d=2000 --from=101010'),
-            MenuCommand('&Fade to black', 'fade -d=2000 --to=101010'),
-            MenuCommand('&Fade from white', 'fade -d=2000 --from=FFFFFF'),
-            MenuCommand('&Fade to white', 'fade -d=2000 --to=FFFFFF'),
+            MenuCommand("&Fade from black", "fade -d=2000 --from=101010"),
+            MenuCommand("&Fade to black", "fade -d=2000 --to=101010"),
+            MenuCommand("&Fade from white", "fade -d=2000 --from=FFFFFF"),
+            MenuCommand("&Fade to white", "fade -d=2000 --to=FFFFFF"),
         ],
     )
 ]
