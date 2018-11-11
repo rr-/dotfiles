@@ -13,15 +13,16 @@ from bubblesub.opt.menu import SubMenu
 async def _work(language: str, api: Api, line: Event) -> None:
     api.log.info(f'line #{line.number} - analyzing')
     recognizer = sr.Recognizer()
-    try:
-        def recognize():
-            with io.BytesIO() as handle:
-                api.media.audio.save_wav(handle, [(line.start, line.end)])
-                handle.seek(0, io.SEEK_SET)
-                with sr.AudioFile(handle) as source:
-                    audio = recognizer.record(source)
-            return recognizer.recognize_google(audio, language=language)
 
+    def recognize():
+        with io.BytesIO() as handle:
+            api.media.audio.save_wav(handle, [(line.start, line.end)])
+            handle.seek(0, io.SEEK_SET)
+            with sr.AudioFile(handle) as source:
+                audio = recognizer.record(source)
+        return recognizer.recognize_google(audio, language=language)
+
+    try:
         # don't clog the UI thread
         note = await asyncio.get_event_loop().run_in_executor(None, recognize)
     except sr.UnknownValueError:
@@ -46,8 +47,10 @@ class SpeechRecognitionCommand(BaseCommand):
 
     @property
     def is_enabled(self):
-        return self.api.subs.has_selection \
+        return (
+            self.api.subs.has_selection
             and self.api.media.audio.has_audio_source
+        )
 
     async def run(self):
         for line in self.api.subs.selected_events:
@@ -67,7 +70,7 @@ MENU = [
             MenuCommand('&German', 'sr de'),
             MenuCommand('&French', 'sr fr'),
             MenuCommand('&Italian', 'sr it'),
-            MenuCommand('&Auto', 'sr auto')
-        ]
+            MenuCommand('&Auto', 'sr auto'),
+        ],
     )
 ]

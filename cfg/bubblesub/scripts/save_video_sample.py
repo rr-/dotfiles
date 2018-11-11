@@ -35,22 +35,26 @@ class SaveVideoSampleCommand(BaseCommand):
         path = await self.args.path.get_save_path(
             file_filter='Webm Video File (*.webm)',
             default_file_name='video-{}-{}..{}.webm'.format(
-                self.api.media.path.name,
-                ms_to_str(start),
-                ms_to_str(end)
-            )
+                self.api.media.path.name, ms_to_str(start), ms_to_str(end)
+            ),
         )
 
         def create_sample():
-            subprocess.run([
-                'ffmpeg',
-                '-i', self.api.media.path,
-                '-y',
-                '-lossless', '1',
-                '-ss', ms_to_str(start),
-                '-to', ms_to_str(end),
-                str(path)
-            ])
+            subprocess.run(
+                [
+                    'ffmpeg',
+                    '-i',
+                    self.api.media.path,
+                    '-y',
+                    '-lossless',
+                    '1',
+                    '-ss',
+                    ms_to_str(start),
+                    '-to',
+                    ms_to_str(end),
+                    str(path),
+                ]
+            )
 
         # don't clog the UI thread
         self.api.log.info(f'saving video sample to {path}...')
@@ -72,7 +76,8 @@ class SaveVideoSampleCommand(BaseCommand):
             default='a.e',
         )
         parser.add_argument(
-            '-p', '--path',
+            '-p',
+            '--path',
             help='path to save the sample to',
             type=lambda value: FancyPath(api, value),
             default='',
