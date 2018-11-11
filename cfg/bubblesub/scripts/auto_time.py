@@ -7,9 +7,9 @@ from bubblesub.opt.menu import MenuCommand
 
 
 class AutoTimeCommand(BaseCommand):
-    names = ['auto-time']
+    names = ["auto-time"]
     help_text = (
-        'Attempts to add empty subtitles on parts of audio containing speech.'
+        "Attempts to add empty subtitles on parts of audio containing speech."
     )
 
     @property
@@ -17,19 +17,19 @@ class AutoTimeCommand(BaseCommand):
         return self.api.media.is_loaded
 
     async def run(self):
-        _, temp_path = tempfile.mkstemp(suffix='.wav')
-        result = run(['ffmpeg', '-y', '-i', self.api.media.path, temp_path])
+        _, temp_path = tempfile.mkstemp(suffix=".wav")
+        result = run(["ffmpeg", "-y", "-i", self.api.media.path, temp_path])
         if result.returncode != 0:
             self.api.log.error(result.stdout)
             return
 
-        result = run(['auditok', '-i', temp_path], stdout=PIPE)
+        result = run(["auditok", "-i", temp_path], stdout=PIPE)
         if result.returncode != 0:
             self.api.log.error(result.stdout)
             return
 
         with self.api.undo.capture():
-            for line in result.stdout.decode().split('\n'):
+            for line in result.stdout.decode().split("\n"):
                 if not line:
                     continue
                 _line_id, start, end = line.split()
@@ -47,4 +47,4 @@ class AutoTimeCommand(BaseCommand):
 
 
 COMMANDS = [AutoTimeCommand]
-MENU = [MenuCommand('Auto time', 'auto-time')]
+MENU = [MenuCommand("Auto time", "auto-time")]

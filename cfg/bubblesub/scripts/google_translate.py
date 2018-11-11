@@ -10,13 +10,13 @@ from bubblesub.opt.menu import SubMenu
 
 
 async def _work(language: str, api: Api, line: Event) -> None:
-    api.log.info(f'line #{line.number} - analyzing')
+    api.log.info(f"line #{line.number} - analyzing")
     try:
 
         def recognize():
             translator = googletrans.Translator()
             return translator.translate(
-                line.note.replace('\\N', '\n'), src=language, dest='en'
+                line.note.replace("\\N", "\n"), src=language, dest="en"
             )
 
         # don't clog the UI thread
@@ -24,19 +24,19 @@ async def _work(language: str, api: Api, line: Event) -> None:
             None, recognize
         )
     except Exception as ex:
-        api.log.error(f'line #{line.number}: error ({ex})')
+        api.log.error(f"line #{line.number}: error ({ex})")
     else:
-        api.log.info(f'line #{line.number}: OK')
+        api.log.info(f"line #{line.number}: OK")
         with api.undo.capture():
             if line.text:
-                line.text = line.text + r'\N' + result.text
+                line.text = line.text + r"\N" + result.text
             else:
                 line.text = result.text
 
 
 class GoogleTranslateCommand(BaseCommand):
-    names = ['tl', 'google-translate']
-    help_text = 'Puts results of Google translation into selected subtitles.'
+    names = ["tl", "google-translate"]
+    help_text = "Puts results of Google translation into selected subtitles."
 
     @property
     def is_enabled(self):
@@ -48,20 +48,20 @@ class GoogleTranslateCommand(BaseCommand):
 
     @staticmethod
     def decorate_parser(api: Api, parser: argparse.ArgumentParser) -> None:
-        parser.add_argument('code', help='language code')
+        parser.add_argument("code", help="language code")
 
 
 COMMANDS = [GoogleTranslateCommand]
 MENU = [
     SubMenu(
-        '&Translate',
+        "&Translate",
         [
-            MenuCommand('&Japanese', 'tl ja'),
-            MenuCommand('&German', 'tl de'),
-            MenuCommand('&French', 'tl fr'),
-            MenuCommand('&Italian', 'tl it'),
-            MenuCommand('&Polish', 'tl pl'),
-            MenuCommand('&Auto', 'tl auto'),
+            MenuCommand("&Japanese", "tl ja"),
+            MenuCommand("&German", "tl de"),
+            MenuCommand("&French", "tl fr"),
+            MenuCommand("&Italian", "tl it"),
+            MenuCommand("&Polish", "tl pl"),
+            MenuCommand("&Auto", "tl auto"),
         ],
     )
 ]

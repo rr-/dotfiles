@@ -7,8 +7,8 @@ def ms_to_str(ms: int) -> str:
 
 
 class ProgressCommand(BaseCommand):
-    names = ['progress']
-    help_text = 'How much left'
+    names = ["progress"]
+    help_text = "How much left"
 
     async def run(self):
         empty_count = 0
@@ -16,7 +16,7 @@ class ProgressCommand(BaseCommand):
         total_count = 0
         total_duration = 0
         for event in self.api.subs.events:
-            if event.actor.startswith('[') and event.actor.endswith(']'):
+            if event.actor.startswith("[") and event.actor.endswith("]"):
                 continue
             total_duration += event.duration
             total_count += 1
@@ -25,17 +25,17 @@ class ProgressCommand(BaseCommand):
                 empty_count += 1
 
         self.api.log.info(
-            f'{empty_count} lines left ('
-            f'{total_count-empty_count}/{total_count}, '
-            f'{(total_count-empty_count)/total_count:.01%})'
+            f"{empty_count} lines left ("
+            f"{total_count-empty_count}/{total_count}, "
+            f"{(total_count-empty_count)/total_count:.01%})"
         )
         self.api.log.info(
-            f'{ms_to_str(empty_duration)} seconds left ('
-            f'{ms_to_str(total_duration-empty_duration)}/'
-            f'{ms_to_str(total_duration)}, '
-            f'{(total_duration-empty_duration)/total_duration:.01%})'
+            f"{ms_to_str(empty_duration)} seconds left ("
+            f"{ms_to_str(total_duration-empty_duration)}/"
+            f"{ms_to_str(total_duration)}, "
+            f"{(total_duration-empty_duration)/total_duration:.01%})"
         )
 
 
 COMMANDS = [ProgressCommand]
-MENU = [MenuCommand('Show translation &progress', 'progress')]
+MENU = [MenuCommand("Show translation &progress", "progress")]

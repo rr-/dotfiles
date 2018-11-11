@@ -11,7 +11,7 @@ from bubblesub.opt.menu import SubMenu
 
 
 async def _work(language: str, api: Api, line: Event) -> None:
-    api.log.info(f'line #{line.number} - analyzing')
+    api.log.info(f"line #{line.number} - analyzing")
     recognizer = sr.Recognizer()
 
     def recognize():
@@ -26,23 +26,23 @@ async def _work(language: str, api: Api, line: Event) -> None:
         # don't clog the UI thread
         note = await asyncio.get_event_loop().run_in_executor(None, recognize)
     except sr.UnknownValueError:
-        api.log.warn(f'line #{line.number}: not recognized')
+        api.log.warn(f"line #{line.number}: not recognized")
     except sr.RequestError as ex:
-        api.log.error(f'line #{line.number}: error ({ex})')
+        api.log.error(f"line #{line.number}: error ({ex})")
     else:
-        api.log.info(f'line #{line.number}: OK')
+        api.log.info(f"line #{line.number}: OK")
         with api.undo.capture():
             if line.note:
-                line.note = line.note + r'\N' + note
+                line.note = line.note + r"\N" + note
             else:
                 line.note = note
 
 
 class SpeechRecognitionCommand(BaseCommand):
-    names = ['sr', 'google-speech-recognition']
+    names = ["sr", "google-speech-recognition"]
     help_text = (
-        'Puts results of Google speech recognition '
-        'for selected subtitles into their notes.'
+        "Puts results of Google speech recognition "
+        "for selected subtitles into their notes."
     )
 
     @property
@@ -58,19 +58,19 @@ class SpeechRecognitionCommand(BaseCommand):
 
     @staticmethod
     def decorate_parser(api: Api, parser: argparse.ArgumentParser) -> None:
-        parser.add_argument('code', help='language code')
+        parser.add_argument("code", help="language code")
 
 
 COMMANDS = [SpeechRecognitionCommand]
 MENU = [
     SubMenu(
-        '&Speech recognition',
+        "&Speech recognition",
         [
-            MenuCommand('&Japanese', 'sr ja'),
-            MenuCommand('&German', 'sr de'),
-            MenuCommand('&French', 'sr fr'),
-            MenuCommand('&Italian', 'sr it'),
-            MenuCommand('&Auto', 'sr auto'),
+            MenuCommand("&Japanese", "sr ja"),
+            MenuCommand("&German", "sr de"),
+            MenuCommand("&French", "sr fr"),
+            MenuCommand("&Italian", "sr it"),
+            MenuCommand("&Auto", "sr auto"),
         ],
     )
 ]
