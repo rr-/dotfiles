@@ -14,16 +14,11 @@ DURATION = 2000
 
 def _parse_color(text):
     match = re.match(
-        '#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})',
-        text,
-        flags=re.I
+        '#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})', text, flags=re.I
     )
     if not match:
         raise ValueError(f'Unknown color "{text}"')
-    return [
-        int(part, 16)
-        for part in match.groups()
-    ]
+    return [int(part, 16) for part in match.groups()]
 
 
 def _format_color(number, color):
@@ -67,48 +62,59 @@ class FadeCommand(BaseCommand):
                 col4 = style.back_color
 
                 if self.args.src:
-                    line.text = _format_ass_tags(
-                        _format_color(1, self.args.src),
-                        _format_color(3, self.args.src),
-                        _format_color(4, self.args.src),
-                        _format_animation(
-                            0,
-                            self.args.duration,
-                            _format_color(1, col1),
-                            _format_color(3, col3),
-                            _format_color(4, col4)
-                        ),
-                        close=True
-                    ) + line.text
+                    line.text = (
+                        _format_ass_tags(
+                            _format_color(1, self.args.src),
+                            _format_color(3, self.args.src),
+                            _format_color(4, self.args.src),
+                            _format_animation(
+                                0,
+                                self.args.duration,
+                                _format_color(1, col1),
+                                _format_color(3, col3),
+                                _format_color(4, col4),
+                            ),
+                            close=True,
+                        )
+                        + line.text
+                    )
                 if self.args.dst:
-                    line.text = _format_ass_tags(
-                        _format_animation(
-                            max(0, line.duration - self.args.duration),
-                            line.duration,
-                            _format_color(1, self.args.dst),
-                            _format_color(3, self.args.dst),
-                            _format_color(4, self.args.dst)
-                        ),
-                        close=True
-                    ) + line.text
+                    line.text = (
+                        _format_ass_tags(
+                            _format_animation(
+                                max(0, line.duration - self.args.duration),
+                                line.duration,
+                                _format_color(1, self.args.dst),
+                                _format_color(3, self.args.dst),
+                                _format_color(4, self.args.dst),
+                            ),
+                            close=True,
+                        )
+                        + line.text
+                    )
 
     @staticmethod
     def decorate_parser(api: Api, parser: argparse.ArgumentParser) -> None:
         parser.add_argument(
-            '-d', '--duration',
+            '-d',
+            '--duration',
             help='how long the fade should last',
             type=int,
-            required=True
+            required=True,
         )
         parser.add_argument(
-            '-f', '--from', dest='src',
+            '-f',
+            '--from',
+            dest='src',
             help='color to fade from',
-            type=_parse_color
+            type=_parse_color,
         )
         parser.add_argument(
-            '-t', '--to', dest='dst',
+            '-t',
+            '--to',
+            dest='dst',
             help='color to fade to',
-            type=_parse_color
+            type=_parse_color,
         )
 
 
@@ -120,7 +126,7 @@ MENU = [
             MenuCommand('&Fade from black', 'fade -d=2000 --from=101010'),
             MenuCommand('&Fade to black', 'fade -d=2000 --to=101010'),
             MenuCommand('&Fade from white', 'fade -d=2000 --from=FFFFFF'),
-            MenuCommand('&Fade to white', 'fade -d=2000 --to=FFFFFF')
-        ]
+            MenuCommand('&Fade to white', 'fade -d=2000 --to=FFFFFF'),
+        ],
     )
 ]

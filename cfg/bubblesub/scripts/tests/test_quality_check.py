@@ -95,80 +95,86 @@ def test_check_durations_good_gap() -> None:
     assert len(list(check_durations(event_list[0]))) == 0
 
 
-@pytest.mark.parametrize('text, violation_text', [
-    ('Text\\N', 'extra line break'),
-    ('\\NText', 'extra line break'),
-    ('Text\\NText\\NText', 'three or more lines'),
-    ('Text\\N Text', 'whitespace around line break'),
-    ('Text \\NText', 'whitespace around line break'),
-    ('Text ', 'extra whitespace'),
-    (' Text', 'extra whitespace'),
-    ('Text  text', 'double space'),
-    ('...', 'bad ellipsis (expected …)'),
-    ('What youve done', 'missing apostrophe'),
-    ('- What?\\N- No!', 'bad dash (expected \N{EN DASH})'),
-    ('\N{EM DASH}What?\\N\N{EM DASH}No!', 'bad dash (expected \N{EN DASH})'),
-    ('\N{EM DASH}What?', 'bad dash (expected \N{EN DASH})'),
-    ('\N{EN DASH} Title \N{EN DASH}', 'bad dash (expected \N{EM DASH})'),
-    ('\N{EM DASH}Title\N{EM DASH}', None),
-    ('\N{EM DASH}Whatever\N{EM DASH}…', 'bad dash (expected \N{EN DASH})'),
-    ('- What?', 'bad dash (expected \N{EN DASH})'),
-    ('\N{EN DASH} What!', 'dialog with just one person'),
-    ('What--', 'bad dash (expected \N{EM DASH})'),
-    ('What\N{EN DASH}', 'bad dash (expected \N{EM DASH})'),
-    ('W-what?', 'possibly wrong stutter capitalization'),
-    ('Ayuhara-san', None),
-    ('What! what…', 'lowercase letter after sentence end'),
-    ('What. what…', 'lowercase letter after sentence end'),
-    ('What? what…', 'lowercase letter after sentence end'),
-    ('What , no.', 'whitespace before punctuation'),
-    ('What !', 'whitespace before punctuation'),
-    ('What .', 'whitespace before punctuation'),
-    ('What ?', 'whitespace before punctuation'),
-    ('What :', 'whitespace before punctuation'),
-    ('What ;', 'whitespace before punctuation'),
-    ('What\\N, no.', 'line break before punctuation'),
-    ('What\\N!', 'line break before punctuation'),
-    ('What\\N.', 'line break before punctuation'),
-    ('What\\N?', 'line break before punctuation'),
-    ('What\\N:', 'line break before punctuation'),
-    ('What\\N;', 'line break before punctuation'),
-    ('What?No!', 'missing whitespace after punctuation mark'),
-    ('What!No!', 'missing whitespace after punctuation mark'),
-    ('What.No!', 'missing whitespace after punctuation mark'),
-    ('What,no!', 'missing whitespace after punctuation mark'),
-    ('What:no!', 'missing whitespace after punctuation mark'),
-    ('What;no!', 'missing whitespace after punctuation mark'),
-    ('What…no!', 'missing whitespace after punctuation mark'),
-    ('What? No!', None),
-    ('What! No!', None),
-    ('What. No!', None),
-    ('What, no!', None),
-    ('What: no!', None),
-    ('What; no!', None),
-    ('What… no!', None),
-    ('What?\\NNo!', None),
-    ('What!\\NNo!', None),
-    ('What.\\NNo!', None),
-    ('What,\\Nno!', None),
-    ('What:\\Nno!', None),
-    ('What;\\Nno!', None),
-    ('What…\\Nno!', None),
-    ('test\ttest', 'unrecognized whitespace'),
-    ('test\N{ZERO WIDTH SPACE}test', 'unrecognized whitespace'),
-    ('….', 'extra comma or dot'),
-    (',.', 'extra comma or dot'),
-    ('?.', 'extra comma or dot'),
-    ('!.', 'extra comma or dot'),
-    (':.', 'extra comma or dot'),
-    (';.', 'extra comma or dot'),
-    ('…,', 'extra comma or dot'),
-    (',,', 'extra comma or dot'),
-    ('?,', 'extra comma or dot'),
-    ('!,', 'extra comma or dot'),
-    (':,', 'extra comma or dot'),
-    (';,', 'extra comma or dot'),
-])
+@pytest.mark.parametrize(
+    'text, violation_text',
+    [
+        ('Text\\N', 'extra line break'),
+        ('\\NText', 'extra line break'),
+        ('Text\\NText\\NText', 'three or more lines'),
+        ('Text\\N Text', 'whitespace around line break'),
+        ('Text \\NText', 'whitespace around line break'),
+        ('Text ', 'extra whitespace'),
+        (' Text', 'extra whitespace'),
+        ('Text  text', 'double space'),
+        ('...', 'bad ellipsis (expected …)'),
+        ('What youve done', 'missing apostrophe'),
+        ('- What?\\N- No!', 'bad dash (expected \N{EN DASH})'),
+        (
+            '\N{EM DASH}What?\\N\N{EM DASH}No!',
+            'bad dash (expected \N{EN DASH})',
+        ),
+        ('\N{EM DASH}What?', 'bad dash (expected \N{EN DASH})'),
+        ('\N{EN DASH} Title \N{EN DASH}', 'bad dash (expected \N{EM DASH})'),
+        ('\N{EM DASH}Title\N{EM DASH}', None),
+        ('\N{EM DASH}Whatever\N{EM DASH}…', 'bad dash (expected \N{EN DASH})'),
+        ('- What?', 'bad dash (expected \N{EN DASH})'),
+        ('\N{EN DASH} What!', 'dialog with just one person'),
+        ('What--', 'bad dash (expected \N{EM DASH})'),
+        ('What\N{EN DASH}', 'bad dash (expected \N{EM DASH})'),
+        ('W-what?', 'possibly wrong stutter capitalization'),
+        ('Ayuhara-san', None),
+        ('What! what…', 'lowercase letter after sentence end'),
+        ('What. what…', 'lowercase letter after sentence end'),
+        ('What? what…', 'lowercase letter after sentence end'),
+        ('What , no.', 'whitespace before punctuation'),
+        ('What !', 'whitespace before punctuation'),
+        ('What .', 'whitespace before punctuation'),
+        ('What ?', 'whitespace before punctuation'),
+        ('What :', 'whitespace before punctuation'),
+        ('What ;', 'whitespace before punctuation'),
+        ('What\\N, no.', 'line break before punctuation'),
+        ('What\\N!', 'line break before punctuation'),
+        ('What\\N.', 'line break before punctuation'),
+        ('What\\N?', 'line break before punctuation'),
+        ('What\\N:', 'line break before punctuation'),
+        ('What\\N;', 'line break before punctuation'),
+        ('What?No!', 'missing whitespace after punctuation mark'),
+        ('What!No!', 'missing whitespace after punctuation mark'),
+        ('What.No!', 'missing whitespace after punctuation mark'),
+        ('What,no!', 'missing whitespace after punctuation mark'),
+        ('What:no!', 'missing whitespace after punctuation mark'),
+        ('What;no!', 'missing whitespace after punctuation mark'),
+        ('What…no!', 'missing whitespace after punctuation mark'),
+        ('What? No!', None),
+        ('What! No!', None),
+        ('What. No!', None),
+        ('What, no!', None),
+        ('What: no!', None),
+        ('What; no!', None),
+        ('What… no!', None),
+        ('What?\\NNo!', None),
+        ('What!\\NNo!', None),
+        ('What.\\NNo!', None),
+        ('What,\\Nno!', None),
+        ('What:\\Nno!', None),
+        ('What;\\Nno!', None),
+        ('What…\\Nno!', None),
+        ('test\ttest', 'unrecognized whitespace'),
+        ('test\N{ZERO WIDTH SPACE}test', 'unrecognized whitespace'),
+        ('….', 'extra comma or dot'),
+        (',.', 'extra comma or dot'),
+        ('?.', 'extra comma or dot'),
+        ('!.', 'extra comma or dot'),
+        (':.', 'extra comma or dot'),
+        (';.', 'extra comma or dot'),
+        ('…,', 'extra comma or dot'),
+        (',,', 'extra comma or dot'),
+        ('?,', 'extra comma or dot'),
+        ('!,', 'extra comma or dot'),
+        (':,', 'extra comma or dot'),
+        (';,', 'extra comma or dot'),
+    ],
+)
 def test_check_punctuation(text: str, violation_text: T.Optional[str]) -> None:
     event = Event(text=text)
     results = list(check_punctuation(event))
@@ -179,26 +185,27 @@ def test_check_punctuation(text: str, violation_text: T.Optional[str]) -> None:
         assert results[0].text == violation_text
 
 
-@pytest.mark.parametrize('text, violation_text_re, log_level', [
-    ('"What…', 'partial quote', LogLevel.Info),
-    ('…what."', 'partial quote', LogLevel.Info),
-    ('"What."', '.*inside.*marks', LogLevel.Debug),
-    ('"What".', '.*outside.*', LogLevel.Debug),
-    ('"What", he said.', '.*outside.*', LogLevel.Debug),
-    ('"What." he said.', '.*inside.*', LogLevel.Debug),
-    ('"What!" he said.', '.*inside.*', LogLevel.Debug),
-    ('"What?" he said.', '.*inside.*', LogLevel.Debug),
-    ('"What…" he said.', '.*inside.*', LogLevel.Debug),
-    ('"What," he said.', '.*inside.*', LogLevel.Warning),
-    ('He said "what."', '.*inside.*', LogLevel.Warning),
-    ('He said "what!"', '.*inside.*', LogLevel.Warning),
-    ('He said "what?"', '.*inside.*', LogLevel.Warning),
-    ('He said "what…"', '.*inside.*', LogLevel.Warning),
-])
+@pytest.mark.parametrize(
+    'text, violation_text_re, log_level',
+    [
+        ('"What…', 'partial quote', LogLevel.Info),
+        ('…what."', 'partial quote', LogLevel.Info),
+        ('"What."', '.*inside.*marks', LogLevel.Debug),
+        ('"What".', '.*outside.*', LogLevel.Debug),
+        ('"What", he said.', '.*outside.*', LogLevel.Debug),
+        ('"What." he said.', '.*inside.*', LogLevel.Debug),
+        ('"What!" he said.', '.*inside.*', LogLevel.Debug),
+        ('"What?" he said.', '.*inside.*', LogLevel.Debug),
+        ('"What…" he said.', '.*inside.*', LogLevel.Debug),
+        ('"What," he said.', '.*inside.*', LogLevel.Warning),
+        ('He said "what."', '.*inside.*', LogLevel.Warning),
+        ('He said "what!"', '.*inside.*', LogLevel.Warning),
+        ('He said "what?"', '.*inside.*', LogLevel.Warning),
+        ('He said "what…"', '.*inside.*', LogLevel.Warning),
+    ],
+)
 def test_check_quotes(
-        text: str,
-        violation_text_re: str,
-        log_level: LogLevel
+    text: str, violation_text_re: str, log_level: LogLevel
 ) -> None:
     event_list = EventList()
     event_list.insert_one(0, text=text)
@@ -208,22 +215,27 @@ def test_check_quotes(
     assert results[0].log_level == log_level
 
 
-@pytest.mark.parametrize('texts, violation_text', [
-    (['Whatever…'], None),
-    (['Whatever…', 'I don\'t care.'], None),
-    (['…okay.'], None),
-    (['Whatever…', '…you say.'], 'old-style line continuation'),
-    (['Whatever', 'you say.'], None),
-    (['Whatever,', 'we don\'t care.'], None),
-    (['Whatever:', 'we don\'t care.'], None),
-    (['whatever.'], 'sentence begins with a lowercase letter'),
-    (['Whatever.', 'whatever.'], 'sentence begins with a lowercase letter'),
-    (['Whatever'], 'possibly unended sentence'),
-    (['Whatever', 'Whatever.'], 'possibly unended sentence'),
-])
+@pytest.mark.parametrize(
+    'texts, violation_text',
+    [
+        (['Whatever…'], None),
+        (['Whatever…', 'I don\'t care.'], None),
+        (['…okay.'], None),
+        (['Whatever…', '…you say.'], 'old-style line continuation'),
+        (['Whatever', 'you say.'], None),
+        (['Whatever,', 'we don\'t care.'], None),
+        (['Whatever:', 'we don\'t care.'], None),
+        (['whatever.'], 'sentence begins with a lowercase letter'),
+        (
+            ['Whatever.', 'whatever.'],
+            'sentence begins with a lowercase letter',
+        ),
+        (['Whatever'], 'possibly unended sentence'),
+        (['Whatever', 'Whatever.'], 'possibly unended sentence'),
+    ],
+)
 def test_check_line_continuation(
-        texts: T.List[str],
-        violation_text: T.Optional[str]
+    texts: T.List[str], violation_text: T.Optional[str]
 ) -> None:
     event_list = EventList()
     for i, text in enumerate(texts):
@@ -240,19 +252,22 @@ def test_check_line_continuation(
         assert results[0].text == violation_text
 
 
-@pytest.mark.parametrize('text, violation_text_re', [
-    ('text', None),
-    ('{\\an8}', None),
-    ('text{\\b1}text', None),
-    ('{\\fsherp}', 'invalid syntax (.*)'),
-    ('{}', 'pointless ASS tag'),
-    ('{\\\\comment}', 'use notes to make comments'),
-    ('{\\comment}', 'invalid syntax (.*)'),
-    ('{\\a5}', 'using legacy alignment tag'),
-    ('{\\an8comment}', 'use notes to make comments'),
-    ('{comment\\an8}', 'use notes to make comments'),
-    ('{\\an8}{\\fs5}', 'disjointed tags'),
-])
+@pytest.mark.parametrize(
+    'text, violation_text_re',
+    [
+        ('text', None),
+        ('{\\an8}', None),
+        ('text{\\b1}text', None),
+        ('{\\fsherp}', 'invalid syntax (.*)'),
+        ('{}', 'pointless ASS tag'),
+        ('{\\\\comment}', 'use notes to make comments'),
+        ('{\\comment}', 'invalid syntax (.*)'),
+        ('{\\a5}', 'using legacy alignment tag'),
+        ('{\\an8comment}', 'use notes to make comments'),
+        ('{comment\\an8}', 'use notes to make comments'),
+        ('{\\an8}{\\fs5}', 'disjointed tags'),
+    ],
+)
 def test_check_ass_tags(text, violation_text_re):
     event_list = EventList()
     event_list.insert_one(0, text=text)
@@ -264,13 +279,16 @@ def test_check_ass_tags(text, violation_text_re):
         assert re.match(violation_text_re, results[0].text)
 
 
-@pytest.mark.parametrize('text, violation_text', [
-    ('text', None),
-    ('text text', 'double word (text)'),
-    ('text{} text', 'double word (text)'),
-    ('text{}\\Ntext', 'double word (text)'),
-    ('text{}text', None),
-])
+@pytest.mark.parametrize(
+    'text, violation_text',
+    [
+        ('text', None),
+        ('text text', 'double word (text)'),
+        ('text{} text', 'double word (text)'),
+        ('text{}\\Ntext', 'double word (text)'),
+        ('text{}text', None),
+    ],
+)
 def test_check_double_words(text, violation_text):
     event_list = EventList()
     event_list.insert_one(0, text=text)

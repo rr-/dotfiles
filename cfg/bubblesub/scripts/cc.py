@@ -27,7 +27,7 @@ class LoadClosedCaptionsCommand(BaseCommand):
                     len(self.api.subs.events),
                     start=line.start,
                     end=line.end,
-                    note=line.text
+                    note=line.text,
                 )
 
 
@@ -56,11 +56,8 @@ class CleanClosedCaptionsCommand(BaseCommand):
                 line.note = note
 
 
-COMMANDS = [
-    LoadClosedCaptionsCommand,
-    CleanClosedCaptionsCommand
-]
+COMMANDS = [LoadClosedCaptionsCommand, CleanClosedCaptionsCommand]
 MENU = [
     MenuCommand('&Load closed captions', 'load-cc'),
-    MenuCommand('&Clean closed captions', 'clean-cc')
+    MenuCommand('&Clean closed captions', 'clean-cc'),
 ]

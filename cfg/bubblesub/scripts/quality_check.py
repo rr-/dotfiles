@@ -53,9 +53,7 @@ def _get_next_non_empty_event(event: Event) -> T.Optional[Event]:
 
 class BaseResult:
     def __init__(
-            self,
-            event: T.Union[Event, T.List[Event]],
-            text: str
+        self, event: T.Union[Event, T.List[Event]], text: str
     ) -> None:
         if isinstance(event, list):
             self.event = event[0]
@@ -88,8 +86,7 @@ class Violation(BaseResult):
 
 
 def check_style_validity(
-        event: Event,
-        styles: StyleList
+    event: Event, styles: StyleList
 ) -> T.Iterable[BaseResult]:
     style = styles.get_by_name(event.style)
     if style is None:
@@ -101,8 +98,7 @@ def check_durations(event: Event) -> T.Iterable[BaseResult]:
     if not text or event.is_comment:
         return
 
-    if event.duration < MIN_DURATION_LONG \
-            and character_count(text) >= 8:
+    if event.duration < MIN_DURATION_LONG and character_count(text) >= 8:
         yield Violation(event, f'duration shorter than {MIN_DURATION_LONG} ms')
 
     elif event.duration < MIN_DURATION:
@@ -115,7 +111,7 @@ def check_durations(event: Event) -> T.Iterable[BaseResult]:
         if 0 < gap < MIN_GAP:
             yield Violation(
                 [event, next_event],
-                f'gap shorter than {MIN_GAP} ms ({gap} ms)'
+                f'gap shorter than {MIN_GAP} ms ({gap} ms)',
             )
 
 
@@ -148,10 +144,31 @@ def check_punctuation(event: Event) -> T.Iterable[BaseResult]:
 
     context = re.split(r'\W+', re.sub('[.,?!"]', '', text.lower()))
     for word in {
-        'im', 'youre', 'hes', 'shes', 'theyre', 'isnt', 'arent', 'wasnt',
-        'werent', 'didnt', 'thats', 'heres', 'theres', 'wheres', 'cant',
-        'dont', 'wouldnt', 'couldnt', 'shouldnt', 'hasnt', 'havent', 'ive'
-        'wouldve', 'youve', 'ive',
+        'im',
+        'youre',
+        'hes',
+        'shes',
+        'theyre',
+        'isnt',
+        'arent',
+        'wasnt',
+        'werent',
+        'didnt',
+        'thats',
+        'heres',
+        'theres',
+        'wheres',
+        'cant',
+        'dont',
+        'wouldnt',
+        'couldnt',
+        'shouldnt',
+        'hasnt',
+        'havent',
+        'ive',
+        'wouldve',
+        'youve',
+        'ive',
     }:
         if word in context:
             yield Violation(event, 'missing apostrophe')
@@ -176,17 +193,18 @@ def check_punctuation(event: Event) -> T.Iterable[BaseResult]:
 
     match = re.search(r'^([A-Z][a-z]{,3})-([a-z]+)', text, flags=re.M)
     if match:
-        if match.group(0).lower() not in NON_STUTTER_WORDS \
-                and match.group(1).lower() not in NON_STUTTER_PREFIXES \
-                and match.group(2).lower() not in NON_STUTTER_SUFFIXES:
+        if (
+            match.group(0).lower() not in NON_STUTTER_WORDS
+            and match.group(1).lower() not in NON_STUTTER_PREFIXES
+            and match.group(2).lower() not in NON_STUTTER_SUFFIXES
+        ):
             yield Violation(event, 'possibly wrong stutter capitalization')
 
     if re.search(r'[\.,?!:;][A-Za-z]|[a-zA-Z]…[A-Za-z]', text):
         yield Violation(event, 'missing whitespace after punctuation mark')
 
     if re.search(
-            '\\s|\N{ZERO WIDTH SPACE}',
-            text.replace(' ', '').replace('\n', '')
+        '\\s|\N{ZERO WIDTH SPACE}', text.replace(' ', '').replace('\n', '')
     ):
         yield Violation(event, 'unrecognized whitespace')
 
@@ -221,17 +239,22 @@ def check_line_continuation(event: Event) -> T.Iterable[BaseResult]:
     if text.endswith('…') and next_text.startswith('…'):
         yield Violation([event, next_event], 'old-style line continuation')
 
-    if re.search(r'\A[a-z]', text, flags=re.M) \
-            and not re.search(r'[,:a-z]\Z', prev_text, flags=re.M):
+    if re.search(r'\A[a-z]', text, flags=re.M) and not re.search(
+        r'[,:a-z]\Z', prev_text, flags=re.M
+    ):
         yield Violation(event, 'sentence begins with a lowercase letter')
 
-    if re.search(r'[,:a-z]\Z', text, flags=re.M) \
-            and not re.search(r'\A[a-z]', next_text, flags=re.M) \
-            and not re.search(r'\AI\s', next_text, flags=re.M):
-        if not event.is_comment \
-                and event.actor != '[karaoke]' \
-                and event.actor != '[title]' \
-                and event.actor != '(sign)':
+    if (
+        re.search(r'[,:a-z]\Z', text, flags=re.M)
+        and not re.search(r'\A[a-z]', next_text, flags=re.M)
+        and not re.search(r'\AI\s', next_text, flags=re.M)
+    ):
+        if (
+            not event.is_comment
+            and event.actor != '[karaoke]'
+            and event.actor != '[title]'
+            and event.actor != '(sign)'
+        ):
             yield Violation(event, 'possibly unended sentence')
 
 
@@ -270,8 +293,7 @@ def check_spelling(api):
 
     try:
         dictionary = enchant.DictWithPWL(
-            SPELL_CHECK_LANGUAGE,
-            pwl=str(api.subs.path.with_name('dict.txt'))
+            SPELL_CHECK_LANGUAGE, pwl=str(api.subs.path.with_name('dict.txt'))
         )
     except enchant.errors.DictNotFoundError:
         api.log.warn(f'Dictionary "{SPELL_CHECK_LANGUAGE}" not found')
@@ -287,9 +309,7 @@ def check_spelling(api):
 
     api.log.info('Misspelt words:')
     for word, line_numbers in sorted(
-            misspelling_map.items(),
-            key=lambda item: len(item[1]),
-            reverse=True
+        misspelling_map.items(), key=lambda item: len(item[1]), reverse=True
     ):
         api.log.warn(
             f'- {word}: ' + ', '.join(f'#{num}' for num in line_numbers)
@@ -334,9 +354,7 @@ def check_fonts(api):
             self.is_bold = bool(font['OS/2'].fsSelection & (1 << 5))
             self.is_italic = bool(font['OS/2'].fsSelection & 1)
             self.glyphs = set(
-                chr(y[0])
-                for x in font['cmap'].tables
-                for y in x.cmap.items()
+                chr(y[0]) for x in font['cmap'].tables for y in x.cmap.items()
             )
 
             for record in font['name'].names:
@@ -344,9 +362,10 @@ def check_fonts(api):
                     continue
 
                 if record.nameID not in {
-                        TT_NAME_ID_FONT_FAMILY,
-                        TT_NAME_ID_FULL_NAME,
-                        TT_NAME_ID_TYPOGRAPHIC_FAMILY}:
+                    TT_NAME_ID_FONT_FAMILY,
+                    TT_NAME_ID_FULL_NAME,
+                    TT_NAME_ID_TYPOGRAPHIC_FAMILY,
+                }:
                     continue
 
                 self.names.append(record.string.decode('utf-16-be'))
@@ -403,9 +422,8 @@ def check_fonts(api):
         candidates = []
         for font_path, font in fonts.items():
             if family.lower() in [n.lower() for n in font.names]:
-                weight = (
-                    (font.is_bold == is_bold) +
-                    (font.is_italic == is_italic)
+                weight = (font.is_bold == is_bold) + (
+                    font.is_italic == is_italic
                 )
                 candidates.append((weight, font_path, font))
         candidates.sort(key=lambda i: -i[0])
@@ -435,8 +453,7 @@ def check_fonts(api):
 
 
 def measure_frame_size(
-        renderer: AssRenderer,
-        event: Event
+    renderer: AssRenderer, event: Event
 ) -> T.Tuple[int, int]:
     fake_event_list = EventList()
     fake_event_list.insert(0, [copy(event)])
@@ -445,7 +462,7 @@ def measure_frame_size(
         style_list=renderer.style_list,
         event_list=fake_event_list,
         info=renderer.info,
-        video_resolution=renderer.video_resolution
+        video_resolution=renderer.video_resolution,
     )
 
     layers = list(renderer.render_raw(time=event.start))
@@ -459,8 +476,7 @@ def measure_frame_size(
 
 
 def get_optimal_line_heights(
-        api: Api,
-        renderer: AssRenderer
+    api: Api, renderer: AssRenderer
 ) -> T.Dict[str, float]:
     TEST_LINE_COUNT = 20
     VIDEO_RES_X = 100
@@ -480,7 +496,7 @@ def get_optimal_line_heights(
             start=0,
             end=1000,
             text='\\N'.join(['gjMW'] * TEST_LINE_COUNT),
-            style=style.name
+            style=style.name,
         )
 
         _frame_width, frame_height = measure_frame_size(renderer, event)
@@ -499,10 +515,10 @@ def get_width(api: Api) -> int:
 
 
 def check_long_line(
-        event: Event,
-        api: Api,
-        renderer: AssRenderer,
-        optimal_line_heights: T.Dict[str, float]
+    event: Event,
+    api: Api,
+    renderer: AssRenderer,
+    optimal_line_heights: T.Dict[str, float],
 ) -> T.Iterable[BaseResult]:
     width, height = measure_frame_size(renderer, event)
     average_height = optimal_line_heights.get(event.style, 0)
@@ -510,17 +526,13 @@ def check_long_line(
     if not line_count:
         return
 
-    width_multipliers = {
-        1: 0.6,
-        2: 0.9,
-    }
+    width_multipliers = {1: 0.6, 2: 0.9}
 
     try:
         width_multiplier = width_multipliers[line_count]
     except LookupError:
         yield Violation(
-            event,
-            f'too many lines ({height}/{average_height} = {line_count})'
+            event, f'too many lines ({height}/{average_height} = {line_count})'
         )
     else:
         optimal_width = get_width(api) * width_multiplier
@@ -528,7 +540,7 @@ def check_long_line(
             yield Violation(
                 event,
                 f'too long line '
-                f'({width - optimal_width:.02f} beyond {optimal_width:.02f})'
+                f'({width - optimal_width:.02f} beyond {optimal_width:.02f})',
             )
 
 
@@ -539,7 +551,7 @@ def list_violations(api: Api) -> T.Iterable[BaseResult]:
         style_list=api.subs.styles,
         event_list=api.subs.events,
         info=api.subs.info,
-        video_resolution=(get_width(api), get_height(api))
+        video_resolution=(get_width(api), get_height(api)),
     )
 
     for event in api.subs.events:
@@ -565,7 +577,8 @@ class QualityCheckCommand(BaseCommand):
     async def run(self):
         if self.args.focus_prev or self.args.focus_next:
             violations = [
-                result for result in list_violations(self.api)
+                result
+                for result in list_violations(self.api)
                 if result.log_level in {LogLevel.Warning, LogLevel.Error}
             ]
             violated_indexes = sorted(
@@ -598,8 +611,8 @@ class QualityCheckCommand(BaseCommand):
             list_violations(self.api),
             key=lambda result: (
                 re.match('^([^(]*).*?$', result.text).group(1),
-                result.event.number
-            )
+                result.event.number,
+            ),
         )
         for result in results:
             self.api.log.log(result.log_level, repr(result))

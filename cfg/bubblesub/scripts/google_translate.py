@@ -12,17 +12,16 @@ from bubblesub.opt.menu import SubMenu
 async def _work(language: str, api: Api, line: Event) -> None:
     api.log.info(f'line #{line.number} - analyzing')
     try:
+
         def recognize():
             translator = googletrans.Translator()
             return translator.translate(
-                line.note.replace('\\N', '\n'),
-                src=language,
-                dest='en',
+                line.note.replace('\\N', '\n'), src=language, dest='en'
             )
 
         # don't clog the UI thread
-        result = (
-            await asyncio.get_event_loop().run_in_executor(None, recognize)
+        result = await asyncio.get_event_loop().run_in_executor(
+            None, recognize
         )
     except Exception as ex:
         api.log.error(f'line #{line.number}: error ({ex})')
@@ -62,7 +61,7 @@ MENU = [
             MenuCommand('&French', 'tl fr'),
             MenuCommand('&Italian', 'tl it'),
             MenuCommand('&Polish', 'tl pl'),
-            MenuCommand('&Auto', 'tl auto')
-        ]
+            MenuCommand('&Auto', 'tl auto'),
+        ],
     )
 ]
