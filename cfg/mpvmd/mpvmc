@@ -26,15 +26,6 @@ def format_time(value):
     return f"{hour:02d}:{minute:02d}:{second:02d}.{nano}"
 
 
-def float_between(value, min_, max_):
-    value = float(value)
-    if value < min_ or value > max_:
-        raise argparse.ArgumentTypeError(
-            f"{value} must be between {min_} and {max_}"
-        )
-    return value
-
-
 def send(args):
     sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
     sock.connect("/tmp/mpvmd.socket")
@@ -68,11 +59,7 @@ class VolumeCommand(Command):
     name = "volume"
 
     def decorate_parser(self, parser):
-        parser.add_argument(
-            "volume",
-            nargs="?",
-            type=lambda value: float_between(value, 0, 100),
-        )
+        parser.add_argument("volume", nargs="?", type=float)
 
     def run(self, args):
         if args.volume is not None:
