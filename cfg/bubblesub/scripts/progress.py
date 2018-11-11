@@ -38,4 +38,4 @@ class ProgressCommand(BaseCommand):
 
 
 COMMANDS = [ProgressCommand]
-MENU = [MenuCommand('Show translation &progress', '/progress')]
+MENU = [MenuCommand('Show translation &progress', 'progress')]

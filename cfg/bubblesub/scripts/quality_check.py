@@ -554,7 +554,7 @@ def list_violations(api: Api) -> T.Iterable[BaseResult]:
 
 
 class QualityCheckCommand(BaseCommand):
-    names = ['quality-check', 'qc']
+    names = ['qc', 'quality-check']
     help_text = 'Tries to pinpoint common issues with the subtitles.'
 
     @staticmethod
@@ -611,4 +611,4 @@ class QualityCheckCommand(BaseCommand):
 
 
 COMMANDS = [QualityCheckCommand]
-MENU = [MenuCommand('&Quality check', '/quality-check')]
+MENU = [MenuCommand('&Quality check', 'qc')]

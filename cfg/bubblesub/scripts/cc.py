@@ -61,6 +61,6 @@ COMMANDS = [
     CleanClosedCaptionsCommand
 ]
 MENU = [
-    MenuCommand('&Load closed captions', '/load-cc'),
-    MenuCommand('&Clean closed captions', '/clean-cc')
+    MenuCommand('&Load closed captions', 'load-cc'),
+    MenuCommand('&Clean closed captions', 'clean-cc')
 ]

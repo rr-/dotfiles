@@ -47,4 +47,4 @@ class AutoTimeCommand(BaseCommand):
 
 
 COMMANDS = [AutoTimeCommand]
-MENU = [MenuCommand('Auto time', '/auto-time')]
+MENU = [MenuCommand('Auto time', 'auto-time')]

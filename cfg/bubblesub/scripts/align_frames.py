@@ -24,6 +24,6 @@ class AlignSubtitlesToVideoFramesCommand(BaseCommand):
 COMMANDS = [AlignSubtitlesToVideoFramesCommand]
 MENU = [
     MenuCommand(
-        'Align subtitles to &video frames', '/align-subs-to-video-frames'
+        'Align subtitles to &video frames', 'align-subs-to-video-frames'
     )
 ]
