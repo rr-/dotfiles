@@ -490,6 +490,14 @@ def get_optimal_line_heights(
     return ret
 
 
+def get_height(api: Api) -> int:
+    return int(api.subs.info.get('PlayResY'))
+
+
+def get_width(api: Api) -> int:
+    return int(get_height(api) * 4 / 3)
+
+
 def check_long_line(
         event: Event,
         api: Api,
@@ -515,7 +523,7 @@ def check_long_line(
             f'too many lines ({height}/{average_height} = {line_count})'
         )
     else:
-        optimal_width = api.media.video.width * width_multiplier
+        optimal_width = get_width(api) * width_multiplier
         if width > optimal_width:
             yield Violation(
                 event,
@@ -531,7 +539,7 @@ def list_violations(api: Api) -> T.Iterable[BaseResult]:
         style_list=api.subs.styles,
         event_list=api.subs.events,
         info=api.subs.info,
-        video_resolution=(api.media.video.width, api.media.video.height)
+        video_resolution=(get_width(api), get_height(api))
     )
 
     for event in api.subs.events:
