@@ -5,18 +5,19 @@ import googletrans
 from bubblesub.api import Api
 from bubblesub.api.cmd import BaseCommand
 from bubblesub.ass.event import Event
+from bubblesub.cmd.common import SubtitlesSelection
 from bubblesub.opt.menu import MenuCommand
 from bubblesub.opt.menu import SubMenu
 
 
-async def _work(language: str, api: Api, line: Event) -> None:
-    api.log.info(f"line #{line.number} - analyzing")
+async def _work(language: str, api: Api, sub: Event) -> None:
+    api.log.info(f"line #{sub.number} - analyzing")
     try:
 
         def recognize():
             translator = googletrans.Translator()
             return translator.translate(
-                line.note.replace("\\N", "\n"), src=language, dest="en"
+                sub.note.replace("\\N", "\n"), src=language, dest="en"
             )
 
         # don't clog the UI thread
@@ -24,14 +25,14 @@ async def _work(language: str, api: Api, line: Event) -> None:
             None, recognize
         )
     except Exception as ex:
-        api.log.error(f"line #{line.number}: error ({ex})")
+        api.log.error(f"line #{sub.number}: error ({ex})")
     else:
-        api.log.info(f"line #{line.number}: OK")
+        api.log.info(f"line #{sub.number}: OK")
         with api.undo.capture():
-            if line.text:
-                line.text = line.text + r"\N" + result.text
+            if sub.text:
+                sub.text = sub.text + r"\N" + result.text
             else:
-                line.text = result.text
+                sub.text = result.text
 
 
 class GoogleTranslateCommand(BaseCommand):
@@ -40,14 +41,21 @@ class GoogleTranslateCommand(BaseCommand):
 
     @property
     def is_enabled(self):
-        return self.api.subs.has_selection
+        return self.args.target.makes_sense
 
     async def run(self):
-        for line in self.api.subs.selected_events:
-            await _work(self.args.code, self.api, line)
+        for sub in await self.args.target.get_subtitles():
+            await _work(self.args.code, self.api, sub)
 
     @staticmethod
     def decorate_parser(api: Api, parser: argparse.ArgumentParser) -> None:
+        parser.add_argument(
+            "-t",
+            "--target",
+            help="subtitles to process",
+            type=lambda value: SubtitlesSelection(api, value),
+            default="selected",
+        )
         parser.add_argument("code", help="language code")
 
 
