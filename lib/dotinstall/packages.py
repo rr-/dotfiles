@@ -1,7 +1,6 @@
 import logging
 import re
 import sys
-import tempfile
 
 from dotinstall import util
 
@@ -68,20 +67,15 @@ class PacaurPackageInstaller:
 
 class PipPackageInstaller:
     name = "pip"
-    cache_dir = tempfile.gettempdir()
 
     def __init__(self):
         if "cygwin" in sys.platform:
             self.executable = "pip3"
-            self.use_sudo = False
         else:
             self.executable = "pip"
-            self.use_sudo = True
 
     @property
     def supported(self):
-        if self.use_sudo and not util.has_executable("sudo"):
-            return False
         return util.has_executable(self.executable)
 
     def has_installed(self, package):
@@ -103,8 +97,6 @@ class PipPackageInstaller:
                         self.executable,
                         "search",
                         package,
-                        "--cache-dir",
-                        self.cache_dir,
                     ]
                 )[1],
                 re.MULTILINE,
@@ -116,12 +108,9 @@ class PipPackageInstaller:
         command = [
             self.executable,
             "install",
-            "--cache-dir",
-            self.cache_dir,
+            "--user",
             package,
         ]
-        if self.use_sudo:
-            command = ["sudo", "-S"] + command
         return util.run_verbose(command)
 
 
