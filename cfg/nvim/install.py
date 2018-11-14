@@ -5,6 +5,7 @@ from dotinstall import util
 def run():
     spell_dir = '~/.config/nvim/spell/'
     packages.try_install('neovim')
+    packages.try_install('neovim', method='pip')
 
     for name in ['undo', 'backup', 'swap', 'spell']:
         util.create_dir('~/.config/nvim/' + name)
