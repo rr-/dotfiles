@@ -4,6 +4,7 @@ from dotinstall import util
 
 
 def run():
+    packages.install('base-devel', method='pacman')
     packages.install('yajl', method='pacman')
 
     os.chdir('/tmp')
