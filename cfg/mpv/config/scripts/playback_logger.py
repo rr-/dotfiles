@@ -11,8 +11,8 @@ from datetime import datetime
 MINIMUM_WATCHED_PERCENTAGE = 80
 MINIMUM_DURATION = 300  # five minutes
 IGNORE_ONLINE_STREAMS = True
-REMOTE_HOST = 'cyclone'
-REMOTE_CMD = 'cd /srv/www/sakuya.pl && echo %s>>data/playback.lst && ./build'
+REMOTE_HOST = 'drizzle'
+REMOTE_CMD = 'cd srv/sakuya.pl && echo %s>>data/playback.lst'
 ALLOWED_EXTENSIONS = [
     'mkv', 'mp4', 'avi', 'm4v', 'mov',
     'flv', 'mpeg', 'mpg', 'wmv', 'ogv', 'webm', 'rm']
