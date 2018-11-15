@@ -85,5 +85,5 @@ bind index D purge-message
 bind index - collapse-thread
 bind index _ collapse-all
 
-# save attachment to ~/hub/share
-macro attach s '<save-entry><bol>~/hub/share/'
+# save attachment to ~/data/
+macro attach s '<save-entry><bol>~/data/'
