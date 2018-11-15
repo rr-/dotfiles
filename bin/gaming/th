@@ -5,7 +5,7 @@ import re
 import sys
 from subprocess import run
 
-TH_ROOT_DIR = os.path.expanduser("~/blob/games/Touhou Project/")
+TH_ROOT_DIR = os.path.expanduser("~/data/blob/games/Touhou Project/")
 
 
 def parse_args():
