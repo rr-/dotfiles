@@ -157,13 +157,14 @@ def print_long_listing(
                 .replace(microsecond=0)
                 .isoformat()
             )
+            size = format_size(path_stat.st_size)
         except OSError:
             chmod = "?" * 7
             user = "?"
             group = "?"
             date = "?"
+            size = "?"
 
-        size: str = format_size(path_stat.st_size)
         name = format_name(path, args.color)
 
         rows.append((chmod, user + ":" + group, size, date, name))
