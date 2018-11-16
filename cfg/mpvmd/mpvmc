@@ -194,12 +194,14 @@ class InfoCommand(Command):
         path = send(["get_property", "path"])["data"]
 
         if args.short:
-            ret = metadata.get('artist') or metadata.get('albumartist') or ''
+            ret = metadata.get("artist") or metadata.get("albumartist") or ""
             if ret:
-                ret += ' - '
-            ret += metadata.get('title') \
-                or metadata.get('icy-title') \
-                or (os.path.basename(path) if path else '?')
+                ret += " - "
+            ret += (
+                metadata.get("title")
+                or metadata.get("icy-title")
+                or (os.path.basename(path) if path else "?")
+            )
             print(ret)
             return
 
