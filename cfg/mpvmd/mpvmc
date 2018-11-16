@@ -102,6 +102,16 @@ class ShowListCommand(Command):
                 print(f"{i}. {line}")
 
 
+class JumpCommand(Command):
+    name = "jump"
+
+    def decorate_parser(self, parser):
+        parser.add_argument("num", type=int)
+
+    def run(self, args):
+        send(["set", "playlist-pos-1", str(args.num)])
+
+
 class LoadListCommand(Command):
     name = "loadlist"
 
