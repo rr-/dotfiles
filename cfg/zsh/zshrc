@@ -72,11 +72,16 @@ fi
 
 # command prompt
 function make_ps1 () {
-    if [ -n "$SSH_CLIENT" ] || [ -n "$SSH_TTY" ]; then
-        PS1='%F{75}'
-    else
-        PS1="%F{203}"
-    fi
+    case $(hostname) in
+        drizzle) PS1='%F{75}';;
+        cyclone) PS1='%F{162}';;
+        aurora) PS1='%F{215}';;
+        oldcastle) PS1='%F{150}';;
+        tornado) PS1='%F{203}';;
+        stx*) PS1='%F{156}';;
+        *) PS1='%F{145}';;
+    esac
+
     # user@host
     PS1+='%n@%M'
 
