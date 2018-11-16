@@ -105,7 +105,6 @@ class Connection:
             self.info.raw[event["name"]] = event["data"]
 
     def _send(self, message: T.Any) -> None:
-        print("out", message)
         assert self._socket is not None
         try:
             self._socket.send((json.dumps(message) + "\n").encode())
@@ -129,7 +128,6 @@ class Connection:
         for line in data.decode().split("\n"):
             if line:
                 ret.append(json.loads(line))
-        print("in", ret)
         return ret
 
 
