@@ -35,8 +35,9 @@ class NetworkUsageWidget(Widget):
         try:
             self._rx_path: T.Optional[Path] = None
             self._tx_path: T.Optional[Path] = None
-            for interface in glob.glob("/sys/class/net/*"):
-                path = Path(interface)
+            for path in Path("/sys/class/net/").iterdir():
+                if "virtual" in str(path.resolve()):
+                    continue
                 state = (path / "operstate").read_text().strip()
                 if state.lower() == "up":
                     self._rx_path = path / "statistics" / "rx_bytes"
