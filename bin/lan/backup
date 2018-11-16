@@ -1,56 +1,119 @@
 #!/usr/bin/env python3
-# Two-way backup between server and main PC.
-
-from subprocess import run
+import argparse
+import shlex
+import typing as T
+from subprocess import CalledProcessError, run
 
 from dotfiles import logging
 
 
-def sync(source, target):
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-d", "--dry-run", action="store_true")
+    return parser.parse_args()
+
+
+def sync(
+    source: str,
+    target: str,
+    dry_run: bool,
+    copy_links: bool = True,
+    exclude: T.Optional[T.List[str]] = None,
+) -> None:
+    logging.info("%s → %s", source, target)
+
     source_machine, source_path = source.split(":", 1)
     target_machine, target_path = target.split(":", 1)
 
-    logging.info("%s -> %s", source, target)
+    run(["ssh", target_machine, "mkdir", "-p", target_path], check=True)
 
-    run(["ssh", target_machine, "mkdir", "-p", target_path])
+    source_machine_cmd = [
+        "rsync",
+        "--progress",
+        # "--whole-file",
+        "--chmod=D=rwxrxrx,F=rwrr",
+        "-vi",  # increase verbosity
+        "-a",  # archive
+        "-R",  # keep full paths
+        "--delete-excluded",
+        "--delete-during",
+    ]
 
-    status = run(
-        [
-            "ssh",
-            "-A",
-            source_machine,
-            "rsync",
-            "--progress",
-            "--whole-file",
-            "--chmod=D=rwxrxrx,F=rwrr",
-            "-vaKR",
-            "-xx",
-            "--delete-excluded",
-            "--delete-during",
-            # '--dry-run',
-            source_path,
-            target,
-        ]
+    if copy_links:
+        # traverse into symlinks and copy their contents
+        source_machine_cmd.append("-L")
+    if dry_run:
+        source_machine_cmd.append("--dry-run")
+    if exclude:
+        for pattern in exclude:
+            source_machine_cmd.append(f"--exclude={pattern}")
+
+    source_machine_cmd += [source_path, target]
+
+    args = ["ssh", "-A", source_machine] + list(
+        map(shlex.quote, source_machine_cmd)
     )
 
-    if status.returncode != 0:
-        logging.error("Error during sync, aborting")
-        exit(1)
+    run(args, check=True)
 
 
 def main():
-    logging.info("tornado -> cyclone")
-    for directory in ["src", "blob", "hub", "text"]:
-        sync("tornado:/home/rr-/" + directory, "cyclone:/srv/backup/tornado/")
+    args = parse_args()
 
-    logging.info("cyclone -> tornado")
-    for directory in [
-        "/srv/www",
-        "/srv/img",
-        "/home/rr-/text",
-        "/home/rr-/.weechat/logs",
-    ]:
-        sync("cyclone:" + directory, "tornado:/home/rr-/.backup/cyclone/")
+    def do_sync(source: str, target_machine: str, **kwargs: T.Any) -> None:
+        source_machine, _source_path = source.split(":", 1)
+        target = f"{target_machine}:/home/rr-/backup/{source_machine}/"
+        sync(source, target, dry_run=args.dry_run, **kwargs)
+
+    try:
+        # data
+        do_sync("cyclone:/home/rr-/data/img", "tornado", copy_links=True)
+        do_sync("cyclone:/home/rr-/data/text", "tornado", copy_links=True)
+        do_sync("cyclone:/home/rr-/data/blob", "tornado", copy_links=True)
+        do_sync("cyclone:/home/rr-/data/audio", "drizzle", copy_links=True)
+
+        # # development
+        do_sync(
+            "tornado:/home/rr-/src",
+            "cyclone",
+            copy_links=False,
+            exclude=["python_modules/", "node_modules/", "*.pyc"],
+        )
+
+        # servers
+        do_sync(
+            "drizzle:/home/rr-",
+            "cyclone",
+            copy_links=False,
+            exclude=[
+                "/home/rr-/data/",
+                "/home/rr-/backup/",
+                "/home/rr-/.cache/",
+            ],
+        )
+
+        do_sync(
+            "oc:/home/rr-/srv",
+            "cyclone",
+            copy_links=True,
+            exclude=["/home/rr-/srv/torrent/"],
+        )
+
+        do_sync(
+            "cyclone:/home/rr-/srv",
+            "tornado",
+            copy_links=True,
+            exclude=[
+                "home.sakuya.pl",
+                "python_modules",
+                "node_modules",
+                "*.pyc",
+            ],
+        )
+
+    except CalledProcessError:
+        logging.error("Error during sync, aborting")
+        exit(1)
 
     logging.info("Syncing finished without errors")
 
