@@ -5,7 +5,7 @@ instance=$3
 title=$(xdotool getwindowname "$window_id")
 
 if [ "$window_class" = URxvt ]; then
-    if [ "$instance" = remote_irc ] ; then
+    if [ "$instance" = drizzle ] ; then
         echo desktop=10
     fi
     if [ "$title" = ul-yume ] || [ "$title" = ul-gelbooru ]; then
