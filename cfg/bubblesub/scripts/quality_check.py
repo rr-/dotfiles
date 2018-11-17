@@ -32,6 +32,8 @@ NON_STUTTER_WORDS = {"bye-bye", "part-time"}
 
 SPELL_CHECK_LANGUAGE = "en_US"
 
+WIDTH_MULTIPLIERS = {1: 0.6, 2: 0.9}
+
 
 def _get_prev_non_empty_event(event: Event) -> T.Optional[Event]:
     event = event.prev
@@ -514,6 +516,26 @@ def get_width(api: Api) -> int:
     return int(get_height(api) * 4 / 3)
 
 
+def check_unnecessary_breaks(
+    event: Event,
+    api: Api,
+    renderer: AssRenderer,
+    optimal_line_heights: T.Dict[str, float],
+) -> T.Iterable[BaseResult]:
+    if r"\N" not in event.text:
+        return
+    event_copy = copy(event)
+    event_copy.text = event.text.replace(r"\N", " ")
+    width, _height = measure_frame_size(renderer, event_copy)
+    optimal_width = get_width(api) * WIDTH_MULTIPLIERS[1]
+    if width < optimal_width and not "– " in event.text:
+        yield Information(
+            event,
+            f"possibly unnecessary break "
+            f"({optimal_width - width:.02f} until {optimal_width:.02f})",
+        )
+
+
 def check_long_line(
     event: Event,
     api: Api,
@@ -526,10 +548,8 @@ def check_long_line(
     if not line_count:
         return
 
-    width_multipliers = {1: 0.6, 2: 0.9}
-
     try:
-        width_multiplier = width_multipliers[line_count]
+        width_multiplier = WIDTH_MULTIPLIERS[line_count]
     except LookupError:
         yield Violation(
             event, f"too many lines ({height}/{average_height} = {line_count})"
@@ -562,6 +582,9 @@ def list_violations(api: Api) -> T.Iterable[BaseResult]:
         yield from check_line_continuation(event)
         yield from check_ass_tags(event)
         yield from check_double_words(event)
+        yield from check_unnecessary_breaks(
+            event, api, renderer, optimal_line_heights
+        )
         yield from check_long_line(event, api, renderer, optimal_line_heights)
 
 
