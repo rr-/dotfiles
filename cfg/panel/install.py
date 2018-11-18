@@ -11,4 +11,4 @@ def run():
     util.copy_file('./start', '~/.config/x/start-panel.sh')
 
     os.chdir(util.root_dir / 'opt' / 'panel')
-    util.run_verbose(['pip', 'install', '--user', '--upgrade', '.'])
+    util.run_verbose(['pip', 'install', '--user', '--editable', '.'])
