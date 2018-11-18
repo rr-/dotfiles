@@ -458,7 +458,7 @@ def measure_frame_size(
     renderer: AssRenderer, event: Event
 ) -> T.Tuple[int, int]:
     fake_event_list = EventList()
-    fake_event_list.insert(0, [copy(event)])
+    fake_event_list.append(copy(event))
 
     renderer.set_source(
         style_list=renderer.style_list,

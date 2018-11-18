@@ -2,6 +2,7 @@ import re
 
 import pysubs2
 import bubblesub.ui.util
+from bubblesub.ass.event import Event
 from bubblesub.api.cmd import BaseCommand
 from bubblesub.opt.menu import MenuCommand
 
@@ -23,11 +24,13 @@ class LoadClosedCaptionsCommand(BaseCommand):
         source = pysubs2.load(str(path))
         with self.api.undo.capture():
             for line in source:
-                self.api.subs.events.insert_one(
-                    len(self.api.subs.events),
-                    start=line.start,
-                    end=line.end,
-                    note=line.text,
+                self.api.subs.events.insert(
+                    Event(
+                        len(self.api.subs.events),
+                        start=line.start,
+                        end=line.end,
+                        note=line.text,
+                    )
                 )
 
 

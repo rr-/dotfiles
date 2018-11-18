@@ -17,15 +17,15 @@ from ..quality_check import check_punctuation
 
 def test_violation_single_event() -> None:
     event_list = EventList()
-    event_list.insert_one(0, start=0, end=0)
+    event_list.append(Event(start=0, end=0))
     violation = Violation(event_list[0], "test")
     assert repr(violation) == "#1: test"
 
 
 def test_violation_multiple_events() -> None:
     event_list = EventList()
-    event_list.insert_one(0, start=0, end=0)
-    event_list.insert_one(1, start=0, end=0)
+    event_list.append(Event(start=0, end=0))
+    event_list.append(Event(start=0, end=0))
     violation = Violation([event_list[0], event_list[1]], "test")
     assert repr(violation) == "#1+#2: test"
 
@@ -61,8 +61,8 @@ def test_check_durations_good_duration() -> None:
 
 def test_check_durations_too_short_gap() -> None:
     event_list = EventList()
-    event_list.insert_one(0, start=0, end=500, text="test")
-    event_list.insert_one(1, start=600, end=900, text="test")
+    event_list.append(Event(start=0, end=500, text="test"))
+    event_list.append(Event(start=600, end=900, text="test"))
     results = list(check_durations(event_list[0]))
     assert len(results) == 1
     assert results[0].text == "gap shorter than 250 ms (100 ms)"
@@ -70,9 +70,9 @@ def test_check_durations_too_short_gap() -> None:
 
 def test_check_durations_too_short_gap_empty_lines() -> None:
     event_list = EventList()
-    event_list.insert_one(0, start=0, end=500, text="test")
-    event_list.insert_one(1, start=550, end=550)
-    event_list.insert_one(2, start=600, end=900, text="test")
+    event_list.append(Event(start=0, end=500, text="test"))
+    event_list.append(Event(start=550, end=550))
+    event_list.append(Event(start=600, end=900, text="test"))
     results = list(check_durations(event_list[0]))
     assert len(results) == 1
     assert results[0].text == "gap shorter than 250 ms (100 ms)"
@@ -80,9 +80,9 @@ def test_check_durations_too_short_gap_empty_lines() -> None:
 
 def test_check_durations_too_short_gap_comments() -> None:
     event_list = EventList()
-    event_list.insert_one(0, start=0, end=500, text="test")
-    event_list.insert_one(1, start=550, end=550, text="test", is_comment=True)
-    event_list.insert_one(2, start=600, end=900, text="test")
+    event_list.append(Event(start=0, end=500, text="test"))
+    event_list.append(Event(start=550, end=550, text="test", is_comment=True))
+    event_list.append(Event(start=600, end=900, text="test"))
     results = list(check_durations(event_list[0]))
     assert len(results) == 1
     assert results[0].text == "gap shorter than 250 ms (100 ms)"
@@ -90,8 +90,8 @@ def test_check_durations_too_short_gap_comments() -> None:
 
 def test_check_durations_good_gap() -> None:
     event_list = EventList()
-    event_list.insert_one(0, start=0, end=500, text="test")
-    event_list.insert_one(1, start=750, end=900, text="test")
+    event_list.append(Event(start=0, end=500, text="test"))
+    event_list.append(Event(start=750, end=900, text="test"))
     assert len(list(check_durations(event_list[0]))) == 0
 
 
@@ -208,7 +208,7 @@ def test_check_quotes(
     text: str, violation_text_re: str, log_level: LogLevel
 ) -> None:
     event_list = EventList()
-    event_list.insert_one(0, text=text)
+    event_list.append(Event(text=text))
     results = list(check_quotes(event_list[0]))
     assert len(results) == 1
     assert re.match(violation_text_re, results[0].text)
@@ -239,7 +239,7 @@ def test_check_line_continuation(
 ) -> None:
     event_list = EventList()
     for i, text in enumerate(texts):
-        event_list.insert_one(i, text=text)
+        event_list.append(Event(text=text))
 
     results = []
     for event in event_list:
@@ -270,7 +270,7 @@ def test_check_line_continuation(
 )
 def test_check_ass_tags(text, violation_text_re):
     event_list = EventList()
-    event_list.insert_one(0, text=text)
+    event_list.append(Event(text=text))
     results = list(check_ass_tags(event_list[0]))
     if violation_text_re is None:
         assert len(results) == 0
@@ -291,7 +291,7 @@ def test_check_ass_tags(text, violation_text_re):
 )
 def test_check_double_words(text, violation_text):
     event_list = EventList()
-    event_list.insert_one(0, text=text)
+    event_list.append(Event(text=text))
     results = list(check_double_words(event_list[0]))
     if violation_text is None:
         assert len(results) == 0
