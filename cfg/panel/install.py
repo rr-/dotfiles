@@ -6,6 +6,7 @@ from dotinstall import util
 def run():
     packages.try_install('libxkbcommon-x11')
     packages.try_install('python-pyqt5')
+    packages.try_install('qt5-svg')
 
     util.copy_file('./start', '~/.config/x/start-panel.sh')
 
