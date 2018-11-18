@@ -1,9 +1,10 @@
 import re
 
 import pysubs2
+
 import bubblesub.ui.util
-from bubblesub.ass.event import Event
 from bubblesub.api.cmd import BaseCommand
+from bubblesub.ass.event import Event
 from bubblesub.opt.menu import MenuCommand
 
 

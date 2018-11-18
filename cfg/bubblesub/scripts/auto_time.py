@@ -1,6 +1,6 @@
 import os
 import tempfile
-from subprocess import run, PIPE
+from subprocess import PIPE, run
 
 from bubblesub.api.cmd import BaseCommand
 from bubblesub.ass.event import Event
