@@ -1,5 +1,4 @@
-from dotinstall import packages
-from dotinstall import util
+from dotinstall import packages, util
 
 
 def run():

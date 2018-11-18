@@ -2,12 +2,12 @@ import argparse
 import asyncio
 
 import googletrans
+
 from bubblesub.api import Api
 from bubblesub.api.cmd import BaseCommand
 from bubblesub.ass.event import Event
 from bubblesub.cmd.common import SubtitlesSelection
-from bubblesub.opt.menu import MenuCommand
-from bubblesub.opt.menu import SubMenu
+from bubblesub.opt.menu import MenuCommand, SubMenu
 
 
 async def _work(language: str, api: Api, sub: Event) -> None:

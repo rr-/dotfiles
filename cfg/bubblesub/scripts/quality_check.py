@@ -12,13 +12,14 @@ import fontTools.ttLib as font_tools
 from bubblesub.api import Api
 from bubblesub.api.cmd import BaseCommand
 from bubblesub.api.log import LogLevel
-from bubblesub.ass.event import Event
-from bubblesub.ass.event import EventList
+from bubblesub.ass.event import Event, EventList
 from bubblesub.ass.info import Metadata
 from bubblesub.ass.style import StyleList
-from bubblesub.ass.util import ass_to_plaintext
-from bubblesub.ass.util import character_count
-from bubblesub.ass.util import spell_check_ass_line
+from bubblesub.ass.util import (
+    ass_to_plaintext,
+    character_count,
+    spell_check_ass_line,
+)
 from bubblesub.opt.menu import MenuCommand
 from bubblesub.ui.ass_renderer import AssRenderer
 
