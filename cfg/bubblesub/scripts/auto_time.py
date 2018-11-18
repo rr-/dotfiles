@@ -3,6 +3,7 @@ import tempfile
 from subprocess import run, PIPE
 
 from bubblesub.api.cmd import BaseCommand
+from bubblesub.ass.event import Event
 from bubblesub.opt.menu import MenuCommand
 
 
@@ -35,12 +36,15 @@ class AutoTimeCommand(BaseCommand):
                 _line_id, start, end = line.split()
                 ms_start = float(start) * 1000
                 ms_end = float(end) * 1000
-                self.api.subs.events.insert_one(
-                    len(self.api.subs.events),
-                    start=self.api.media.video.align_pts_to_near_frame(
-                        ms_start
-                    ),
-                    end=self.api.media.video.align_pts_to_near_frame(ms_end),
+                self.api.subs.events.append(
+                    Event(
+                        start=self.api.media.video.align_pts_to_near_frame(
+                            ms_start
+                        ),
+                        end=self.api.media.video.align_pts_to_near_frame(
+                            ms_end
+                        ),
+                    )
                 )
 
         os.unlink(temp_path)
