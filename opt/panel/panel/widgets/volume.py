@@ -100,7 +100,10 @@ class VolumeWidget(Widget):
     def mixer(self) -> T.Optional["alsaaudio.Mixer"]:
         if not alsaaudio:
             return None
-        return alsaaudio.Mixer(device="pulse")
+        try:
+            return alsaaudio.Mixer(device="pulse")
+        except alsaaudio.ALSAAudioError:
+            return None
 
     def change_volume(self, event: QtGui.QWheelEvent) -> None:
         with self.exception_guard():
