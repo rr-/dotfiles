@@ -9,9 +9,9 @@ import sys
 import tarfile
 import urllib.parse
 
-BASE_DIR = "/srv/www/tmp.sakuya.pl/f/"
+BASE_DIR = "/home/rr-/srv/tmp.sakuya.pl/f/"
 BASE_URL = "https://tmp.sakuya.pl/f/"
-REMOTE_HOST = "cyclone"
+REMOTE_HOST = "drizzle"
 
 
 def collect_single_file(arg):
