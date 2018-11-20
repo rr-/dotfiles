@@ -212,9 +212,9 @@ class MpvmdWidget(Widget):
 
     def _render_impl(self) -> None:
         if self._info.pause:
-            self._set_icon(self._status_icon_label, "pause")
-        else:
             self._set_icon(self._status_icon_label, "play")
+        else:
+            self._set_icon(self._status_icon_label, "pause")
 
         text = ""
         if self._info.metadata.get("title"):
