@@ -39,8 +39,14 @@ class SpeechRecognitionCommand(BaseCommand):
             future_to_sub = {
                 executor.submit(self.recognize, sub): sub for sub in subs
             }
-            for future in concurrent.futures.as_completed(future_to_sub):
-                sub = future_to_sub[future]
+            completed, non_completed = concurrent.futures.wait(
+                future_to_sub, timeout=5
+            )
+
+        with self.api.undo.capture():
+            for future, sub in future_to_sub.items():
+                if future not in completed:
+                    continue
                 try:
                     note = future.result()
                 except sr.UnknownValueError:
@@ -49,11 +55,14 @@ class SpeechRecognitionCommand(BaseCommand):
                     self.api.log.error(f"line #{sub.number}: error ({ex})")
                 else:
                     self.api.log.info(f"line #{sub.number}: OK")
-                    with self.api.undo.capture():
-                        if sub.note:
-                            sub.note += r"\N" + note
-                        else:
-                            sub.note = note
+                    if sub.note:
+                        sub.note += r"\N" + note
+                    else:
+                        sub.note = note
+
+        for future, sub in future_to_sub.items():
+            if future in non_completed:
+                self.api.log.info(f"line #{sub.number}: timeout")
 
     def recognize(self, sub: Event) -> str:
         self.api.log.info(f"line #{sub.number} - analyzing")
