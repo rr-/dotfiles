@@ -1,5 +1,7 @@
 import argparse
 import asyncio
+import concurrent.futures
+import typing as T
 
 import googletrans
 
@@ -8,31 +10,6 @@ from bubblesub.api.cmd import BaseCommand
 from bubblesub.ass.event import Event
 from bubblesub.cmd.common import SubtitlesSelection
 from bubblesub.opt.menu import MenuCommand, SubMenu
-
-
-async def _work(language: str, api: Api, sub: Event) -> None:
-    api.log.info(f"line #{sub.number} - analyzing")
-    try:
-
-        def recognize():
-            translator = googletrans.Translator()
-            return translator.translate(
-                sub.note.replace("\\N", "\n"), src=language, dest="en"
-            )
-
-        # don't clog the UI thread
-        result = await asyncio.get_event_loop().run_in_executor(
-            None, recognize
-        )
-    except Exception as ex:
-        api.log.error(f"line #{sub.number}: error ({ex})")
-    else:
-        api.log.info(f"line #{sub.number}: OK")
-        with api.undo.capture():
-            if sub.text:
-                sub.text = sub.text + r"\N" + result.text
-            else:
-                sub.text = result.text
 
 
 class GoogleTranslateCommand(BaseCommand):
@@ -44,8 +21,38 @@ class GoogleTranslateCommand(BaseCommand):
         return self.args.target.makes_sense
 
     async def run(self):
-        for sub in await self.args.target.get_subtitles():
-            await _work(self.args.code, self.api, sub)
+        await asyncio.get_event_loop().run_in_executor(
+            None,
+            self.run_in_background,
+            await self.args.target.get_subtitles(),
+        )
+
+    def run_in_background(self, subs: T.List[Event]) -> None:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
+            future_to_sub = {
+                executor.submit(self.recognize, sub): sub for sub in subs
+            }
+
+            for future in concurrent.futures.as_completed(future_to_sub):
+                sub = future_to_sub[future]
+                try:
+                    result = future.result()
+                except Exception as ex:
+                    self.api.log.error(f"line #{sub.number}: error ({ex})")
+                else:
+                    self.api.log.info(f"line #{sub.number}: OK")
+                    with self.api.undo.capture():
+                        if sub.text:
+                            sub.text += r"\N" + result.text
+                        else:
+                            sub.text = result.text
+
+    def recognize(self, sub: Event) -> str:
+        self.api.log.info(f"line #{sub.number} - analyzing")
+        translator = googletrans.Translator()
+        return translator.translate(
+            sub.note.replace("\\N", "\n"), src=self.args.code, dest="en"
+        )
 
     @staticmethod
     def decorate_parser(api: Api, parser: argparse.ArgumentParser) -> None:
