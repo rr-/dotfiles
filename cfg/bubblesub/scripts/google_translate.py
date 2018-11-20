@@ -32,20 +32,28 @@ class GoogleTranslateCommand(BaseCommand):
             future_to_sub = {
                 executor.submit(self.recognize, sub): sub for sub in subs
             }
+            completed, non_completed = concurrent.futures.wait(
+                future_to_sub, timeout=5
+            )
 
-            for future in concurrent.futures.as_completed(future_to_sub):
-                sub = future_to_sub[future]
+        with self.api.undo.capture():
+            for future, sub in future_to_sub.items():
+                if future not in completed:
+                    continue
                 try:
                     result = future.result()
                 except Exception as ex:
                     self.api.log.error(f"line #{sub.number}: error ({ex})")
                 else:
                     self.api.log.info(f"line #{sub.number}: OK")
-                    with self.api.undo.capture():
-                        if sub.text:
-                            sub.text += r"\N" + result.text
-                        else:
-                            sub.text = result.text
+                    if sub.text:
+                        sub.text += r"\N" + result.text
+                    else:
+                        sub.text = result.text
+
+        for future, sub in future_to_sub.items():
+            if future in non_completed:
+                self.api.log.info(f"line #{sub.number}: timeout")
 
     def recognize(self, sub: Event) -> str:
         self.api.log.info(f"line #{sub.number} - analyzing")
