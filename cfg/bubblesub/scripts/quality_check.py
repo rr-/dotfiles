@@ -418,7 +418,8 @@ def check_fonts(api):
 
         return {
             path: FontInfo(path)
-            for path in (api.subs.path.parent / "../.fonts").iterdir()
+            for path in (api.subs.path.parent / "../../oc-fonts").iterdir()
+            if path.is_file()
         }
 
     def locate_font(fonts, family, is_bold, is_italic):
