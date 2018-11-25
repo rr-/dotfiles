@@ -40,7 +40,7 @@ class SpeechRecognitionCommand(BaseCommand):
                 executor.submit(self.recognize, sub): sub for sub in subs
             }
             completed, non_completed = concurrent.futures.wait(
-                future_to_sub, timeout=5
+                future_to_sub, timeout=8
             )
 
         with self.api.undo.capture():
