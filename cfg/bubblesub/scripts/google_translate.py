@@ -12,15 +12,25 @@ from bubblesub.cmd.common import SubtitlesSelection
 from bubblesub.opt.menu import MenuCommand, SubMenu
 
 
+def retry(func: T.Callable, *args: T.Any, **kwargs: T.Any) -> T.Any:
+    max_tries = 3
+    for i in range(max_tries - 1):
+        try:
+            return func(*args, **kwargs)
+        except Exception as ex:
+            pass
+    return func(*args, **kwargs)
+
+
 class GoogleTranslateCommand(BaseCommand):
     names = ["tl", "google-translate"]
     help_text = "Puts results of Google translation into selected subtitles."
 
     @property
-    def is_enabled(self):
+    def is_enabled(self) -> bool:
         return self.args.target.makes_sense
 
-    async def run(self):
+    async def run(self) -> None:
         await asyncio.get_event_loop().run_in_executor(
             None,
             self.run_in_background,
@@ -58,8 +68,11 @@ class GoogleTranslateCommand(BaseCommand):
     def recognize(self, sub: Event) -> str:
         self.api.log.info(f"line #{sub.number} - analyzing")
         translator = googletrans.Translator()
-        return translator.translate(
-            sub.note.replace("\\N", "\n"), src=self.args.code, dest="en"
+        return retry(
+            translator.translate,
+            sub.note.replace("\\N", "\n"),
+            src=self.args.code,
+            dest="en",
         )
 
     @staticmethod
