@@ -158,10 +158,15 @@ nnoremap <c-q> :q<cr>
 
 " Clipboard integration
 " full path to selected file
-nnoremap yp :!echo -n "'"%"c:p:gs!\!/!"'" %i | clip<cr>
+nnoremap yp :!printf '%%s\n' %"f:p | head -c -1 | clip<cr>
+vnoremap yp :!printf '%%s\n' %"f:p | head -c -1 | clip<cr>
+nnoremap yP :!printf '%%q ' %"f:p | clip<cr>
+vnoremap yP :!printf '%%q ' %"f:p | clip<cr>
 " name of selected file
-nnoremap yf :!echo -n "'"%"c:gs!\!/!"'" %i | clip<cr>
-nnoremap yn :!echo -n "'"%"c:gs!\!/!"'" %i | clip<cr>
+nnoremap yn :!printf '%%s\n' %"f | head -c -1 | clip<cr>
+vnoremap yn :!printf '%%s\n' %"f | head -c -1 | clip<cr>
+nnoremap yN :!printf '%%q ' %"f | clip<cr>
+vnoremap yN :!printf '%%q ' %"f | clip<cr>
 " full path to selected file's directory
 nnoremap yd :!echo -n "'"%"d:gs!\!/!"'" %i | clip<cr>
 
