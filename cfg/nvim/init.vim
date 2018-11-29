@@ -11,6 +11,7 @@ Plug 'duggiefresh/vim-easydir'          "create directories on save
 Plug 'christoomey/vim-tmux-navigator'   "integration with tmux
 Plug 'tpope/vim-vinegar'                "better netrw
 Plug 'ambv/black'                       "format python source code
+Plug 'fisadev/vim-isort'                "sort includes in python source code
 call plug#end()
 
 runtime editor.vim

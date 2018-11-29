@@ -38,3 +38,8 @@ tnoremap <silent> <M-\> <C-\><C-n>:TmuxNavigatePrevious<CR>
 
 "set black line length
 let g:black_linelength = 79
+
+"source code formatters
+let g:vim_isort_map = ''
+nnoremap <silent> <C-i> :Isort<CR>
+nnoremap <silent> <C-b> :Black<CR>
