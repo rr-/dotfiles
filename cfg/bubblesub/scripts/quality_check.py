@@ -546,7 +546,7 @@ def check_long_line(
 ) -> T.Iterable[BaseResult]:
     width, height = measure_frame_size(renderer, event)
     average_height = optimal_line_heights.get(event.style, 0)
-    line_count = round(height / average_height)
+    line_count = round(height / average_height) if average_height else 0
     if not line_count:
         return
 
