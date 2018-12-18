@@ -11,7 +11,7 @@ c.fonts.hints = 'bold 12px monospace'
 c.fonts.monospace = 'Input Mono'
 c.hints.auto_follow_timeout = 300
 c.hints.mode = 'number'
-c.downloads.location.directory = '~/hub/dl/'
+c.downloads.location.directory = '~/'
 
 c.url.searchengines = {
     'DEFAULT': 'https://google.com/search?hl=en&q={}',
