@@ -71,6 +71,10 @@ def is_album_page(url):
     return "/album/" in url or "/track" in url
 
 
+def safe_file_name(text: str) -> str:
+    return text.replace("/", "·")
+
+
 def download_album(album_url, target_directory):
     print("Downloading album", album_url)
     response_text = download_page(album_url)
@@ -94,9 +98,8 @@ def download_album(album_url, target_directory):
         or data["current"].get("publish_date")
     )
 
-    album_directory = (
-        target_directory
-        / f"{album_artist} - {album_release_date:%Y-%m-%d} - {album_title}"
+    album_directory = target_directory / safe_file_name(
+        f"{album_artist} - {album_release_date:%Y-%m-%d} - {album_title}"
     )
 
     download_file(album_cover_url, album_directory / "cover.jpg", desc="cover")
@@ -110,7 +113,9 @@ def download_album(album_url, target_directory):
             continue
         track_url = track_data["file"]["mp3-128"]
 
-        track_path = album_directory / f"{track_number:02d}. {track_title}.mp3"
+        track_path = album_directory / safe_file_name(
+            f"{track_number:02d}. {track_title}.mp3"
+        )
         download_file(
             track_url,
             track_path,
