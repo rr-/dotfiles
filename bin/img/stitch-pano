@@ -1,29 +1,10 @@
 #!/usr/bin/env python3
-
-#  ______     ______   __     ______   ______     __  __                       
-# /\  ___\   /\__  _\ /\ \   /\__  _\ /\  ___\   /\ \_\ \                      
-# \ \___  \  \/_/\ \/ \ \ \  \/_/\ \/ \ \ \____  \ \  __ \                     
-#  \/\_____\    \ \_\  \ \_\    \ \_\  \ \_____\  \ \_\ \_\                    
-#   \/_____/     \/_/   \/_/     \/_/   \/_____/   \/_/\/_/                    
-#                                                                              
-#  ______     ______     ______     __   __     __   __     ______     _____   
-# /\  ___\   /\  ___\   /\  __ \   /\ "-.\ \   /\ "-.\ \   /\  ___\   /\  __-. 
-# \ \___  \  \ \ \____  \ \  __ \  \ \ \-.  \  \ \ \-.  \  \ \  __\   \ \ \/\ \
-#  \/\_____\  \ \_____\  \ \_\ \_\  \ \_\\"\_\  \ \_\\"\_\  \ \_____\  \ \____-
-#   \/_____/   \/_____/   \/_/\/_/   \/_/ \/_/   \/_/ \/_/   \/_____/   \/____/
-#                                                                              
-#  __     __    __     ______     ______     ______     ______                 
-# /\ \   /\ "-./  \   /\  __ \   /\  ___\   /\  ___\   /\  ___\                
-# \ \ \  \ \ \-./\ \  \ \  __ \  \ \ \__ \  \ \  __\   \ \___  \               
-#  \ \_\  \ \_\ \ \_\  \ \_\ \_\  \ \_____\  \ \_____\  \/\_____\              
-#   \/_/   \/_/  \/_/   \/_/\/_/   \/_____/   \/_____/   \/_____/              
-#                                                                              
-# Stitch Scanned Images
+# Copyright (c) 2018 rr-
 # Copyright (c) 2013 Matthew Petroff
-# 
+#
 # Dependencies: autooptimiser, convert, cpclean, cpfind, enblend, nona,
 #               pto_gen, pano_modify, pano_trafo, pto_var
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
 # in the Software without restriction, including without limitation the rights
@@ -41,105 +22,252 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
-#
 
 import argparse
-import subprocess
 import glob
-import tempfile
 import os
+import sys
+import tempfile
+import typing as T
+from dataclasses import dataclass
+from pathlib import Path
+from subprocess import CalledProcessError, run
 
-# Parse input
-parser = argparse.ArgumentParser(description='Stitch scanned segments.')
-parser.add_argument('inputFiles', metavar='N', nargs='+',
-                    help='files to be stitched')
-parser.add_argument('-o', '--output', dest='output', default='output.jpg',
-                    help='output name (default: output.jpg)')
-args = parser.parse_args()
 
-# Allow glob syntax cross-platform
-inputFiles = []
-for i in args.inputFiles:
-    inputFiles += glob.glob(i)
+@dataclass
+class Point:
+    x: float
+    y: float
 
-# Make temporary directory
-tmpDir = tempfile.TemporaryDirectory()
-tmp = tmpDir.name
 
-# Make pto file
-ptoFile = args.output.split('.')[0] + '.pto'
-subprocess.call(['pto_gen', '-o', ptoFile] + inputFiles)
+@dataclass
+class ControlPoint(Point):
+    img: int
 
-# Find control points
-subprocess.call(['cpfind', '--fullscale', '--multirow', '--sieve1size', '500',
-                 '--sieve2width', '20', '--sieve2height', '20', '-o', ptoFile,
-                 ptoFile])
 
-# Set image parameters to optimize
-subprocess.call(['pto_var', '--opt', 'r,TrX,TrY', '-o', ptoFile, ptoFile])
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="Stitch scanned segments.")
+    parser.add_argument(
+        "input_files",
+        metavar="N",
+        nargs="+",
+        help="files to be stitched",
+        type=Path,
+    )
+    parser.add_argument(
+        "-o",
+        "--output",
+        dest="output_file",
+        default=Path("output.jpg"),
+        help="output name (default: output.jpg)",
+        type=Path,
+    )
+    parser.add_argument(
+        "--preserve-pto",
+        action="store_true",
+        help="keep the .pto panorama spec file",
+    )
+    return parser.parse_args()
 
-# Remove incorrect control points
-subprocess.call(['cpclean', '-n', '1', '-o', ptoFile, ptoFile])
-subprocess.call(['cpclean', '-o', ptoFile, ptoFile])
 
-# Optimize rotation and x,y translation
-subprocess.call(['autooptimiser', '-n', '-o', ptoFile, ptoFile])
+def make_pto_file(pto_file: Path, input_files: T.List[Path]) -> None:
+    run(["pto_gen", "-o", pto_file] + input_files, check=True)
 
-# Morph images to fit control points
-imgCtrlPts = ''
-with open(ptoFile) as input:
-    for line in input:
-        if line[0] == 'c':
-            img1 = line.split('n')[1].split()[0]
-            img2 = line.split('N')[1].split()[0]
-            x1 = line.split('x')[1].split()[0]
-            x2 = line.split('X')[1].split()[0]
-            y1 = line.split('y')[1].split()[0]
-            y2 = line.split('Y')[1].split()[0]
-            imgCtrlPts += img1 + ' ' + x1 + ' ' + y1 + '\n' \
-                        + img2 + ' ' + x2 + ' ' + y2 + '\n'
-pipe = subprocess.Popen(['pano_trafo', ptoFile], stdout=subprocess.PIPE,
-                        stdin=subprocess.PIPE)
-trafoOut = (pipe.communicate(input
-                             = imgCtrlPts.encode('utf-8'))[0]).decode('utf-8')
-splitImgCtrlPts = imgCtrlPts.splitlines()
-splitTrafoOut = trafoOut.splitlines()
-morphedSplitTrafoOut = [''] * len(splitTrafoOut)
-for i in range(0, int(len(splitTrafoOut) / 2)):
-    i1 = splitImgCtrlPts[i*2].split()[0]
-    i2 = splitImgCtrlPts[i*2+1].split()[0]
-    x = (float(splitTrafoOut[i*2].split()[0]) \
-        + float(splitTrafoOut[i*2+1].split()[0])) / 2
-    y = (float(splitTrafoOut[i*2].split()[1]) \
-        + float(splitTrafoOut[i*2+1].split()[1])) / 2
-    morphedSplitTrafoOut[i*2] = i1 + ' ' + str(x) + ' ' + str(y)
-    morphedSplitTrafoOut[i*2+1] = i2 + ' ' + str(x) + ' ' + str(y)
-trafoRin = "\n".join(morphedSplitTrafoOut)
-pipe = subprocess.Popen(['pano_trafo', '-r', ptoFile], stdout=subprocess.PIPE,
-                        stdin=subprocess.PIPE)
-trafoRout = (pipe.communicate(input
-                              = trafoRin.encode('utf-8'))[0]).decode('utf-8')
-splitTrafoRout = trafoRout.splitlines()
-ctrlPts = [''] * len(inputFiles)
-for i in range(0, len(splitTrafoRout)):
-    ctrlPts[int(splitImgCtrlPts[i].split()[0])] \
-        += splitImgCtrlPts[i].split()[1] + ',' \
-        + splitImgCtrlPts[i].split()[2] \
-        + ' ' + splitTrafoRout[i].split()[0] + ',' \
-        + splitTrafoRout[i].split()[1] + ' '
-ptoOpt = open(ptoFile, 'r', encoding='utf-8').read()
-for i in range(0, len(inputFiles)):
-    print('morphing image: ' + str(i))
-    subprocess.call(['convert', inputFiles[i], '-compress', 'LZW', '-distort',
-                     'Shepards', ctrlPts[i],
-                     tmp + os.sep + 'm' + str(i) + '.tif'])
-    ptoOpt = ptoOpt.replace(inputFiles[i], tmp + '/m' + str(i) + '.tif')
-open(ptoFile, 'w', encoding='utf-8').write(ptoOpt)
 
-# Stitch images
-subprocess.call(['pano_modify', '-p', '0', '--fov=AUTO', '--canvas=AUTO',
-                 '--crop=AUTO', '-o', ptoFile, ptoFile])
-subprocess.call(['nona', '-o', tmp + os.sep + 'remapped', ptoFile])
-subprocess.call(['enblend', '--primary-seam-generator=graph-cut', '-o',
-                 args.output.split('.')[0] + '.tif']
-                 + glob.glob(tmp + os.sep + 'remapped*'))
+def find_control_points(pto_file: Path) -> None:
+    run(
+        [
+            "cpfind",
+            "--fullscale",
+            "--multirow",
+            "--sieve1size",
+            "500",
+            "--sieve2width",
+            "20",
+            "--sieve2height",
+            "20",
+            "-o",
+            pto_file,
+            pto_file,
+        ],
+        check=True,
+    )
+
+
+def set_image_params_to_optimize(pto_file: Path) -> None:
+    run(
+        ["pto_var", "--opt", "r,TrX,TrY", "-o", pto_file, pto_file], check=True
+    )
+
+
+def remove_incorrect_control_points(pto_file: Path) -> None:
+    run(["cpclean", "-n", "1", "-o", pto_file, pto_file], check=True)
+    run(["cpclean", "-o", pto_file, pto_file], check=True)
+
+
+def optimize_rotation_and_translation(pto_file: Path) -> None:
+    run(["autooptimiser", "-n", "-o", pto_file, pto_file], check=True)
+
+
+def get_control_points(
+    pto_file: Path
+) -> T.Iterable[ControlPoint]:
+    with pto_file.open() as handle:
+        for line in handle:
+            if line.startswith("c"):
+                args = {group[0]: group[1:] for group in line.split()[1:]}
+                yield ControlPoint(
+                    img=int(args["n"]), x=float(args["x"]), y=float(args["y"])
+                )
+                yield ControlPoint(
+                    img=int(args["N"]), x=float(args["X"]), y=float(args["Y"])
+                )
+
+
+def pano_trafo(
+    pto_file: Path, control_points: T.List[ControlPoint], reverse: bool = False
+) -> T.List[Point]:
+    result = run(
+        ["pano_trafo"] + (["-r"] if reverse else []) + [pto_file],
+        check=True,
+        input="\n".join(f"{cp.img} {cp.x} {cp.y}" for cp in control_points),
+        capture_output=True,
+        text=True,
+    )
+
+    return [
+        Point(float(line.split()[0]), float(line.split()[1]))
+        for line in result.stdout.splitlines()
+    ]
+
+
+def morph_images_to_fit_control_points(
+    pto_file: Path, tmp_dir: Path, input_files: T.List[Path]
+) -> None:
+    control_points = list(get_control_points(pto_file))
+
+    trafo_points = pano_trafo(pto_file, control_points)
+
+    morphed_control_points: T.List[ControlPoint] = []
+    for i in range(len(control_points) // 2):
+        img1 = control_points[i * 2].img
+        img2 = control_points[i * 2 + 1].img
+        x = (trafo_points[i * 2].x + trafo_points[i * 2 + 1].x) / 2
+        y = (trafo_points[i * 2].y + trafo_points[i * 2 + 1].y) / 2
+        morphed_control_points.append(ControlPoint(img=img1, x=x, y=y))
+        morphed_control_points.append(ControlPoint(img=img2, x=x, y=y))
+
+    rev_trafo_points = pano_trafo(
+        pto_file, morphed_control_points, reverse=True
+    )
+
+    control_points_for_imagick: T.Dict[int, T.List[Point]] = {
+        i: [] for i in range(len(input_files))
+    }
+    for control_point, rev_trafo_point in zip(
+        control_points, rev_trafo_points
+    ):
+        control_points_for_imagick[control_point.img].append(control_point)
+        control_points_for_imagick[control_point.img].append(rev_trafo_point)
+
+    pto_content = pto_file.read_text()
+    for i, input_file in enumerate(input_files):
+        print(f"morphing image: {input_file}")
+
+        image_name = tmp_dir / f"m{i}.tif"
+        run(
+            [
+                "convert",
+                input_file,
+                "-compress",
+                "LZW",
+                "-distort",
+                "Shepards",
+                " ".join(
+                    f"{point.x},{point.y}"
+                    for point in control_points_for_imagick[i]
+                ),
+                image_name,
+            ],
+            check=True,
+        )
+        pto_content = pto_content.replace(str(input_file), str(image_name))
+
+    pto_file.write_text(pto_content)
+
+
+def stitch_images(pto_file: Path, tmp_dir: Path) -> Path:
+    tmp_output_file = tmp_dir / "output.tif"
+
+    run(
+        [
+            "pano_modify",
+            "-p",
+            "0",
+            "--fov=AUTO",
+            "--canvas=AUTO",
+            "--crop=AUTO",
+            "-o",
+            pto_file,
+            pto_file,
+        ],
+        check=True,
+    )
+
+    run(["nona", "-o", tmp_dir / "remapped", pto_file], check=True)
+
+    remapped_paths = [
+        str(path)
+        for path in tmp_dir.iterdir()
+        if path.name.startswith("remapped")
+    ]
+    run(
+        [
+            "enblend",
+            "--primary-seam-generator=graph-cut",
+            "-o",
+            tmp_output_file,
+        ]
+        + remapped_paths,
+        check=True,
+    )
+
+    return tmp_output_file
+
+
+def convert_image(source_path: Path, target_path: Path) -> None:
+    run(["convert", source_path, target_path], check=True)
+
+
+def main() -> None:
+    args = parse_args()
+
+    try:
+        with tempfile.TemporaryDirectory() as tmp_dir_name:
+            tmp_dir = Path(tmp_dir_name)
+
+            pto_file = args.output_file.with_suffix(".pto")
+
+            make_pto_file(pto_file, args.input_files)
+            find_control_points(pto_file)
+            set_image_params_to_optimize(pto_file)
+            remove_incorrect_control_points(pto_file)
+            optimize_rotation_and_translation(pto_file)
+
+            morph_images_to_fit_control_points(
+                pto_file, tmp_dir, args.input_files
+            )
+
+            tmp_output_file = stitch_images(pto_file, tmp_dir)
+            if not args.preserve_pto:
+                pto_file.unlink()
+
+            convert_image(tmp_output_file, args.output_file)
+
+    except CalledProcessError as ex:
+        print(ex.stderr, file=sys.stderr)
+        raise
+
+
+if __name__ == "__main__":
+    main()
