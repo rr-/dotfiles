@@ -1,11 +1,12 @@
 import re
 
 import pysubs2
+from PyQt5 import QtWidgets
 
-import bubblesub.ui.util
 from bubblesub.api.cmd import BaseCommand
 from bubblesub.ass.event import Event
 from bubblesub.opt.menu import MenuCommand
+from bubblesub.ui.util import load_dialog
 
 
 class LoadClosedCaptionsCommand(BaseCommand):
@@ -15,8 +16,8 @@ class LoadClosedCaptionsCommand(BaseCommand):
     async def run(self):
         await self.api.gui.exec(self._run)
 
-    async def _run(self, _api, main_window):
-        path = bubblesub.ui.util.load_dialog(
+    async def _run(self, main_window: QtWidgets.QMainWindow) -> None:
+        path = load_dialog(
             main_window, "Subtitles (*.ass *.srt);;All files (*.*)"
         )
         if not path:
@@ -25,9 +26,8 @@ class LoadClosedCaptionsCommand(BaseCommand):
         source = pysubs2.load(str(path))
         with self.api.undo.capture():
             for line in source:
-                self.api.subs.events.insert(
+                self.api.subs.events.append(
                     Event(
-                        len(self.api.subs.events),
                         start=line.start,
                         end=line.end,
                         note=line.text,
