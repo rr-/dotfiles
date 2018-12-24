@@ -188,6 +188,9 @@ def check_punctuation(event: Event) -> T.Iterable[BaseResult]:
         if re.search(r"^- |^—", text, flags=re.M):
             yield Violation(event, "bad dash (expected –)")
 
+        if re.search(r" - ", text, flags=re.M):
+            yield Violation(event, "bad dash (expected –)")
+
     if re.search(r" —|— ", text):
         yield Violation(event, "whitespace around —")
 
