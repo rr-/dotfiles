@@ -194,8 +194,10 @@ def check_punctuation(event: Event) -> T.Iterable[BaseResult]:
     if re.search(r" —|— ", text):
         yield Violation(event, "whitespace around —")
 
-    if re.search(r"[\.!?]\s+[a-z]", text, flags=re.M):
-        yield Violation(event, "lowercase letter after sentence end")
+    match = re.search(r"(\w+[\.!?])\s+[a-z]", text, flags=re.M)
+    if match:
+        if match.group(1) not in {"vs."}:
+            yield Violation(event, "lowercase letter after sentence end")
 
     match = re.search(r"^([A-Z][a-z]{,3})-([a-z]+)", text, flags=re.M)
     if match:
@@ -245,8 +247,10 @@ def check_line_continuation(event: Event) -> T.Iterable[BaseResult]:
     if text.endswith("…") and next_text.startswith("…"):
         yield Violation([event, next_event], "old-style line continuation")
 
-    if re.search(r"\A[a-z]", text, flags=re.M) and not re.search(
-        r"[,:a-z]\Z", prev_text, flags=re.M
+    if (
+        re.search(r"\A[a-z]", text, flags=re.M)
+        and not re.search(r"[,:a-z]\Z", prev_text, flags=re.M)
+        and not prev_text.endswith("vs.")
     ):
         yield Violation(event, "sentence begins with a lowercase letter")
 

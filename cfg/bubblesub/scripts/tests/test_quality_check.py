@@ -127,6 +127,8 @@ def test_check_durations_good_gap() -> None:
         ("Ayuhara-san", None),
         ("What! what…", "lowercase letter after sentence end"),
         ("What. what…", "lowercase letter after sentence end"),
+        ("Japan vs. the world", None),
+        ("Japan vss. the world", "lowercase letter after sentence end"),
         ("What? what…", "lowercase letter after sentence end"),
         ("What , no.", "whitespace before punctuation"),
         ("What !", "whitespace before punctuation"),
@@ -234,6 +236,11 @@ def test_check_quotes(
         ),
         (["Whatever"], "possibly unended sentence"),
         (["Whatever", "Whatever."], "possibly unended sentence"),
+        (["Japan vs.", "the rest."], None),
+        (
+            ["Japan vss.", "the rest."],
+            "sentence begins with a lowercase letter",
+        ),
     ],
 )
 def test_check_line_continuation(
