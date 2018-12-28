@@ -108,20 +108,24 @@ def download_album(album_url, target_directory):
     for i, track_data in enumerate(data["trackinfo"]):
         track_title = track_data["title"]
         track_number = int(track_data.get("track_num") or "1")
-
-        if track_data["file"] is None:
-            print(f'Track "{track_number:02d}. {track_title}" is unavailable')
-            continue
-        track_url = track_data["file"]["mp3-128"]
-
         track_path = album_directory / safe_file_name(
             f"{track_number:02d}. {track_title}.mp3"
         )
-        download_file(
-            track_url,
-            track_path,
-            desc=f'{i + 1:02d}/{len(data["trackinfo"]):02d}',
+        track_url = (
+            None
+            if track_data["file"] is None
+            else track_data["file"]["mp3-128"]
         )
+
+        if track_url is None:
+            print(f'Track "{track_path.stem}" is unavailable')
+            track_path.with_suffix(".stub").write_bytes(b"")
+        else:
+            download_file(
+                track_url,
+                track_path,
+                desc=f'{i + 1:02d}/{len(data["trackinfo"]):02d}',
+            )
 
 
 def get_album_track_links(album_url):
