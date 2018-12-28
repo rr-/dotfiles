@@ -17,3 +17,5 @@ if [ -d $DIR/lib ]; then                # shared libraries for Python scripts
     pythonpath=($DIR/lib/)
 fi
 export PYTHONPATH                       # export modified var for subprocesses
+
+export TZ='Europe/Warsaw'
