@@ -3,6 +3,7 @@ import argparse
 import os
 import pathlib
 import shelve
+import sys
 import tempfile
 import urllib.parse
 import zlib
@@ -154,7 +155,11 @@ def main():
         download_album(args.url, args.directory)
     elif is_artist_page(args.url):
         for album_link in get_artist_album_links(args.url):
-            download_album(album_link, args.directory)
+            try:
+                download_album(album_link, args.directory)
+            except Exception as ex:
+                print(ex, file=sys.stderr)
+                continue
     else:
         raise RuntimeError("Neither an artist nor an album page")
 
