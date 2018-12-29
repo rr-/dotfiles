@@ -96,7 +96,11 @@ def main():
             "oc:/home/rr-/srv",
             "cyclone",
             copy_links=True,
-            exclude=["/home/rr-/srv/torrent/"],
+            exclude=[
+                "/home/rr-/srv/torrent/",
+                "/home/rr-/srv/data/fonts",
+                "/home/rr-/srv/data/subs",
+            ],
         )
 
         do_sync(
