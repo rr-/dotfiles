@@ -1,0 +1,72 @@
+#!/usr/bin/env python3
+import argparse
+import os
+import tempfile
+import urllib.parse
+from pathlib import Path
+
+import lxml.html
+import requests
+import tqdm
+
+BUFFER_SIZE = 32 * 1024
+
+
+def download_file(source_url: str, target_path: Path) -> None:
+    if target_path.exists():
+        print(f'"{target_path}" already exists, skipping')
+        return
+
+    response = requests.get(source_url, stream=True)
+    total_size = int(response.headers.get("content-length", 0))
+    target_path.parent.mkdir(exist_ok=True, parents=True)
+
+    with tempfile.NamedTemporaryFile(
+        dir=target_path.parent
+    ) as handle, tqdm.tqdm(
+        desc=target_path.name, total=total_size, unit="B", unit_scale=True
+    ) as pbar:
+        for chunk in response.iter_content(BUFFER_SIZE):
+            handle.write(chunk)
+            pbar.update(len(chunk))
+        os.link(handle.name, target_path)
+
+
+def download_page(document_url: str, directory: Path) -> None:
+    response = requests.get(document_url)
+    response.raise_for_status()
+    document = lxml.html.fromstring(response.text)
+    image_url = document.xpath('//meta[@property="og:image"]/@content')[0]
+    image_name = (
+        urllib.parse.urlparse(document_url)
+        .path.strip("/")
+        .replace("photos/", "")
+        .replace("/", "-")
+    )
+    target_path = (directory / image_name).with_suffix(".jpg")
+    download_file(image_url, target_path)
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("url", nargs="+")
+    parser.add_argument(
+        "-o", "--output", help="output directory", default=".", type=Path
+    )
+    return parser.parse_args()
+
+
+def main() -> None:
+    args = parse_args()
+    output_dir = args.output.expanduser()
+    for url in args.url:
+        download_page(url, output_dir)
+
+
+if __name__ == "__main__":
+    try:
+        main()
+        exit(0)
+    except RuntimeError as ex:
+        print(ex)
+        exit(1)
