@@ -2,6 +2,7 @@ import argparse
 import asyncio
 import concurrent.futures
 import typing as T
+from subprocess import run
 
 import googletrans
 
@@ -59,19 +60,37 @@ class GoogleTranslateCommand(BaseCommand):
                 else:
                     self.api.log.info(f"line #{sub.number}: OK")
                     if sub.text:
-                        sub.text += r"\N" + result.text
+                        sub.text += r"\N" + result
                     else:
-                        sub.text = result.text
+                        sub.text = result
 
     def recognize(self, sub: Event) -> str:
         self.api.log.info(f"line #{sub.number} - analyzing")
-        translator = googletrans.Translator()
-        return retry(
-            translator.translate,
-            sub.note.replace("\\N", "\n"),
-            src=self.args.code,
-            dest="en",
-        )
+        if self.args.alternative:
+            result = run(
+                [
+                    "trans",
+                    "-b",
+                    "-s",
+                    self.args.source_code,
+                    "-t",
+                    self.args.target_code,
+                    sub.note.replace("\\N", "\n"),
+                ],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+            return result.stdout.strip()
+        else:
+            translator = googletrans.Translator()
+            return retry(
+                lambda: translator.translate(
+                    sub.note.replace("\\N", "\n"),
+                    src=self.args.source_code,
+                    dest=self.args.target_code,
+                ).text
+            )
 
     @staticmethod
     def decorate_parser(api: Api, parser: argparse.ArgumentParser) -> None:
@@ -82,7 +101,22 @@ class GoogleTranslateCommand(BaseCommand):
             type=lambda value: SubtitlesSelection(api, value),
             default="selected",
         )
-        parser.add_argument("code", help="language code")
+        parser.add_argument(
+            "-a",
+            "--alternative",
+            help="use alternative way to translate subtitles",
+            action="store_true",
+        )
+        parser.add_argument(
+            metavar="from", dest="source_code", help="source language code"
+        )
+        parser.add_argument(
+            metavar="to",
+            dest="target_code",
+            help="target language code",
+            nargs="?",
+            default="en",
+        )
 
 
 COMMANDS = [GoogleTranslateCommand]
