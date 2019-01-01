@@ -97,6 +97,7 @@ MENU = [
             MenuCommand("&French", "tl fr"),
             MenuCommand("&Italian", "tl it"),
             MenuCommand("&Polish", "tl pl"),
+            MenuCommand("&Spanish", "tl es"),
             MenuCommand("&Auto", "tl auto"),
         ],
     )
