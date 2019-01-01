@@ -48,8 +48,10 @@ class GoogleTranslateCommand(BaseCommand):
 
         with self.api.undo.capture():
             for future, sub in future_to_sub.items():
-                if future not in completed:
+                if future in non_completed:
+                    self.api.log.info(f"line #{sub.number}: timeout")
                     continue
+                assert future in completed
                 try:
                     result = future.result()
                 except Exception as ex:
@@ -60,10 +62,6 @@ class GoogleTranslateCommand(BaseCommand):
                         sub.text += r"\N" + result.text
                     else:
                         sub.text = result.text
-
-        for future, sub in future_to_sub.items():
-            if future in non_completed:
-                self.api.log.info(f"line #{sub.number}: timeout")
 
     def recognize(self, sub: Event) -> str:
         self.api.log.info(f"line #{sub.number} - analyzing")
