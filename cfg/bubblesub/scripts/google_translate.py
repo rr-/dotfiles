@@ -66,31 +66,18 @@ class GoogleTranslateCommand(BaseCommand):
 
     def recognize(self, sub: Event) -> str:
         self.api.log.info(f"line #{sub.number} - analyzing")
-        if self.args.alternative:
-            result = run(
-                [
-                    "trans",
-                    "-b",
-                    "-s",
-                    self.args.source_code,
-                    "-t",
-                    self.args.target_code,
-                    sub.note.replace("\\N", "\n"),
-                ],
-                check=True,
-                capture_output=True,
-                text=True,
-            )
-            return result.stdout.strip()
-        else:
-            translator = googletrans.Translator()
-            return retry(
-                lambda: translator.translate(
-                    sub.note.replace("\\N", "\n"),
-                    src=self.args.source_code,
-                    dest=self.args.target_code,
-                ).text
-            )
+        text = sub.note.replace("\\N", "\n")
+        if not text.strip():
+            return ""
+        args = ["trans", "-b"]
+        args += ["-e", self.args.engine]
+        args += ["-s", self.args.source_code]
+        args += ["-t", self.args.target_code]
+        args += [text]
+        result = run(args, check=True, capture_output=True, text=True)
+        if not result.stdout:
+            raise ValueError("error")
+        return result.stdout.strip()
 
     @staticmethod
     def decorate_parser(api: Api, parser: argparse.ArgumentParser) -> None:
@@ -102,10 +89,11 @@ class GoogleTranslateCommand(BaseCommand):
             default="selected",
         )
         parser.add_argument(
-            "-a",
-            "--alternative",
-            help="use alternative way to translate subtitles",
-            action="store_true",
+            "-e",
+            "--engine",
+            help="engine to use",
+            choices=["bing", "google", "yandex"],
+            default="google",
         )
         parser.add_argument(
             metavar="from", dest="source_code", help="source language code"
