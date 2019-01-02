@@ -419,6 +419,18 @@ def check_fonts(api):
 
         return results
 
+    def get_font_description(
+        font_family: str, is_bold: bool, is_italic: bool
+    ) -> str:
+        attrs = []
+        if is_bold:
+            attrs.append("bold")
+        if is_italic:
+            attrs.append("italic")
+        if attrs:
+            return f"{font_family} ({', '.join(attrs)})"
+        return font_family
+
     def get_fonts():
         if not api.subs.path:
             return {}
@@ -446,7 +458,9 @@ def check_fonts(api):
     fonts = get_fonts()
     for font_specs, glyphs in results.items():
         font_family, is_bold, is_italic = font_specs
-        api.log.info(f"– {font_family}, {len(glyphs)} glyphs")
+        api.log.info(
+            f"– {get_font_description(*font_specs)}, {len(glyphs)} glyphs"
+        )
 
         result = locate_font(fonts, font_family, is_bold, is_italic)
         if not result:
