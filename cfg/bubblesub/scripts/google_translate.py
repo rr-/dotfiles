@@ -5,7 +5,6 @@ import typing as T
 from subprocess import run
 
 import googletrans
-
 from bubblesub.api import Api
 from bubblesub.api.cmd import BaseCommand
 from bubblesub.ass.event import Event
