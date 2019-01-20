@@ -270,21 +270,26 @@ def check_line_continuation(event: Event) -> T.Iterable[BaseResult]:
 
 def check_ass_tags(event: Event) -> T.Iterable[BaseResult]:
     try:
-        result = ass_tag_parser.parse_ass(event.text)
-    except ass_tag_parser.ParsingError as ex:
+        ass_line = ass_tag_parser.parse_ass(event.text)
+    except ass_tag_parser.ParseError as ex:
         yield Violation(event, f"invalid syntax ({ex})")
         return
 
-    for item in result:
-        if item["type"] != "tags":
-            continue
-        if not item["children"]:
-            yield Violation(event, "pointless ASS tag")
-        for subitem in item["children"]:
-            if subitem["type"] == "alignment" and subitem["legacy"]:
-                yield Violation(event, "using legacy alignment tag")
-            if subitem["type"] == "comment":
-                yield Violation(event, "use notes to make comments")
+    violations: T.List[Violation] = []
+
+    def visitor(item: ass_tag_parser.AssItem) -> None:
+        nonlocal violations
+
+        if isinstance(item, ass_tag_parser.AssTagAlignment) and item.legacy:
+            violations.append(Violation(event, "using legacy alignment tag"))
+
+        elif isinstance(item, ass_tag_parser.AssTagComment):
+            violations.append(Violation(event, "use notes to make comments"))
+
+    ass_tag_parser.walk_ass_line(ass_line, visitor)
+
+    yield from violations
+
     if "}{" in event.text:
         yield Violation(event, "disjointed tags")
 
@@ -396,26 +401,29 @@ def check_fonts(api):
             is_italic = styles[line.style].italic
 
             try:
-                chunks = ass_tag_parser.parse_ass(line.text)
-            except ass_tag_parser.ParsingError:
+                ass_line = ass_tag_parser.parse_ass(line.text)
+            except ass_tag_parser.ParseError:
                 # ASS parsing errors are handled elsewhere
                 continue
 
-            for chunk in chunks:
-                if chunk["type"] == "tags":
-                    for ass_tag in chunk["children"]:
-                        if ass_tag["type"] == "bold":
-                            if "enabled" in ass_tag:
-                                is_bold = ass_tag["enabled"]
-                            else:
-                                is_bold = ass_tag["weight"] > 100
-                        elif ass_tag["type"] == "italics":
-                            is_italic = ass_tag["enabled"]
-                        elif ass_tag["type"] == "font-name":
-                            family = ass_tag["name"]
-                elif chunk["type"] == "text":
-                    for glyph in chunk["text"]:
+            def visitor(item: ass_tag_parser.AssItem) -> None:
+                nonlocal results, family, is_bold, is_italic
+
+                if isinstance(item, ass_tag_parser.AssTagBold):
+                    is_bold = (
+                        item.enabled
+                        if item.weight is None
+                        else item.weight > 100
+                    )
+                elif isinstance(item, ass_tag_parser.AssTagItalic):
+                    is_italic = item.enabled
+                elif isinstance(item, ass_tag_parser.AssTagFontName):
+                    family = item.name
+                elif isinstance(item, ass_tag_parser.AssText):
+                    for glyph in item.text:
                         results[(family, is_bold, is_italic)].add(glyph)
+
+            ass_tag_parser.walk_ass_line(ass_line, visitor)
 
         return results
 
