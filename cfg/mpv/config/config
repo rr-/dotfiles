@@ -15,6 +15,7 @@ audio-channels=2
 alang=jpn,jp,jap,Japanese,en,eng,English
 slang=en,eng,English,pl,pol,Polish
 sub-codepage=utf8,cp1250
+osd-status-msg=${playback-time/full} / ${duration} (${percent-pos}%)\nframe: ${estimated-frame-number} / ${estimated-frame-count}
 volume-max=300
 
 af=scaletempo=stride=30
