@@ -18,7 +18,10 @@ def check_ass_tags(event: Event) -> T.Iterable[BaseResult]:
     def visitor(item: ass_tag_parser.AssItem) -> None:
         nonlocal violations
 
-        if isinstance(item, ass_tag_parser.AssTagAlignment) and item.legacy:
+        if isinstance(item, ass_tag_parser.AssTagList) and not item.tags:
+            violations.append(Violation(event, "pointless tag"))
+
+        elif isinstance(item, ass_tag_parser.AssTagAlignment) and item.legacy:
             violations.append(Violation(event, "using legacy alignment tag"))
 
         elif isinstance(item, ass_tag_parser.AssTagComment):
