@@ -70,7 +70,9 @@ def get_used_font_styles(
             elif isinstance(item, ass_tag_parser.AssTagItalic):
                 is_italic = item.enabled
             elif isinstance(item, ass_tag_parser.AssTagFontName):
-                family = item.name
+                family = (
+                    item.name if item.name else styles[line.style].font_name
+                )
             elif isinstance(item, ass_tag_parser.AssText):
                 for glyph in item.text:
                     results[(family, is_bold, is_italic)].add(glyph)
