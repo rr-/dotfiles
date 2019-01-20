@@ -540,7 +540,7 @@ def get_optimal_line_heights(
 
 
 def get_height(api: Api) -> int:
-    return int(api.subs.info.get("PlayResY"))
+    return int(api.subs.info.get("PlayResY", "0"))
 
 
 def get_width(api: Api) -> int:
