@@ -2,19 +2,16 @@ import re
 import typing as T
 
 import pytest
-
 from bubblesub.api.log import LogLevel
 from bubblesub.ass.event import Event, EventList
 
-from ..quality_check import (
-    Violation,
-    check_ass_tags,
-    check_double_words,
-    check_durations,
-    check_line_continuation,
-    check_punctuation,
-    check_quotes,
-)
+from .check_ass_tags import check_ass_tags
+from .check_double_words import check_double_words
+from .check_durations import check_durations
+from .check_line_continuation import check_line_continuation
+from .check_punctuation import check_punctuation
+from .check_quotes import check_quotes
+from .common import Violation
 
 
 def test_violation_single_event() -> None:
