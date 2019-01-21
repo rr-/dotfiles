@@ -14,20 +14,23 @@ def check_ass_tags(event: Event) -> T.Iterable[BaseResult]:
         return
 
     violations: T.List[Violation] = []
+    opened = False
 
-    def visitor(item: ass_tag_parser.AssItem) -> None:
-        nonlocal violations
+    for item in ass_line:
+        if isinstance(item, ass_tag_parser.AssTagListOpening):
+            opened = True
+        elif isinstance(item, ass_tag_parser.AssTagListEnding):
+            if opened:
+                violations.append(Violation(event, "pointless tag"))
+            opened = False
+        else:
+            opened = False
 
-        if isinstance(item, ass_tag_parser.AssTagList) and not item.tags:
-            violations.append(Violation(event, "pointless tag"))
-
-        elif isinstance(item, ass_tag_parser.AssTagAlignment) and item.legacy:
+        if isinstance(item, ass_tag_parser.AssTagAlignment) and item.legacy:
             violations.append(Violation(event, "using legacy alignment tag"))
 
         elif isinstance(item, ass_tag_parser.AssTagComment):
             violations.append(Violation(event, "use notes to make comments"))
-
-    ass_tag_parser.walk_ass_line(ass_line, visitor)
 
     yield from violations
 
