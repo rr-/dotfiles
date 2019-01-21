@@ -60,9 +60,7 @@ def get_used_font_styles(
             # ASS parsing errors are handled elsewhere
             continue
 
-        def visitor(item: ass_tag_parser.AssItem) -> None:
-            nonlocal results, family, is_bold, is_italic
-
+        for item in ass_line:
             if isinstance(item, ass_tag_parser.AssTagBold):
                 is_bold = (
                     item.enabled if item.weight is None else item.weight > 100
@@ -76,8 +74,6 @@ def get_used_font_styles(
             elif isinstance(item, ass_tag_parser.AssText):
                 for glyph in item.text:
                     results[(family, is_bold, is_italic)].add(glyph)
-
-        ass_tag_parser.walk_ass_line(ass_line, visitor)
 
     return results
 
