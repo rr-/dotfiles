@@ -17,12 +17,19 @@ setopt magic_equal_subst                # enable path autocompletion after =
 WORDCHARS='*?_-.[]~=&;!#$%^(){}<>'      # what kill-word should delete
 
 # history
-export HISTFILE=~/.config/zsh/history   # set path to history file
-export HISTSIZE=10000                   # how many entries in history (memory)
-export SAVEHIST=10000                   # how many entries in history (hdd)
-export HISTORY_IGNORE='(yum|tmp|gel)'   # don't remember certain commands
-setopt appendhistory                    # append lines (for concurrent sessions)
-setopt HIST_IGNORE_ALL_DUPS             # ignore even interleaved duplicates
+export HISTFILE=~/.config/zsh/history
+export HISTSIZE=100000       # how many entries in history (memory)
+export SAVEHIST=$HISTSIZE    # how many entries in history (hdd)
+setopt appendhistory         # append lines (for concurrent sessions)
+setopt extended_history      # record usage timestamps in the histfile
+setopt inc_append_history    # write to the histfile immediately
+setopt share_history         # share history between all sessions
+setopt hist_ignore_all_dups  # delete old entry if new entry is a duplicate
+setopt hist_find_no_dups     # do not display a line previously found
+setopt hist_ignore_space     # discard entries that start with space
+setopt hist_save_no_dups     # don't write duplicate entries in the histfile
+setopt hist_reduce_blanks    # remove superfluous blanks before recording entry
+setopt hist_verify           # don't execute immediately upon history expansion
 
 # basic key bindings for interactive shells
 if [[ $- == *i* ]]; then
