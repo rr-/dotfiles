@@ -15,16 +15,22 @@ def check_ass_tags(event: Event) -> T.Iterable[BaseResult]:
 
     violations: T.List[Violation] = []
     opened = False
+    closed = False
 
     for item in ass_line:
         if isinstance(item, ass_tag_parser.AssTagListOpening):
             opened = True
+            if closed:
+                violations.append(Violation(event, "disjointed tags"))
+            closed = False
         elif isinstance(item, ass_tag_parser.AssTagListEnding):
+            closed = True
             if opened:
                 violations.append(Violation(event, "pointless tag"))
             opened = False
         else:
             opened = False
+            closed = False
 
         if isinstance(item, ass_tag_parser.AssTagAlignment) and item.legacy:
             violations.append(Violation(event, "using legacy alignment tag"))
@@ -33,6 +39,3 @@ def check_ass_tags(event: Event) -> T.Iterable[BaseResult]:
             violations.append(Violation(event, "use notes to make comments"))
 
     yield from violations
-
-    if "}{" in event.text:
-        yield Violation(event, "disjointed tags")
