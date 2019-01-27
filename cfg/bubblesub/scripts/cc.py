@@ -3,7 +3,7 @@ import re
 import pysubs2
 from bubblesub.api.cmd import BaseCommand
 from bubblesub.ass.event import Event
-from bubblesub.opt.menu import MenuCommand
+from bubblesub.cfg.menu import MenuCommand
 from bubblesub.ui.util import load_dialog
 from PyQt5 import QtWidgets
 

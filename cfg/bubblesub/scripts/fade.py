@@ -3,7 +3,7 @@ import re
 
 from bubblesub.api import Api
 from bubblesub.api.cmd import BaseCommand
-from bubblesub.opt.menu import MenuCommand, SubMenu
+from bubblesub.cfg.menu import MenuCommand, SubMenu
 
 BLACK = (16, 16, 16)
 WHITE = (255, 255, 255)

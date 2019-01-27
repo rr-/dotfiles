@@ -1,4 +1,4 @@
-from bubblesub.opt.menu import MenuCommand
+from bubblesub.cfg.menu import MenuCommand
 
 from .command import QualityCheckCommand
 

@@ -4,7 +4,7 @@ from subprocess import PIPE, run
 
 from bubblesub.api.cmd import BaseCommand
 from bubblesub.ass.event import Event
-from bubblesub.opt.menu import MenuCommand
+from bubblesub.cfg.menu import MenuCommand
 
 
 class AutoTimeCommand(BaseCommand):
