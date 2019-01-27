@@ -5,7 +5,7 @@ import subprocess
 from bubblesub.api import Api
 from bubblesub.api.cmd import BaseCommand, CommandUnavailable
 from bubblesub.cmd.common import FancyPath, Pts
-from bubblesub.opt.menu import MenuCommand
+from bubblesub.cfg.menu import MenuCommand
 from bubblesub.util import ms_to_str
 
 

@@ -3,7 +3,7 @@ import argparse
 from bubblesub.api import Api
 from bubblesub.api.cmd import BaseCommand
 from bubblesub.cmd.common import SubtitlesSelection
-from bubblesub.opt.menu import MenuCommand
+from bubblesub.cfg.menu import MenuCommand
 
 
 class AlignSubtitlesToVideoFramesCommand(BaseCommand):

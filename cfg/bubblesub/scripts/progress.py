@@ -1,5 +1,5 @@
 from bubblesub.api.cmd import BaseCommand
-from bubblesub.opt.menu import MenuCommand
+from bubblesub.cfg.menu import MenuCommand
 
 
 def ms_to_str(ms: int) -> str:

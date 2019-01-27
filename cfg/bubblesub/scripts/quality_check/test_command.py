@@ -266,7 +266,7 @@ def test_check_line_continuation(
         ("text{\\b1}text", None),
         ("{\\fsherp}", "invalid syntax (.*)"),
         ("{}", "pointless tag"),
-        ("{\\\\comment}", "invalid syntax (.*)"),
+        ("{\\\\comment}", "use notes to make comments"),
         ("{\\comment}", "invalid syntax (.*)"),
         ("{\\a5}", "using legacy alignment tag"),
         ("{\\an8comment}", "invalid syntax (.*)"),

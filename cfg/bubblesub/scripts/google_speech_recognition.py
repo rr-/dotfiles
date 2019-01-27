@@ -9,7 +9,7 @@ from bubblesub.api import Api
 from bubblesub.api.cmd import BaseCommand
 from bubblesub.ass.event import Event
 from bubblesub.cmd.common import SubtitlesSelection
-from bubblesub.opt.menu import MenuCommand, SubMenu
+from bubblesub.cfg.menu import MenuCommand, SubMenu
 
 
 class SpeechRecognitionCommand(BaseCommand):

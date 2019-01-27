@@ -5,8 +5,8 @@ from collections import defaultdict
 
 from bubblesub.api import Api
 from bubblesub.api.cmd import BaseCommand
-from bubblesub.opt.hotkeys import HotkeyContext
-from bubblesub.opt.menu import MenuCommand, SubMenu
+from bubblesub.cfg.hotkeys import HotkeyContext
+from bubblesub.cfg.menu import MenuCommand, SubMenu
 
 SHORTCUTS = [f"F{num}" for num in range(1, 13)]
 
@@ -67,7 +67,7 @@ class ActorsTagger:
             return
 
         def set_hotkey(shortcut, cmd_parts: T.List[str]) -> None:
-            self._api.opt.hotkeys[HotkeyContext.Global, shortcut] = " ".join(
+            self._api.cfg.hotkeys[HotkeyContext.Global, shortcut] = " ".join(
                 map(shlex.quote, cmd_parts)
             )
 
@@ -82,13 +82,13 @@ class ActorsTagger:
 
     def _store_hotkeys(self) -> None:
         for shortcut in SHORTCUTS:
-            self._stored_hotkeys[shortcut] = self._api.opt.hotkeys[
+            self._stored_hotkeys[shortcut] = self._api.cfg.hotkeys[
                 HotkeyContext.Global, shortcut
             ]
 
     def _restore_hotkeys(self) -> None:
         for shortcut, cmdline in self._stored_hotkeys.items():
-            self._api.opt.hotkeys[HotkeyContext.Global, shortcut] = cmdline
+            self._api.cfg.hotkeys[HotkeyContext.Global, shortcut] = cmdline
 
 
 tagger: ActorsTagger = None
