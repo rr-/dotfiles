@@ -1,9 +1,22 @@
+import ass_tag_parser
 from bubblesub.api.cmd import BaseCommand
 from bubblesub.cfg.menu import MenuCommand
 
 
 def ms_to_str(ms: int) -> str:
     return str(ms // 1000)
+
+
+def extract_text(text: str) -> str:
+    try:
+        ass_line = ass_tag_parser.parse_ass(text)
+    except ass_tag_parser.ParseError as ex:
+        return text
+    ret = ""
+    for item in ass_line:
+        if isinstance(item, ass_tag_parser.AssText):
+            ret += item.text
+    return ret
 
 
 class ProgressCommand(BaseCommand):
@@ -20,7 +33,7 @@ class ProgressCommand(BaseCommand):
                 continue
             total_duration += event.duration
             total_count += 1
-            if not event.text:
+            if not extract_text(event.text):
                 empty_duration += event.duration
                 empty_count += 1
 
