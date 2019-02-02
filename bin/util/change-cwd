@@ -1,0 +1,10 @@
+#!/bin/bash
+pid="$1"
+cwd="$2"
+
+gdb -q <<EOF
+  attach $pid
+  call (int) chdir("$cwd")
+  detach
+  quit
+EOF
