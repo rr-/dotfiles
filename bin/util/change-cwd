@@ -19,7 +19,7 @@ def main() -> None:
     detach
     quit
     """
-    run(["gdb", "-q"], input=program.encode())
+    run(["sudo", "gdb", "-q"], input=program.encode())
 
 
 if __name__ == "__main__":
