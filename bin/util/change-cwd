@@ -1,11 +1,32 @@
 #!/usr/bin/env python3
 import argparse
+import typing as T
 from pathlib import Path
 from subprocess import run
 
 
+def get_help_epilog() -> T.Optional[str]:
+    try:
+        import psutil
+        import os
+        import shlex
+    except ImportError:
+        return None
+
+    ret = "Process tree:\n"
+    proc_id = os.getpid()
+    while proc_id:
+        proc = psutil.Process(proc_id)
+        proc_cmdline = " ".join(map(shlex.quote, proc.cmdline()))
+        ret += f"{proc_id:5d}: {proc_cmdline}\n"
+        proc_id = proc.ppid()
+    return ret
+
+
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(
+        epilog=get_help_epilog(), formatter_class=argparse.RawTextHelpFormatter
+    )
     parser.add_argument("-p", "--pid", type=int)
     parser.add_argument("-c", "--cwd", type=Path)
     return parser.parse_args()
