@@ -21,6 +21,7 @@ au FileType gitcommit setlocal spell textwidth=72 colorcolumn=50,72
 
 "disable syntax for certain files
 au FileType text,xml,json setlocal syntax=
+autocmd BufNewFile,BufRead *.ts setlocal filetype=javascript
 
 "automatically sort word lists and generate spell files
 au BufWritePre */spell/*.add %sort i
