@@ -8,7 +8,7 @@ from bubblesub.ass.info import Metadata
 from bubblesub.ass.util import ass_to_plaintext
 from bubblesub.ui.ass_renderer import AssRenderer
 
-WIDTH_MULTIPLIERS = {1: 0.6, 2: 0.9}
+WIDTH_MULTIPLIERS = {1: 0.7, 2: 0.9}
 
 
 class BaseResult:
