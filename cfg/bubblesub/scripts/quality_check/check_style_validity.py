@@ -1,13 +1,13 @@
 import typing as T
 
-from bubblesub.ass.event import Event
-from bubblesub.ass.style import StyleList
+from bubblesub.ass.event import AssEvent
+from bubblesub.ass.style import AssStyleList
 
 from .common import BaseResult, Violation
 
 
 def check_style_validity(
-    event: Event, styles: StyleList
+    event: AssEvent, styles: AssStyleList
 ) -> T.Iterable[BaseResult]:
     style = styles.get_by_name(event.style)
     if style is None:

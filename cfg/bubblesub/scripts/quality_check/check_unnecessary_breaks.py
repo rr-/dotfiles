@@ -2,7 +2,7 @@ import typing as T
 from copy import copy
 
 from bubblesub.api import Api
-from bubblesub.ass.event import Event
+from bubblesub.ass.event import AssEvent
 from bubblesub.ui.ass_renderer import AssRenderer
 
 from .common import (
@@ -15,7 +15,7 @@ from .common import (
 
 
 def check_unnecessary_breaks(
-    event: Event,
+    event: AssEvent,
     api: Api,
     renderer: AssRenderer,
     optimal_line_heights: T.Dict[str, float],

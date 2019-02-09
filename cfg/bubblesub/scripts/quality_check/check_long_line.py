@@ -1,7 +1,7 @@
 import typing as T
 
 from bubblesub.api import Api
-from bubblesub.ass.event import Event
+from bubblesub.ass.event import AssEvent
 from bubblesub.ui.ass_renderer import AssRenderer
 
 from .common import (
@@ -14,7 +14,7 @@ from .common import (
 
 
 def check_long_line(
-    event: Event,
+    event: AssEvent,
     api: Api,
     renderer: AssRenderer,
     optimal_line_heights: T.Dict[str, float],

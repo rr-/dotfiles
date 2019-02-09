@@ -1,6 +1,6 @@
 import typing as T
 
-from bubblesub.ass.event import Event
+from bubblesub.ass.event import AssEvent
 from bubblesub.ass.util import ass_to_plaintext, character_count
 
 from .common import BaseResult, Violation, get_next_non_empty_event
@@ -10,7 +10,7 @@ MIN_DURATION_LONG = 500  # milliseconds
 MIN_GAP = 250  # milliseconds
 
 
-def check_durations(event: Event) -> T.Iterable[BaseResult]:
+def check_durations(event: AssEvent) -> T.Iterable[BaseResult]:
     text = ass_to_plaintext(event.text)
     if not text or event.is_comment:
         return

@@ -1,13 +1,13 @@
 import re
 import typing as T
 
-from bubblesub.ass.event import Event
+from bubblesub.ass.event import AssEvent
 from bubblesub.ass.util import ass_to_plaintext
 
 from .common import BaseResult, DebugInformation, Information, Violation
 
 
-def check_quotes(event: Event) -> T.Iterable[BaseResult]:
+def check_quotes(event: AssEvent) -> T.Iterable[BaseResult]:
     text = ass_to_plaintext(event.text)
 
     if text.count('"') == 1:
