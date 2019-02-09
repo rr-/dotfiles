@@ -1,13 +1,13 @@
 import re
 import typing as T
 
-from bubblesub.ass.event import Event
+from bubblesub.ass.event import AssEvent
 from bubblesub.ass.util import ass_to_plaintext
 
 from .common import BaseResult, Violation
 
 
-def check_double_words(event: Event) -> T.Iterable[BaseResult]:
+def check_double_words(event: AssEvent) -> T.Iterable[BaseResult]:
     text = ass_to_plaintext(event.text)
 
     for pair in re.finditer(r"(?<!\w)(\w+)\s+\1(?!\w)", text):

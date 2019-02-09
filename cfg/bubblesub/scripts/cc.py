@@ -2,7 +2,7 @@ import re
 
 import pysubs2
 from bubblesub.api.cmd import BaseCommand
-from bubblesub.ass.event import Event
+from bubblesub.ass.event import AssEvent
 from bubblesub.cfg.menu import MenuCommand
 from bubblesub.ui.util import load_dialog
 from PyQt5 import QtWidgets
@@ -26,7 +26,7 @@ class LoadClosedCaptionsCommand(BaseCommand):
         with self.api.undo.capture():
             for line in source:
                 self.api.subs.events.append(
-                    Event(start=line.start, end=line.end, note=line.text)
+                    AssEvent(start=line.start, end=line.end, note=line.text)
                 )
 
 

@@ -1,7 +1,7 @@
 import re
 import typing as T
 
-from bubblesub.ass.event import Event
+from bubblesub.ass.event import AssEvent
 from bubblesub.ass.util import ass_to_plaintext
 
 from .common import BaseResult, Violation
@@ -11,7 +11,7 @@ NON_STUTTER_SUFFIXES = {"kun", "san", "chan", "smaa", "senpai", "sensei"}
 NON_STUTTER_WORDS = {"bye-bye", "part-time"}
 
 
-def check_punctuation(event: Event) -> T.Iterable[BaseResult]:
+def check_punctuation(event: AssEvent) -> T.Iterable[BaseResult]:
     text = ass_to_plaintext(event.text)
 
     if text.startswith("\n") or text.endswith("\n"):

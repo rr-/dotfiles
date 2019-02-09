@@ -7,7 +7,7 @@ from subprocess import run
 import googletrans
 from bubblesub.api import Api
 from bubblesub.api.cmd import BaseCommand
-from bubblesub.ass.event import Event
+from bubblesub.ass.event import AssEvent
 from bubblesub.cmd.common import SubtitlesSelection
 from bubblesub.cfg.menu import MenuCommand, SubMenu
 
@@ -37,7 +37,7 @@ class GoogleTranslateCommand(BaseCommand):
             await self.args.target.get_subtitles(),
         )
 
-    def run_in_background(self, subs: T.List[Event]) -> None:
+    def run_in_background(self, subs: T.List[AssEvent]) -> None:
         with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
             future_to_sub = {
                 executor.submit(self.recognize, sub): sub for sub in subs
@@ -63,7 +63,7 @@ class GoogleTranslateCommand(BaseCommand):
                     else:
                         sub.text = result
 
-    def recognize(self, sub: Event) -> str:
+    def recognize(self, sub: AssEvent) -> str:
         self.api.log.info(f"line #{sub.number} - analyzing")
         text = sub.note.replace("\\N", "\n")
         if not text.strip():

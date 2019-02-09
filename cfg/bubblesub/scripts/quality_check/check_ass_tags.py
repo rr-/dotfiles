@@ -1,12 +1,12 @@
 import typing as T
 
 import ass_tag_parser
-from bubblesub.ass.event import Event
+from bubblesub.ass.event import AssEvent
 
 from .common import BaseResult, Violation
 
 
-def check_ass_tags(event: Event) -> T.Iterable[BaseResult]:
+def check_ass_tags(event: AssEvent) -> T.Iterable[BaseResult]:
     try:
         ass_line = ass_tag_parser.parse_ass(event.text)
     except ass_tag_parser.ParseError as ex:

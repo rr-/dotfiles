@@ -1,7 +1,7 @@
 import re
 import typing as T
 
-from bubblesub.ass.event import Event
+from bubblesub.ass.event import AssEvent
 from bubblesub.ass.util import ass_to_plaintext
 
 from .common import (
@@ -12,7 +12,7 @@ from .common import (
 )
 
 
-def check_line_continuation(event: Event) -> T.Iterable[BaseResult]:
+def check_line_continuation(event: AssEvent) -> T.Iterable[BaseResult]:
     text = ass_to_plaintext(event.text)
 
     prev_event = get_prev_non_empty_event(event)

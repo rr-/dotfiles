@@ -30,7 +30,7 @@ def list_violations(api: Api) -> T.Iterable[BaseResult]:
     renderer.set_source(
         style_list=api.subs.styles,
         event_list=api.subs.events,
-        info=api.subs.info,
+        meta=api.subs.meta,
         video_resolution=(get_width(api), get_height(api)),
     )
 

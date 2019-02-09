@@ -3,8 +3,8 @@ from copy import copy
 
 from bubblesub.api import Api
 from bubblesub.api.log import LogLevel
-from bubblesub.ass.event import Event, EventList
-from bubblesub.ass.info import Metadata
+from bubblesub.ass.event import AssEvent, AssEventList
+from bubblesub.ass.meta import AssMeta
 from bubblesub.ass.util import ass_to_plaintext
 from bubblesub.ui.ass_renderer import AssRenderer
 
@@ -13,7 +13,7 @@ WIDTH_MULTIPLIERS = {1: 0.7, 2: 0.9}
 
 class BaseResult:
     def __init__(
-        self, event: T.Union[Event, T.List[Event]], text: str
+        self, event: T.Union[AssEvent, T.List[AssEvent]], text: str
     ) -> None:
         if isinstance(event, list):
             self.event = event[0]
@@ -24,7 +24,7 @@ class BaseResult:
         self.text = text
 
     @property
-    def events(self) -> T.Iterable[Event]:
+    def events(self) -> T.Iterable[AssEvent]:
         yield self.event
         yield from self.additional_events
 
@@ -46,15 +46,15 @@ class Violation(BaseResult):
 
 
 def measure_frame_size(
-    renderer: AssRenderer, event: Event
+    renderer: AssRenderer, event: AssEvent
 ) -> T.Tuple[int, int]:
-    fake_event_list = EventList()
+    fake_event_list = AssEventList()
     fake_event_list.append(copy(event))
 
     renderer.set_source(
         style_list=renderer.style_list,
         event_list=fake_event_list,
-        info=renderer.info,
+        meta=renderer.meta,
         video_resolution=renderer.video_resolution,
     )
 
@@ -75,17 +75,17 @@ def get_optimal_line_heights(
     VIDEO_RES_X = 100
     VIDEO_RES_Y = TEST_LINE_COUNT * 300
 
-    fake_info = Metadata()
+    fake_meta = AssMeta()
     renderer.set_source(
         style_list=api.subs.styles,
         event_list=api.subs.events,
-        info=fake_info,
+        meta=fake_meta,
         video_resolution=(VIDEO_RES_X, VIDEO_RES_Y),
     )
 
     ret = {}
     for style in api.subs.styles:
-        event = Event(
+        event = AssEvent(
             start=0,
             end=1000,
             text="\\N".join(["gjMW"] * TEST_LINE_COUNT),
@@ -100,14 +100,14 @@ def get_optimal_line_heights(
 
 
 def get_height(api: Api) -> int:
-    return int(api.subs.info.get("PlayResY", "0"))
+    return int(api.subs.meta.get("PlayResY", "0"))
 
 
 def get_width(api: Api) -> int:
     return int(get_height(api) * 4 / 3)
 
 
-def get_prev_non_empty_event(event: Event) -> T.Optional[Event]:
+def get_prev_non_empty_event(event: AssEvent) -> T.Optional[AssEvent]:
     event = event.prev
     while event:
         if ass_to_plaintext(event.text) and not event.is_comment:
@@ -116,7 +116,7 @@ def get_prev_non_empty_event(event: Event) -> T.Optional[Event]:
     return None
 
 
-def get_next_non_empty_event(event: Event) -> T.Optional[Event]:
+def get_next_non_empty_event(event: AssEvent) -> T.Optional[AssEvent]:
     event = event.next
     while event:
         if ass_to_plaintext(event.text) and not event.is_comment:
