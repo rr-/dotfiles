@@ -24,3 +24,7 @@ elif [[ "$instance" =~ Diablo.* ]]; then
     bspc config -n "$window_id" border_width 0
     echo border=off
 fi
+
+if xwininfo -wm -id "$window_id" | grep -i splash; then
+    echo border=off
+fi
