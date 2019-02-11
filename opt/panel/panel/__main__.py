@@ -6,6 +6,7 @@ import threading
 import time
 import typing as T
 
+import dbus.mainloop.pyqt5
 from PyQt5 import QtCore, QtWidgets
 
 from panel import settings
@@ -15,6 +16,7 @@ from panel.widgets.battery import BatteryWidget
 from panel.widgets.cpu import CpuWidget
 from panel.widgets.mpvmd import MpvmdWidget
 from panel.widgets.net import NetworkUsageWidget
+from panel.widgets.notifications import NotificationsWidget
 from panel.widgets.stretch import StretchWidget
 from panel.widgets.time import TimeWidget
 from panel.widgets.volume import VolumeWidget
@@ -64,6 +66,10 @@ QWidget[class=chart] {{
     height: 16px;
     margin: 2px;
 }}
+QDialog {{
+    background: {colors.background};
+    color: {colors.foreground};
+}}
 """
 
 
@@ -108,6 +114,8 @@ class MainWindow(QtWidgets.QMainWindow):
 
 
 def main() -> None:
+    dbus.mainloop.pyqt5.DBusQtMainLoop(set_as_default=True)
+
     app = QtWidgets.QApplication([os.fsencode(arg) for arg in sys.argv])
     app.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling)
     workspaces_updater = WorkspacesUpdater()
@@ -123,6 +131,7 @@ def main() -> None:
         BatteryWidget(app, main_window),
         CpuWidget(app, main_window),
         VolumeWidget(app, main_window),
+        NotificationsWidget(app, main_window),
         TimeWidget(app, main_window),
     ]
 
