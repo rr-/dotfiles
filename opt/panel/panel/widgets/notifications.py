@@ -9,8 +9,8 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 
 from panel.widgets.widget import Widget
 
-MIN_DURATION = timedelta(milliseconds=3000)
-MAX_DURATION = timedelta(milliseconds=5000)
+MIN_DURATION = timedelta(milliseconds=5000)
+MAX_DURATION = timedelta(milliseconds=10000)
 
 
 @dataclass
