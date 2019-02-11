@@ -5,6 +5,7 @@ from datetime import timedelta
 
 import dbus
 import dbus.service
+import Xlib
 from PyQt5 import QtCore, QtGui, QtWidgets
 
 from panel.widgets.widget import Widget
@@ -48,12 +49,23 @@ class NotificationFetcher(dbus.service.Object):
 
     def __init__(self, queue: NotificationsQueue) -> None:
         self._queue = queue
+        self._disp = Xlib.display.Display()
+        self._root = self._disp.screen().root
+        self._NET_ACTIVE_WINDOW = self._disp.intern_atom("_NET_ACTIVE_WINDOW")
 
         session_bus = dbus.SessionBus()
         bus_name = dbus.service.BusName(
             "org.freedesktop.Notifications", bus=session_bus
         )
         super().__init__(bus_name, "/org/freedesktop/Notifications")
+
+    def _get_active_window(self) -> int:
+        response = self._root.get_full_property(
+            self._NET_ACTIVE_WINDOW, Xlib.X.AnyPropertyType
+        )
+        if response:
+            return int(response.value[0])
+        return -1
 
     @dbus.service.method(
         "org.freedesktop.Notifications",
@@ -71,6 +83,11 @@ class NotificationFetcher(dbus.service.Object):
         hints: T.List[T.Tuple[str, str]],
         expire_timeout: int,
     ):
+        wid = hints.get("wid", -1)
+        active_wid = self._get_active_window()
+        if wid != -1 and wid == active_wid:
+            return notification_id
+
         duration = timedelta(milliseconds=expire_timeout)
         if duration < MIN_DURATION:
             duration = MIN_DURATION
