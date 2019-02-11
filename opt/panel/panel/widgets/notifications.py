@@ -16,7 +16,8 @@ MAX_DURATION = timedelta(milliseconds=5000)
 @dataclass
 class Notification:
     id_: int
-    text: str
+    summary: str
+    body: str
     duration: timedelta
 
 
@@ -35,7 +36,8 @@ class NotificationsQueue:
         with self.lock:
             for n in self.notifications:
                 if n.id_ == notification.id_:
-                    n.text = notification.text
+                    n.summary = notification.summary
+                    n.body = notification.body
                     return
 
             self.notifications.append(notification)
@@ -79,8 +81,7 @@ class NotificationFetcher(dbus.service.Object):
             self._id += 1
             notification_id = self._id
 
-        text = ("%s %s" % (summary, body)).strip()
-        self._queue.add(Notification(notification_id, text, duration))
+        self._queue.add(Notification(notification_id, summary, body, duration))
         return notification_id
 
     @dbus.service.method(
@@ -134,7 +135,7 @@ class NotificationWidget(QtWidgets.QLabel):
         self, notification: Notification, parent: QtWidgets.QWidget
     ) -> None:
         super().__init__(parent)
-        self.setText(notification.text.strip())
+        self.setText((notification.body or notification.summary).strip())
         timer = QtCore.QTimer(self)
         timer.setSingleShot(True)
         timer.setInterval(notification.duration.total_seconds() * 1000)
