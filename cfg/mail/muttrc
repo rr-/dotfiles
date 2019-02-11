@@ -87,3 +87,5 @@ bind index _ collapse-all
 
 # save attachment to ~/data/
 macro attach s '<save-entry><bol>~/data/'
+
+set new_mail_command="notify-urxvt neomutt '%n new messages, %u unread.' &"
