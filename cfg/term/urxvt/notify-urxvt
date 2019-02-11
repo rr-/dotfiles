@@ -1,0 +1,48 @@
+#!/usr/bin/env python3
+import typing as T
+import argparse
+import os
+import subprocess
+import sys
+
+
+def is_tmux_visible() -> bool:
+    if os.getenv("TMUX") is None:
+        return True
+    return subprocess.check_output(
+        ["tmux", "display-message", "-p", "#{pane_id}"], text=True
+    ).strip() == os.getenv("TMUX_PANE")
+
+
+def send_osc(*args: T.Any) -> None:
+    msg = "\a\x1b]777;" + ";".join(str(x) for x in args) + "\a"
+
+    if os.getenv("TMUX"):
+        clients = subprocess.check_output(
+            ["tmux", "list-clients", "-F", "#{client_tty} #{client_termname}"],
+            text=True,
+        ).strip()
+        if clients:
+            for line in clients.split("\n"):
+                tty, term = line.split()
+                if term.startswith("rxvt"):
+                    with open(tty, "w") as handle:
+                        handle.write(msg)
+    elif os.getenv("TERM").startswith("rxvt"):
+        sys.stderr.write(msg)
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("title")
+    parser.add_argument("body")
+    return parser.parse_args()
+
+
+def main() -> None:
+    args = parse_args()
+    send_osc("notify", args.title, args.body)
+
+
+if __name__ == "__main__":
+    main()
