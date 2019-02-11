@@ -3,7 +3,8 @@
 sub on_osc_seq_perl {
   my ($term, $osc, $resp) = @_;
   if ($osc =~ /^notify;(\S+);(.*)$/) {
-    my @args = ("notify-send", $1, $2);
+    my $window_id = $term->parent;
+    my @args = ("notify-send", "-h", "int:wid:$window_id", $1, $2);
     system(@args);
   }
 }
