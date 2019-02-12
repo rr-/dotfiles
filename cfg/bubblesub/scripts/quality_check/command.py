@@ -6,7 +6,7 @@ import typing as T
 from bubblesub.api import Api
 from bubblesub.api.cmd import BaseCommand
 from bubblesub.api.log import LogLevel
-from bubblesub.ui.ass_renderer import AssRenderer
+from bubblesub.ass_renderer import AssRenderer
 
 from .check_actors import check_actors
 from .check_ass_tags import check_ass_tags
