@@ -2,7 +2,7 @@ import typing as T
 
 from bubblesub.api import Api
 from bubblesub.ass.event import AssEvent
-from bubblesub.ui.ass_renderer import AssRenderer
+from bubblesub.ass_renderer import AssRenderer
 
 from .common import (
     WIDTH_MULTIPLIERS,
