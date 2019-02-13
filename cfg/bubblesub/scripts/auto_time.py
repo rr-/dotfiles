@@ -15,11 +15,11 @@ class AutoTimeCommand(BaseCommand):
 
     @property
     def is_enabled(self):
-        return self.api.media.is_loaded
+        return self.api.playback.is_loaded
 
     async def run(self):
         _, temp_path = tempfile.mkstemp(suffix=".wav")
-        result = run(["ffmpeg", "-y", "-i", self.api.media.path, temp_path])
+        result = run(["ffmpeg", "-y", "-i", self.api.playback.path, temp_path])
         if result.returncode != 0:
             self.api.log.error(result.stdout)
             return
@@ -38,12 +38,8 @@ class AutoTimeCommand(BaseCommand):
                 ms_end = float(end) * 1000
                 self.api.subs.events.append(
                     AssEvent(
-                        start=self.api.media.video.align_pts_to_near_frame(
-                            ms_start
-                        ),
-                        end=self.api.media.video.align_pts_to_near_frame(
-                            ms_end
-                        ),
+                        start=self.api.video.align_pts_to_near_frame(ms_start),
+                        end=self.api.video.align_pts_to_near_frame(ms_end),
                     )
                 )
 
