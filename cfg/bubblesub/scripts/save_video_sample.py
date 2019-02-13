@@ -4,8 +4,8 @@ import subprocess
 
 from bubblesub.api import Api
 from bubblesub.api.cmd import BaseCommand, CommandUnavailable
-from bubblesub.cmd.common import FancyPath, Pts
 from bubblesub.cfg.menu import MenuCommand
+from bubblesub.cmd.common import FancyPath, Pts
 from bubblesub.util import ms_to_str
 
 
@@ -19,7 +19,7 @@ class SaveVideoSampleCommand(BaseCommand):
 
     @property
     def is_enabled(self) -> bool:
-        return self.api.media.video.has_video_source
+        return self.api.video.has_video_source
 
     async def run(self) -> None:
         start = await self.args.start.get()
@@ -29,11 +29,11 @@ class SaveVideoSampleCommand(BaseCommand):
         if start == end:
             raise CommandUnavailable("nothing to sample")
 
-        assert self.api.media.path
+        assert self.api.playback.path
         path = await self.args.path.get_save_path(
             file_filter="Webm Video File (*.webm)",
             default_file_name="video-{}-{}..{}.webm".format(
-                self.api.media.path.name, ms_to_str(start), ms_to_str(end)
+                self.api.playback.path.name, ms_to_str(start), ms_to_str(end)
             ),
         )
 
@@ -42,7 +42,7 @@ class SaveVideoSampleCommand(BaseCommand):
                 [
                     "ffmpeg",
                     "-i",
-                    self.api.media.path,
+                    self.api.playback.path,
                     "-y",
                     "-lossless",
                     "1",

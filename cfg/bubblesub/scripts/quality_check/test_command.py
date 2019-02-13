@@ -80,7 +80,9 @@ def test_check_durations_too_short_gap_empty_lines() -> None:
 def test_check_durations_too_short_gap_comments() -> None:
     event_list = AssEventList()
     event_list.append(AssEvent(start=0, end=500, text="test"))
-    event_list.append(AssEvent(start=550, end=550, text="test", is_comment=True))
+    event_list.append(
+        AssEvent(start=550, end=550, text="test", is_comment=True)
+    )
     event_list.append(AssEvent(start=600, end=900, text="test"))
     results = list(check_durations(event_list[0]))
     assert len(results) == 1

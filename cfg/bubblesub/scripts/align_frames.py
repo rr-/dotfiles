@@ -2,8 +2,8 @@ import argparse
 
 from bubblesub.api import Api
 from bubblesub.api.cmd import BaseCommand
-from bubblesub.cmd.common import SubtitlesSelection
 from bubblesub.cfg.menu import MenuCommand
+from bubblesub.cmd.common import SubtitlesSelection
 
 
 class AlignSubtitlesToVideoFramesCommand(BaseCommand):
@@ -12,7 +12,7 @@ class AlignSubtitlesToVideoFramesCommand(BaseCommand):
 
     @property
     def is_enabled(self):
-        return self.api.media.is_loaded and self.args.target.makes_sense
+        return self.api.playback.is_loaded and self.args.target.makes_sense
 
     @staticmethod
     def decorate_parser(api: Api, parser: argparse.ArgumentParser) -> None:
@@ -29,11 +29,11 @@ class AlignSubtitlesToVideoFramesCommand(BaseCommand):
 
     async def run(self):
         if self.args.mode == "near":
-            func = self.api.media.video.align_pts_to_near_frame
+            func = self.api.video.align_pts_to_near_frame
         elif self.args.mode == "prev":
-            func = self.api.media.video.align_pts_to_prev_frame
+            func = self.api.video.align_pts_to_prev_frame
         elif self.args.mode == "next":
-            func = self.api.media.video.align_pts_to_next_frame
+            func = self.api.video.align_pts_to_next_frame
         else:
             assert False
 

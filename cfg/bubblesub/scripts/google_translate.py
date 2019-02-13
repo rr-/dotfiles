@@ -8,8 +8,8 @@ import googletrans
 from bubblesub.api import Api
 from bubblesub.api.cmd import BaseCommand
 from bubblesub.ass.event import AssEvent
-from bubblesub.cmd.common import SubtitlesSelection
 from bubblesub.cfg.menu import MenuCommand, SubMenu
+from bubblesub.cmd.common import SubtitlesSelection
 
 
 def retry(func: T.Callable, *args: T.Any, **kwargs: T.Any) -> T.Any:
