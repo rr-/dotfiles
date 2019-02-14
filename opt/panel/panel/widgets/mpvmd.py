@@ -53,6 +53,7 @@ class Info:
 class Connection:
     def __init__(self) -> None:
         self._request_id = 0
+        self._messages: T.Dict[int, T.Any] = {}
         self._socket: T.Optional[socket.socket] = None
         self.info = Info()
 
@@ -86,6 +87,7 @@ class Connection:
         ]
         for i, name in enumerate(properties, 1):
             self.send(["observe_property", i, name])
+            self.send(["get_property", name])
 
     def send(self, command: T.List[T.Any]) -> None:
         if not self.connected:
@@ -93,6 +95,7 @@ class Connection:
 
         message = {"command": command, "request_id": self._request_id}
         self._send(message)
+        self._messages[self._request_id] = message
         self._request_id += 1
 
     def process(self) -> None:
@@ -100,9 +103,13 @@ class Connection:
             return
 
         for event in self._recv():
-            if event.get("event") != "property-change":
-                continue
-            self.info.raw[event["name"]] = event["data"]
+            if event.get("event") == "property-change":
+                self.info.raw[event["name"]] = event["data"]
+            elif event.get("request_id"):
+                message = self._messages[event["request_id"]]
+                if message["command"][0] == "get_property":
+                    self.info.raw[message["command"][1]] = event["data"]
+                del self._messages[event["request_id"]]
 
     def _send(self, message: T.Any) -> None:
         assert self._socket is not None
