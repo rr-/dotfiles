@@ -125,8 +125,12 @@ class NotificationFetcher(dbus.service.Object):
 
 
 class NotificationsAreaWidget(QtWidgets.QDialog):
-    def __init__(self, parent: QtWidgets.QWidget) -> None:
+    def __init__(
+        self, parent: QtWidgets.QWidget, align_widget: QtWidgets.QWidget
+    ) -> None:
         super().__init__(parent)
+        self._align_widget = align_widget
+
         self.setWindowFlags(
             QtCore.Qt.Tool
             | QtCore.Qt.SplashScreen
@@ -140,8 +144,9 @@ class NotificationsAreaWidget(QtWidgets.QDialog):
     def resizeEvent(self, event: QtGui.QResizeEvent) -> None:
         super().resizeEvent(event)
 
-        time_widget = self.parent().findChild(QtWidgets.QWidget, "time")
-        pos = self.parent().mapToGlobal(time_widget.geometry().bottomRight())
+        pos = self.parent().mapToGlobal(
+            self._align_widget.geometry().bottomRight()
+        )
 
         pos.setX(pos.x() - self.width())
         self.move(pos)
@@ -177,23 +182,35 @@ class NotificationsWidget(Widget):
         self._queue = NotificationsQueue()
         self._fetcher = NotificationFetcher(self._queue)
 
-        self._container = QtWidgets.QLabel(main_window)
-        self._area = NotificationsAreaWidget(self._container.parent())
+        self._icon_label = QtWidgets.QLabel(main_window)
+        self._icon_label.mouseReleaseEvent = self.toggle_enable
+        self._area = NotificationsAreaWidget(
+            self._icon_label.parent(), self._icon_label
+        )
+        self._enabled = True
 
     @property
     def container(self) -> QtWidgets.QWidget:
-        return self._container
+        return self._icon_label
 
     @property
     def available(self) -> bool:
         return True
 
+    def toggle_enable(self, _event: QtGui.QMouseEvent) -> None:
+        self._enabled = not self._enabled
+        self.refresh()
+        self.render()
+
     def _refresh_impl(self) -> None:
         pass
 
     def _render_impl(self) -> None:
+        self._set_icon(
+            self._icon_label, "bell-on" if self._enabled else "bell-off"
+        )
         notification = self._queue.get()
-        if notification:
+        if notification and self._enabled:
             widget = NotificationWidget(notification, self._area)
             self._area.layout().addWidget(widget)
             self._area.show()
