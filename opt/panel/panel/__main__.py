@@ -131,8 +131,8 @@ def main() -> None:
         BatteryWidget(app, main_window),
         CpuWidget(app, main_window),
         VolumeWidget(app, main_window),
-        NotificationsWidget(app, main_window),
         TimeWidget(app, main_window),
+        NotificationsWidget(app, main_window),
     ]
 
     def worker(widget: QtWidgets.QWidget, trigger: QtCore.pyqtSignal) -> None:
