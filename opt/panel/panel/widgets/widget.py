@@ -1,4 +1,5 @@
 import logging
+import re
 import time
 import typing as T
 from contextlib import contextmanager
@@ -9,6 +10,10 @@ from PyQt5 import QtCore, QtGui, QtSvg, QtWidgets
 from panel.colors import Colors
 
 ROOT_DIR = Path(__file__).parent.parent
+ICON_STYLESHEET = """
+path {{ fill: {foreground} }}
+.off {{ opacity: 0.3; }}
+"""
 
 
 class Widget:
@@ -59,12 +64,16 @@ class Widget:
 
         icon_path = ROOT_DIR / "data" / "icons" / (icon_name + ".svg")
         target_size = QtCore.QSize(18, 18)
-        icon_content = icon_path.read_bytes()
-        icon_content = icon_content.replace(
-            b"<svg", b'<svg fill="%s"' % Colors.foreground.encode("ascii")
+        stylesheet = ICON_STYLESHEET.format(foreground=Colors.foreground)
+
+        icon_content = icon_path.read_text()
+        icon_content = re.sub(
+            "(<svg.*>)",
+            r"\1<style type='text/css'>" + stylesheet + "</style>",
+            icon_content,
         )
 
-        svg_renderer = QtSvg.QSvgRenderer(icon_content)
+        svg_renderer = QtSvg.QSvgRenderer(icon_content.encode("utf-8"))
         image = QtGui.QPixmap(target_size * self.app.devicePixelRatio())
         painter = QtGui.QPainter()
 
