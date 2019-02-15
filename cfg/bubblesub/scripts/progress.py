@@ -1,3 +1,5 @@
+import functools
+
 import ass_tag_parser
 from bubblesub.api.cmd import BaseCommand
 from bubblesub.cfg.menu import MenuCommand
@@ -16,7 +18,9 @@ def extract_text(text: str) -> str:
     for item in ass_line:
         if isinstance(item, ass_tag_parser.AssText):
             ret += item.text
-    return ret
+    return functools.reduce(
+        lambda ret, word: ret.replace(word, ""), list("…♪"), ret
+    ).strip()
 
 
 class ProgressCommand(BaseCommand):
