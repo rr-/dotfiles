@@ -1,11 +1,12 @@
 import re
 
 import pysubs2
+from PyQt5 import QtWidgets
+
 from bubblesub.api.cmd import BaseCommand
 from bubblesub.ass.event import AssEvent
 from bubblesub.cfg.menu import MenuCommand
 from bubblesub.ui.util import load_dialog
-from PyQt5 import QtWidgets
 
 
 class LoadClosedCaptionsCommand(BaseCommand):
