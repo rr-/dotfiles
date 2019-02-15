@@ -5,6 +5,7 @@ import io
 import typing as T
 
 import speech_recognition as sr
+
 from bubblesub.api import Api
 from bubblesub.api.cmd import BaseCommand
 from bubblesub.ass.event import AssEvent

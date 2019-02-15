@@ -2,6 +2,7 @@ import re
 import typing as T
 
 import pytest
+
 from bubblesub.api.log import LogLevel
 from bubblesub.ass.event import AssEvent, AssEventList
 

@@ -1,6 +1,7 @@
 from collections import defaultdict
 
 import enchant
+
 from bubblesub.api import Api
 from bubblesub.ass.util import ass_to_plaintext, spell_check_ass_line
 

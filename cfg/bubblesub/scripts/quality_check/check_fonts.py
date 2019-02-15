@@ -2,8 +2,9 @@ import typing as T
 from collections import defaultdict
 from pathlib import Path
 
-import ass_tag_parser
 import fontTools.ttLib as font_tools
+
+import ass_tag_parser
 from bubblesub.api import Api
 
 TT_NAME_ID_FONT_FAMILY = 1
