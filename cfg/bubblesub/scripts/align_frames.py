@@ -12,7 +12,7 @@ class AlignSubtitlesToVideoFramesCommand(BaseCommand):
 
     @property
     def is_enabled(self):
-        return self.api.playback.is_loaded and self.args.target.makes_sense
+        return self.api.playback.is_ready and self.args.target.makes_sense
 
     @staticmethod
     def decorate_parser(api: Api, parser: argparse.ArgumentParser) -> None:
