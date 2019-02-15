@@ -15,11 +15,11 @@ class AutoTimeCommand(BaseCommand):
 
     @property
     def is_enabled(self):
-        return self.api.playback.is_loaded
+        return self.api.playback.is_ready
 
     async def run(self):
         _, temp_path = tempfile.mkstemp(suffix=".wav")
-        result = run(["ffmpeg", "-y", "-i", self.api.playback.path, temp_path])
+        result = run(["ffmpeg", "-y", "-i", self.api.audio.path, temp_path])
         if result.returncode != 0:
             self.api.log.error(result.stdout)
             return
