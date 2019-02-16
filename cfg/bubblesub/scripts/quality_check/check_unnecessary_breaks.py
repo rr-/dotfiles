@@ -24,7 +24,7 @@ def check_unnecessary_breaks(
         return
     event_copy = copy(event)
     event_copy.text = event.text.replace(r"\N", " ")
-    width, _height = measure_frame_size(renderer, event_copy)
+    width, _height = measure_frame_size(api, renderer, event_copy)
     optimal_width = get_width(api) * WIDTH_MULTIPLIERS[1]
     if width < optimal_width and not "– " in event.text:
         yield Information(

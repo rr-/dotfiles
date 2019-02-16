@@ -19,7 +19,7 @@ def check_long_line(
     renderer: AssRenderer,
     optimal_line_heights: T.Dict[str, float],
 ) -> T.Iterable[BaseResult]:
-    width, height = measure_frame_size(renderer, event)
+    width, height = measure_frame_size(api, renderer, event)
     average_height = optimal_line_heights.get(event.style, 0)
     line_count = round(height / average_height) if average_height else 0
     if not line_count:

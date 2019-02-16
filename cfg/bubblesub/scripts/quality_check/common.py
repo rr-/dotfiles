@@ -46,7 +46,7 @@ class Violation(BaseResult):
 
 
 def measure_frame_size(
-    renderer: AssRenderer, event: AssEvent
+    api: Api, renderer: AssRenderer, event: AssEvent
 ) -> T.Tuple[int, int]:
     fake_event_list = AssEventList()
     fake_event_list.append(copy(event))
@@ -65,7 +65,7 @@ def measure_frame_size(
     min_y = min(layer.dst_y for layer in layers)
     max_x = max(layer.dst_x + layer.w for layer in layers)
     max_y = max(layer.dst_y + layer.h for layer in layers)
-    return (max_x - min_x, max_y - min_y)
+    return (int((max_x - min_x) * api.video.aspect_ratio), max_y - min_y)
 
 
 def get_optimal_line_heights(
@@ -92,7 +92,7 @@ def get_optimal_line_heights(
             style=style.name,
         )
 
-        _frame_width, frame_height = measure_frame_size(renderer, event)
+        _frame_width, frame_height = measure_frame_size(api, renderer, event)
         line_height = frame_height / TEST_LINE_COUNT
         ret[event.style] = line_height
         api.log.debug(f"average height for {event.style}: {line_height}")
