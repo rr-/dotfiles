@@ -80,6 +80,7 @@ def get_optimal_line_heights(
     VIDEO_RES_Y = TEST_LINE_COUNT * 300
 
     fake_meta = AssMeta()
+    fake_meta.set("WrapStyle", 2)
     renderer.set_source(
         style_list=api.subs.styles,
         event_list=api.subs.events,
