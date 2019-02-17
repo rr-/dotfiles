@@ -58,7 +58,11 @@ def measure_frame_size(
         video_resolution=renderer.video_resolution,
     )
 
-    layers = list(renderer.render_raw(time=event.start))
+    layers = [
+        layer
+        for layer in renderer.render_raw(time=event.start)
+        if layer.type == 0
+    ]
     if not layers:
         return (0, 0)
     min_x = min(layer.dst_x for layer in layers)
