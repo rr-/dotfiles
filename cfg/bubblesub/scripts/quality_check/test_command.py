@@ -1,5 +1,6 @@
 import re
 import typing as T
+from unittest.mock import MagicMock
 
 import pytest
 
@@ -12,6 +13,7 @@ from .check_durations import check_durations
 from .check_line_continuation import check_line_continuation
 from .check_punctuation import check_punctuation
 from .check_quotes import check_quotes
+from .check_unnecessary_breaks import check_unnecessary_breaks
 from .common import Violation
 
 
@@ -302,6 +304,36 @@ def test_check_double_words(text, violation_text):
     event_list = AssEventList()
     event_list.append(AssEvent(text=text))
     results = list(check_double_words(event_list[0]))
+    if violation_text is None:
+        assert len(results) == 0
+    else:
+        assert len(results) == 1
+        assert results[0].text == violation_text
+
+
+@pytest.mark.parametrize(
+    "text, violation_text",
+    [
+        ("text", None),
+        ("text\\Ntext", "possibly unnecessary break (796.00 until 896.00)"),
+        ("text.\\Ntext", None),
+    ],
+)
+def test_check_unnecessary_breaks(text, violation_text):
+    api = MagicMock()
+    api.video.aspect_ratio = 1
+    api.subs.meta = {"PlayResX": 1280}
+    renderer = MagicMock()
+    renderer.render_raw.return_value = [
+        MagicMock(dst_x=0, dst_y=0, w=100, h=0, type=0)
+    ]
+    event_list = AssEventList()
+    event_list.append(AssEvent(text=text))
+    results = list(
+        check_unnecessary_breaks(
+            event_list[0], api, renderer, {"Default": 200}
+        )
+    )
     if violation_text is None:
         assert len(results) == 0
     else:
