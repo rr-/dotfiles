@@ -1,3 +1,4 @@
+import re
 import typing as T
 from copy import copy
 
@@ -26,7 +27,9 @@ def check_unnecessary_breaks(
     event_copy.text = event.text.replace(r"\N", " ")
     width, _height = measure_frame_size(api, renderer, event_copy)
     optimal_width = get_width(api) * WIDTH_MULTIPLIERS[1]
-    if width < optimal_width and not "– " in event.text:
+
+    many_sentences = len(re.split("(?<=[\.!?] )", event_copy.text)) > 1
+    if width < optimal_width and not many_sentences:
         yield Information(
             event,
             f"possibly unnecessary break "
