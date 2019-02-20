@@ -109,7 +109,7 @@ def get_height(api: Api) -> int:
 
 
 def get_width(api: Api) -> int:
-    return int(get_height(api) * 4 / 3)
+    return int(api.subs.meta.get("PlayResX", "0"))
 
 
 def get_prev_non_empty_event(event: AssEvent) -> T.Optional[AssEvent]:
