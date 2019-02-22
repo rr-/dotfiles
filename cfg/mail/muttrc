@@ -51,10 +51,11 @@ mailboxes =.sent
 unignore x-label
 
 # smtp config
-source ~/.mutt/smtp.muttrc
+send2-hook '~f "^.*@stxnext\\.pl$"' 'source ~/.mutt/smtp-stx.muttrc'
+send2-hook '~f "^.*@(sakuya\\.pl|oldcastle\\.moe)$"' source ~/.mutt/smtp-mailbox.muttrc'
 
 # reply using the address the message was sent to
-alternates '^.*@(sakuya.pl|oldcastle.moe)|mkurczew@gmail.com|marcin.kurczewski@.*$'
+alternates '^.*@(sakuya\.pl|oldcastle\.moe)|mkurczew@gmail\.com|marcin\.kurczewski@.*$'
 set reverse_name=yes
 set reverse_realname=yes
 
