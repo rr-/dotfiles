@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 import argparse
 import re
+import typing as T
+import urllib.parse
 import urllib.request
 
 import lxml.etree
@@ -29,7 +31,7 @@ LANG_MAP = {
 }
 
 
-def _parse_args():
+def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Looks up phrases on reverso.net"
     )
@@ -54,7 +56,7 @@ def _parse_args():
     return parser.parse_args()
 
 
-def _format_html(node):
+def _format_html(node: lxml.etree.Element) -> str:
     inner_html = lxml.etree.tostring(node, encoding="unicode")
     inner_html = inner_html.replace("<em>", COLOR_HIGHLIGHT).replace(
         "</em>", COLOR_RESET
@@ -62,7 +64,9 @@ def _format_html(node):
     return re.sub("<[^>]*>", "", inner_html).strip()
 
 
-def _lookup_context_phrase(src_language, dst_language, conjugate, phrase):
+def lookup_context_phrase(
+    src_language: str, dst_language: str, conjugate: bool, phrase: str
+) -> T.Iterable[T.Tuple[str, str]]:
     url = (
         BASE_URL
         + f"{src_language}-{dst_language}/"
@@ -83,10 +87,10 @@ def _lookup_context_phrase(src_language, dst_language, conjugate, phrase):
             yield (_format_html(src_node), _format_html(dst_node))
 
 
-def main():
-    args = _parse_args()
+def main() -> None:
+    args = parse_args()
 
-    results = _lookup_context_phrase(
+    results = lookup_context_phrase(
         LANG_MAP[args.src_lang],
         LANG_MAP[args.dst_lang],
         args.conjugate,
