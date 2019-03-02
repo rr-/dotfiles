@@ -1,41 +1,48 @@
 import typing as T
 
-import ass_tag_parser
+from ass_tag_parser import (
+    AssTagAlignment,
+    AssTagComment,
+    AssTagKaraoke,
+    AssTagListEnding,
+    AssTagListOpening,
+    ParseError,
+    parse_ass,
+)
 from bubblesub.ass.event import AssEvent
 
 from .common import BaseResult, Violation
 
 
+def get(source: T.List[T.Any], n: int) -> T.Any:
+    if n < 0 or n >= len(source):
+        return None
+    return source[n]
+
+
 def check_ass_tags(event: AssEvent) -> T.Iterable[BaseResult]:
     try:
-        ass_line = ass_tag_parser.parse_ass(event.text)
-    except ass_tag_parser.ParseError as ex:
+        ass_line = parse_ass(event.text)
+    except ParseError as ex:
         yield Violation(event, f"invalid syntax ({ex})")
         return
 
-    violations: T.List[Violation] = []
-    opened = False
-    closed = False
+    for i, item in enumerate(ass_line):
+        if (
+            isinstance(item, AssTagListOpening)
+            and isinstance(get(ass_line, i - 1), AssTagListEnding)
+            and not isinstance(get(ass_line, i - 2), AssTagKaraoke)
+        ):
+            yield Violation(event, "disjointed tags")
+
+        if isinstance(item, AssTagListEnding) and isinstance(
+            get(ass_line, i - 1), AssTagListOpening
+        ):
+            yield Violation(event, "pointless tag")
 
     for item in ass_line:
-        if isinstance(item, ass_tag_parser.AssTagListOpening):
-            opened = True
-            if closed:
-                violations.append(Violation(event, "disjointed tags"))
-            closed = False
-        elif isinstance(item, ass_tag_parser.AssTagListEnding):
-            closed = True
-            if opened:
-                violations.append(Violation(event, "pointless tag"))
-            opened = False
-        else:
-            opened = False
-            closed = False
+        if isinstance(item, AssTagAlignment) and item.legacy:
+            yield Violation(event, "using legacy alignment tag")
 
-        if isinstance(item, ass_tag_parser.AssTagAlignment) and item.legacy:
-            violations.append(Violation(event, "using legacy alignment tag"))
-
-        elif isinstance(item, ass_tag_parser.AssTagComment):
-            violations.append(Violation(event, "use notes to make comments"))
-
-    yield from violations
+        elif isinstance(item, AssTagComment):
+            yield Violation(event, "use notes to make comments")
