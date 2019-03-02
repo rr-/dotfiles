@@ -43,14 +43,14 @@ class ProgressCommand(BaseCommand):
 
         self.api.log.info(
             f"{empty_count} lines left ("
-            f"{total_count-empty_count}/{total_count}, "
-            f"{(total_count-empty_count)/total_count:.01%})"
+            f"{total_count - empty_count}/{max(1, total_count)}, "
+            f"{(total_count - empty_count) / max(1, total_count):.01%})"
         )
         self.api.log.info(
             f"{ms_to_str(empty_duration)} seconds left ("
-            f"{ms_to_str(total_duration-empty_duration)}/"
+            f"{ms_to_str(total_duration - empty_duration)}/"
             f"{ms_to_str(total_duration)}, "
-            f"{(total_duration-empty_duration)/total_duration:.01%})"
+            f"{(total_duration - empty_duration) / max(1, total_duration):.01%})"
         )
 
 
