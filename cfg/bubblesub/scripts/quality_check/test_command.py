@@ -276,6 +276,7 @@ def test_check_line_continuation(
         ("{\\a5}", "using legacy alignment tag"),
         ("{\\an8comment}", "invalid syntax (.*)"),
         ("{comment\\an8}", "use notes to make comments"),
+        ("{\\k20}{\\k20}", None),
         ("{\\an8}{\\fs5}", "disjointed tags"),
     ],
 )
