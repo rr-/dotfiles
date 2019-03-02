@@ -12,6 +12,21 @@ BASE_URL = "http://context.reverso.net/translation/"
 USER_AGENT = (
     "Mozilla/5.0 (X11; Linux x86_64; rv:10.0) Gecko/20100101 Firefox/10.0"
 )
+LANG_MAP = {
+    "ar": "arabic",
+    "de": "german",
+    "en": "english",
+    "es": "spanish",
+    "fr": "french",
+    "he": "hebrew",
+    "it": "italian",
+    "ja": "japanese",
+    "nl": "dutch",
+    "pl": "polish",
+    "pt": "portuguese",
+    "ro": "romanian",
+    "ru": "russian",
+}
 
 
 def _parse_args():
@@ -22,12 +37,20 @@ def _parse_args():
         "-n", "--no-conjugations", action="store_false", dest="conjugate"
     )
     parser.add_argument(
-        "-s", "--source-language", default="english", dest="src_lang"
+        metavar="src-lang",
+        default="en",
+        dest="src_lang",
+        nargs="?",
+        choices=LANG_MAP.keys(),
     )
     parser.add_argument(
-        "-t", "--target-language", default="polish", dest="dst_lang"
+        metavar="dst-lang",
+        default="pl",
+        dest="dst_lang",
+        nargs="?",
+        choices=LANG_MAP.keys(),
     )
-    parser.add_argument("phrase", nargs="+")
+    parser.add_argument("phrase")
     return parser.parse_args()
 
 
@@ -64,7 +87,10 @@ def main():
     args = _parse_args()
 
     results = _lookup_context_phrase(
-        args.src_lang, args.dst_lang, args.conjugate, " ".join(args.phrase)
+        LANG_MAP[args.src_lang],
+        LANG_MAP[args.dst_lang],
+        args.conjugate,
+        args.phrase,
     )
 
     for src, dst in results:
