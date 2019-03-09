@@ -2,6 +2,7 @@ import contextlib
 import copy
 import json
 import typing as T
+import zlib
 from getpass import getpass
 from pathlib import Path
 
@@ -27,7 +28,9 @@ def database() -> T.Iterator[T.Dict[str, T.Dict[str, str]]]:
 
     db: T.Dict[str, T.Dict[str, str]]
     if DB_FILE.exists():
-        db = json.loads(aes.decrypt(DB_FILE.read_bytes()).decode())
+        db = json.loads(
+            zlib.decompress(aes.decrypt(DB_FILE.read_bytes())).decode()
+        )
     else:
         db = {}
 
@@ -35,4 +38,10 @@ def database() -> T.Iterator[T.Dict[str, T.Dict[str, str]]]:
 
     yield db
     if old_db != db:
-        DB_FILE.write_bytes(aes.encrypt(json.dumps(db).encode()))
+        DB_FILE.write_bytes(
+            aes.encrypt(
+                zlib.compress(
+                    json.dumps(db).encode(), level=zlib.Z_BEST_COMPRESSION
+                )
+            )
+        )
