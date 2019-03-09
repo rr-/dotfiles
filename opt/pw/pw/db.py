@@ -1,4 +1,5 @@
 import contextlib
+import copy
 import json
 import typing as T
 from getpass import getpass
@@ -30,6 +31,8 @@ def database() -> T.Iterator[T.Dict[str, T.Dict[str, str]]]:
     else:
         db = {}
 
-    yield db
+    old_db = copy.deepcopy(db)
 
-    DB_FILE.write_bytes(aes.encrypt(json.dumps(db).encode()))
+    yield db
+    if old_db != db:
+        DB_FILE.write_bytes(aes.encrypt(json.dumps(db).encode()))
