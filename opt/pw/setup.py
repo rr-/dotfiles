@@ -8,5 +8,5 @@ setup(
     packages=find_packages(),
     entry_points={"console_scripts": ["pw = pw.__main__:main"]},
     package_dir={"pw": "pw"},
-    install_requires=["pycrypto"],
+    install_requires=["pycryptodome"],
 )
