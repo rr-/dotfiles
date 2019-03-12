@@ -22,7 +22,12 @@ else:
 
 c.downloads.remove_finished = 10000
 c.downloads.position = "bottom"
-c.fonts.hints = "bold 12px monospace"
+c.tabs.padding["top"] = 2
+c.tabs.padding["bottom"] = 2
+c.tabs.indicator.padding["top"] = 1
+c.tabs.indicator.padding["bottom"] = 1
+c.fonts.hints = "12px sans-serif"
+c.fonts.tabs = "14px sans-serif"
 c.fonts.monospace = "Input Mono"
 c.hints.auto_follow_timeout = 300
 c.hints.mode = "number"
