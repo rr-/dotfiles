@@ -157,7 +157,8 @@ alt + F12
 
 alt + shift + F12
     bash -c '~/.config/bspwm/bspwmrc'; \
-    bash -c '~/.config/x/start-panel.sh'
+    bash -c '~/.config/x/start-panel.sh'; \
+    if pgrep qutebrowser; then qutebrowser :config-source; fi
 
 # screenshots
 super + i
