@@ -32,6 +32,7 @@ c.fonts.monospace = "Input Mono"
 c.hints.auto_follow_timeout = 300
 c.hints.mode = "number"
 c.statusbar.hide = True
+c.tabs.title.format = "{index}: {title} {audio}"
 c.downloads.location.directory = "~/"
 
 c.url.searchengines = {
