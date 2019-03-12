@@ -65,18 +65,6 @@ else
     bindkey '\e[1;6I' 'beep'                # disable ctrl+shift+tab
 fi
 
-    # necessary for the above to work
-    if [[ -n ${terminfo[smkx]} ]] && [[ -n ${terminfo[rmkx]} ]]; then
-        function zle-line-init () {
-            echoti smkx
-        }
-        function zle-line-finish () {
-            echoti rmkx
-        }
-        zle -N zle-line-init
-        zle -N zle-line-finish
-    fi
-
 # command prompt
 function make_ps1 () {
     case $(hostname) in
@@ -121,3 +109,28 @@ if [ -f ~/.fzf.zsh ]; then
 fi
 
 export DISPLAY=:0.0
+
+# change cursor for vim insert mode
+zle-line-init zle-keymap-select () {
+    case $KEYMAP in
+        vicmd)
+            if [[ $TMUX = '' ]]; then
+                echo -ne "\033]12;red\007"
+            else
+                printf '\033Ptmux;\033\033]12;red\007\033\\'
+            fi
+            ;;
+        viins|main)
+            if [[ $TMUX = '' ]]; then
+                echo -ne "\033]12;15\007"
+            else
+                printf '\033Ptmux;\033\033]12;15\007\033\\'
+            fi
+            ;;
+    esac
+}
+zle -N zle-line-init
+zle -N zle-keymap-select
+
+export KEYTIMEOUT=1
+bindkey "\e" vi-cmd-mode
