@@ -20,13 +20,18 @@ class ColorsDark:
 
 
 class ColorsLight:
-    background = "#CCC"
+    background = "#DDD"
     foreground = "#333"
     workspace_background = "#EEE"
-    workspace_full_background = "#AAA"
-    workspace_focused_background = "#FFDFA1"
-    workspace_focused_full_background = "#FA0"
-    workspace_urgent_background = "#F99CB1"
+    workspace_foreground = "#AAA"
+    workspace_full_background = "#CCC"
+    workspace_full_foreground = "#333"
+    workspace_focused_background = "#A1DFFF"
+    workspace_focused_foreground = "#000"
+    workspace_focused_full_background = "#46AAFE"
+    workspace_focused_full_foreground = "#000"
+    workspace_urgent_background = "#FFA040"
+    workspace_urgent_foreground = "#000000"
     chart_background = "#EEE"
     chart_foreground = "#888"
     cpu_chart_line = "#F00"
