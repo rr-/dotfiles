@@ -93,7 +93,7 @@ class GoogleTranslateCommand(BaseCommand):
             "--engine",
             help="engine to use",
             choices=["bing", "google", "yandex"],
-            default="google",
+            default="bing",
         )
         parser.add_argument(
             metavar="from", dest="source_code", help="source language code"
