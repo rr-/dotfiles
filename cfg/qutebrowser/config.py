@@ -1,10 +1,25 @@
+palette = "dark"
+
 c.auto_save.session = True
-c.colors.tabs.even.bg = "black"
-c.colors.tabs.odd.bg = "black"
-c.colors.tabs.selected.even.bg = "#015B82"
-c.colors.tabs.selected.even.fg = "#CDE"
-c.colors.tabs.selected.odd.bg = "#015B82"
-c.colors.tabs.selected.odd.fg = "#CDE"
+if palette == "dark":
+    c.colors.tabs.even.bg = "#000"
+    c.colors.tabs.odd.bg = "#000"
+    c.colors.tabs.even.fg = "#FFF"
+    c.colors.tabs.odd.fg = "#FFF"
+    c.colors.tabs.selected.even.bg = "#015B82"
+    c.colors.tabs.selected.even.fg = "#CDE"
+    c.colors.tabs.selected.odd.bg = "#015B82"
+    c.colors.tabs.selected.odd.fg = "#CDE"
+else:
+    c.colors.tabs.even.bg = "#EEE"
+    c.colors.tabs.odd.bg = "#EEE"
+    c.colors.tabs.even.fg = "#000"
+    c.colors.tabs.odd.fg = "#000"
+    c.colors.tabs.selected.even.bg = "#46AAFE"
+    c.colors.tabs.selected.even.fg = "#000"
+    c.colors.tabs.selected.odd.bg = "#46AAFE"
+    c.colors.tabs.selected.odd.fg = "#000"
+
 c.downloads.remove_finished = 10000
 c.downloads.position = "bottom"
 c.fonts.hints = "bold 12px monospace"
