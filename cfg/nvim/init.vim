@@ -12,6 +12,7 @@ Plug 'christoomey/vim-tmux-navigator'   "integration with tmux
 Plug 'tpope/vim-vinegar'                "better netrw
 Plug 'ambv/black'                       "format python source code
 Plug 'fisadev/vim-isort'                "sort includes in python source code
+Plug 'editorconfig/editorconfig-vim'    "respect .editorconfig
 call plug#end()
 
 runtime editor.vim
