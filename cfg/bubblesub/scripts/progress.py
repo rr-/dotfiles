@@ -19,7 +19,7 @@ def extract_text(text: str) -> str:
         if isinstance(item, ass_tag_parser.AssText):
             ret += item.text
     return functools.reduce(
-        lambda ret, word: ret.replace(word, ""), list("…♪"), ret
+        lambda ret, word: ret.replace(word, ""), list("…–—♪") + ["\\N"], ret
     ).strip()
 
 
