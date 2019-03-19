@@ -3,7 +3,7 @@ let $COLORED_LOGS = 1
 let $VIFM_SERVER_NAME = v:servername
 
 " don't confirm file removals if they're using trash
-set confirm=permdelete
+set confirm=delete,permdelete
 
 " the command to start vi
 if executable('nvim')
