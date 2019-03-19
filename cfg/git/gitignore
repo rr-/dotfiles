@@ -11,3 +11,4 @@
 .pytest_cache
 .tox
 *.egg-info
+docker-compose.local.yml
