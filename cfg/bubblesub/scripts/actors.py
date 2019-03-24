@@ -1,7 +1,9 @@
 import argparse
+import enum
 import shlex
 import typing as T
 from collections import defaultdict
+from dataclasses import dataclass
 
 from bubblesub.api import Api
 from bubblesub.api.cmd import BaseCommand
@@ -11,20 +13,31 @@ from bubblesub.cfg.menu import MenuCommand, SubMenu
 SHORTCUTS = [f"F{num}" for num in range(1, 13)]
 
 
+class MacroType(enum.Enum):
+    actor = enum.auto()
+    style = enum.auto()
+    text = enum.auto()
+
+
+@dataclass
+class Macro:
+    name: str
+    type: MacroType
+    text: str
+
+
 class ActorsTagger:
     def __init__(self, api: Api) -> None:
         self._api = api
-        self._stored_hotkeys: T.Dict[str, T.Optional[str]] = {}
-        self._actors: T.Dict[str, str] = {}
-        self._styles: T.Dict[str, str] = {}
+        self._previous_hotkeys: T.Dict[str, T.Optional[str]] = {}
+        self._macros: T.List[StoredMacro] = []
         self.running = False
 
     def enable(self) -> None:
         if self.running:
             return
         self.running = True
-        self._actors.clear()
-        self._styles.clear()
+        self._macros.clear()
         self._store_hotkeys()
         self._setup_hotkeys()
 
@@ -34,33 +47,39 @@ class ActorsTagger:
         self.running = False
         self._restore_hotkeys()
 
-    def store_style(self, sender_shortcut: str) -> None:
-        self._actors.pop(sender_shortcut, None)
-        self._styles.pop(sender_shortcut, None)
+    def store_macro(self, type: MacroType, name: str) -> None:
+        self._macros = [macro for macro in self._macros if macro.name != name]
         try:
             sub = self._api.subs.selected_events[0]
         except LookupError:
             pass
         else:
-            self._styles[sender_shortcut] = sub.style
+            if type == MacroType.style:
+                text = sub.style
+            elif type == MacroType.text:
+                text = sub.text
+            elif type == MacroType.actor:
+                text = sub.actor
+            else:
+                raise NotImplementedError("not implemented")
+            self._macros.append(Macro(name=name, type=type, text=text))
 
-    def store_actor(self, sender_shortcut: str) -> None:
-        self._actors.pop(sender_shortcut, None)
-        self._styles.pop(sender_shortcut, None)
-        try:
-            sub = self._api.subs.selected_events[0]
-        except LookupError:
-            pass
+    def apply_macro(self, name: str) -> None:
+        for macro in self._macros:
+            if macro.name == name:
+                break
         else:
-            self._actors[sender_shortcut] = sub.actor
+            return
 
-    def apply(self, sender_shortcut: str) -> None:
-        if sender_shortcut in self._actors:
-            for sub in self._api.subs.selected_events:
-                sub.actor = self._actors[sender_shortcut]
-        if sender_shortcut in self._styles:
-            for sub in self._api.subs.selected_events:
-                sub.style = self._styles[sender_shortcut]
+        for sub in self._api.subs.selected_events:
+            if macro.type == MacroType.style:
+                sub.style = macro.text
+            elif macro.type == MacroType.text:
+                sub.text = macro.text
+            elif macro.type == MacroType.actor:
+                sub.actor = macro.text
+            else:
+                raise NotImplementedError("not implemented")
 
     def _setup_hotkeys(self) -> None:
         if not self.running:
@@ -79,15 +98,18 @@ class ActorsTagger:
             set_hotkey(
                 f"Ctrl+{shortcut}", ["actors", "--store-actor", shortcut]
             )
+            set_hotkey(
+                f"Shift+{shortcut}", ["actors", "--store-text", shortcut]
+            )
 
     def _store_hotkeys(self) -> None:
         for shortcut in SHORTCUTS:
-            self._stored_hotkeys[shortcut] = self._api.cfg.hotkeys[
+            self._previous_hotkeys[shortcut] = self._api.cfg.hotkeys[
                 HotkeyContext.Global, shortcut
             ]
 
     def _restore_hotkeys(self) -> None:
-        for shortcut, cmdline in self._stored_hotkeys.items():
+        for shortcut, cmdline in self._previous_hotkeys.items():
             self._api.cfg.hotkeys[HotkeyContext.Global, shortcut] = cmdline
 
 
@@ -107,6 +129,7 @@ class ActorsCommand(BaseCommand):
         parser.add_argument("mode", choices=["on", "off"], nargs="?")
         parser.add_argument("--store-style")
         parser.add_argument("--store-actor")
+        parser.add_argument("--store-text")
         parser.add_argument("--apply")
 
     async def run(self):
@@ -115,11 +138,13 @@ class ActorsCommand(BaseCommand):
         elif self.args.mode == "off":
             tagger.disable()
         elif self.args.store_style:
-            tagger.store_style(self.args.store_style)
+            tagger.store_macro(MacroType.style, self.args.store_style)
         elif self.args.store_actor:
-            tagger.store_actor(self.args.store_actor)
+            tagger.store_macro(MacroType.actor, self.args.store_actor)
+        elif self.args.store_text:
+            tagger.store_macro(MacroType.text, self.args.store_text)
         elif self.args.apply:
-            tagger.apply(self.args.apply)
+            tagger.apply_macro(self.args.apply)
 
 
 COMMANDS = [ActorsCommand]
