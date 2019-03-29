@@ -28,7 +28,7 @@ def check_unnecessary_breaks(
     width, _height = measure_frame_size(api, renderer, event_copy)
     optimal_width = get_width(api) * WIDTH_MULTIPLIERS[1]
 
-    many_sentences = len(re.split("(?<=[\.!?] )", event_copy.text)) > 1
+    many_sentences = len(re.split("(?<=[\.!?…] )", event_copy.text)) > 1
     if width < optimal_width and not many_sentences:
         yield Information(
             event,
