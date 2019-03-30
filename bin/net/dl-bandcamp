@@ -53,8 +53,7 @@ def download_page(url, use_cache=True):
 
 def uniq(seq):
     seen = set()
-    seen_add = seen.add
-    return [x for x in seq if not (x in seen or seen_add(x))]
+    return [x for x in seq if not (x in seen or seen.add(x))]
 
 
 def parse_args():
@@ -145,11 +144,13 @@ def get_artist_album_links(artist_url):
     response_text = download_page(artist_url, use_cache=False)
     document = lxml.html.fromstring(response_text)
     document.make_links_absolute(base_url=artist_url)
-    return [
-        link
-        for link in document.xpath("//a/@href")
-        if "/album/" in link or "/track/" in link
-    ]
+    return uniq(
+        [
+            link
+            for link in document.xpath("//a/@href")
+            if "/album/" in link or "/track/" in link
+        ]
+    )
 
 
 def main():
