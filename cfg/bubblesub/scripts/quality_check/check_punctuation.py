@@ -4,7 +4,7 @@ import typing as T
 from bubblesub.ass.event import AssEvent
 from bubblesub.ass.util import ass_to_plaintext
 
-from .common import BaseResult, Violation
+from .common import BaseResult, Violation, is_event_title
 
 NON_STUTTER_PREFIXES = {"half", "well"}
 NON_STUTTER_SUFFIXES = {"kun", "san", "chan", "smaa", "senpai", "sensei"}
@@ -84,7 +84,7 @@ def check_punctuation(event: AssEvent) -> T.Iterable[BaseResult]:
         if re.search(r" - ", text, flags=re.M):
             yield Violation(event, "bad dash (expected –)")
 
-    if re.search(r" —|— ", text):
+    if re.search(r" —|— ", text) and not is_event_title(event):
         yield Violation(event, "whitespace around —")
 
     match = re.search(r"(\w+[\.!?])\s+[a-z]", text, flags=re.M)
