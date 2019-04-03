@@ -30,10 +30,15 @@ def check_spelling(api: Api) -> None:
         for _start, _end, word in spell_check_ass_line(dictionary, text):
             misspelling_map[word].add(event.number)
 
-    api.log.info("Misspelt words:")
-    for word, line_numbers in sorted(
-        misspelling_map.items(), key=lambda item: len(item[1]), reverse=True
-    ):
-        api.log.warn(
-            f"- {word}: " + ", ".join(f"#{num}" for num in line_numbers)
-        )
+    if misspelling_map:
+        api.log.info("Misspelled words:")
+        for word, line_numbers in sorted(
+            misspelling_map.items(),
+            key=lambda item: len(item[1]),
+            reverse=True,
+        ):
+            api.log.warn(
+                f"- {word}: " + ", ".join(f"#{num}" for num in line_numbers)
+            )
+    else:
+        api.log.info("No misspelled words")
