@@ -9,6 +9,7 @@ from .common import (
     BaseResult,
     Violation,
     get_width,
+    is_event_karaoke,
     measure_frame_size,
 )
 
@@ -19,6 +20,9 @@ def check_long_line(
     renderer: AssRenderer,
     optimal_line_heights: T.Dict[str, float],
 ) -> T.Iterable[BaseResult]:
+    if is_event_karaoke(event):
+        return
+
     width, height = measure_frame_size(api, renderer, event)
     average_height = optimal_line_heights.get(event.style, 0)
     line_count = round(height / average_height) if average_height else 0
