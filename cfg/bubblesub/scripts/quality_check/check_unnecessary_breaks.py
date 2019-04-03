@@ -11,6 +11,7 @@ from .common import (
     BaseResult,
     Information,
     get_width,
+    is_event_title,
     measure_frame_size,
 )
 
@@ -29,7 +30,11 @@ def check_unnecessary_breaks(
     optimal_width = get_width(api) * WIDTH_MULTIPLIERS[1]
 
     many_sentences = len(re.split("(?<=[\.!?…] )", event_copy.text)) > 1
-    if width < optimal_width and not many_sentences:
+    if (
+        width < optimal_width
+        and not many_sentences
+        and not is_event_title(event)
+    ):
         yield Information(
             event,
             f"possibly unnecessary break "
