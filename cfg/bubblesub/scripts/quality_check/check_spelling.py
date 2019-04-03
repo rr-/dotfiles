@@ -5,6 +5,8 @@ import enchant
 from bubblesub.api import Api
 from bubblesub.ass.util import ass_to_plaintext, spell_check_ass_line
 
+from .common import is_event_karaoke
+
 SPELL_CHECK_LANGUAGE = "en_US"
 
 
@@ -22,7 +24,7 @@ def check_spelling(api: Api) -> None:
 
     misspelling_map = defaultdict(set)
     for event in api.subs.events:
-        if event.actor == "[karaoke]":
+        if is_event_karaoke(event):
             continue
         text = ass_to_plaintext(event.text)
         for _start, _end, word in spell_check_ass_line(dictionary, text):

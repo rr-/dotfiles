@@ -128,3 +128,15 @@ def get_next_non_empty_event(event: AssEvent) -> T.Optional[AssEvent]:
             return event
         event = event.next
     return None
+
+
+def is_event_sign(event: AssEvent) -> bool:
+    return event.actor == "(sign)"
+
+
+def is_event_title(event: AssEvent) -> bool:
+    return event.actor == "[title]"
+
+
+def is_event_karaoke(event: AssEvent) -> bool:
+    return event.actor == "[karaoke]"

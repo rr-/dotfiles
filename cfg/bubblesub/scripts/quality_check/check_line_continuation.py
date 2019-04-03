@@ -9,6 +9,9 @@ from .common import (
     Violation,
     get_next_non_empty_event,
     get_prev_non_empty_event,
+    is_event_karaoke,
+    is_event_sign,
+    is_event_title,
 )
 
 
@@ -37,8 +40,8 @@ def check_line_continuation(event: AssEvent) -> T.Iterable[BaseResult]:
     ):
         if (
             not event.is_comment
-            and event.actor != "[karaoke]"
-            and event.actor != "[title]"
-            and event.actor != "(sign)"
+            and not is_event_karaoke(event)
+            and not is_event_title(event)
+            and not is_event_sign(event)
         ):
             yield Violation(event, "possibly unended sentence")
