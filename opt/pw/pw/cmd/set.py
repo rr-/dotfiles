@@ -37,7 +37,7 @@ class SetPasswordCommand(Command):
         alpha = "abcdefghijklmnopqrstuvwxyz"
         alpha += "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
         alpha += "0123456789"
-        alpha += ",._-+@%/"
+        alpha += "_-"
         while True:
             password = "".join(random.choice(alpha) for _ in range(length))
             if not password.startswith(" ") and not password.endswith(" "):
