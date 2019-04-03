@@ -40,6 +40,7 @@ set wrapscan                  "search again from top if no matches
 set nowrap                    "don't wrap long lines
 set formatoptions-=c          "auto comment continuation works against me
 set formatoptions-=j          "make :join not remove nonwhitespace
+set formatoptions-=t          "don't auto align lines during typing
 
 "editor behavior
 set showcmd                   "show last command in status
