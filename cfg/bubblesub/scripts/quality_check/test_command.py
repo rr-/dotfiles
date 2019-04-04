@@ -123,6 +123,23 @@ def test_check_durations_good_gap() -> None:
         ("\N{EM DASH}Whatever\N{EM DASH}…", "bad dash (expected \N{EN DASH})"),
         ("- What?", "bad dash (expected \N{EN DASH})"),
         ("\N{EN DASH} What!", "dialog with just one person"),
+        ("\N{EN DASH} What! \N{EN DASH} Nothing\\Nat all.", None),
+        ("\N{EN DASH} What. \N{EN DASH} Nothing\\Nat all.", None),
+        ("\N{EN DASH} What? \N{EN DASH} Nothing\\Nat all.", None),
+        ("\N{EN DASH} What… \N{EN DASH} Nothing\\Nat all.", None),
+        (
+            "\N{EN DASH} What \N{EN DASH} Nothing\\Nat all.",
+            "dialog with just one person",
+        ),
+        (
+            "\N{EN DASH} What.\N{EN DASH} Nothing\\Nat all.",
+            "dialog with just one person",
+        ),
+        (
+            "\N{EN DASH} What: \N{EN DASH} Nothing\\Nat all.",
+            "dialog with just one person",
+        ),
+        ("\N{EN DASH} What!\\N\N{EN DASH} Nothing.", None),
         ("What--", "bad dash (expected \N{EM DASH})"),
         ("What\N{EN DASH}", "bad dash (expected \N{EM DASH})"),
         ("W-what?", "possibly wrong stutter capitalization"),
