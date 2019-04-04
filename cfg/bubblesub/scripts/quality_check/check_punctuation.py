@@ -72,7 +72,7 @@ def check_punctuation(event: AssEvent) -> T.Iterable[BaseResult]:
     if re.search("^– .* –$", text, flags=re.M):
         yield Violation(event, "bad dash (expected —)")
     elif not re.search("^—.*—$", text, flags=re.M):
-        if len(re.findall(r"^–", text, flags=re.M)) == 1:
+        if len(re.findall(r"^–|[\.…!?] –", text, flags=re.M)) == 1:
             yield Violation(event, "dialog with just one person")
 
         if re.search(r"[-–]$", text, flags=re.M):
