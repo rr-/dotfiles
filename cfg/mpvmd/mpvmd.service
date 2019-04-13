@@ -10,4 +10,4 @@ Environment=LD_LIBRARY_PATH=/usr/local/lib
 Restart=on-abort
 
 [Install]
-WantedBy=multi-user.target
+WantedBy=default.target
