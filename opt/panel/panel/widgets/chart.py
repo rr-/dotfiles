@@ -8,9 +8,12 @@ from panel.colors import Colors
 
 
 class Chart(QtWidgets.QWidget):
-    def __init__(self, parent: QtWidgets.QWidget, min_width: int) -> None:
+    def __init__(
+        self, parent: QtWidgets.QWidget, min_width: int, min_scale: float
+    ) -> None:
         super().__init__(parent)
         self.setMinimumSize(QtCore.QSize(min_width, 0))
+        self.min_scale = min_scale
         self.label: T.Optional[str] = None
         self.points: T.Dict[str, T.List[float]] = collections.defaultdict(list)
         self.setProperty("class", "chart")
@@ -30,6 +33,7 @@ class Chart(QtWidgets.QWidget):
             if len(self.points)
             else 0
         )
+        highest = max(self.min_scale, highest)
 
         def x_transform(x: float) -> float:
             return width - 1 - 2 * x
