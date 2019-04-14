@@ -1,4 +1,5 @@
 import functools
+import re
 
 import ass_tag_parser
 from bubblesub.api.cmd import BaseCommand
@@ -32,14 +33,18 @@ class ProgressCommand(BaseCommand):
         empty_duration = 0
         total_count = 0
         total_duration = 0
+        words = []
         for event in self.api.subs.events:
             if event.actor.startswith("[") and event.actor.endswith("]"):
                 continue
             total_duration += event.duration
             total_count += 1
-            if not extract_text(event.text):
+            text = extract_text(event.text)
+            if not text:
                 empty_duration += event.duration
                 empty_count += 1
+            else:
+                words += list(re.findall("[a-zA-Z]+", text))
 
         self.api.log.info(
             f"{empty_count} lines left ("
@@ -52,6 +57,8 @@ class ProgressCommand(BaseCommand):
             f"{ms_to_str(total_duration)}, "
             f"{(total_duration - empty_duration) / max(1, total_duration):.01%})"
         )
+        self.api.log.info(f"{len(words)} words translated")
+        self.api.log.info(f"{sum(map(len, words))} characters translated")
 
 
 COMMANDS = [ProgressCommand]
