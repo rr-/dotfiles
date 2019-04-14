@@ -51,7 +51,9 @@ class NetworkUsageWidget(Widget):
             self._old_tx_bytes = int(self._tx_path.read_text().strip())
 
         self._container = QtWidgets.QWidget(main_window)
-        self._chart = Chart(self._container, 150)
+        self._chart = Chart(
+            self._container, min_width=150, min_scale=1024 * 1024
+        )
 
         layout = QtWidgets.QHBoxLayout(self._container, margin=0, spacing=6)
         layout.addWidget(self._chart)
