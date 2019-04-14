@@ -127,10 +127,10 @@ def main() -> None:
         WindowTitleWidget(app, main_window),
         StretchWidget(app, main_window),
         MpvmdWidget(app, main_window),
+        VolumeWidget(app, main_window),
         NetworkUsageWidget(app, main_window),
         BatteryWidget(app, main_window),
         CpuWidget(app, main_window),
-        VolumeWidget(app, main_window),
         TimeWidget(app, main_window),
         NotificationsWidget(app, main_window),
     ]
