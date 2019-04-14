@@ -17,20 +17,10 @@ class CpuWidget(Widget):
         super().__init__(app, main_window)
         self.percentage: T.Optional[float] = None
         self._container = QtWidgets.QWidget(main_window)
-        self._icon_label = QtWidgets.QLabel(self._container)
-        self._text_label = QtWidgets.QLabel(self._container)
-        self._chart = Chart(self._container, 80)
+        self._chart = Chart(self._container, 100)
 
         layout = QtWidgets.QHBoxLayout(self._container, margin=0, spacing=6)
-        layout.addWidget(self._icon_label)
-        layout.addWidget(self._text_label)
         layout.addWidget(self._chart)
-
-        self._text_label.setFixedWidth(45)
-        self._text_label.setAlignment(
-            QtCore.Qt.AlignCenter | QtCore.Qt.AlignVCenter
-        )
-        self._set_icon(self._icon_label, "chip")
 
     @property
     def container(self) -> QtWidgets.QWidget:
@@ -44,6 +34,6 @@ class CpuWidget(Widget):
 
     def _render_impl(self) -> None:
         assert self.percentage is not None
-        self._text_label.setText("{:.1f}%".format(self.percentage))
         self._chart.addPoint(Colors.cpu_chart_line, self.percentage)
+        self._chart.setLabel(f"CPU {self.percentage:.1f}%")
         self._chart.repaint()

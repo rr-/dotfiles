@@ -51,29 +51,10 @@ class NetworkUsageWidget(Widget):
             self._old_tx_bytes = int(self._tx_path.read_text().strip())
 
         self._container = QtWidgets.QWidget(main_window)
-        self._net_in_icon_label = QtWidgets.QLabel(self._container)
-        self._net_in_text_label = QtWidgets.QLabel(self._container)
-        self._net_out_icon_label = QtWidgets.QLabel(self._container)
-        self._net_out_text_label = QtWidgets.QLabel(self._container)
-        self._chart = Chart(self._container, 80)
+        self._chart = Chart(self._container, 150)
 
         layout = QtWidgets.QHBoxLayout(self._container, margin=0, spacing=6)
-        layout.addWidget(self._net_in_icon_label)
-        layout.addWidget(self._net_in_text_label)
-        layout.addWidget(self._net_out_icon_label)
-        layout.addWidget(self._net_out_text_label)
         layout.addWidget(self._chart)
-
-        self._set_icon(self._net_in_icon_label, "arrow-down")
-        self._set_icon(self._net_out_icon_label, "arrow-up")
-        self._net_in_text_label.setFixedWidth(65)
-        self._net_in_text_label.setAlignment(
-            QtCore.Qt.AlignCenter | QtCore.Qt.AlignVCenter
-        )
-        self._net_out_text_label.setFixedWidth(65)
-        self._net_out_text_label.setAlignment(
-            QtCore.Qt.AlignCenter | QtCore.Qt.AlignVCenter
-        )
 
     @property
     def container(self) -> QtWidgets.QWidget:
@@ -92,8 +73,9 @@ class NetworkUsageWidget(Widget):
         self._old_tx_bytes = tx_bytes
 
     def _render_impl(self) -> None:
-        self._net_in_text_label.setText(convert_speed(self.net_in))
-        self._net_out_text_label.setText(convert_speed(self.net_out))
+        self._chart.setLabel(
+            f"DL {convert_speed(self.net_in)}  UL {convert_speed(self.net_out)}"
+        )
         self._chart.addPoint(Colors.net_up_chart_line, self.net_in)
         self._chart.addPoint(Colors.net_down_chart_line, self.net_out)
         self._chart.update()
