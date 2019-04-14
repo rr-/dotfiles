@@ -14,6 +14,7 @@ from panel.colors import Colors
 from panel.util import run
 from panel.widgets.battery import BatteryWidget
 from panel.widgets.cpu import CpuWidget
+from panel.widgets.memory import MemoryWidget
 from panel.widgets.mpvmd import MpvmdWidget
 from panel.widgets.net import NetworkUsageWidget
 from panel.widgets.notifications import NotificationsWidget
@@ -131,6 +132,7 @@ def main() -> None:
         NetworkUsageWidget(app, main_window),
         BatteryWidget(app, main_window),
         CpuWidget(app, main_window),
+        MemoryWidget(app, main_window),
         TimeWidget(app, main_window),
         NotificationsWidget(app, main_window),
     ]
