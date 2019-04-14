@@ -11,8 +11,12 @@ class Chart(QtWidgets.QWidget):
     def __init__(self, parent: QtWidgets.QWidget, min_width: int) -> None:
         super().__init__(parent)
         self.setMinimumSize(QtCore.QSize(min_width, 0))
+        self.label: T.Optional[str] = None
         self.points: T.Dict[str, T.List[float]] = collections.defaultdict(list)
         self.setProperty("class", "chart")
+
+    def setLabel(self, text: T.Optional[str]) -> None:
+        self.label = text
 
     def addPoint(self, color: str, y: float) -> None:
         self.points[color].append(y)
@@ -61,5 +65,12 @@ class Chart(QtWidgets.QWidget):
                 if excess:
                     points.pop(0)
                     break
+
+        if self.label:
+            font = painter.font()
+            font.setPixelSize(10)
+            painter.setFont(font)
+            painter.setPen(QtGui.QColor(Colors.foreground))
+            painter.drawText(self.rect(), QtCore.Qt.AlignCenter, self.label)
 
         painter.end()
