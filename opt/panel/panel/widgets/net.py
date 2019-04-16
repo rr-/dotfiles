@@ -52,7 +52,10 @@ class NetworkUsageWidget(Widget):
 
         self._container = QtWidgets.QWidget(main_window)
         self._chart = Chart(
-            self._container, min_width=150, min_scale=1024 * 1024
+            self._container,
+            min_width=150,
+            scale_low=0.0,
+            scale_high=1024.0 * 1024.0,
         )
 
         layout = QtWidgets.QHBoxLayout(self._container, margin=0, spacing=6)
