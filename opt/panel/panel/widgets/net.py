@@ -11,12 +11,12 @@ from panel.widgets.widget import Widget
 
 
 def convert_speed(speed_bytes: int) -> str:
-    suffixes = ("B/s", "KB/s", "MB/s", "GB/s", "TB/s")
+    suffixes = ("B", "KB", "MB", "GB", "TB")
     if speed_bytes < 1024:
         return "{:.0f} {}".format(speed_bytes, suffixes[0])
     power = int(math.floor(math.log(speed_bytes, 1024)))
     denominator = math.pow(1024, power)
-    return f"{speed_bytes / denominator:.1f} {suffixes[power]}"
+    return f"{speed_bytes / denominator:.0f} {suffixes[power]}"
 
 
 class NetworkUsageWidget(Widget):
@@ -53,7 +53,7 @@ class NetworkUsageWidget(Widget):
         self._container = QtWidgets.QWidget(main_window)
         self._chart = Chart(
             self._container,
-            min_width=150,
+            min_width=120,
             scale_low=0.0,
             scale_high=1024.0 * 1024.0,
         )
