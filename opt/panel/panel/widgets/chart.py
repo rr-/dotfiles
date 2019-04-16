@@ -38,7 +38,7 @@ class Chart(QtWidgets.QWidget):
 
         def x_transform(x: float) -> float:
             max_x = width - 1
-            return max_x - 2 * x
+            return max_x - x
 
         # trim excess data points
         for _, points in self.points.items():
