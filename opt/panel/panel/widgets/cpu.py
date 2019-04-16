@@ -18,7 +18,7 @@ class CpuWidget(Widget):
         self.percentage: T.Optional[float] = None
         self._container = QtWidgets.QWidget(main_window)
         self._chart = Chart(
-            self._container, min_width=100, scale_low=0.0, scale_high=100.0
+            self._container, min_width=80, scale_low=0.0, scale_high=100.0
         )
 
         layout = QtWidgets.QHBoxLayout(self._container, margin=0, spacing=6)

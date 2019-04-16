@@ -20,7 +20,7 @@ class CurrencyWidget(Widget):
         self._container = QtWidgets.QWidget(main_window)
         self._chart = Chart(
             self._container,
-            min_width=100,
+            min_width=80,
             scale_low=float("inf"),
             scale_high=0.0,
         )
