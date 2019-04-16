@@ -48,7 +48,7 @@ class CurrencyWidget(Widget):
 
         self._chart.clearPoints()
         for key, value in sorted(self._quotes.items(), key=lambda kv: kv[0]):
-            self._chart.addPoint(Colors.cpu_chart_line, value)
+            self._chart.addPoint(Colors.currency_chart_line, value)
 
         self._chart.setLabel(f"USD {value}")
 
