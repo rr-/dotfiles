@@ -36,18 +36,31 @@ class Chart(QtWidgets.QWidget):
         width = T.cast(int, self.width())
         height = T.cast(int, self.height())
 
+        def x_transform(x: float) -> float:
+            max_x = width - 1
+            return max_x - 2 * x
+
+        # trim excess data points
+        for _, points in self.points.items():
+            start_removing = False
+            for x, _ in enumerate(reversed(points)):
+                if start_removing:
+                    points.pop(0)
+                else:
+                    dx = x_transform(x)
+                    if dx < 0:
+                        start_removing = True
+
         values = [p for points in self.points.values() for p in points]
         value_low = min(values + [self.scale_low])
         value_high = max(values + [self.scale_high])
 
-        def x_transform(x: float) -> float:
-            return width - 1 - 2 * x
-
         def y_transform(value: float) -> float:
             max_y = height - 1
-            return max_y - (value - value_low) * max_y / max(
-                1, value_high - value_low
-            )
+            if value_high - value_low == 0:
+                return max_y
+            ratio = (value - value_low) / (value_high - value_low)
+            return (1 - ratio) * max_y
 
         painter = QtGui.QPainter()
         painter.begin(self)
@@ -59,24 +72,14 @@ class Chart(QtWidgets.QWidget):
 
         for color, points in self.points.items():
             painter.setPen(QtGui.QColor(color))
-            prev_x = 0
-            prev_y = points[-1]
+            prev_dx = x_transform(0)
+            prev_dy = y_transform(points[-1])
             for x, y in enumerate(reversed(points)):
-                dx = x_transform(x)
-                excess = dx < 0
-                if excess:
-                    dx = 0
-                painter.drawLine(
-                    x_transform(prev_x),
-                    y_transform(prev_y),
-                    dx,
-                    y_transform(y),
-                )
-                prev_x = x
-                prev_y = y
-                if excess:
-                    points.pop(0)
-                    break
+                dx = max(0.0, x_transform(x))
+                dy = y_transform(y)
+                painter.drawLine(prev_dx, prev_dy, dx, dy)
+                prev_dx = dx
+                prev_dy = dy
 
         if self.label:
             font = painter.font()
