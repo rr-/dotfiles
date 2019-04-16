@@ -33,6 +33,6 @@ class MemoryWidget(Widget):
 
     def _render_impl(self) -> None:
         assert self.percentage is not None
-        self._chart.addPoint(Colors.cpu_chart_line, self.percentage)
+        self._chart.addPoint(Colors.memory_chart_line, self.percentage)
         self._chart.setLabel(f"RAM {self.percentage:.1f}%")
         self._chart.repaint()
