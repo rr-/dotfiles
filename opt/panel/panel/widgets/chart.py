@@ -9,17 +9,25 @@ from panel.colors import Colors
 
 class Chart(QtWidgets.QWidget):
     def __init__(
-        self, parent: QtWidgets.QWidget, min_width: int, min_scale: float
+        self,
+        parent: QtWidgets.QWidget,
+        min_width: int,
+        scale_low: float,
+        scale_high: float,
     ) -> None:
         super().__init__(parent)
         self.setMinimumSize(QtCore.QSize(min_width, 0))
-        self.min_scale = min_scale
+        self.scale_low = scale_low
+        self.scale_high = scale_high
         self.label: T.Optional[str] = None
         self.points: T.Dict[str, T.List[float]] = collections.defaultdict(list)
         self.setProperty("class", "chart")
 
     def setLabel(self, text: T.Optional[str]) -> None:
         self.label = text
+
+    def clearPoints(self) -> None:
+        self.points.clear()
 
     def addPoint(self, color: str, y: float) -> None:
         self.points[color].append(y)
@@ -28,18 +36,18 @@ class Chart(QtWidgets.QWidget):
         width = T.cast(int, self.width())
         height = T.cast(int, self.height())
 
-        highest = (
-            max(p for points in self.points.values() for p in points)
-            if len(self.points)
-            else 0
-        )
-        highest = max(self.min_scale, highest)
+        values = [p for points in self.points.values() for p in points]
+        value_low = min(values + [self.scale_low])
+        value_high = max(values + [self.scale_high])
 
         def x_transform(x: float) -> float:
             return width - 1 - 2 * x
 
-        def y_transform(y: float) -> float:
-            return height - 1 - y * (height - 1) / max(1, highest)
+        def y_transform(value: float) -> float:
+            max_y = height - 1
+            return max_y - (value - value_low) * max_y / max(
+                1, value_high - value_low
+            )
 
         painter = QtGui.QPainter()
         painter.begin(self)
