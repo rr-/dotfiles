@@ -14,6 +14,7 @@ from panel.colors import Colors
 from panel.util import run
 from panel.widgets.battery import BatteryWidget
 from panel.widgets.cpu import CpuWidget
+from panel.widgets.currency import CurrencyWidget
 from panel.widgets.memory import MemoryWidget
 from panel.widgets.mpvmd import MpvmdWidget
 from panel.widgets.net import NetworkUsageWidget
@@ -129,6 +130,7 @@ def main() -> None:
         StretchWidget(app, main_window),
         MpvmdWidget(app, main_window),
         VolumeWidget(app, main_window),
+        CurrencyWidget(app, main_window),
         BatteryWidget(app, main_window),
         NetworkUsageWidget(app, main_window),
         CpuWidget(app, main_window),
