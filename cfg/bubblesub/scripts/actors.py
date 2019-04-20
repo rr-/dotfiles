@@ -103,10 +103,12 @@ class ActorsTagger:
             )
 
     def _store_hotkeys(self) -> None:
-        for shortcut in SHORTCUTS:
-            self._previous_hotkeys[shortcut] = self._api.cfg.hotkeys[
-                HotkeyContext.Global, shortcut
-            ]
+        for base in SHORTCUTS:
+            for modifier in ["", "Alt+", "Ctrl+", "Shift+"]:
+                shortcut = modifier + base
+                self._previous_hotkeys[shortcut] = self._api.cfg.hotkeys[
+                    HotkeyContext.Global, shortcut
+                ]
 
     def _restore_hotkeys(self) -> None:
         for shortcut, cmdline in self._previous_hotkeys.items():
