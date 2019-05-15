@@ -98,14 +98,3 @@ set wildignore+=*.swp,*.spl
 set wildignore+=*.stackdump
 set wildignore+=*~.*
 set wildignorecase    "case-insensitive filename completion in commands
-
-function! DeleteHiddenBuffers()
-    redir => buffersoutput
-    buffers
-    redir END
-    let buflist = split(buffersoutput,"\n")
-    for item in filter(buflist,"v:val[5] == 'h'")
-            exec 'bdelete ' . item[:2]
-    endfor
-endfunction
-command! DeleteHiddenBuffers call DeleteHiddenBuffers()
