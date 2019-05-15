@@ -14,8 +14,8 @@ function playback_finished(event)
         args={
             'python3',
             mp_utils.join_path(os.getenv('HOME'), '.config/mpv/scripts/playback_logger.py'),
-            '--percent', mp.get_property_number('percent-pos') or 0.0,
-            '--duration', mp.get_property_number('duration') or 0.0,
+            '--percent', tostring(mp.get_property_number('percent-pos') or 0.0),
+            '--duration', tostring(mp.get_property_number('duration') or 0.0),
             '--path', mp.get_property('path'),
         },
         cancellable=false})
