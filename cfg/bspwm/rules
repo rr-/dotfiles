@@ -25,6 +25,10 @@ elif [[ "$instance" =~ Diablo.* ]]; then
     echo border=off
 fi
 
+if xwininfo -wm -id "$window_id" | grep -i vision; then
+    echo 'state=floating'
+fi
+
 if xwininfo -wm -id "$window_id" | grep -i splash; then
     echo border=off
 fi
