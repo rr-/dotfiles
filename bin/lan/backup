@@ -72,7 +72,7 @@ def main():
         do_sync("cyclone:/home/rr-/data/blob", "tornado", copy_links=True)
         do_sync("cyclone:/home/rr-/data/audio", "drizzle", copy_links=True)
 
-        # # development
+        # development
         do_sync(
             "tornado:/home/rr-/src",
             "cyclone",
@@ -102,6 +102,8 @@ def main():
                 "/home/rr-/srv/data/subs",
             ],
         )
+
+        do_sync("oc:/var/log/nginx/", "cyclone", copy_links=True)
 
         do_sync(
             "cyclone:/home/rr-/srv",
