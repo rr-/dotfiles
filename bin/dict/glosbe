@@ -1,0 +1,90 @@
+#!/usr/bin/env python3
+import argparse
+import re
+import typing as T
+import urllib.parse
+import urllib.request
+
+import lxml.etree
+
+COLOR_RESET = "\x1B[0m"
+COLOR_HIGHLIGHT = "\x1B[38;5;%dm\x1B[48;5;%dm" % (229, 58)
+
+BASE_URL = "https://glosbe.com/"
+USER_AGENT = (
+    "Mozilla/5.0 (X11; Linux x86_64; rv:10.0) Gecko/20100101 Firefox/10.0"
+)
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        description="Looks up phrases on glosbe.com"
+    )
+    parser.add_argument(
+        "-n", "--no-stemming", action="store_false", dest="stem"
+    )
+    parser.add_argument(
+        metavar="src-lang", default="en", dest="src_lang", nargs="?"
+    )
+    parser.add_argument(
+        metavar="dst-lang", default="pl", dest="dst_lang", nargs="?"
+    )
+    parser.add_argument("phrase")
+    return parser.parse_args()
+
+
+def _format_html(node: lxml.etree.Element) -> str:
+    inner_html = lxml.etree.tostring(node, encoding="unicode")
+    inner_html = re.sub(
+        '<span class="tm-p-em">([^<>]*)</span>',
+        COLOR_HIGHLIGHT + r"\1" + COLOR_RESET,
+        inner_html,
+    )
+    return re.sub("<[^>]*>", "", inner_html).strip()
+
+
+def lookup_context_phrase(
+    src_language: str, dst_language: str, stem: bool, phrase: str
+) -> T.Iterable[T.Tuple[str, str]]:
+    url = (
+        BASE_URL
+        + f"{src_language}/{dst_language}/"
+        + f"{urllib.parse.quote(phrase)}"
+        + f"?stem={stem}"
+    )
+
+    request = urllib.request.Request(
+        url=url, headers={"User-Agent": USER_AGENT}
+    )
+
+    with urllib.request.urlopen(request) as handle:
+        content = handle.read()
+        doc = lxml.etree.HTML(content)
+        for example_node in doc.cssselect("#tmTable div.tableRow"):
+            #print(lxml.etree.tostring(example_node, encoding="unicode"))
+            src_node = example_node.cssselect(
+                "div.span6:nth-child(1) span[class=''],"
+                "div.span6:nth-child(1) span[class='nobold']"
+            )[0]
+            dst_node = example_node.cssselect(
+                "div.span6:nth-child(2) span[class=''],"
+                "div.span6:nth-child(2) span[class='nobold']"
+            )[0]
+            yield (_format_html(src_node), _format_html(dst_node))
+
+
+def main() -> None:
+    args = parse_args()
+
+    results = lookup_context_phrase(
+        args.src_lang, args.dst_lang, args.stem, args.phrase
+    )
+
+    for src, dst in results:
+        print(src)
+        print(dst)
+        print()
+
+
+if __name__ == "__main__":
+    main()
