@@ -17,10 +17,7 @@ from .common import (
 
 
 def check_unnecessary_breaks(
-    event: AssEvent,
-    api: Api,
-    renderer: AssRenderer,
-    optimal_line_heights: T.Dict[str, float],
+    event: AssEvent, api: Api, renderer: AssRenderer
 ) -> T.Iterable[BaseResult]:
     if r"\N" not in event.text:
         return
@@ -29,7 +26,7 @@ def check_unnecessary_breaks(
     width, _height = measure_frame_size(api, renderer, event_copy)
     optimal_width = get_width(api) * WIDTH_MULTIPLIERS[1]
 
-    many_sentences = len(re.split("(?<=[\.!?…] )", event_copy.text)) > 1
+    many_sentences = len(re.split(r"(?<=[\.!?…] )", event_copy.text)) > 1
     if (
         width < optimal_width
         and not many_sentences

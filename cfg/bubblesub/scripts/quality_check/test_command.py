@@ -266,7 +266,7 @@ def test_check_line_continuation(
     texts: T.List[str], violation_text: T.Optional[str]
 ) -> None:
     event_list = AssEventList()
-    for i, text in enumerate(texts):
+    for text in texts:
         event_list.append(AssEvent(text=text))
 
     results = []
@@ -347,11 +347,7 @@ def test_check_unnecessary_breaks(text, violation_text):
     ]
     event_list = AssEventList()
     event_list.append(AssEvent(text=text))
-    results = list(
-        check_unnecessary_breaks(
-            event_list[0], api, renderer, {"Default": 200}
-        )
-    )
+    results = list(check_unnecessary_breaks(event_list[0], api, renderer))
     if violation_text is None:
         assert len(results) == 0
     else:
