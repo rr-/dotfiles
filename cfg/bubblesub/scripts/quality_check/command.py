@@ -42,9 +42,7 @@ def list_violations(api: Api) -> T.Iterable[BaseResult]:
         yield from check_line_continuation(event)
         yield from check_ass_tags(event)
         yield from check_double_words(event)
-        yield from check_unnecessary_breaks(
-            event, api, renderer, optimal_line_heights
-        )
+        yield from check_unnecessary_breaks(event, api, renderer)
         yield from check_long_line(event, api, renderer, optimal_line_heights)
 
 

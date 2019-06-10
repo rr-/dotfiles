@@ -4,8 +4,6 @@ import concurrent.futures
 import typing as T
 from subprocess import run
 
-import googletrans
-
 from bubblesub.api import Api
 from bubblesub.api.cmd import BaseCommand
 from bubblesub.ass.event import AssEvent
@@ -15,10 +13,10 @@ from bubblesub.cmd.common import SubtitlesSelection
 
 def retry(func: T.Callable, *args: T.Any, **kwargs: T.Any) -> T.Any:
     max_tries = 3
-    for i in range(max_tries - 1):
+    for _ in range(max_tries - 1):
         try:
             return func(*args, **kwargs)
-        except Exception as ex:
+        except Exception:
             pass
     return func(*args, **kwargs)
 

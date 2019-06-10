@@ -13,7 +13,7 @@ def ms_to_str(ms: int) -> str:
 def extract_text(text: str) -> str:
     try:
         ass_line = ass_tag_parser.parse_ass(text)
-    except ass_tag_parser.ParseError as ex:
+    except ass_tag_parser.ParseError:
         return text
     ret = ""
     for item in ass_line:

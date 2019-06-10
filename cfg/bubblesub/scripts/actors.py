@@ -2,7 +2,6 @@ import argparse
 import enum
 import shlex
 import typing as T
-from collections import defaultdict
 from dataclasses import dataclass
 
 from bubblesub.api import Api
@@ -30,7 +29,7 @@ class ActorsTagger:
     def __init__(self, api: Api) -> None:
         self._api = api
         self._previous_hotkeys: T.Dict[str, T.Optional[str]] = {}
-        self._macros: T.List[StoredMacro] = []
+        self._macros: T.List[Macro] = []
         self.running = False
 
     def enable(self) -> None:
@@ -65,12 +64,9 @@ class ActorsTagger:
             self._macros.append(Macro(name=name, type=type, text=text))
 
     def apply_macro(self, name: str) -> None:
-        for macro in self._macros:
-            if macro.name == name:
-                break
-        else:
+        macro = self.get_macro(name)
+        if not macro:
             return
-
         for sub in self._api.subs.selected_events:
             if macro.type == MacroType.style:
                 sub.style = macro.text
@@ -80,6 +76,12 @@ class ActorsTagger:
                 sub.actor = macro.text
             else:
                 raise NotImplementedError("not implemented")
+
+    def get_macro(self, name: str) -> T.Optional[Macro]:
+        for macro in self._macros:
+            if macro.name == name:
+                return macro
+        return None
 
     def _setup_hotkeys(self) -> None:
         if not self.running:

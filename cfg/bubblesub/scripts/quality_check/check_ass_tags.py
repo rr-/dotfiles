@@ -14,10 +14,10 @@ from bubblesub.ass.event import AssEvent
 from .common import BaseResult, Violation
 
 
-def get(source: T.List[T.Any], n: int) -> T.Any:
-    if n < 0 or n >= len(source):
+def get(source: T.List[T.Any], idx: int) -> T.Any:
+    if idx < 0 or idx >= len(source):
         return None
-    return source[n]
+    return source[idx]
 
 
 def check_ass_tags(event: AssEvent) -> T.Iterable[BaseResult]:
