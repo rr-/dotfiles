@@ -11,6 +11,7 @@ from panel.colors import Colors
 
 ROOT_DIR = Path(__file__).parent.parent
 ICON_STYLESHEET = """
+polygon {{ fill: {foreground} }}
 path {{ fill: {foreground} }}
 .off {{ opacity: 0.3; }}
 """
