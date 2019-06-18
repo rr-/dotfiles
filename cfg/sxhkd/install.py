@@ -3,8 +3,8 @@ from dotinstall import util
 
 
 def run():
-    packages.try_install('sxhkd-git')
-    packages.try_install('xdo-git')
+    packages.try_install('sxhkd')
+    packages.try_install('xdo')
 
     util.create_symlink('./config', '~/.config/sxhkd')
     util.create_symlink('./beep-shot.mp3', '~/.local/share/')
