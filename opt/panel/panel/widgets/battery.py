@@ -62,4 +62,4 @@ class BatteryWidget(Widget):
         self.percentage = current_value * 100.0 / max_value
 
     def _render_impl(self) -> None:
-        self._text_label.setText("%5.02f%%" % self.percentage)
+        self._text_label.setText(f"{self.percentage:.1f}%")
