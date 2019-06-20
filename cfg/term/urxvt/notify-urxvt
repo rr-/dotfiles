@@ -30,6 +30,7 @@ def send_osc(*args: T.Any) -> None:
                         handle.write(msg)
     elif os.getenv("TERM").startswith("rxvt"):
         sys.stderr.write(msg)
+    sys.stderr.write("\a")
 
 
 def parse_args() -> argparse.Namespace:
