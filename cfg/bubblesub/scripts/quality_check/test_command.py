@@ -5,7 +5,7 @@ from unittest.mock import MagicMock
 import pytest
 
 from bubblesub.api.log import LogLevel
-from bubblesub.ass.event import AssEvent, AssEventList
+from bubblesub.fmt.ass.event import AssEvent, AssEventList
 
 from .check_ass_tags import check_ass_tags
 from .check_double_words import check_double_words

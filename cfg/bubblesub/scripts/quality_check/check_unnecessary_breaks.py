@@ -3,8 +3,8 @@ import typing as T
 from copy import copy
 
 from bubblesub.api import Api
-from bubblesub.ass.event import AssEvent
 from bubblesub.ass_renderer import AssRenderer
+from bubblesub.fmt.ass.event import AssEvent
 
 from .common import (
     WIDTH_MULTIPLIERS,
