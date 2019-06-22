@@ -1,7 +1,7 @@
 import typing as T
 
-from bubblesub.ass.event import AssEvent
-from bubblesub.ass.util import ass_to_plaintext, character_count
+from bubblesub.fmt.ass.event import AssEvent
+from bubblesub.fmt.ass.util import ass_to_plaintext, character_count
 
 from .common import (
     BaseResult,

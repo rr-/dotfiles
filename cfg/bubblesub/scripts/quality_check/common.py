@@ -3,10 +3,10 @@ from copy import copy
 
 from bubblesub.api import Api
 from bubblesub.api.log import LogLevel
-from bubblesub.ass.event import AssEvent, AssEventList
-from bubblesub.ass.meta import AssMeta
-from bubblesub.ass.util import ass_to_plaintext
 from bubblesub.ass_renderer import AssRenderer
+from bubblesub.fmt.ass.event import AssEvent, AssEventList
+from bubblesub.fmt.ass.meta import AssMeta
+from bubblesub.fmt.ass.util import ass_to_plaintext
 
 WIDTH_MULTIPLIERS = {1: 0.7, 2: 0.9}
 

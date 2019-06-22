@@ -1,7 +1,7 @@
 import typing as T
 
-from bubblesub.ass.event import AssEvent
-from bubblesub.ass.style import AssStyleList
+from bubblesub.fmt.ass.event import AssEvent
+from bubblesub.fmt.ass.style import AssStyleList
 
 from .common import BaseResult, Violation
 

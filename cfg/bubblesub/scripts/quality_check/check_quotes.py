@@ -1,8 +1,8 @@
 import re
 import typing as T
 
-from bubblesub.ass.event import AssEvent
-from bubblesub.ass.util import ass_to_plaintext
+from bubblesub.fmt.ass.event import AssEvent
+from bubblesub.fmt.ass.util import ass_to_plaintext
 
 from .common import BaseResult, DebugInformation, Information, Violation
 
