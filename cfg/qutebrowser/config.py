@@ -33,6 +33,7 @@ c.hints.auto_follow_timeout = 300
 c.hints.mode = "number"
 c.tabs.title.format = "{index}: {title} {audio}"
 c.downloads.location.directory = "~/"
+c.completion.web_history.max_items = 1000
 
 c.url.searchengines = {
     "DEFAULT": "https://google.com/search?hl=en&q={}",
