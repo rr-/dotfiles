@@ -17,22 +17,22 @@ setopt magic_equal_subst                # enable path autocompletion after =
 WORDCHARS='*?_-.[]~=&;!#$%^(){}<>'      # what kill-word should delete
 
 # history
-export HISTFILE=~/.config/zsh/history
-export HISTSIZE=5000         # how many entries in history (memory)
-export SAVEHIST=$HISTSIZE    # how many entries in history (hdd)
-setopt appendhistory         # append lines (for concurrent sessions)
-setopt extended_history      # record usage timestamps in the histfile
-setopt inc_append_history    # write to the histfile immediately
-setopt share_history         # share history between all sessions
-setopt hist_ignore_all_dups  # delete old entry if new entry is a duplicate
-setopt hist_find_no_dups     # do not display a line previously found
-setopt hist_ignore_space     # discard entries that start with space
-setopt hist_save_no_dups     # don't write duplicate entries in the histfile
-setopt hist_reduce_blanks    # remove superfluous blanks before recording entry
-setopt hist_verify           # don't execute immediately upon history expansion
+HISTFILE=~/.config/zsh/history  # where to put the history
+HISTSIZE=5000                   # how many entries in history (memory)
+SAVEHIST=$HISTSIZE              # how many entries in history (hdd)
+setopt appendhistory            # append lines (for concurrent sessions)
+setopt extended_history         # record usage timestamps in the histfile
+setopt inc_append_history       # write to the histfile immediately
+setopt share_history            # share history between all sessions
+setopt hist_ignore_all_dups     # delete old entry if new entry is a duplicate
+setopt hist_find_no_dups        # do not display a line previously found
+setopt hist_ignore_space        # discard entries that start with space
+setopt hist_save_no_dups        # don't write duplicate entries in the histfile
+setopt hist_reduce_blanks       # remove extra blanks before recording entry
+setopt hist_verify              # don't execute immediately upon expansion
 
 # don't remember certain commands
-export HISTORY_IGNORE="(plen*|enpl*|jaen*|tl*|edict*|reverso*|glosbe*|sjp*|urban*|rg*|git*)"
+HISTORY_IGNORE="(plen*|enpl*|jaen*|tl*|edict*|reverso*|glosbe*|sjp*|urban*|rg*|git*)"
 zshaddhistory() {
   emulate -L zsh
   [[ $1 != ${~HISTORY_IGNORE} ]]
@@ -40,36 +40,38 @@ zshaddhistory() {
 
 # basic key bindings for interactive shells
 if [[ $- == *i* ]]; then
-    bindkey -e                              # use Emacs keybindings
-    stty -ixon                              # reclaim ctrl+q for Vim
-    stty stop undef                         # reclaim ctrl+s for Vim
+    bindkey -e                # use Emacs keybindings
+    bindkey "\e" vi-cmd-mode  # ...but allow going to Vi mode
+    export KEYTIMEOUT=1       # ...and don't block other hotkeys for too long
+    stty -ixon                # reclaim ctrl+q for Neovim
+    stty stop undef           # reclaim ctrl+s for Neovim
 fi
 
 # key bindings for terminal emulator
 if [ "$TERM" =~ rxvt ]; then
-    bindkey "\e[3~"   delete-char           # delete
-    bindkey '\e[1~'   beginning-of-line     # home and ctrl+home
-    bindkey '\e[4~'   end-of-line           # end and ctrl+end
-    bindkey '^H'      backward-kill-word    # ctrl+backspace
-    bindkey "^[3^"    kill-word             # ctrl+delete
-    bindkey '\eOd'    backward-word         # ctrl+left
-    bindkey '\eOc'    forward-word          # ctrl+right
+    bindkey "\e[3~"   delete-char         # delete
+    bindkey '\e[1~'   beginning-of-line   # home and ctrl+home
+    bindkey '\e[4~'   end-of-line         # end and ctrl+end
+    bindkey '^H'      backward-kill-word  # ctrl+backspace
+    bindkey "^[3^"    kill-word           # ctrl+delete
+    bindkey '\eOd'    backward-word       # ctrl+left
+    bindkey '\eOc'    forward-word        # ctrl+right
 
-    bindkey '\e[1;5I' 'beep'                # disable ctrl+tab
-    bindkey '\e[1;6I' 'beep'                # disable ctrl+shift+tab
+    bindkey '\e[1;5I' 'beep'              # disable ctrl+tab
+    bindkey '\e[1;6I' 'beep'              # disable ctrl+shift+tab
 else
-    bindkey "\e[3~"   delete-char           # delete
-    bindkey '\eOH'    beginning-of-line     # home
-    bindkey '\eOF'    end-of-line           # end
-    bindkey ';5H'     beginning-of-line     # ctrl+home
-    bindkey ';5F'     end-of-line           # ctrl+end
-    bindkey '^_'      backward-kill-word    # ctrl+backspace
-    bindkey "\e[3;5~" kill-word             # ctrl+delete
-    bindkey ';5D'     backward-word         # ctrl+left
-    bindkey ';5C'     forward-word          # ctrl+right
+    bindkey "\e[3~"   delete-char         # delete
+    bindkey '\eOH'    beginning-of-line   # home
+    bindkey '\eOF'    end-of-line         # end
+    bindkey ';5H'     beginning-of-line   # ctrl+home
+    bindkey ';5F'     end-of-line         # ctrl+end
+    bindkey '^_'      backward-kill-word  # ctrl+backspace
+    bindkey "\e[3;5~" kill-word           # ctrl+delete
+    bindkey ';5D'     backward-word       # ctrl+left
+    bindkey ';5C'     forward-word        # ctrl+right
 
-    bindkey '\e[1;5I' 'beep'                # disable ctrl+tab
-    bindkey '\e[1;6I' 'beep'                # disable ctrl+shift+tab
+    bindkey '\e[1;5I' 'beep'              # disable ctrl+tab
+    bindkey '\e[1;6I' 'beep'              # disable ctrl+shift+tab
 fi
 
 # command prompt
@@ -111,10 +113,11 @@ if [ -f ~/.fzf.zsh ]; then
     export FZF_DEFAULT_COMMAND='ag -g ""'
     export FZF_DEFAULT_OPTS="$FZF_DEFAULT_OPTS --inline-info --color=dark"
     source ~/.fzf.zsh
-    bindkey '\C-t' transpose-chars
-    bindkey '\C-o' fzf-file-widget
+    bindkey '\C-o' fzf-file-widget  # choose c-o for file opener
+    bindkey '\C-t' transpose-chars  # restore default binding for c-t
 fi
 
+# don't be a nag when working with gui via ssh
 export DISPLAY=:0.0
 
 # change cursor for vim insert mode
@@ -138,6 +141,3 @@ zle-line-init zle-keymap-select () {
 }
 zle -N zle-line-init
 zle -N zle-keymap-select
-
-export KEYTIMEOUT=1
-bindkey "\e" vi-cmd-mode
