@@ -31,6 +31,13 @@ setopt hist_save_no_dups     # don't write duplicate entries in the histfile
 setopt hist_reduce_blanks    # remove superfluous blanks before recording entry
 setopt hist_verify           # don't execute immediately upon history expansion
 
+# don't remember certain commands
+export HISTORY_IGNORE="(plen*|enpl*|jaen*|tl*|edict*|reverso*|glosbe*|sjp*|urban*|rg*|git*)"
+zshaddhistory() {
+  emulate -L zsh
+  [[ $1 != ${~HISTORY_IGNORE} ]]
+}
+
 # basic key bindings for interactive shells
 if [[ $- == *i* ]]; then
     bindkey -e                              # use Emacs keybindings
