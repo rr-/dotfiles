@@ -37,10 +37,22 @@ class AlignSubtitlesToVideoFramesCommand(BaseCommand):
         else:
             assert False
 
+        changed = 0
+        unchanged = 0
+
         with self.api.undo.capture():
             for sub in await self.args.target.get_subtitles():
-                sub.start = func(sub.start)
-                sub.end = func(sub.end)
+                new_start = func(sub.start)
+                new_end = func(sub.end)
+
+                if new_start != sub.start or new_end != sub.end:
+                    sub.start = new_start
+                    sub.end = new_end
+                    changed += 1
+                else:
+                    unchanged += 1
+
+        self.api.log.info(f"{changed} changed, {unchanged} unchanged")
 
 
 COMMANDS = [AlignSubtitlesToVideoFramesCommand]
