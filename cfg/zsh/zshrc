@@ -18,7 +18,7 @@ WORDCHARS='*?_-.[]~=&;!#$%^(){}<>'      # what kill-word should delete
 
 # history
 export HISTFILE=~/.config/zsh/history
-export HISTSIZE=100000       # how many entries in history (memory)
+export HISTSIZE=5000         # how many entries in history (memory)
 export SAVEHIST=$HISTSIZE    # how many entries in history (hdd)
 setopt appendhistory         # append lines (for concurrent sessions)
 setopt extended_history      # record usage timestamps in the histfile
