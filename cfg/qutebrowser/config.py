@@ -29,6 +29,17 @@ c.tabs.indicator.padding["bottom"] = 1
 c.fonts.hints = "12px sans-serif"
 c.fonts.tabs = "14px sans-serif"
 c.fonts.monospace = "Input Mono"
+
+c.editor.command = [
+    "urxvt",
+    "-e",
+    "nvim",
+    "-f",
+    "{file}",
+    "-c",
+    "normal {line}G{column0}l",
+]
+
 c.hints.auto_follow_timeout = 300
 c.hints.mode = "number"
 c.tabs.title.format = "{index}: {title} {audio}"
