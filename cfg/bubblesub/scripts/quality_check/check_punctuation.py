@@ -4,11 +4,15 @@ import typing as T
 from bubblesub.fmt.ass.event import AssEvent
 from bubblesub.fmt.ass.util import ass_to_plaintext
 
-from .common import BaseResult, Violation, is_event_title
-
-NON_STUTTER_PREFIXES = {"half", "well"}
-NON_STUTTER_SUFFIXES = {"kun", "san", "chan", "smaa", "senpai", "sensei"}
-NON_STUTTER_WORDS = {"bye-bye", "part-time", "easy-peasy"}
+from .common import (
+    NON_STUTTER_PREFIXES,
+    NON_STUTTER_SUFFIXES,
+    NON_STUTTER_WORDS,
+    WORDS_WITH_PERIOD,
+    BaseResult,
+    Violation,
+    is_event_title,
+)
 
 
 def check_punctuation(event: AssEvent) -> T.Iterable[BaseResult]:
@@ -89,7 +93,7 @@ def check_punctuation(event: AssEvent) -> T.Iterable[BaseResult]:
 
     match = re.search(r"(\w+[\.!?])\s+[a-z]", text, flags=re.M)
     if match:
-        if match.group(1) not in {"vs."}:
+        if match.group(1) not in WORDS_WITH_PERIOD:
             yield Violation(event, "lowercase letter after sentence end")
 
     match = re.search(r"^([A-Z][a-z]{,3})-([a-z]+)", text, flags=re.M)

@@ -10,6 +10,11 @@ from bubblesub.fmt.ass.util import ass_to_plaintext
 
 WIDTH_MULTIPLIERS = {1: 0.7, 2: 0.9}
 
+NON_STUTTER_PREFIXES = {"half", "well"}
+NON_STUTTER_SUFFIXES = {"kun", "san", "chan", "smaa", "senpai", "sensei"}
+NON_STUTTER_WORDS = {"bye-bye", "part-time", "easy-peasy"}
+WORDS_WITH_PERIOD = {"vs.", "Mr.", "Jr."}
+
 
 class BaseResult:
     def __init__(
