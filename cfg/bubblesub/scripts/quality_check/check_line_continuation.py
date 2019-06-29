@@ -10,9 +10,7 @@ from .common import (
     Violation,
     get_next_non_empty_event,
     get_prev_non_empty_event,
-    is_event_karaoke,
-    is_event_sign,
-    is_event_title,
+    is_event_dialog,
 )
 
 
@@ -29,6 +27,7 @@ def check_line_continuation(event: AssEvent) -> T.Iterable[BaseResult]:
 
     if (
         re.search(r"\A[a-z]", text, flags=re.M)
+        and is_event_dialog(event)
         and not re.search(r"[,:a-z]\Z", prev_text, flags=re.M)
         and not any(prev_text.endswith(word) for word in WORDS_WITH_PERIOD)
     ):
@@ -39,10 +38,5 @@ def check_line_continuation(event: AssEvent) -> T.Iterable[BaseResult]:
         and not re.search(r"\A[a-z]", next_text, flags=re.M)
         and not re.search(r"\AI\s", next_text, flags=re.M)
     ):
-        if (
-            not event.is_comment
-            and not is_event_karaoke(event)
-            and not is_event_title(event)
-            and not is_event_sign(event)
-        ):
+        if not event.is_comment and is_event_dialog(event):
             yield Violation(event, "possibly unended sentence")
