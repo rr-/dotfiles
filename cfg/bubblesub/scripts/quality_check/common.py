@@ -145,3 +145,11 @@ def is_event_title(event: AssEvent) -> bool:
 
 def is_event_karaoke(event: AssEvent) -> bool:
     return event.actor == "[karaoke]"
+
+
+def is_event_dialog(event: AssEvent) -> bool:
+    return not (
+        is_event_sign(event)
+        or is_event_title(event)
+        or is_event_karaoke(event)
+    )
