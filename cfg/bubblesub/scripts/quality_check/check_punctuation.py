@@ -41,6 +41,12 @@ def check_punctuation(event: AssEvent) -> T.Iterable[BaseResult]:
         yield Violation(event, "bad ellipsis (expected …)")
     elif re.search("[…,.!?:;][,.]", text):
         yield Violation(event, "extra comma or dot")
+    elif re.search(r"!!|\?\?", text):
+        yield Violation(event, "double punctuation mark")
+    elif re.search(r"…[!?]|[!?]…", text):
+        yield Violation(event, "ellipsis around punctuation mark")
+    elif re.search(r"[!?\.] …", text):
+        yield Violation(event, "ellipsis in the middle of sentence")
 
     context = re.split(r"\W+", re.sub('[.,?!"]', "", text.lower()))
     for word in {
@@ -87,6 +93,9 @@ def check_punctuation(event: AssEvent) -> T.Iterable[BaseResult]:
 
         if re.search(r" - ", text, flags=re.M):
             yield Violation(event, "bad dash (expected –)")
+
+    if re.search(r"\s+'t", text):
+        yield Violation(event, "whitespace before apostrophe")
 
     if re.search(r" —|— ", text) and not is_event_title(event):
         yield Violation(event, "whitespace around —")
