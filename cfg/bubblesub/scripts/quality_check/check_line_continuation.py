@@ -33,10 +33,8 @@ def check_line_continuation(event: AssEvent) -> T.Iterable[BaseResult]:
     ):
         yield Violation(event, "sentence begins with a lowercase letter")
 
-    if (
-        re.search(r"[,:a-z]\Z", text, flags=re.M)
-        and not re.search(r"\A[a-z]", next_text, flags=re.M)
-        and not re.search(r"\AI\s", next_text, flags=re.M)
-    ):
-        if not event.is_comment and is_event_dialog(event):
+    if not event.is_comment and is_event_dialog(event):
+        if re.search(r"[,:a-z]\Z", text, flags=re.M) and not re.search(
+            r'\A(I\s|I\'m|[a-z]|"[A-Z])', next_text, flags=re.M
+        ):
             yield Violation(event, "possibly unended sentence")
