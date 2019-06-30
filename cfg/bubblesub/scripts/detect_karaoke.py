@@ -105,7 +105,13 @@ class DetectKaraokeCommand(BaseCommand):
         )
 
         self.api.subs.events.insert(
-            idx, AssEvent(start=start, end=end, note="detected karaoke")
+            idx,
+            AssEvent(
+                start=start,
+                end=end,
+                note="detected karaoke",
+                style=self.api.subs.default_style_name,
+            ),
         )
 
     def get_frame(self, frame_idx: int) -> np.array:

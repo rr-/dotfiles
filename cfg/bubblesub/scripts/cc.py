@@ -27,7 +27,12 @@ class LoadClosedCaptionsCommand(BaseCommand):
         with self.api.undo.capture():
             for line in source:
                 self.api.subs.events.append(
-                    AssEvent(start=line.start, end=line.end, note=line.text)
+                    AssEvent(
+                        start=line.start,
+                        end=line.end,
+                        note=line.text,
+                        style=self.api.subs.default_style_name,
+                    )
                 )
 
 
