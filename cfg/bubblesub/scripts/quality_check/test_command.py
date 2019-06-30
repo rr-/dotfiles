@@ -143,6 +143,7 @@ def test_check_durations_good_gap() -> None:
         ("What--", "bad dash (expected \N{EM DASH})"),
         ("What\N{EN DASH}", "bad dash (expected \N{EM DASH})"),
         ("W-what?", "possibly wrong stutter capitalization"),
+        ("Ta-da!", None),
         ("Ayuhara-san", None),
         ("What! what…", "lowercase letter after sentence end"),
         ("What. what…", "lowercase letter after sentence end"),
