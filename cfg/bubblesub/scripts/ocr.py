@@ -16,7 +16,6 @@ except ImportError as ex:
 
 FRAME_WIDTH = 640
 FRAME_HEIGHT = 480
-WHITE_THRESHOLD = 230
 
 
 class OCRCommand(BaseCommand):
@@ -49,6 +48,12 @@ class OCRCommand(BaseCommand):
             help="language used for detection",
             default="jpn",
         )
+        parser.add_argument(
+            "--threshold",
+            type=int,
+            help="threshold to filter the character data",
+            default=230,
+        )
 
     async def run(self):
         pts = await self.args.pts.get()
@@ -64,7 +69,9 @@ class OCRCommand(BaseCommand):
         frame = self.api.video.get_frame(frame_idx, FRAME_WIDTH, FRAME_HEIGHT)
 
         img = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-        _, img = cv2.threshold(img, WHITE_THRESHOLD, 255, cv2.THRESH_BINARY)
+        _, img = cv2.threshold(
+            img, self.args.threshold, 255, cv2.THRESH_BINARY
+        )
 
         ret = pytesseract.image_to_string(img, self.args.lang)
         if self.args.lang in {"jpn"}:
