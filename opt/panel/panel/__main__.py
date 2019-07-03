@@ -12,10 +12,11 @@ from PyQt5 import QtCore, QtWidgets
 from panel import settings
 from panel.colors import Colors
 from panel.updaters.currency import CurrencyUpdater
+from panel.updaters.mpvmd import MpvmdUpdater
 from panel.updaters.network import NetworkUpdater
 from panel.updaters.resources import ResourcesUpdater
 from panel.updaters.volume import VolumeUpdater
-from panel.updaters.mpvmd import MpvmdUpdater
+from panel.updaters.workspaces import Monitor, WorkspacesUpdater
 from panel.util import run
 from panel.widgets.base import BaseWidget
 from panel.widgets.battery import BatteryWidget
@@ -29,11 +30,7 @@ from panel.widgets.stretch import StretchWidget
 from panel.widgets.time import TimeWidget
 from panel.widgets.volume import VolumeWidget
 from panel.widgets.window_title import WindowTitleWidget
-from panel.widgets.workspaces import (
-    Monitor,
-    WorkspacesUpdater,
-    WorkspacesWidget,
-)
+from panel.widgets.workspaces import WorkspacesWidget
 
 STYLESHEET_TEMPLATE = """
 #central {{
@@ -115,11 +112,6 @@ class MainWindow(QtWidgets.QMainWindow):
     def render(self, renderer: T.Callable[[], None]) -> None:
         renderer()
 
-    def reload_style_sheet(self) -> None:
-        old_stylesheet = self.styleSheet()
-        self.setStyleSheet("")
-        self.setStyleSheet(old_stylesheet)
-
 
 def main() -> None:
     dbus.mainloop.pyqt5.DBusQtMainLoop(set_as_default=True)
@@ -137,7 +129,7 @@ def main() -> None:
     mpvmd_updater = MpvmdUpdater()
 
     widgets = [
-        WorkspacesWidget(app, main_window, workspaces_updater),
+        WorkspacesWidget(workspaces_updater, main_window),
         WindowTitleWidget(app, main_window),
         StretchWidget(main_window),
     ]
