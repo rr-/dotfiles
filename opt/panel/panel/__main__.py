@@ -11,8 +11,8 @@ from PyQt5 import QtCore, QtWidgets
 
 from panel import settings
 from panel.colors import Colors
-from panel.updaters.cpu import CpuUpdater
 from panel.updaters.currency import CurrencyUpdater
+from panel.updaters.resources import ResourcesUpdater
 from panel.updaters.volume import VolumeUpdater
 from panel.util import run
 from panel.widgets.base import BaseWidget
@@ -128,7 +128,7 @@ def main() -> None:
     main_window = MainWindow(workspaces_updater.monitors)
     main_window.setWindowTitle("panel")
 
-    cpu_updater = CpuUpdater()
+    resources_updater = ResourcesUpdater()
     currency_updater = CurrencyUpdater()
     volume_updater = VolumeUpdater()
 
@@ -148,8 +148,8 @@ def main() -> None:
         BatteryWidget(app, main_window),
         CurrencyWidget(currency_updater, main_window),
         NetworkUsageWidget(app, main_window),
-        CpuWidget(cpu_updater, main_window),
-        MemoryWidget(app, main_window),
+        CpuWidget(resources_updater, main_window),
+        MemoryWidget(resources_updater, main_window),
         TimeWidget(main_window),
         NotificationsWidget(app, main_window),
     ]
