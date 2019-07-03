@@ -1,16 +1,8 @@
-# pylint: disable=invalid-name
-import typing as T
-
 from PyQt5 import QtCore, QtGui, QtWidgets
 
 from panel.colors import Colors
-from panel.util import run
-from panel.widgets.widget import Widget
-
-try:
-    import alsaaudio
-except ImportError:
-    alsaaudio = None
+from panel.updaters.volume import VolumeUpdater
+from panel.widgets.base import BaseWidget
 
 
 class VolumeControl(QtWidgets.QWidget):
@@ -22,6 +14,7 @@ class VolumeControl(QtWidgets.QWidget):
 
     def set(self, value: int) -> None:
         self.value = value
+        self.update()
 
     def paintEvent(self, _event: QtGui.QPaintEvent) -> None:
         width = self.width()
@@ -66,80 +59,41 @@ class VolumeControl(QtWidgets.QWidget):
         painter.end()
 
 
-class VolumeWidget(Widget):
-    delay = 1
-
+class VolumeWidget(BaseWidget):
     def __init__(
-        self, app: QtWidgets.QApplication, main_window: QtWidgets.QWidget
+        self, updater: VolumeUpdater, parent: QtWidgets.QWidget
     ) -> None:
-        super().__init__(app, main_window)
+        super().__init__(parent)
 
-        self.volume = 0
+        self._updater = updater
+        self._updater.volume_changed.connect(self._on_volume_change)
+        self._updater.mute_changed.connect(self._on_mute_change)
 
-        self._container = QtWidgets.QWidget(main_window)
-        self._container.mouseReleaseEvent = self.toggle_mute
-        self._container.wheelEvent = self.change_volume
-        self._icon_label = QtWidgets.QLabel(self._container)
-        self._volume_control = VolumeControl(
-            self._container, QtCore.QSize(50, 10)
-        )
+        self._icon_label = QtWidgets.QLabel(self)
+        self._volume_control = VolumeControl(self, QtCore.QSize(50, 10))
 
-        layout = QtWidgets.QHBoxLayout(self._container, margin=0, spacing=6)
+        layout = QtWidgets.QHBoxLayout(self, margin=0, spacing=6)
         layout.addWidget(self._icon_label)
         layout.addWidget(self._volume_control)
 
-    @property
-    def available(self) -> bool:
-        return self.mixer is not None
+        self._on_mute_change()
+        self._on_volume_change()
 
-    @property
-    def container(self) -> QtWidgets.QWidget:
-        return self._container
-
-    @property
-    def mixer(self) -> T.Optional["alsaaudio.Mixer"]:
-        if not alsaaudio:
-            return None
-        try:
-            return alsaaudio.Mixer(device="pulse")
-        except alsaaudio.ALSAAudioError:
-            return None
-
-    def change_volume(self, event: QtGui.QWheelEvent) -> None:
+    def wheelEvent(self, event: QtGui.QWheelEvent) -> None:
         with self.exception_guard():
-            run(
-                [
-                    "amixer",
-                    "-D",
-                    "pulse",
-                    "set",
-                    "Master",
-                    "1%" + ["-", "+"][event.angleDelta().y() > 0],
-                    "unmute",
-                ]
+            self._updater.volume += 1 if event.angleDelta().y() > 0 else -1
+
+    def mouseReleaseEvent(self, _event: QtGui.QMouseEvent) -> None:
+        with self.exception_guard():
+            self._updater.is_muted = not self._updater.is_muted
+
+    def _on_mute_change(self) -> None:
+        with self.exception_guard():
+            self._set_icon(
+                self._icon_label,
+                "volume-off" if self._updater.is_muted else "volume-on",
             )
-            self.refresh()
-            self.render()
 
-    def toggle_mute(self, _event: QtGui.QMouseEvent) -> None:
-        if not self.mixer:
-            return
+    def _on_volume_change(self) -> None:
         with self.exception_guard():
-            self.mixer.setmute(1 - self.mixer.getmute()[0])
-            self.refresh()
-            self.render()
-
-    def _refresh_impl(self) -> None:
-        if not self.mixer:
-            return
-        self.volume = self.mixer.getvolume()[0]
-
-    def _render_impl(self) -> None:
-        if not self.mixer:
-            return
-        self._set_icon(
-            self._icon_label,
-            "volume-off" if self.mixer.getmute()[0] else "volume-on",
-        )
-        self._volume_control.set(self.volume)
-        self._volume_control.repaint()
+            self._volume_control.set(self._updater.volume)
