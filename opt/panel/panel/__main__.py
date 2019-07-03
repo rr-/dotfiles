@@ -11,6 +11,7 @@ from PyQt5 import QtCore, QtWidgets
 
 from panel import settings
 from panel.colors import Colors
+from panel.updaters.battery import BatteryUpdater
 from panel.updaters.currency import CurrencyUpdater
 from panel.updaters.mpvmd import MpvmdUpdater
 from panel.updaters.network import NetworkUpdater
@@ -126,6 +127,7 @@ def main() -> None:
     main_window.setWindowTitle("panel")
 
     window_title_updater = WindowTitleUpdater()
+    battery_updater = BatteryUpdater()
     resources_updater = ResourcesUpdater()
     currency_updater = CurrencyUpdater()
     volume_updater = VolumeUpdater()
@@ -149,10 +151,12 @@ def main() -> None:
     else:
         print("Volume control not available on this system")
 
-    widgets += [
-        BatteryWidget(app, main_window),
-        CurrencyWidget(currency_updater, main_window),
-    ]
+    if battery_updater.is_available:
+        widgets.append(BatteryWidget(battery_updater, main_window))
+    else:
+        print("Battery not available on this system")
+
+    widgets.append(CurrencyWidget(currency_updater, main_window))
 
     if network_updater.is_available:
         widgets.append(NetworkUsageWidget(network_updater, main_window))
