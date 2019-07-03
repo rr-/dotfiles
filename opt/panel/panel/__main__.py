@@ -135,7 +135,7 @@ def main() -> None:
     widgets = [
         WorkspacesWidget(app, main_window, workspaces_updater),
         WindowTitleWidget(app, main_window),
-        StretchWidget(app, main_window),
+        StretchWidget(main_window),
         MpvmdWidget(app, main_window),
     ]
 
