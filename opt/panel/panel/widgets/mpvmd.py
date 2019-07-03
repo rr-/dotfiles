@@ -5,7 +5,7 @@ import time
 from PyQt5 import QtGui, QtWidgets
 
 from panel.updaters.mpvmd import MpvmdUpdater
-from panel.widgets.base import BaseWidget
+from panel.util import exception_guard, set_icon
 
 
 def _format_time(seconds: int) -> str:
@@ -13,7 +13,7 @@ def _format_time(seconds: int) -> str:
     return "%02d:%02d" % (seconds // 60, seconds % 60)
 
 
-class MpvmdWidget(BaseWidget):
+class MpvmdWidget(QtWidgets.QWidget):
     def __init__(
         self, updater: MpvmdUpdater, parent: QtWidgets.QWidget
     ) -> None:
@@ -47,44 +47,42 @@ class MpvmdWidget(BaseWidget):
         self._on_is_shuffle_enabled_change(self._updater.is_shuffle_enabled)
 
     def _play_pause_clicked(self, _event: QtGui.QMouseEvent) -> None:
-        with self.exception_guard():
+        with exception_guard():
             self._updater.is_paused = not self._updater.is_paused
 
     def _prev_or_next_track(self, event: QtGui.QWheelEvent) -> None:
-        with self.exception_guard():
+        with exception_guard():
             if event.angleDelta().y() > 0:
                 self._updater.next_track()
             else:
                 self._updater.prev_track()
 
     def _shuffle_clicked(self, _event: QtGui.QMouseEvent) -> None:
-        with self.exception_guard():
+        with exception_guard():
             self._updater.is_shuffle_enabled = (
                 not self._updater.is_shuffle_enabled
             )
 
     def _on_is_paused_change(self, is_paused: bool) -> None:
-        self._set_icon(
-            self._status_icon_label, "play" if is_paused else "pause"
-        )
+        set_icon(self._status_icon_label, "play" if is_paused else "pause")
 
     def _on_is_shuffle_enabled_change(self, is_shuffle_enabled: bool) -> None:
-        self._set_icon(
+        set_icon(
             self._shuffle_icon_label,
             "shuffle-on" if is_shuffle_enabled else "shuffle-off",
         )
 
     def _on_elapsed_change(self) -> None:
         if time.time() - self._last_updated >= 1:
-            with self.exception_guard():
+            with exception_guard():
                 self._update_text()
 
     def _on_path_change(self) -> None:
-        with self.exception_guard():
+        with exception_guard():
             self._update_text()
 
     def _on_metadata_change(self) -> None:
-        with self.exception_guard():
+        with exception_guard():
             self._update_text()
 
     def _update_text(self) -> None:

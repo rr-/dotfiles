@@ -4,10 +4,10 @@ from subprocess import run
 from PyQt5 import QtGui, QtWidgets
 
 from panel.updaters.workspaces import Workspace, WorkspacesUpdater
-from panel.widgets.base import BaseWidget
+from panel.util import exception_guard
 
 
-class WorkspacesWidget(BaseWidget):
+class WorkspacesWidget(QtWidgets.QWidget):
     def __init__(
         self, workspaces_updater: WorkspacesUpdater, parent: QtWidgets.QWidget
     ) -> None:
@@ -39,7 +39,7 @@ class WorkspacesWidget(BaseWidget):
         return self._updater.monitors[monitor_idx].workspaces[workspace_idx]
 
     def _wheel(self, event: QtGui.QWheelEvent) -> None:
-        with self.exception_guard():
+        with exception_guard():
             workspace_widgets = list(self._workspace_widgets)
             focused_widget_idx = None
             for i, workspace_widget in enumerate(workspace_widgets):
@@ -63,7 +63,7 @@ class WorkspacesWidget(BaseWidget):
     def _click(self, event: QtGui.QMouseEvent) -> None:
         workspace_widget = self.window().childAt(event.globalPos())
         workspace = self._widget_to_workspace(workspace_widget)
-        with self.exception_guard():
+        with exception_guard():
             run(["bspc", "desktop", "-f", workspace.name or "?"], check=True)
 
     def _on_update(self) -> None:
