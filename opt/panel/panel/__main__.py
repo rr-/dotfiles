@@ -12,6 +12,7 @@ from PyQt5 import QtCore, QtWidgets
 from panel import settings
 from panel.colors import Colors
 from panel.updaters.currency import CurrencyUpdater
+from panel.updaters.network import NetworkUpdater
 from panel.updaters.resources import ResourcesUpdater
 from panel.updaters.volume import VolumeUpdater
 from panel.util import run
@@ -131,6 +132,7 @@ def main() -> None:
     resources_updater = ResourcesUpdater()
     currency_updater = CurrencyUpdater()
     volume_updater = VolumeUpdater()
+    network_updater = NetworkUpdater()
 
     widgets = [
         WorkspacesWidget(app, main_window, workspaces_updater),
@@ -147,7 +149,14 @@ def main() -> None:
     widgets += [
         BatteryWidget(app, main_window),
         CurrencyWidget(currency_updater, main_window),
-        NetworkUsageWidget(app, main_window),
+    ]
+
+    if network_updater.is_available:
+        widgets.append(NetworkUsageWidget(network_updater, main_window))
+    else:
+        print("Network usage not available on this system")
+
+    widgets += [
         CpuWidget(resources_updater, main_window),
         MemoryWidget(resources_updater, main_window),
         TimeWidget(main_window),
