@@ -146,7 +146,7 @@ def main() -> None:
         NetworkUsageWidget(app, main_window),
         CpuWidget(app, main_window),
         MemoryWidget(app, main_window),
-        TimeWidget(app, main_window),
+        TimeWidget(main_window),
         NotificationsWidget(app, main_window),
     ]
 
