@@ -1,7 +1,7 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
 
 from panel.updaters.notifications import Notification, NotificationsUpdater
-from panel.widgets.base import BaseWidget
+from panel.util import set_icon
 
 
 class NotificationsAreaWidget(QtWidgets.QDialog):
@@ -51,7 +51,7 @@ class NotificationWidget(QtWidgets.QLabel):
         self.deleteLater()
 
 
-class NotificationsWidget(BaseWidget):
+class NotificationsWidget(QtWidgets.QWidget):
     def __init__(
         self,
         notifications_updater: NotificationsUpdater,
@@ -78,7 +78,7 @@ class NotificationsWidget(BaseWidget):
         self._update_icon()
 
     def _update_icon(self) -> None:
-        self._set_icon(
+        set_icon(
             self._icon_label, "bell-on" if self._is_enabled else "bell-off"
         )
 

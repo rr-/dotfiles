@@ -2,10 +2,8 @@ from datetime import datetime
 
 from PyQt5 import QtCore, QtWidgets
 
-from panel.widgets.base import BaseWidget
 
-
-class TimeWidget(BaseWidget):
+class TimeWidget(QtWidgets.QWidget):
     def __init__(self, parent: QtWidgets.QWidget) -> None:
         super().__init__(parent, objectName="time")
         self.date = datetime.now()

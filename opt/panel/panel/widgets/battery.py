@@ -1,10 +1,10 @@
 from PyQt5 import QtCore, QtWidgets
 
 from panel.updaters.battery import BatteryUpdater
-from panel.widgets.base import BaseWidget
+from panel.util import set_icon
 
 
-class BatteryWidget(BaseWidget):
+class BatteryWidget(QtWidgets.QWidget):
     def __init__(
         self, updater: BatteryUpdater, parent: QtWidgets.QWidget
     ) -> None:
@@ -22,7 +22,7 @@ class BatteryWidget(BaseWidget):
         self._text_label.setAlignment(
             QtCore.Qt.AlignCenter | QtCore.Qt.AlignVCenter
         )
-        self._set_icon(self._icon_label, "battery")
+        set_icon(self._icon_label, "battery")
 
         self._updater.updated.connect(self._on_update)
         self._on_update(self._updater.percentage)

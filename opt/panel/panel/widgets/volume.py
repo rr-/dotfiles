@@ -2,7 +2,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 
 from panel.colors import Colors
 from panel.updaters.volume import VolumeUpdater
-from panel.widgets.base import BaseWidget
+from panel.util import exception_guard, set_icon
 
 
 class VolumeControl(QtWidgets.QWidget):
@@ -59,7 +59,7 @@ class VolumeControl(QtWidgets.QWidget):
         painter.end()
 
 
-class VolumeWidget(BaseWidget):
+class VolumeWidget(QtWidgets.QWidget):
     def __init__(
         self, updater: VolumeUpdater, parent: QtWidgets.QWidget
     ) -> None:
@@ -80,20 +80,20 @@ class VolumeWidget(BaseWidget):
         self._on_volume_change()
 
     def wheelEvent(self, event: QtGui.QWheelEvent) -> None:
-        with self.exception_guard():
+        with exception_guard():
             self._updater.volume += 1 if event.angleDelta().y() > 0 else -1
 
     def mouseReleaseEvent(self, _event: QtGui.QMouseEvent) -> None:
-        with self.exception_guard():
+        with exception_guard():
             self._updater.is_muted = not self._updater.is_muted
 
     def _on_mute_change(self) -> None:
-        with self.exception_guard():
-            self._set_icon(
+        with exception_guard():
+            set_icon(
                 self._icon_label,
                 "volume-off" if self._updater.is_muted else "volume-on",
             )
 
     def _on_volume_change(self) -> None:
-        with self.exception_guard():
+        with exception_guard():
             self._volume_control.set(self._updater.volume)

@@ -3,12 +3,11 @@ import typing as T
 from PyQt5 import QtCore, QtGui, QtWidgets
 
 from panel.updaters.window_title import WindowTitleUpdater
-from panel.widgets.base import BaseWidget
 
 DEFAULT_TITLE = "<no window id>"
 
 
-class WindowTitleWidget(BaseWidget):
+class WindowTitleWidget(QtWidgets.QWidget):
     def __init__(
         self, updater: WindowTitleUpdater, parent: QtWidgets.QWidget
     ) -> None:
