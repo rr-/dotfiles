@@ -11,6 +11,7 @@ from PyQt5 import QtCore, QtWidgets
 
 from panel import settings
 from panel.colors import Colors
+from panel.updaters.window_title import WindowTitleUpdater
 from panel.updaters.currency import CurrencyUpdater
 from panel.updaters.mpvmd import MpvmdUpdater
 from panel.updaters.network import NetworkUpdater
@@ -118,10 +119,12 @@ def main() -> None:
 
     app = QtWidgets.QApplication([os.fsencode(arg) for arg in sys.argv])
     app.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling)
+
     workspaces_updater = WorkspacesUpdater()
     main_window = MainWindow(workspaces_updater.monitors)
     main_window.setWindowTitle("panel")
 
+    window_title_updater = WindowTitleUpdater()
     resources_updater = ResourcesUpdater()
     currency_updater = CurrencyUpdater()
     volume_updater = VolumeUpdater()
@@ -130,7 +133,7 @@ def main() -> None:
 
     widgets = [
         WorkspacesWidget(workspaces_updater, main_window),
-        WindowTitleWidget(app, main_window),
+        WindowTitleWidget(window_title_updater, main_window),
         StretchWidget(main_window),
     ]
 
