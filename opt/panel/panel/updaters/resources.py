@@ -21,9 +21,21 @@ class CpuUpdaterThread(QtCore.QThread):
             self.value_changed.emit(value)
 
 
-class CpuUpdater(BaseUpdater):
+class ResourcesUpdater(BaseUpdater):
+    ram_usage_changed = QtCore.pyqtSignal(float)
+
     def __init__(self) -> None:
         super().__init__()
-        self.thread = CpuUpdaterThread(self)
-        self.thread.start()
-        self.value_changed = self.thread.value_changed
+
+        self.cpu_thread = CpuUpdaterThread(self)
+        self.cpu_thread.start()
+
+        self.cpu_usage_changed = self.cpu_thread.value_changed
+
+        timer = QtCore.QTimer(self)
+        timer.setInterval(1000)
+        timer.timeout.connect(self._on_timeout)
+        timer.start()
+
+    def _on_timeout(self) -> None:
+        self.ram_usage_changed.emit(psutil.virtual_memory().percent)
