@@ -12,6 +12,7 @@ from PyQt5 import QtCore, QtWidgets
 from panel import settings
 from panel.colors import Colors
 from panel.updaters.cpu import CpuUpdater
+from panel.updaters.currency import CurrencyUpdater
 from panel.updaters.volume import VolumeUpdater
 from panel.util import run
 from panel.widgets.base import BaseWidget
@@ -128,6 +129,7 @@ def main() -> None:
     main_window.setWindowTitle("panel")
 
     cpu_updater = CpuUpdater()
+    currency_updater = CurrencyUpdater()
     volume_updater = VolumeUpdater()
 
     widgets = [
@@ -144,7 +146,7 @@ def main() -> None:
 
     widgets += [
         BatteryWidget(app, main_window),
-        CurrencyWidget(app, main_window),
+        CurrencyWidget(currency_updater, main_window),
         NetworkUsageWidget(app, main_window),
         CpuWidget(cpu_updater, main_window),
         MemoryWidget(app, main_window),
