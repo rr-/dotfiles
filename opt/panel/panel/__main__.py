@@ -11,12 +11,13 @@ from PyQt5 import QtCore, QtWidgets
 
 from panel import settings
 from panel.colors import Colors
-from panel.updaters.window_title import WindowTitleUpdater
 from panel.updaters.currency import CurrencyUpdater
 from panel.updaters.mpvmd import MpvmdUpdater
 from panel.updaters.network import NetworkUpdater
+from panel.updaters.notifications import NotificationsUpdater
 from panel.updaters.resources import ResourcesUpdater
 from panel.updaters.volume import VolumeUpdater
+from panel.updaters.window_title import WindowTitleUpdater
 from panel.updaters.workspaces import Monitor, WorkspacesUpdater
 from panel.util import run
 from panel.widgets.base import BaseWidget
@@ -130,6 +131,7 @@ def main() -> None:
     volume_updater = VolumeUpdater()
     network_updater = NetworkUpdater()
     mpvmd_updater = MpvmdUpdater()
+    notifications_updater = NotificationsUpdater()
 
     widgets = [
         WorkspacesWidget(workspaces_updater, main_window),
@@ -161,7 +163,7 @@ def main() -> None:
         CpuWidget(resources_updater, main_window),
         MemoryWidget(resources_updater, main_window),
         TimeWidget(main_window),
-        NotificationsWidget(app, main_window),
+        NotificationsWidget(notifications_updater, main_window),
     ]
 
     def worker(widget: QtWidgets.QWidget, trigger: QtCore.pyqtSignal) -> None:
