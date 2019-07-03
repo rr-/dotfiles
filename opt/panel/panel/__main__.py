@@ -2,9 +2,8 @@
 import os
 import signal
 import sys
-import threading
-import time
 import typing as T
+from subprocess import run
 
 import dbus.mainloop.pyqt5
 from PyQt5 import QtCore, QtWidgets
@@ -20,8 +19,6 @@ from panel.updaters.resources import ResourcesUpdater
 from panel.updaters.volume import VolumeUpdater
 from panel.updaters.window_title import WindowTitleUpdater
 from panel.updaters.workspaces import Monitor, WorkspacesUpdater
-from panel.util import run
-from panel.widgets.base import BaseWidget
 from panel.widgets.battery import BatteryWidget
 from panel.widgets.cpu import CpuWidget
 from panel.widgets.currency import CurrencyWidget
@@ -98,8 +95,22 @@ class MainWindow(QtWidgets.QMainWindow):
         self.move(0, 0)
         self.show()
 
-        window_gap = int(run(["bspc", "config", "window_gap"]).stdout)
-        window_border = int(run(["bspc", "config", "border_width"]).stdout)
+        window_gap = int(
+            run(
+                ["bspc", "config", "window_gap"],
+                capture_output=True,
+                text=True,
+                check=True,
+            ).stdout
+        )
+        window_border = int(
+            run(
+                ["bspc", "config", "border_width"],
+                capture_output=True,
+                text=True,
+                check=True,
+            ).stdout
+        )
         content_margin = (
             window_gap + window_border
         ) / self.devicePixelRatioF()
@@ -170,13 +181,6 @@ def main() -> None:
         NotificationsWidget(notifications_updater, main_window),
     ]
 
-    def worker(widget: QtWidgets.QWidget, trigger: QtCore.pyqtSignal) -> None:
-        while True:
-            widget.refresh()
-            trigger.emit(widget.render)
-            if widget.delay > 0:
-                time.sleep(widget.delay)
-
     physical_height = main_window.height() * app.devicePixelRatio()
     for monitor in workspaces_updater.monitors:
         run(
@@ -191,18 +195,7 @@ def main() -> None:
         )
 
     for widget in widgets:
-        if isinstance(widget, BaseWidget):
-            main_window.centralWidget().layout().addWidget(widget)
-            continue
-
-        if not widget.available:
-            print(f"{widget.__class__} is not available on this system")
-            continue
-        main_window.centralWidget().layout().addWidget(widget.container)
-        thread = threading.Thread(
-            target=worker, args=(widget, main_window.trigger), daemon=True
-        )
-        thread.start()
+        main_window.centralWidget().layout().addWidget(widget)
 
     signal.signal(signal.SIGINT, signal.SIG_DFL)
     app.exec_()
