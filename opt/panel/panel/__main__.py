@@ -11,6 +11,7 @@ from PyQt5 import QtCore, QtWidgets
 
 from panel import settings
 from panel.colors import Colors
+from panel.updaters.cpu import CpuUpdater
 from panel.updaters.volume import VolumeUpdater
 from panel.util import run
 from panel.widgets.base import BaseWidget
@@ -126,6 +127,7 @@ def main() -> None:
     main_window = MainWindow(workspaces_updater.monitors)
     main_window.setWindowTitle("panel")
 
+    cpu_updater = CpuUpdater()
     volume_updater = VolumeUpdater()
 
     widgets = [
@@ -138,13 +140,13 @@ def main() -> None:
     if volume_updater.is_available:
         widgets.append(VolumeWidget(volume_updater, main_window))
     else:
-        print('Volume control not available on this system')
+        print("Volume control not available on this system")
 
     widgets += [
         BatteryWidget(app, main_window),
         CurrencyWidget(app, main_window),
         NetworkUsageWidget(app, main_window),
-        CpuWidget(app, main_window),
+        CpuWidget(cpu_updater, main_window),
         MemoryWidget(app, main_window),
         TimeWidget(main_window),
         NotificationsWidget(app, main_window),
