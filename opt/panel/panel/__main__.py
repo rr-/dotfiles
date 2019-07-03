@@ -15,6 +15,7 @@ from panel.updaters.currency import CurrencyUpdater
 from panel.updaters.network import NetworkUpdater
 from panel.updaters.resources import ResourcesUpdater
 from panel.updaters.volume import VolumeUpdater
+from panel.updaters.mpvmd import MpvmdUpdater
 from panel.util import run
 from panel.widgets.base import BaseWidget
 from panel.widgets.battery import BatteryWidget
@@ -133,13 +134,18 @@ def main() -> None:
     currency_updater = CurrencyUpdater()
     volume_updater = VolumeUpdater()
     network_updater = NetworkUpdater()
+    mpvmd_updater = MpvmdUpdater()
 
     widgets = [
         WorkspacesWidget(app, main_window, workspaces_updater),
         WindowTitleWidget(app, main_window),
         StretchWidget(main_window),
-        MpvmdWidget(app, main_window),
     ]
+
+    if mpvmd_updater.is_available:
+        widgets.append(MpvmdWidget(mpvmd_updater, main_window))
+    else:
+        print("MPVMD not available on this system")
 
     if volume_updater.is_available:
         widgets.append(VolumeWidget(volume_updater, main_window))
