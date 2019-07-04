@@ -15,7 +15,7 @@ source ~/.mutt/colors.muttrc
 
 # prefer plaintext to html
 auto_view text/html
-alternative_order text/plain text/html
+alternative_order text/html text/plain
 
 # add labels in index
 set index_format='%4C %Z %{%b %d} %-15.15L (%?l?%4l&%4c?) %s%* %y'
