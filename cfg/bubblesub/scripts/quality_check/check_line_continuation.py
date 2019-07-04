@@ -35,6 +35,6 @@ def check_line_continuation(event: AssEvent) -> T.Iterable[BaseResult]:
 
     if not event.is_comment and is_event_dialog(event):
         if re.search(r"[,:a-z]\Z", text, flags=re.M) and not re.search(
-            r'\A(I\s|I\'m|[a-z]|"[A-Z])', next_text, flags=re.M
+            r'\A(I\s|I\'[md]|[a-z]|"[A-Z])', next_text, flags=re.M
         ):
             yield Violation(event, "possibly unended sentence")
