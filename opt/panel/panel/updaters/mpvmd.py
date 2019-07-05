@@ -133,7 +133,8 @@ class MpvmdUpdater(BaseUpdater):
         self._script_opts: T.Dict[str, T.Any] = {}
 
         self._connection = MpvmdConnection(self)
-        self._connection.start()
+        if self.is_available:
+            self._connection.start()
 
         self._connection.property_changed.connect(self._on_property_change)
 
