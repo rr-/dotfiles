@@ -2,6 +2,8 @@
 import os
 import signal
 import sys
+import traceback as tb
+import types
 import typing as T
 from subprocess import run
 
@@ -127,6 +129,15 @@ class MainWindow(QtWidgets.QMainWindow):
         renderer()
 
 
+def on_error(
+    type_: T.Type[BaseException],
+    value: BaseException,
+    traceback: types.TracebackType,
+) -> None:
+    logging.error("An unhandled error occurred: ")
+    logging.error("".join(tb.format_exception(type_, value, traceback)))
+
+
 def main() -> None:
     dbus.mainloop.pyqt5.DBusQtMainLoop(set_as_default=True)
 
@@ -197,6 +208,7 @@ def main() -> None:
     for widget in widgets:
         main_window.centralWidget().layout().addWidget(widget)
 
+    sys.excepthook = on_error
     signal.signal(signal.SIGINT, signal.SIG_DFL)
     app.exec_()
 
