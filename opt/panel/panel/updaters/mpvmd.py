@@ -7,6 +7,7 @@ import typing as T
 from PyQt5 import QtCore
 
 from panel.updaters.base import BaseUpdater
+from panel.util import exception_guard
 
 SOCKET_PATH = "/tmp/mpvmd.socket"
 
@@ -40,15 +41,16 @@ class MpvmdConnection(QtCore.QThread):
         return self._socket is not None
 
     def _process_event(self, event: T.Any) -> None:
-        if event.get("event") == "property-change":
-            self.property_changed.emit(event["name"], event["data"])
-        elif event.get("request_id"):
-            message = self._messages[event["request_id"]]
-            if message["command"][0] == "get_property":
-                self.property_changed.emit(
-                    message["command"][1], event["data"]
-                )
-            del self._messages[event["request_id"]]
+        with exception_guard():
+            if event.get("event") == "property-change":
+                self.property_changed.emit(event["name"], event["data"])
+            elif event.get("request_id"):
+                message = self._messages[event["request_id"]]
+                if message["command"][0] == "get_property":
+                    self.property_changed.emit(
+                        message["command"][1], event["data"]
+                    )
+                del self._messages[event["request_id"]]
 
     def _connect(self) -> None:
         if self.is_connected:
