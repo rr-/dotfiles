@@ -14,6 +14,7 @@ class NetworkUpdater(BaseUpdater):
     def __init__(self) -> None:
         super().__init__()
 
+        self.is_available = False
         try:
             self._rx_path: T.Optional[Path] = None
             self._tx_path: T.Optional[Path] = None
@@ -26,7 +27,7 @@ class NetworkUpdater(BaseUpdater):
                     self._tx_path = path / "statistics" / "tx_bytes"
                     self.is_available = True
         except (FileNotFoundError, PermissionError):
-            self.is_available = False
+            pass
 
         if self.is_available:
             self._old_rx_bytes = int(self._rx_path.read_text().strip())
@@ -38,10 +39,9 @@ class NetworkUpdater(BaseUpdater):
         timer = QtCore.QTimer(self)
         timer.setInterval(1000)
         timer.timeout.connect(self._on_timeout)
-        timer.start()
-
-        self.quotes: T.Dict[datetime.datetime, float] = {}
-        self._on_timeout()
+        if self.is_available:
+            timer.start()
+            self._on_timeout()
 
     def _on_timeout(self) -> None:
         rx_bytes = int(self._rx_path.read_text().strip())
