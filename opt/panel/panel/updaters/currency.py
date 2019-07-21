@@ -5,6 +5,7 @@ import requests
 from PyQt5 import QtCore
 
 from panel.updaters.base import BaseUpdater
+from panel.util import exception_guard
 
 
 class CurrencyUpdater(BaseUpdater):
@@ -21,15 +22,16 @@ class CurrencyUpdater(BaseUpdater):
         self._on_timeout()
 
     def _on_timeout(self) -> None:
-        response = requests.get(
-            "https://www.ingturbo.pl/services/underlying/usd-pln/chart"
-            "?period=intraday"
-        )
-        response.raise_for_status()
+        with exception_guard():
+            response = requests.get(
+                "https://www.ingturbo.pl/services/underlying/usd-pln/chart"
+                "?period=intraday"
+            )
+            response.raise_for_status()
 
-        for row in response.json()["Quotes"]:
-            time, quote = row
-            date = datetime.datetime.fromtimestamp(time / 1000.0)
-            self.quotes[date] = quote
+            for row in response.json()["Quotes"]:
+                time, quote = row
+                date = datetime.datetime.fromtimestamp(time / 1000.0)
+                self.quotes[date] = quote
 
-        self.quotes_changed.emit()
+            self.quotes_changed.emit()
