@@ -94,7 +94,7 @@ def check_punctuation(event: AssEvent) -> T.Iterable[BaseResult]:
         if re.search(r" - ", text, flags=re.M):
             yield Violation(event, "bad dash (expected –)")
 
-    if re.search(r"\s+'t", text):
+    if re.search(r"\s+'(t|re)", text):
         yield Violation(event, "whitespace before apostrophe")
 
     if re.search(r" —|— ", text) and not is_event_title(event):
