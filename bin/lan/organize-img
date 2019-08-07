@@ -5,7 +5,7 @@
 
 import argparse
 import re
-import subprocess
+import typing as T
 from pathlib import Path
 
 from PIL import Image
@@ -17,7 +17,7 @@ TARGET_ROOT_DIR = Path("~/data/img/net/").expanduser()
 SMALL_IMAGE_EXTENSIONS = {".png", ".jpg", ".jpeg"}
 
 
-def _parse_args():
+def parse_args() -> argparse.Namespace:
     description = (
         "Downloads, filters and organizes into directories "
         + "images crawled by cron job."
@@ -31,7 +31,7 @@ def _parse_args():
     return parser.parse_args()
 
 
-def _find_directories_recursive(root_dir):
+def find_directories_recursive(root_dir: Path) -> T.Iterable[Path]:
     """ Returns all sub directories in DFS order """
     stack = [root_dir]
     result = []
@@ -45,11 +45,11 @@ def _find_directories_recursive(root_dir):
         yield result.pop()
 
 
-def _find_files(root_dir):
+def find_files(root_dir: Path) -> T.List[Path]:
     return [entry for entry in root_dir.iterdir() if entry.is_file()]
 
 
-def _is_image_too_small(source_path, args):
+def is_image_too_small(source_path: Path, args: argparse.Namespace) -> bool:
     if not source_path.suffix.lower() in SMALL_IMAGE_EXTENSIONS:
         return False
 
@@ -66,23 +66,23 @@ def _is_image_too_small(source_path, args):
     return False
 
 
-def main():
-    args = _parse_args()
+def main() -> None:
+    args = parse_args()
 
     cur_file = 0
     max_files = 0
     logging.info("Computing file count...")
-    for source_dir in _find_directories_recursive(SOURCE_ROOT_DIR):
-        max_files += len(_find_files(source_dir))
+    for source_dir in find_directories_recursive(SOURCE_ROOT_DIR):
+        max_files += len(find_files(source_dir))
 
-    for source_dir in _find_directories_recursive(SOURCE_ROOT_DIR):
+    for source_dir in find_directories_recursive(SOURCE_ROOT_DIR):
         target_dir = TARGET_ROOT_DIR / source_dir.relative_to(SOURCE_ROOT_DIR)
         target_dir = str(target_dir)
         target_dir = re.sub(r"([^\\/]*)\.2chan\.net", r"2chan/\1", target_dir)
         target_dir = re.sub(r"[^\\/]*\.(4chan|4cdn)\.org", "4chan", target_dir)
         target_dir = Path(target_dir)
 
-        source_files = _find_files(source_dir)
+        source_files = find_files(source_dir)
         if source_files:
             target_dir.mkdir(parents=True, exist_ok=True)
 
@@ -92,7 +92,7 @@ def main():
 
                 target_file = target_dir / source_file.name
 
-                if _is_image_too_small(source_file, args):
+                if is_image_too_small(source_file, args):
                     logging.warning(f"{prefix}: too small, ignoring")
                     if not args.dry_run:
                         source_file.unlink()
