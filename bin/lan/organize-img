@@ -23,9 +23,11 @@ def _parse_args():
         + "images crawled by cron job."
     )
     parser = argparse.ArgumentParser(description=description)
-    parser.add_argument("--dry", action="store_true", help="don't do anything")
     parser.add_argument("--min-image-width", default=300, type=int)
     parser.add_argument("--min-image-height", default=300, type=int)
+    parser.add_argument(
+        "-d", "--dry-run", action="store_true", help="don't do anything"
+    )
     return parser.parse_args()
 
 
@@ -92,12 +94,12 @@ def main():
 
                 if _is_image_too_small(source_file, args):
                     logging.warning(f"{prefix}: too small, ignoring")
-                    if not args.dry:
+                    if not args.dry_run:
                         source_file.unlink()
                     continue
 
                 logging.info(f"{prefix}: ok (moving to {target_file}")
-                if not args.dry:
+                if not args.dry_run:
                     try:
                         source_file.rename(target_file)
                     except OSError:
