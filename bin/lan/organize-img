@@ -67,6 +67,12 @@ def _is_image_too_small(source_path, args):
 def main():
     args = _parse_args()
 
+    cur_file = 0
+    max_files = 0
+    logging.info("Computing file count...")
+    for source_dir in _find_directories_recursive(SOURCE_ROOT_DIR):
+        max_files += len(_find_files(source_dir))
+
     for source_dir in _find_directories_recursive(SOURCE_ROOT_DIR):
         target_dir = TARGET_ROOT_DIR / source_dir.relative_to(SOURCE_ROOT_DIR)
         target_dir = str(target_dir)
@@ -79,15 +85,18 @@ def main():
             target_dir.mkdir(parents=True, exist_ok=True)
 
             for source_file in source_files:
+                cur_file += 1
+                prefix = f"{source_file} ({cur_file/max_files:.02%})"
+
                 target_file = target_dir / source_file.name
 
                 if _is_image_too_small(source_file, args):
-                    logging.warning(f"{source_file}: too small, ignoring")
+                    logging.warning(f"{prefix}: too small, ignoring")
                     if not args.dry:
                         source_file.unlink()
                     continue
 
-                logging.info(f"{source_file}: ok (moving to {target_file}")
+                logging.info(f"{prefix}: ok (moving to {target_file}")
                 if not args.dry:
                     try:
                         source_file.rename(target_file)
