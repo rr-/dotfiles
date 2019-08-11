@@ -4,21 +4,20 @@ fullscreen
 
 vo=gpu,drm
 profile=opengl-hq
-script-opts=osc-layout=slimbox
 stop-screensaver=yes
-osd-fractions=yes
 image-display-duration=inf
-script-opts=images-statusbar=no,reset-view=no
 sub-file-paths=subs:~/src/subs:..
 
 audio-channels=2
 alang=jpn,jp,jap,Japanese,en,eng,English
 slang=en,eng,English,pl,pol,Polish
 sub-codepage=utf8,cp1250
-osd-status-msg=${playback-time/full} / ${duration} (${percent-pos}%)\nframe: ${estimated-frame-number} / ${estimated-frame-count}
-volume-max=300
 
+volume-max=300
 af=scaletempo=stride=30
+
+osd-fractions=yes
+osd-status-msg=${playback-time/full} / ${duration} (${percent-pos}%)\nframe: ${estimated-frame-number} / ${estimated-frame-count}
 
 screenshot-format=jpg
 screenshot-template=~/shot-%f-%P
