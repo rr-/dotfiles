@@ -1,4 +1,5 @@
 import datetime
+import time
 import typing as T
 
 import requests
@@ -8,21 +9,17 @@ from panel.updaters.base import BaseUpdater
 from panel.util import exception_guard
 
 
-class CurrencyUpdater(BaseUpdater):
-    quotes_changed = QtCore.pyqtSignal()
+class CurrencyUpdaterThread(QtCore.QThread):
+    updated = QtCore.pyqtSignal(object)
 
-    def __init__(self) -> None:
-        super().__init__()
-        timer = QtCore.QTimer(self)
-        timer.setInterval(60000)
-        timer.timeout.connect(self._on_timeout)
-        timer.start()
-
+    def __init__(self, parent: QtCore.QObject) -> None:
+        super().__init__(parent)
+        self.running = False
         self.quotes: T.Dict[datetime.datetime, float] = {}
-        self._on_timeout()
 
-    def _on_timeout(self) -> None:
-        with exception_guard():
+    def run(self) -> None:
+        self.running = True
+        while self.running:
             response = requests.get(
                 "https://www.ingturbo.pl/services/underlying/usd-pln/chart"
                 "?period=intraday"
@@ -30,8 +27,21 @@ class CurrencyUpdater(BaseUpdater):
             response.raise_for_status()
 
             for row in response.json()["Quotes"]:
-                time, quote = row
-                date = datetime.datetime.fromtimestamp(time / 1000.0)
+                _time, quote = row
+                date = datetime.datetime.fromtimestamp(_time / 1000.0)
                 self.quotes[date] = quote
 
-            self.quotes_changed.emit()
+            self.updated.emit(self.quotes)
+            time.sleep(60)
+
+
+class CurrencyUpdater(BaseUpdater):
+    quotes_changed = QtCore.pyqtSignal()
+
+    def __init__(self) -> None:
+        super().__init__()
+
+        self._thread = CurrencyUpdaterThread(self)
+        self._thread.updated.connect(self.quotes_changed.emit)
+        self.quotes = self._thread.quotes
+        self._thread.start()
