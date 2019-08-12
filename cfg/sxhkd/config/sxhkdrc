@@ -18,7 +18,7 @@ alt + ctrl + shift + l
 alt + ctrl + bracketleft
     xdotool search --classname local_terminal windowactivate; \
     if [ $? -ne 0 ]; then; \
-        urxvt -name local_terminal -e zsh -ilc 'tmux attach-session || tmux new-session'; \
+        urxvt -name local_terminal -e zsh -ilc 'tmux attach-session || tmux new-session -c ~'; \
     else; \
         tmux new-window -t work; \
     fi
