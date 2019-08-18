@@ -118,7 +118,9 @@ if [ -f ~/.fzf.zsh ]; then
 fi
 
 # don't be a nag when working with gui via ssh
-export DISPLAY=:0.0
+if [ ! -v DISPLAY ]; then
+    export DISPLAY=:0.0
+fi
 
 # change cursor for vim insert mode
 zle-line-init zle-keymap-select () {
