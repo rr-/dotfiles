@@ -7,6 +7,12 @@ from dotinstall import util
 
 logger = logging.getLogger(__name__)
 
+PIP_EXECUTABLE = (
+    "pip3"
+    if "cygwin" in sys.platform or util.distro_name() == "linuxmint"
+    else "pip"
+)
+
 
 class PackageInstaller:
     @property
@@ -105,21 +111,15 @@ class PacaurPackageInstaller(PackageInstaller):
 class PipPackageInstaller(PackageInstaller):
     name = "pip"
 
-    def __init__(self) -> None:
-        if "cygwin" in sys.platform or util.distro_name() == "linuxmint":
-            self.executable = "pip3"
-        else:
-            self.executable = "pip"
-
     @property
     def is_supported(self) -> bool:
-        return util.has_executable(self.executable)
+        return util.has_executable(PIP_EXECUTABLE)
 
     def has_installed(self, package: str) -> bool:
         return (
             re.search(
                 "^" + re.escape(package) + r"($|\s)",
-                util.run_silent([self.executable, "list"])[1],
+                util.run_silent([PIP_EXECUTABLE, "list"])[1],
                 re.MULTILINE,
             )
             is not None
@@ -129,14 +129,14 @@ class PipPackageInstaller(PackageInstaller):
         return (
             re.search(
                 "^" + re.escape(package) + r"($|\s)",
-                util.run_silent([self.executable, "search", package])[1],
+                util.run_silent([PIP_EXECUTABLE, "search", package])[1],
                 re.MULTILINE,
             )
             is not None
         )
 
     def install(self, package: str) -> bool:
-        command = [self.executable, "install", "--user", package]
+        command = [PIP_EXECUTABLE, "install", "--user", package]
         return util.run_verbose(command)
 
 
