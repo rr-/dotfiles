@@ -15,5 +15,6 @@ def run():
         packages.try_install("libffms2-4")
         packages.try_install("libfftw3-bin")
         packages.try_install("libmpv-dev")
+        packages.try_install("libass-dev")
 
     util.create_symlink("./scripts", "~/.config/bubblesub/")
