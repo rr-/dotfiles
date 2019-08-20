@@ -3,8 +3,13 @@ from dotinstall import packages, util
 
 def run():
     spell_dir = "~/.config/nvim/spell/"
-    packages.try_install("neovim")
-    packages.try_install("neovim", method="pip")
+    if util.distro_name() == "arch":
+        packages.try_install("neovim")
+        packages.try_install("neovim", method="pip")
+    elif util.distro_name() == "linuxmint":
+        packages.try_install("neovim")
+        packages.try_install("python3-neovim")
+    packages.try_install("black", method="pip")
 
     for name in ["undo", "backup", "swap", "spell"]:
         util.create_dir("~/.config/nvim/" + name)
