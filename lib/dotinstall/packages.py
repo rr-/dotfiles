@@ -106,7 +106,7 @@ class PipPackageInstaller(PackageInstaller):
     name = "pip"
 
     def __init__(self) -> None:
-        if "cygwin" in sys.platform:
+        if "cygwin" in sys.platform or util.distro_name() == "linuxmint":
             self.executable = "pip3"
         else:
             self.executable = "pip"
