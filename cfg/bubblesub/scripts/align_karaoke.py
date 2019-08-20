@@ -2,12 +2,11 @@ import enum
 
 import cv2
 import numpy as np
-from PyQt5 import QtCore, QtGui, QtWidgets
-
 from bubblesub.api import Api
 from bubblesub.api.cmd import BaseCommand
 from bubblesub.cfg.menu import MenuCommand
 from bubblesub.ui.util import Dialog, async_dialog_exec
+from PyQt5 import QtCore, QtGui, QtWidgets
 
 FRAME_CROP = 0.85
 THRESHOLD = 210
