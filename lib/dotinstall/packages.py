@@ -29,6 +29,23 @@ class CygwinPackageInstaller:
         return util.run_verbose(["apt-cyg", "install", package])
 
 
+class AptPackageInstaller:
+    name = "apt"
+
+    @property
+    def supported(self):
+        return util.has_executable("apt")
+
+    def has_installed(self, package):
+        return util.run_silent(["dpkg", "-l", package])[0]
+
+    def is_available(self, package):
+        return util.run_silent(["apt", "show", package])[0]
+
+    def install(self, package):
+        return util.run_verbose(["sudo", "-S", "apt", "install", package])
+
+
 class PacmanPackageInstaller:
     name = "pacman"
 
@@ -119,6 +136,7 @@ INSTALLERS = [
     PacmanPackageInstaller(),
     PacaurPackageInstaller(),
     PipPackageInstaller(),
+    AptPackageInstaller(),
 ]
 
 
