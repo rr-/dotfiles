@@ -119,3 +119,12 @@ def _remove_symlink(path: str) -> None:
     if os.path.islink(path):
         logger.info("Removing old symlink %r...", path)
         os.unlink(path)
+
+
+def distro_name() -> str:
+    for line in Path("/etc/os-release").read_text().splitlines():
+        key, value = line.split("=", 1)
+        key = key.lower()
+        if key == "id":
+            return value.strip('"')
+    return "unknown"
