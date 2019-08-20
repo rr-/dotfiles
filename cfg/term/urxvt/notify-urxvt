@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-import typing as T
 import argparse
 import os
 import subprocess
 import sys
+import typing as T
 
 
 def is_tmux_visible() -> bool:

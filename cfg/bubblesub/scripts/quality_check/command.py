@@ -13,10 +13,10 @@ from .check_ass_tags import check_ass_tags
 from .check_double_words import check_double_words
 from .check_durations import check_durations
 from .check_fonts import check_fonts
-from .check_punctuation_stats import check_punctuation_stats
 from .check_line_continuation import check_line_continuation
 from .check_long_line import check_long_line
 from .check_punctuation import check_punctuation
+from .check_punctuation_stats import check_punctuation_stats
 from .check_quotes import check_quotes
 from .check_spelling import check_spelling
 from .check_style_validity import check_style_validity
