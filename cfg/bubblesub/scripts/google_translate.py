@@ -2,7 +2,7 @@ import argparse
 import asyncio
 import concurrent.futures
 import typing as T
-from subprocess import run
+from subprocess import PIPE, run
 
 from bubblesub.api import Api
 from bubblesub.api.cmd import BaseCommand
@@ -72,10 +72,11 @@ class GoogleTranslateCommand(BaseCommand):
         args += ["-s", self.args.source_code]
         args += ["-t", self.args.target_code]
         args += [text]
-        result = run(args, check=True, capture_output=True, text=True)
-        if not result.stdout:
+        result = run(args, check=True, stdout=PIPE, stderr=PIPE)
+        response = result.stdout.decode().strip()
+        if not response:
             raise ValueError("error")
-        return result.stdout.strip()
+        return response
 
     @staticmethod
     def decorate_parser(api: Api, parser: argparse.ArgumentParser) -> None:
