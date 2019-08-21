@@ -1,3 +1,3 @@
 #!/bin/sh
-pkill sxhkd
+pkill -x sxhkd
 SXHKD_SHELL=~/.config/sxhkd/runner sxhkd &
