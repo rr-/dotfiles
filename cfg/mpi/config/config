@@ -1,6 +1,7 @@
 # vim syntax=config
 
 vo=gpu,x11
+fullscreen=yes
 stop-screensaver=yes
 image-display-duration=inf
 
