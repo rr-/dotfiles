@@ -1,47 +1,77 @@
 #!/usr/bin/env python3
-# Switches between Polish and Japanese keyboard layout for ibus
-# (the default switcher of ibus was too buggy)
+# Switches between Polish and Japanese keyboard layout for ibus and/or mozc
 
 import argparse
 import os
 import typing as T
+from dataclasses import dataclass
 from subprocess import PIPE, run
 
 import xdg
 
 XMODMAPS: T.List[str] = [
-    #"keysym equal = equal plus equal plus dead_macron dead_macron",
-    "keysym space = space space space space space U200B",
+    # "keysym equal = equal plus equal plus dead_macron dead_macron",
+    "keysym space = space space space space space U200B"
 ]
 
-LANGUAGES: T.List[T.Tuple[str, str]] = [("pl", "xkb:pl::pol"), ("jp", "anthy")]
+
+@dataclass
+class Language:
+    code: str
+    engine: str
+
+
+LANGUAGES: T.List[Language] = [
+    Language(code="pl", engine="xkb:pl::pol"),
+    Language(code="jp", engine="anthy"),
+    Language(code="jp", engine="mozc-jp"),
+]
 
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "lang", nargs="?", choices=[item[0] for item in LANGUAGES]
+        "lang", nargs="?", choices=set(lang.code for lang in LANGUAGES)
     )
     return parser.parse_args()
 
 
-def get_code_and_engine(lang: str) -> T.Tuple[str, str]:
-    if not lang:
-        current_engine = (
-            run(["ibus", "engine"], stdout=PIPE).stdout.decode().strip()
-        )
+def is_language_available(lang: Language) -> bool:
+    available_engines = (
+        run(["ibus", "list-engine"], stdout=PIPE).stdout.decode().strip()
+    )
+    return lang.engine in available_engines
 
-        for i, item in enumerate(LANGUAGES):
-            code, engine = item
-            if engine == current_engine:
-                return LANGUAGES[(i + 1) % len(LANGUAGES)]
 
-    else:
-        for code, engine in LANGUAGES:
-            if code == lang:
-                return (code, engine)
+def get_current_language() -> Language:
+    current_engine = (
+        run(["ibus", "engine"], stdout=PIPE).stdout.decode().strip()
+    )
+    for lang in LANGUAGES:
+        if lang.engine == current_engine:
+            return lang
+    raise RuntimeError(f'Unknown language engine "{current_engine}"')
 
-    raise ValueError("Unknown language")
+
+def get_next_language() -> Language:
+    current_lang = get_current_language()
+    for i, lang in enumerate(LANGUAGES):
+        if lang.engine == current_lang.engine:
+            break
+    for j in range(len(LANGUAGES)):
+        lang = LANGUAGES[(i + j + 1) % len(LANGUAGES)]
+        if is_language_available(lang):
+            return lang
+    raise RuntimeError("Unable to find available language")
+
+
+def get_target_language(lang_code: str) -> Language:
+    if not lang_code:
+        return get_next_language()
+    for lang in LANGUAGES:
+        if lang.code == lang_code and is_language_available(lang):
+            return lang
+    raise RuntimeError(f'Unknown language code "{lang_code}"')
 
 
 def main() -> None:
@@ -51,10 +81,10 @@ def main() -> None:
 
     args = parse_args()
 
-    code, engine = get_code_and_engine(args.lang)
+    lang = get_target_language(args.lang)
 
-    run(["setxkbmap", code])
-    run(["ibus", "engine", engine])
+    run(["setxkbmap", lang.code])
+    run(["ibus", "engine", lang.engine])
     for expr in XMODMAPS:
         run(["xmodmap", "-e", expr])
 
