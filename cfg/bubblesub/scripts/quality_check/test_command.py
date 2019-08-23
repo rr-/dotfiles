@@ -258,6 +258,8 @@ def test_check_quotes(
         (["Whatever", "Whatever."], "possibly unended sentence"),
         (["Whatever,", "I have."], None),
         (["Whatever,", "I'm going."], None),
+        (["Whatever,", "I'd go."], None),
+        (["Whatever,", "I'll go."], None),
         (["Whatever,", "Not."], "possibly unended sentence"),
         (["Whatever,", '"Not."'], None),
         (["Japan vs.", "the rest."], None),
