@@ -2,11 +2,11 @@ if [ -d /etc/X11/xinit/xinitrc.d ]; then
     for f in /etc/X11/xinit/xinitrc.d/*; do
         [ -x "$f" ] && . "$f"
     done
-    unset f
 fi
 
-xrdb ~/.config/Xresources
-xrdb -override ~/.config/Xresources-theme
+for f in ~/.config/Xresources*; do
+    xrdb -override "$f"
+done
 
 #left pointing cursor
 xsetroot -cursor_name left_ptr
