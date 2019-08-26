@@ -31,7 +31,7 @@ import tempfile
 import typing as T
 from dataclasses import dataclass
 from pathlib import Path
-from subprocess import CalledProcessError, run
+from subprocess import PIPE, CalledProcessError, run
 
 
 @dataclass
@@ -109,9 +109,7 @@ def optimize_rotation_and_translation(pto_file: Path) -> None:
     run(["autooptimiser", "-n", "-o", pto_file, pto_file], check=True)
 
 
-def get_control_points(
-    pto_file: Path
-) -> T.Iterable[ControlPoint]:
+def get_control_points(pto_file: Path) -> T.Iterable[ControlPoint]:
     with pto_file.open() as handle:
         for line in handle:
             if line.startswith("c"):
@@ -130,14 +128,15 @@ def pano_trafo(
     result = run(
         ["pano_trafo"] + (["-r"] if reverse else []) + [pto_file],
         check=True,
-        input="\n".join(f"{cp.img} {cp.x} {cp.y}" for cp in control_points),
-        capture_output=True,
-        text=True,
+        input="\n".join(
+            f"{cp.img} {cp.x} {cp.y}" for cp in control_points
+        ).encode(),
+        stdout=PIPE,
     )
 
     return [
         Point(float(line.split()[0]), float(line.split()[1]))
-        for line in result.stdout.splitlines()
+        for line in result.stdout.decode().splitlines()
     ]
 
 
