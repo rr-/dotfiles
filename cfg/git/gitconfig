@@ -5,8 +5,6 @@
     user = rr-
 [branch]
     autosetuprebase = always
-[color]
-    diff = always
 [core]
     excludesfile = ~/.gitignore
     autocrlf = false
