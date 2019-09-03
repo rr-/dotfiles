@@ -7,6 +7,7 @@ zstyle ':completion:*' matcher-list \
 setopt NO_NOMATCH                       # if extended glob fails, run cmd as-is
 setopt NO_CASE_GLOB                     # ignore case in glob searches
 setopt nullglob                         # nonexisting wildcards expand to ''
+source ~/.zprofile
 
 # miscellaneous
 unsetopt beep                           # disable beep on errors
