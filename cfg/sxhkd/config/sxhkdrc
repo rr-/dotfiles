@@ -86,70 +86,36 @@ super + {z,Z}
 
 # close active window
 super + q
-    bspc node -c
+    wmctrl -c :ACTIVE:
 
 # send active window to given another workspace
-super + shift + {grave,1-9,0,minus}
-    TARGET={IM,1-9,10,IM}; \
-    ID=$(xdotool getactivewindow); \
-    bspc node -d $TARGET && bspc node -f $ID
+super + shift + {1-4}
+    TARGET={0-3}; \
+    wmctrl -r :ACTIVE: -t "$TARGET"; \
+    wmctrl -s "$TARGET"
 
 # focus workspace
-super + {grave,1-9,0,minus}
-    bspc desktop -f {IM,1-9,10,IM}
+super + {1-4}
+    wmctrl -s {0-3}
 
 # focus window in given direction
 super + {h,j,k,l}
     DIR={west,south,north,east}; \
     bspc node -f $DIR || ( bspc monitor -f $DIR; bspc node -f @/1.floating )
 
-# swap window with another one in given direction
-super + shift + {h,j,k,l}
-    bspc node -s {west,south,north,east}.local
+# maximize the window
+super + Up
+    wmctrl -r :ACTIVE: -b add,maximized_horz; \
+    wmctrl -r :ACTIVE: -b add,maximized_vert
 
-# expand a window by moving one of its side outward
-super + alt + {h,j,k,l}
-    bspc node -z {left -20 0,bottom 0 20,top 0 -20,right 20 0}
-
-# contract a window by moving one of its side inward
-super + alt + shift + {h,j,k,l}
-    bspc node -z {right -20 0,top 0 20,bottom 0 -20,left 20 0}
-
-# set current window as floating
-super + s
-    toggle_state floating
+# restore the window
+super + Down
+    wmctrl -r :ACTIVE: -b remove,maximized_horz; \
+    wmctrl -r :ACTIVE: -b remove,maximized_vert
 
 # set current window as fullscreen
 super + f
-    toggle_state fullscreen
-
-# cycle between desktop layouts
-super + shift + f
-    bspc desktop -l {tiled,monocle}
-
-# toggle window gaps
-super + o
-    if test $(bspc config window_gap) -eq 0; then; \
-        bspc config window_gap $(cat /tmp/bspc_window_gap); \
-    else; \
-        bspc config window_gap >/tmp/bspc_window_gap; \
-        bspc config window_gap 0; \
-    fi
-
-# toggle window borders
-super + shift + o
-    if test $(bspc config border_width) -eq 0; then; \
-        bspc config border_width $(cat /tmp/bspc_border_width); \
-    else; \
-        bspc config border_width >/tmp/bspc_border_width; \
-        bspc config border_width 0; \
-    fi
-
-# focus window with regard to focus history
-super + {bracketleft,bracketright}
-    bspc control --record-history off; \
-    bspc node {older,newer} -f; \
-    bspc control --record-history on
+    wmctrl -r :ACTIVE: -b toggle,fullscreen
 
 # reload sxhkd configuration
 alt + F12
