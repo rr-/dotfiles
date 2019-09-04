@@ -11,7 +11,6 @@ endif
 syntax on                     "enable syntax highlighting
 set synmaxcol=256             "highlight up to X columns (binary files)
 set number                    "enable line numbers
-set nofoldenable              "disable folding
 
 "fix fast hitting escape + <key> being interpreted as escape sequence
 if !has('gui_running')
@@ -36,7 +35,6 @@ endif
 set enc=utf-8                 "character encoding of ui
 set fencs=utf-8,cp932         "preferred character encodings
 set ff=unix ffs=unix,dos      "preferred eol styles
-set wrapscan                  "search again from top if no matches
 set nowrap                    "don't wrap long lines
 set formatoptions-=c          "auto comment continuation works against me
 set formatoptions-=j          "make :join not remove nonwhitespace
@@ -47,6 +45,7 @@ set showcmd                   "show last command in status
 set virtualedit=onemore       "allow moving cursor up to EOL+1 character
 set splitbelow splitright     "change placement when splitting a buffer
 set shell=/bin/zsh            "when opening shell, use zsh
+set wrapscan                  "search again from top if no matches
 set noincsearch               "disable 'live' search
 set ignorecase                "ignore case in searches
 set smartcase                 " ...unless they contain uppercase chars
@@ -75,6 +74,7 @@ let &spellfile=
   \$HOME.'/.config/'.s:dir.'/spell/pl.utf-8.add'
 
 "folds
+set nofoldenable              "disable folding
 set foldopen-=block           "{ and } skips over folds
 set foldmethod=indent         "fold basing on indent (to be used with zM / zR)
 set foldnestmax=2             "don't fold too deep
