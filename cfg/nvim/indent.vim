@@ -15,7 +15,8 @@ command! Tabs set noet sts=4 ts=4 sw=4
 set autoindent                "match indentation from previous line after <CR>
 set nosmartindent             "don't add any extra indenation after { (I)
 set nocindent                 "don't add any extra indenation after { (II)
-filetype plugin indent off    "auto indentation works against me
+filetype plugin on            "enable filetype specific stuff
+filetype indent off           "but disable indentation settings
 
 "setup indentation for common file types
 autocmd FileType text     FourSpaces
