@@ -79,6 +79,9 @@ def check_punctuation(event: AssEvent) -> T.Iterable[BaseResult]:
         if word in context:
             yield Violation(event, "missing apostrophe")
 
+    if '’' in text:
+        yield Violation(event, "bad apostrophe")
+
     if re.search("^– .* –$", text, flags=re.M):
         yield Violation(event, "bad dash (expected —)")
     elif not re.search("^—.*—$", text, flags=re.M):
