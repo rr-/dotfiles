@@ -2,11 +2,12 @@ import enum
 
 import cv2
 import numpy as np
+from PyQt5 import QtCore, QtGui, QtWidgets
+
 from bubblesub.api import Api
 from bubblesub.api.cmd import BaseCommand
 from bubblesub.cfg.menu import MenuCommand
 from bubblesub.ui.util import Dialog, async_dialog_exec
-from PyQt5 import QtCore, QtGui, QtWidgets
 
 FRAME_CROP = 0.85
 THRESHOLD = 210
@@ -14,7 +15,6 @@ THRESHOLD = 210
 
 class DragMode(enum.IntEnum):
     none = enum.auto()
-    start = enum.auto()
     end = enum.auto()
 
 
@@ -32,25 +32,18 @@ class _PreviewWidget(QtWidgets.QWidget):
 
     def mouseReleaseEvent(self, event: QtGui.QMouseEvent) -> None:
         if event.button() == QtCore.Qt.LeftButton:
-            self.start = event.pos()
-        elif event.button() == QtCore.Qt.RightButton:
             self.end = event.pos()
         self.drag = DragMode.none
         self.update()
 
     def mousePressEvent(self, event: QtGui.QMouseEvent) -> None:
         if event.button() == QtCore.Qt.LeftButton:
-            self.drag = DragMode.start
-            self.start = event.pos()
-        elif event.button() == QtCore.Qt.RightButton:
             self.drag = DragMode.end
-            self.end = event.pos()
+            self.start = self.end = event.pos()
         self.update()
 
     def mouseMoveEvent(self, event: QtGui.QMouseEvent) -> None:
-        if self.drag == DragMode.start:
-            self.start = event.pos()
-        elif self.drag == DragMode.end:
+        if self.drag == DragMode.end:
             self.end = event.pos()
         self.update()
 
@@ -113,37 +106,16 @@ class _AlignKaraokeDialog(Dialog):
         layout.addWidget(self.preview)
         layout.addWidget(strip)
 
-        self.detect_region()
-
     def action(self, sender: QtWidgets.QAbstractButton) -> None:
         if sender == self.set_xy_btn:
             self.set_xy()
 
     def set_xy(self) -> None:
         x = (self.preview.start.x() + self.preview.end.x()) // 2
-        y = (self.preview.end.y() + self.frame.shape[0]) // 2
+        y = (self.preview.start.y() + self.preview.end.y()) // 2
         with self._api.undo.capture():
             for event in self._events:
                 event.text = f"{{\\an5\\pos({x},{y})}}" + event.text
-
-    def detect_region(self) -> None:
-        img = cv2.cvtColor(self.frame, cv2.COLOR_BGR2GRAY)
-        crop_y = int(img.shape[0] * FRAME_CROP)
-        img = img[crop_y : img.shape[0], :]
-
-        _, img = cv2.threshold(img, THRESHOLD, 255, cv2.THRESH_BINARY)
-        kernel = kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5))
-        img = cv2.dilate(img, kernel, 1)
-        img = cv2.erode(img, kernel, 2)
-        img = cv2.dilate(img, kernel, 1)
-
-        box = cv2.boundingRect(np.argwhere(img >= 1))
-
-        self.preview.start = QtCore.QPoint(box[1], box[0] + crop_y)
-        self.preview.end = QtCore.QPoint(
-            box[3] + box[1], box[2] + box[0] + crop_y
-        )
-        self.preview.update()
 
 
 class AlignKaraokeCommand(BaseCommand):
