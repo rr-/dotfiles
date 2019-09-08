@@ -98,7 +98,7 @@ def get_fonts(api) -> T.Dict[Path, FontInfo]:
 
     return {
         path: FontInfo(path)
-        for path in (api.subs.path.parent / "../../fonts").iterdir()
+        for path in Path("~/.config/oc-fonts").expanduser().iterdir()
         if path.is_file()
     }
 
