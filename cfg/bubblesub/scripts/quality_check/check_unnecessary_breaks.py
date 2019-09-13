@@ -11,6 +11,7 @@ from .common import (
     BaseResult,
     Information,
     get_width,
+    is_event_karaoke,
     is_event_title,
     measure_frame_size,
 )
@@ -31,6 +32,7 @@ def check_unnecessary_breaks(
         width < optimal_width
         and not many_sentences
         and not is_event_title(event)
+        and not is_event_karaoke(event)
     ):
         yield Information(
             event,
