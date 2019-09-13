@@ -26,7 +26,7 @@ def check_punctuation(event: AssEvent) -> T.Iterable[BaseResult]:
     if text.count("\n") >= 2:
         yield Violation(event, "three or more lines")
 
-    if re.search(r"\n\s|\s\n", text):
+    if re.search(r"\n[ \t]|[ \t]\n", text):
         yield Violation(event, "whitespace around line break")
 
     if re.search(r"\n[.,?!:;]", text):
