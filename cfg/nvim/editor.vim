@@ -36,9 +36,15 @@ set enc=utf-8                 "character encoding of ui
 set fencs=utf-8,cp932         "preferred character encodings
 set ff=unix ffs=unix,dos      "preferred eol styles
 set nowrap                    "don't wrap long lines
-set formatoptions-=c          "auto comment continuation works against me
-set formatoptions-=j          "make :join not remove nonwhitespace
-set formatoptions-=t          "don't auto align lines during typing
+
+"automatic aids
+set formatoptions-=t          "disable autowrapping text
+set formatoptions-=c          "disable autowrapping comments
+set formatoptions-=r          "disable inserting comment prefix after <Enter>
+set formatoptions-=o          "disable inserting comment prefix after 'o'/'O'
+set formatoptions-=j          "keep the comment prefix when joining lines
+"respect my choice even for ftplugin
+autocmd FileType * setlocal fo-=t fo-=c fo-=r fo-=o fo-=j
 
 "editor behavior
 set showcmd                   "show last command in status
