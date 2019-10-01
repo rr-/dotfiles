@@ -7,7 +7,6 @@ if whence -p dircolors >/dev/null; then
 fi
 
 # aliases
-alias cal="cal -m"
 alias l="myls"
 alias ll="myls -l"
 alias la="myls -la"
@@ -61,6 +60,11 @@ man() {
     LESS_TERMCAP_ue=$'\E[0m' \
     LESS_TERMCAP_us=$'\E[04;38;5;146m' \
     man "$@"
+}
+
+# nice cal output
+cal() {
+    whence ncal && ncal -M3 || env cal -m3
 }
 
 # load additional modules
