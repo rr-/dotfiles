@@ -135,9 +135,9 @@ zle-line-init zle-keymap-select () {
             ;;
         viins|main)
             if [[ $TMUX = '' ]]; then
-                echo -ne "\033]12;15\007"
+                echo -ne "\033]112\007"
             else
-                printf '\033Ptmux;\033\033]12;15\007\033\\'
+                printf '\033Ptmux;\033\033]112\007\033\\'
             fi
             ;;
     esac
