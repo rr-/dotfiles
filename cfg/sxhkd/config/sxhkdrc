@@ -37,7 +37,7 @@ alt + ctrl + shift + m
 
 # spawn web browser
 alt + ctrl + semicolon
-    run_or_raise -n 'Qutebrowser' -p "xdg-open 'about:blank'"
+    run_or_raise -n browser -p "xdg-open 'about:blank'"
 
 
 
@@ -124,7 +124,7 @@ alt + F12
 alt + shift + F12
     bash -c '~/.config/bspwm/bspwmrc'; \
     bash -c '~/.config/x/start-panel.sh'; \
-    if pgrep qutebrowser; then qutebrowser :config-source; fi
+    if pgrep browser; then browser :config-source; fi
 
 # screenshots
 super + i
