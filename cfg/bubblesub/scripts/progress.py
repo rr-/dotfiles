@@ -4,6 +4,9 @@ import re
 import ass_tag_parser
 from bubblesub.api.cmd import BaseCommand
 from bubblesub.cfg.menu import MenuCommand
+from bubblesub.fmt.ass.util import ass_to_plaintext
+
+STRIP = list("…–—♪") + ["\\N"]
 
 
 def ms_to_str(ms: int) -> str:
@@ -11,16 +14,9 @@ def ms_to_str(ms: int) -> str:
 
 
 def extract_text(text: str) -> str:
-    try:
-        ass_line = ass_tag_parser.parse_ass(text)
-    except ass_tag_parser.ParseError:
-        return text
-    ret = ""
-    for item in ass_line:
-        if isinstance(item, ass_tag_parser.AssText):
-            ret += item.text
+    ret = ass_to_plaintext(text)
     return functools.reduce(
-        lambda ret, word: ret.replace(word, ""), list("…–—♪") + ["\\N"], ret
+        lambda ret, word: ret.replace(word, ""), STRIP, ret
     ).strip()
 
 
