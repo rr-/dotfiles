@@ -1,12 +1,13 @@
 import contextlib
 import copy
 import json
+import sys
 import typing as T
 import zlib
 from getpass import getpass
 from pathlib import Path
 
-from .aes import AESCipher
+from .aes import AESCipher, InvalidKey
 
 DB_FILE = Path("~/.config/pw.dat").expanduser()
 
@@ -43,8 +44,16 @@ def write_database(key: str, db: T.Dict[str, T.Dict[str, str]]) -> None:
 
 @contextlib.contextmanager
 def database() -> T.Iterator[T.Dict[str, T.Dict[str, str]]]:
-    key = getpass("Master password: ")
-    db = read_database(key)
+    while True:
+        try:
+            key = getpass("Master password: ")
+            db = read_database(key)
+        except InvalidKey as ex:
+            print(ex, file=sys.stderr)
+            pass
+        else:
+            break
+
     old_db = copy.deepcopy(db)
     yield db
     if old_db != db:
