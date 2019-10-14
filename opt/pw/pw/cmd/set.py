@@ -3,6 +3,7 @@ import random
 from getpass import getpass
 
 from pw.cmd.base import Command
+from pw.common import DEFAULT_WAIT, set_clipboard_for
 from pw.db import database
 
 
@@ -12,6 +13,8 @@ class SetPasswordCommand(Command):
     def decorate_parser(self, parser: argparse.ArgumentParser) -> None:
         parser.add_argument("name")
         parser.add_argument("-u", "--user")
+        parser.add_argument("--copy", action="store_true")
+        parser.add_argument("--wait", type=int, default=DEFAULT_WAIT)
         group = parser.add_mutually_exclusive_group()
         group.add_argument("-r", "--random", action="store_true")
         group.add_argument("-m", "--manual", action="store_true")
@@ -31,6 +34,9 @@ class SetPasswordCommand(Command):
             elif args.random:
                 db[args.name]["pass"] = self.get_random_pass()
                 print("Password set")
+
+            if args.copy:
+                set_clipboard_for(db[args.name]["pass"], args.wait)
 
     @staticmethod
     def get_random_pass(length: int = 32) -> str:
