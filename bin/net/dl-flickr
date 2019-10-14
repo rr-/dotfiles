@@ -42,6 +42,7 @@ def download_page(document_url: str, directory: Path) -> None:
         .path.strip("/")
         .replace("photos/", "")
         .replace("/", "-")
+        [0:100]
     )
     target_path = (directory / image_name).with_suffix(".jpg")
     download_file(image_url, target_path)
