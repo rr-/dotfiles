@@ -106,7 +106,7 @@ class GradientCommand(BaseCommand):
                 prefix = (
                     f"{{"
                     f"\\clip({t.x1:.02f},{t.y1:.02f},{t.x2:.02f},{t.y2:.02f})"
-                    f"\\1c&H{t.c.r:02X}{t.c.g:02X}{t.c.b:02X}&"
+                    f"\\1c&H{t.c.b:02X}{t.c.g:02X}{t.c.r:02X}&"
                     f"}}"
                 )
 
