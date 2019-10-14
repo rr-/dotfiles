@@ -39,7 +39,7 @@ class SetPasswordCommand(Command):
                 set_clipboard_for(db[args.name]["pass"], args.wait)
 
     @staticmethod
-    def get_random_pass(length: int = 32) -> str:
+    def get_random_pass(length: int = 25) -> str:
         alpha = "abcdefghijklmnopqrstuvwxyz"
         alpha += "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
         alpha += "0123456789"
