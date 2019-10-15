@@ -1,9 +1,8 @@
 from collections import defaultdict
 
-import enchant
-
 from bubblesub.api import Api
 from bubblesub.fmt.ass.util import ass_to_plaintext, spell_check_ass_line
+from bubblesub.spell_check import SpellChecker, SpellCheckerError
 
 from .common import is_event_karaoke
 
@@ -14,13 +13,26 @@ def check_spelling(api: Api) -> None:
     if not api.subs.path:
         return
 
-    try:
-        dictionary = enchant.DictWithPWL(
-            SPELL_CHECK_LANGUAGE, pwl=str(api.subs.path.with_name("dict.txt"))
-        )
-    except enchant.errors.DictNotFoundError:
-        api.log.warn(f'Dictionary "{SPELL_CHECK_LANGUAGE}" not found')
+    spell_check_lang = api.cfg.opt["gui"]["spell_check"]
+    if not spell_check_lang:
+        api.log.warn("Spell check was disabled in config.")
         return
+
+    try:
+        dictionary = SpellChecker(spell_check_lang)
+    except SpellCheckerError as ex:
+        api.log.error(str(ex))
+        return
+
+    exceptions_case_sensitive: T.List[str] = []
+    exceptions_case_insensitive: T.List[str] = []
+    dict_path = api.subs.path.with_name("dict.txt")
+    if dict_path.exists():
+        for line in dict_path.read_text().splitlines():
+            if line.islower():
+                exceptions_case_insensitive.append(line.lower())
+            else:
+                exceptions_case_sensitive.append(line)
 
     misspelling_map = defaultdict(set)
     for event in api.subs.events:
@@ -28,7 +40,11 @@ def check_spelling(api: Api) -> None:
             continue
         text = ass_to_plaintext(event.text)
         for _start, _end, word in spell_check_ass_line(dictionary, text):
-            misspelling_map[word].add(event.number)
+            if (
+                word not in exceptions_case_sensitive
+                and word.lower() not in exceptions_case_insensitive
+            ):
+                misspelling_map[word].add(event.number)
 
     if misspelling_map:
         api.log.info("Misspelled words:")
