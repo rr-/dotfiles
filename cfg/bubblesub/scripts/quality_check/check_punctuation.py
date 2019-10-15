@@ -15,7 +15,7 @@ from .common import (
 )
 
 
-def check_punctuation(event: AssEvent) -> T.Iterable[BaseResult]:
+def check_punctuation(lang: str, event: AssEvent) -> T.Iterable[BaseResult]:
     text = ass_to_plaintext(event.text)
 
     if text.startswith("\n") or text.endswith("\n"):
@@ -49,37 +49,38 @@ def check_punctuation(event: AssEvent) -> T.Iterable[BaseResult]:
         yield Violation(event, "ellipsis in the middle of sentence")
 
     context = re.split(r"\W+", re.sub('[.,?!"]', "", text.lower()))
-    for word in {
-        "im",
-        "youre",
-        "hes",
-        "shes",
-        "theyre",
-        "isnt",
-        "arent",
-        "wasnt",
-        "werent",
-        "didnt",
-        "thats",
-        "heres",
-        "theres",
-        "wheres",
-        "cant",
-        "dont",
-        "wouldnt",
-        "couldnt",
-        "shouldnt",
-        "hasnt",
-        "havent",
-        "ive",
-        "wouldve",
-        "youve",
-        "ive",
-    }:
-        if word in context:
-            yield Violation(event, "missing apostrophe")
+    if lang.startswith("en"):
+        for word in {
+            "im",
+            "youre",
+            "hes",
+            "shes",
+            "theyre",
+            "isnt",
+            "arent",
+            "wasnt",
+            "werent",
+            "didnt",
+            "thats",
+            "heres",
+            "theres",
+            "wheres",
+            "cant",
+            "dont",
+            "wouldnt",
+            "couldnt",
+            "shouldnt",
+            "hasnt",
+            "havent",
+            "ive",
+            "wouldve",
+            "youve",
+            "ive",
+        }:
+            if word in context:
+                yield Violation(event, "missing apostrophe")
 
-    if '’' in text:
+    if "’" in text:
         yield Violation(event, "bad apostrophe")
 
     if re.search("^– .* –$", text, flags=re.M):

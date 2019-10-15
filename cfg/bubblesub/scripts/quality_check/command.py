@@ -35,10 +35,11 @@ def list_violations(api: Api) -> T.Iterable[BaseResult]:
         video_resolution=(get_width(api), get_height(api)),
     )
 
+    spell_check_lang = api.cfg.opt["gui"]["spell_check"]
     for event in api.subs.events:
         yield from check_style_validity(event, api.subs.styles)
         yield from check_durations(event)
-        yield from check_punctuation(event)
+        yield from check_punctuation(spell_check_lang, event)
         yield from check_quotes(event)
         yield from check_line_continuation(event)
         yield from check_ass_tags(event)

@@ -201,7 +201,7 @@ def test_check_durations_good_gap() -> None:
 )
 def test_check_punctuation(text: str, violation_text: T.Optional[str]) -> None:
     event = AssEvent(text=text)
-    results = list(check_punctuation(event))
+    results = list(check_punctuation("en_US", event))
     if violation_text is None:
         assert len(results) == 0
     else:
