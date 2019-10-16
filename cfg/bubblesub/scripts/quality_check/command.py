@@ -25,7 +25,9 @@ from .check_unnecessary_breaks import check_unnecessary_breaks
 from .common import BaseResult, get_height, get_optimal_line_heights, get_width
 
 
-def list_violations(api: Api) -> T.Iterable[BaseResult]:
+def list_violations(
+    spell_check_lang: T.Optional[str], api: Api
+) -> T.Iterable[BaseResult]:
     renderer = AssRenderer()
     optimal_line_heights = get_optimal_line_heights(api, renderer)
     renderer.set_source(
@@ -35,7 +37,6 @@ def list_violations(api: Api) -> T.Iterable[BaseResult]:
         video_resolution=(get_width(api), get_height(api)),
     )
 
-    spell_check_lang = api.cfg.opt["gui"]["spell_check"]
     for event in api.subs.events:
         yield from check_style_validity(event, api.subs.styles)
         yield from check_durations(event)
@@ -58,10 +59,14 @@ class QualityCheckCommand(BaseCommand):
         parser.add_argument("-n", "--focus-next", action="store_true")
 
     async def run(self):
+        spell_check_lang = (
+            self.api.subs.language or self.api.cfg.opt["gui"]["spell_check"]
+        )
+
         if self.args.focus_prev or self.args.focus_next:
             violations = [
                 result
-                for result in list_violations(self.api)
+                for result in list_violations(spell_check_lang, self.api)
                 if result.log_level in {LogLevel.Warning, LogLevel.Error}
             ]
             violated_indexes = sorted(
@@ -91,7 +96,7 @@ class QualityCheckCommand(BaseCommand):
             return
 
         results = sorted(
-            list_violations(self.api),
+            list_violations(spell_check_lang, self.api),
             key=lambda result: (
                 re.match("^([^(]*).*?$", result.text).group(1),
                 result.event.number,
@@ -100,7 +105,7 @@ class QualityCheckCommand(BaseCommand):
         for result in results:
             self.api.log.log(result.log_level, repr(result))
 
-        check_spelling(self.api)
+        check_spelling(spell_check_lang, self.api)
         check_actors(self.api)
         check_styles(self.api)
         check_fonts(self.api)
