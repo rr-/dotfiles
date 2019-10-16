@@ -1,3 +1,4 @@
+import typing as T
 from collections import defaultdict
 
 from bubblesub.api import Api
@@ -9,11 +10,10 @@ from .common import is_event_karaoke
 SPELL_CHECK_LANGUAGE = "en_US"
 
 
-def check_spelling(api: Api) -> None:
+def check_spelling(spell_check_lang: T.Optional[str], api: Api) -> None:
     if not api.subs.path:
         return
 
-    spell_check_lang = api.cfg.opt["gui"]["spell_check"]
     if not spell_check_lang:
         api.log.warn("Spell check was disabled in config.")
         return
