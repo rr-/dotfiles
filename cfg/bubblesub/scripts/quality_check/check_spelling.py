@@ -1,3 +1,4 @@
+import re
 import typing as T
 from collections import defaultdict
 
@@ -26,7 +27,10 @@ def check_spelling(spell_check_lang: T.Optional[str], api: Api) -> None:
 
     exceptions_case_sensitive: T.List[str] = []
     exceptions_case_insensitive: T.List[str] = []
-    dict_names = [f"dict-{spell_check_lang}.txt", "dict.txt"]
+    dict_names = [
+        f"dict-{spell_check_lang}.txt",
+        f"dict-{re.sub('[-_].*', '', spell_check_lang)}.txt",
+        "dict.txt"]
     for dict_name in dict_names:
         dict_path = api.subs.path.with_name(dict_name)
         if dict_path.exists():
