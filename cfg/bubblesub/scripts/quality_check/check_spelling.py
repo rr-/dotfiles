@@ -26,13 +26,16 @@ def check_spelling(api: Api) -> None:
 
     exceptions_case_sensitive: T.List[str] = []
     exceptions_case_insensitive: T.List[str] = []
-    dict_path = api.subs.path.with_name("dict.txt")
-    if dict_path.exists():
-        for line in dict_path.read_text().splitlines():
-            if line.islower():
-                exceptions_case_insensitive.append(line.lower())
-            else:
-                exceptions_case_sensitive.append(line)
+    dict_names = [f"dict-{spell_check_lang}.txt", "dict.txt"]
+    for dict_name in dict_names:
+        dict_path = api.subs.path.with_name(dict_name)
+        if dict_path.exists():
+            for line in dict_path.read_text().splitlines():
+                if line.islower():
+                    exceptions_case_insensitive.append(line.lower())
+                else:
+                    exceptions_case_sensitive.append(line)
+            break
 
     misspelling_map = defaultdict(set)
     for event in api.subs.events:
