@@ -4,6 +4,7 @@ import concurrent.futures
 import typing as T
 from subprocess import PIPE, run
 
+import ass_tag_parser
 from bubblesub.api import Api
 from bubblesub.api.cmd import BaseCommand
 from bubblesub.cfg.menu import MenuCommand, SubMenu
@@ -65,8 +66,24 @@ class GoogleTranslateCommand(BaseCommand):
     def recognize(self, sub: AssEvent) -> str:
         self.api.log.info(f"line #{sub.number} - analyzing")
         text = sub.note.replace("\\N", "\n")
+
+        try:
+            ass_line = ass_tag_parser.parse_ass(text)
+        except ass_tag_parser.ParseError as ex:
+            return self.translate(text)
+        else:
+            ret = ""
+            for item in ass_line:
+                if isinstance(item, ass_tag_parser.AssText):
+                    ret += self.translate(item.text)
+                else:
+                    ret += item.meta.text
+            return ret
+
+    def translate(self, text: str) -> str:
         if not text.strip():
             return ""
+
         args = ["trans", "-b"]
         args += ["-e", self.args.engine]
         args += ["-s", self.args.source_code]
