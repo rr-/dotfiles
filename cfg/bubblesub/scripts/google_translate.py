@@ -91,6 +91,7 @@ class GoogleTranslateCommand(BaseCommand):
         args += [text]
         result = run(args, check=True, stdout=PIPE, stderr=PIPE)
         response = result.stdout.decode().strip()
+        response = response.replace("...", "…")
         if not response:
             raise ValueError("error")
         return response
