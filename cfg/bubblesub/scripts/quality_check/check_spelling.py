@@ -8,9 +8,6 @@ from bubblesub.spell_check import SpellChecker, SpellCheckerError
 
 from .common import is_event_karaoke
 
-SPELL_CHECK_LANGUAGE = "en_US"
-
-
 def check_spelling(spell_check_lang: T.Optional[str], api: Api) -> None:
     if not api.subs.path:
         return
