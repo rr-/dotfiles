@@ -96,11 +96,14 @@ def get_fonts(api) -> T.Dict[Path, FontInfo]:
     if not api.subs.path:
         return {}
 
-    return {
-        path: FontInfo(path)
-        for path in Path("~/.config/oc-fonts").expanduser().iterdir()
-        if path.is_file()
-    }
+    ret: T.Dict[Path, FontInfo] = {}
+    for path in Path("~/.config/oc-fonts").expanduser().iterdir():
+        if path.is_file():
+            try:
+                ret[path] = FontInfo(path)
+            except font_tools.TTLibError:
+                pass
+    return ret
 
 
 def locate_font(
