@@ -65,7 +65,9 @@ class GoogleTranslateCommand(BaseCommand):
 
     def recognize(self, sub: AssEvent) -> str:
         self.api.log.info(f"line #{sub.number} - analyzing")
-        text = sub.note.replace("\\N", "\n")
+        text = sub.note
+        text = text.replace("\\N", "\n")
+        text = text.replace("\n", " ")
 
         try:
             ass_line = ass_tag_parser.parse_ass(text)
