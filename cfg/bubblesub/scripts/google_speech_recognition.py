@@ -12,6 +12,9 @@ from bubblesub.cfg.menu import MenuCommand, SubMenu
 from bubblesub.cmd.common import SubtitlesSelection
 from bubblesub.fmt.ass.event import AssEvent
 
+LEAD_IN = 100
+LEAD_OUT = 100
+
 
 class SpeechRecognitionCommand(BaseCommand):
     names = ["sr", "google-speech-recognition"]
@@ -65,7 +68,9 @@ class SpeechRecognitionCommand(BaseCommand):
         self.api.log.info(f"line #{sub.number} - analyzing")
         recognizer = sr.Recognizer()
         with io.BytesIO() as handle:
-            self.api.audio.save_wav(handle, sub.start, sub.end)
+            self.api.audio.save_wav(
+                handle, sub.start - LEAD_IN, sub.end + LEAD_OUT
+            )
             handle.seek(0, io.SEEK_SET)
             with sr.AudioFile(handle) as source:
                 audio = recognizer.record(source)
