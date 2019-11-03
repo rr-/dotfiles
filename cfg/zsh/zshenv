@@ -64,7 +64,7 @@ man() {
 
 # nice cal output
 cal() {
-    whence ncal && ncal -M3 || env cal -m3
+    whence ncal && ncal -M3b || env cal -m3
 }
 
 # load additional modules
