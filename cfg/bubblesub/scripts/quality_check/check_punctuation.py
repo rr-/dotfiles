@@ -29,9 +29,9 @@ def check_punctuation(lang: str, event: AssEvent) -> T.Iterable[BaseResult]:
     if re.search(r"\n[ \t]|[ \t]\n", text):
         yield Violation(event, "whitespace around line break")
 
-    if re.search(r"\n[.,?!:;]", text):
+    if re.search(r"\n[.,?!:;…]", text):
         yield Violation(event, "line break before punctuation")
-    elif re.search(r"\s[.,?!:;]", text):
+    elif re.search(r"\s[.,?!:;…]", text):
         yield Violation(event, "whitespace before punctuation")
 
     if "  " in text:
