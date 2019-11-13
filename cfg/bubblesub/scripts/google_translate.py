@@ -1,6 +1,5 @@
 import argparse
 import asyncio
-import concurrent.futures
 import typing as T
 from subprocess import PIPE, run
 
@@ -12,14 +11,65 @@ from bubblesub.cmd.common import SubtitlesSelection
 from bubblesub.fmt.ass.event import AssEvent
 
 
-def retry(func: T.Callable, *args: T.Any, **kwargs: T.Any) -> T.Any:
-    max_tries = 3
-    for _ in range(max_tries - 1):
+def translate(
+    text: str, engine: str, source_code: str, target_code: str
+) -> str:
+    if not text.strip():
+        return ""
+
+    args = ["trans", "-b"]
+    args += ["-e", engine]
+    args += ["-s", source_code]
+    args += ["-t", target_code]
+    args += [text]
+    result = run(args, check=True, stdout=PIPE, stderr=PIPE)
+    response = result.stdout.decode().strip()
+    if not response:
+        raise ValueError("error")
+    return response
+
+
+def preprocess(chunk: str) -> str:
+    return chunk.replace("\n", " ").replace("\\N", " ")
+
+
+def postprocess(chunk: str) -> str:
+    return (
+        chunk.replace("...", "…")
+        .replace(" !", "!")
+        .replace(" ?", "?")
+        .replace(" …", "…")
+    )
+
+
+def collect_text_chunks(events: T.List[AssEvent]) -> str:
+    for event in events:
+        text = event.note
         try:
-            return func(*args, **kwargs)
-        except Exception:
-            pass
-    return func(*args, **kwargs)
+            ass_line = ass_tag_parser.parse_ass(text)
+        except ass_tag_parser.ParseError as ex:
+            if text:
+                yield text
+        else:
+            for item in ass_line:
+                if isinstance(item, ass_tag_parser.AssText) and item.text:
+                    yield item.text
+
+
+def put_text_chunks(events: T.List[AssEvent], chunks: T.List[str]) -> str:
+    for event in events:
+        text = event.note
+        try:
+            ass_line = ass_tag_parser.parse_ass(text)
+        except ass_tag_parser.ParseError as ex:
+            event.text = chunks.pop(0)
+        else:
+            event.text = ""
+            for item in ass_line:
+                if isinstance(item, ass_tag_parser.AssText) and item.text:
+                    event.text += chunks.pop(0)
+                else:
+                    event.text += item.meta.text
 
 
 class GoogleTranslateCommand(BaseCommand):
@@ -38,65 +88,33 @@ class GoogleTranslateCommand(BaseCommand):
         )
 
     def run_in_background(self, subs: T.List[AssEvent]) -> None:
-        with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
-            future_to_sub = {
-                executor.submit(self.recognize, sub): sub for sub in subs
-            }
-            completed, non_completed = concurrent.futures.wait(
-                future_to_sub, timeout=5
-            )
+        chunks = list(collect_text_chunks(subs))
 
-        with self.api.undo.capture():
-            for future, sub in future_to_sub.items():
-                if future in non_completed:
-                    self.api.log.info(f"line #{sub.number}: timeout")
-                    continue
-                assert future in completed
-                try:
-                    result = future.result()
-                except Exception as ex:
-                    self.api.log.error(f"line #{sub.number}: error ({ex})")
-                else:
-                    self.api.log.info(f"line #{sub.number}: OK")
-                    if sub.text:
-                        sub.text += r"\N" + result
-                    else:
-                        sub.text = result
-
-    def recognize(self, sub: AssEvent) -> str:
-        self.api.log.info(f"line #{sub.number} - analyzing")
-        text = sub.note
-        text = text.replace("\\N", "\n")
-        text = text.replace("\n", " ")
+        lines = "\n".join(map(preprocess, chunks))
 
         try:
-            ass_line = ass_tag_parser.parse_ass(text)
-        except ass_tag_parser.ParseError as ex:
-            return self.translate(text)
-        else:
-            ret = ""
-            for item in ass_line:
-                if isinstance(item, ass_tag_parser.AssText):
-                    ret += self.translate(item.text)
-                else:
-                    ret += item.meta.text
-            return ret
+            translated_lines = translate(
+                lines,
+                self.args.engine,
+                self.args.source_code,
+                self.args.target_code,
+            )
+        except ValueError as ex:
+            self.api.log.error(f"error ({ex})")
+            return
 
-    def translate(self, text: str) -> str:
-        if not text.strip():
-            return ""
+        translated_chunks = list(
+            map(postprocess, translated_lines.split("\n"))
+        )
 
-        args = ["trans", "-b"]
-        args += ["-e", self.args.engine]
-        args += ["-s", self.args.source_code]
-        args += ["-t", self.args.target_code]
-        args += [text]
-        result = run(args, check=True, stdout=PIPE, stderr=PIPE)
-        response = result.stdout.decode().strip()
-        response = response.replace("...", "…")
-        if not response:
-            raise ValueError("error")
-        return response
+        if len(translated_chunks) != len(chunks):
+            self.api.log.error(f"mismatching number of chunks")
+            return
+
+        self.api.log.info("OK")
+
+        with self.api.undo.capture():
+            put_text_chunks(subs, translated_chunks)
 
     @staticmethod
     def decorate_parser(api: Api, parser: argparse.ArgumentParser) -> None:
