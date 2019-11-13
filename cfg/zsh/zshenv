@@ -67,6 +67,17 @@ cal() {
     whence ncal && ncal -M3b || env cal -m3
 }
 
+# extend docker capabilities
+docker() {
+    case "$1" in
+    kill-all)
+        command docker kill $(command docker ps -q)
+        ;;
+    *)
+        command docker "$@"
+    esac
+}
+
 # load additional modules
 for x in ~/.config/zsh/*.sh; do
     source "$x"
