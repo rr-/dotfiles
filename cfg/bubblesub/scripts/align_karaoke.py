@@ -18,10 +18,16 @@ class DragMode(enum.IntEnum):
     end = enum.auto()
 
 
+def clamp(src: float, low: float, high: float) -> float:
+    return max(low, min(high, src))
+
+
 class _PreviewWidget(QtWidgets.QWidget):
     def __init__(self, parent: QtWidgets.QWidget, frame: np.array) -> None:
         super().__init__(parent)
         self.frame = frame
+        self.width = frame.shape[1]
+        self.height = frame.shape[0]
         self.start = QtCore.QPoint(0, 0)
         self.end = QtCore.QPoint(0, 0)
         self.drag = DragMode.none
@@ -32,20 +38,25 @@ class _PreviewWidget(QtWidgets.QWidget):
 
     def mouseReleaseEvent(self, event: QtGui.QMouseEvent) -> None:
         if event.button() == QtCore.Qt.LeftButton:
-            self.end = event.pos()
+            self.end = self.constraint(event.pos())
         self.drag = DragMode.none
         self.update()
 
     def mousePressEvent(self, event: QtGui.QMouseEvent) -> None:
         if event.button() == QtCore.Qt.LeftButton:
             self.drag = DragMode.end
-            self.start = self.end = event.pos()
+            self.start = self.end = self.constraint(event.pos())
         self.update()
 
     def mouseMoveEvent(self, event: QtGui.QMouseEvent) -> None:
         if self.drag == DragMode.end:
-            self.end = event.pos()
+            self.end = self.constraint(event.pos())
         self.update()
+
+    def constraint(self, point: QtCore.QPoint) -> QtCore.QPoint:
+        return QtCore.QPoint(
+            clamp(point.x(), 0, self.width), clamp(point.y(), 0, self.height)
+        )
 
     def paintEvent(self, event: QtGui.QPaintEvent) -> None:
         painter = QtGui.QPainter()
