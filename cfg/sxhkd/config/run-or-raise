@@ -1,0 +1,50 @@
+#!/bin/bash
+# If an X11 program is running, bring it to front,
+# otherwise execute it in new process
+type=
+match=
+program=
+on_raise=
+
+while [[ $# > 0 ]]
+do
+    key=$1
+    case $key in
+        -n|--name)
+            shift
+            type=name
+            match=$1
+            ;;
+        -c|--class)
+            shift
+            type=class
+            match=$1
+            ;;
+        -cn|--classname)
+            shift
+            type=classname
+            match=$1
+            ;;
+        -p|--program)
+            shift
+            program=$1
+            ;;
+        --on-raise)
+            shift
+            on_raise=$1
+            ;;
+        *)
+            echo "Unknown option: $key"
+            exit 1
+            ;;
+    esac
+    shift
+done
+
+window=$(xdotool search --$type "$match" | head -1)
+if [ -z "$window" ]; then
+    eval "$program" &
+else
+    eval "$on_raise" &
+fi
+xdotool search --sync --$type "$match" windowactivate

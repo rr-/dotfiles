@@ -29,15 +29,15 @@ alt + ctrl + shift + bracketleft
 
 # focus or spawn irc
 alt + ctrl + m
-    run_or_raise -cn drizzle -p "urxvt -name drizzle -e zsh -ilc 'ssh drizzle -t "'"zsh -ilc tmux\ attach\ -t\ main"'"'"
+    ~/.config/sxhkd/run-or-raise -cn drizzle -p "urxvt -name drizzle -e zsh -ilc 'ssh drizzle -t "'"zsh -ilc tmux\ attach\ -t\ main"'"'"
 
 # focus or spawn irc, and detach all other sessions
 alt + ctrl + shift + m
-    run_or_raise -cn drizzle -p "urxvt -name drizzle -e zsh -ilc 'ssh drizzle -t "'"zsh -ilc tmux\ attach\ -d\ -t\ main"'"'"
+    ~/.config/sxhkd/run-or-raise -cn drizzle -p "urxvt -name drizzle -e zsh -ilc 'ssh drizzle -t "'"zsh -ilc tmux\ attach\ -d\ -t\ main"'"'"
 
 # spawn web browser
 alt + ctrl + semicolon
-    run_or_raise -n browser -p "xdg-open 'about:blank'"
+    ~/.config/sxhkd/run-or-raise -n browser -p "xdg-open 'about:blank'"
 
 
 
