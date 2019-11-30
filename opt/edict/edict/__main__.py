@@ -4,7 +4,6 @@ import gzip
 import pathlib
 import re
 import typing as T
-from functools import reduce
 
 import requests
 import xdg
@@ -17,16 +16,11 @@ _RAW_PATH = pathlib.Path(xdg.XDG_CACHE_HOME) / "edict2.txt"
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser("Look up words in edict2 dictionary")
-    parser.add_argument("pattern", nargs="+", help="regex to search for")
+    parser.add_argument("pattern", nargs="*", help="regex to search for")
     parser.add_argument("--tags", nargs="*", help="regex to search tags for")
-    group = parser.add_mutually_exclusive_group()
-    group.add_argument("--kana", action="store_true", help="search only kana")
-    group.add_argument(
-        "--kanji", action="store_true", help="search only kanji"
-    )
-    group.add_argument(
-        "--english", action="store_true", help="search only English"
-    )
+    parser.add_argument("--kana", nargs="*", help="regex to search for in kana")
+    parser.add_argument("--kanji", nargs="*", help="regex to search for in kanji")
+    parser.add_argument("--glossary", nargs="*", help="regex to search for in glossary")
     return parser.parse_args()
 
 
@@ -53,18 +47,14 @@ def main() -> None:
     args = parse_args()
     patterns: T.List[str] = args.pattern
     tag_patterns: T.List[str] = args.tags or []
-    sources: db.SearchSource = reduce(
-        lambda x, y: x | y, list(db.SearchSource)
-    )
-    if args.kanji:
-        sources = db.SearchSource.KANJI
-    elif args.kana:
-        sources = db.SearchSource.KANA
-    elif args.english:
-        sources = db.SearchSource.ENGLISH
 
     create_db_if_needed()
-    entries = db.search_entries_by_regex(patterns, sources)
+    entries = db.search_entries_by_regex(
+        general_patterns=args.pattern,
+        kanji_patterns=args.kanji,
+        kana_patterns=args.kana,
+        glossary_patterns=args.glossary,
+    )
     entries = [
         entry
         for entry in entries
