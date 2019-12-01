@@ -1,0 +1,25 @@
+#!/usr/bin/env python3
+import argparse
+from pathlib import Path
+
+
+def is_small(path: Path, max_files) -> bool:
+    return len(list(filter(Path.is_file, path.iterdir()))) <= max_files
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-m", "--max-files", default=1, type=int)
+    return parser.parse_args()
+
+
+def main() -> None:
+    args = parse_args()
+
+    for path in Path().iterdir():
+        if path.is_dir() and is_small(path, args.max_files):
+            print(path)
+
+
+if __name__ == "__main__":
+    main()
