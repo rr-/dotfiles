@@ -62,14 +62,18 @@ def put_text_chunks(events: T.List[AssEvent], chunks: T.List[str]) -> str:
         try:
             ass_line = ass_tag_parser.parse_ass(text)
         except ass_tag_parser.ParseError as ex:
-            event.text = chunks.pop(0)
+            text = chunks.pop(0)
         else:
-            event.text = ""
+            text = ""
             for item in ass_line:
                 if isinstance(item, ass_tag_parser.AssText) and item.text:
-                    event.text += chunks.pop(0)
+                    text += chunks.pop(0)
                 else:
-                    event.text += item.meta.text
+                    text += item.meta.text
+        if event.text:
+            event.text += '\\N' + text
+        else:
+            event.text = text
 
 
 class GoogleTranslateCommand(BaseCommand):
