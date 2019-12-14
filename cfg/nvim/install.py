@@ -14,8 +14,9 @@ def run():
     for name in ["undo", "backup", "swap", "spell"]:
         util.create_dir("~/.config/nvim/" + name)
 
-    for path in util.find("./*.vim"):
+    for path in util.find("./nvim/*.vim"):
         util.create_symlink(path, "~/.config/nvim/")
+    util.create_symlink("./editorconfig", "~/.editorconfig")
     util.create_symlink("./spell/pl.utf-8.add", spell_dir)
     util.create_symlink("./spell/en.utf-8.add", spell_dir)
     util.download(
