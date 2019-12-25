@@ -71,7 +71,7 @@ def put_text_chunks(events: T.List[AssEvent], chunks: T.List[str]) -> str:
                 else:
                     text += item.meta.text
         if event.text:
-            event.text += '\\N' + text
+            event.text += "\\N" + text
         else:
             event.text = text
 

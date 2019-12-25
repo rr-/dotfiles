@@ -37,7 +37,10 @@ class DetectKaraokeCommand(BaseCommand):
 
     @property
     def is_enabled(self):
-        return self.api.video.is_ready
+        return (
+            self.api.video.current_stream
+            and self.api.video.current_stream.is_ready
+        )
 
     @staticmethod
     def decorate_parser(api: Api, parser: argparse.ArgumentParser) -> None:
@@ -63,8 +66,12 @@ class DetectKaraokeCommand(BaseCommand):
             raise CommandUnavailable("nothing to sample")
 
         with self.api.undo.capture():
-            start_frame_idx = self.api.video.frame_idx_from_pts(start)
-            end_frame_idx = self.api.video.frame_idx_from_pts(end)
+            start_frame_idx = self.api.video.current_stream.frame_idx_from_pts(
+                start
+            )
+            end_frame_idx = self.api.video.current_stream.frame_idx_from_pts(
+                end
+            )
 
             sub_start = 0
             frame = self.get_frame(start_frame_idx)
@@ -74,12 +81,12 @@ class DetectKaraokeCommand(BaseCommand):
                 frame = self.get_frame(frame_idx).copy()
 
                 if is_black(prev_frame) and is_white(frame):
-                    start = self.api.video.timecodes[frame_idx]
+                    start = self.api.video.current_stream.timecodes[frame_idx]
 
                 elif is_white(prev_frame) and is_black(frame):
                     if not start:
                         continue
-                    end = self.api.video.timecodes[frame_idx]
+                    end = self.api.video.current_stream.timecodes[frame_idx]
                     self.add_sub(start, end)
                     start = 0
 
@@ -87,7 +94,7 @@ class DetectKaraokeCommand(BaseCommand):
                     start
                     and np.abs(np.mean(prev_frame - frame)) > DIFF_THRESHOLD
                 ):
-                    end = self.api.video.timecodes[frame_idx]
+                    end = self.api.video.current_stream.timecodes[frame_idx]
                     self.add_sub(start, end)
                     start = end
 
@@ -115,7 +122,9 @@ class DetectKaraokeCommand(BaseCommand):
         )
 
     def get_frame(self, frame_idx: int) -> np.array:
-        frame = self.api.video.get_frame(frame_idx, FRAME_WIDTH, FRAME_HEIGHT)
+        frame = self.api.video.current_stream.get_frame(
+            frame_idx, FRAME_WIDTH, FRAME_HEIGHT
+        )
 
         # crop lower part
         frame = frame[FRAME_CROP:FRAME_HEIGHT, :, :]
