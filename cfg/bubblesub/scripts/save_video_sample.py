@@ -19,7 +19,10 @@ class SaveVideoSampleCommand(BaseCommand):
 
     @property
     def is_enabled(self) -> bool:
-        return self.api.video.is_ready
+        return (
+            self.api.video.current_stream
+            and self.api.video.current_stream.is_ready
+        )
 
     async def run(self) -> None:
         start = await self.args.start.get()
@@ -29,11 +32,13 @@ class SaveVideoSampleCommand(BaseCommand):
         if start == end:
             raise CommandUnavailable("nothing to sample")
 
-        assert self.api.video.path
+        assert self.api.video.current_stream.path
         path = await self.args.path.get_save_path(
             file_filter="Webm Video File (*.webm)",
             default_file_name="video-{}-{}..{}.webm".format(
-                self.api.video.path.name, ms_to_str(start), ms_to_str(end)
+                self.api.video.current_stream.path.name,
+                ms_to_str(start),
+                ms_to_str(end),
             ),
         )
 
@@ -42,7 +47,7 @@ class SaveVideoSampleCommand(BaseCommand):
                 [
                     "ffmpeg",
                     "-i",
-                    self.api.video.path,
+                    self.api.video.current_stream.path,
                     "-y",
                     "-crf",
                     "20",

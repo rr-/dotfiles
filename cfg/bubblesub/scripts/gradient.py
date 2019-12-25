@@ -45,7 +45,7 @@ def get_transform(
     return Transform(
         x1=0,
         y1=y1 + step * (y2 - y1),
-        x2=api.video.width,
+        x2=api.video.current_frame.width,
         y2=y1 + next_step * (y2 - y1),
         c=Color(
             int(c1.r + step * (c2.r - c1.r)),

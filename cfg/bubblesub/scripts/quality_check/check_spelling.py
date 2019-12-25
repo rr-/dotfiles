@@ -8,6 +8,7 @@ from bubblesub.spell_check import SpellChecker, SpellCheckerError
 
 from .common import is_event_karaoke
 
+
 def check_spelling(spell_check_lang: T.Optional[str], api: Api) -> None:
     if not api.subs.path:
         return
@@ -24,14 +25,15 @@ def check_spelling(spell_check_lang: T.Optional[str], api: Api) -> None:
 
     exceptions_case_sensitive: T.List[str] = []
     exceptions_case_insensitive: T.List[str] = []
-    spell_check_lang_short = re.sub('[-_].*', '', spell_check_lang)
+    spell_check_lang_short = re.sub("[-_].*", "", spell_check_lang)
 
     dict_names = [
         f"dict-{spell_check_lang}.txt",
         f"dict-{spell_check_lang_short}.txt",
         f"{spell_check_lang}-dict.txt",
         f"{spell_check_lang_short}-dict.txt",
-        "dict.txt"]
+        "dict.txt",
+    ]
     for dict_name in dict_names:
         dict_path = api.subs.path.with_name(dict_name)
         if dict_path.exists():

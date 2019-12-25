@@ -74,7 +74,12 @@ def measure_frame_size(
     min_y = min(layer.dst_y for layer in layers)
     max_x = max(layer.dst_x + layer.w for layer in layers)
     max_y = max(layer.dst_y + layer.h for layer in layers)
-    return (int((max_x - min_x) * api.video.aspect_ratio), max_y - min_y)
+    aspect_ratio = (
+        api.video.current_stream.aspect_ratio
+        if api.video.current_stream
+        else 1
+    )
+    return (int((max_x - min_x) * aspect_ratio), max_y - min_y)
 
 
 def get_optimal_line_heights(

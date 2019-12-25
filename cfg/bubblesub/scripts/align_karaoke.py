@@ -97,10 +97,12 @@ class _AlignKaraokeDialog(Dialog):
         self._api = api
         self._events = api.subs.selected_events
 
-        self.frame = self._api.video.get_frame(
-            self._api.video.frame_idx_from_pts(self._api.playback.current_pts),
-            width=self._api.video.width,
-            height=self._api.video.height,
+        self.frame = self._api.video.current_stream.get_frame(
+            self._api.video.current_stream.frame_idx_from_pts(
+                self._api.playback.current_pts
+            ),
+            width=self._api.video.current_stream.width,
+            height=self._api.video.current_stream.height,
         ).copy()
 
         self.preview = _PreviewWidget(self, self.frame)
@@ -138,7 +140,12 @@ class AlignKaraokeCommand(BaseCommand):
 
     @property
     def is_enabled(self) -> bool:
-        return self.api.playback.is_ready and self.api.subs.has_selection
+        return (
+            self.api.video.current_stream
+            and self.api.video.current_stream.is_ready
+            and self.api.playback.is_ready
+            and self.api.subs.has_selection
+        )
 
     async def run(self) -> None:
         await self.api.gui.exec(self._run_with_gui)

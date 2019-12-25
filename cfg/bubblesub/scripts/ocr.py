@@ -164,10 +164,12 @@ class _Dialog(Dialog):
         self.lang = lang
         self.events = events
 
-        self.frame = api.video.get_frame(
-            api.video.frame_idx_from_pts(api.playback.current_pts),
-            width=api.video.width,
-            height=api.video.height,
+        self.frame = api.video.current_stream.get_frame(
+            api.video.current_stream.frame_idx_from_pts(
+                api.playback.current_pts
+            ),
+            width=api.video.current_stream.width,
+            height=api.video.current_stream.height,
         ).copy()
 
         self.settings = OcrSettings(self)
@@ -244,7 +246,7 @@ class _Dialog(Dialog):
             self.settings.y1 : self.settings.y2,
             self.settings.x1 : self.settings.x2,
         ]
-        #cv2.imwrite("/home/rr-/test.png", img)
+        # cv2.imwrite("/home/rr-/test.png", img)
 
         try:
             text = pytesseract.image_to_string(img, self.lang)
@@ -271,7 +273,11 @@ class OCRCommand(BaseCommand):
 
     @property
     def is_enabled(self):
-        return self.api.video.is_ready and self.args.target.makes_sense
+        return (
+            self.api.video.current_stream
+            and self.api.video.current_stream.is_ready
+            and self.args.target.makes_sense
+        )
 
     @staticmethod
     def decorate_parser(api: Api, parser: argparse.ArgumentParser) -> None:
