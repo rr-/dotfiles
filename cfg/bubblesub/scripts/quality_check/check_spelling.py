@@ -4,7 +4,11 @@ from collections import defaultdict
 
 from bubblesub.api import Api
 from bubblesub.fmt.ass.util import ass_to_plaintext, spell_check_ass_line
-from bubblesub.spell_check import SpellChecker, SpellCheckerError
+from bubblesub.spell_check import (
+    BaseSpellChecker,
+    SpellCheckerError,
+    create_spell_checker,
+)
 
 from .common import is_event_karaoke
 
@@ -18,7 +22,7 @@ def check_spelling(spell_check_lang: T.Optional[str], api: Api) -> None:
         return
 
     try:
-        dictionary = SpellChecker(spell_check_lang)
+        dictionary = create_spell_checker(spell_check_lang)
     except SpellCheckerError as ex:
         api.log.error(str(ex))
         return
