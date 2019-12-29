@@ -53,6 +53,7 @@ unignore x-label
 # smtp config
 send2-hook '~f "^.*@stxnext\\.pl$"' 'source ~/.mutt/smtp-stx.muttrc'
 send2-hook '~f "^.*@motoinsight\\.com$"' 'source ~/.mutt/smtp-moto.muttrc'
+send2-hook '~f "^.*@qualio\\.com$"' 'source ~/.mutt/smtp-qualio.muttrc'
 send2-hook '~f "^.*@(sakuya\\.pl|oldcastle\\.moe)$"' source ~/.mutt/smtp-mailbox.muttrc'
 
 # reply using the address the message was sent to
