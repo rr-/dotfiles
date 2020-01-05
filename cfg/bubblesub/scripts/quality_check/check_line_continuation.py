@@ -1,4 +1,4 @@
-import re
+import regex
 import typing as T
 
 from bubblesub.fmt.ass.event import AssEvent
@@ -26,15 +26,17 @@ def check_line_continuation(event: AssEvent) -> T.Iterable[BaseResult]:
         yield Violation([event, next_event], "old-style line continuation")
 
     if (
-        re.search(r"\A[a-z]", text, flags=re.M)
+        regex.search(r"\A\p{Ll}", text, flags=regex.M)
         and is_event_dialog(event)
-        and not re.search(r"[,:a-z]\Z", prev_text, flags=re.M)
+        and not regex.search(r"[,:\p{Ll}]\Z", prev_text, flags=regex.M)
         and not any(prev_text.endswith(word) for word in WORDS_WITH_PERIOD)
     ):
         yield Violation(event, "sentence begins with a lowercase letter")
 
     if not event.is_comment and is_event_dialog(event):
-        if re.search(r"[,:a-z]\Z", text, flags=re.M) and not re.search(
-            r'\A(I\s|I\'(m|d|ll)|[a-z]|"[A-Z])', next_text, flags=re.M
+        if regex.search(
+            r"[,:\p{Ll}]\Z", text, flags=regex.M
+        ) and not regex.search(
+            r'\A(I\s|I\'(m|d|ll)|[a-z]|"[A-Z])', next_text, flags=regex.M
         ):
             yield Violation(event, "possibly unended sentence")

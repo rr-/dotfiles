@@ -256,6 +256,8 @@ def test_check_quotes(
             ["Whatever.", "whatever."],
             "sentence begins with a lowercase letter",
         ),
+        (["Whatever,", "whatever."], None),
+        (["Whatever i18n ąćę", "whatever."], None),
         (["Whatever"], "possibly unended sentence"),
         (["Whatever", "Whatever."], "possibly unended sentence"),
         (["Whatever,", "I have."], None),
