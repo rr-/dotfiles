@@ -350,7 +350,7 @@ def test_check_double_words(text, violation_text):
 )
 def test_check_unnecessary_breaks(text, violation_text):
     api = MagicMock()
-    api.video.aspect_ratio = 1
+    api.video.current_stream.aspect_ratio = 1
     api.subs.meta = {"PlayResX": 1280}
     renderer = MagicMock()
     renderer.render_raw.return_value = [
