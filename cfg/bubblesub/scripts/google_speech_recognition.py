@@ -4,13 +4,16 @@ import concurrent.futures
 import io
 import typing as T
 
-import speech_recognition as sr
-
 from bubblesub.api import Api
 from bubblesub.api.cmd import BaseCommand
 from bubblesub.cfg.menu import MenuCommand, SubMenu
 from bubblesub.cmd.common import SubtitlesSelection
 from bubblesub.fmt.ass.event import AssEvent
+
+try:
+    import speech_recognition as sr
+except ImportError as ex:
+    raise CommandUnavailable(f"{ex.name} is not installed")
 
 LEAD_IN = 100
 LEAD_OUT = 100

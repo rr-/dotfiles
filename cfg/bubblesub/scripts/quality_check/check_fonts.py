@@ -2,10 +2,13 @@ import typing as T
 from collections import defaultdict
 from pathlib import Path
 
-import fontTools.ttLib as font_tools
-
 import ass_tag_parser
 from bubblesub.api import Api
+
+try:
+    import fontTools.ttLib as font_tools
+except ImportError as ex:
+    raise CommandUnavailable(f"{ex.name} is not installed")
 
 TT_NAME_ID_FONT_FAMILY = 1
 TT_NAME_ID_FULL_NAME = 4
