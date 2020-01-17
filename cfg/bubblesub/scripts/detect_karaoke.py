@@ -1,8 +1,6 @@
 import argparse
 import bisect
 
-import numpy as np
-
 from bubblesub.api import Api
 from bubblesub.api.cmd import BaseCommand, CommandUnavailable
 from bubblesub.cfg.menu import MenuCommand
@@ -11,9 +9,10 @@ from bubblesub.fmt.ass.event import AssEvent
 from bubblesub.util import ms_to_str
 
 try:
+    import numpy as np
     import cv2
 except ImportError as ex:
-    raise CommandUnavailable("numpy is not installed")
+    raise CommandUnavailable(f"{ex.name} is not installed")
 
 FRAME_WIDTH = 320
 FRAME_HEIGHT = 240

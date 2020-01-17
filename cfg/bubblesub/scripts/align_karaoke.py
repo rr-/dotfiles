@@ -1,13 +1,17 @@
 import enum
 
-import cv2
-import numpy as np
 from PyQt5 import QtCore, QtGui, QtWidgets
 
 from bubblesub.api import Api
 from bubblesub.api.cmd import BaseCommand
 from bubblesub.cfg.menu import MenuCommand
 from bubblesub.ui.util import Dialog, async_dialog_exec
+
+try:
+    import cv2
+    import numpy as np
+except ImportError as ex:
+    raise CommandUnavailable(f"{ex.name} is not installed")
 
 FRAME_CROP = 0.85
 THRESHOLD = 210

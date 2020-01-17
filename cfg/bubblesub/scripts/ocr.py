@@ -17,7 +17,7 @@ try:
     import numpy as np
     import pytesseract
 except ImportError as ex:
-    raise CommandUnavailable("numpy is not installed")
+    raise CommandUnavailable(f"{ex.name} is not installed")
 
 
 class OcrSettings(QtCore.QObject):
