@@ -64,10 +64,16 @@ def oscn_irc_privmsg(
         weechat.config_get_plugin("notify_private_messages") == "on"
     )
 
+    is_muted = (prefix or "").lower() in get_muted_highlight_nicks(buffer)
+
     if (
-        (is_private and notify_privmsg and prefix.lower() == name.lower())
-        or (highlight and notify_chat)
-    ) and ((prefix or "").lower() not in get_muted_highlight_nicks(buffer)):
+        displayed
+        and not is_muted
+        and (
+            (is_private and notify_privmsg and prefix.lower() == name.lower())
+            or (highlight and notify_chat)
+        )
+    ):
         notify(prefix, message)
 
     return weechat.WEECHAT_RC_OK
