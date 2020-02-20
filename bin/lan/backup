@@ -15,43 +15,52 @@ def parse_args() -> argparse.Namespace:
 
 def sync(
     source: str,
-    target: str,
     dry_run: bool,
-    copy_links: bool = True,
+    traverse_links: bool = False,
     exclude: T.Optional[T.List[str]] = None,
 ) -> None:
-    logging.info("%s → %s", source, target)
-
     source_machine, source_path = source.split(":", 1)
-    target_machine, target_path = target.split(":", 1)
+    target_machine = "frost"
+    target_path = f"/volume1/data/backup/{source_machine}/"
 
-    run(["ssh", target_machine, "mkdir", "-p", target_path], check=True)
+    logging.info(
+        "%s:%s → %s:%s",
+        source_machine,
+        source_path,
+        target_machine,
+        target_path,
+    )
 
-    source_machine_cmd = [
+    target_machine_cmd = [
         "rsync",
         "--progress",
-        # "--whole-file",
-        "--chmod=D=rwxrxrx,F=rwrr",
-        "-vi",  # increase verbosity
-        "-a",  # archive
+        "--size-only",
+        # "--usermap=*:admin",
+        # "--groupmap=*:users",
+        "--chmod=D=rwxrwxrx,F=rwwr",
+        "-r",  # recurse
         "-R",  # keep full paths
         "--delete-excluded",
         "--delete-during",
     ]
 
-    if copy_links:
+    if traverse_links:
         # traverse into symlinks and copy their contents
-        source_machine_cmd.append("-L")
+        target_machine_cmd.append("-L")
+    else:
+        # copy symlinks as-is
+        target_machine_cmd.append("-l")
+
     if dry_run:
-        source_machine_cmd.append("--dry-run")
+        target_machine_cmd.append("--dry-run")
     if exclude:
         for pattern in exclude:
-            source_machine_cmd.append(f"--exclude={pattern}")
+            target_machine_cmd.append(f"--exclude={pattern}")
 
-    source_machine_cmd += [source_path, target]
+    target_machine_cmd += [f"{source_machine}:{source_path}", target_path]
 
-    args = ["ssh", "-A", source_machine] + list(
-        map(shlex.quote, source_machine_cmd)
+    args = ["ssh", "-A", target_machine] + list(
+        map(shlex.quote, target_machine_cmd)
     )
 
     run(args, check=True)
@@ -60,62 +69,44 @@ def sync(
 def main():
     args = parse_args()
 
-    def do_sync(source: str, target_machine: str, **kwargs: T.Any) -> None:
-        source_machine, _source_path = source.split(":", 1)
-        target = f"{target_machine}:/home/rr-/backup/{source_machine}/"
-        sync(source, target, dry_run=args.dry_run, **kwargs)
-
     try:
-        # data
-        do_sync("cyclone:/home/rr-/data/img", "tornado", copy_links=True)
-        do_sync("cyclone:/home/rr-/data/text", "tornado", copy_links=True)
-        do_sync("cyclone:/home/rr-/data/blob", "tornado", copy_links=True)
-        do_sync("cyclone:/home/rr-/data/audio", "drizzle", copy_links=True)
+        # main machine config
+        sync(
+            "lightning:/home/rr-/.tmuxp/",
+            dry_run=args.dry_run,
+            traverse_links=True,
+        )
+        sync("lightning:/home/rr-/.local/", dry_run=args.dry_run)
+        sync(
+            "lightning:/home/rr-/.config/",
+            dry_run=args.dry_run,
+            exclude=["chromium/", "nvim/", "skypeforlinux/", "discord/"],
+        )
 
-        # development
-        do_sync(
-            "tornado:/home/rr-/src",
-            "cyclone",
-            copy_links=False,
+        # my work
+        sync(
+            "lightning:/home/rr-/src/",
+            dry_run=args.dry_run,
             exclude=["python_modules/", "node_modules/", "*.pyc"],
         )
 
-        # servers
-        do_sync(
-            "drizzle:/home/rr-",
-            "cyclone",
-            copy_links=False,
+        # dedibox
+        sync(
+            "drizzle:/home/rr-/",
+            dry_run=args.dry_run,
             exclude=[
-                "/home/rr-/data/",
-                "/home/rr-/backup/",
-                "/home/rr-/.cache/",
-            ],
-        )
-
-        do_sync(
-            "oc:/home/rr-/srv",
-            "cyclone",
-            copy_links=True,
-            exclude=[
-                "/home/rr-/srv/torrent/",
-                "/home/rr-/srv/data/fonts",
-                "/home/rr-/srv/data/subs",
-            ],
-        )
-
-        do_sync("oc:/var/log/nginx/", "cyclone", copy_links=True)
-
-        do_sync(
-            "cyclone:/home/rr-/srv",
-            "tornado",
-            copy_links=True,
-            exclude=[
-                "home.sakuya.pl",
-                "python_modules",
-                "node_modules",
+                "/home/rr-/data",
+                "/home/rr-/.config/nvim/",
+                "yume.pl/db/",
+                "python_modules/",
+                "node_modules/",
                 "*.pyc",
             ],
         )
+
+        # OldCastle
+        sync("oc:/home/rr-/", dry_run=args.dry_run, exclude=["*.pyc"])
+        sync("oc:/var/log/nginx/", dry_run=args.dry_run, traverse_links=True)
 
     except CalledProcessError:
         logging.error("Error during sync, aborting")
