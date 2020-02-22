@@ -49,6 +49,8 @@ class AlignSubtitlesToVideoFramesCommand(BaseCommand):
             for sub in await self.args.target.get_subtitles():
                 new_start = func(sub.start)
                 new_end = func(sub.end)
+                if new_end >= self.api.video.current_stream.timecodes[-1]:
+                    new_end += 10
 
                 if new_start != sub.start or new_end != sub.end:
                     sub.start = new_start
