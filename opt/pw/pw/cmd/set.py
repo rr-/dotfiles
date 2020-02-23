@@ -1,9 +1,8 @@
 import argparse
-import random
 from getpass import getpass
 
 from pw.cmd.base import Command
-from pw.common import DEFAULT_WAIT, set_clipboard_for
+from pw.common import DEFAULT_WAIT, get_random_pass, set_clipboard_for
 from pw.db import database
 
 
@@ -32,19 +31,8 @@ class SetPasswordCommand(Command):
                 db[args.name]["pass"] = getpass()
                 print("Password set")
             elif args.random:
-                db[args.name]["pass"] = self.get_random_pass()
+                db[args.name]["pass"] = get_random_pass()
                 print("Password set")
 
             if args.copy:
                 set_clipboard_for(db[args.name]["pass"], args.wait)
-
-    @staticmethod
-    def get_random_pass(length: int = 25) -> str:
-        alpha = "abcdefghijklmnopqrstuvwxyz"
-        alpha += "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-        alpha += "0123456789"
-        alpha += "_-"
-        while True:
-            password = "".join(random.choice(alpha) for _ in range(length))
-            if not password.startswith(" ") and not password.endswith(" "):
-                return password
