@@ -12,8 +12,8 @@ from PIL import Image
 
 from dotfiles import logging
 
-SOURCE_ROOT_DIR = Path("~/data/img/net-queue").expanduser()
-TARGET_ROOT_DIR = Path("~/data/img/net/").expanduser()
+SOURCE_ROOT_DIR = Path("~/frost/img/net-queue").expanduser()
+TARGET_ROOT_DIR = Path("~/frost/img/net/").expanduser()
 SMALL_IMAGE_EXTENSIONS = {".png", ".jpg", ".jpeg"}
 
 
@@ -32,7 +32,7 @@ def parse_args() -> argparse.Namespace:
 
 
 def find_directories_recursive(root_dir: Path) -> T.Iterable[Path]:
-    """ Returns all sub directories in DFS order """
+    """Returns all sub directories in a DFS order."""
     stack = [root_dir]
     result = []
     while len(stack):
