@@ -32,20 +32,17 @@ def parse_args() -> argparse.Namespace:
 
 
 def find_directories_recursive(root_dir: Path) -> T.Iterable[Path]:
-    """Returns all sub directories in a DFS order."""
-    stack = [root_dir]
-    result = []
-    while len(stack):
-        dir_path = stack.pop(0)
-        result.append(dir_path)
-        for entry in dir_path.iterdir():
-            if entry.is_dir():
-                stack.insert(0, entry)
-    while len(result):
-        yield result.pop()
+    """Return all sub directories in a DFS order."""
+    for entry in sorted(root_dir.iterdir(), key=lambda file: file.name):
+        if entry.is_dir():
+            yield from find_directories_recursive(entry)
+            yield entry
+    yield root_dir
 
 
 def find_files(root_dir: Path) -> T.List[Path]:
+    if not root_dir.exists():
+        return []
     return [entry for entry in root_dir.iterdir() if entry.is_file()]
 
 
@@ -69,12 +66,6 @@ def is_image_too_small(source_path: Path, args: argparse.Namespace) -> bool:
 def main() -> None:
     args = parse_args()
 
-    cur_file = 0
-    max_files = 0
-    logging.info("Computing file count...")
-    for source_dir in find_directories_recursive(SOURCE_ROOT_DIR):
-        max_files += len(find_files(source_dir))
-
     for source_dir in find_directories_recursive(SOURCE_ROOT_DIR):
         target_dir = TARGET_ROOT_DIR / source_dir.relative_to(SOURCE_ROOT_DIR)
         target_dir = str(target_dir)
@@ -87,8 +78,7 @@ def main() -> None:
             target_dir.mkdir(parents=True, exist_ok=True)
 
             for source_file in source_files:
-                cur_file += 1
-                prefix = f"{source_file} ({cur_file/max_files:.02%})"
+                prefix = f"{source_file}"
 
                 target_file = target_dir / source_file.name
 
