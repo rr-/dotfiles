@@ -59,6 +59,8 @@ set scrolloff=5               "keep at least x lines below and above cursor
 set nojoinspaces              "don't put double spaces when using auto wrapping
 set fillchars=vert:\│         "better character for vertical window splits
 set hidden                    "don't purge undo history when changing buffers
+set clipboard+=unnamed        "automatically copy unnamed yanks to "*
+set clipboard+=unnamedplus    "automatically copy unnamed yanks to "+
 
 "netrw (directory explorer)
 let g:netrw_banner=0          "disable useless banner in :Explore
