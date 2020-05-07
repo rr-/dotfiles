@@ -33,8 +33,7 @@ alias ul-yume='ul-booru --config=~/.config/ul-yume.conf'
 alias tmp=ul-tmp
 alias 0x0=ul-0x0
 
-alias todo='\notes -c ~/.config/notes.conf todo.txt'
-alias notes='\notes -c ~/.config/notes.conf notes.txt'
+alias pw='aes-edit ~/.config/pw.dat'
 
 vb() {
     dec vm
