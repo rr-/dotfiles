@@ -1,0 +1,114 @@
+#!/usr/bin/env python3
+import argparse
+import hashlib
+import io
+import os
+import shlex
+import subprocess
+import sys
+import tempfile
+import zlib
+from getpass import getpass
+from pathlib import Path
+
+from Crypto import Random
+from Crypto.Cipher import AES
+from Crypto.Util.Padding import pad, unpad
+
+
+class InvalidKey(RuntimeError):
+    def __init__(self) -> None:
+        super().__init__("the supplied key appears to be invalid")
+
+
+class EditorError(RuntimeError):
+    def __init__(self, editor: str, retval: int) -> None:
+        super().__init__(f"editor {editor} exited nonzero with {retval}")
+
+
+class AESCipher:
+    def __init__(self, key: str) -> None:
+        self.key = hashlib.sha256(key.encode()).digest()
+        self.chk = bytes(range(AES.block_size))
+
+    def encrypt(self, data: bytes) -> bytes:
+        iv = Random.new().read(AES.block_size)
+        cipher = AES.new(self.key, AES.MODE_CBC, iv)
+        ciphertext = cipher.encrypt(self.chk + pad(data, AES.block_size))
+        with io.BytesIO() as handle:
+            handle.write(iv)
+            handle.write(ciphertext)
+            handle.seek(0)
+            return bytes(handle.read())
+
+    def decrypt(self, enc: bytes) -> bytes:
+        with io.BytesIO(enc) as handle:
+            iv = handle.read(AES.block_size)
+            assert len(iv) == AES.block_size
+            ciphertext = handle.read()
+
+        cipher = AES.new(self.key, AES.MODE_CBC, iv)
+        with io.BytesIO(cipher.decrypt(ciphertext)) as handle:
+            chk = handle.read(AES.block_size)
+            if chk != self.chk:
+                raise InvalidKey
+            data = unpad(handle.read(), AES.block_size)
+
+        return data
+
+
+def read_encrypted_file(path: Path, key: str) -> str:
+    aes = AESCipher(key)
+    if not path.exists():
+        return {}
+    return zlib.decompress(aes.decrypt(path.read_bytes())).decode()
+
+
+def write_encrypted_file(path: Path, key: str, content: str) -> None:
+    aes = AESCipher(key)
+    path.write_bytes(
+        aes.encrypt(
+            zlib.compress(content.encode(), level=zlib.Z_BEST_COMPRESSION)
+        )
+    )
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("path", type=Path, help="path to edit")
+    parser.add_argument(
+        "--editor",
+        type=str,
+        default=os.environ.get("EDITOR") or "nano",
+        help="use this particular editor",
+    )
+    return parser.parse_args()
+
+
+def main() -> None:
+    args = parse_args()
+    while True:
+        try:
+            key = getpass("Master password: ")
+            content = read_encrypted_file(args.path, key)
+        except InvalidKey as ex:
+            print(ex, file=sys.stderr)
+        else:
+            break
+
+    old_content = content
+    tmp_file = tempfile.NamedTemporaryFile()
+    tmp_path = Path(tmp_file.name)
+    tmp_path.write_text(content)
+
+    retval = subprocess.call(shlex.split(args.editor) + [str(tmp_path)])
+    if retval != 0:
+        raise EditorError(args.editor, retval)
+
+    new_content = tmp_path.read_text()
+    if new_content != old_content:
+        write_encrypted_file(args.path, key, new_content)
+
+
+if __name__ == "__main__":
+    main()
