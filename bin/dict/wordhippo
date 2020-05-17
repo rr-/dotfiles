@@ -70,13 +70,14 @@ def print_in_columns(items: T.List[str]) -> None:
     term_size = shutil.get_terminal_size()
     columns = term_size.columns // column_size
     while items:
+        row = ""
         for _ in range(columns):
             if not items:
                 break
             item = items.pop(0)
-            print(f"{item:<{column_size}s}", end="")
-        if column_size * columns < term_size.columns:
-            print()
+            row += f"{item:<{column_size}s}"
+        row = row.rstrip()
+        print(row, end="\n" if len(row) < term_size.columns else "")
     print()
 
 
