@@ -1,0 +1,136 @@
+#!/usr/bin/env python3
+import argparse
+import shutil
+import typing as T
+import urllib.request
+from dataclasses import dataclass
+from enum import IntEnum
+
+import lxml.etree
+
+SYNONYMS_URL = "https://www.wordhippo.com/what-is/another-word-for/{}.html"
+MEANINGS_URL = (
+    "https://www.wordhippo.com/what-is/the-meaning-of-the-word/{}.html"
+)
+USER_AGENT = (
+    "Mozilla/5.0 (X11; Linux x86_64; rv:10.0) Gecko/20100101 Firefox/10.0"
+)
+
+
+class Mode(IntEnum):
+    synonyms = 1
+    meanings = 2
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        description="Looks up phrases on wordhippo.com"
+    )
+    parser.add_argument(
+        "-s", action="store_const", dest="mode", const=Mode.synonyms
+    )
+    parser.add_argument(
+        "-d", action="store_const", dest="mode", const=Mode.meanings
+    )
+    parser.add_argument("phrase")
+    ret = parser.parse_args()
+    if not getattr(ret, "mode", None):
+        ret.mode = Mode.synonyms
+    return ret
+
+
+@dataclass
+class SynonymGroup:
+    word_type: str
+    word_desc: str
+    synonyms: T.List[str]
+
+
+@dataclass
+class MeaningGroup:
+    word_type: str
+    meanings: T.List[str]
+
+
+def get_text(node) -> str:
+    return "".join(node.itertext())
+
+
+def download(url: str) -> str:
+    request = urllib.request.Request(
+        url=url, headers={"User-Agent": USER_AGENT}
+    )
+    with urllib.request.urlopen(request) as handle:
+        return handle.read().decode()
+
+
+def print_in_columns(items: T.List[str]) -> None:
+    items = [f"- {item} " for item in items]
+    column_size = max((len(item) for item in items), default=5)
+    term_size = shutil.get_terminal_size()
+    columns = term_size.columns // column_size
+    while items:
+        for _ in range(columns):
+            if not items:
+                break
+            item = items.pop(0)
+            print(f"{item:<{column_size}s}", end="")
+        if column_size * columns < term_size.columns:
+            print()
+    print()
+
+
+def get_synonyms(phrase: str) -> T.Iterable[SynonymGroup]:
+    url = SYNONYMS_URL.format(phrase)
+    content = download(url)
+    doc = lxml.etree.HTML(content)
+    for word_desc_node in doc.cssselect("div.tabdesc"):
+        word_type_node = word_desc_node.getprevious()
+        related_word_nodes = word_desc_node.getnext().cssselect("div.wb a")
+        yield SynonymGroup(
+            word_type=(word_type_node.text or "").strip(),
+            word_desc=get_text(word_desc_node),
+            synonyms=list(map(get_text, related_word_nodes)),
+        )
+
+
+def get_meanings(phrase: str) -> T.Iterable[MeaningGroup]:
+    url = MEANINGS_URL.format(phrase)
+    content = download(url)
+    doc = lxml.etree.HTML(content)
+    for word_type_node in doc.cssselect("div.defv2wordtype"):
+        meaning_word_nodes = word_type_node.getnext().cssselect(
+            ".topleveldefinition li"
+        )
+        yield MeaningGroup(
+            word_type=get_text(word_type_node),
+            meanings=list(map(get_text, meaning_word_nodes)),
+        )
+
+
+def show_synonyms(phrase: str) -> None:
+    for synonym_group in get_synonyms(phrase):
+        print(f"{synonym_group.word_type} ({synonym_group.word_desc})")
+        print_in_columns(synonym for synonym in synonym_group.synonyms)
+
+
+def show_meanings(phrase: str) -> None:
+    for meaning_group in get_meanings(phrase):
+        print(f"{meaning_group.word_type}")
+        for meaning in meaning_group.meanings:
+            print(f"- {meaning}")
+        print()
+
+
+def main() -> None:
+    args = parse_args()
+    if args.mode == Mode.synonyms:
+        show_synonyms(args.phrase)
+    elif args.mode == Mode.meanings:
+        show_meanings(args.phrase)
+    else:
+        print("unknown mode")
+
+
+if __name__ == "__main__":
+    main()
