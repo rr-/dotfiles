@@ -1,15 +1,21 @@
 import asyncio
+import typing as T
 import urllib.parse
 import xml.dom.minidom
-from typing import Optional, Tuple, List, Dict, AsyncIterable
 from tempfile import TemporaryFile
+from typing import AsyncIterable, Dict, List, Optional, Tuple
+
 import requests
 from bs4 import BeautifulSoup
+
 from booru_toolkit import errors
-from booru_toolkit.plugin.base import PluginBase
-from booru_toolkit.plugin.base import Post
-from booru_toolkit.plugin.base import Safety
+from booru_toolkit.plugin.base import PluginBase, Post, Safety
 from booru_toolkit.plugin.tag_cache import CachedTag
+
+POSTS_LIMIT = 100
+POSTS_MAX_PAGES = 200
+POSTS_MAX_IDS = POSTS_LIMIT * POSTS_MAX_PAGES
+TAGS_LIMIT = 1000
 
 
 def _process_response(response: requests.Response) -> str:
@@ -39,18 +45,54 @@ class PluginGelbooru(PluginBase):
         return []
 
     async def find_posts(self, query: str) -> AsyncIterable[Post]:
+        url = (
+            "/index.php?page=dapi&s=post&q=index" "&limit=0&tags={query}"
+        ).format(query=urllib.parse.quote(query))
+        response = await self._get(url)
+        with xml.dom.minidom.parseString(response) as doc:
+            total_count = int(
+                doc.getElementsByTagName("posts")[0].getAttribute("count")
+            )
+
+        if total_count < POSTS_MAX_IDS:
+            async for post in self._find_posts_by_query(query):
+                yield post
+            return
+
+        total_done = 0
+        partition_start_id = 0
+        partition_end_id = POSTS_MAX_IDS
+        while total_done < total_count:
+            partition_query = (
+                f"{query} id:>={partition_start_id} id:<{partition_end_id}"
+            )
+            async for post in self._find_posts_by_query(partition_query):
+                yield post
+                total_done += 1
+            partition_start_id += POSTS_MAX_IDS
+            partition_end_id += POSTS_MAX_IDS
+
+    async def _find_posts_by_query(self, query: str) -> T.Iterable[Post]:
         page = 0
+        done = 0
         while True:
             url = (
                 "/index.php?page=dapi&s=post&q=index"
                 "&limit={limit}&tags={query}&pid={page}"
-            ).format(query=urllib.parse.quote(query), limit=10, page=page)
+            ).format(
+                query=urllib.parse.quote(query), limit=POSTS_LIMIT, page=page
+            )
+            print(f"Downloading {query} {url}...", flush=True)
 
             response = await self._get(url)
             with xml.dom.minidom.parseString(response) as doc:
+                count = int(
+                    doc.getElementsByTagName("posts")[0].getAttribute("count")
+                )
+                offset = int(
+                    doc.getElementsByTagName("posts")[0].getAttribute("offset")
+                )
                 posts = doc.getElementsByTagName("post")
-                if not posts:
-                    break
                 for post in posts:
                     yield Post(
                         post_id=int(post.getAttribute("id")),
@@ -70,6 +112,9 @@ class PluginGelbooru(PluginBase):
                         source=post.getAttribute("source"),
                         title=None,
                     )
+                    done += 1
+                if not posts or done >= offset + count:
+                    break
 
             page += 1
 
@@ -140,7 +185,7 @@ class PluginGelbooru(PluginBase):
             print("Downloading tag cache... page {}".format(page))
             response = await self._get(
                 "/index.php?page=dapi&s=tag&q=index&limit={limit}&pid={page}".format(
-                    limit=1000, page=page
+                    limit=TAGS_LIMIT, page=page
                 )
             )
             page += 1
