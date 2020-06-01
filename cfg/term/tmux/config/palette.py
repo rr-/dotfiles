@@ -46,10 +46,7 @@ def send_osc(ps, *pt):
 def parse_args():
     parser = argparse.ArgumentParser()
     subparsers = parser.add_subparsers(dest="command_name")
-    subparsers.add_parser("restore")
     subparsers.add_parser("list")
-    subparsers.add_parser("get")
-    subparsers.add_parser("cycle")
     set_parser = subparsers.add_parser("set")
     set_parser.add_argument("theme")
     return parser.parse_args()
