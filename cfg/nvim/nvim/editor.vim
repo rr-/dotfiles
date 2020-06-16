@@ -11,6 +11,7 @@ endif
 syntax on                     "enable syntax highlighting
 set synmaxcol=256             "highlight up to X columns (binary files)
 set number                    "enable line numbers
+set relativenumber            "show relative line numbers
 
 "fix fast hitting escape + <key> being interpreted as escape sequence
 if !has('gui_running')
