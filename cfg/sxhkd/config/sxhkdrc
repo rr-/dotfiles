@@ -127,12 +127,12 @@ alt + shift + F12
     if pgrep browser; then browser :config-source; fi
 
 # screenshots
-# interactive
-super + i
-    bash -c "sleep 0.2 && mate-screenshot -a"
 # window
+super + i
+    sh -c 'shot -s && mpv ~/.local/share/beep-shot.mp3 >/dev/null'|clip
+# interactive
 super + shift + i
-    mate-screenshot -w
-# monitor
+    sh -c 'shot -i && mpv ~/.local/share/beep-shot.mp3 >/dev/null'|clip
+# desktop
 super + alt + i
-    mate-screenshot
+    sh -c 'shot -d && mpv ~/.local/share/beep-shot.mp3 >/dev/null'|clip
