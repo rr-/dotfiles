@@ -1,0 +1,190 @@
+#!/usr/bin/env python3
+import argparse
+import random
+import string
+import sys
+import typing as T
+from datetime import datetime
+from enum import Enum
+from pathlib import Path
+
+from PyQt5 import QtCore, QtGui, QtWidgets
+
+
+class InteractiveCaptureWindow(QtWidgets.QWidget):
+    def __init__(self, rect: QtCore.QRect):
+        super().__init__()
+        self.rubberband = QtWidgets.QRubberBand(
+            QtWidgets.QRubberBand.Rectangle, self
+        )
+        self.setWindowFlags(
+            QtCore.Qt.FramelessWindowHint
+            | QtCore.Qt.WindowStaysOnTopHint
+            | QtCore.Qt.X11BypassWindowManagerHint
+        )
+        self.setAttribute(QtCore.Qt.WA_TranslucentBackground)
+        self.setGeometry(
+            QtWidgets.QApplication.instance().desktop().geometry()
+        )
+        if rect:
+            self.rubberband.setGeometry(rect)
+            self.rubberband.show()
+        self.setMouseTracking(True)
+        self.setFocusPolicy(QtCore.Qt.TabFocus)
+        self.value = False
+        self.origin = None
+
+    def keyPressEvent(self, event):
+        if event.key() == QtCore.Qt.Key_Escape:
+            self.close()
+
+    def mousePressEvent(self, event):
+        self.origin = event.pos()
+        self.rubberband.setGeometry(QtCore.QRect(self.origin, QtCore.QSize()))
+        self.rubberband.show()
+        super().mousePressEvent(event)
+
+    def mouseMoveEvent(self, event):
+        if self.origin:
+            self.rubberband.setGeometry(
+                QtCore.QRect(self.origin, event.pos()).normalized()
+            )
+        super().mouseMoveEvent(event)
+
+    def mouseReleaseEvent(self, event):
+        if self.rubberband.isVisible():
+            self.rubberband.hide()
+            selected = []
+            rect = self.rubberband.geometry()
+            self.value = rect
+        self.close()
+        super().mouseReleaseEvent(event)
+
+
+class CaptureMode(Enum):
+    desktop = 1
+    active_screen = 2
+    active_window = 3
+
+
+def get_default_filename(suffix: str) -> str:
+    return (
+        datetime.now().strftime("%Y%m%d_%H%M%S")
+        + "_"
+        + "".join(random.choices(string.ascii_lowercase, k=3))
+        + f".{suffix}"
+    )
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--output-dir", type=Path, default=Path.home(), nargs="?"
+    )
+    parser.add_argument(
+        "--output-filename", type=str, nargs="?",
+    )
+    parser.add_argument(
+        "-F",
+        "--output-format",
+        type=str,
+        default="png",
+        choices=["png", "jpg"],
+        nargs="?",
+    )
+    parser.add_argument("-i", "--interactive", action="store_true")
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument(
+        "-d",
+        "--desktop",
+        action="store_const",
+        dest="capture_mode",
+        const=CaptureMode.desktop,
+    )
+    group.add_argument(
+        "-s",
+        "--screen",
+        action="store_const",
+        dest="capture_mode",
+        const=CaptureMode.active_screen,
+    )
+    group.add_argument(
+        "-w",
+        "--window",
+        action="store_const",
+        dest="capture_mode",
+        const=CaptureMode.active_window,
+    )
+    return parser.parse_args()
+
+
+class WindowCapture:
+    def __init__(self) -> None:
+        self.app = QtWidgets.QApplication(sys.argv)
+
+    def get_desktop_rect(self) -> QtCore.QRect:
+        return self.app.desktop().geometry()
+
+    def get_active_screen_rect(self) -> QtCore.QRect:
+        return self.get_active_screen().geometry()
+
+    def get_active_window_rect(self) -> QtCore.QRect:
+        raise NotImplementedError("not implemented")
+
+    def get_interactive_rect(
+        self, rect: QtCore.QRect
+    ) -> T.Optional[QtCore.QRect]:
+        window = InteractiveCaptureWindow(rect)
+        window.show()
+        self.app.exec_()
+        return window.value
+
+    def get_active_screen(self) -> QtGui.QScreen:
+        mouse_pos = self.get_mouse_pos()
+        for screen in self.get_screens():
+            if mouse_pos in screen.geometry():
+                return screen
+        raise RuntimeError("unable to determine active screen")
+
+    def capture_region(self, rect: QtCore.QRect) -> QtGui.QPixmap:
+        screen = QtWidgets.QApplication.primaryScreen()
+        screenshot = screen.grabWindow(
+            0, rect.x(), rect.y(), rect.width(), rect.height()
+        )
+        return screenshot
+
+    def get_mouse_pos(self) -> QtCore.QPoint:
+        return QtGui.QCursor.pos()
+
+    def get_screens(self) -> T.Iterable[QtGui.QScreen]:
+        return self.app.screens()
+
+
+def main() -> None:
+    args = parse_args()
+    capture = WindowCapture()
+    method = {
+        CaptureMode.desktop: capture.get_desktop_rect,
+        CaptureMode.active_screen: capture.get_active_screen_rect,
+        CaptureMode.active_window: capture.get_active_window_rect,
+    }.get(args.capture_mode)
+    rect = method() if method else None
+
+    if args.interactive:
+        rect = capture.get_interactive_rect(rect)
+        if not rect:
+            sys.exit(1)
+    elif not rect:
+        rect = capture.get_desktop_rect()
+
+    screenshot = capture.capture_region(rect)
+    path = args.output_dir / (
+        args.output_filename or get_default_filename(args.output_format)
+    )
+    print(path)
+    screenshot.save(str(path), args.output_format)
+    sys.exit(0)
+
+
+if __name__ == "__main__":
+    main()
