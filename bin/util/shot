@@ -31,6 +31,7 @@ class InteractiveCaptureWindow(QtWidgets.QWidget):
             self.rubberband.show()
         self.setMouseTracking(True)
         self.setFocusPolicy(QtCore.Qt.TabFocus)
+        self.setCursor(QtCore.Qt.CrossCursor)
         self.value = False
         self.origin = None
 
