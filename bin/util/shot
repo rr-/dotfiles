@@ -182,7 +182,7 @@ def main() -> None:
     path = args.output_dir / (
         args.output_filename or get_default_filename(args.output_format)
     )
-    print(path)
+    print(path, end="")
     screenshot.save(str(path), args.output_format)
     sys.exit(0)
 
