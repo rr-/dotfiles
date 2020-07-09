@@ -13,6 +13,8 @@
 [merge]
     conflictStyle = diff3
 [alias]
+    ri = rebase --interactive
+    rc = rebase --continue
     set-upstream = !git branch --set-upstream-to=origin/`git symbolic-ref --short HEAD`
     amen = commit --amend
     ramen = commit --amend --all --no-edit
