@@ -3,6 +3,7 @@ import argparse
 import random
 import string
 import sys
+import time
 import typing as T
 from datetime import datetime
 from enum import Enum
@@ -178,6 +179,7 @@ def main() -> None:
         rect = capture.get_interactive_rect(rect)
         if not rect:
             sys.exit(1)
+        time.sleep(0.1)
     elif not rect:
         rect = capture.get_desktop_rect()
 
