@@ -1,8 +1,12 @@
-#!/bin/sh
-sessions=$(tmux ls | grep '^[0-9]\+:' | cut -f1 -d':' | sort)
+#!/bin/bash
+sessions=$(tmux list-sessions -F '#S' | grep '^[0-9]\+$' | sort -n)
 new=1
 for old in $sessions
 do
+    if [ -z "$old" ]
+    then
+        continue
+    fi
     tmux rename -t "$old" "$new"
     ((new++))
 done
