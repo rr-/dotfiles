@@ -21,6 +21,7 @@ for option, default_value in settings.items():
         weechat.config_set_plugin(option, default_value)
 
 weechat.hook_print("", "irc_privmsg", "", 1, "oscn_irc_privmsg", "")
+weechat.hook_print("", "notify_private", "", 1, "oscn_notify_private", "")
 
 
 def notify(name, message):
@@ -74,6 +75,27 @@ def oscn_irc_privmsg(
             or (highlight and notify_chat)
         )
     ):
+        notify(prefix, message)
+
+    return weechat.WEECHAT_RC_OK
+
+
+def oscn_notify_private(
+    data, buffer, date, tags, displayed, highlight, prefix, message
+):
+    if "irc_privmsg" in tags:
+        return weechat.WEECHAT_RC_OK
+
+    notify_chat = weechat.config_get_plugin("notify_highlights") == "on"
+    notify_privmsg = (
+        weechat.config_get_plugin("notify_private_messages") == "on"
+    )
+
+    is_muted = (prefix or "").lstrip("&").lower() in get_muted_highlight_nicks(
+        buffer
+    )
+
+    if displayed and not is_muted and notify_privmsg:
         notify(prefix, message)
 
     return weechat.WEECHAT_RC_OK
