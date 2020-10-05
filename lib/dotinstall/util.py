@@ -115,7 +115,9 @@ def create_symlink(source: str, target: str) -> None:
     os.symlink(source, target)
 
 
-def concat_files(sources, target, comment_fmt=None):
+def concat_files(
+    sources: T.List[str], target: str, comment_fmt: T.Optional[str] = None
+) -> None:
     sources = [os.path.abspath(os.path.expanduser(path)) for path in sources]
     target = os.path.expanduser(target)
     _remove_symlink(target)
