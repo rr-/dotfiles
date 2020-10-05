@@ -1,5 +1,5 @@
 [basic]
-good-names=ex,_,logger,i,j,x,y
+good-names=ex,_,logger,i,j,x,y,ft,fs
 
 [variables]
 dummy-variables-rgx=_|dummy
