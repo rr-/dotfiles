@@ -21,4 +21,9 @@ jobs:
     - uses: actions/checkout@v2
     - name: Run test
       run: |
-        cat txt/radio-stations.txt | grep -Eo 'https?://(.*)$' | xargs -I {} sh -c 'echo {} && curl -L --head --fail --silent --show-error {} 2>&1 >/dev/null && echo OK'
+        cat txt/radio-stations.txt \
+        | grep -Eo 'https?://(.*)$' \
+        | xargs -I {} sh -c \
+        'echo {} && $curl {} 2>&1 >/dev/null && echo OK'
+      env:
+        curl: curl -L --head --fail --silent --show-error
