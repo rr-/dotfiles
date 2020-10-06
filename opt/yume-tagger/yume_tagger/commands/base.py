@@ -20,6 +20,6 @@ class BaseCommand:
 
     @staticmethod
     def _create_parser(
-        parent_parser: configargparse.ArgumentParser
+        parent_parser: configargparse.ArgumentParser,
     ) -> configargparse.ArgumentParser:
         raise NotImplementedError("Not implemented")
