@@ -26,7 +26,7 @@ class AutoTagConfigCommand(BaseCommand):
 
     @staticmethod
     def _create_parser(
-        parent_parser: configargparse.ArgumentParser
+        parent_parser: configargparse.ArgumentParser,
     ) -> configargparse.ArgumentParser:
         return parent_parser.add_parser(
             "autotag-config", help="tweak settings of autotagger"
