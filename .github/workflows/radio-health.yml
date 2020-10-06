@@ -1,0 +1,24 @@
+name: Check radio health
+
+on:
+  workflow_dispatch: ~
+  schedule:
+    - cron: '37 13 * 1 *'
+  push:
+    paths:
+      - txt/radio-stations.txt
+      - .github/workflows/radio-health.yml
+  pull_request:
+    paths:
+      - txt/radio-stations.txt
+      - .github/workflows/radio-health.yml
+
+jobs:
+  check:
+    name: Check radio health
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Run test
+      run: |
+        cat txt/radio-stations.txt | grep -Eo 'https?://(.*)$' | xargs -I {} sh -c 'echo {} && curl -L --head --fail --silent --show-error {} 2>&1 >/dev/null && echo OK'
