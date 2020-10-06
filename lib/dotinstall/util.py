@@ -147,7 +147,6 @@ def concat_files(
                     file=target_handle,
                 )
             print(Path(source).read_text(), file=target_handle)
-            print(file=target_handle)
 
 
 def _remove_symlink(path: str) -> None:
