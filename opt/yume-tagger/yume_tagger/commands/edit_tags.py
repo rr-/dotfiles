@@ -224,7 +224,7 @@ class EditTagsCommand(BaseCommand):
 
     @staticmethod
     def _create_parser(
-        parent_parser: configargparse.ArgumentParser
+        parent_parser: configargparse.ArgumentParser,
     ) -> configargparse.ArgumentParser:
         parser = parent_parser.add_parser(
             "edit", help="edit tags interactively"
