@@ -18,9 +18,15 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser("Look up words in edict2 dictionary")
     parser.add_argument("pattern", nargs="*", help="regex to search for")
     parser.add_argument("--tags", nargs="*", help="regex to search tags for")
-    parser.add_argument("--kana", nargs="*", help="regex to search for in kana")
-    parser.add_argument("--kanji", nargs="*", help="regex to search for in kanji")
-    parser.add_argument("--glossary", nargs="*", help="regex to search for in glossary")
+    parser.add_argument(
+        "--kana", nargs="*", help="regex to search for in kana"
+    )
+    parser.add_argument(
+        "--kanji", nargs="*", help="regex to search for in kanji"
+    )
+    parser.add_argument(
+        "--glossary", nargs="*", help="regex to search for in glossary"
+    )
     return parser.parse_args()
 
 
