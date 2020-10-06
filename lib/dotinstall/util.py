@@ -122,7 +122,7 @@ def concat_files(
     target = os.path.expanduser(target)
     _remove_symlink(target)
     create_dir(os.path.dirname(target))
-    
+
     logger.info("Concatenating %s to %s...", sources, target)
     with open(target, "w") as target_handle:
         if comment_fmt:
