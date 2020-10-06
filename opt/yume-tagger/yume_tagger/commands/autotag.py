@@ -352,7 +352,7 @@ class AutoTagChosenPostCommand(BaseCommand):
 
     @staticmethod
     def _create_parser(
-        parent_parser: configargparse.ArgumentParser
+        parent_parser: configargparse.ArgumentParser,
     ) -> configargparse.ArgumentParser:
         parser = parent_parser.add_parser(
             "autotag-chosen", help="fetch tags for chosen posts"
@@ -410,7 +410,7 @@ class AutoTagNewestPostCommand(BaseCommand):
 
     @staticmethod
     def _create_parser(
-        parent_parser: configargparse.ArgumentParser
+        parent_parser: configargparse.ArgumentParser,
     ) -> configargparse.ArgumentParser:
         parser = parent_parser.add_parser(
             "autotag-newest", help="fetch tags for newest posts"
