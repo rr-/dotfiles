@@ -9,21 +9,42 @@ from pathlib import Path
 from subprocess import run
 
 MANAGED_EXTENSIONS = {
-    'jpg', 'jpeg', 'jfif', 'gif', 'png', 'tga', 'bmp',
-    'webm', 'mkv', 'mp4'}
+    "jpg",
+    "jpeg",
+    "jfif",
+    "gif",
+    "png",
+    "tga",
+    "bmp",
+    "webm",
+    "mkv",
+    "mp4",
+}
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(description='Run mpv as image viewer')
+    parser = argparse.ArgumentParser(description="Run mpv as image viewer")
     parser.add_argument(
-        '-s', '--select', dest='selected_path', type=Path,
-        help='Which file to preselect')
+        "-s",
+        "--select",
+        dest="selected_path",
+        type=Path,
+        help="Which file to preselect",
+    )
     parser.add_argument(
-        '-r', '--recursive', action='store_true',
-        help='Scan directories recursively')
+        "-r",
+        "--recursive",
+        action="store_true",
+        help="Scan directories recursively",
+    )
     parser.add_argument(
-        metavar='PATH', nargs='*', dest='paths', type=str,
-        help='path to the image or a directory', default=None)
+        metavar="PATH",
+        nargs="*",
+        dest="paths",
+        type=str,
+        help="path to the image or a directory",
+        default=None,
+    )
     args, unknown_args = parser.parse_known_args()
 
     if args.selected_path:
@@ -32,8 +53,8 @@ def parse_args():
     if args.paths:
         args.paths = [
             path
-            if path.startswith('http') else
-            Path(path).expanduser().resolve()
+            if path.startswith("http")
+            else Path(path).expanduser().resolve()
             for path in args.paths
         ]
     else:
@@ -52,7 +73,7 @@ def gather_playlist(paths, recursive):
                 for subpath in path.iterdir():
                     yield from scan(subpath, depth + 1)
         elif path.is_file():
-            ext = path.suffix.lower().lstrip('.')
+            ext = path.suffix.lower().lstrip(".")
             if ext in MANAGED_EXTENSIONS or not depth:
                 yield path
 
@@ -68,12 +89,13 @@ def sort_playlist(playlist):
         return int(text) if text.isdigit() else text.lower()
 
     playlist.sort(
-        key=lambda key: [convert(c) for c in re.split(r'(\d+)', str(key))])
+        key=lambda key: [convert(c) for c in re.split(r"(\d+)", str(key))]
+    )
 
 
 def main():
     args, unknown_args = parse_args()
-    config_dir = Path('~/.config/mpi').expanduser()
+    config_dir = Path("~/.config/mpi").expanduser()
 
     playlist = list(gather_playlist(args.paths, args.recursive))
     if args.selected_path:
@@ -82,25 +104,28 @@ def main():
     sort_playlist(playlist)
 
     playlist_pos = (
-        playlist.index(args.selected_path)
-        if args.selected_path
-        else 0)
+        playlist.index(args.selected_path) if args.selected_path else 0
+    )
 
     # write the playlist
     with tempfile.NamedTemporaryFile(
-            delete=False, mode='w', encoding='utf-8') as handle:
-        handle.write('\n'.join(str(path) for path in playlist))
+        delete=False, mode="w", encoding="utf-8"
+    ) as handle:
+        handle.write("\n".join(str(path) for path in playlist))
 
     try:
-        run([
-            'mpv',
-            f'--config-dir={config_dir}',
-            f'--playlist={handle.name}',
-            f'--playlist-start={playlist_pos}']
-            + unknown_args)
+        run(
+            [
+                "mpv",
+                f"--config-dir={config_dir}",
+                f"--playlist={handle.name}",
+                f"--playlist-start={playlist_pos}",
+            ]
+            + unknown_args
+        )
     finally:
         os.unlink(handle.name)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
