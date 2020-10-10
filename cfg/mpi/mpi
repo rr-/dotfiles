@@ -86,7 +86,7 @@ def gather_playlist(paths, recursive):
 
 def sort_playlist(playlist):
     def convert(text):
-        return int(text) if text.isdigit() else text.lower()
+        return int(text) if text.isdigit() else text
 
     playlist.sort(
         key=lambda key: [convert(c) for c in re.split(r"(\d+)", str(key))]
