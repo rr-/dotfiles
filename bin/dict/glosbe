@@ -61,7 +61,7 @@ def lookup_context_phrase(
         content = handle.read()
         doc = lxml.etree.HTML(content)
         for example_node in doc.cssselect("#tmTable div.tableRow"):
-            #print(lxml.etree.tostring(example_node, encoding="unicode"))
+            # print(lxml.etree.tostring(example_node, encoding="unicode"))
             src_node = example_node.cssselect(
                 "div.span6:nth-child(1) span[class=''],"
                 "div.span6:nth-child(1) span[class='nobold']"
