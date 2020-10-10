@@ -13,32 +13,34 @@ def setup_logger():
 
     handler = logging.StreamHandler(sys.stdout)
     handler.setLevel(logging.DEBUG)
-    formatter = logging.Formatter('[%(asctime)s/%(name)s] %(message)s')
+    formatter = logging.Formatter("[%(asctime)s/%(name)s] %(message)s")
     handler.setFormatter(formatter)
     root.addHandler(handler)
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(description='Install configurations')
-    parser.add_argument('configuration', help='directory to install', nargs='+')
+    parser = argparse.ArgumentParser(description="Install configurations")
+    parser.add_argument(
+        "configuration", help="directory to install", nargs="+"
+    )
     return parser.parse_args()
 
 
 def main():
     directory = os.path.abspath(os.path.dirname(__file__))
-    sys.path.append(os.path.join(directory, 'lib'))
+    sys.path.append(os.path.join(directory, "lib"))
 
     setup_logger()
     args = parse_args()
     original_dir = os.getcwd()
     for configuration in args.configuration:
-        module_name = 'cfg.' + re.sub('[-_]', '.', configuration)
-        module_path = os.path.join(directory, module_name.replace('.', '/'))
+        module_name = "cfg." + re.sub("[-_]", ".", configuration)
+        module_path = os.path.join(directory, module_name.replace(".", "/"))
         os.chdir(module_path)
-        module = importlib.import_module(module_name + '.install')
+        module = importlib.import_module(module_name + ".install")
         module.run()
         os.chdir(original_dir)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

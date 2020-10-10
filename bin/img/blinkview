@@ -14,7 +14,16 @@ PAGE_WIDTH = 2
 PAGE_HEIGHT = 2
 IMAGES_PER_PAGE = PAGE_WIDTH * PAGE_HEIGHT
 MANAGED_EXTENSIONS = [
-    "bmp", "gif", "jfif", "jpeg", "jpg", "mkv", "mp4", "png", "tga", "webm"
+    "bmp",
+    "gif",
+    "jfif",
+    "jpeg",
+    "jpg",
+    "mkv",
+    "mp4",
+    "png",
+    "tga",
+    "webm",
 ]
 
 
