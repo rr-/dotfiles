@@ -18,8 +18,12 @@ def parse_args() -> argparse.Namespace:
 def main() -> None:
     args = parse_args()
     ims = [np.array(Image.open(path)) for path in args.path]
-    sequence = np.stack(ims, axis=len(ims))
-    result = np.median(sequence, axis=len(ims)).astype(np.uint8)
+    sequence = np.vstack(
+        [im.reshape(1, im.shape[0] * im.shape[1] * im.shape[2]) for im in ims]
+    )
+    result = (
+        np.median(sequence, axis=0).astype(np.uint8).reshape(*ims[0].shape)
+    )
     Image.fromarray(result).save(args.output)
 
 
