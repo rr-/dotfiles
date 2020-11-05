@@ -84,5 +84,7 @@
     whitespace = blue reverse
 [commit]
     gpgsign = true
+[pull]
+    ff = only
 [gpg]
     program = gpg
