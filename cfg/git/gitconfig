@@ -1,6 +1,7 @@
 [user]
     name = rr-
     email = rr-@sakuya.pl
+    signingkey = DEA244FD0BE4151466C73583CC65E6FD28CAE42A
 [github]
     user = rr-
 [branch]
@@ -81,3 +82,7 @@
     old = red reverse
     new = green reverse
     whitespace = blue reverse
+[commit]
+    gpgsign = true
+[gpg]
+    program = gpg
