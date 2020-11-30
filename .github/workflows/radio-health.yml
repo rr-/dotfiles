@@ -3,7 +3,7 @@ name: Check radio health
 on:
   workflow_dispatch: ~
   schedule:
-    - cron: '37 13 * 1 *'
+    - cron: '37 13 1 * *'
   push:
     paths:
       - txt/radio-stations.txt
