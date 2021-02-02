@@ -6,6 +6,8 @@ import json
 import re
 import urllib.request
 
+DEFAULT_MAX_DEFINITIONS = 3
+
 
 def _wrap_long_text(text, length=70):
     return "\n".join(
@@ -18,6 +20,9 @@ def _parse_args():
         description="Looks up word definitions on Urban Dictionary"
     )
     parser.add_argument("word", nargs="+")
+    parser.add_argument(
+        "-n", "--num", type=int, default=DEFAULT_MAX_DEFINITIONS
+    )
     return parser.parse_args()
 
 
@@ -29,13 +34,15 @@ def _lookup_word(word):
         return json.loads(handle.read().decode())
 
 
-def _print_definition(definition):
+def _print_definition(
+    definition, max_definitions: int = DEFAULT_MAX_DEFINITIONS
+):
     if not definition["list"]:
         print("Nothing found")
         return
     for entry in list(
         sorted(definition["list"], key=lambda item: -item["thumbs_up"])
-    )[0:3]:
+    )[0 : max_definitions]:
         print("Definition:")
         print(_wrap_long_text(entry["definition"]))
         print()
@@ -51,7 +58,7 @@ def main():
     args = _parse_args()
     for word in args.word:
         definition = _lookup_word(word)
-        _print_definition(definition)
+        _print_definition(definition, max_definitions=args.num)
 
 
 if __name__ == "__main__":
