@@ -33,7 +33,9 @@ def _print_definition(definition):
     if not definition["list"]:
         print("Nothing found")
         return
-    for entry in definition["list"][0:3]:
+    for entry in list(
+        sorted(definition["list"], key=lambda item: -item["thumbs_up"])
+    )[0:3]:
         print("Definition:")
         print(_wrap_long_text(entry["definition"]))
         print()
