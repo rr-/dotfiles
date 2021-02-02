@@ -1,20 +1,12 @@
 #!/usr/bin/env python3
-# Looks up word definitions on jisho.org.
-
-import argparse
 import json
+import typing as T
 import urllib.request
 
-
-def _parse_args():
-    parser = argparse.ArgumentParser(
-        description="Looks up word definitions on jisho.org"
-    )
-    parser.add_argument("word", nargs="+")
-    return parser.parse_args()
+import click
 
 
-def _lookup_word(word):
+def lookup_word(word: str) -> T.Dict[str, T.Any]:
     url = "http://jisho.org/api/v1/search/words?keyword=%s" % (
         urllib.parse.quote(word)
     )
@@ -22,7 +14,7 @@ def _lookup_word(word):
         return json.loads(handle.read().decode())
 
 
-def _print_definition(definition):
+def print_definition(definition: T.Dict[str, T.Any]) -> None:
     if not definition["data"]:
         print("Nothing found")
         return
@@ -42,12 +34,14 @@ def _print_definition(definition):
         print()
 
 
-def main():
-    args = _parse_args()
-    for word in args.word:
-        definition = _lookup_word(word)
-        _print_definition(definition)
+@click.command()
+@click.argument("words", nargs=-1)
+def cli(words: T.List[str]) -> None:
+    """Look up word definitions on jisho.org."""
+    for word in words:
+        definition = lookup_word(word)
+        print_definition(definition)
 
 
 if __name__ == "__main__":
-    main()
+    cli()
