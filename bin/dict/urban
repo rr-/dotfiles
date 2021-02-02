@@ -1,32 +1,22 @@
 #!/usr/bin/env python3
-# Looks up word definitions on Urban Dictionary.
-
-import argparse
 import json
 import re
+import typing as T
+import urllib.parse
 import urllib.request
+
+import click
 
 DEFAULT_MAX_DEFINITIONS = 3
 
 
-def _wrap_long_text(text, length=70):
+def wrap_long_text(text: str, length: int = 70) -> str:
     return "\n".join(
         line.strip() for line in re.findall(r".{1,%d}(?:\s+|$)" % length, text)
     )
 
 
-def _parse_args():
-    parser = argparse.ArgumentParser(
-        description="Looks up word definitions on Urban Dictionary"
-    )
-    parser.add_argument("word", nargs="+")
-    parser.add_argument(
-        "-n", "--num", type=int, default=DEFAULT_MAX_DEFINITIONS
-    )
-    return parser.parse_args()
-
-
-def _lookup_word(word):
+def lookup_word(word: str) -> T.Dict[str, T.Any]:
     url = "http://api.urbandictionary.com/v0/define?term=%s" % (
         urllib.parse.quote(word)
     )
@@ -34,32 +24,42 @@ def _lookup_word(word):
         return json.loads(handle.read().decode())
 
 
-def _print_definition(
-    definition, max_definitions: int = DEFAULT_MAX_DEFINITIONS
-):
+def print_definition(
+    definition: T.Dict[str, T.Any], max_definitions: int
+) -> None:
     if not definition["list"]:
         print("Nothing found")
         return
+
     for entry in list(
         sorted(definition["list"], key=lambda item: -item["thumbs_up"])
-    )[0 : max_definitions]:
+    )[0:max_definitions]:
         print("Definition:")
-        print(_wrap_long_text(entry["definition"]))
+        print(wrap_long_text(entry["definition"]))
         print()
         print("Example:")
-        print(_wrap_long_text(entry["example"]))
+        print(wrap_long_text(entry["example"]))
         print("+%d -%d" % (entry["thumbs_up"], entry["thumbs_down"]))
         print()
         print("-" * 50)
         print()
 
 
-def main():
-    args = _parse_args()
-    for word in args.word:
-        definition = _lookup_word(word)
-        _print_definition(definition, max_definitions=args.num)
+@click.command()
+@click.option(
+    "-n",
+    "--num",
+    type=int,
+    default=DEFAULT_MAX_DEFINITIONS,
+    help="How many definitions to print.",
+)
+@click.argument("words", nargs=-1)
+def cli(words: T.List[str], num: int) -> None:
+    """Look up word definitions on Urban Dictionary."""
+    for word in words:
+        definition = lookup_word(word)
+        print_definition(definition, max_definitions=num)
 
 
 if __name__ == "__main__":
-    main()
+    cli()
