@@ -1,23 +1,21 @@
 #!/usr/bin/env python3
 import json
 import typing as T
-import urllib.request
 
 import click
+import requests
 
 
 def lookup_word(word: str) -> T.Dict[str, T.Any]:
-    url = "http://jisho.org/api/v1/search/words?keyword=%s" % (
-        urllib.parse.quote(word)
-    )
-    with urllib.request.urlopen(url) as handle:
-        return json.loads(handle.read().decode())
+    url = "http://jisho.org/api/v1/search/words"
+    return requests.get(url, {"keyword": word}).json()
 
 
 def print_definition(definition: T.Dict[str, T.Any]) -> None:
     if not definition["data"]:
         print("Nothing found")
         return
+
     for entry in definition["data"]:
         print("Definition:")
         for item in entry["japanese"]:
