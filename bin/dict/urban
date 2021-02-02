@@ -2,10 +2,9 @@
 import json
 import re
 import typing as T
-import urllib.parse
-import urllib.request
 
 import click
+import requests
 
 DEFAULT_MAX_DEFINITIONS = 3
 
@@ -17,11 +16,8 @@ def wrap_long_text(text: str, length: int = 70) -> str:
 
 
 def lookup_word(word: str) -> T.Dict[str, T.Any]:
-    url = "http://api.urbandictionary.com/v0/define?term=%s" % (
-        urllib.parse.quote(word)
-    )
-    with urllib.request.urlopen(url) as handle:
-        return json.loads(handle.read().decode())
+    url = "http://api.urbandictionary.com/v0/define"
+    return requests.get(url, {"term": word}).json()
 
 
 def print_definition(
