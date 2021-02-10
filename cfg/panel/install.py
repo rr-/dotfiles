@@ -10,7 +10,7 @@ def run():
 
     util.copy_file("./start", "~/.config/x/start-panel.sh")
 
-    os.chdir(util.root_dir / "opt" / "panel")
+    os.chdir(util.REPO_ROOT_DIR / "opt" / "panel")
     util.run_verbose(
         [packages.PIP_EXECUTABLE, "install", "--user", "--editable", "."]
     )
