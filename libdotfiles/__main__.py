@@ -8,8 +8,7 @@ from pathlib import Path
 
 import click
 
-LIB_DIR = Path(__file__).parent.absolute()
-ROOT_DIR = LIB_DIR.parent
+from libdotfiles.util import REPO_ROOT_DIR
 
 
 def setup_logger() -> None:
@@ -45,7 +44,7 @@ def install(paths: T.List[Path]) -> None:
     """Install given module."""
     original_dir = os.getcwd()
     for module_path in paths:
-        module_path = ROOT_DIR / module_path
+        module_path = REPO_ROOT_DIR / module_path
         os.chdir(module_path)
         module = importlib.import_module("install")
         module.run()
