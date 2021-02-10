@@ -147,7 +147,7 @@ def try_install(package: str, method: T.Optional[str] = None) -> bool:
     try:
         return install(package, method)
     except Exception as ex:
-        logger.info("Error installing %s: %s", package, ex)
+        logger.error("Error installing %s: %s", package, ex)
         return False
 
 
