@@ -21,9 +21,9 @@ custom goodies are located in the `bin/` directory.
 Every module can be installed with `./install` like this:
 
 ```console
-./install zsh
-./install vim
-./install term.urxvt
+./install cfg/zsh
+./install cfg/vim
+./install cfg/term/urxvt
 ```
 
 Most things are installed using symbolic links.
