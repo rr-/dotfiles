@@ -11,7 +11,7 @@ import tempfile
 
 import requests
 
-from dotfiles import logging
+from libdotfiles import logging
 
 PASSWORD = "iBlm8NTigvru0Jr0"
 URL_TEMPLATE = (

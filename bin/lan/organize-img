@@ -10,7 +10,7 @@ from pathlib import Path
 
 from PIL import Image
 
-from dotfiles import logging
+from libdotfiles import logging
 
 SOURCE_ROOT_DIR = Path("~/data.frost/img/net-queue").expanduser()
 TARGET_ROOT_DIR = Path("~/data.frost/img/net/").expanduser()

@@ -1,7 +1,7 @@
 import os
 import tempfile
 
-from dotinstall import packages, util
+from libdotfiles import packages, util
 
 
 def run():

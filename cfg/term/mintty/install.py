@@ -1,4 +1,4 @@
-from dotinstall import util
+from libdotfiles import util
 
 
 def run():
