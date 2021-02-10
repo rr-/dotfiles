@@ -8,7 +8,7 @@ from pathlib import Path
 from subprocess import PIPE, Popen, call
 
 logger = logging.getLogger(__name__)
-root_dir = Path(__file__).parent.parent.parent
+root_dir = Path(__file__).parent.parent
 
 
 def run_silent(*args: T.Any, **kwargs: T.Any) -> T.Tuple[bool, str, str]:

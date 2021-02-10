@@ -3,7 +3,7 @@ import re
 import sys
 import typing as T
 
-from dotinstall import util
+from libdotfiles import util
 
 logger = logging.getLogger(__name__)
 

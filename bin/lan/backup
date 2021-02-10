@@ -4,7 +4,7 @@ import shlex
 import typing as T
 from subprocess import CalledProcessError, run
 
-from dotfiles import logging
+from libdotfiles import logging
 
 
 def parse_args() -> argparse.Namespace:
