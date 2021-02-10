@@ -68,6 +68,7 @@ def sync(
 
 def main():
     args = parse_args()
+    logging.setup_colored_logs()
 
     try:
         # main machine config

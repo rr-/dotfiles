@@ -1,25 +1,13 @@
 #!/usr/bin/env python3
 import importlib
-import logging
 import os
-import sys
 import typing as T
 from pathlib import Path
 
 import click
 
+from libdotfiles import logging
 from libdotfiles.util import REPO_ROOT_DIR
-
-
-def setup_logger() -> None:
-    root = logging.getLogger()
-    root.setLevel(logging.DEBUG)
-
-    handler = logging.StreamHandler(sys.stdout)
-    handler.setLevel(logging.DEBUG)
-    formatter = logging.Formatter("[%(asctime)s/%(name)s] %(message)s")
-    handler.setFormatter(formatter)
-    root.addHandler(handler)
 
 
 class PathPath(click.Path):
@@ -31,7 +19,7 @@ class PathPath(click.Path):
 
 @click.group(context_settings={"help_option_names": ["-h", "--help"]})
 def cli() -> None:
-    setup_logger()
+    logging.setup_colored_logs(fmt="[%(asctime)s/%(name)s] %(message)s")
 
 
 @cli.command()
