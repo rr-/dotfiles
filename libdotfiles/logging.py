@@ -42,7 +42,7 @@ def setup_colored_logs(fmt: str = "%(message)s") -> None:
             "warning": {"color": "yellow"},
             "success": {"color": "green", "bold": True},
             "error": {"color": "red", "bold": True},
-            "info": {"color": "blue", "bold": True},
+            "info": {},
         },
         isatty=True if "COLORED_LOGS" in os.environ else None,
     )
