@@ -7,5 +7,5 @@ setup(
     long_description="wrapper script around my dotfiles",
     packages=find_packages(),
     entry_points={"console_scripts": ["dotfiles = dotfiles.__main__:main"]},
-    install_requires=["click"],
+    install_requires=["click", "coloredlogs"],
 )

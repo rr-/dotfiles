@@ -397,6 +397,7 @@ def process_task(task, parser, lang, force, debug):
 
 def main():
     args = parse_args()
+    logging.setup_colored_logs()
     tasks = collect_tasks(args.sources)
     parser = SubtitleParser()
     with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:

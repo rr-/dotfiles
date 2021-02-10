@@ -1,7 +1,17 @@
 # pylint: disable=unused-import,protected-access,invalid-name
 import logging
 import os
-from logging import ERROR, INFO, WARNING, error, getLogger, info, warning
+from logging import (
+    DEBUG,
+    ERROR,
+    INFO,
+    WARNING,
+    debug,
+    error,
+    getLogger,
+    info,
+    warning,
+)
 
 import coloredlogs
 
@@ -24,13 +34,15 @@ def _add_custom_level(number, name):
 
 SUCCESS, success = _add_custom_level(29, "success")
 
-coloredlogs.install(
-    fmt="%(message)s",
-    level_styles={
-        "warning": {"color": "yellow"},
-        "success": {"color": "green", "bold": True},
-        "error": {"color": "red", "bold": True},
-        "info": {"color": "blue", "bold": True},
-    },
-    isatty=True if "COLORED_LOGS" in os.environ else None,
-)
+
+def setup_colored_logs(fmt: str = "%(message)s") -> None:
+    coloredlogs.install(
+        fmt=fmt,
+        level_styles={
+            "warning": {"color": "yellow"},
+            "success": {"color": "green", "bold": True},
+            "error": {"color": "red", "bold": True},
+            "info": {"color": "blue", "bold": True},
+        },
+        isatty=True if "COLORED_LOGS" in os.environ else None,
+    )

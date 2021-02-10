@@ -1,6 +1,7 @@
 # vim syntax=config
 
 fullscreen
+fs-screen=0
 
 vo=gpu,drm
 profile=opengl-hq

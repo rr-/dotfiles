@@ -65,6 +65,7 @@ def is_image_too_small(source_path: Path, args: argparse.Namespace) -> bool:
 
 def main() -> None:
     args = parse_args()
+    logging.setup_colored_logs()
 
     for source_dir in find_directories_recursive(SOURCE_ROOT_DIR):
         target_dir = TARGET_ROOT_DIR / source_dir.relative_to(SOURCE_ROOT_DIR)
