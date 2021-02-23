@@ -89,7 +89,7 @@ def main():
     bbox_width = args.width << 1
     bbox_height = args.height << 2
 
-    img = skimage.io.imread(args.path, as_grey=True)
+    img = skimage.io.imread(args.path, as_gray=True)
     width, height = img.shape[1], img.shape[0]
     width, height = fit_inside(
         width * (args.font_aspect_ratio / 0.5),  # 4:2 in Braille characters
