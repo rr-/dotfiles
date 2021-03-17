@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-import importlib
 import os
 import typing as T
 from pathlib import Path
@@ -34,8 +33,9 @@ def install(paths: T.List[Path]) -> None:
     for module_path in paths:
         module_path = REPO_ROOT_DIR / module_path
         os.chdir(module_path)
-        module = importlib.import_module("install")
-        module.run()
+        scope = {}
+        exec((module_path / "install.py").read_text(), scope)
+        scope["run"]()
         os.chdir(original_dir)
 
 
