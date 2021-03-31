@@ -31,10 +31,11 @@ def install(paths: T.List[Path]) -> None:
     """Install given module."""
     original_dir = os.getcwd()
     for module_path in paths:
-        module_path = REPO_ROOT_DIR / module_path
+        module_path = module_path
+        script = (module_path / "install.py").read_text()
         os.chdir(module_path)
         scope = {}
-        exec((module_path / "install.py").read_text(), scope)
+        exec(script, scope)
         scope["run"]()
         os.chdir(original_dir)
 
