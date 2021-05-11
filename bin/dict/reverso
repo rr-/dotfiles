@@ -61,7 +61,12 @@ def _format_html(node: lxml.etree.Element) -> str:
     inner_html = inner_html.replace("<em>", COLOR_HIGHLIGHT).replace(
         "</em>", COLOR_RESET
     )
-    return re.sub("<[^>]*>", "", inner_html).strip()
+    inner_html = re.sub(
+        "&#(\d+);", lambda m: chr(int(m.group(1))), inner_html
+    )
+    inner_html = re.sub("<[^>]*>", "", inner_html)
+    inner_html = inner_html.strip()
+    return inner_html
 
 
 def lookup_context_phrase(
