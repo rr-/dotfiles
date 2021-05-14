@@ -5,6 +5,7 @@ DIR=${SOURCE:h:h:h}
 setopt NO_NOMATCH
 path=(/usr/local/bin $path)             # prefer manually compiled libraries
 path=(~/.local/bin/ $path)              # python!
+path=(~/.local/bin-priv/ $path)         # python!
 path=($DIR/bin/* $path)                 # PATH for all the goodies in this repo
 export PATH                             # export modified var for subprocesses
 
