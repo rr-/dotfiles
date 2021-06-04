@@ -3,7 +3,7 @@
 fullscreen
 fs-screen=0
 
-vo=gpu,drm
+vo=opengl,gpu,drm
 profile=opengl-hq
 stop-screensaver=yes
 image-display-duration=inf
