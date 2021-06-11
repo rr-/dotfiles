@@ -72,11 +72,6 @@ def main():
 
     try:
         # main machine config
-        sync(
-            "lightning:/home/rr-/.tmuxp/",
-            dry_run=args.dry_run,
-            traverse_links=True,
-        )
         sync("lightning:/home/rr-/.local/", dry_run=args.dry_run)
         sync(
             "lightning:/home/rr-/.config/",
