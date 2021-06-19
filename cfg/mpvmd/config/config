@@ -1,9 +1,0 @@
-# vim syntax=config
-
-quiet
-video=no
-idle=yes
-input-default-bindings=no
-input-ipc-server=/tmp/mpvmd.socket
-loop-playlist=yes
-script-opts=random_playback=yes
