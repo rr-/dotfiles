@@ -1,8 +1,0 @@
-#!/bin/bash
-window_id=$1
-window_class=$2
-instance=$3
-
-if xwininfo -wm -id "$window_id" | grep -i splash; then
-    echo border=off
-fi
