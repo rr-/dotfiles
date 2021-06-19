@@ -29,9 +29,8 @@ Every module can be installed with `./install` like this:
 Most things are installed using symbolic links.
 
 The installation scripts also try to install relevant packages using various
-package managers, e.g. `zsh` will try downloading only `zsh`, while `bspwm`
-will download `bspwm-git`, `PyQt4` and other dependencies required for the full
-`bspwm` setup.
+package managers, e.g. `./install cfg/zsh` will try downloading `zsh` with a
+package manager relevant to the current Linux distribution.
 
 #### Caveats
 
