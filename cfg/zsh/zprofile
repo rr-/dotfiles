@@ -13,12 +13,6 @@ export LD_LIBRARY_PATH=/usr/local/lib:/usr/lib:$LD_LIBRARY_PATH
 export INCLUDE_PATH=/usr/local/include:/usr/include:$INCLUDE_PATH
 export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig:/usr/lib/pkgconfig:$PKG_CONFIG_PATH
 
-typeset -T PYTHONPATH pythonpath :      # turn PYTHONPATH into zsh list
-if [ -d $DIR/lib ]; then                # shared libraries for Python scripts
-    pythonpath=($DIR/lib/)
-fi
-export PYTHONPATH                       # export modified var for subprocesses
-
 export TZ='Europe/Warsaw'
 
 # fix gpg not working in ssh…
