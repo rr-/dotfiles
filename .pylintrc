@@ -1,5 +1,6 @@
 [basic]
 good-names=ex,_,logger,i,j,x,y
+extension-pkg-allow-list=lxml
 
 [variables]
 dummy-variables-rgx=_|dummy
