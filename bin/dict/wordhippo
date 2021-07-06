@@ -1,13 +1,15 @@
 #!/usr/bin/env python3
 import argparse
-import shutil
-import typing as T
+import io
 import urllib.request
 from dataclasses import dataclass
 from enum import IntEnum
+from typing import Iterable, TextIO
 from urllib.parse import quote
 
 import lxml.etree
+
+from libdotfiles.text import pager, print_in_columns
 
 COLOR_RESET = "\x1B[0m"
 COLOR_HIGHLIGHT = "\x1B[38;5;%dm\x1B[48;5;%dm" % (223, 58)
@@ -22,9 +24,9 @@ USER_AGENT = (
 )
 
 
-class Mode(IntEnum):
-    synonyms = 1
-    meanings = 2
+class LookupMode(IntEnum):
+    SYNONYMS = 1
+    MEANINGS = 2
 
 
 def parse_args() -> argparse.Namespace:
@@ -32,15 +34,21 @@ def parse_args() -> argparse.Namespace:
         description="Looks up phrases on wordhippo.com"
     )
     parser.add_argument(
-        "-s", action="store_const", dest="mode", const=Mode.synonyms
+        "-s", action="store_const", dest="mode", const=LookupMode.SYNONYMS
     )
     parser.add_argument(
-        "-d", action="store_const", dest="mode", const=Mode.meanings
+        "-d", action="store_const", dest="mode", const=LookupMode.MEANINGS
+    )
+    parser.add_argument(
+        "-N",
+        action="store_false",
+        dest="use_pager",
+        help="disable pager in interactive mode",
     )
     parser.add_argument("phrase", nargs="?")
     ret = parser.parse_args()
     if not getattr(ret, "mode", None):
-        ret.mode = Mode.synonyms
+        ret.mode = LookupMode.SYNONYMS
     return ret
 
 
@@ -48,20 +56,20 @@ def parse_args() -> argparse.Namespace:
 class SynonymGroup:
     word_type: str
     word_desc: str
-    synonyms: T.List[str]
+    synonyms: list[str]
 
 
 @dataclass
 class MeaningGroup:
     word_type: str
-    meanings: T.List[str]
+    meanings: list[str]
 
 
-def get_text(node) -> str:
+def get_text_from_node(node: lxml.etree.Element) -> str:
     return "".join(node.itertext())
 
 
-def download(url: str) -> str:
+def download_to_string(url: str) -> str:
     request = urllib.request.Request(
         url=url, headers={"User-Agent": USER_AGENT}
     )
@@ -69,79 +77,73 @@ def download(url: str) -> str:
         return handle.read().decode()
 
 
-def print_in_columns(items: T.List[str]) -> None:
-    items = [f"- {item} " for item in items]
-    column_size = max((len(item) for item in items), default=5)
-    term_size = shutil.get_terminal_size()
-    columns = term_size.columns // column_size
-    while items:
-        row = ""
-        for _ in range(columns):
-            if not items:
-                break
-            item = items.pop(0)
-            row += f"{item:<{column_size}s}"
-        row = row.rstrip()
-        print(row, end="\n" if len(row) < term_size.columns else "")
-    print()
-
-
-def get_synonyms(phrase: str) -> T.Iterable[SynonymGroup]:
+def get_synonyms(phrase: str) -> Iterable[SynonymGroup]:
     url = SYNONYMS_URL.format(quote(phrase))
-    content = download(url)
+    content = download_to_string(url)
     doc = lxml.etree.HTML(content)
     for word_desc_node in doc.cssselect("div.tabdesc"):
         word_type_node = word_desc_node.getprevious()
         related_word_nodes = word_desc_node.getnext().cssselect("div.wb a")
         yield SynonymGroup(
             word_type=(word_type_node.text or "").strip(),
-            word_desc=get_text(word_desc_node),
-            synonyms=list(map(get_text, related_word_nodes)),
+            word_desc=get_text_from_node(word_desc_node),
+            synonyms=list(map(get_text_from_node, related_word_nodes)),
         )
 
 
-def get_meanings(phrase: str) -> T.Iterable[MeaningGroup]:
+def get_meanings(phrase: str) -> Iterable[MeaningGroup]:
     url = MEANINGS_URL.format(quote(phrase))
-    content = download(url)
+    content = download_to_string(url)
     doc = lxml.etree.HTML(content)
     for word_type_node in doc.cssselect("div.defv2wordtype"):
         meaning_word_nodes = word_type_node.getnext().cssselect(
             ".topleveldefinition li"
         )
         yield MeaningGroup(
-            word_type=get_text(word_type_node),
-            meanings=list(map(get_text, meaning_word_nodes)),
+            word_type=get_text_from_node(word_type_node),
+            meanings=list(map(get_text_from_node, meaning_word_nodes)),
         )
 
 
-def show_synonyms(phrase: str) -> None:
+def show_synonyms(phrase: str, file: TextIO) -> None:
     for synonym_group in get_synonyms(phrase):
         print(
             COLOR_HIGHLIGHT
             + f"{synonym_group.word_type} ({synonym_group.word_desc})"
-            + COLOR_RESET
+            + COLOR_RESET,
+            file=file,
         )
-        print_in_columns(synonym for synonym in synonym_group.synonyms)
+        print_in_columns(
+            (synonym for synonym in synonym_group.synonyms), file=file
+        )
 
 
-def show_meanings(phrase: str) -> None:
+def show_meanings(phrase: str, file: TextIO) -> None:
     for meaning_group in get_meanings(phrase):
-        print(COLOR_HIGHLIGHT + f"{meaning_group.word_type}" + COLOR_RESET)
+        print(
+            COLOR_HIGHLIGHT + f"{meaning_group.word_type}" + COLOR_RESET,
+            file=file,
+        )
         for meaning in meaning_group.meanings:
-            print(f"- {meaning}")
-        print()
+            print(f"- {meaning}", file=file)
+        print(file=file)
 
 
 def main() -> None:
     args = parse_args()
 
     def work(phrase: str) -> None:
-        if args.mode == Mode.synonyms:
-            show_synonyms(phrase)
-        elif args.mode == Mode.meanings:
-            show_meanings(phrase)
-        else:
-            print("unknown mode")
+        with io.StringIO() as file:
+            func = {
+                LookupMode.SYNONYMS: show_synonyms,
+                LookupMode.MEANINGS: show_meanings,
+            }[args.mode]
+            func(phrase, file=file)
+
+            if args.use_pager:
+                pager(file.getvalue())
+            else:
+                print(file.getvalue(), end="")
 
     if args.phrase:
         work(args.phrase)
