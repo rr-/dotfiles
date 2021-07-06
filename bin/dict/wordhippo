@@ -9,6 +9,10 @@ from urllib.parse import quote
 
 import lxml.etree
 
+COLOR_RESET = "\x1B[0m"
+COLOR_HIGHLIGHT = "\x1B[38;5;%dm\x1B[48;5;%dm" % (223, 58)
+COLOR_PROMPT = "\x1B[38;5;%dm\x1B[48;5;%dm" % (194, 64)
+
 SYNONYMS_URL = "https://www.wordhippo.com/what-is/another-word-for/{}.html"
 MEANINGS_URL = (
     "https://www.wordhippo.com/what-is/the-meaning-of-the-word/{}.html"
@@ -33,7 +37,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "-d", action="store_const", dest="mode", const=Mode.meanings
     )
-    parser.add_argument("phrase")
+    parser.add_argument("phrase", nargs="?")
     ret = parser.parse_args()
     if not getattr(ret, "mode", None):
         ret.mode = Mode.synonyms
@@ -112,13 +116,17 @@ def get_meanings(phrase: str) -> T.Iterable[MeaningGroup]:
 
 def show_synonyms(phrase: str) -> None:
     for synonym_group in get_synonyms(phrase):
-        print(f"{synonym_group.word_type} ({synonym_group.word_desc})")
+        print(
+            COLOR_HIGHLIGHT
+            + f"{synonym_group.word_type} ({synonym_group.word_desc})"
+            + COLOR_RESET
+        )
         print_in_columns(synonym for synonym in synonym_group.synonyms)
 
 
 def show_meanings(phrase: str) -> None:
     for meaning_group in get_meanings(phrase):
-        print(f"{meaning_group.word_type}")
+        print(COLOR_HIGHLIGHT + f"{meaning_group.word_type}" + COLOR_RESET)
         for meaning in meaning_group.meanings:
             print(f"- {meaning}")
         print()
@@ -126,12 +134,24 @@ def show_meanings(phrase: str) -> None:
 
 def main() -> None:
     args = parse_args()
-    if args.mode == Mode.synonyms:
-        show_synonyms(args.phrase)
-    elif args.mode == Mode.meanings:
-        show_meanings(args.phrase)
+
+    def work(phrase: str) -> None:
+        if args.mode == Mode.synonyms:
+            show_synonyms(phrase)
+        elif args.mode == Mode.meanings:
+            show_meanings(phrase)
+        else:
+            print("unknown mode")
+
+    if args.phrase:
+        work(args.phrase)
     else:
-        print("unknown mode")
+        while True:
+            try:
+                phrase = input(COLOR_PROMPT + "wordhippo> " + COLOR_RESET)
+            except (EOFError, KeyboardInterrupt):
+                break
+            work(phrase)
 
 
 if __name__ == "__main__":
