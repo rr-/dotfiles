@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import argparse
+import io
 import re
 import typing as T
 import urllib.parse
@@ -7,8 +8,11 @@ import urllib.request
 
 import lxml.etree
 
+from libdotfiles.text import pager
+
 COLOR_RESET = "\x1B[0m"
-COLOR_HIGHLIGHT = "\x1B[38;5;%dm\x1B[48;5;%dm" % (229, 58)
+COLOR_HIGHLIGHT = "\x1B[38;5;%dm\x1B[48;5;%dm" % (223, 58)
+COLOR_PROMPT = "\x1B[38;5;%dm\x1B[48;5;%dm" % (194, 64)
 
 BASE_URL = "http://context.reverso.net/translation/"
 USER_AGENT = (
@@ -39,20 +43,28 @@ def parse_args() -> argparse.Namespace:
         "-n", "--no-conjugations", action="store_false", dest="conjugate"
     )
     parser.add_argument(
+        "-s",
+        "--source-lang",
         metavar="src-lang",
         default="en",
         dest="src_lang",
-        nargs="?",
         choices=LANG_MAP.keys(),
     )
     parser.add_argument(
+        "-d",
+        "--dest-lang",
         metavar="dst-lang",
         default="pl",
         dest="dst_lang",
-        nargs="?",
         choices=LANG_MAP.keys(),
     )
-    parser.add_argument("phrase")
+    parser.add_argument(
+        "-N",
+        action="store_false",
+        dest="use_pager",
+        help="disable pager in interactive mode",
+    )
+    parser.add_argument("phrase", nargs="?")
     return parser.parse_args()
 
 
@@ -61,9 +73,7 @@ def _format_html(node: lxml.etree.Element) -> str:
     inner_html = inner_html.replace("<em>", COLOR_HIGHLIGHT).replace(
         "</em>", COLOR_RESET
     )
-    inner_html = re.sub(
-        "&#(\d+);", lambda m: chr(int(m.group(1))), inner_html
-    )
+    inner_html = re.sub("&#(\d+);", lambda m: chr(int(m.group(1))), inner_html)
     inner_html = re.sub("<[^>]*>", "", inner_html)
     inner_html = inner_html.strip()
     return inner_html
@@ -95,17 +105,34 @@ def lookup_context_phrase(
 def main() -> None:
     args = parse_args()
 
-    results = lookup_context_phrase(
-        LANG_MAP[args.src_lang],
-        LANG_MAP[args.dst_lang],
-        args.conjugate,
-        args.phrase,
-    )
+    def work(phrase: str) -> None:
+        results = lookup_context_phrase(
+            LANG_MAP[args.src_lang],
+            LANG_MAP[args.dst_lang],
+            args.conjugate,
+            phrase,
+        )
 
-    for src, dst in results:
-        print(src)
-        print(dst)
-        print()
+        with io.StringIO() as file:
+            for src, dst in results:
+                print(src, file=file)
+                print(dst, file=file)
+                print(file=file)
+
+            if args.use_pager:
+                pager(file.getvalue())
+            else:
+                print(file.getvalue(), end="")
+
+    if args.phrase:
+        work(args.phrase)
+    else:
+        while True:
+            try:
+                phrase = input(COLOR_PROMPT + "reverso> " + COLOR_RESET)
+            except (EOFError, KeyboardInterrupt):
+                break
+            work(phrase)
 
 
 if __name__ == "__main__":
