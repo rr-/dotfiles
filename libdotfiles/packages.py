@@ -7,12 +7,6 @@ from libdotfiles import util
 
 logger = logging.getLogger(__name__)
 
-PIP_EXECUTABLE = (
-    "pip3"
-    if "cygwin" in sys.platform or util.distro_name() == "linuxmint"
-    else "pip"
-)
-
 
 class PackageInstaller:
     @property
@@ -113,30 +107,33 @@ class PipPackageInstaller(PackageInstaller):
 
     @property
     def is_supported(self) -> bool:
-        return util.has_executable(PIP_EXECUTABLE)
+        return util.has_executable("python3")
 
     def has_installed(self, package: str) -> bool:
         return (
             re.search(
                 "^" + re.escape(package) + r"($|\s)",
-                util.run_silent([PIP_EXECUTABLE, "list"])[1],
+                util.run_silent(["python3", "-m", "pip", "list"])[1],
                 re.MULTILINE,
             )
             is not None
         )
 
     def is_available(self, package: str) -> bool:
-        return (
-            re.search(
-                "^" + re.escape(package) + r"($|\s)",
-                util.run_silent([PIP_EXECUTABLE, "search", package])[1],
-                re.MULTILINE,
-            )
-            is not None
+        import urllib.request
+
+        request = urllib.request.Request(
+            f"https://pypi.org/project/{package}/", method="HEAD"
         )
+        try:
+            urllib.request.urlopen(request)
+        except urllib.request.HTTPError:
+            return False
+        else:
+            return True
 
     def install(self, package: str) -> bool:
-        command = [PIP_EXECUTABLE, "install", "--user", package]
+        command = ["python3", "-m", "pip", "install", "--user", package]
         return util.run_verbose(command)
 
 
