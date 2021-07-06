@@ -5,11 +5,12 @@ def run():
     spell_dir = "~/.config/nvim/spell/"
     if util.distro_name() == "arch":
         packages.try_install("neovim")
-        packages.try_install("neovim", method="pip")
+        packages.try_install("pynvim", method="pip")
     elif util.distro_name() == "linuxmint":
         packages.try_install("neovim")
         packages.try_install("python3-neovim")
     packages.try_install("black", method="pip")
+    packages.try_install("isort", method="pip")
 
     for name in ["undo", "backup", "swap", "spell"]:
         util.create_dir("~/.config/nvim/" + name)
