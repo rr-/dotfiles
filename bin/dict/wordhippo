@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import argparse
 import io
+import readline  # pylint: disable=unused-import
 import urllib.request
 from dataclasses import dataclass
 from enum import IntEnum
