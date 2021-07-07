@@ -2,6 +2,7 @@
 import argparse
 import io
 import re
+import readline  # pylint: disable=unused-import
 import typing as T
 import urllib.parse
 import urllib.request
