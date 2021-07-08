@@ -13,6 +13,7 @@ from libdotfiles.text import pager
 
 COLOR_RESET = "\x1B[0m"
 COLOR_HIGHLIGHT = "\x1B[38;5;%dm\x1B[48;5;%dm" % (223, 58)
+COLOR_ERROR = "\x1B[38;5;%dm\x1B[48;5;%dm" % (196, 52)
 COLOR_PROMPT = "\x1B[38;5;%dm\x1B[48;5;%dm" % (194, 64)
 
 BASE_URL = "http://context.reverso.net/translation/"
@@ -94,31 +95,41 @@ def lookup_context_phrase(
         url=url, headers={"User-Agent": USER_AGENT}
     )
 
-    with urllib.request.urlopen(request) as handle:
-        content = handle.read()
-        doc = lxml.etree.HTML(content)
-        for example_node in doc.cssselect("div.example"):
-            src_node = example_node.cssselect("div.src span.text")[0]
-            dst_node = example_node.cssselect("div.trg span.text")[0]
-            yield (_format_html(src_node), _format_html(dst_node))
+    try:
+        with urllib.request.urlopen(request) as handle:
+            content = handle.read()
+            doc = lxml.etree.HTML(content)
+            for example_node in doc.cssselect("div.example"):
+                src_node = example_node.cssselect("div.src span.text")[0]
+                dst_node = example_node.cssselect("div.trg span.text")[0]
+                yield (_format_html(src_node), _format_html(dst_node))
+    except urllib.error.HTTPError as ex:
+        if ex.code == 404:
+            return
+        raise
 
 
 def main() -> None:
     args = parse_args()
 
     def work(phrase: str) -> None:
-        results = lookup_context_phrase(
-            LANG_MAP[args.src_lang],
-            LANG_MAP[args.dst_lang],
-            args.conjugate,
-            phrase,
+        results = list(
+            lookup_context_phrase(
+                LANG_MAP[args.src_lang],
+                LANG_MAP[args.dst_lang],
+                args.conjugate,
+                phrase,
+            )
         )
 
         with io.StringIO() as file:
-            for src, dst in results:
-                print(src, file=file)
-                print(dst, file=file)
-                print(file=file)
+            if results:
+                for src, dst in results:
+                    print(src, file=file)
+                    print(dst, file=file)
+                    print(file=file)
+            else:
+                print(COLOR_ERROR + "no results" + COLOR_RESET, file=file)
 
             if args.use_pager:
                 pager(file.getvalue())
