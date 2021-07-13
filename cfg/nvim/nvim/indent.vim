@@ -17,20 +17,3 @@ set nosmartindent             "don't add any extra indenation after { (I)
 set nocindent                 "don't add any extra indenation after { (II)
 filetype plugin on            "enable filetype specific stuff
 filetype indent off           "but disable indentation settings
-
-"setup indentation for common file types
-autocmd FileType text     FourSpaces
-autocmd FileType plaintex FourSpaces
-autocmd FileType markdown FourSpaces
-autocmd FileType c        FourSpaces
-autocmd FileType cpp      FourSpaces
-autocmd FileType python   FourSpaces
-autocmd FileType lua      FourSpaces
-autocmd FileType ruby     TwoSpaces
-autocmd FileType vim      TwoSpaces
-autocmd FileType zsh      FourSpaces
-autocmd FileType sh       FourSpaces
-autocmd FileType make     Tabs
-autocmd FileType php      FourSpaces
-autocmd FileType js       FourSpaces
-autocmd FileType css      FourSpaces
