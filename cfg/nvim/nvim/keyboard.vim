@@ -2,11 +2,6 @@
 "- keyboard bindings
 "----------------------------------------
 
-"set the leader key to -
-let mapleader = "-"
-"prevent vinegar from binding to -
-nnoremap - -
-
 "movement over visual lines, not physical lines
 map <buffer> <silent> k gk
 map <buffer> <silent> j gj
@@ -45,17 +40,6 @@ nnoremap gn :tabnew<CR>
 "go to line
 nnoremap <expr> <silent> <CR> v:count ? ":<C-U><Esc>" . v:count . "G" : "<CR>"
 
-"toggle .h .cpp
-function! SwitchSourceHeader()
-  let ext = expand("%:e")
-  if (ext == "cpp" || ext == "c" || ext == "cc")
-    silent! find %:t:r.h | edit %:r.h
-  else
-    silent! find %:t:r.cc | silent! find %:t:r.c | silent! find %:t:r.cpp
-  endif
-endfunction
-nnoremap <F4> :call SwitchSourceHeader()<CR>
-
 "exit terminal mode via escape
 tnoremap <Esc> <C-\><C-n>
 
@@ -80,14 +64,5 @@ cnoremap <C-d> <Del>
 cnoremap <C-k> <C-\>e getcmdpos() == 1 ? '' : getcmdline()[:getcmdpos()-2]<CR>
 cnoremap <M-b> <S-Left>
 cnoremap <M-f> <S-Right>
-
-if has("digraphs")
-  digraph .. 8230 " …
-  digraph xx 215 " ×
-endif
-
-"highlight search inplace
-map <Leader>* :let @/ = '\<'.expand('<cword>').'\>'\|set hlsearch<C-M>
-map <Leader>g* :let @/ = expand('<cword>')\|set hlsearch<C-M>
 
 inoreabbr <expr> ts# strftime("%Y-%m-%d")
