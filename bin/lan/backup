@@ -102,7 +102,11 @@ def main():
         sync("drizzle:/home/rr-/.config/", dry_run=args.dry_run)
 
         # OldCastle
-        sync("oc:/home/rr-/", dry_run=args.dry_run, exclude=["*.pyc"])
+        sync(
+            "oc:/home/rr-/",
+            dry_run=args.dry_run,
+            exclude=["*.pyc", "torrent/data"],
+        )
         sync("oc:/var/log/nginx/", dry_run=args.dry_run, traverse_links=True)
 
     except CalledProcessError:
