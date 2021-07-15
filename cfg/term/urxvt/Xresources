@@ -24,12 +24,13 @@ URxvt.keysym.C-0: perl:font-size:reset
 URxvt.keysym.C-minus: perl:font-size:decrease
 URxvt.keysym.C-equal: perl:font-size:increase
 
-URxvt.perl-ext-common: default,matcher,font-size,keyboard-select,notify
+URxvt.perl-ext-common: default,matcher,font-size,keyboard-select,notify,fullscreen
 
 URxvt.keysym.M-Escape: builtin: ! Unbind M-Escape
 URxvt.keysym.M-s:      builtin: ! Unbind M-s
 URxvt.keysym.M-u:      perl:matcher:list
 URxvt.keysym.M-U:      perl:matcher:last
+URxvt.keysym.M-Return: perl:fullscreen:switch
 URxvt.url-launcher:    xdg-open
 URxvt.matcher.button:  1
 URxvt.matcher.pattern.0: \\b(?:(?:https?|ftp|news|file):\/\/|mailto:)\\w[\\w\-\@;\/?:&=%\$_.+!*\x27(),~#\\[\\]:]+
