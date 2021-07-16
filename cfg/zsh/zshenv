@@ -61,11 +61,6 @@ man() {
     man "$@"
 }
 
-# nice cal output
-cal() {
-    whence ncal && ncal -M3b "$@" || env cal -m3 "$@"
-}
-
 # extend docker capabilities
 docker() {
     case "$1" in

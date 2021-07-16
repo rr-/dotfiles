@@ -1,0 +1,121 @@
+#!/usr/bin/env python3
+import argparse
+import calendar
+import re
+from datetime import date, timedelta
+from itertools import groupby
+
+from holidays import Polish
+
+COLOR_RESET = "\x1B[0m"
+COLOR_TODAY = "\x1B[38;5;%dm\x1B[48;5;%dm" % (232, 39)
+COLOR_WEEKEND = "\x1B[38;5;%dm\x1B[48;5;%dm" % (194, 64)
+
+MONTHS = [
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
+]
+WEEK_DAYS = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"]
+PL_HOLIDAYS = Polish()
+
+
+def strip_ansi(text: str) -> str:
+    return re.sub("\x1B.*?m", "", text)
+
+
+def format_month(year: int, month: int, include_year: bool) -> str:
+    days_line = " ".join(WEEK_DAYS)
+    if include_year:
+        month_line = f"{MONTHS[month - 1]} {year}".center(len(days_line))
+    else:
+        month_line = f"{MONTHS[month - 1]}".center(len(days_line))
+    lines = [month_line, days_line]
+
+    cal = calendar.Calendar()
+    for _, group in groupby(
+        enumerate(cal.itermonthdates(year, month)), key=lambda kv: kv[0] // 7
+    ):
+        line = []
+        for idx, date in group:
+            if date.year == year and date.month == month:
+                if date == date.today():
+                    line.append(COLOR_TODAY + f"{date.day:2d}" + COLOR_RESET)
+                elif date.weekday() in {5, 6} or date in PL_HOLIDAYS:
+                    line.append(COLOR_WEEKEND + f"{date.day:2d}" + COLOR_RESET)
+                else:
+                    line.append(f"{date.day:2d}")
+            else:
+                line.append("  ")
+        lines.append(" ".join(line))
+
+    return "\n".join(lines)
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-y", "--year", action="store_true")
+    parser.add_argument("-3", dest="three", action="store_true")
+    return parser.parse_args()
+
+
+def merge_linewise(source: list[str]):
+    result = []
+    sources = [item.splitlines() for item in source]
+    max_sources_lines = max(map(len, sources))
+    for source in sources:
+        max_source_columns = max(len(strip_ansi(item)) for item in source)
+        while len(source) < max_sources_lines:
+            source.append(" " * max_source_columns)
+    for lines in zip(*sources):
+        result.append("   ".join(lines))
+    return "\n".join(result)
+
+
+def main() -> None:
+    args = parse_args()
+    today = date.today()
+
+    if args.year:
+        groups = []
+        for _, month_range in groupby(range(12), key=lambda num: num // 3):
+            groups.append(
+                merge_linewise(
+                    [
+                        format_month(today.year, month + 1, include_year=False)
+                        for month in month_range
+                    ]
+                )
+            )
+        lines = "\n\n".join(groups).splitlines()
+        max_columns = max(len(strip_ansi(item)) for item in lines)
+        print(f"{today.year}".center(max_columns))
+        print("\n".join(lines))
+    elif args.three:
+        left = date(today.year, today.month, 1) - timedelta(days=15)
+        right = date(today.year, today.month, 1) + timedelta(days=35)
+
+        print(
+            merge_linewise(
+                [
+                    format_month(left.year, left.month, include_year=True),
+                    format_month(today.year, today.month, include_year=True),
+                    format_month(right.year, right.month, include_year=True),
+                ]
+            )
+        )
+    else:
+        print(format_month(today.year, today.month, include_year=True))
+
+
+if __name__ == "__main__":
+    main()
