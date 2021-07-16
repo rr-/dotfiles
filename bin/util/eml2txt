@@ -46,23 +46,23 @@ def get_body_text(parsed):
 def main():
     args = parse_args()
 
+    parser = eml_parser.EmlParser(
+        include_raw_body=True, include_attachment_data=True
+    )
+
     for i, path in enumerate(args.paths):
         if i > 0:
             print("-" * 79)
             print()
 
         raw_email = path.read_bytes()
-        message = email.message_from_bytes(raw_email)
-        parsed = eml_parser.eml_parser.parse_email(
-            message, include_raw_body=True, include_attachment_data=True
-        )
-        text = get_body_text(parsed)
+        message = parser.decode_email_bytes(raw_email)
 
-        print("From:    " + parsed["header"]["from"])
-        print("To:      " + ", ".join(parsed["header"]["to"]))
-        print("Subject: " + parsed["header"]["subject"])
+        print("From:    " + message["header"]["from"])
+        print("To:      " + ", ".join(message["header"]["to"]))
+        print("Subject: " + message["header"]["subject"])
         print()
-        print(text)
+        print(get_body_text(message))
 
 
 if __name__ == "__main__":
