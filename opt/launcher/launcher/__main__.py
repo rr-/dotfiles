@@ -19,7 +19,7 @@ def main():
         pattern, command = line.split("::")
         pattern = pattern.strip()
         command = command.strip()
-        if re.match(pattern, args.file, re.I):
+        if re.fullmatch(pattern, args.file, flags=re.I):
             parameters = shlex.split(command)
             parameters = [args.file if p == "{}" else p for p in parameters]
             if "{}" not in parameters:
