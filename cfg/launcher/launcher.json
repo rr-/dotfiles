@@ -6,5 +6,5 @@ about:blank                                                         :: browser
 .*\.(odt|doc|docx|xls|xlsx|odp|pptx)                                :: libreoffice
 .*\.pdf                                                             :: evince
 .*\.html?                                                           :: browser
-.*\.torrent                                                         :: qbittorrent
-magnet:                                                             :: qbittorrent
+.*\.torrent                                                         :: transgui
+magnet:                                                             :: transgui
