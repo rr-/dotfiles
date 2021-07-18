@@ -1,6 +1,5 @@
 .*\.(wav|mp3|flac|ogg|m4a|wma|ape|ac3|opus)                         :: mpv
 .*\.(avi|mp4|wmv|dat|3gp|ogv|mkv|mpg|vob|flv|m2v|mov|m2ts|ts|m4v)   :: mpv
-https?://(www\.)?youtube                                            :: mpv
 about:blank                                                         :: browser
 (https?|file)://.*                                                  :: browser
 .*\.(jpg|jpeg|gif|png|bmp|webm)                                     :: mpi
