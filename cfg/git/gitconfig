@@ -1,7 +1,3 @@
-[user]
-    name = rr-
-    email = rr-@sakuya.pl
-    signingkey = DEA244FD0BE4151466C73583CC65E6FD28CAE42A
 [github]
     user = rr-
 [branch]
@@ -88,3 +84,17 @@
     ff = only
 [gpg]
     program = gpg
+[includeIf "gitdir:*/oc/"]
+    path = ~/.config/git/config-priv
+[includeIf "gitdir:~/src/priv/"]
+    path = ~/.config/git/config-priv
+[includeIf "gitdir:~/src/dotfiles/"]
+    path = ~/.config/git/config-priv
+[includeIf "gitdir:~/src/dotfiles-priv/"]
+    path = ~/.config/git/config-priv
+[includeIf "gitdir:~/src/work/moto/"]
+    path = ~/.config/git/config-moto
+[includeIf "gitdir:~/src/work/invoices/"]
+    path = ~/.config/git/config-priv
+[includeIf "gitdir:~/src/work/festicket/"]
+    path = ~/.config/git/config-priv
