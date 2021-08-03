@@ -4,7 +4,7 @@ about:blank                                                         :: browser
 (https?|file)://.*                                                  :: browser
 .*\.(jpg|jpeg|gif|png|bmp|webm)                                     :: mpi
 .*\.(odt|doc|docx|xls|xlsx|odp|pptx)                                :: libreoffice
-.*\.pdf                                                             :: evince
+.*\.pdf                                                             :: browser
 .*\.html?                                                           :: browser
 .*\.torrent                                                         :: transgui
 magnet:                                                             :: transgui
