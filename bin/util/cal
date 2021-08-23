@@ -4,6 +4,7 @@ import calendar
 import re
 from datetime import date, timedelta
 from itertools import groupby
+from typing import Any, Optional
 
 from holidays import Polish
 
@@ -66,18 +67,31 @@ def format_month(
     ):
         line = []
         for _idx, day in group:
-            if day.year == year and day.month == month:
-                if day == date.today():
-                    line.append(COLOR_TODAY + f"{day.day:2d}" + COLOR_RESET)
-                elif day.weekday() in {5, 6} or day in PL_HOLIDAYS:
-                    line.append(COLOR_WEEKEND + f"{day.day:2d}" + COLOR_RESET)
-                else:
-                    line.append(f"{day.day:2d}")
-            else:
+            if day.year != year or day.month != month:
                 line.append("  ")
+            elif day == date.today():
+                line.append(COLOR_TODAY + f"{day.day:2d}" + COLOR_RESET)
+            elif day.weekday() in {5, 6} or day in PL_HOLIDAYS:
+                line.append(COLOR_WEEKEND + f"{day.day:2d}" + COLOR_RESET)
+            else:
+                line.append(f"{day.day:2d}")
         lines.append(" ".join(line))
 
     return "\n".join(lines)
+
+
+def year_and_month(source: str) -> tuple[int, Optional[int]]:
+    match = re.match(r"^(?P<year>\d{4})(-(?P<month>\d{2}))?$", source)
+    if not match:
+        raise ValueError("expected year or year-month")
+    return (
+        int(match.group("year")),
+        int(match.group("month")) if match.group("month") else None,
+    )
+
+
+# for better argparse error messages
+year_and_month.__name__ = "date"
 
 
 def parse_args() -> argparse.Namespace:
@@ -87,10 +101,11 @@ def parse_args() -> argparse.Namespace:
         "--year",
         help="display calendar for the entire year",
         action="store_true",
+        dest="display_year",
     )
     parser.add_argument(
         "-3",
-        dest="three",
+        dest="display_three",
         help="display calendar for the previous and next month as well",
         action="store_true",
     )
@@ -100,7 +115,23 @@ def parse_args() -> argparse.Namespace:
         help="show week day count",
         action="store_true",
     )
-    return parser.parse_args()
+    parser.add_argument(
+        "date",
+        type=year_and_month,
+        help="year and optional month to display",
+        nargs="?",
+    )
+    args = parser.parse_args()
+    if args.date:
+        args.year, args.month = args.date
+    else:
+        today = date.today()
+        args.year = today.year
+        args.month = today.month
+    if args.year and not args.month:
+        args.display_year = True
+
+    return args
 
 
 def merge_linewise(sources: list[str]) -> str:
@@ -116,67 +147,58 @@ def merge_linewise(sources: list[str]) -> str:
     return "\n".join(result)
 
 
-def main() -> None:
-    args = parse_args()
-    today = date.today()
-
-    if args.year:
-        groups = []
-        for _, month_range in groupby(range(12), key=lambda num: num // 3):
-            groups.append(
-                merge_linewise(
-                    [
-                        format_month(
-                            today.year,
-                            month + 1,
-                            include_year=False,
-                            count_weekdays=args.count_weekdays,
-                        )
-                        for month in month_range
-                    ]
-                )
-            )
-        lines = "\n\n".join(groups).splitlines()
-        max_columns = max(len(strip_ansi(item)) for item in lines)
-        print(f"{today.year}".center(max_columns))
-        print("\n".join(lines))
-    elif args.three:
-        left = date(today.year, today.month, 1) - timedelta(days=15)
-        right = date(today.year, today.month, 1) + timedelta(days=35)
-
-        print(
+def display_year(year: int, **kwargs: Any) -> None:
+    groups = []
+    for _, month_range in groupby(range(12), key=lambda num: num // 3):
+        groups.append(
             merge_linewise(
                 [
-                    format_month(
-                        left.year,
-                        left.month,
-                        include_year=True,
-                        count_weekdays=args.count_weekdays,
-                    ),
-                    format_month(
-                        today.year,
-                        today.month,
-                        include_year=True,
-                        count_weekdays=args.count_weekdays,
-                    ),
-                    format_month(
-                        right.year,
-                        right.month,
-                        include_year=True,
-                        count_weekdays=args.count_weekdays,
-                    ),
+                    format_month(year, month + 1, include_year=False, **kwargs)
+                    for month in month_range
                 ]
             )
         )
-    else:
-        print(
-            format_month(
-                today.year,
-                today.month,
-                include_year=True,
-                count_weekdays=args.count_weekdays,
-            )
+    lines = "\n\n".join(groups).splitlines()
+    max_columns = max(len(strip_ansi(item)) for item in lines)
+    print(f"{year}".center(max_columns))
+    print("\n".join(lines))
+
+
+def display_three_months(year: int, month: int, **kwargs: Any) -> None:
+    left = date(year, month, 1) - timedelta(days=15)
+    right = date(year, month, 1) + timedelta(days=35)
+
+    print(
+        merge_linewise(
+            [
+                format_month(
+                    left.year, left.month, include_year=True, **kwargs
+                ),
+                format_month(year, month, include_year=True, **kwargs),
+                format_month(
+                    right.year, right.month, include_year=True, **kwargs
+                ),
+            ]
         )
+    )
+
+
+def display_single_month(year: int, month: int, **kwargs: Any) -> None:
+    print(format_month(year, month, include_year=True, **kwargs))
+
+
+def main() -> None:
+    args = parse_args()
+
+    kwargs = dict(
+        count_weekdays=args.count_weekdays,
+    )
+    if args.display_year:
+        display_year(args.year, **kwargs)
+    elif args.display_three:
+        display_three_months(args.year, args.month, **kwargs)
+    else:
+        display_single_month(args.year, args.month, **kwargs)
 
 
 if __name__ == "__main__":
