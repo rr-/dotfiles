@@ -55,20 +55,30 @@ def parse_args() -> configargparse.Namespace:
         help="open up interactive editor",
     )
     parser.add(metavar="POST_PATH", dest="path", help="path to the post")
+    parser.add("-n", "--no-prompt", dest="prompt", action="store_false")
     return parser.parse_args()
 
 
-async def confirm_similar_posts(plugin: PluginBase, content: bytes) -> None:
+async def confirm_similar_posts(
+    plugin: PluginBase, content: bytes, prompt: bool
+) -> bool:
     similar_posts = await plugin.find_similar_posts(content)
     if not similar_posts:
-        return
+        return True
     print("Similar posts found:")
     for similarity, post in similar_posts:
         print(
             "%.02f: %s (%dx%d)"
             % (similarity, post.site_url, post.width, post.height)
         )
-    await aioconsole.ainput("Hit enter to continue, ^C to abort\n")
+    if not prompt:
+        print("Prompting disabled, aborting")
+        return False
+    try:
+        await aioconsole.ainput("Hit enter to continue, ^C to abort\n")
+    except KeyboardInterrupt:
+        return False
+    return True
 
 
 async def run(args: configargparse.Namespace) -> int:
@@ -95,7 +105,10 @@ async def run(args: configargparse.Namespace) -> int:
         print("Searching for duplicates...")
         post = await plugin.find_exact_post(content)
         if not post:
-            await confirm_similar_posts(plugin, content)
+            if not await confirm_similar_posts(
+                plugin, content, prompt=args.prompt
+            ):
+                return 1
 
         print("Gathering tags...")
         if post:
