@@ -24,6 +24,7 @@ alias enpl='tl en pl'
 alias enja='tl en ja'
 alias jaen='tl ja en'
 alias reverso='python3 -m dict -e reverso'
+alias urban='python3 -m dict -e urban'
 alias pyup='pip install --user --upgrade --no-deps .'
 
 alias dl-gelbooru='dl-booru --config=~/.config/dl-gelbooru.conf'
