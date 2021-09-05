@@ -28,6 +28,7 @@ alias urban='python3 -m dict -e urban'
 alias sjp='python3 -m dict -e sjp'
 alias jisho='python3 -m dict -e jisho'
 alias wordhippo='python3 -m dict -e wordhippo'
+alias edict='python3 -m dict -e edict'
 alias pyup='pip install --user --upgrade --no-deps .'
 
 alias dl-gelbooru='dl-booru --config=~/.config/dl-gelbooru.conf'
