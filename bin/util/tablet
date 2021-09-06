@@ -1,5 +1,0 @@
-#!/bin/sh
-# Configures tablet on the main PC
-
-xsetwacom set 'Wacom BambooFun 4x5 Pen stylus' MapToOutput '1920x1080+0+0'
-xsetwacom set 'Wacom BambooFun 4x5 Pen stylus' Threshold 5
