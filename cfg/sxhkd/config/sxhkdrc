@@ -10,10 +10,6 @@ super + {r, d}
 super + n
     kb
 
-# lock screen
-alt + ctrl + shift + l
-    i3lock -c 000000
-
 # focus or spawn local tmux
 alt + ctrl + bracketleft
     xdotool search --classname local_terminal windowactivate; \
@@ -50,28 +46,6 @@ super + {x,X}
     dir={+,-}; \
     amixer -D pulse set Master 1%$dir unmute
 
-# previous and next track
-super + {c,C}
-    CMD={nextfile,prevfile}; \
-    mpvmc $CMD
-
-# toggle play
-super + v
-    mpvmc toggle
-
-# copy current song title to clipboard
-super + V
-    zsh -ilc 'mpvmc info --short|clip'
-
-# toggle random
-super + b
-    mpvmc random toggle
-
-# seek backward and forward
-super + {less,greater}
-    NUM={-,+}10; \
-    mpvmc seek "$NUM"
-
 
 
 #
@@ -98,11 +72,6 @@ super + shift + {1-4}
 super + {1-4}
     wmctrl -s {0-3}
 
-# focus window in given direction
-super + {h,j,k,l}
-    DIR={west,south,north,east}; \
-    bspc node -f $DIR || ( bspc monitor -f $DIR; bspc node -f @/1.floating )
-
 # maximize the window
 super + Up
     wmctrl -r :ACTIVE: -b add,maximized_horz; \
@@ -120,11 +89,6 @@ super + f
 # reload sxhkd configuration
 alt + F12
     killall -SIGUSR1 sxhkd
-
-alt + shift + F12
-    bash -c '~/.config/bspwm/bspwmrc'; \
-    bash -c '~/.config/x/start-panel.sh'; \
-    if pgrep browser; then browser :config-source; fi
 
 # screenshots
 # window
