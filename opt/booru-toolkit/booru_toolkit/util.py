@@ -1,6 +1,6 @@
-import re
 import asyncio
 import functools
+import re
 from collections import OrderedDict
 from typing import Any, Dict
 

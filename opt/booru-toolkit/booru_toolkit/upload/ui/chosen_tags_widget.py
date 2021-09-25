@@ -1,10 +1,12 @@
 import asyncio
-from typing import Optional, Tuple, List
+from typing import List, Optional, Tuple
+
 import urwid
+
 from booru_toolkit.plugin import PluginBase
 from booru_toolkit.upload import common
-from booru_toolkit.upload.ui.vim_list_box import VimListBox
 from booru_toolkit.upload.ui.ellipsis_text_layout import EllipsisTextLayout
+from booru_toolkit.upload.ui.vim_list_box import VimListBox
 
 
 class ChosenTagsListBox(VimListBox):

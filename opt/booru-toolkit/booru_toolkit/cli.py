@@ -1,6 +1,8 @@
 from getpass import getpass
 from typing import Any, List
+
 import configargparse
+
 from booru_toolkit.plugin.base import PluginBase
 
 

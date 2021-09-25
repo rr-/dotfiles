@@ -1,6 +1,7 @@
 from enum import Enum
 from pathlib import Path
-from typing import Optional, List, Callable
+from typing import Callable, List, Optional
+
 from booru_toolkit import errors
 from booru_toolkit.plugin import Safety
 

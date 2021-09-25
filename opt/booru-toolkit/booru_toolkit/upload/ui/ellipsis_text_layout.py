@@ -1,6 +1,6 @@
 from typing import Any
-import urwid
 
+import urwid
 
 ELLIPSIS = "..."
 
