@@ -1,6 +1,7 @@
 import asyncio
 import concurrent.futures
 import sys
+from asyncio.exceptions import CancelledError
 from pathlib import Path
 from typing import Optional
 
@@ -72,7 +73,7 @@ async def confirm_similar_posts(
         return False
     try:
         await aioconsole.ainput("Hit enter to continue, ^C to abort\n")
-    except KeyboardInterrupt:
+    except (KeyboardInterrupt, CancelledError):
         return False
     return True
 
@@ -162,15 +163,13 @@ def main() -> int:
     args = parse_args()
     loop = asyncio.get_event_loop()
     try:
-        try:
-            task = loop.create_task(run(args))
-            exit_code = loop.run_until_complete(task)
-        except KeyboardInterrupt:
-            task.cancel()
-            loop.run_until_complete(task)
-    except concurrent.futures.CancelledError:
+        task = loop.create_task(run(args))
+        exit_code = loop.run_until_complete(task)
+    except (KeyboardInterrupt, CancelledError):
         print("Aborted.")
+        task.cancel()
         exit_code = 1
+        loop.run_until_complete(task)
     finally:
         loop.close()
     sys.exit(exit_code)
