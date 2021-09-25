@@ -2,6 +2,7 @@ import asyncio
 import contextlib
 import os
 import sys
+from asyncio.exceptions import CancelledError
 from pathlib import Path
 from typing import Generator, Optional
 
@@ -260,7 +261,7 @@ def main() -> None:
             sleep,
         )
         loop.run_until_complete(downloader.run(query, limit))
-    except KeyboardInterrupt:
+    except (KeyboardInterrupt, CancelledError):
         print("Aborted.")
     except errors.ApiError as ex:
         print("Error: %s" % str(ex), file=sys.stderr)
