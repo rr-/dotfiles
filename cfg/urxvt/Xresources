@@ -33,7 +33,7 @@ URxvt.keysym.M-U:      perl:matcher:last
 URxvt.keysym.M-Return: perl:fullscreen:switch
 URxvt.url-launcher:    xdg-open
 URxvt.matcher.button:  1
-URxvt.matcher.pattern.0: \\b(?:(?:https?|ftp|news|file):\/\/|mailto:)\\w[\\w\-\@;\/?:&=%\$_.+!*\x27(),~#\\[\\]:]+
+URxvt.matcher.pattern.0: \\b(?:(?:https?|ftp|news):\/\/|mailto:)\\w[\\w\-\@;\/?:&=%\$_.+!*\x27(),~#\\[\\]:]+|file:\/\/\\S+
 
 URxvt.cursorBlink: 1
 
