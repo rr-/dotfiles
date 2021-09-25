@@ -3,7 +3,7 @@ import typing as T
 import urllib.parse
 import xml.dom.minidom
 from tempfile import TemporaryFile
-from typing import AsyncIterable, Dict, List, Optional, Tuple
+from typing import AsyncIterable, Optional
 
 import requests
 from bs4 import BeautifulSoup
@@ -41,7 +41,7 @@ class PluginGelbooru(PluginBase):
 
     async def find_similar_posts(
         self, content: bytes
-    ) -> List[Tuple[float, Post]]:
+    ) -> list[tuple[float, Post]]:
         return []
 
     async def find_posts(self, query: str) -> AsyncIterable[Post]:
@@ -130,7 +130,7 @@ class PluginGelbooru(PluginBase):
         content: bytes,
         source: Optional[str],
         safety: Safety,
-        tags: List[str],
+        tags: list[str],
         anonymous: bool,
     ) -> Optional[Post]:
         if not tags:
@@ -172,7 +172,7 @@ class PluginGelbooru(PluginBase):
                 raise errors.ApiError("Unknown response from the server")
 
     async def update_post(
-        self, post_id: int, safety: Safety, tags: List[str]
+        self, post_id: int, safety: Safety, tags: list[str]
     ) -> None:
         raise NotImplementedError("Not supported")
 
@@ -223,8 +223,8 @@ class PluginGelbooru(PluginBase):
     async def _post(
         self,
         url: str,
-        data: Optional[Dict] = None,
-        files: Optional[Dict] = None,
+        data: Optional[dict] = None,
+        files: Optional[dict] = None,
     ) -> str:
         return _process_response(
             await asyncio.get_event_loop().run_in_executor(

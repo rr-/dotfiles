@@ -3,7 +3,7 @@ import contextlib
 import os
 import sys
 from pathlib import Path
-from typing import Dict, Generator, List, Optional
+from typing import Generator, Optional
 
 import configargparse
 
@@ -16,14 +16,14 @@ from booru_toolkit.plugin import (
     Post,
 )
 
-PLUGINS: List[PluginBase] = [PluginGelbooru(), PluginPixiv(), PluginYume()]
+PLUGINS: list[PluginBase] = [PluginGelbooru(), PluginPixiv(), PluginYume()]
 
 
 class DownloadHistory:
     def __init__(self, path: Path) -> None:
         self._path = path
-        self._downloaded_urls: Dict[str, bool] = {}
-        self._buffered_urls: List[str] = []
+        self._downloaded_urls: dict[str, bool] = {}
+        self._buffered_urls: list[str] = []
         if self._path.exists():
             for line in self._path.open("r"):
                 self._downloaded_urls[line.strip()] = True

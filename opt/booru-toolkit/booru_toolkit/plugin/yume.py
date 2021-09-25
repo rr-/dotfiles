@@ -2,7 +2,7 @@ import asyncio
 import json
 import urllib.parse
 from tempfile import TemporaryFile
-from typing import Any, AsyncIterable, Dict, List, Optional, Tuple
+from typing import Any, AsyncIterable, Optional
 
 import requests
 
@@ -19,7 +19,7 @@ _SAFETY_MAP = bidict(
         Safety.Explicit: "unsafe",
     }
 )
-_version_cache: Dict[int, int] = {}
+_version_cache: dict[int, int] = {}
 
 
 def _result_to_post(result: Json) -> Post:
@@ -67,7 +67,7 @@ class PluginYume(PluginBase):
 
     async def find_similar_posts(
         self, content: bytes
-    ) -> List[Tuple[float, Post]]:
+    ) -> list[tuple[float, Post]]:
         result = await self._get_similar_posts(content)
         return [
             (item["distance"], _result_to_post(item["post"]))
@@ -113,7 +113,7 @@ class PluginYume(PluginBase):
         content: bytes,
         source: Optional[str],
         safety: Safety,
-        tags: List[str],
+        tags: list[str],
         anonymous: bool,
     ) -> Optional[Post]:
         with TemporaryFile() as handle:
@@ -136,7 +136,7 @@ class PluginYume(PluginBase):
             return _result_to_post(result)
 
     async def update_post(
-        self, post_id: int, safety: Safety, tags: List[str]
+        self, post_id: int, safety: Safety, tags: list[str]
     ) -> None:
         response = await self._put(
             "/post/{}".format(post_id),
@@ -198,8 +198,8 @@ class PluginYume(PluginBase):
     async def _put(
         self,
         url: str,
-        data: Optional[Dict] = None,
-        files: Optional[Dict] = None,
+        data: Optional[dict] = None,
+        files: Optional[dict] = None,
     ) -> Json:
         return _process_response(
             await asyncio.get_event_loop().run_in_executor(
@@ -219,9 +219,9 @@ class PluginYume(PluginBase):
     async def _post(
         self,
         url: str,
-        data: Optional[Dict] = None,
-        files: Optional[Dict] = None,
-    ) -> Dict:
+        data: Optional[dict] = None,
+        files: Optional[dict] = None,
+    ) -> dict:
         return _process_response(
             await asyncio.get_event_loop().run_in_executor(
                 None,

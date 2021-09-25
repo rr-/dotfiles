@@ -1,5 +1,5 @@
 import asyncio
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any, Callable, Optional
 
 import urwid
 from urwid_readline import ReadlineEdit
@@ -24,7 +24,7 @@ class FuzzyInput(urwid.ListBox):
         self._is_tag_used = is_tag_used
 
         self._focus = -1
-        self._matches: List[Tuple[str, int]] = []
+        self._matches: list[tuple[str, int]] = []
 
         self._update_id = 0
         self._update_alarm = None
@@ -39,8 +39,8 @@ class FuzzyInput(urwid.ListBox):
     def selectable(self) -> bool:
         return True
 
-    def keypress(self, size: Tuple[int, int], key: str) -> Optional[str]:
-        keymap: Dict[str, Callable[[Tuple[int, int]], None]] = {
+    def keypress(self, size: tuple[int, int], key: str) -> Optional[str]:
+        keymap: dict[str, Callable[[tuple[int, int]], None]] = {
             "enter": self._accept,
             "tab": self._select_prev,
             "shift tab": self._select_next,
@@ -50,7 +50,7 @@ class FuzzyInput(urwid.ListBox):
             return None
         return self._input_box.keypress((size[0],), key)
 
-    def _accept(self, _size: Tuple[int, int]) -> None:
+    def _accept(self, _size: tuple[int, int]) -> None:
         text = self._input_box.text.strip()
         if not text:
             return
@@ -61,13 +61,13 @@ class FuzzyInput(urwid.ListBox):
         urwid.signals.emit_signal(self, "accept", self, text)
         self._invalidate()
 
-    def _select_next(self, _size: Tuple[int, int]) -> None:
+    def _select_next(self, _size: tuple[int, int]) -> None:
         if self._focus > 0:
             self._focus -= 1
             self._on_results_focus_change()
             self._update_widgets()
 
-    def _select_prev(self, size: Tuple[int, int]) -> None:
+    def _select_prev(self, size: tuple[int, int]) -> None:
         if self._focus + 1 < min(len(self._matches), size[1] - 1):
             self._focus += 1
             self._on_results_focus_change()
@@ -114,7 +114,7 @@ class FuzzyInput(urwid.ListBox):
         self._update_widgets()
 
     def _update_widgets(self) -> None:
-        new_list: List[urwid.Widget] = [self._input_box]
+        new_list: list[urwid.Widget] = [self._input_box]
         for i, (tag_name, tag_usage_count) in enumerate(self._matches):
             attr_name = "match"
             if self._is_tag_used(tag_name):

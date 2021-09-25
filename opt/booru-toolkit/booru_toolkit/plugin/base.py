@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import AsyncIterable, List, Optional, Tuple
+from typing import AsyncIterable, Optional
 
 from booru_toolkit.plugin.tag_cache import TagCache
 
@@ -15,7 +15,7 @@ class Post:
         self,
         post_id: int,
         safety: Safety,
-        tags: List[str],
+        tags: list[str],
         site_url: str,
         content_url: str,
         width: int,
@@ -53,7 +53,7 @@ class PluginBase:
 
     async def find_similar_posts(
         self, content: bytes
-    ) -> List[Tuple[float, Post]]:
+    ) -> list[tuple[float, Post]]:
         raise NotImplementedError("Not implemented")
 
     async def find_posts(self, query: str) -> AsyncIterable[Post]:
@@ -67,17 +67,17 @@ class PluginBase:
         content: bytes,
         source: Optional[str],
         safety: Safety,
-        tags: List[str],
+        tags: list[str],
         anonymous: bool,
     ) -> Optional[Post]:
         raise NotImplementedError("Not implemented")
 
     async def update_post(
-        self, post_id: int, safety: Safety, tags: List[str]
+        self, post_id: int, safety: Safety, tags: list[str]
     ) -> None:
         raise NotImplementedError("Not implemented")
 
-    async def find_tags(self, query: str) -> List[str]:
+    async def find_tags(self, query: str) -> list[str]:
         await self._update_tag_cache()
         return await self._tag_cache.find_tags(query)
 
