@@ -1,7 +1,7 @@
 import asyncio
 import json
 import re
-from typing import AsyncIterable, Dict, List, Optional, Tuple
+from typing import AsyncIterable, Optional
 
 import requests
 
@@ -9,7 +9,7 @@ from booru_toolkit import errors, util
 from booru_toolkit.plugin.base import PluginBase, Post, Safety
 
 
-def _process_response(response: requests.Response) -> Dict:
+def _process_response(response: requests.Response) -> dict:
     response.raise_for_status()
     ret = json.loads(response.content)
     if "status" in ret and ret["status"] != "success":
@@ -48,7 +48,7 @@ class PluginPixiv(PluginBase):
 
     async def find_similar_posts(
         self, content: bytes
-    ) -> List[Tuple[float, Post]]:
+    ) -> list[tuple[float, Post]]:
         return []
 
     async def find_posts(self, query: str) -> AsyncIterable[Post]:
@@ -57,7 +57,7 @@ class PluginPixiv(PluginBase):
         if match:
             artist_id = int(match.group("artist_id"))
 
-            async def page_getter(page: int, page_size: int) -> Dict:
+            async def page_getter(page: int, page_size: int) -> dict:
                 return await self._get(
                     "/v1/users/{}/works.json".format(artist_id),
                     params={
@@ -72,7 +72,7 @@ class PluginPixiv(PluginBase):
 
         else:
 
-            async def page_getter(page: int, page_size: int) -> Dict:
+            async def page_getter(page: int, page_size: int) -> dict:
                 return await self._get(
                     "/v1/search/works.json",
                     params={
@@ -127,7 +127,7 @@ class PluginPixiv(PluginBase):
         content: bytes,
         source: Optional[str],
         safety: Safety,
-        tags: List[str],
+        tags: list[str],
         anonymous: bool,
     ) -> Optional[Post]:
         raise NotImplementedError("Not implemented")
@@ -136,11 +136,11 @@ class PluginPixiv(PluginBase):
         pass
 
     async def update_post(
-        self, post_id: int, safety: Safety, tags: List[str]
+        self, post_id: int, safety: Safety, tags: list[str]
     ) -> None:
         raise NotImplementedError("Not implemented")
 
-    async def _get(self, url: str, params: Dict) -> Dict:
+    async def _get(self, url: str, params: dict) -> dict:
         return _process_response(
             await asyncio.get_event_loop().run_in_executor(
                 None,

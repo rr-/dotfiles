@@ -1,4 +1,4 @@
-from typing import Any, Optional, Tuple
+from typing import Any, Optional
 
 import urwid
 
@@ -13,7 +13,7 @@ class VimListBox(urwid.ListBox):
     def selectable(self) -> bool:
         return True
 
-    def keypress(self, _size: Tuple[int, int], key: str) -> Optional[str]:
+    def keypress(self, _size: tuple[int, int], key: str) -> Optional[str]:
         keymap = {
             "j": self._select_prev,
             "k": self._select_next,

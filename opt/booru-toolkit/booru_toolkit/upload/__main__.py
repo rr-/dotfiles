@@ -2,15 +2,16 @@ import asyncio
 import concurrent.futures
 import sys
 from pathlib import Path
-from typing import List, Optional
+from typing import Optional
 
 import aioconsole
 import configargparse
+
 from booru_toolkit import cli, errors
 from booru_toolkit.plugin import PluginBase, PluginGelbooru, PluginYume, Safety
 from booru_toolkit.upload import common, ui
 
-PLUGINS: List[PluginBase] = [PluginGelbooru(), PluginYume()]
+PLUGINS: list[PluginBase] = [PluginGelbooru(), PluginYume()]
 SAFETY_MAP = {
     "safe": Safety.Safe,
     "sketchy": Safety.Questionable,

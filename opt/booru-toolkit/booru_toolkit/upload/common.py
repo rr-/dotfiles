@@ -1,6 +1,6 @@
 from enum import Enum
 from pathlib import Path
-from typing import Callable, List, Optional
+from typing import Callable, Optional
 
 from booru_toolkit import errors
 from booru_toolkit.plugin import Safety
@@ -28,10 +28,10 @@ class Tag:
 
 class TagList:
     def __init__(self) -> None:
-        self._tags: List[Tag] = []
-        self.on_update: List[Callable[[], None]] = []
+        self._tags: list[Tag] = []
+        self.on_update: list[Callable[[], None]] = []
 
-    def get_all(self) -> List[Tag]:
+    def get_all(self) -> list[Tag]:
         return sorted(self._tags, key=lambda tag: tag.name)
 
     def contains(self, name: str) -> bool:
@@ -62,7 +62,7 @@ class UploadSettings:
         path: Path,
         safety: Safety,
         source: Optional[str],
-        tags: List[str],
+        tags: list[str],
         anonymous: bool,
     ) -> None:
         self.path = path
@@ -74,7 +74,7 @@ class UploadSettings:
         self.anonymous = anonymous
 
     @property
-    def tag_names(self) -> List[str]:
+    def tag_names(self) -> list[str]:
         return [tag.name for tag in self.tags.get_all()]
 
     def read_content(self) -> bytes:

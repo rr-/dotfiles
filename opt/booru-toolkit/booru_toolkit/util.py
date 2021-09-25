@@ -2,13 +2,13 @@ import asyncio
 import functools
 import re
 from collections import OrderedDict
-from typing import Any, Dict
+from typing import Any
 
 
 class bidict(dict):
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
-        self.inverse: Dict = {}
+        self.inverse: dict = {}
         for key, value in self.items():
             self.inverse.setdefault(value, []).append(key)
 

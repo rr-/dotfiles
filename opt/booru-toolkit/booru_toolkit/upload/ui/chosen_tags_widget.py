@@ -1,5 +1,5 @@
-import asyncio
-from typing import List, Optional, Tuple
+
+from typing import Optional
 
 import urwid
 
@@ -18,7 +18,7 @@ class ChosenTagsListBox(VimListBox):
         self._plugin = plugin
         self.schedule_update()
 
-    def keypress(self, size: Tuple[int, int], key: str) -> Optional[str]:
+    def keypress(self, size: tuple[int, int], key: str) -> Optional[str]:
         keymap = {"d": self._delete_selected, "delete": self._delete_selected}
         if key in keymap:
             keymap[key]()
@@ -30,7 +30,7 @@ class ChosenTagsListBox(VimListBox):
         asyncio.ensure_future(self.update())
 
     async def update(self) -> None:
-        new_list: List[urwid.Widget] = []
+        new_list: list[urwid.Widget] = []
         for tag in self._chosen_tags.get_all():
             if tag.source == common.TagSource.Implication:
                 attr_name = "implied-tag"

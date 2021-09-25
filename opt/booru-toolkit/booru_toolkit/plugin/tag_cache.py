@@ -1,6 +1,6 @@
 import asyncio
 from pathlib import Path
-from typing import Any, AsyncIterable, Dict, List, Optional, Set
+from typing import Any, AsyncIterable, Optional
 
 import sqlalchemy as sa
 import sqlalchemy.ext.declarative
@@ -17,7 +17,7 @@ class CachedTag(Base):
     id: int = sa.Column("id", sa.Integer, primary_key=True)
     name: str = sa.Column("name", sa.Text, nullable=False, index=True)
     importance: int = sa.Column("importance", sa.Integer, nullable=False)
-    implications: List[str] = sa.Column(
+    implications: list[str] = sa.Column(
         "implications",
         sa.ext.mutable.MutableList.as_mutable(sa.PickleType),
         nullable=False,
@@ -26,7 +26,7 @@ class CachedTag(Base):
 
 class TagCache:
     def __init__(self, cache_name: str) -> None:
-        self._cache: Dict[str, CachedTag] = {}
+        self._cache: dict[str, CachedTag] = {}
         self._path = Path(
             "~/.cache/tags-{}.sqlite".format(cache_name)
         ).expanduser()
@@ -54,10 +54,10 @@ class TagCache:
     async def tag_exists(self, tag_name: str) -> bool:
         return (await self._get_tag_by_name(tag_name)) is not None
 
-    async def find_tags(self, query: str) -> List[str]:
+    async def find_tags(self, query: str) -> list[str]:
         if not query:
             return []
-        ret: List[str] = []
+        ret: list[str] = []
         for tag in (
             self._session.query(CachedTag)
             .filter(CachedTag.name.ilike("%{}%".format("%".join(query))))
@@ -101,7 +101,7 @@ class TagCache:
 
     async def get_tag_implications(self, tag_name: str) -> AsyncIterable[str]:
         to_check = [tag_name]
-        visited: Set[str] = set([tag_name])
+        visited: set[str] = set([tag_name])
         while to_check:
             tag_name = to_check.pop(0)
             tag = await self._get_tag_by_name(tag_name)

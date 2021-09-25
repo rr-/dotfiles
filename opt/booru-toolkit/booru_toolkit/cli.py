@@ -1,5 +1,5 @@
 from getpass import getpass
-from typing import Any, List
+from typing import Any
 
 import configargparse
 
@@ -7,7 +7,7 @@ from booru_toolkit.plugin.base import PluginBase
 
 
 def make_arg_parser(
-    description: str, plugins: List[PluginBase]
+    description: str, plugins: list[PluginBase]
 ) -> configargparse.Parser:
     class CustomHelpFormatter(configargparse.HelpFormatter):
         def _format_action_invocation(

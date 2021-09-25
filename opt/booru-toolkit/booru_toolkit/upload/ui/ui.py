@@ -1,5 +1,5 @@
 import asyncio
-from typing import List, Optional, Set, Tuple
+from typing import Optional
 
 import urwid
 
@@ -27,8 +27,8 @@ _PALETTE = [
 
 class TableColumn(urwid.Pile):
     def pack(
-        self, size: Tuple[int, int], focus: bool = False
-    ) -> Tuple[int, int]:
+        self, size: tuple[int, int], focus: bool = False
+    ) -> tuple[int, int]:
         maxcol = size[0]
         maximum = max([i[0].pack((maxcol,), focus)[0] for i in self.contents])
         return (min(maximum, maxcol), len(self.contents))
@@ -40,7 +40,7 @@ class Ui:
     ) -> None:
         self._plugin = plugin
         self._upload_settings = upload_settings
-        self._undo_stack: List[Set[common.Tag]] = []
+        self._undo_stack: list[set[common.Tag]] = []
         self._running = True
 
         upload_settings.tags.on_update.append(self._on_tags_change)
