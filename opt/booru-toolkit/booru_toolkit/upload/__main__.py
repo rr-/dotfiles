@@ -96,6 +96,8 @@ async def run(args: configargparse.Namespace) -> int:
         anonymous=args.anonymous,
     )
 
+    print(upload_settings.path.absolute().as_uri())
+
     try:
         content = upload_settings.read_content()
 
