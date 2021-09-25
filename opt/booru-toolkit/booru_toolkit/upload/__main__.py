@@ -2,18 +2,13 @@ import asyncio
 import concurrent.futures
 import sys
 from pathlib import Path
-from typing import Optional, List
+from typing import List, Optional
+
 import aioconsole
 import configargparse
-from booru_toolkit import errors
-from booru_toolkit import cli
-from booru_toolkit.plugin import Safety
-from booru_toolkit.plugin import PluginBase
-from booru_toolkit.plugin import PluginYume
-from booru_toolkit.plugin import PluginGelbooru
-from booru_toolkit.upload import common
-from booru_toolkit.upload import ui
-
+from booru_toolkit import cli, errors
+from booru_toolkit.plugin import PluginBase, PluginGelbooru, PluginYume, Safety
+from booru_toolkit.upload import common, ui
 
 PLUGINS: List[PluginBase] = [PluginGelbooru(), PluginYume()]
 SAFETY_MAP = {

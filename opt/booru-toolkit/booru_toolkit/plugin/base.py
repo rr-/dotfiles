@@ -1,5 +1,6 @@
 from enum import Enum
-from typing import Optional, Tuple, List, AsyncIterable
+from typing import AsyncIterable, List, Optional, Tuple
+
 from booru_toolkit.plugin.tag_cache import TagCache
 
 

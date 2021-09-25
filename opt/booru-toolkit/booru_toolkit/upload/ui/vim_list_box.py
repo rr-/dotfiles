@@ -1,5 +1,7 @@
 from typing import Any, Optional, Tuple
+
 import urwid
+
 from booru_toolkit import util
 
 

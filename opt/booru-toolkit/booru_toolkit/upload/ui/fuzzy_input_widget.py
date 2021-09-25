@@ -1,7 +1,9 @@
 import asyncio
-from typing import Any, Optional, Tuple, List, Dict, Callable
+from typing import Any, Callable, Dict, List, Optional, Tuple
+
 import urwid
 from urwid_readline import ReadlineEdit
+
 from booru_toolkit import util
 from booru_toolkit.plugin import PluginBase
 from booru_toolkit.upload import common

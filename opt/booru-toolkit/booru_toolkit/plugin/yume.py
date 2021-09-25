@@ -1,17 +1,15 @@
 import asyncio
 import json
 import urllib.parse
-from typing import Any, Optional, Tuple, List, Dict, AsyncIterable
 from tempfile import TemporaryFile
-import requests
-from booru_toolkit import util
-from booru_toolkit import errors
-from booru_toolkit.util import bidict
-from booru_toolkit.plugin.base import PluginBase
-from booru_toolkit.plugin.base import Post
-from booru_toolkit.plugin.base import Safety
-from booru_toolkit.plugin.tag_cache import CachedTag
+from typing import Any, AsyncIterable, Dict, List, Optional, Tuple
 
+import requests
+
+from booru_toolkit import errors, util
+from booru_toolkit.plugin.base import PluginBase, Post, Safety
+from booru_toolkit.plugin.tag_cache import CachedTag
+from booru_toolkit.util import bidict
 
 Json = Any
 _SAFETY_MAP = bidict(

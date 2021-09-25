@@ -1,13 +1,12 @@
 import asyncio
-import re
 import json
-from typing import Optional, Tuple, List, Dict, AsyncIterable
+import re
+from typing import AsyncIterable, Dict, List, Optional, Tuple
+
 import requests
-from booru_toolkit import errors
-from booru_toolkit import util
-from booru_toolkit.plugin.base import PluginBase
-from booru_toolkit.plugin.base import Post
-from booru_toolkit.plugin.base import Safety
+
+from booru_toolkit import errors, util
+from booru_toolkit.plugin.base import PluginBase, Post, Safety
 
 
 def _process_response(response: requests.Response) -> Dict:

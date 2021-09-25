@@ -1,13 +1,13 @@
 import asyncio
-from typing import Optional, Tuple, Set, List
+from typing import List, Optional, Set, Tuple
+
 import urwid
-from booru_toolkit.plugin import PluginBase
-from booru_toolkit.plugin import Safety
+
+from booru_toolkit.plugin import PluginBase, Safety
 from booru_toolkit.upload import common
-from booru_toolkit.upload.ui.fuzzy_input_widget import FuzzyInput
 from booru_toolkit.upload.ui.chosen_tags_widget import ChosenTagsListBox
 from booru_toolkit.upload.ui.ellipsis_text_layout import EllipsisTextLayout
-
+from booru_toolkit.upload.ui.fuzzy_input_widget import FuzzyInput
 
 _PALETTE = [
     ("match", "default", "default"),

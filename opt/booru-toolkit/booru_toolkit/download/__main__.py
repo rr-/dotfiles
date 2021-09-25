@@ -1,19 +1,20 @@
 import asyncio
+import contextlib
 import os
 import sys
-import contextlib
 from pathlib import Path
-from typing import Optional, List, Dict, Generator
-import configargparse
-from booru_toolkit import errors
-from booru_toolkit import cli
-from booru_toolkit import util
-from booru_toolkit.plugin import PluginBase
-from booru_toolkit.plugin import Post
-from booru_toolkit.plugin import PluginGelbooru
-from booru_toolkit.plugin import PluginPixiv
-from booru_toolkit.plugin import PluginYume
+from typing import Dict, Generator, List, Optional
 
+import configargparse
+
+from booru_toolkit import cli, errors, util
+from booru_toolkit.plugin import (
+    PluginBase,
+    PluginGelbooru,
+    PluginPixiv,
+    PluginYume,
+    Post,
+)
 
 PLUGINS: List[PluginBase] = [PluginGelbooru(), PluginPixiv(), PluginYume()]
 
