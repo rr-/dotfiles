@@ -98,3 +98,5 @@
     path = ~/.config/git/config-priv
 [includeIf "gitdir:~/src/work/festicket/"]
     path = ~/.config/git/config-priv
+[credential "https://github.com"]
+    helper = !/usr/bin/gh auth git-credential
