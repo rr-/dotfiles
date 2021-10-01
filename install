@@ -1,2 +1,2 @@
 #!/bin/sh
-python3 -m libdotfiles install "$@"
+python3 -m cfg."$@"
