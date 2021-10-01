@@ -18,7 +18,7 @@ from bs4 import BeautifulSoup
 
 
 def run_workers(queue, count, worker_factory):
-    """ Executes all the given workers and blocks until the queue's empty. """
+    """Executes all the given workers and blocks until the queue's empty."""
     for _ in range(count):
         worker = worker_factory()
         thread = threading.Thread(target=worker.run)
@@ -29,7 +29,7 @@ def run_workers(queue, count, worker_factory):
 
 
 class Flow:
-    """ Used to control the lifetime of the script. """
+    """Used to control the lifetime of the script."""
 
     terminated = False
 
@@ -121,7 +121,7 @@ class BaseWorker:
 
 
 class Command:
-    """ The action to undertake, chosen via CLI """
+    """The action to undertake, chosen via CLI"""
 
     @staticmethod
     def decorate_parser(parent_parser, fmt):
@@ -131,7 +131,7 @@ class Command:
         raise NotImplementedError()
 
     def run(self, args):
-        """ Executed when the user chooses given command via CLI """
+        """Executed when the user chooses given command via CLI"""
         raise NotImplementedError()
 
 
@@ -387,7 +387,7 @@ class PruneCommand(Command):
 
 
 def parse_args():
-    """ Collects all the option from the CLI arguments """
+    """Collects all the option from the CLI arguments"""
 
     def fmt(prog):
         return argparse.HelpFormatter(prog, max_help_position=40, width=80)
