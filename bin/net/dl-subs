@@ -42,7 +42,7 @@ class Task(abc.ABC):
 
     @abc.abstractmethod
     def get_file_hash(self):
-        """ Gets the MD5 of the first 10 megabytes of the movie. """
+        """Gets the MD5 of the first 10 megabytes of the movie."""
         raise NotImplementedError()
 
 
@@ -297,7 +297,7 @@ def parse_args():
 
 
 def flat_walk(root_path):
-    """ Returns recursive list of files contained inside the directory. """
+    """Returns recursive list of files contained inside the directory."""
     for path in root_path.iterdir():
         if path.is_file():
             yield path
@@ -330,7 +330,7 @@ def get_fps(_path):
 
 
 def get_checksum(file_hash):
-    """ Gets the checksum for Napiprojekt basing on the file's MD5. """
+    """Gets the checksum for Napiprojekt basing on the file's MD5."""
     checksum = ""
     add = (0, 13, 16, 11, 5)
     mul = (2, 2, 5, 4, 3)

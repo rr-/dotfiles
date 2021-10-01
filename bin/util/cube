@@ -307,12 +307,12 @@ def strip_escape_codes(text):
 
 
 def join_templates(templates):
-    """ Merges text templates side by side. """
+    """Merges text templates side by side."""
     return "\n\n".join(templates)
 
 
 def render_system_colors():
-    """ Renders basic system color (i.e. the 16 color palette) ramp. """
+    """Renders basic system color (i.e. the 16 color palette) ramp."""
     templates = []
     for fgbg in [48, 38]:
         template = ""
@@ -325,7 +325,7 @@ def render_system_colors():
 
 
 def render_grayscale_ramp():
-    """ Renders basic grayscale ramp. """
+    """Renders basic grayscale ramp."""
     for fgbg in [48, 38]:
         print("", end="")
         for color in range(232, 256):
@@ -335,7 +335,7 @@ def render_grayscale_ramp():
 
 
 def render_color_cube():
-    """ Renders the XTerm 216 color cube. """
+    """Renders the XTerm 216 color cube."""
     templates = []
     for fgbg in [48, 38]:
 
