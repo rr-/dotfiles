@@ -1,7 +1,0 @@
-#!/bin/sh
-cd /tmp
-cvs -z3 -d :pserver:anonymous@cvs.schmorp.de/schmorpforge co rxvt-unicode
-cd rxvt-unicode
-./configure --enable-everything --enable-256-color --enable-perl
-make -j4
-sudo make install
