@@ -4,12 +4,12 @@ from libdotfiles import packages, util
 
 
 def run() -> None:
-    packages.try_install("xorg-font-utils")
-    packages.try_install("otf-ipafont")
-    packages.try_install("ttf-dejavu")
-    packages.try_install("ttf-symbola")
-    packages.try_install("ttf-font-awesome")
-    packages.try_install("ttf-monapo")
+    packages.try_install("xfonts-utils")
+    packages.try_install("fonts-ipafont")
+    packages.try_install("fonts-dejavu")
+    packages.try_install("fonts-symbola")
+    packages.try_install("fonts-font-awesome")
+    packages.try_install("fonts-monapo")
 
     if os.path.exists("/usr/share/fonts"):
         fonts_dir = "~/.local/share/fonts/"
