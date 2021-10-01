@@ -1,3 +1,0 @@
-#!/bin/sh
-pkill -f 'python.*panel'
-nohup panel </dev/null &>/tmp/panel.log &
