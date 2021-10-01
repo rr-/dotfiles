@@ -3,8 +3,9 @@ import contextlib
 import os
 import sys
 from asyncio.exceptions import CancelledError
+from collections.abc import AsyncIterable
 from pathlib import Path
-from typing import Generator, Optional
+from typing import Iterator, Optional, cast
 
 import configargparse
 
@@ -57,7 +58,7 @@ class DownloadStats:
         self.ignored += 1
 
     @contextlib.contextmanager
-    def download(self, url: str) -> Generator:
+    def download(self, url: str) -> Iterator[None]:
         try:
             print("{}: downloading...".format(url))
             yield
@@ -141,9 +142,11 @@ class Downloader:
     async def run(self, query: str, limit: Optional[int]) -> None:
         downloaded = 0
 
-        queue = asyncio.Queue(maxsize=self._max_concurrent_downloads)
+        queue: asyncio.Queue[Post] = asyncio.Queue(
+            maxsize=self._max_concurrent_downloads
+        )
 
-        async def consumer():
+        async def consumer_func() -> None:
             nonlocal downloaded
             while True:
                 post = await queue.get()
@@ -155,13 +158,15 @@ class Downloader:
                     print("{}: {}".format(post.content_url, ex))
                 queue.task_done()
 
-        consumers = [
-            asyncio.ensure_future(consumer())
+        consumers: list[asyncio.Task[None]] = [
+            asyncio.ensure_future(consumer_func())
             for i in range(self._max_concurrent_downloads)
         ]
 
         try:
-            async for post in self._plugin.find_posts(query):
+            async for post in cast(
+                AsyncIterable[Post], self._plugin.find_posts(query)
+            ):
                 if limit is not None and downloaded >= limit:
                     break
                 await queue.put(post)

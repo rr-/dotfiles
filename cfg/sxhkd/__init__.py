@@ -1,7 +1,7 @@
 from libdotfiles import packages, util
 
 
-def run():
+def run() -> None:
     packages.try_install("sxhkd")
     packages.try_install("xdo")
 

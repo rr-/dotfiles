@@ -1,7 +1,7 @@
 from libdotfiles import packages, util
 
 
-def run():
+def run() -> None:
     spell_dir = "~/.config/nvim/spell/"
     if util.distro_name() == "arch":
         packages.try_install("neovim")

@@ -3,7 +3,7 @@ from os.path import expanduser
 from libdotfiles import packages, util
 
 
-def run():
+def run() -> None:
     packages.try_install("tmux")
     util.create_symlink("./tmux.conf", "~/.tmux.conf")
     util.create_symlink("./config", "~/.config/tmux")

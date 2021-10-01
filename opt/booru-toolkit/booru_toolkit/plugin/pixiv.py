@@ -1,20 +1,23 @@
 import asyncio
 import json
 import re
-from typing import AsyncIterable, Optional
+from collections.abc import AsyncIterable
+from typing import Any, Optional, cast
 
 import requests
 
 from booru_toolkit import errors, util
 from booru_toolkit.plugin.base import PluginBase, Post, Safety
 
+Json = dict[str, Any]
 
-def _process_response(response: requests.Response) -> dict:
+
+def _process_response(response: requests.Response) -> Json:
     response.raise_for_status()
     ret = json.loads(response.content)
     if "status" in ret and ret["status"] != "success":
         raise errors.ApiError("Pixiv error ({})".format(ret))
-    return ret
+    return cast(Json, ret)
 
 
 class PluginPixiv(PluginBase):
@@ -51,13 +54,13 @@ class PluginPixiv(PluginBase):
     ) -> list[tuple[float, Post]]:
         return []
 
-    async def find_posts(self, query: str) -> AsyncIterable[Post]:
+    async def find_posts(self, query: str) -> AsyncIterable[Post]:  # type: ignore
         match = re.match(r"^artist:(?P<artist_id>\d+)$", query)
 
         if match:
             artist_id = int(match.group("artist_id"))
 
-            async def page_getter(page: int, page_size: int) -> dict:
+            async def page_getter(page: int, page_size: int) -> Json:
                 return await self._get(
                     "/v1/users/{}/works.json".format(artist_id),
                     params={
@@ -72,7 +75,7 @@ class PluginPixiv(PluginBase):
 
         else:
 
-            async def page_getter(page: int, page_size: int) -> dict:
+            async def page_getter(page: int, page_size: int) -> Json:
                 return await self._get(
                     "/v1/search/works.json",
                     params={
@@ -140,7 +143,7 @@ class PluginPixiv(PluginBase):
     ) -> None:
         raise NotImplementedError("Not implemented")
 
-    async def _get(self, url: str, params: dict) -> dict:
+    async def _get(self, url: str, params: dict[str, Any]) -> Json:
         return _process_response(
             await asyncio.get_event_loop().run_in_executor(
                 None,

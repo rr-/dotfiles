@@ -1,3 +1,4 @@
+# type: ignore
 """
 Usage: put [custom_hotlist] in your status bar items.
 '/set weechat.bar.status.items'.

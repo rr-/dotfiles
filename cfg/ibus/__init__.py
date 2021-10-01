@@ -1,7 +1,7 @@
 from libdotfiles import packages, util
 
 
-def run():
+def run() -> None:
     packages.try_install("ibus")
     packages.try_install("ibus-anthy")
     util.create_symlink("./config.ini", "~/.config/ibus/config.ini")

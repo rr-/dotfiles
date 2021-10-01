@@ -1,7 +1,7 @@
 from libdotfiles import packages, util
 
 
-def run():
+def run() -> None:
     if not util.has_executable("vifm"):
         packages.try_install("vifm")
     util.create_dir("~/.config/vifm")

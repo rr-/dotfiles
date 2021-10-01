@@ -1,7 +1,7 @@
 from libdotfiles import packages, util
 
 
-def run():
+def run() -> None:
     packages.try_install("weechat")
     util.create_symlink("./alias.conf", "~/.weechat/")
     util.create_symlink("./charset.conf", "~/.weechat/")

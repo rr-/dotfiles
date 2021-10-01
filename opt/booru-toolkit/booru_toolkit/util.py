@@ -2,25 +2,11 @@ import asyncio
 import functools
 import re
 from collections import OrderedDict
-from typing import Any
+from collections.abc import Callable
+from typing import Any, TypeVar
 
-
-class bidict(dict):
-    def __init__(self, *args: Any, **kwargs: Any) -> None:
-        super().__init__(*args, **kwargs)
-        self.inverse: dict = {}
-        for key, value in self.items():
-            self.inverse.setdefault(value, []).append(key)
-
-    def __setitem__(self, key: Any, value: Any) -> None:
-        super(bidict, self).__setitem__(key, value)
-        self.inverse.setdefault(value, []).append(key)
-
-    def __delitem__(self, key: Any) -> None:
-        self.inverse.setdefault(self[key], []).remove(key)
-        if self[key] in self.inverse and not self.inverse[self[key]]:
-            del self.inverse[self[key]]
-        super(bidict, self).__delitem__(key)
+TResult = Any
+TCallable = Callable[..., TResult]
 
 
 def sanitize_file_name(name: str) -> str:
@@ -28,11 +14,13 @@ def sanitize_file_name(name: str) -> str:
 
 
 # credit: http://stackoverflow.com/a/39628789
-def async_lru_cache(maxsize=128):
+def async_lru_cache(maxsize: int = 128) -> TCallable:
     cache = OrderedDict()
-    awaiting = dict()
+    awaiting: dict[Any, TResult] = dict()
 
-    async def run_and_cache(func, args, kwargs):
+    async def run_and_cache(
+        func: TCallable, args: Any, kwargs: Any
+    ) -> TResult:
         result = await func(*args, **kwargs)
         key = functools._make_key(args, kwargs, False)
         cache[key] = result
@@ -41,9 +29,9 @@ def async_lru_cache(maxsize=128):
         cache.move_to_end(key)
         return result
 
-    def decorator(func):
+    def decorator(func: TCallable) -> TCallable:
         @functools.wraps(func)
-        async def wrapper(*args, **kwargs):
+        async def wrapper(*args: Any, **kwargs: Any) -> TResult:
             key = functools._make_key(args, kwargs, False)
             if key in cache:
                 return cache[key]
@@ -65,7 +53,13 @@ def clamp(number: int, min_value: int, max_value: int) -> int:
     return max(min_value, min(max_value, number))
 
 
-async def retry(max_attempts, sleep, func, *args, **kwargs):
+async def retry(
+    max_attempts: int,
+    sleep: float,
+    func: Callable[..., TResult],
+    *args: Any,
+    **kwargs: Any
+) -> TResult:
     attempt = 0
     while True:
         attempt += 1

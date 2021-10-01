@@ -1,6 +1,6 @@
 import concurrent.futures
 import contextlib
-import typing as T
+from typing import Iterator
 
 
 class Flow:
@@ -8,7 +8,7 @@ class Flow:
 
     @staticmethod
     @contextlib.contextmanager
-    def guard(executor: concurrent.futures.Executor) -> T.Generator:
+    def guard(executor: concurrent.futures.Executor) -> Iterator[None]:
         try:
             yield
         except KeyboardInterrupt:

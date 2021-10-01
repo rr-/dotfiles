@@ -32,7 +32,7 @@ def install(paths: T.List[Path]) -> None:
     original_dir = os.getcwd()
     for module_path in paths:
         module_path = module_path
-        script_path = (module_path / "install.py").absolute()
+        script_path = (module_path / "__init__.py").absolute()
         script = script_path.read_text()
         os.chdir(module_path)
         scope = {"__file__": str(script_path)}

@@ -28,7 +28,7 @@ ALLOWED_EXTENSIONS = [
 ]
 
 
-def parse_args():
+def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Send playback log")
     parser.add_argument("--path", required=True)
     parser.add_argument("--percent", required=True, type=float)
@@ -36,7 +36,7 @@ def parse_args():
     return parser.parse_args()
 
 
-def main():
+def main() -> None:
     args = parse_args()
 
     try:

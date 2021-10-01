@@ -173,6 +173,7 @@ def _download_url(
 def _get_target_path(
     url: str, args: argparse.Namespace, link_scan_result: LinkScanResult
 ) -> Path:
+    target_dir: Path = args.target_dir
     parsed_url = urllib.parse.urlparse(url)
 
     if args.parent and url in link_scan_result.linkings:
@@ -180,16 +181,14 @@ def _get_target_path(
             if args.parent.search(parent_url):
                 parsed_parent_url = urllib.parse.urlparse(parent_url)
                 return (
-                    args.target_dir
+                    target_dir
                     / parsed_parent_url.netloc
                     / re.sub(r"^[\/]*", "", parsed_parent_url.path)
                     / os.path.basename(parsed_url.path)
                 )
 
     return (
-        args.target_dir
-        / parsed_url.netloc
-        / re.sub(r"^[\/]*", "", parsed_url.path)
+        target_dir / parsed_url.netloc / re.sub(r"^[\/]*", "", parsed_url.path)
     )
 
 
@@ -238,15 +237,21 @@ class DownloadCommand(BaseCommand):
             help="set path to the history file",
         )
         parser.add_argument(
-            "-r", "--reject", type=re.compile, help="what urls not to download"
+            "-r",
+            "--reject",
+            type=lambda arg: re.compile(arg),
+            help="what urls not to download",
         )
         parser.add_argument(
-            "-a", "--accept", type=re.compile, help="what urls to download"
+            "-a",
+            "--accept",
+            type=lambda arg: re.compile(arg),
+            help="what urls to download",
         )
         parser.add_argument(
             "-p",
             "--parent",
-            type=re.compile,
+            type=lambda arg: re.compile(arg),
             help=(
                 "reparents downloaded files to "
                 "a source url that matches this regex"

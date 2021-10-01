@@ -1,4 +1,4 @@
-from typing import Any, Optional
+from typing import Any, Optional, cast
 
 import urwid
 
@@ -8,7 +8,7 @@ from booru_toolkit import util
 class VimListBox(urwid.ListBox):
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
-        self.num = None
+        self.num: Optional[int] = None
 
     def selectable(self) -> bool:
         return True
@@ -58,7 +58,7 @@ class VimListBox(urwid.ListBox):
 
     @property
     def _focus(self) -> int:
-        return self.body.focus
+        return cast(int, self.body.focus)
 
     @_focus.setter
     def _focus(self, focus: int) -> None:

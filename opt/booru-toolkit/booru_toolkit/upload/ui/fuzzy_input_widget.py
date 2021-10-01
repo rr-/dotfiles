@@ -1,5 +1,5 @@
 import asyncio
-from typing import Any, Callable, Optional
+from typing import Any, Callable, Optional, cast
 
 import urwid
 from urwid_readline import ReadlineEdit
@@ -48,7 +48,7 @@ class FuzzyInput(urwid.ListBox):
         if key in keymap:
             keymap[key](size)
             return None
-        return self._input_box.keypress((size[0],), key)
+        return cast(str, self._input_box.keypress((size[0],), key))
 
     def _accept(self, _size: tuple[int, int]) -> None:
         text = self._input_box.text.strip()

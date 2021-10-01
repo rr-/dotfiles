@@ -1,7 +1,7 @@
 import logging
 import re
 import sys
-import typing as T
+from typing import Optional
 
 from libdotfiles import util
 
@@ -140,7 +140,7 @@ class PipPackageInstaller(PackageInstaller):
 INSTALLERS = [cls() for cls in PackageInstaller.__subclasses__()]
 
 
-def try_install(package: str, method: T.Optional[str] = None) -> bool:
+def try_install(package: str, method: Optional[str] = None) -> bool:
     try:
         return install(package, method)
     except Exception as ex:
@@ -148,14 +148,14 @@ def try_install(package: str, method: T.Optional[str] = None) -> bool:
         return False
 
 
-def has_installed(package: str, method: T.Optional[str] = None) -> bool:
+def has_installed(package: str, method: Optional[str] = None) -> bool:
     chosen_installers = _choose_installers(method)
     return any(
         installer.has_installed(package) for installer in chosen_installers
     )
 
 
-def install(package: str, method: T.Optional[str] = None) -> bool:
+def install(package: str, method: Optional[str] = None) -> bool:
     if has_installed(package, method):
         logger.info("Package %s is already installed.", package)
         return True
@@ -175,7 +175,7 @@ def install(package: str, method: T.Optional[str] = None) -> bool:
     raise RuntimeError(f"{method} is not capable of installing {package}")
 
 
-def _choose_installers(method: T.Optional[str]) -> T.List[PackageInstaller]:
+def _choose_installers(method: Optional[str]) -> list[PackageInstaller]:
     if method is None:
         chosen_installers = INSTALLERS
     else:

@@ -1,7 +1,7 @@
 from libdotfiles import util
 
 
-def run():
+def run() -> None:
     util.create_symlink("./locale.conf", "~/.config/")
     for lang in ["en_US", "pl_PL", "ja_JP"]:
         util.run_verbose(

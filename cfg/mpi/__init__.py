@@ -1,7 +1,7 @@
 from libdotfiles import packages, util
 
 
-def run():
+def run() -> None:
     if not util.has_executable("mpv"):
         packages.try_install("luajit")
         packages.try_install("mpv-git")

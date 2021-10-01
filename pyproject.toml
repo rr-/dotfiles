@@ -2,5 +2,11 @@
 line-length = 79
 
 [tool.isort]
-profile = "black"
+multi_line_output = 3
+include_trailing_comma = true
 known_first_party = ["booru_toolkit", "launcher", "crawl"]
+
+[tool.mypy]
+strict = true
+ignore_missing_imports = true
+disallow_subclassing_any = false
