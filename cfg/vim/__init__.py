@@ -1,16 +1,18 @@
 from libdotfiles import packages, util
 
 
-def run():
+def run() -> None:
     spell_dir = "~/.config/vim/spell/"
 
     choices = [
         "vim",
         "gvim",  # gvim supports for X11 clipboard, but has more dependencies
     ]
-    choice = None
+
+    choice = ""
     while choice not in choices:
         choice = input("Which package to install? (%s) " % choices).lower()
+
     packages.try_install(choice)
     packages.try_install("fzf")
 

@@ -1,7 +1,7 @@
 from libdotfiles import packages, util
 
 
-def run():
+def run() -> None:
     packages.try_install("git")
     packages.try_install("git-extras-git")
     util.create_symlink("./gitconfig", "~/.config/git/config")

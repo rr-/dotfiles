@@ -3,9 +3,9 @@ import os
 from libdotfiles import packages, util
 
 
-def run():
+def run() -> None:
     util.create_symlink("./launcher.json", "~/.config/launcher.json")
     os.chdir(util.REPO_ROOT_DIR / "opt" / "launcher")
     util.run_verbose(
-        [packages.PIP_EXECUTABLE, "install", "--user", "--upgrade", "."]
+        ["python3", "-m", "pip", "install", "--user", "--upgrade", "."]
     )

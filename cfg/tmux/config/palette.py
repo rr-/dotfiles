@@ -1,17 +1,30 @@
 #!/usr/bin/env python3
 import argparse
-import glob
-import os
 import re
 import sys
+from collections.abc import Iterable
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Any
 
 ESC = "\033"
 BEL = "\007"
 DSC = ESC + "P"
 OSC = ESC + "]"
 
+THEMES_PATH = Path(__file__).parent
 
-def change_color(name, arg):
+
+@dataclass
+class Theme:
+    path: Path
+
+    @property
+    def name(self) -> str:
+        return self.path.stem
+
+
+def change_color(name: str, arg: str) -> None:
     result = re.match(r"color(\d+)", name)
     if result:
         send_osc(4, int(result.group(1)), arg)
@@ -33,17 +46,17 @@ def change_color(name, arg):
         raise ValueError("Unknown name: " + name)
 
 
-def send_escape_sequence(escape_sequence):
+def send_escape_sequence(escape_sequence: str) -> None:
     escape_sequence = DSC + "tmux;" + ESC + escape_sequence + ESC + "\\"
     sys.stdout.write(escape_sequence)
 
 
-def send_osc(ps, *pt):
+def send_osc(ps: int, *pt: Any) -> None:
     command = OSC + str(ps) + ";" + ";".join(str(x) for x in pt) + BEL
     send_escape_sequence(command)
 
 
-def parse_args():
+def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     subparsers = parser.add_subparsers(dest="command_name")
     subparsers.add_parser("list")
@@ -52,21 +65,12 @@ def parse_args():
     return parser.parse_args()
 
 
-def get_theme_names():
-    paths = glob.glob("*.txt")
-    result = []
-    for path in paths:
-        name, ext = os.path.splitext(os.path.basename(path))
-        result.append(name)
-    return list(sorted(result))
+def get_themes() -> Iterable[Theme]:
+    return (Theme(path=path) for path in THEMES_PATH.glob("*.txt"))
 
 
-def get_theme_path(name):
-    return name + ".txt"
-
-
-def apply_theme(theme_name):
-    with open(get_theme_path(theme_name), "r") as handle:
+def apply_theme(theme: Theme) -> None:
+    with theme.path.open(encoding="utf-8") as handle:
         for line in handle:
             if line.startswith("#"):
                 continue
@@ -77,19 +81,24 @@ def apply_theme(theme_name):
             change_color(key, value)
 
 
-def main():
+def main() -> None:
     args = parse_args()
-    os.chdir(os.path.realpath(os.path.dirname(__file__)))
 
-    theme_names = get_theme_names()
-    if not theme_names:
+    themes = sorted(get_themes(), key=lambda theme: theme.name)
+    if not themes:
         print("No themes", file=sys.stderr)
         sys.exit(1)
 
     elif args.command_name == "list":
-        print("\n".join(theme_names))
+        print("\n".join([theme.name for theme in themes]))
     elif args.command_name == "set":
-        apply_theme(args.theme)
+        for theme in themes:
+            if theme.name == args.theme:
+                apply_theme(theme)
+                break
+        else:
+            print("No such theme", file=sys.stderr)
+            sys.exit(1)
     else:
         print("No command chosen", file=sys.stderr)
         sys.exit(1)

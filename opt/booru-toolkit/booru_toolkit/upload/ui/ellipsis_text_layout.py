@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, cast
 
 import urwid
 
@@ -10,7 +10,7 @@ class EllipsisTextLayout(urwid.TextLayout):
         return align in (urwid.LEFT, urwid.RIGHT)
 
     def supports_wrap_mode(self, wrap: Any) -> bool:
-        return wrap == urwid.CLIP
+        return cast(bool, wrap == urwid.CLIP)
 
     def layout(self, text: str, width: int, align: Any, wrap: Any) -> Any:
         if urwid.util.calc_width(text, 0, len(text)) <= width:

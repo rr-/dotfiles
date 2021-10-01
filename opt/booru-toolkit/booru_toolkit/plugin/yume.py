@@ -1,31 +1,30 @@
 import asyncio
 import json
 import urllib.parse
+from collections.abc import AsyncIterable
 from tempfile import TemporaryFile
-from typing import Any, AsyncIterable, Optional
+from typing import Any, Optional
 
 import requests
 
 from booru_toolkit import errors, util
 from booru_toolkit.plugin.base import PluginBase, Post, Safety
 from booru_toolkit.plugin.tag_cache import CachedTag
-from booru_toolkit.util import bidict
 
 Json = Any
-_SAFETY_MAP = bidict(
-    {
-        Safety.Safe: "safe",
-        Safety.Questionable: "sketchy",
-        Safety.Explicit: "unsafe",
-    }
-)
+_SAFETY_MAP = {
+    Safety.Safe: "safe",
+    Safety.Questionable: "sketchy",
+    Safety.Explicit: "unsafe",
+}
+_SAFETY_MAP_INVERSE = {value: key for key, value in _SAFETY_MAP.items()}
 _version_cache: dict[int, int] = {}
 
 
 def _result_to_post(result: Json) -> Post:
     post = Post(
         post_id=result["id"],
-        safety=_SAFETY_MAP.inverse[result["safety"]][0],
+        safety=_SAFETY_MAP_INVERSE[result["safety"]],
         tags=[tag["names"][0] for tag in result["tags"]],
         site_url="https://yume.pl/post/{}".format(result["id"]),
         content_url=result["contentUrl"],
@@ -74,7 +73,7 @@ class PluginYume(PluginBase):
             for item in result["similarPosts"]
         ]
 
-    async def find_posts(self, query: str) -> AsyncIterable[Post]:
+    async def find_posts(self, query: str) -> AsyncIterable[Post]:  # type: ignore
         offset = 0
         while True:
             response = await self._get(
@@ -198,8 +197,8 @@ class PluginYume(PluginBase):
     async def _put(
         self,
         url: str,
-        data: Optional[dict] = None,
-        files: Optional[dict] = None,
+        data: Optional[dict[str, Any]] = None,
+        files: Optional[dict[str, Any]] = None,
     ) -> Json:
         return _process_response(
             await asyncio.get_event_loop().run_in_executor(
@@ -219,9 +218,9 @@ class PluginYume(PluginBase):
     async def _post(
         self,
         url: str,
-        data: Optional[dict] = None,
-        files: Optional[dict] = None,
-    ) -> dict:
+        data: Optional[dict[str, Any]] = None,
+        files: Optional[dict[str, Any]] = None,
+    ) -> Json:
         return _process_response(
             await asyncio.get_event_loop().run_in_executor(
                 None,

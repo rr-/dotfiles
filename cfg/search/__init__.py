@@ -3,7 +3,7 @@ from pathlib import Path
 from libdotfiles import packages, util
 
 
-def run():
+def run() -> None:
     if util.distro_name() == "arch":
         packages.try_install("fzf")  # super opener
         packages.try_install(

@@ -1,7 +1,7 @@
 from libdotfiles import packages, util
 
 
-def run():
+def run() -> None:
     packages.try_install("urxvt-perls")
     packages.try_install("rxvt-unicode")
 

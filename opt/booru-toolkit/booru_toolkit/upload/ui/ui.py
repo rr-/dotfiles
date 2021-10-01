@@ -1,5 +1,5 @@
 import asyncio
-from typing import Optional
+from typing import Any, Optional
 
 import urwid
 
@@ -77,7 +77,7 @@ class Ui:
     def show_alert(self, message: str) -> None:
         original_widget = self._loop.widget
 
-        def button_click(*args) -> None:
+        def button_click(*args: Any) -> None:
             self._loop.widget = original_widget
 
         button = urwid.Button("OK")

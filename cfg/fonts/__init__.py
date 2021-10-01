@@ -3,7 +3,7 @@ import os
 from libdotfiles import packages, util
 
 
-def run():
+def run() -> None:
     packages.try_install("xorg-font-utils")
     packages.try_install("otf-ipafont")
     packages.try_install("ttf-dejavu")

@@ -1,5 +1,7 @@
+from abc import ABC, abstractmethod
+from collections.abc import AsyncIterable
 from enum import Enum
-from typing import AsyncIterable, Optional
+from typing import Optional
 
 from booru_toolkit.plugin.tag_cache import TagCache
 
@@ -34,34 +36,41 @@ class Post:
         self.title = title
 
 
-class PluginBase:
+class PluginBase(ABC):
     @property
+    @abstractmethod
     def name(self) -> str:
         raise NotImplementedError("Not implemented")
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._tag_cache = TagCache(self.name)
 
     async def login(self, user_name: str, password: str) -> None:
         await self._login(user_name, password)
 
+    @abstractmethod
     async def _login(self, user_name: str, password: str) -> None:
         raise NotImplementedError("Not implemented")
 
+    @abstractmethod
     async def find_exact_post(self, content: bytes) -> Optional[Post]:
         raise NotImplementedError("Not implemented")
 
+    @abstractmethod
     async def find_similar_posts(
         self, content: bytes
     ) -> list[tuple[float, Post]]:
         raise NotImplementedError("Not implemented")
 
+    @abstractmethod
     async def find_posts(self, query: str) -> AsyncIterable[Post]:
         raise NotImplementedError("Not implemented")
 
+    @abstractmethod
     async def get_post_content(self, post: Post) -> bytes:
         raise NotImplementedError("Not implemented")
 
+    @abstractmethod
     async def upload_post(
         self,
         content: bytes,
@@ -72,6 +81,7 @@ class PluginBase:
     ) -> Optional[Post]:
         raise NotImplementedError("Not implemented")
 
+    @abstractmethod
     async def update_post(
         self, post_id: int, safety: Safety, tags: list[str]
     ) -> None:
@@ -98,5 +108,6 @@ class PluginBase:
         async for tag in self._tag_cache.get_tag_implications(tag_name):
             yield tag
 
+    @abstractmethod
     async def _update_tag_cache(self) -> None:
         raise NotImplementedError("Not implemented")

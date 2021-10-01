@@ -9,3 +9,11 @@ repos:
   rev: 21.7b0
   hooks:
   - id: black
+- repo: local
+  hooks:
+  - id: mypy
+    name: mypy
+    entry: bash -c 'set -e; mypy cfg; for x in opt/*; do mypy "$x"; done'
+    language: system
+    types: [python]
+    pass_filenames: false

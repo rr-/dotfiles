@@ -13,7 +13,7 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def main():
+def main() -> None:
     args = parse_args()
     for line in Path("~/.config/launcher.json").expanduser().open():
         pattern, command = line.split("::")

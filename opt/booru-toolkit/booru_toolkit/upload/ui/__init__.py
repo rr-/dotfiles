@@ -6,3 +6,5 @@ del urwid.command_map["left"]
 del urwid.command_map["down"]
 del urwid.command_map["up"]
 del urwid.command_map["right"]
+
+__all__ = ["run"]

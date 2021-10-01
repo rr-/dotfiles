@@ -4,7 +4,7 @@ import tempfile
 from libdotfiles import packages, util
 
 
-def run():
+def run() -> None:
     if util.distro_name() == "arch":
         packages.try_install("translate-shell-git")
     elif util.distro_name() == "linuxmint":

@@ -1,3 +1,4 @@
+# type: ignore
 import string
 import subprocess
 import sys

@@ -1,5 +1,5 @@
 from getpass import getpass
-from typing import Any
+from typing import Any, cast
 
 import configargparse
 
@@ -14,9 +14,9 @@ def make_arg_parser(
             self, action: configargparse.Action
         ) -> str:
             if not action.option_strings or action.nargs == 0:
-                return super()._format_action_invocation(action)
+                return cast(str, super()._format_action_invocation(action))
             default = self._get_default_metavar_for_optional(action)
-            args_string = self._format_args(action, default)
+            args_string = cast(str, self._format_args(action, default))
             return ", ".join(action.option_strings) + " " + args_string
 
     class PluginAction(configargparse.Action):
@@ -25,7 +25,7 @@ def make_arg_parser(
             parser: configargparse.Parser,
             args: configargparse.Namespace,
             values: Any,
-            option_string=None,
+            option_string: Any = None,
         ) -> None:
             assert isinstance(values, str)
             plugin = next(

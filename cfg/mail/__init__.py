@@ -1,7 +1,7 @@
 from libdotfiles import packages, util
 
 
-def run():
+def run() -> None:
     packages.try_install("getmail")
     util.create_dir("~/mail/new")
     util.create_dir("~/mail/cur")

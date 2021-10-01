@@ -1,9 +1,9 @@
 import asyncio
-import typing as T
 import urllib.parse
 import xml.dom.minidom
+from collections.abc import AsyncIterable
 from tempfile import TemporaryFile
-from typing import AsyncIterable, Optional
+from typing import Any, Optional
 
 import requests
 from bs4 import BeautifulSoup
@@ -44,7 +44,7 @@ class PluginGelbooru(PluginBase):
     ) -> list[tuple[float, Post]]:
         return []
 
-    async def find_posts(self, query: str) -> AsyncIterable[Post]:
+    async def find_posts(self, query: str) -> AsyncIterable[Post]:  # type: ignore
         url = (
             "/index.php?page=dapi&s=post&q=index" "&limit=0&tags={query}"
         ).format(query=urllib.parse.quote(query))
@@ -72,7 +72,7 @@ class PluginGelbooru(PluginBase):
             partition_start_id += POSTS_MAX_IDS
             partition_end_id += POSTS_MAX_IDS
 
-    async def _find_posts_by_query(self, query: str) -> T.Iterable[Post]:
+    async def _find_posts_by_query(self, query: str) -> AsyncIterable[Post]:
         page = 0
         done = 0
         while True:
@@ -223,8 +223,8 @@ class PluginGelbooru(PluginBase):
     async def _post(
         self,
         url: str,
-        data: Optional[dict] = None,
-        files: Optional[dict] = None,
+        data: Optional[dict[str, Any]] = None,
+        files: Optional[dict[str, Any]] = None,
     ) -> str:
         return _process_response(
             await asyncio.get_event_loop().run_in_executor(

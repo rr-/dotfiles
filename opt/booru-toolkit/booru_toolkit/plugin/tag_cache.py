@@ -1,6 +1,7 @@
 import asyncio
+from collections.abc import AsyncIterable
 from pathlib import Path
-from typing import Any, AsyncIterable, Optional
+from typing import Any, Optional, cast
 
 import sqlalchemy as sa
 import sqlalchemy.ext.declarative
@@ -26,7 +27,7 @@ class CachedTag(Base):
 
 class TagCache:
     def __init__(self, cache_name: str) -> None:
-        self._cache: dict[str, CachedTag] = {}
+        self._cache: dict[str, Optional[CachedTag]] = {}
         self._path = Path(
             "~/.cache/tags-{}.sqlite".format(cache_name)
         ).expanduser()
@@ -43,7 +44,12 @@ class TagCache:
         )
 
     def exists(self) -> bool:
-        return self._session.query(sa.func.count(CachedTag.id)).scalar() > 0
+        return (
+            cast(
+                int, self._session.query(sa.func.count(CachedTag.id)).scalar()
+            )
+            > 0
+        )
 
     def add(self, cached_tag: CachedTag) -> None:
         self._session.add(cached_tag)
@@ -60,8 +66,10 @@ class TagCache:
         ret: list[str] = []
         for tag in (
             self._session.query(CachedTag)
-            .filter(CachedTag.name.ilike("%{}%".format("%".join(query))))
-            .order_by(CachedTag.importance.desc())
+            .filter(
+                cast(Any, CachedTag.name).ilike("%{}%".format("%".join(query)))
+            )
+            .order_by(cast(Any, CachedTag.importance).desc())
             .limit(100)
             .all()
         ):
@@ -69,12 +77,12 @@ class TagCache:
             ret.append(tag.name)
         return ret
 
-    async def _get_tag_by_name(self, tag_name: str) -> CachedTag:
+    async def _get_tag_by_name(self, tag_name: str) -> Optional[CachedTag]:
         if tag_name in self._cache:
             return self._cache[tag_name]
 
-        def work():
-            ret = (
+        def work() -> Optional[CachedTag]:
+            ret: Optional[CachedTag] = (
                 self._session.query(CachedTag)
                 .filter(sa.func.lower(CachedTag.name) == tag_name.lower())
                 .one_or_none()

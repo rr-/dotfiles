@@ -3,7 +3,7 @@ from os.path import expanduser
 from libdotfiles import packages, util
 
 
-def run():
+def run() -> None:
     packages.try_install("zsh")
     util.create_symlink("./zshrc", "~/.zshrc")
     util.create_symlink("./zprofile", "~/.zprofile")

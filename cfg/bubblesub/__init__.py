@@ -1,7 +1,7 @@
 from libdotfiles import packages, util
 
 
-def run():
+def run() -> None:
     if util.distro_name() == "arch":
         packages.try_install("python-pyqt5")
         packages.try_install("ffms2000-git")

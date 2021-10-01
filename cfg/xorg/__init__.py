@@ -1,7 +1,7 @@
 from libdotfiles import packages, util
 
 
-def run():
+def run() -> None:
     # the server itself
     packages.try_install("xorg")
     # for clip to work
