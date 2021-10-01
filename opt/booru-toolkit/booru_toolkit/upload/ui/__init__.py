@@ -1,4 +1,5 @@
 import urwid
+
 from booru_toolkit.upload.ui.ui import run
 
 del urwid.command_map["left"]
