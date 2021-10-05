@@ -7,6 +7,7 @@ if whence -p dircolors >/dev/null; then
 fi
 
 # aliases
+alias p=python3.9
 alias l="myls"
 alias ll="myls -l"
 alias la="myls -la"
@@ -24,19 +25,19 @@ alias enpl='tl en pl'
 alias enja='tl en ja'
 alias jaen='tl ja en'
 
-alias track-moto='python3 -m timetracker moto'
-alias track-ng='python3 -m timetracker netguru'
+alias track-moto='p -m timetracker moto'
+alias track-ng='p -m timetracker netguru'
 
 alias pyup='pip install --user --upgrade --no-deps .'
 
-alias reverso='python3 -m dict -e reverso'
-alias urban='python3 -m dict -e urban'
-alias sjp='python3 -m dict -e sjp'
-alias jisho='python3 -m dict -e jisho'
-alias wordhippo='python3 -m dict -e wordhippo'
-alias synonim='python3 -m dict -e synonim'
-alias edict='python3 -m dict -e edict'
-alias jmdict='python3 -m dict -e jmdict'
+alias reverso='p -m dict -e reverso'
+alias urban='p -m dict -e urban'
+alias sjp='p -m dict -e sjp'
+alias jisho='p -m dict -e jisho'
+alias wordhippo='p -m dict -e wordhippo'
+alias synonim='p -m dict -e synonim'
+alias edict='p -m dict -e edict'
+alias jmdict='p -m dict -e jmdict'
 
 alias dl-gelbooru='dl-booru --config=~/.config/dl-gelbooru.conf'
 alias dl-pixiv='dl-booru --config=~/.config/dl-pixiv.conf'
