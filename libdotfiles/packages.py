@@ -63,7 +63,9 @@ class AptPackageInstaller(PackageInstaller):
         return util.run_silent(["apt", "show", package])[0]
 
     def install(self, package: str) -> bool:
-        return util.run_verbose(["sudo", "-S", "apt", "install", package])
+        return util.run_verbose(
+            ["sudo", "-S", "apt", "install", "-y", package]
+        )
 
 
 class PacmanPackageInstaller(PackageInstaller):
