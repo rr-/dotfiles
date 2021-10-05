@@ -24,6 +24,9 @@ alias enpl='tl en pl'
 alias enja='tl en ja'
 alias jaen='tl ja en'
 
+alias track-moto='python3 -m timetracker moto'
+alias track-ng='python3 -m timetracker netguru'
+
 alias pyup='pip install --user --upgrade --no-deps .'
 
 alias reverso='python3 -m dict -e reverso'

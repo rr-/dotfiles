@@ -86,17 +86,15 @@
     program = gpg
 [includeIf "gitdir:*/oc/"]
     path = ~/.config/git/config-priv
-[includeIf "gitdir:~/src/priv/"]
+[includeIf "gitdir:~/dotfiles/"]
     path = ~/.config/git/config-priv
-[includeIf "gitdir:~/src/dotfiles/"]
+[includeIf "gitdir:~/dotfiles-priv/"]
     path = ~/.config/git/config-priv
-[includeIf "gitdir:~/src/dotfiles-priv/"]
+[includeIf "gitdir:~/work/priv/"]
     path = ~/.config/git/config-priv
-[includeIf "gitdir:~/src/work/moto/"]
+[includeIf "gitdir:~/work/moto/"]
     path = ~/.config/git/config-moto
-[includeIf "gitdir:~/src/work/invoices/"]
-    path = ~/.config/git/config-priv
-[includeIf "gitdir:~/src/work/festicket/"]
+[includeIf "gitdir:~/work/invoices/"]
     path = ~/.config/git/config-priv
 [credential "https://github.com"]
     helper = !/usr/bin/gh auth git-credential
