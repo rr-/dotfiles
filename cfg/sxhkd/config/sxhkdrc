@@ -7,8 +7,8 @@ super + {r, d}
     dmenu_run
 
 # switch Polish↔Japanese
-super + n
-    kb
+super + {n, space}
+    fcitx-remote -t
 
 # focus or spawn local tmux
 alt + ctrl + bracketleft
