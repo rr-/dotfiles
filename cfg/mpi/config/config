@@ -1,7 +1,7 @@
 # vim syntax=config
 
 geometry='75%x75%+50%+50%'
-vo=opengl,gpu,x11
+vo=gpu,x11
 stop-screensaver=yes
 image-display-duration=inf
 
