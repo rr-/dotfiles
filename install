@@ -1,2 +1,2 @@
 #!/bin/sh
-python3 -m cfg."$@"
+python3.9 -m cfg."$@"
