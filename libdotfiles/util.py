@@ -1,11 +1,13 @@
 import glob
 import logging
 import os
+import shlex
 import shutil
-import typing as T
+import subprocess
 import urllib.request
 from pathlib import Path
 from subprocess import PIPE, Popen, call
+from typing import Any, Optional
 
 import __main__
 
@@ -17,7 +19,12 @@ HOME_DIR = Path("~").expanduser()
 PKG_DIR = Path(__main__.__file__).parent
 
 
-def run_silent(*args: T.Any, **kwargs: T.Any) -> T.Tuple[bool, str, str]:
+def run(command: list[Any], **kwargs: Any) -> Any:
+    logger.info("Running %r...", shlex.join(map(str, command)))
+    return subprocess.run(command, **kwargs)
+
+
+def run_silent(*args: Any, **kwargs: Any) -> tuple[bool, str, str]:
     proc = Popen(stdout=PIPE, stderr=PIPE, *args, **kwargs)
     out, err = proc.communicate()
     try:
@@ -27,7 +34,7 @@ def run_silent(*args: T.Any, **kwargs: T.Any) -> T.Tuple[bool, str, str]:
     return (proc.returncode == 0, out, err)
 
 
-def run_verbose(*args: T.Any, **kwargs: T.Any) -> bool:
+def run_verbose(*args: Any, **kwargs: Any) -> bool:
     return call(*args, **kwargs) == 0
 
 
@@ -48,7 +55,7 @@ def download(url: str, path: Path, overwrite: bool = False) -> None:
 
 
 def create_file(
-    path: Path, content: T.Optional[str] = None, overwrite: bool = False
+    path: Path, content: Optional[str] = None, overwrite: bool = False
 ) -> None:
     create_dir(path.parent)
     if overwrite or not os.path.exists(path):
