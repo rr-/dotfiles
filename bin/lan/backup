@@ -81,7 +81,7 @@ def main():
 
         # my work
         sync(
-            "lightning:/home/rr-/src/",
+            "lightning:/home/rr-/work/",
             dry_run=args.dry_run,
             exclude=["python_modules/", "node_modules/", "*.pyc"],
         )
