@@ -5,7 +5,6 @@ vo=gpu,drm
 profile=opengl-hq
 stop-screensaver=yes
 image-display-duration=inf
-sub-file-paths=subs:~/src/subs:..
 
 audio-channels=2
 alang=jpn,jp,jap,Japanese,en,eng,English
