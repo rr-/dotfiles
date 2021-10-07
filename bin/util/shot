@@ -4,10 +4,11 @@ import random
 import string
 import sys
 import time
-import typing as T
+from collections.abc import Iterable
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
+from typing import Optional
 
 from PyQt5 import QtCore, QtGui, QtWidgets
 
@@ -140,7 +141,7 @@ class WindowCapture:
 
     def get_interactive_rect(
         self, rect: QtCore.QRect
-    ) -> T.Optional[QtCore.QRect]:
+    ) -> Optional[QtCore.QRect]:
         window = InteractiveCaptureWindow(rect)
         window.show()
         self.app.exec_()
@@ -167,7 +168,7 @@ class WindowCapture:
     def get_mouse_pos(self) -> QtCore.QPoint:
         return QtGui.QCursor.pos()
 
-    def get_screens(self) -> T.Iterable[QtGui.QScreen]:
+    def get_screens(self) -> Iterable[QtGui.QScreen]:
         return self.app.screens()
 
 

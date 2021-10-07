@@ -1,16 +1,15 @@
-from libdotfiles import HOME_DIR, PKG_DIR, packages, util
+from libdotfiles.packages import try_install
+from libdotfiles.util import HOME_DIR, PKG_DIR, create_symlinks
 
-packages.try_install("bspwm")
-packages.try_install("dmenu")  # program executor
-packages.try_install("feh")  # wallpaper renderer
-packages.try_install("i3lock")  # lock screen
+try_install("bspwm")
+try_install("dmenu")  # program executor
+try_install("feh")  # wallpaper renderer
+try_install("i3lock")  # lock screen
 
-util.create_symlink(
-    PKG_DIR / "bspwmrc", HOME_DIR / ".config" / "bspwm" / "bspwmrc"
-)
-util.create_symlink(
-    PKG_DIR / "rules", HOME_DIR / ".config" / "bspwm" / "rules"
-)
-util.create_symlink(
-    PKG_DIR / "start", HOME_DIR / ".config" / "x" / "start-wm.sh"
+create_symlinks(
+    [
+        (PKG_DIR / "bspwmrc", HOME_DIR / ".config" / "bspwm" / "bspwmrc"),
+        (PKG_DIR / "rules", HOME_DIR / ".config" / "bspwm" / "rules"),
+        (PKG_DIR / "start", HOME_DIR / ".config" / "x" / "start-wm.sh"),
+    ]
 )

@@ -1,13 +1,14 @@
-from libdotfiles import packages, util
+from libdotfiles.packages import try_install
+from libdotfiles.util import run
 
-packages.try_install("bluez")
-packages.try_install("bluez-utils")
-packages.try_install("blueman")
+try_install("bluez")
+try_install("bluez-utils")
+try_install("blueman")
 
-util.run(["sudo", "systemctl", "enable", "bluetooth"])
-util.run(["sudo", "systemctl", "start", "bluetooth"])
+run(["sudo", "systemctl", "enable", "bluetooth"])
+run(["sudo", "systemctl", "start", "bluetooth"])
 
-util.run(
+run(
     [
         "sudo",
         "sh",

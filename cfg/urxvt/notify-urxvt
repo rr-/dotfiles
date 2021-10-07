@@ -3,7 +3,7 @@ import argparse
 import os
 import subprocess
 import sys
-import typing as T
+from typing import Any
 
 
 def is_tmux_visible() -> bool:
@@ -14,7 +14,7 @@ def is_tmux_visible() -> bool:
     ).strip() == os.getenv("TMUX_PANE")
 
 
-def send_osc(*args: T.Any) -> None:
+def send_osc(*args: Any) -> None:
     msg = "\a\x1b]777;" + ";".join(str(x) for x in args) + "\a"
 
     if os.getenv("TMUX"):

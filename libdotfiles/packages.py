@@ -1,21 +1,17 @@
 import logging
 import re
 import sys
+from functools import lru_cache
 from typing import Optional
 
-from libdotfiles import util
+from libdotfiles.util import has_executable, run
 
 logger = logging.getLogger(__name__)
 
 
 class PackageInstaller:
-    @property
-    def name(self) -> str:
-        raise NotImplementedError("not implemented")
-
-    @property
-    def is_supported(self) -> bool:
-        raise NotImplementedError("not implemented")
+    name: str = NotImplemented
+    is_supported: bool = NotImplemented
 
     def has_installed(self, package: str) -> bool:
         raise NotImplementedError("not implemented")
@@ -25,28 +21,6 @@ class PackageInstaller:
 
     def install(self, package: str) -> bool:
         raise NotImplementedError("not implemented")
-
-
-class CygwinPackageInstaller(PackageInstaller):
-    name = "cygwin"
-
-    @property
-    def is_supported(self) -> bool:
-        return util.has_executable("apt-cyg")
-
-    def has_installed(self, package: str) -> bool:
-        return (
-            len(util.run_silent(["apt-cyg", "list", "^%s$" % package])[1]) > 0
-        )
-
-    def is_available(self, package: str) -> bool:
-        return (
-            len(util.run_silent(["apt-cyg", "listall", "^%s$" % package])[1])
-            > 0
-        )
-
-    def install(self, package: str) -> bool:
-        return util.run_verbose(["apt-cyg", "install", package])
 
 
 class AptPackageInstaller(PackageInstaller):
@@ -54,17 +28,20 @@ class AptPackageInstaller(PackageInstaller):
 
     @property
     def is_supported(self) -> bool:
-        return util.has_executable("apt")
+        return has_executable("apt")
 
     def has_installed(self, package: str) -> bool:
-        return util.run_silent(["dpkg", "-l", package])[0]
+        return run(["dpkg", "-l", package], check=False).returncode == 0
 
     def is_available(self, package: str) -> bool:
-        return util.run_silent(["apt", "show", package])[0]
+        return run(["apt", "show", package], check=False).returncode == 0
 
     def install(self, package: str) -> bool:
-        return util.run_verbose(
-            ["sudo", "-S", "apt", "install", "-y", package]
+        return (
+            run(
+                ["sudo", "-S", "apt", "install", "-y", package], check=False
+            ).returncode
+            == 0
         )
 
 
@@ -73,16 +50,22 @@ class PacmanPackageInstaller(PackageInstaller):
 
     @property
     def is_supported(self) -> bool:
-        return util.has_executable("pacman") and util.has_executable("sudo")
+        return has_executable("pacman") and has_executable("sudo")
 
     def has_installed(self, package: str) -> bool:
-        return util.run_silent(["pacman", "-Q", package])[0]
+        return run(["pacman", "-Q", package], check=False).returncode == 0
 
     def is_available(self, package: str) -> bool:
-        return util.run_silent(["pacman", "-Ss", package])[0]
+        return run(["pacman", "-Ss", package], check=False).returncode == 0
 
     def install(self, package: str) -> bool:
-        return util.run_verbose(["sudo", "-S", "pacman", "-S", package])
+        return (
+            run(
+                ["sudo", "-S", "pacman", "-S", package, "--noconfirm"],
+                check=False,
+            ).returncode
+            == 0
+        )
 
 
 class PacaurPackageInstaller(PackageInstaller):
@@ -90,17 +73,21 @@ class PacaurPackageInstaller(PackageInstaller):
 
     @property
     def is_supported(self) -> bool:
-        return util.has_executable("pacaur")
+        return has_executable("pacaur")
 
     def has_installed(self, package: str) -> bool:
-        return util.run_silent(["pacaur", "-Q", package])[0]
+        return run(["pacaur", "-Q", package], check=False).returncode == 0
 
     def is_available(self, package: str) -> bool:
-        return util.run_silent(["pacaur", "-Ss", package])[0]
+        return run(["pacaur", "-Ss", package], check=False).returncode == 0
 
     def install(self, package: str) -> bool:
-        return util.run_verbose(
-            ["pacaur", "-S", package, "--noconfirm", "--noedit"]
+        return (
+            run(
+                ["pacaur", "-S", package, "--noconfirm", "--noedit"],
+                check=False,
+            ).returncode
+            == 0
         )
 
 
@@ -109,16 +96,39 @@ class PipPackageInstaller(PackageInstaller):
 
     @property
     def is_supported(self) -> bool:
-        return util.has_executable("python3")
+        return has_executable("python3")
+
+    @property
+    @lru_cache
+    def installed_packages(self) -> list[tuple[str, str, Optional[str]]]:
+        output = run(
+            ["python3", "-m", "pip", "list"],
+            check=True,
+            text=True,
+            capture_output=True,
+        ).stdout
+        ret = []
+        for line in output.splitlines()[2:]:
+            if line:
+                result = line.split(maxsplit=2)
+                if len(result) == 2:
+                    package, version = result
+                    location = None
+                elif len(result) == 3:
+                    package, version, location = result
+                else:
+                    raise RuntimeError("unexpected output")
+                ret.append((package, version, location))
+        return ret
 
     def has_installed(self, package: str) -> bool:
-        return (
-            re.search(
-                "^" + re.escape(package) + r"($|\s)",
-                util.run_silent(["python3", "-m", "pip", "list"])[1],
-                re.MULTILINE,
-            )
-            is not None
+        return any(
+            other_package == package
+            for (
+                other_package,
+                _other_version,
+                _other_location,
+            ) in self.installed_packages
         )
 
     def is_available(self, package: str) -> bool:
@@ -129,14 +139,14 @@ class PipPackageInstaller(PackageInstaller):
         )
         try:
             urllib.request.urlopen(request)
-        except urllib.request.HTTPError:
+        except urllib.error.HTTPError:
             return False
         else:
             return True
 
     def install(self, package: str) -> bool:
         command = ["python3", "-m", "pip", "install", "--user", package]
-        return util.run_verbose(command)
+        return run(command, check=False).returncode == 0
 
 
 INSTALLERS = [cls() for cls in PackageInstaller.__subclasses__()]

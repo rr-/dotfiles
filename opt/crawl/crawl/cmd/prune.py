@@ -1,7 +1,6 @@
 import argparse
 import concurrent.futures
 import dataclasses
-import typing as T
 from pathlib import Path
 
 from tqdm import tqdm
@@ -20,7 +19,7 @@ class PruneStats:
     total: int = 0
     removed: int = 0
     kept: int = 0
-    errors: T.List[Exception] = dataclasses.field(default_factory=list)
+    errors: list[Exception] = dataclasses.field(default_factory=list)
 
     @property
     def skipped(self) -> int:

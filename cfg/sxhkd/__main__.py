@@ -1,10 +1,11 @@
-from libdotfiles import HOME_DIR, PKG_DIR, packages, util
+from libdotfiles.packages import try_install
+from libdotfiles.util import HOME_DIR, PKG_DIR, create_symlinks
 
-packages.try_install("sxhkd")
-packages.try_install("xdo")
-packages.try_install("wmctrl")
+try_install("sxhkd")
+try_install("xdo")
+try_install("wmctrl")
 
-util.create_symlinks(
+create_symlinks(
     [
         (PKG_DIR / "config", HOME_DIR / ".config/sxhkd"),
         (

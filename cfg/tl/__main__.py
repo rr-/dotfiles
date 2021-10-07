@@ -1,16 +1,18 @@
 import os
 import tempfile
 
-from libdotfiles import packages, util
+from libdotfiles.packages import try_install
+from libdotfiles.util import distro_name, run
 
-if util.distro_name() == "arch":
-    packages.try_install("translate-shell-git")
-elif util.distro_name() == "linuxmint":
+if distro_name() == "arch":
+    try_install("translate-shell-git")
+elif distro_name() == "linuxmint":
     with tempfile.TemporaryDirectory() as tmp_dir:
         os.chdir(tmp_dir)
-        util.run_verbose(
-            ["git", "clone", "https://github.com/soimort/translate-shell"]
+        run(
+            ["git", "clone", "https://github.com/soimort/translate-shell"],
+            check=True,
         )
         os.chdir("translate-shell")
-        util.run_verbose(["make"])
-        util.run_verbose(["sudo", "make", "install"])
+        run(["make"], check=True)
+        run(["sudo", "make", "install"], check=True)

@@ -1,4 +1,3 @@
-import typing as T
 from collections.abc import Iterable
 from pathlib import Path
 

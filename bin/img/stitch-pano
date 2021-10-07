@@ -28,7 +28,7 @@ import glob
 import os
 import sys
 import tempfile
-import typing as T
+from collections.abc import Iterable
 from dataclasses import dataclass
 from pathlib import Path
 from subprocess import PIPE, CalledProcessError, run
@@ -70,7 +70,7 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def make_pto_file(pto_file: Path, input_files: T.List[Path]) -> None:
+def make_pto_file(pto_file: Path, input_files: list[Path]) -> None:
     run(["pto_gen", "-o", pto_file] + input_files, check=True)
 
 
@@ -109,7 +109,7 @@ def optimize_rotation_and_translation(pto_file: Path) -> None:
     run(["autooptimiser", "-n", "-o", pto_file, pto_file], check=True)
 
 
-def get_control_points(pto_file: Path) -> T.Iterable[ControlPoint]:
+def get_control_points(pto_file: Path) -> Iterable[ControlPoint]:
     with pto_file.open() as handle:
         for line in handle:
             if line.startswith("c"):
@@ -123,8 +123,8 @@ def get_control_points(pto_file: Path) -> T.Iterable[ControlPoint]:
 
 
 def pano_trafo(
-    pto_file: Path, control_points: T.List[ControlPoint], reverse: bool = False
-) -> T.List[Point]:
+    pto_file: Path, control_points: list[ControlPoint], reverse: bool = False
+) -> list[Point]:
     result = run(
         ["pano_trafo"] + (["-r"] if reverse else []) + [pto_file],
         check=True,
@@ -141,13 +141,13 @@ def pano_trafo(
 
 
 def morph_images_to_fit_control_points(
-    pto_file: Path, tmp_dir: Path, input_files: T.List[Path]
+    pto_file: Path, tmp_dir: Path, input_files: list[Path]
 ) -> None:
     control_points = list(get_control_points(pto_file))
 
     trafo_points = pano_trafo(pto_file, control_points)
 
-    morphed_control_points: T.List[ControlPoint] = []
+    morphed_control_points: list[ControlPoint] = []
     for i in range(len(control_points) // 2):
         img1 = control_points[i * 2].img
         img2 = control_points[i * 2 + 1].img
@@ -160,7 +160,7 @@ def morph_images_to_fit_control_points(
         pto_file, morphed_control_points, reverse=True
     )
 
-    control_points_for_imagick: T.Dict[int, T.List[Point]] = {
+    control_points_for_imagick: dict[int, list[Point]] = {
         i: [] for i in range(len(input_files))
     }
     for control_point, rev_trafo_point in zip(

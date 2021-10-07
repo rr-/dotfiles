@@ -24,25 +24,11 @@ def run(command: list[Any], **kwargs: Any) -> CompletedProcess[str]:
     return subprocess.run(command, **kwargs)
 
 
-def run_silent(*args: Any, **kwargs: Any) -> tuple[bool, str, str]:
-    proc = Popen(*args, stdout=PIPE, stderr=PIPE, **kwargs)  # type: ignore
-    out, err = proc.communicate()
-    try:
-        out, err = out.decode("utf8"), err.decode("utf8")
-    except UnicodeDecodeError:
-        pass
-    return (proc.returncode == 0, out, err)
-
-
-def run_verbose(*args: Any, **kwargs: Any) -> bool:
-    return call(*args, **kwargs) == 0
-
-
 def has_executable(program: str) -> bool:
     return shutil.which(program) is not None
 
 
-def download(url: str, path: Path, overwrite: bool = False) -> None:
+def download_file(url: str, path: Path, overwrite: bool = False) -> None:
     create_dir(path.parent)
     if overwrite or not path.exists():
         logger.info("Downloading %r into %r...", url, path)

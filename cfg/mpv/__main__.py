@@ -1,8 +1,9 @@
-from libdotfiles import HOME_DIR, PKG_DIR, packages, util
+from libdotfiles.packages import try_install
+from libdotfiles.util import HOME_DIR, PKG_DIR, create_symlink, distro_name
 
-if util.distro_name() == "arch":
-    packages.try_install("mujs")
-    packages.try_install("luajit")
+if distro_name() == "arch":
+    try_install("mujs")
+    try_install("luajit")
 
-packages.try_install("mpv")
-util.create_symlink(PKG_DIR / "config", HOME_DIR / ".config" / "mpv")
+try_install("mpv")
+create_symlink(PKG_DIR / "config", HOME_DIR / ".config" / "mpv")

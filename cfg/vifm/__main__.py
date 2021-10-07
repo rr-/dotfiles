@@ -1,10 +1,17 @@
-from libdotfiles import HOME_DIR, PKG_DIR, packages, util
+from libdotfiles.packages import try_install
+from libdotfiles.util import (
+    HOME_DIR,
+    PKG_DIR,
+    create_dir,
+    create_symlinks,
+    has_executable,
+)
 
-if not util.has_executable("vifm"):
-    packages.try_install("vifm")
+if not has_executable("vifm"):
+    try_install("vifm")
 
-util.create_dir(HOME_DIR / ".config" / "vifm")
-util.create_symlinks(
+create_dir(HOME_DIR / ".config" / "vifm")
+create_symlinks(
     [
         (PKG_DIR / "vifmrc", HOME_DIR / ".config" / "vifm" / "vifmrc"),
         (PKG_DIR / "colors", HOME_DIR / ".config" / "vifm" / "colors"),

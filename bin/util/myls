@@ -3,7 +3,7 @@ import argparse
 import os
 import stat
 import sys
-import typing as T
+from collections.abc import Iterable
 from datetime import datetime
 from grp import getgrgid
 from pathlib import Path
@@ -18,9 +18,9 @@ RESET = Fore.RESET
 
 
 def tabulate(
-    rows: T.Iterable[T.Tuple[str, ...]],
-    headers: T.Tuple[str, ...],
-    alignments: T.Tuple[str, ...],
+    rows: Iterable[tuple[str, ...]],
+    headers: tuple[str, ...],
+    alignments: tuple[str, ...],
 ) -> str:
     gap = "  "
 
@@ -37,7 +37,7 @@ def tabulate(
         for i in range(len(headers))
     ]
 
-    def print_row(row: T.Tuple[str, ...]) -> str:
+    def print_row(row: tuple[str, ...]) -> str:
         return gap.join(formats[i].format(cell) for i, cell in enumerate(row))
 
     ret = ""
@@ -58,7 +58,7 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def collect_paths(path: Path) -> T.Iterable[Path]:
+def collect_paths(path: Path) -> Iterable[Path]:
     if path.is_dir():
         for sub_path in path.iterdir():
             yield sub_path
@@ -136,9 +136,9 @@ def format_chmod(mode: int) -> str:
 
 
 def print_long_listing(
-    paths: T.Iterable[Path], args: argparse.Namespace
+    paths: Iterable[Path], args: argparse.Namespace
 ) -> None:
-    rows: T.List[T.Tuple[str, ...]] = []
+    rows: list[tuple[str, ...]] = []
 
     for path in paths:
         try:
@@ -179,7 +179,7 @@ def print_long_listing(
 
 
 def print_short_listing(
-    paths: T.Iterable[Path], args: argparse.Namespace
+    paths: Iterable[Path], args: argparse.Namespace
 ) -> None:
     for path in paths:
         print(format_name(path, args.color))

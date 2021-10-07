@@ -2,7 +2,7 @@ import tempfile
 from pathlib import Path
 
 from libdotfiles.packages import try_install
-from libdotfiles.util import current_username, distro_name, download, run
+from libdotfiles.util import current_username, distro_name, download_file, run
 
 if distro_name() == "linux":
     try_install("docker")
@@ -10,7 +10,9 @@ if distro_name() == "linux":
 elif distro_name() == "linuxmint":
     with tempfile.TemporaryDirectory() as tmpdir:
         target_file = Path(tmpdir) / "docker-key.gpg"
-        download("https://download.docker.com/linux/ubuntu/gpg", target_file)
+        download_file(
+            "https://download.docker.com/linux/ubuntu/gpg", target_file
+        )
         run(["sudo", "apt-key", "add", target_file], check=False)
 
     run(

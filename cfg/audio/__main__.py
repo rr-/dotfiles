@@ -1,8 +1,9 @@
-from libdotfiles import packages, util
+from libdotfiles.packages import try_install
+from libdotfiles.util import run
 
-packages.try_install("alsa-utils")
-packages.try_install("pulseaudio")
-packages.try_install("pulseaudio-bluetooth")
-packages.try_install("pavucontrol")
+try_install("alsa-utils")
+try_install("pulseaudio")
+try_install("pulseaudio-bluetooth")
+try_install("pavucontrol")
 
-util.run(["pulseaudio", "-D"])
+run(["pulseaudio", "-D"])
