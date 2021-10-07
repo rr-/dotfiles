@@ -94,6 +94,8 @@
     path = ~/.config/git/config-priv
 [includeIf "gitdir:~/work/moto/"]
     path = ~/.config/git/config-moto
+[includeIf "gitdir:~/work/netguru/"]
+    path = ~/.config/git/config-netguru
 [includeIf "gitdir:~/work/invoices/"]
     path = ~/.config/git/config-priv
 [credential "https://github.com"]
