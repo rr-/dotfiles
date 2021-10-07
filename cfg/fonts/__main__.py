@@ -2,12 +2,20 @@ from pathlib import Path
 
 from libdotfiles import HOME_DIR, PKG_DIR, packages, util
 
-packages.try_install("xfonts-utils")
-packages.try_install("fonts-ipafont")
-packages.try_install("fonts-dejavu")
-packages.try_install("fonts-symbola")
-packages.try_install("fonts-font-awesome")
-packages.try_install("fonts-monapo")
+if util.distro_name() == "arch":
+    # packages.try_install("xfonts-utils")
+    # packages.try_install("otf-ipafont")
+    packages.try_install("ttf-dejavu")
+    # packages.try_install("ttf-symbola")
+    # packages.try_install("ttf-font-awesome")
+    # packages.try_install("otf-monapo")
+else:
+    packages.try_install("xfonts-utils")
+    packages.try_install("fonts-ipafont")
+    packages.try_install("fonts-dejavu")
+    packages.try_install("fonts-symbola")
+    packages.try_install("fonts-font-awesome")
+    packages.try_install("fonts-monapo")
 
 if Path("/usr/share/fonts").exists():
     fonts_dir = HOME_DIR / ".local" / "share" / "fonts"
