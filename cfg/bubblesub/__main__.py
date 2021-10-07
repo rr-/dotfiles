@@ -2,7 +2,7 @@ from libdotfiles import packages, util
 
 if util.distro_name() == "arch":
     packages.try_install("python-pyqt5")
-    packages.try_install("ffms2000-git")
+    packages.try_install("ffms2-git")
     packages.try_install("fftw")
 elif util.distro_name() == "linuxmint":
     packages.try_install("python3-setuptools")
