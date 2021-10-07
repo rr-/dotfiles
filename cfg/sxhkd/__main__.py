@@ -2,6 +2,7 @@ from libdotfiles import HOME_DIR, PKG_DIR, packages, util
 
 packages.try_install("sxhkd")
 packages.try_install("xdo")
+packages.try_install("wmctrl")
 
 util.create_symlinks(
     [
