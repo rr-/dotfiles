@@ -6,7 +6,7 @@ import shutil
 import subprocess
 import urllib.request
 from pathlib import Path
-from subprocess import PIPE, Popen, call
+from subprocess import PIPE, CompletedProcess, Popen, call
 from typing import Any, Optional
 
 import __main__
@@ -19,13 +19,13 @@ HOME_DIR = Path("~").expanduser()
 PKG_DIR = Path(__main__.__file__).parent
 
 
-def run(command: list[Any], **kwargs: Any) -> Any:
+def run(command: list[Any], **kwargs: Any) -> CompletedProcess[str]:
     logger.info("Running %r...", shlex.join(map(str, command)))
     return subprocess.run(command, **kwargs)
 
 
 def run_silent(*args: Any, **kwargs: Any) -> tuple[bool, str, str]:
-    proc = Popen(stdout=PIPE, stderr=PIPE, *args, **kwargs)
+    proc = Popen(*args, stdout=PIPE, stderr=PIPE, **kwargs)  # type: ignore
     out, err = proc.communicate()
     try:
         out, err = out.decode("utf8"), err.decode("utf8")
@@ -100,3 +100,9 @@ def distro_name() -> str:
         if key == "id":
             return value.strip('"')
     return "unknown"
+
+
+def current_username() -> str:
+    return run(
+        ["whoami"], check=True, capture_output=True, text=True
+    ).stdout.strip()
