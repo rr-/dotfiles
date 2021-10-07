@@ -156,7 +156,11 @@ class WindowCapture:
     def capture_region(self, rect: QtCore.QRect) -> QtGui.QPixmap:
         screen = QtWidgets.QApplication.primaryScreen()
         screenshot = screen.grabWindow(
-            0, rect.x(), rect.y(), rect.width(), rect.height()
+            self.app.desktop().winId(),
+            rect.x(),
+            rect.y(),
+            rect.width(),
+            rect.height(),
         )
         return screenshot
 
