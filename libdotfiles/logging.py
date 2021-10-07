@@ -1,6 +1,7 @@
 # pylint: disable=unused-import,protected-access,invalid-name
 import logging
 import os
+from collections.abc import Callable
 from logging import (
     DEBUG,
     ERROR,
@@ -12,18 +13,21 @@ from logging import (
     info,
     warning,
 )
+from typing import Any
 
 import coloredlogs
 
 
-def _add_custom_level(number, name):
+def _add_custom_level(
+    number: int, name: str
+) -> tuple[int, Callable[..., None]]:
     logging.addLevelName(number, name.upper())
 
-    def member(self, message, *args, **kwargs):
+    def member(self: Any, message: str, *args: Any, **kwargs: Any) -> None:
         if self.isEnabledFor(number):
             self._log(number, message, args, **kwargs)
 
-    def function(message, *args, **kwargs):
+    def function(message: str, *args: Any, **kwargs: Any) -> None:
         if len(logging.Logger.root.handlers) == 0:
             logging.basicConfig()
         logging.Logger.root._log(number, message, args, **kwargs)

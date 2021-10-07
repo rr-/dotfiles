@@ -1,30 +1,33 @@
 import os
 import tempfile
 
-from libdotfiles import packages, util
+from libdotfiles.packages import try_install
+from libdotfiles.util import distro_name, run
 
-if util.distro_name() == "arch":
-    packages.try_install("base-devel")
-    packages.try_install("expac")
-    packages.try_install("fakechroot")
-    packages.try_install("fakeroot")
-    packages.try_install("gtest")
-    packages.try_install("jq")
-    packages.try_install("meson")
-    packages.try_install("sudo")
+if distro_name() == "arch":
+    try_install("base-devel")
+    try_install("expac")
+    try_install("fakechroot")
+    try_install("fakeroot")
+    try_install("gtest")
+    try_install("jq")
+    try_install("meson")
+    try_install("sudo")
 
     with tempfile.TemporaryDirectory() as tmp_dir:
         os.chdir(tmp_dir)
-        util.run_verbose(
-            ["git", "clone", "https://aur.archlinux.org/auracle-git.git"]
+        run(
+            ["git", "clone", "https://aur.archlinux.org/auracle-git.git"],
+            check=True,
         )
         os.chdir(os.path.join(tmp_dir, "auracle-git"))
-        util.run_verbose(["makepkg", "-i", "--skippgpcheck"])
+        run(["makepkg", "-i", "--skippgpcheck"], check=True)
 
     with tempfile.TemporaryDirectory() as tmp_dir:
         os.chdir(tmp_dir)
-        util.run_verbose(
-            ["git", "clone", "https://aur.archlinux.org/pacaur.git"]
+        run(
+            ["git", "clone", "https://aur.archlinux.org/pacaur.git"],
+            check=True,
         )
         os.chdir(os.path.join(tmp_dir, "pacaur"))
-        util.run_verbose(["makepkg", "-i", "--skippgpcheck"])
+        run(["makepkg", "-i", "--skippgpcheck"], check=True)

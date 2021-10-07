@@ -1,7 +1,8 @@
-from libdotfiles import HOME_DIR, PKG_DIR, packages, util
+from libdotfiles.packages import try_install
+from libdotfiles.util import HOME_DIR, PKG_DIR, create_symlink
 
-packages.try_install("signal-desktop")
+try_install("signal-desktop")
 
-util.create_symlink(
+create_symlink(
     PKG_DIR / "start", HOME_DIR / ".config" / "x" / "start-signal.sh"
 )

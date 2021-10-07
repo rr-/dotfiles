@@ -3,7 +3,6 @@ import concurrent.futures
 import dataclasses
 import os
 import re
-import typing as T
 import urllib.parse
 from pathlib import Path
 
@@ -24,15 +23,15 @@ MEDIA_EXTENSIONS = [".jpg", ".gif", ".png", ".webm"]
 class ProbeResult:
     url: str
     is_media: bool
-    child_urls: T.Set[str] = dataclasses.field(default_factory=set)
+    child_urls: set[str] = dataclasses.field(default_factory=set)
 
 
 @dataclasses.dataclass
 class LinkScanResult:
-    errors: T.List[str] = dataclasses.field(default_factory=list)
-    document_urls: T.Set[str] = dataclasses.field(default_factory=set)
-    media_urls: T.Set[str] = dataclasses.field(default_factory=set)
-    linkings: T.Dict[str, T.Set[str]] = dataclasses.field(default_factory=dict)
+    errors: list[str] = dataclasses.field(default_factory=list)
+    document_urls: set[str] = dataclasses.field(default_factory=set)
+    media_urls: set[str] = dataclasses.field(default_factory=set)
+    linkings: dict[str, set[str]] = dataclasses.field(default_factory=dict)
 
     @property
     def total(self) -> int:
@@ -43,7 +42,7 @@ class LinkScanResult:
 class DownloadStats:
     total: int = 0
     downloaded: int = 0
-    errors: T.List[str] = dataclasses.field(default_factory=list)
+    errors: list[str] = dataclasses.field(default_factory=list)
 
     @property
     def skipped(self) -> int:
@@ -59,7 +58,7 @@ def _link_scan(args: argparse.Namespace, result: LinkScanResult) -> None:
 
     executor = concurrent.futures.ThreadPoolExecutor(max_workers=args.num)
     with Flow.guard(executor):
-        urls_to_fetch: T.Set[str] = set(args.url)
+        urls_to_fetch: set[str] = set(args.url)
 
         while urls_to_fetch:
             futures = [
@@ -192,8 +191,8 @@ def _get_target_path(
     )
 
 
-def _collect_links(response: Response) -> T.Set[str]:
-    ret: T.Set[str] = set()
+def _collect_links(response: Response) -> set[str]:
+    ret: set[str] = set()
     soup = BeautifulSoup(response.text, "html.parser")
 
     for link in soup.find_all("a", href=True):

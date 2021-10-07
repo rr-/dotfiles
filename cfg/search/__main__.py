@@ -1,28 +1,36 @@
 from pathlib import Path
 
-from libdotfiles import HOME_DIR, PKG_DIR, packages, util
+from libdotfiles.packages import has_installed, try_install
+from libdotfiles.util import (
+    HOME_DIR,
+    PKG_DIR,
+    create_symlink,
+    distro_name,
+    run,
+)
 
 FZF_DIR = HOME_DIR / ".fzf"
 
-if util.distro_name() == "arch":
-    packages.try_install("fzf")  # super opener
-    packages.try_install("the_silver_searcher")  # fzf dependency
-    packages.try_install("ripgrep")  # super grep (shell)
+if distro_name() == "arch":
+    try_install("fzf")  # super opener
+    try_install("the_silver_searcher")  # fzf dependency
+    try_install("ripgrep")  # super grep (shell)
 
-elif util.distro_name() == "linuxmint":
-    packages.try_install("silversearcher-ag")
+elif distro_name() == "linuxmint":
+    try_install("silversearcher-ag")
 
-    if not packages.has_installed("ripgrep"):
-        util.run_verbose(
+    if not has_installed("ripgrep"):
+        run(
             [
                 "curl",
                 "-LO",
                 "https://github.com/BurntSushi/ripgrep/releases/download/11.0.2/ripgrep_11.0.2_amd64.deb",
-            ]
+            ],
+            check=True,
         )
-        util.run_verbose(["sudo", "dpkg", "-i", "ripgrep_11.0.2_amd64.deb"])
+        run(["sudo", "dpkg", "-i", "ripgrep_11.0.2_amd64.deb"], check=True)
 
-    util.run_verbose(
+    run(
         [
             "git",
             "clone",
@@ -30,15 +38,17 @@ elif util.distro_name() == "linuxmint":
             "1",
             "https://github.com/junegunn/fzf.git",
             FZF_DIR,
-        ]
+        ],
+        check=True,
     )
-    util.run_verbose(
+    run(
         [
             FZF_DIR / "install",
             "--key-bindings",
             "--completion",
             "--no-update-rc",
-        ]
+        ],
+        check=True,
     )
 
-util.create_symlink(PKG_DIR / "agignore", HOME_DIR / ".agignore")
+create_symlink(PKG_DIR / "agignore", HOME_DIR / ".agignore")

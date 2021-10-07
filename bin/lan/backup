@@ -1,8 +1,8 @@
 #!/usr/bin/env python3.9
 import argparse
 import shlex
-import typing as T
 from subprocess import CalledProcessError, run
+from typing import Optional
 
 from libdotfiles import logging
 
@@ -17,7 +17,7 @@ def sync(
     source: str,
     dry_run: bool,
     traverse_links: bool = False,
-    exclude: T.Optional[T.List[str]] = None,
+    exclude: Optional[list[str]] = None,
 ) -> None:
     source_machine, source_path = source.split(":", 1)
     target_machine = "frost"

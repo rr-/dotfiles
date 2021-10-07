@@ -1,11 +1,12 @@
 from pathlib import Path
 
-from libdotfiles import HOME_DIR, PKG_DIR, packages, util
+from libdotfiles.packages import try_install
+from libdotfiles.util import HOME_DIR, PKG_DIR, create_symlinks
 
-packages.try_install("urxvt-perls")
-packages.try_install("rxvt-unicode")
+try_install("urxvt-perls")
+try_install("rxvt-unicode")
 
-util.create_symlinks(
+create_symlinks(
     [
         (PKG_DIR / "ext", HOME_DIR / ".urxvt" / "ext"),
         (PKG_DIR / "Xresources", HOME_DIR / ".config" / "Xresources"),

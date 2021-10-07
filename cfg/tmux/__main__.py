@@ -1,13 +1,15 @@
-from libdotfiles import HOME_DIR, PKG_DIR, packages, util
+from libdotfiles.packages import try_install
+from libdotfiles.util import HOME_DIR, PKG_DIR, create_symlink, run
 
-packages.try_install("tmux")
-util.create_symlink(PKG_DIR / "tmux.conf", HOME_DIR / ".tmux.conf")
-util.create_symlink(PKG_DIR / "config", HOME_DIR / ".config" / "tmux")
-util.run_verbose(
+try_install("tmux")
+create_symlink(PKG_DIR / "tmux.conf", HOME_DIR / ".tmux.conf")
+create_symlink(PKG_DIR / "config", HOME_DIR / ".config" / "tmux")
+run(
     [
         "git",
         "clone",
         "https://github.com/tmux-plugins/tpm",
         HOME_DIR / ".config" / "tmux" / "plugins" / "tpm",
-    ]
+    ],
+    check=True,
 )

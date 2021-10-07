@@ -1,8 +1,15 @@
-from libdotfiles import HOME_DIR, PKG_DIR, packages, util
+from libdotfiles.packages import try_install
+from libdotfiles.util import (
+    HOME_DIR,
+    PKG_DIR,
+    create_dir,
+    create_symlinks,
+    run,
+)
 
-packages.try_install("zsh")
+try_install("zsh")
 
-util.create_symlinks(
+create_symlinks(
     [
         (PKG_DIR / "zshrc", HOME_DIR / ".zshrc"),
         (PKG_DIR / "zprofile", HOME_DIR / ".zprofile"),
@@ -10,7 +17,8 @@ util.create_symlinks(
     ]
 )
 
-util.create_dir(HOME_DIR / ".config" / "zsh")
-util.run_verbose(
-    ["lesskey", "-o", HOME_DIR / ".less", "--", PKG_DIR / "lesskey"]
+create_dir(HOME_DIR / ".config" / "zsh")
+run(
+    ["lesskey", "-o", HOME_DIR / ".less", "--", PKG_DIR / "lesskey"],
+    check=False,
 )
