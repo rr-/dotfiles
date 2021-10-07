@@ -96,6 +96,14 @@ super + Down
 super + f
     wmctrl -r :ACTIVE: -b toggle,fullscreen
 
+# set current window as tiled
+super + t
+    bspc node -t tiled
+
+# set current window as floating
+super + s
+    bspc node -t floating
+
 # reload sxhkd configuration
 alt + F12
     killall -SIGUSR1 sxhkd
