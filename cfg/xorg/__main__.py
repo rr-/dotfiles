@@ -8,13 +8,14 @@ packages.try_install("xorg-xrandr")  # to query monitor information
 packages.try_install("xdotool")  # for all sort of things
 packages.try_install("autocutsel")  # sync primary and selection clipboards
 packages.try_install("clipit")  # keep clipboard data after process exit
-packages.try_install("pkg-config")  # for compton
-packages.try_install("compton")  # for shadows, transparency and vsync
+packages.try_install("pkg-config")  # for picom
+packages.try_install("picom")  # for shadows, transparency and vsync
 packages.try_install("xdg", method="pip")  # for XDG_CONFIG_HOME
 
 util.create_symlinks(
     [
         (PKG_DIR / "xinitrc", HOME_DIR / ".xinitrc"),
-        (PKG_DIR / "compton.conf", HOME_DIR / ".config" / "compton.conf"),
+        (PKG_DIR / "picom.conf", HOME_DIR / ".config" / "picom.conf"),
+        (PKG_DIR / "picom.conf", HOME_DIR / ".config" / "compton.conf"),
     ]
 )
