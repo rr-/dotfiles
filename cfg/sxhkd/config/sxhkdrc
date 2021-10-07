@@ -72,13 +72,13 @@ super + shift + {h,j,k,l}
     bspc node -s $DIR
 
 # focus workspace
-super + {1-5}
-    TARGET={1-5}; \
+super + {1-6}
+    TARGET={1-6}; \
     bspc desktop -f $TARGET
 
 # send active window to given another workspace
-super + shift + {1-5}
-    TARGET={1-5}; \
+super + shift + {1-6}
+    TARGET={1-6}; \
     ID=$(xdotool getactivewindow); \
     bspc node -d $TARGET && bspc node -f $ID
 
