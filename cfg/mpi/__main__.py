@@ -2,7 +2,7 @@ from libdotfiles import HOME_DIR, PKG_DIR, packages, util
 
 if not util.has_executable("mpv"):
     packages.try_install("luajit")
-    packages.try_install("mpv-git")
+    packages.try_install("mpv")
 
 util.create_symlinks(
     [
