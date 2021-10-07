@@ -1,0 +1,61 @@
+#!/bin/sh
+SOURCE="${BASH_SOURCE[0]}"
+while [ -h "$SOURCE" ]; do
+    DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
+    SOURCE="$(readlink "$SOURCE")"
+    [[ $SOURCE != /* ]] && SOURCE="$DIR/$SOURCE"
+done
+DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
+
+if [ "$(hostname)" = lightning ]; then
+    bspc monitor DP-1 -d 1 2 3 4
+    bspc monitor HDMI-0 -d 5
+else
+    bspc monitor -d 1 2 3 4
+fi
+
+bspc config pointer_modifier mod4
+bspc config focused_border_color "#027BB2"
+bspc config active_border_color "#555555"
+bspc config normal_border_color "#555555"
+
+bspc config border_width          4
+bspc config window_gap            20
+bspc config -d 4 window_gap       100
+bspc config split_ratio           0.6
+bspc config borderless_monocle    true
+bspc config gapless_monocle       true
+bspc config focus_follows_pointer true
+
+bspc rule -a remote_irc desktop=10
+bspc rule -a qbittorrent desktop=9
+bspc rule -a Steam desktop=8
+bspc config external_rules_command "$DIR/rules"
+
+systemctl restart --user sxhkd
+
+# fix Java GUI rendering - found in baskerville's dotfiles
+IRONIC_WM_NAME="LG3D"
+NET_WIN=$(xprop -root _NET_SUPPORTING_WM_CHECK | awk -F "# " '{print $2}')
+if [[ "$NET_WIN" == 0x* ]]; then
+    xprop -id "$NET_WIN" -remove _NET_WM_NAME
+    xprop -id "$NET_WIN" -f _NET_WM_NAME 8s -set _NET_WM_NAME "$IRONIC_WM_NAME"
+else
+    xprop -root -remove _NET_WM_NAME
+    xprop -root -f _NET_WM_NAME 8s -set _NET_WM_NAME "$IRONIC_WM_NAME"
+fi
+
+# enable transparency manager
+# this is also supposed to eliminate problems with tearing.
+picomflags=( )
+if lspci | grep -i nvidia &>/dev/null; then
+    # nvidia
+    picomflags+=( --backend glx --vsync )
+else
+    # amd
+    picomflags+=( --backend xrender --unredir-if-possible )
+fi
+pkill -f -9 picom &>/dev/null
+picom "${picomflags[@]}" & # -b broke on pacman -Syu at 2016-03-14
+
+feh --no-fehbg --bg-fill ~/.wallpaper.jpg
