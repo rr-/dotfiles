@@ -5,10 +5,8 @@
 # dmenu (a program launcher)
 super + {r, d}
     dmenu_run
-
-# switch Polish↔Japanese
-super + {n, space}
-    fcitx-remote -t
+alt + F2
+    dmenu_run
 
 # focus or spawn local tmux
 alt + ctrl + bracketleft
@@ -44,7 +42,8 @@ alt + ctrl + semicolon
 # volume up and down
 super + {x,X}
     dir={+,-}; \
-    amixer -D pulse set Master 1%$dir unmute
+    sink=$(pactl get-default-sink); \
+    pactl -- set-sink-volume ${sink} ${dir}'5%'
 
 
 
@@ -54,23 +53,34 @@ super + {x,X}
 
 # transparency
 super + {button5,button4}
-    compton-trans -c {-,+}5
+    picom-trans -c {-,+}5
 super + {z,Z}
-    compton-trans -c {-,+}5
+    picom-trans -c {-,+}5
 
 # close active window
 super + q
     wmctrl -c :ACTIVE:
 
-# send active window to given another workspace
-super + shift + {1-4}
-    TARGET={0-3}; \
-    wmctrl -r :ACTIVE: -t "$TARGET"; \
-    wmctrl -s "$TARGET"
+# focus window in given direction
+super + {h,j,k,l}
+    DIR={west,south,north,east}; \
+    bspc node -f $DIR || ( bspc monitor -f $DIR; bspc node -f @/1.floating )
+
+# move window in given direction
+super + shift + {h,j,k,l}
+    DIR={west,south,north,east}; \
+    bspc node -s $DIR
 
 # focus workspace
-super + {1-4}
-    wmctrl -s {0-3}
+super + {1-5}
+    TARGET={1-5}; \
+    bspc desktop -f $TARGET
+
+# send active window to given another workspace
+super + shift + {1-5}
+    TARGET={1-5}; \
+    ID=$(xdotool getactivewindow); \
+    bspc node -d $TARGET && bspc node -f $ID
 
 # maximize the window
 super + Up
@@ -89,6 +99,10 @@ super + f
 # reload sxhkd configuration
 alt + F12
     killall -SIGUSR1 sxhkd
+
+# reload bspwm configuration
+alt + shift + F12
+    bash -c '~/.config/bspwm/bspwmrc'
 
 # screenshots
 # window
