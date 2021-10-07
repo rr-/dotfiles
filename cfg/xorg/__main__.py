@@ -10,7 +10,6 @@ packages.try_install("autocutsel")  # sync primary and selection clipboards
 packages.try_install("clipit")  # keep clipboard data after process exit
 packages.try_install("pkg-config")  # for compton
 packages.try_install("compton")  # for shadows, transparency and vsync
-packages.try_install("shot-git")  # for screenshots
 packages.try_install("xdg", method="pip")  # for XDG_CONFIG_HOME
 
 util.create_symlinks(
