@@ -13,12 +13,9 @@ from libdotfiles.util import (
 )
 
 if distro_name() == "arch":
-    # try_install("xfonts-utils")
-    # try_install("otf-ipafont")
     try_install("ttf-dejavu")
-    # try_install("ttf-symbola")
-    # try_install("ttf-font-awesome")
-    # try_install("otf-monapo")
+    try_install("adobe-source-han-sans-otc-fonts")
+    try_install("adobe-source-han-serif-otc-fonts")
 else:
     try_install("xfonts-utils")
     try_install("fonts-ipafont")
