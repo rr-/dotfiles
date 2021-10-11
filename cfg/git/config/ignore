@@ -1,3 +1,4 @@
+/.git
 .*.swp
 *.py[cod]
 *.exe
@@ -5,7 +6,6 @@
 *.o
 *.so
 .lvimrc
-.agignore
 .mypy_cache
 .cache
 .pytest_cache

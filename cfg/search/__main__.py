@@ -13,12 +13,9 @@ FZF_DIR = HOME_DIR / ".fzf"
 
 if distro_name() == "arch":
     try_install("fzf")  # super opener
-    try_install("the_silver_searcher")  # fzf dependency
-    try_install("ripgrep")  # super grep (shell)
+    try_install("ripgrep")  # super grep
 
 elif distro_name() == "linuxmint":
-    try_install("silversearcher-ag")
-
     if not has_installed("ripgrep"):
         run(
             [

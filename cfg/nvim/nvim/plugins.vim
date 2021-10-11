@@ -46,3 +46,8 @@ nnoremap <silent> <C-b> :Black<CR>
 
 "don't mess with my formatoptions
 let g:EditorConfig_preserve_formatoptions = 1
+
+command! -bang -nargs=* Rg
+  \ call fzf#vim#grep(
+  \   'rg --hidden --column --line-number --no-heading --color=always --smart-case -- '.shellescape(<q-args>), 1,
+  \   fzf#vim#with_preview(), <bang>0)

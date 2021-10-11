@@ -159,7 +159,7 @@ make_ps1
 
 # config fzf
 if [ -f ~/.fzf.zsh ]; then
-    export FZF_DEFAULT_COMMAND='ag -g ""'
+    export FZF_DEFAULT_COMMAND='rg --files --hidden'
     export FZF_DEFAULT_OPTS="$FZF_DEFAULT_OPTS --inline-info --color=dark"
     source ~/.fzf.zsh
     bindkey '\C-o' fzf-file-widget  # choose c-o for file opener
