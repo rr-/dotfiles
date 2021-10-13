@@ -14,6 +14,8 @@ from libdotfiles.util import (
 
 if distro_name() == "arch":
     try_install("ttf-dejavu")
+    try_install("ttf-ms-fonts")
+    try_install("ttf-ipa-mona")
     try_install("adobe-source-han-sans-otc-fonts")
     try_install("adobe-source-han-serif-otc-fonts")
 else:
@@ -49,3 +51,14 @@ if has_executable("fc-cache"):
         HOME_DIR / ".config" / "fontconfig" / "fonts.conf",
     )
     run(["fc-cache"], check=False)
+
+if Path("/etc/fonts/conf.d/50-user.conf").exists():
+    run(
+        [
+            "sudo",
+            "mv",
+            "/etc/fonts/conf.d/50-user.conf",
+            "/etc/fonts/conf.d/99-user.conf",
+        ],
+        check=True,
+    )
