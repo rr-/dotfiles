@@ -2,6 +2,7 @@ import asyncio
 import concurrent.futures
 import sys
 from asyncio.exceptions import CancelledError
+from enum import Enum
 from pathlib import Path
 from typing import Optional
 
@@ -9,7 +10,13 @@ import aioconsole
 import configargparse
 
 from booru_toolkit import cli, errors
-from booru_toolkit.plugin import PluginBase, PluginGelbooru, PluginYume, Safety
+from booru_toolkit.plugin import (
+    PluginBase,
+    PluginGelbooru,
+    PluginYume,
+    Post,
+    Safety,
+)
 from booru_toolkit.upload import common, ui
 
 PLUGINS: list[PluginBase] = [PluginGelbooru(), PluginYume()]
@@ -58,24 +65,25 @@ def parse_args() -> configargparse.Namespace:
 
 async def confirm_similar_posts(
     plugin: PluginBase, content: bytes, prompt: bool
-) -> bool:
+) -> Optional[Post]:
     similar_posts = await plugin.find_similar_posts(content)
     if not similar_posts:
-        return True
+        return None
     print("Similar posts found:")
     for similarity, post in similar_posts:
         print(
             "%.02f: %s (%dx%d)"
             % (similarity, post.site_url, post.width, post.height)
         )
+    for similarity, post in similar_posts:
+        if similarity == 0.0:
+            print("There is an identical post out there")
+            return post
     if not prompt:
         print("Prompting disabled, aborting")
-        return False
-    try:
-        await aioconsole.ainput("Hit enter to continue, ^C to abort\n")
-    except (KeyboardInterrupt, CancelledError):
-        return False
-    return True
+        raise CancelledError
+    await aioconsole.ainput("Hit enter to continue, ^C to abort\n")
+    return None
 
 
 async def run(args: configargparse.Namespace) -> int:
@@ -104,10 +112,9 @@ async def run(args: configargparse.Namespace) -> int:
         print("Searching for duplicates...")
         post = await plugin.find_exact_post(content)
         if not post:
-            if not await confirm_similar_posts(
+            post = await confirm_similar_posts(
                 plugin, content, prompt=args.prompt
-            ):
-                return 1
+            )
 
         print("Gathering tags...")
         if post:
@@ -162,16 +169,15 @@ async def run(args: configargparse.Namespace) -> int:
 def main() -> int:
     args = parse_args()
     loop = asyncio.get_event_loop()
+    task = loop.create_task(run(args))
+    asyncio.ensure_future(task)
     try:
-        task = loop.create_task(run(args))
-        exit_code = loop.run_until_complete(task)
+        loop.run_until_complete(task)
+        exit_code = task.result()
     except (KeyboardInterrupt, CancelledError):
         print("Aborted.")
         task.cancel()
         exit_code = 1
-        loop.run_until_complete(task)
-    finally:
-        loop.close()
     sys.exit(exit_code)
 
 
