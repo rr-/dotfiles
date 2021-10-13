@@ -9,6 +9,9 @@ path=(~/.local/bin-priv/ $path)         # python!
 path=($DIR/bin/* $path)                 # PATH for all the goodies in this repo
 export PATH                             # export modified var for subprocesses
 
+export LC_CTYPE=en_US.UTF-8
+export LC_ALL=en_US.UTF-8
+
 export LD_LIBRARY_PATH=/usr/local/lib:/usr/lib:$LD_LIBRARY_PATH
 export INCLUDE_PATH=/usr/local/include:/usr/include:$INCLUDE_PATH
 export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig:/usr/lib/pkgconfig:$PKG_CONFIG_PATH
