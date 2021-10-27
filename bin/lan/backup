@@ -72,7 +72,11 @@ def main():
 
     try:
         # main machine config
-        sync("lightning:/home/rr-/.local/", dry_run=args.dry_run)
+        sync(
+            "lightning:/home/rr-/.local/",
+            dry_run=args.dry_run,
+            exclude=["vmware/"],
+        )
         sync(
             "lightning:/home/rr-/.config/",
             dry_run=args.dry_run,
