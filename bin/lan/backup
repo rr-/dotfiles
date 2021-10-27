@@ -103,7 +103,6 @@ def main():
                 "*.pyc",
             ],
         )
-        sync("drizzle:/home/rr-/.config/", dry_run=args.dry_run)
 
         # OldCastle
         sync(
