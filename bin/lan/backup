@@ -34,10 +34,10 @@ def sync(
     target_machine_cmd = [
         "rsync",
         "--progress",
-        "--size-only",
         # "--usermap=*:admin",
         # "--groupmap=*:users",
         "--chmod=D=rwxrwxrx,F=rwwr",
+        "-t",  # preserve times
         "-r",  # recurse
         "-R",  # keep full paths
         "--delete-excluded",
