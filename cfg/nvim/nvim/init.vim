@@ -8,11 +8,12 @@ Plug 'junegunn/vim-easy-align'          "replace :column ...
 Plug 'bronson/vim-visual-star-search'   "enable * and # in visual mode
 Plug 'duggiefresh/vim-easydir'          "create directories on save
 Plug 'christoomey/vim-tmux-navigator'   "integration with tmux
-Plug 'tpope/vim-vinegar'                "better netrw
 Plug 'ambv/black'                       "format python source code
 Plug 'fisadev/vim-isort'                "sort includes in python source code
 Plug 'editorconfig/editorconfig-vim'    "respect .editorconfig
 Plug 'Asheq/close-buffers.vim'          "close hidden buffers
+Plug 'lambdalisue/fern.vim'             "alternative to buggy and unwieldy netrw
+Plug 'lambdalisue/fern-hijack.vim'      "replace netrw
 call plug#end()
 
 runtime editor.vim

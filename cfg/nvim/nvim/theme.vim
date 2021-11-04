@@ -30,6 +30,7 @@ highlight StatusLine   term=NONE      cterm=NONE ctermbg=235
 highlight StatusLineNC term=NONE      cterm=NONE ctermbg=235
 highlight Folded       term=NONE      ctermfg=242 ctermbg=233
 highlight ColorColumn  term=NONE      ctermbg=52
+highlight SignColumn   term=NONE      ctermbg=58
 highlight SpellBad     term=NONE      ctermbg=52
 highlight SpellCap     term=NONE      ctermbg=58
 highlight SpellRare    term=NONE      ctermbg=23
