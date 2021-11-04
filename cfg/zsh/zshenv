@@ -8,6 +8,7 @@ fi
 
 # aliases
 alias p=python3.9
+alias pi=ipython3
 alias l="myls"
 alias ll="myls -l"
 alias la="myls -la"
