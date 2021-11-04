@@ -7,7 +7,7 @@ map <buffer> <silent> k gk
 map <buffer> <silent> j gj
 "ctrl+s = save
 inoremap <silent> <C-s> <Esc>:update<CR>
-nnoremap <silent> <C-s> :<C-u>update<CR>
+nnoremap <silent> <C-s> :update<CR>
 "ctrl+c = copy
 inoremap <silent> <C-c> <Esc>"+y
 nnoremap <silent> <C-c> "+y
