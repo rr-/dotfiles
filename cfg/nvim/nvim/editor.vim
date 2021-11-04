@@ -63,12 +63,6 @@ set hidden                    "don't purge undo history when changing buffers
 set clipboard+=unnamed        "automatically copy unnamed yanks to "*
 set clipboard+=unnamedplus    "automatically copy unnamed yanks to "+
 
-"netrw (directory explorer)
-let g:netrw_banner=0          "disable useless banner in :Explore
-let g:netrw_sort_sequence='[\/]$,*' "disable weird sort order
-let g:netrw_silent=1          "disable prompts when editing 'scp://...'
-let g:netrw_bufsettings = 'noma nomod nu nobl nowrap ro' "show line numbers
-
 "miscellaneous
 set noeb vb t_vb=             "disable beeping
 set laststatus=2              "always display status line

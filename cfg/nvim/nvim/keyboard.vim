@@ -44,8 +44,8 @@ nnoremap <expr> <silent> <CR> v:count ? ":<C-U><Esc>" . v:count . "G" : "<CR>"
 tnoremap <Esc> <C-\><C-n>
 
 "file explorer
-  imap <F3> <Esc><Plug>VinegarUp
-  nmap <F3> <Plug>VinegarUp
+  inoremap <F3> <Esc>:Fern %:h -reveal=%:p<CR>
+  nnoremap <F3> :Fern %:h -reveal=%:p<CR>
 "EasyAlign
   "normal mode (e.g. gaip)
   nmap ga <Plug>(EasyAlign)

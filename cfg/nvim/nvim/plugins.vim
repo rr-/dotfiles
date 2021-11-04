@@ -47,6 +47,19 @@ nnoremap <silent> <C-b> :Black<CR>
 "don't mess with my formatoptions
 let g:EditorConfig_preserve_formatoptions = 1
 
+"hide cursor in the file explorer
+let g:fern#hide_cursor = 1
+function! s:init_fern() abort
+  "pressing <F3> in fern causes it to go up
+  nmap <buffer> <F3> <BS>
+  nmap <buffer> D <Plug>(fern-action-remove)
+  nmap <buffer> R <Plug>(fern-action-rename)
+endfunction
+augroup my-fern
+  autocmd! *
+  autocmd FileType fern call s:init_fern()
+augroup END
+
 command! -bang -nargs=* Rg
   \ call fzf#vim#grep(
   \   'rg --hidden --column --line-number --no-heading --color=always --smart-case -- '.shellescape(<q-args>), 1,
