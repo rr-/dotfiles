@@ -18,6 +18,7 @@ if distro_name() == "arch":
     try_install("ttf-ipa-mona")
     try_install("adobe-source-han-sans-otc-fonts")
     try_install("adobe-source-han-serif-otc-fonts")
+    try_install("noto-fonts-emoji")  # for emoji in alacritty
 else:
     try_install("xfonts-utils")
     try_install("fonts-ipafont")

@@ -12,22 +12,22 @@ alt + F2
 alt + ctrl + bracketleft
     xdotool search --classname local_terminal windowactivate; \
     if [ $? -ne 0 ]; then; \
-        urxvt -name local_terminal -e zsh -ilc 'tmux attach-session || tmux new-session -c ~'; \
+        alacritty --class local_terminal -e zsh -ilc 'tmux attach-session || tmux new-session -c ~'; \
     else; \
         tmux new-window -t work; \
     fi
 
 # spawn plain terminal
 alt + ctrl + shift + bracketleft
-    cd && urxvt
+    cd && alacritty
 
 # focus or spawn irc
 alt + ctrl + m
-    ~/.config/sxhkd/run-or-raise -cn drizzle -p "urxvt -name drizzle -e zsh -ilc 'while :; do ssh drizzle -t "'"zsh -ilc tmux\ attach\ -t\ main\|\|tmux\ new-session\ -t\ main"'"; sleep 1; done'"
+    ~/.config/sxhkd/run-or-raise -cn drizzle -p "alacritty --class drizzle -e zsh -ilc 'while :; do ssh drizzle -t "'"zsh -ilc tmux\ attach\ -t\ main\|\|tmux\ new-session\ -t\ main"'"; sleep 1; done'"
 
 # focus or spawn irc, and detach all other sessions
 alt + ctrl + shift + m
-    ~/.config/sxhkd/run-or-raise -cn drizzle -p "urxvt -name drizzle -e zsh -ilc 'ssh drizzle -t "'"zsh -ilc tmux\ attach\ -d\ -t\ main\|\|tmux\ new-session\ -t\ main"'"'"
+    ~/.config/sxhkd/run-or-raise -cn drizzle -p "alacritty --class drizzle -e zsh -ilc 'ssh drizzle -t "'"zsh -ilc tmux\ attach\ -d\ -t\ main\|\|tmux\ new-session\ -t\ main"'"'"
 
 # spawn web browser
 alt + ctrl + semicolon
