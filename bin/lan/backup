@@ -87,7 +87,12 @@ def main():
         sync(
             "lightning:/home/rr-/work/",
             dry_run=args.dry_run,
-            exclude=["python_modules/", "node_modules/", "*.pyc"],
+            exclude=[
+                "python_modules/",
+                "node_modules/",
+                "*.pyc",
+                "/home/rr-/work/external",
+            ],
         )
 
         # dedibox
