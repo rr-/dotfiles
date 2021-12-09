@@ -21,3 +21,7 @@ export TZ='Europe/Warsaw'
 
 # fix gpg not working in ssh…
 export GPG_TTY=$(tty)
+
+if [ -z "${DISPLAY}" ] && [ "${XDG_VTNR}" -eq 1 ]; then
+    startx
+fi
