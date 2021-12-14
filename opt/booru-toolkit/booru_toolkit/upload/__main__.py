@@ -58,16 +58,19 @@ def parse_args() -> configargparse.Namespace:
         action="store_true",
         help="open up interactive editor",
     )
+    parser.add("--max-similarity", type=float)
     parser.add(metavar="POST_PATH", dest="path", help="path to the post")
     parser.add("-n", "--no-prompt", dest="prompt", action="store_false")
     return parser.parse_args()
 
 
 async def confirm_similar_posts(
-    plugin: PluginBase, content: bytes, prompt: bool
+    plugin: PluginBase, content: bytes, prompt: bool, max_similarity: float
 ) -> Optional[Post]:
     similar_posts = await plugin.find_similar_posts(content)
     if not similar_posts:
+        return None
+    if all(similarity >= max_similarity for similarity, post in similar_posts):
         return None
     print("Similar posts found:")
     for similarity, post in similar_posts:
@@ -113,7 +116,10 @@ async def run(args: configargparse.Namespace) -> int:
         post = await plugin.find_exact_post(content)
         if not post:
             post = await confirm_similar_posts(
-                plugin, content, prompt=args.prompt
+                plugin,
+                content,
+                prompt=args.prompt,
+                max_similarity=args.max_similarity,
             )
 
         print("Gathering tags...")
