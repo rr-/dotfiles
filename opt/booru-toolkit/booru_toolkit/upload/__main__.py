@@ -4,7 +4,6 @@ import sys
 from asyncio.exceptions import CancelledError
 from enum import Enum
 from pathlib import Path
-from typing import Optional
 
 import aioconsole
 import configargparse
@@ -66,7 +65,7 @@ def parse_args() -> configargparse.Namespace:
 
 async def confirm_similar_posts(
     plugin: PluginBase, content: bytes, prompt: bool, max_similarity: float
-) -> Optional[Post]:
+) -> Post | None:
     similar_posts = await plugin.find_similar_posts(content)
     if not similar_posts:
         return None
@@ -131,7 +130,7 @@ async def run(args: configargparse.Namespace) -> int:
         print("Error: %s" % str(ex), file=sys.stderr)
         return 1
 
-    error_message: Optional[str] = None
+    error_message: str | None = None
 
     while True:
         if interactive:

@@ -1,5 +1,5 @@
 import asyncio
-from typing import Any, Callable, Optional, cast
+from typing import Any, Callable, cast
 
 import urwid
 from urwid_readline import ReadlineEdit
@@ -39,7 +39,7 @@ class FuzzyInput(urwid.ListBox):
     def selectable(self) -> bool:
         return True
 
-    def keypress(self, size: tuple[int, int], key: str) -> Optional[str]:
+    def keypress(self, size: tuple[int, int], key: str) -> str | None:
         keymap: dict[str, Callable[[tuple[int, int]], None]] = {
             "enter": self._accept,
             "tab": self._select_prev,

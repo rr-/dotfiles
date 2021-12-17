@@ -1,4 +1,4 @@
-#!/usr/bin/env python3.9
+#!/usr/bin/env python3.10
 import argparse
 import random
 import string
@@ -8,7 +8,6 @@ from collections.abc import Iterable
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Optional
 
 from PyQt5 import QtCore, QtGui, QtWidgets
 
@@ -139,9 +138,7 @@ class WindowCapture:
     def get_active_window_rect(self) -> QtCore.QRect:
         raise NotImplementedError("not implemented")
 
-    def get_interactive_rect(
-        self, rect: QtCore.QRect
-    ) -> Optional[QtCore.QRect]:
+    def get_interactive_rect(self, rect: QtCore.QRect) -> QtCore.QRect | None:
         window = InteractiveCaptureWindow(rect)
         window.show()
         self.app.exec_()

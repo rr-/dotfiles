@@ -2,7 +2,6 @@ import logging
 import re
 import sys
 from functools import lru_cache
-from typing import Optional
 
 from libdotfiles.util import has_executable, run
 
@@ -11,7 +10,10 @@ logger = logging.getLogger(__name__)
 
 class PackageInstaller:
     name: str = NotImplemented
-    is_supported: bool = NotImplemented
+
+    @property
+    def is_supported(self) -> bool:
+        raise NotImplementedError("not implemented")
 
     def has_installed(self, package: str) -> bool:
         raise NotImplementedError("not implemented")
@@ -98,9 +100,8 @@ class PipPackageInstaller(PackageInstaller):
     def is_supported(self) -> bool:
         return has_executable("python3")
 
-    @property
     @lru_cache
-    def installed_packages(self) -> list[tuple[str, str, Optional[str]]]:
+    def get_installed_packages(self) -> list[tuple[str, str, str | None]]:
         output = run(
             ["python3", "-m", "pip", "list"],
             check=True,
@@ -128,7 +129,7 @@ class PipPackageInstaller(PackageInstaller):
                 other_package,
                 _other_version,
                 _other_location,
-            ) in self.installed_packages
+            ) in self.get_installed_packages()
         )
 
     def is_available(self, package: str) -> bool:
@@ -152,7 +153,7 @@ class PipPackageInstaller(PackageInstaller):
 INSTALLERS = [cls() for cls in PackageInstaller.__subclasses__()]
 
 
-def try_install(package: str, method: Optional[str] = None) -> bool:
+def try_install(package: str, method: str | None = None) -> bool:
     try:
         return install(package, method)
     except Exception as ex:
@@ -160,14 +161,14 @@ def try_install(package: str, method: Optional[str] = None) -> bool:
         return False
 
 
-def has_installed(package: str, method: Optional[str] = None) -> bool:
+def has_installed(package: str, method: str | None = None) -> bool:
     chosen_installers = _choose_installers(method)
     return any(
         installer.has_installed(package) for installer in chosen_installers
     )
 
 
-def install(package: str, method: Optional[str] = None) -> bool:
+def install(package: str, method: str | None = None) -> bool:
     if has_installed(package, method):
         logger.info("Package %s is already installed.", package)
         return True
@@ -187,7 +188,7 @@ def install(package: str, method: Optional[str] = None) -> bool:
     raise RuntimeError(f"{method} is not capable of installing {package}")
 
 
-def _choose_installers(method: Optional[str]) -> list[PackageInstaller]:
+def _choose_installers(method: str | None) -> list[PackageInstaller]:
     if method is None:
         chosen_installers = INSTALLERS
     else:

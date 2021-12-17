@@ -1,6 +1,6 @@
 from enum import Enum
 from pathlib import Path
-from typing import Callable, Optional
+from typing import Callable
 
 from booru_toolkit import errors
 from booru_toolkit.plugin import Safety
@@ -61,7 +61,7 @@ class UploadSettings:
         self,
         path: Path,
         safety: Safety,
-        source: Optional[str],
+        source: str | None,
         tags: list[str],
         anonymous: bool,
     ) -> None:

@@ -7,7 +7,7 @@ import subprocess
 import urllib.request
 from pathlib import Path
 from subprocess import PIPE, CompletedProcess, Popen, call
-from typing import Any, Optional
+from typing import Any
 
 import __main__
 
@@ -41,7 +41,7 @@ def download_file(url: str, path: Path, overwrite: bool = False) -> None:
 
 
 def create_file(
-    path: Path, content: Optional[str] = None, overwrite: bool = False
+    path: Path, content: str | None = None, overwrite: bool = False
 ) -> None:
     create_dir(path.parent)
     if overwrite or not os.path.exists(path):

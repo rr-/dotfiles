@@ -3,7 +3,7 @@ import urllib.parse
 import xml.dom.minidom
 from collections.abc import AsyncIterable
 from tempfile import TemporaryFile
-from typing import Any, Optional
+from typing import Any
 
 import requests
 from bs4 import BeautifulSoup
@@ -36,7 +36,7 @@ class PluginGelbooru(PluginBase):
             data={"user": user_name, "pass": password, "submit": "Log in"},
         )
 
-    async def find_exact_post(self, content: bytes) -> Optional[Post]:
+    async def find_exact_post(self, content: bytes) -> Post | None:
         return None
 
     async def find_similar_posts(
@@ -128,11 +128,11 @@ class PluginGelbooru(PluginBase):
     async def upload_post(
         self,
         content: bytes,
-        source: Optional[str],
+        source: str | None,
         safety: Safety,
         tags: list[str],
         anonymous: bool,
-    ) -> Optional[Post]:
+    ) -> Post | None:
         if not tags:
             raise errors.ApiError("No tags given")
 
@@ -223,8 +223,8 @@ class PluginGelbooru(PluginBase):
     async def _post(
         self,
         url: str,
-        data: Optional[dict[str, Any]] = None,
-        files: Optional[dict[str, Any]] = None,
+        data: dict[str, Any] | None = None,
+        files: dict[str, Any] | None = None,
     ) -> str:
         return _process_response(
             await asyncio.get_event_loop().run_in_executor(
