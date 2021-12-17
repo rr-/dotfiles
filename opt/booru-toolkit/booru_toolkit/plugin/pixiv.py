@@ -2,7 +2,7 @@ import asyncio
 import json
 import re
 from collections.abc import AsyncIterable
-from typing import Any, Optional, cast
+from typing import Any, cast
 
 import requests
 
@@ -46,7 +46,7 @@ class PluginPixiv(PluginBase):
             }
         )
 
-    async def find_exact_post(self, content: bytes) -> Optional[Post]:
+    async def find_exact_post(self, content: bytes) -> Post | None:
         return None
 
     async def find_similar_posts(
@@ -128,11 +128,11 @@ class PluginPixiv(PluginBase):
     async def upload_post(
         self,
         content: bytes,
-        source: Optional[str],
+        source: str | None,
         safety: Safety,
         tags: list[str],
         anonymous: bool,
-    ) -> Optional[Post]:
+    ) -> Post | None:
         raise NotImplementedError("Not implemented")
 
     async def _update_tag_cache(self) -> None:

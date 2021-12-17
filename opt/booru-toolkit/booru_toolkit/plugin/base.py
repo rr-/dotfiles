@@ -1,7 +1,6 @@
 from abc import ABC, abstractmethod
 from collections.abc import AsyncIterable
 from enum import Enum
-from typing import Optional
 
 from booru_toolkit.plugin.tag_cache import TagCache
 
@@ -22,8 +21,8 @@ class Post:
         content_url: str,
         width: int,
         height: int,
-        source: Optional[str],
-        title: Optional[str] = None,
+        source: str | None,
+        title: str | None = None,
     ) -> None:
         self.id = post_id
         self.safety = safety
@@ -53,7 +52,7 @@ class PluginBase(ABC):
         raise NotImplementedError("Not implemented")
 
     @abstractmethod
-    async def find_exact_post(self, content: bytes) -> Optional[Post]:
+    async def find_exact_post(self, content: bytes) -> Post | None:
         raise NotImplementedError("Not implemented")
 
     @abstractmethod
@@ -74,11 +73,11 @@ class PluginBase(ABC):
     async def upload_post(
         self,
         content: bytes,
-        source: Optional[str],
+        source: str | None,
         safety: Safety,
         tags: list[str],
         anonymous: bool,
-    ) -> Optional[Post]:
+    ) -> Post | None:
         raise NotImplementedError("Not implemented")
 
     @abstractmethod
@@ -95,7 +94,7 @@ class PluginBase(ABC):
         await self._update_tag_cache()
         return await self._tag_cache.tag_exists(tag_name)
 
-    async def get_tag_real_name(self, tag_name: str) -> Optional[str]:
+    async def get_tag_real_name(self, tag_name: str) -> str | None:
         await self._update_tag_cache()
         return await self._tag_cache.get_tag_real_name(tag_name)
 

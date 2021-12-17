@@ -3,7 +3,7 @@ import json
 import urllib.parse
 from collections.abc import AsyncIterable
 from tempfile import TemporaryFile
-from typing import Any, Optional
+from typing import Any
 
 import requests
 
@@ -58,7 +58,7 @@ class PluginYume(PluginBase):
         self._session.auth = (user_name, password)
         await self._get("/user/" + user_name + "?bump-login=true")
 
-    async def find_exact_post(self, content: bytes) -> Optional[Post]:
+    async def find_exact_post(self, content: bytes) -> Post | None:
         result = await self._get_similar_posts(content)
         if not result["exactPost"]:
             return None
@@ -110,11 +110,11 @@ class PluginYume(PluginBase):
     async def upload_post(
         self,
         content: bytes,
-        source: Optional[str],
+        source: str | None,
         safety: Safety,
         tags: list[str],
         anonymous: bool,
-    ) -> Optional[Post]:
+    ) -> Post | None:
         with TemporaryFile() as handle:
             handle.write(content)
             handle.seek(0)
@@ -197,8 +197,8 @@ class PluginYume(PluginBase):
     async def _put(
         self,
         url: str,
-        data: Optional[dict[str, Any]] = None,
-        files: Optional[dict[str, Any]] = None,
+        data: dict[str, Any] | None = None,
+        files: dict[str, Any] | None = None,
     ) -> Json:
         return _process_response(
             await asyncio.get_event_loop().run_in_executor(
@@ -218,8 +218,8 @@ class PluginYume(PluginBase):
     async def _post(
         self,
         url: str,
-        data: Optional[dict[str, Any]] = None,
-        files: Optional[dict[str, Any]] = None,
+        data: dict[str, Any] | None = None,
+        files: dict[str, Any] | None = None,
     ) -> Json:
         return _process_response(
             await asyncio.get_event_loop().run_in_executor(

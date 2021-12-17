@@ -5,7 +5,7 @@ import sys
 from asyncio.exceptions import CancelledError
 from collections.abc import AsyncIterable
 from pathlib import Path
-from typing import Iterator, Optional, cast
+from typing import Iterator, cast
 
 import configargparse
 
@@ -75,7 +75,7 @@ class Downloader:
         self,
         plugin: PluginBase,
         target_dir: Path,
-        history: Optional[DownloadHistory],
+        history: DownloadHistory | None,
         force: bool,
         max_attempts: int,
         max_concurrent_downloads: int,
@@ -139,7 +139,7 @@ class Downloader:
 
         return True
 
-    async def run(self, query: str, limit: Optional[int]) -> None:
+    async def run(self, query: str, limit: int | None) -> None:
         downloaded = 0
 
         queue: asyncio.Queue[Post] = asyncio.Queue(
@@ -238,7 +238,7 @@ def main() -> None:
     max_attempts: int = args.max_attempts
     max_concurrent_downloads: int = args.num
     sleep: float = args.sleep
-    limit: Optional[int] = args.limit
+    limit: int | None = args.limit
     query: str = args.query
 
     target_dir = Path(

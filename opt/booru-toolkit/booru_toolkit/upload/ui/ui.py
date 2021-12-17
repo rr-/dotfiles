@@ -1,5 +1,5 @@
 import asyncio
-from typing import Any, Optional
+from typing import Any
 
 import urwid
 
@@ -223,7 +223,7 @@ class Ui:
 async def run(
     plugin: PluginBase,
     upload_settings: common.UploadSettings,
-    message: Optional[str],
+    message: str | None,
 ) -> None:
     ui = Ui(plugin, upload_settings)
     if message:

@@ -1,10 +1,10 @@
-#!/usr/bin/env python3.9
+#!/usr/bin/env python3.10
 import argparse
 import calendar
 import re
 from datetime import date, timedelta
 from itertools import groupby
-from typing import Any, Optional
+from typing import Any
 
 from holidays import Polish
 
@@ -80,7 +80,7 @@ def format_month(
     return "\n".join(lines)
 
 
-def year_and_month(source: str) -> tuple[int, Optional[int]]:
+def year_and_month(source: str) -> tuple[int, int | None]:
     match = re.match(r"^(?P<year>\d{4})(-(?P<month>\d{2}))?$", source)
     if not match:
         raise ValueError("expected year or year-month")

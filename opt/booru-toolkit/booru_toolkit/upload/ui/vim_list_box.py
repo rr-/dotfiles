@@ -1,4 +1,4 @@
-from typing import Any, Optional, cast
+from typing import Any, cast
 
 import urwid
 
@@ -8,12 +8,12 @@ from booru_toolkit import util
 class VimListBox(urwid.ListBox):
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
-        self.num: Optional[int] = None
+        self.num: int | None = None
 
     def selectable(self) -> bool:
         return True
 
-    def keypress(self, _size: tuple[int, int], key: str) -> Optional[str]:
+    def keypress(self, _size: tuple[int, int], key: str) -> str | None:
         keymap = {
             "j": self._select_prev,
             "k": self._select_next,

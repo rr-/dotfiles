@@ -1,7 +1,7 @@
 import asyncio
 from collections.abc import AsyncIterable
 from pathlib import Path
-from typing import Any, Optional, cast
+from typing import Any, cast
 
 import sqlalchemy as sa
 import sqlalchemy.ext.declarative
@@ -27,7 +27,7 @@ class CachedTag(Base):
 
 class TagCache:
     def __init__(self, cache_name: str) -> None:
-        self._cache: dict[str, Optional[CachedTag]] = {}
+        self._cache: dict[str, CachedTag | None] = {}
         self._path = Path(
             "~/.cache/tags-{}.sqlite".format(cache_name)
         ).expanduser()
@@ -77,12 +77,12 @@ class TagCache:
             ret.append(tag.name)
         return ret
 
-    async def _get_tag_by_name(self, tag_name: str) -> Optional[CachedTag]:
+    async def _get_tag_by_name(self, tag_name: str) -> CachedTag | None:
         if tag_name in self._cache:
             return self._cache[tag_name]
 
-        def work() -> Optional[CachedTag]:
-            ret: Optional[CachedTag] = (
+        def work() -> CachedTag | None:
+            ret: CachedTag | None = (
                 self._session.query(CachedTag)
                 .filter(sa.func.lower(CachedTag.name) == tag_name.lower())
                 .one_or_none()
@@ -95,7 +95,7 @@ class TagCache:
         self._cache[tag_name] = tag
         return tag
 
-    async def get_tag_real_name(self, tag_name: str) -> Optional[str]:
+    async def get_tag_real_name(self, tag_name: str) -> str | None:
         tag = await self._get_tag_by_name(tag_name)
         if tag:
             return tag.name
