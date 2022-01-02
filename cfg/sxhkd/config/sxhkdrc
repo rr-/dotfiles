@@ -112,6 +112,9 @@ alt + F12
 alt + shift + F12
     bash -c '~/.config/bspwm/bspwmrc'
 
+shift + {F11,F12}
+    switch-theme {light,dark}
+
 # screenshots
 # window
 super + i

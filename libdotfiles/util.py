@@ -31,7 +31,7 @@ def has_executable(program: str) -> bool:
 def download_file(url: str, path: Path, overwrite: bool = False) -> None:
     create_dir(path.parent)
     if overwrite or not path.exists():
-        logger.info("Downloading %r into %r...", url, path)
+        logger.info("Downloading %r into %s...", url, path)
         request = urllib.request.Request(url)
         request.add_header("User-Agent", "mozilla")
         request.add_header("Referer", url)
@@ -45,7 +45,7 @@ def create_file(
 ) -> None:
     create_dir(path.parent)
     if overwrite or not os.path.exists(path):
-        logger.info("Creating file %r...", path)
+        logger.info("Creating file %s...", path)
         with path.open("w", encoding="utf-8") as handle:
             if content:
                 handle.write(content)
@@ -53,7 +53,7 @@ def create_file(
 
 def create_dir(path: Path) -> None:
     if not path.exists():
-        logger.info("Creating directory %r...", path)
+        logger.info("Creating directory %s...", path)
         path.mkdir(parents=True)
 
 
@@ -63,9 +63,17 @@ def create_symlink(source: Path, target: Path) -> None:
         raise RuntimeError(
             f"Target file {target} exists and is not a symlink."
         )
-    logger.info("Linking %r to %r...", source, target)
+    logger.info("Linking %s to %s...", source, target)
     create_dir(target.parent)
     os.symlink(source, target)
+
+
+def copy_file(source: Path, target: Path) -> None:
+    _remove_symlink(target)
+    if target.exists() and not target.is_file():
+        raise RuntimeError(f"Target file {target} exists and is not a file.")
+    logger.info("Copying %s to %s...", source, target)
+    target.write_bytes(source.read_bytes())
 
 
 def create_symlinks(items: list[tuple[Path, Path]]) -> None:
@@ -75,7 +83,7 @@ def create_symlinks(items: list[tuple[Path, Path]]) -> None:
 
 def _remove_symlink(path: Path) -> None:
     if path.is_symlink():
-        logger.info("Removing old symlink %r...", path)
+        logger.info("Removing old symlink %s...", path)
         path.unlink()
 
 
