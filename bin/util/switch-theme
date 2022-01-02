@@ -1,0 +1,27 @@
+#!/usr/bin/env python3
+import argparse
+import re
+
+from libdotfiles.util import HOME_DIR
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("theme", choices=["dark", "light"])
+    return parser.parse_args()
+
+
+def update_alacritty_config(theme: str) -> None:
+    config_path = HOME_DIR / ".config" / "alacritty" / "alacritty.yml"
+    config = config_path.read_text()
+    config = re.sub(r"\*(dark|light)", f"*{theme}", config)
+    config_path.write_text(config)
+
+
+def main() -> None:
+    args = parse_args()
+    update_alacritty_config(args.theme)
+
+
+if __name__ == "__main__":
+    main()
