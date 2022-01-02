@@ -18,9 +18,24 @@ def update_alacritty_config(theme: str) -> None:
     config_path.write_text(config)
 
 
+def update_gtk_config(theme: str) -> None:
+    config_path = HOME_DIR / ".gtkrc-2.0"
+    if config_path.exists():
+        config = config_path.read_text()
+    else:
+        config = ""
+    gtk_theme = "Arc-Dark" if theme == "dark" else "Arc"
+    lines = config.splitlines()
+    lines = [line for line in lines if not line.startswith("gtk-theme-name")]
+    lines.append(f'gtk-theme-name="{gtk_theme}"')
+    config = "\n".join(lines) + "\n"
+    config_path.write_text(config)
+
+
 def main() -> None:
     args = parse_args()
     update_alacritty_config(args.theme)
+    update_gtk_config(args.theme)
 
 
 if __name__ == "__main__":
