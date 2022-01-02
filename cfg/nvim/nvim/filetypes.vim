@@ -31,3 +31,6 @@ au BufWritePost */spell/*.add silent mkspell! %
 
 "disable spellcheck in urls
 au FileType text,markdown syn match UrlNoSpell "\w\+:\/\/[^[:space:]]\+" contains=@NoSpell
+
+"don't skip over keywords
+au FileType * setlocal iskeyword=@,48-57,_,192-255
