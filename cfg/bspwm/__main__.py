@@ -5,6 +5,7 @@ try_install("bspwm")
 try_install("dmenu")  # program executor
 try_install("feh")  # wallpaper renderer
 try_install("i3lock")  # lock screen
+try_install("arc-gtk-theme")  # dark GTK theme
 
 create_symlinks(
     [
