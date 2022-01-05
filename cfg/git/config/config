@@ -88,6 +88,10 @@
     path = ~/.config/git/config-priv
 [includeIf "gitdir:*/srv/"]
     path = ~/.config/git/config-priv
+[includeIf "gitdir:~/src/dotfiles/"]
+    path = ~/.config/git/config-priv
+[includeIf "gitdir:~/src/dotfiles-priv/"]
+    path = ~/.config/git/config-priv
 [includeIf "gitdir:~/dotfiles/"]
     path = ~/.config/git/config-priv
 [includeIf "gitdir:~/dotfiles-priv/"]
