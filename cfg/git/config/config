@@ -86,6 +86,8 @@
     program = gpg
 [includeIf "gitdir:*/oc/"]
     path = ~/.config/git/config-priv
+[includeIf "gitdir:*/srv/"]
+    path = ~/.config/git/config-priv
 [includeIf "gitdir:~/dotfiles/"]
     path = ~/.config/git/config-priv
 [includeIf "gitdir:~/dotfiles-priv/"]
