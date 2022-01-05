@@ -51,10 +51,10 @@ mailboxes =.sent
 unignore x-label
 
 # smtp config
-send2-hook '~f "^.*@stxnext\\.pl$"' 'source ~/.mutt/smtp-stx.muttrc'
 send2-hook '~f "^.*@motoinsight\\.com$"' 'source ~/.mutt/smtp-moto.muttrc'
-send2-hook '~f "^.*@bridgemaker\\.com$"' 'source ~/.mutt/smtp-bridgemaker.muttrc'
+send2-hook '~f "^.*@deliveryhero\\.com$"' 'source ~/.mutt/smtp-dh.muttrc'
 send2-hook '~f "^.*@gmail\\.com$"' 'source ~/.mutt/smtp-gmail.muttrc'
+send2-hook '~f "^.*@partners-netguru\\.com$"' 'source ~/.mutt/smtp-netguru.muttrc'
 send2-hook '~f "^.*@(sakuya\\.pl|oldcastle\\.moe|wind\\.garden)$"' source ~/.mutt/smtp-mailbox.muttrc'
 
 # reply using the address the message was sent to
