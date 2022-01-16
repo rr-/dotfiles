@@ -89,8 +89,10 @@ def main():
             exclude=[
                 "python_modules/",
                 "node_modules/",
+                "pgdata/",
                 "*.pyc",
                 "/home/rr-/work/external",
+                "dh/*/db/",
             ],
         )
 
