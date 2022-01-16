@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import argparse
 import re
+from subprocess import run
 
 from libdotfiles.util import HOME_DIR
 
@@ -18,7 +19,7 @@ def update_alacritty_config(theme: str) -> None:
     config_path.write_text(config)
 
 
-def update_gtk_config(theme: str) -> None:
+def update_gtk2_config(theme: str) -> None:
     config_path = HOME_DIR / ".gtkrc-2.0"
     if config_path.exists():
         config = config_path.read_text()
@@ -32,10 +33,39 @@ def update_gtk_config(theme: str) -> None:
     config_path.write_text(config)
 
 
+def update_gtk3_config(theme: str) -> None:
+    config_path = HOME_DIR / ".config" / "gtk-3.0" / "settings.ini"
+    if config_path.exists():
+        config = config_path.read_text()
+    else:
+        config = "[Settings]"
+    gtk_theme = "Arc-Dark" if theme == "dark" else "Arc"
+    lines = config.splitlines()
+    lines = [line for line in lines if not line.startswith("gtk-theme-name")]
+    lines.append(f'gtk-theme-name="{gtk_theme}"')
+    config = "\n".join(lines) + "\n"
+    config_path.write_text(config)
+
+    run(
+        [
+            "gsettings",
+            "set",
+            "org.gnome.desktop.interface",
+            "gtk-key-theme",
+            gtk_theme,
+        ],
+        check=True,
+    )
+
+
 def main() -> None:
     args = parse_args()
-    update_alacritty_config(args.theme)
-    update_gtk_config(args.theme)
+    for func in [
+        update_alacritty_config,
+        update_gtk2_config,
+        update_gtk3_config,
+    ]:
+        func(args.theme)
 
 
 if __name__ == "__main__":
