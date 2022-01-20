@@ -45,6 +45,10 @@ super + {x,X}
     sink=$(pactl get-default-sink); \
     pactl -- set-sink-volume ${sink} ${dir}'5%'
 
+# cycle between devices
+super + {c,C}
+    cycle-audio-device
+
 
 
 #
