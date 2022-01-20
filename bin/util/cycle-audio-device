@@ -1,0 +1,82 @@
+#!/usr/bin/env python3
+import platform
+import sys
+from dataclasses import dataclass
+from subprocess import run
+
+
+@dataclass
+class SinkSpec:
+    sink: str
+    profile: str | None = None
+
+
+@dataclass
+class MachineSpec:
+    card: str
+    sinks: list[SinkSpec]
+
+
+MACHINE_SPECS = {
+    "lightning": MachineSpec(
+        card="alsa_card.pci-0000_01_00.1",
+        sinks=[
+            # TV
+            SinkSpec(
+                sink="alsa_output.pci-0000_01_00.1.hdmi-stereo-extra1",
+                profile="output:hdmi-stereo-extra1",
+            ),
+            # headset
+            SinkSpec(sink="bluez_sink.38_18_4C_95_5F_19.a2dp_sink"),
+        ],
+    )
+}
+
+
+def get_default_sink() -> str:
+    result = run(["pacmd", "info"], check=True, capture_output=True, text=True)
+    for line in result.stdout.splitlines():
+        if line.startswith("Default sink"):
+            key, sink_name = line.split(": ", maxsplit=1)
+            return sink_name
+    raise ValueError("unable to retrieve current sink name")
+
+
+def set_default_sink(sink: str) -> None:
+    run(["pacmd", "set-default-sink", sink], check=True)
+
+
+def set_card_profile(card: str, profile: str) -> None:
+    run(["pacmd", "set-card-profile", card, profile], check=True)
+
+
+def main() -> None:
+    hostname = platform.node()
+    spec = MACHINE_SPECS.get(hostname)
+
+    if not spec:
+        raise ValueError(f"unknown machine: {hostname}")
+
+    default_sink = get_default_sink()
+    idx = 0
+    for i, sink_spec in enumerate(spec.sinks):
+        if sink_spec.sink == default_sink:
+            target_sink = spec.sinks[(i + 1) % len(spec.sinks)]
+            break
+    else:
+        target_sink = None
+    if not target_sink:
+        print(f"unable to find a sink after {default_sink}", file=sys.stderr)
+        target_sink = spec.sinks[0]
+
+    if target_sink.profile:
+        set_card_profile(spec.card, target_sink.profile)
+    set_default_sink(target_sink.sink)
+
+
+if __name__ == "__main__":
+    try:
+        main()
+    except ValueError as ex:
+        print(str(ex), file=sys.stderr)
+        exit(1)
