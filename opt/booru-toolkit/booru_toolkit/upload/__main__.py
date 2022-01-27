@@ -57,7 +57,7 @@ def parse_args() -> configargparse.Namespace:
         action="store_true",
         help="open up interactive editor",
     )
-    parser.add("--max-similarity", type=float)
+    parser.add("--max-similarity", type=float, default=0.4)
     parser.add(metavar="POST_PATH", dest="path", help="path to the post")
     parser.add("-n", "--no-prompt", dest="prompt", action="store_false")
     return parser.parse_args()
@@ -72,7 +72,7 @@ async def confirm_similar_posts(
     if all(similarity >= max_similarity for similarity, post in similar_posts):
         return None
     print("Similar posts found:")
-    for similarity, post in similar_posts:
+    for similarity, post in sorted(similar_posts, key=lambda kv: kv[0]):
         print(
             "%.02f: %s (%dx%d)"
             % (similarity, post.site_url, post.width, post.height)
