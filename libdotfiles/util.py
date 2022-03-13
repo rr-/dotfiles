@@ -73,6 +73,7 @@ def copy_file(source: Path, target: Path) -> None:
     if target.exists() and not target.is_file():
         raise RuntimeError(f"Target file {target} exists and is not a file.")
     logger.info("Copying %s to %s...", source, target)
+    target.parent.mkdir(parents=True, exist_ok=True)
     target.write_bytes(source.read_bytes())
 
 
