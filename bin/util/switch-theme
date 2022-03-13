@@ -44,6 +44,7 @@ def update_gtk3_config(theme: str) -> None:
     lines = [line for line in lines if not line.startswith("gtk-theme-name")]
     lines.append(f'gtk-theme-name="{gtk_theme}"')
     config = "\n".join(lines) + "\n"
+    config_path.parent.mkdir(parents=True, exist_ok=True)
     config_path.write_text(config)
 
     run(
