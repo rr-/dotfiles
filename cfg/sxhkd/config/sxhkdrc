@@ -119,6 +119,18 @@ alt + shift + F12
 shift + {F11,F12}
     switch-theme {light,dark}
 
+# toggle window gaps
+super + o
+    x=$(bspc config -d focused window_gap); \
+    x=$((20-x)); \
+    bspc config -d focused window_gap $x;
+
+# toggle window borders
+super + b
+    x=$(bspc config -d focused border_width); \
+    x=$((4-x)); \
+    bspc config -d focused border_width $x;
+
 # screenshots
 # window
 super + i
