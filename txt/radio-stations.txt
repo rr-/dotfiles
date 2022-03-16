@@ -1,4 +1,0 @@
-re:noize                       | http://stream.clubrenoize.com:9001/
-vapor plaza.one                | https://plaza.one/ogg
-revival kult                   | http://www.revivalkult.de/radio/winamp.pls
-happyhardcore.com              | http://www.happyhardcore.com/livestreams/hardcore.pls
