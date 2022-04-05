@@ -12,3 +12,4 @@
 .tox
 *.egg-info
 docker-compose.local.yml
+/.workrc
