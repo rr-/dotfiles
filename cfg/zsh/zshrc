@@ -77,7 +77,7 @@ fi
 
 # command prompt
 __git_ps1 () {
-    local g="$(git rev-parse --git-dir 2>/dev/null)"
+    local g="$(command git rev-parse --git-dir 2>/dev/null)"
     if [ -n "$g" ]; then
         local r
         local b
@@ -91,7 +91,7 @@ __git_ps1 () {
             else
                 r="|AM/REBASE"
             fi
-            b="$(git symbolic-ref HEAD 2>/dev/null)"
+            b="$(command git symbolic-ref HEAD 2>/dev/null)"
         elif [ -f "$g/rebase-merge/interactive" ]; then
             r="|REBASE-i"
             b="$(cat "$g/rebase-merge/head-name")"
@@ -100,13 +100,13 @@ __git_ps1 () {
             b="$(cat "$g/rebase-merge/head-name")"
         elif [ -f "$g/MERGE_HEAD" ]; then
             r="|MERGING"
-            b="$(git symbolic-ref HEAD 2>/dev/null)"
+            b="$(command git symbolic-ref HEAD 2>/dev/null)"
         else
             if [ -f "$g/BISECT_LOG" ]; then
                 r="|BISECTING"
             fi
-            if ! b="$(git symbolic-ref HEAD 2>/dev/null)"; then
-                if ! b="$(git describe --exact-match HEAD 2>/dev/null)"; then
+            if ! b="$(command git symbolic-ref HEAD 2>/dev/null)"; then
+                if ! b="$(command git describe --exact-match HEAD 2>/dev/null)"; then
                     b="$(cut -c1-7 "$g/HEAD")..."
                 fi
             fi
@@ -192,3 +192,7 @@ zle-line-init zle-keymap-select () {
 }
 zle -N zle-line-init
 zle -N zle-keymap-select
+
+unalias vim
+vim() { echo `tput bold setaf 1`"Use v instead" 1>&2; }
+git() { echo `tput bold setaf 1`"Use g instead" 1>&2; }
