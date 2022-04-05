@@ -1,0 +1,30 @@
+#!/usr/bin/python3 -u
+import shlex
+import sys
+from pathlib import Path
+from subprocess import PIPE, run
+
+
+def main() -> None:
+    workrc = Path(".workrc")
+    if not workrc.exists():
+        raise RuntimeError("Missing .workrc file")
+    if len(sys.argv) == 1:
+        raise RuntimeError("Missing command")
+    for line in workrc.open():
+        command, invocation = map(str.strip, line.split(":", maxsplit=1))
+        if sys.argv[1] == command:
+            run(
+                shlex.split(
+                    invocation.replace("{}", " ".join(sys.argv[2:])).strip()
+                ),
+                input=sys.stdin.read() if not sys.stdin.isatty() else None,
+                text=True,
+                check=True,
+            )
+            return
+    raise RuntimeError(f"Unknown command: {sys.argv[1]}")
+
+
+if __name__ == "__main__":
+    main()
