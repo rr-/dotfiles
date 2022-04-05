@@ -12,8 +12,28 @@ alias pi=ipython3
 alias l="myls"
 alias ll="myls -l"
 alias la="myls -la"
-alias e=vifm
-alias v=nvim
+alias e='vifm'
+alias v='nvim'
+alias g='command git'
+    alias gd='command git diff'
+    alias gs='command git status'
+    alias gsh='command git show'
+    alias ghis='command git hist'
+    alias ga='command git add'
+    alias gam='command git amen'
+    alias gamp='command git amen -p'
+    alias gap='command git add -p'
+    alias gau='command git add -u'
+    alias gc='command git commit'
+    alias gch='command git checkout'
+    alias gpl='command git pull'
+    alias gps='command git push'
+    alias gb='command git branch'
+    alias gres='command git reset'
+    alias gr='command git rebase'
+    alias gri='command git rebase -i'
+    alias grc='command git rebase --continue'
+alias w='work'
 jisho() { command jisho "$@"|less -rFX }
 edict() { command edict "$@"|less -rFX }
 tl() {
