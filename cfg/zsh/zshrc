@@ -19,7 +19,7 @@ WORDCHARS='*?_-.[]~=&;!#$%^(){}<>'      # what kill-word should delete
 
 # history
 HISTFILE=~/.config/zsh/history  # where to put the history
-HISTSIZE=5000                   # how many entries in history (memory)
+HISTSIZE=50000                  # how many entries in history (memory)
 SAVEHIST=$HISTSIZE              # how many entries in history (hdd)
 setopt appendhistory            # append lines (for concurrent sessions)
 setopt extended_history         # record usage timestamps in the histfile
@@ -33,7 +33,7 @@ setopt hist_reduce_blanks       # remove extra blanks before recording entry
 setopt hist_verify              # don't execute immediately upon expansion
 
 # don't remember certain commands
-HISTORY_IGNORE="(plen*|enpl*|jaen*|tl*|edict*|reverso*|glosbe*|sjp*|urban*|rg*|git*)"
+HISTORY_IGNORE="(plen*|enpl*|jaen*|tl*|edict*|reverso*|glosbe*|sjp*|urban*|rg*)"
 zshaddhistory() {
   emulate -L zsh
   [[ $1 != ${~HISTORY_IGNORE} ]]
