@@ -5,8 +5,6 @@
 # dmenu (a program launcher)
 super + {r, d}
     dmenu_run
-alt + F2
-    dmenu_run
 
 # focus or spawn local tmux
 alt + ctrl + bracketleft
