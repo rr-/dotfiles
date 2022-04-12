@@ -1,28 +1,59 @@
 #!/usr/bin/python3 -u
 import shlex
 import sys
+from collections.abc import Iterable
+from dataclasses import dataclass
+from functools import reduce
 from pathlib import Path
 from subprocess import PIPE, run
 
 
-def main() -> None:
-    workrc = Path(".workrc")
-    if not workrc.exists():
+@dataclass
+class Command:
+    name: str
+    invocation: list[str]
+
+
+def get_commands(workrc_path: Path) -> Iterable[Command]:
+    if not workrc_path.exists():
         raise RuntimeError("Missing .workrc file")
+    for line in workrc_path.open("r", encoding="utf-8"):
+        if line.lstrip().startswith("#"):
+            continue
+        name, invocation = map(str.strip, line.split(":", maxsplit=1))
+        yield Command(name=name, invocation=shlex.split(invocation))
+
+
+def main() -> None:
+    workrc_path = Path(".workrc")
+    commands = list(get_commands(workrc_path))
+
     if len(sys.argv) == 1:
-        raise RuntimeError("Missing command")
-    for line in workrc.open():
-        command, invocation = map(str.strip, line.split(":", maxsplit=1))
-        if sys.argv[1] == command:
+        max_length = max(len(command.name) for command in commands)
+        for command in commands:
+            print(
+                f"{command.name:<{max_length}s} {' '.join(command.invocation)}"
+            )
+        return
+
+    for command in commands:
+        if command.name == sys.argv[1]:
+            invocation = reduce(
+                lambda acc, term: [
+                    *acc,
+                    *(sys.argv[2:] if term == "{}" else [term]),
+                ],
+                command.invocation,
+                [],
+            )
             run(
-                shlex.split(
-                    invocation.replace("{}", " ".join(sys.argv[2:])).strip()
-                ),
+                invocation,
                 input=sys.stdin.read() if not sys.stdin.isatty() else None,
                 text=True,
                 check=True,
             )
             return
+
     raise RuntimeError(f"Unknown command: {sys.argv[1]}")
 
 
