@@ -16,6 +16,7 @@ script-opts=osc-showwindowed=no,osc-showfullscreen=no,images-statusbar=yes,reset
 no-input-default-bindings
 native-keyrepeat
 loop-file=yes
+pause=yes
 osd-msg1=${filename} (${width:?} x ${height:?}, ${file-size}) (${playlist-pos-1} of ${playlist-count})
 osd-align-x=right
 osd-align-y=bottom
