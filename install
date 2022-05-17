@@ -1,2 +1,6 @@
-#!/bin/sh
-python3.10 -m cfg."$@"
+#!/bin/bash
+mod="$@"
+mod=${mod//\//.}
+mod=${mod#cfg.}
+mod=cfg.$mod
+python3.10 -m ${mod}
