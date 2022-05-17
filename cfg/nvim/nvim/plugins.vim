@@ -41,8 +41,7 @@ let g:black_linelength = 79
 
 "source code formatters
 let g:vim_isort_map = ''
-nnoremap <silent> <C-i> :Isort<CR>
-nnoremap <silent> <C-b> :Black<CR>
+nnoremap <silent> <C-b> :execute 'Isort' <Bar> :Black<CR>
 
 "don't mess with my formatoptions
 let g:EditorConfig_preserve_formatoptions = 1
