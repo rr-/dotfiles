@@ -101,3 +101,28 @@ def current_username() -> str:
     return run(
         ["whoami"], check=True, capture_output=True, text=True
     ).stdout.strip()
+
+
+def git_clone(repo: str, path: str | Path) -> None:
+    target_path = Path(path).absolute()
+    if target_path.exists():
+        if not (target_path / ".git").exists():
+            logger.error(
+                "Target directory %s already exists and is not a git repository.",
+                target_path,
+            )
+        remote_url = run(
+            ["git", "-C", target_path, "remote", "get-url", "origin"],
+            check=True,
+            capture_output=True,
+            text=True,
+        ).stdout.strip()
+        if remote_url.removesuffix(".git") != repo.removesuffix(".git"):
+            logger.error(
+                "Target repository %s points to %s, expected %s.",
+                target_path,
+                remote_url,
+                repo,
+            )
+        return
+    run(["git", "clone", repo, target_path], check=True)
