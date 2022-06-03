@@ -5,12 +5,15 @@ from libdotfiles.packages import try_install
 from libdotfiles.util import distro_name, run
 
 if distro_name() == "arch":
-    try_install("base-devel")
+    try_install("patch")
     try_install("expac")
     try_install("fakechroot")
     try_install("fakeroot")
     try_install("gtest")
     try_install("jq")
+    try_install("gcc")
+    try_install("pkgconfig")
+    try_install("make")
     try_install("meson")
     try_install("sudo")
 
