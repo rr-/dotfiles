@@ -33,10 +33,20 @@ class AptPackageInstaller(PackageInstaller):
         return has_executable("apt")
 
     def has_installed(self, package: str) -> bool:
-        return run(["dpkg", "-l", package], check=False).returncode == 0
+        return (
+            run(
+                ["dpkg", "-l", package], check=False, capture_output=True
+            ).returncode
+            == 0
+        )
 
     def is_available(self, package: str) -> bool:
-        return run(["apt", "show", package], check=False).returncode == 0
+        return (
+            run(
+                ["apt", "show", package], check=False, capture_output=True
+            ).returncode
+            == 0
+        )
 
     def install(self, package: str) -> bool:
         return (
@@ -55,10 +65,20 @@ class PacmanPackageInstaller(PackageInstaller):
         return has_executable("pacman") and has_executable("sudo")
 
     def has_installed(self, package: str) -> bool:
-        return run(["pacman", "-Q", package], check=False).returncode == 0
+        return (
+            run(
+                ["pacman", "-Q", package], check=False, capture_output=True
+            ).returncode
+            == 0
+        )
 
     def is_available(self, package: str) -> bool:
-        return run(["pacman", "-Ss", package], check=False).returncode == 0
+        return (
+            run(
+                ["pacman", "-Ss", package], check=False, capture_output=True
+            ).returncode
+            == 0
+        )
 
     def install(self, package: str) -> bool:
         return (
@@ -78,10 +98,20 @@ class PacaurPackageInstaller(PackageInstaller):
         return has_executable("pacaur")
 
     def has_installed(self, package: str) -> bool:
-        return run(["pacaur", "-Q", package], check=False).returncode == 0
+        return (
+            run(
+                ["pacaur", "-Q", package], check=False, capture_output=True
+            ).returncode
+            == 0
+        )
 
     def is_available(self, package: str) -> bool:
-        return run(["pacaur", "-Ss", package], check=False).returncode == 0
+        return (
+            run(
+                ["pacaur", "-Ss", package], check=False, capture_output=True
+            ).returncode
+            == 0
+        )
 
     def install(self, package: str) -> bool:
         return (
@@ -104,7 +134,7 @@ class PipPackageInstaller(PackageInstaller):
     def get_installed_packages(self) -> list[tuple[str, str, str | None]]:
         output = run(
             ["python3", "-m", "pip", "list"],
-            check=True,
+            check=False,
             text=True,
             capture_output=True,
         ).stdout
