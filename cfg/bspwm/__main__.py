@@ -10,6 +10,10 @@ try_install("arc-gtk-theme")  # dark GTK theme
 create_symlinks(
     [
         (PKG_DIR / "bspwmrc", HOME_DIR / ".config" / "bspwm" / "bspwmrc"),
+        (
+            PKG_DIR / "sxhkdrc",
+            HOME_DIR / ".config" / "sxhkd" / "bspwm.sxhkdrc",
+        ),
         (PKG_DIR / "rules", HOME_DIR / ".config" / "bspwm" / "rules"),
         (PKG_DIR / "start", HOME_DIR / ".config" / "x" / "start-wm.sh"),
     ]
