@@ -4,9 +4,12 @@ from libdotfiles.util import (
     PKG_DIR,
     create_dir,
     create_symlinks,
+    distro_name,
     run,
 )
 
+if distro_name() == "arch":
+    try_install("inetutils")  # hostname in PS1
 try_install("zsh")
 
 create_symlinks(
