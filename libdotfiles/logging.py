@@ -15,7 +15,10 @@ from logging import (
 )
 from typing import Any
 
-import coloredlogs
+try:
+    import coloredlogs
+except ImportError:
+    coloredlogs = None
 
 
 def _add_custom_level(
@@ -40,6 +43,8 @@ SUCCESS, success = _add_custom_level(29, "success")
 
 
 def setup_colored_logs(fmt: str = "%(message)s") -> None:
+    if coloredlogs is None:
+        return
     coloredlogs.install(
         fmt=fmt,
         level_styles={
