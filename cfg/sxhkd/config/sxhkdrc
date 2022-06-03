@@ -50,39 +50,12 @@ super + {c,C}
 
 
 #
-# window manager
+# universal window manager
 #
-
-# transparency
-super + {button5,button4}
-    picom-trans -c {-,+}5
-super + {z,Z}
-    picom-trans -c {-,+}5
 
 # close active window
 super + q
     wmctrl -c :ACTIVE:
-
-# focus window in given direction
-super + {h,j,k,l}
-    DIR={west,south,north,east}; \
-    bspc node -f $DIR || ( bspc monitor -f $DIR; bspc node -f @/1.floating )
-
-# move window in given direction
-super + shift + {h,j,k,l}
-    DIR={west,south,north,east}; \
-    bspc node -s $DIR
-
-# focus workspace
-super + {1,2,3,4,5,6,F1,F2,F3,F4,F5,F6}
-    TARGET={1,2,3,4,5,6,A1,A2,A3,A4,A5,A6}; \
-    bspc desktop -f $TARGET
-
-# send active window to given another workspace
-super + shift + {1,2,3,4,5,6,F1,F2,F3,F4,F5,F6}
-    TARGET={1,2,3,4,5,6,A1,A2,A3,A4,A5,A6}; \
-    ID=$(xdotool getactivewindow); \
-    bspc node -d $TARGET && bspc node -f $ID
 
 # maximize the window
 super + Up
@@ -98,36 +71,12 @@ super + Down
 super + f
     wmctrl -r :ACTIVE: -b toggle,fullscreen
 
-# set current window as tiled
-super + t
-    bspc node -t tiled
-
-# set current window as floating
-super + s
-    bspc node -t floating
-
 # reload sxhkd configuration
 alt + F12
     killall -SIGUSR1 sxhkd
 
-# reload bspwm configuration
-alt + shift + F12
-    bash -c '~/.config/bspwm/bspwmrc'
-
 shift + {F11,F12}
     switch-theme {light,dark}
-
-# toggle window gaps
-super + o
-    x=$(bspc config -d focused window_gap); \
-    x=$((20-x)); \
-    bspc config -d focused window_gap $x;
-
-# toggle window borders
-super + b
-    x=$(bspc config -d focused border_width); \
-    x=$((4-x)); \
-    bspc config -d focused border_width $x;
 
 # screenshots
 # window

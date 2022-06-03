@@ -7,7 +7,11 @@ try_install("wmctrl")
 
 create_symlinks(
     [
-        (PKG_DIR / "config", HOME_DIR / ".config/sxhkd"),
+        (PKG_DIR / "config/sxhkdrc", HOME_DIR / ".config/sxhkd/sxhkdrc"),
+        (
+            PKG_DIR / "config/run-or-raise",
+            HOME_DIR / ".config/sxhkd/run-or-raise",
+        ),
         (
             PKG_DIR / "beep-shot.mp3",
             HOME_DIR / ".local" / "share" / "beep-shot.mp3",

@@ -1,0 +1,10 @@
+# focus workspace
+super + {1,2,3,4,5,6}
+    TARGET={0,1,2,3,4,5}; \
+    wmctrl -s $TARGET
+
+# send active window to given another workspace
+super + shift + {1,2,3,4,5,6}
+    TARGET={0,1,2,3,4,5}; \
+    wmctrl -r :ACTIVE: -t $TARGET; \
+    wmctrl -s $TARGET
