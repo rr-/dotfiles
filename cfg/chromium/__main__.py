@@ -6,7 +6,7 @@ if distro_name() == "arch":
 
 create_file(
     HOME_DIR / ".local" / "bin" / "browser",
-    "#!/bin/sh\nchromium",
+    "#!/bin/sh\nchromium ${@}",
     overwrite=True,
 )
 (HOME_DIR / ".local" / "bin" / "browser").chmod(0o777)
