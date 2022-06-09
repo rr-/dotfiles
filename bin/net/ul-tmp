@@ -11,7 +11,7 @@ import urllib.parse
 
 BASE_DIR = "/home/rr-/srv/tmp.sakuya.pl/f/"
 BASE_URL = "https://tmp.sakuya.pl/f/"
-REMOTE_HOST = "drizzle"
+REMOTE_HOST = "sakuya.pl"
 
 
 def collect_single_file(arg):
