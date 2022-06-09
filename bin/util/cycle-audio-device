@@ -28,6 +28,8 @@ MACHINE_SPECS = {
             ),
             # headset
             SinkSpec(sink="bluez_sink.38_18_4C_95_5F_19.a2dp_sink"),
+            # headset
+            SinkSpec(sink="bluez_sink.C8_7B_23_07_3E_B1.a2dp_sink"),
         ],
     )
 }
@@ -42,8 +44,9 @@ def get_default_sink() -> str:
     raise ValueError("unable to retrieve current sink name")
 
 
-def set_default_sink(sink: str) -> None:
+def set_default_sink(sink: str) -> bool:
     run(["pacmd", "set-default-sink", sink], check=True)
+    return get_default_sink() == sink
 
 
 def set_card_profile(card: str, profile: str) -> None:
@@ -58,20 +61,21 @@ def main() -> None:
         raise ValueError(f"unknown machine: {hostname}")
 
     default_sink = get_default_sink()
-    idx = 0
-    for i, sink_spec in enumerate(spec.sinks):
-        if sink_spec.sink == default_sink:
-            target_sink = spec.sinks[(i + 1) % len(spec.sinks)]
-            break
-    else:
-        target_sink = None
-    if not target_sink:
-        print(f"unable to find a sink after {default_sink}", file=sys.stderr)
-        target_sink = spec.sinks[0]
 
-    if target_sink.profile:
-        set_card_profile(spec.card, target_sink.profile)
-    set_default_sink(target_sink.sink)
+    sinks = [*spec.sinks]
+    if all(sink_spec.sink != default_sink for sink_spec in sinks):
+        raise ValueError(f"unable to find the default sink: {default_sink}")
+
+    while sinks[-1].sink != default_sink:
+        sinks = [*sinks[1:], sinks[0]]
+
+    for sink_spec in sinks:
+        if sink_spec.profile:
+            set_card_profile(spec.card, sink_spec.profile)
+        if set_default_sink(sink_spec.sink):
+            return
+
+    raise ValueError(f"unable to find a sink after {default_sink}")
 
 
 if __name__ == "__main__":
