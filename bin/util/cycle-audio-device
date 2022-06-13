@@ -64,7 +64,7 @@ def main() -> None:
 
     sinks = [*spec.sinks]
     if all(sink_spec.sink != default_sink for sink_spec in sinks):
-        raise ValueError(f"unable to find the default sink: {default_sink}")
+        default_sink = sinks[-1].sink
 
     while sinks[-1].sink != default_sink:
         sinks = [*sinks[1:], sinks[0]]
