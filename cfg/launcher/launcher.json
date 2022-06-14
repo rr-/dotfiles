@@ -2,7 +2,7 @@
 .*\.(avi|mp4|wmv|dat|3gp|ogv|mkv|mpg|vob|flv|m2v|mov|m2ts|ts|m4v)   :: mpv
 about:blank                                                         :: browser
 (https?|file)://.*                                                  :: browser
-.*\.(jpg|jpeg|gif|png|bmp|webm)                                     :: mpi
+.*\.(jpg|jpeg|gif|png|bmp|webm|webp)                                :: mpi
 .*\.(odt|doc|docx|xls|xlsx|odp|pptx)                                :: libreoffice
 .*\.pdf                                                             :: browser
 .*\.html?                                                           :: browser

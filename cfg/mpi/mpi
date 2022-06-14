@@ -17,6 +17,7 @@ MANAGED_EXTENSIONS = {
     "tga",
     "bmp",
     "webm",
+    "webp",
     "mkv",
     "mp4",
 }
