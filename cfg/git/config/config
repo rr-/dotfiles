@@ -99,6 +99,8 @@
     path = ~/.config/git/config-priv
 [includeIf "gitdir:~/work/priv/"]
     path = ~/.config/git/config-priv
+[includeIf "gitdir:~/work/postmedia/"]
+    path = ~/.config/git/config-postmedia
 [includeIf "gitdir:~/work/moto/"]
     path = ~/.config/git/config-moto
 [includeIf "gitdir:~/work/netguru/"]
