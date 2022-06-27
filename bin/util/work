@@ -23,7 +23,8 @@ class Command:
 def get_commands(workrc_path: Path) -> Iterable[Command]:
     if not workrc_path.exists():
         raise RuntimeError("Missing .workrc file")
-    for key, value in yaml.load(workrc_path.read_text()).items():
+    doc = yaml.safe_load(workrc_path.read_text())
+    for key, value in doc.items():
         yield Command(name=key, invocation=value)
 
 
@@ -34,7 +35,7 @@ def main() -> None:
     if len(sys.argv) == 1:
         max_length = max(len(command.name) for command in commands)
         for command in commands:
-            print(f"{command.name:<{max_length}s} {command.usage}")
+            print(f"{command.name + ':':<{max_length}s} {command.usage}")
         return
 
     for command in commands:
