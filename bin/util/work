@@ -1,27 +1,30 @@
 #!/usr/bin/python3 -u
-import shlex
 import sys
 from collections.abc import Iterable
 from dataclasses import dataclass
-from functools import reduce
 from pathlib import Path
-from subprocess import PIPE, run
+from subprocess import run
+
+import yaml
 
 
 @dataclass
 class Command:
     name: str
-    invocation: list[str]
+    invocation: str
+
+    @property
+    def usage(self) -> str:
+        if "\n" in self.invocation:
+            return self.invocation.splitlines()[0] + " (…)"
+        return self.invocation
 
 
 def get_commands(workrc_path: Path) -> Iterable[Command]:
     if not workrc_path.exists():
         raise RuntimeError("Missing .workrc file")
-    for line in workrc_path.open("r", encoding="utf-8"):
-        if line.lstrip().startswith("#"):
-            continue
-        name, invocation = map(str.strip, line.split(":", maxsplit=1))
-        yield Command(name=name, invocation=shlex.split(invocation))
+    for key, value in yaml.load(workrc_path.read_text()).items():
+        yield Command(name=key, invocation=value)
 
 
 def main() -> None:
@@ -31,21 +34,12 @@ def main() -> None:
     if len(sys.argv) == 1:
         max_length = max(len(command.name) for command in commands)
         for command in commands:
-            print(
-                f"{command.name:<{max_length}s} {' '.join(command.invocation)}"
-            )
+            print(f"{command.name:<{max_length}s} {command.usage}")
         return
 
     for command in commands:
         if command.name == sys.argv[1]:
-            invocation = reduce(
-                lambda acc, term: [
-                    *acc,
-                    *(sys.argv[2:] if term == "{}" else [term]),
-                ],
-                command.invocation,
-                [],
-            )
+            invocation = ["sh", "-c", command.invocation, "--"] + sys.argv[2:]
             run(
                 invocation,
                 input=sys.stdin.read() if not sys.stdin.isatty() else None,
