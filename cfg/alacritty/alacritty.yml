@@ -1,3 +1,8 @@
+window:
+  padding:
+    x: 2
+    y: 2
+
 schemes:
   dark: &dark
     primary:
