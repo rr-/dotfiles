@@ -111,6 +111,8 @@
     path = ~/.config/git/config-lantum
 [includeIf "gitdir:~/work/nodal/"]
     path = ~/.config/git/config-nodal
+[includeIf "gitdir:~/work/decernis/"]
+    path = ~/.config/git/config-priv
 [includeIf "gitdir:~/work/invoices/"]
     path = ~/.config/git/config-priv
 [credential "https://github.com"]
