@@ -88,10 +88,7 @@ set backup            "enable backups
 set undofile          "enable persistent undo
 set undolevels=1000   "store this many undo levels
 set undoreload=10000  "don't wipe undo after reloading file up to 10k lines long
-let &viminfo=$HOME.'/.config/'.s:dir.'/viminfo'    "path to session storage
-let &backupdir=$HOME.'/.config/'.s:dir.'/backup//' "path to file backups
-let &directory=$HOME.'/.config/'.s:dir.'/swap//'   "path to swap files (.*.swp)
-let &undodir=$HOME.'/.config/'.s:dir.'/undo//'     "path to undo data
+let &backupdir=$HOME.'/.local/share/nvim/backup//' "path to file backups
 
 "ignore files in commands and plugins
 set wildignore+=.hg,.git,.bzr

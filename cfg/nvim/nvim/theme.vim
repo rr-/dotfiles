@@ -45,6 +45,8 @@ highlight TabLineFill  term=NONE      cterm=NONE ctermbg=234
 highlight TabLine      term=NONE      cterm=NONE ctermfg=250 ctermbg=238
 highlight TabLineSel   term=NONE      cterm=NONE ctermfg=255 ctermbg=232
 
+highlight! link Pmenu Normal
+
 set cursorline
 set statusline=%f\ %m%r%=Col:%c\ Line:%l/%L
 
