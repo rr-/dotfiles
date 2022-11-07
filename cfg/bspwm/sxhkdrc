@@ -45,6 +45,10 @@ super + b
     x=$((4-x)); \
     bspc config -d focused border_width $x;
 
+# toggle monocle layout
+super + m
+    bspc desktop -l next;
+
 # reload bspwm configuration
 alt + shift + F12
     bash -c '~/.config/bspwm/bspwmrc'

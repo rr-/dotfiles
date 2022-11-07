@@ -27,9 +27,6 @@ bspc config borderless_monocle    true
 bspc config gapless_monocle       true
 bspc config focus_follows_pointer true
 
-bspc rule -a remote_irc desktop=10
-bspc rule -a qbittorrent desktop=9
-bspc rule -a Steam desktop=8
 bspc config external_rules_command "$DIR/rules"
 
 systemctl restart --user sxhkd
