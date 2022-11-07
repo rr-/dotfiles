@@ -21,5 +21,5 @@ runtime indent.vim
 runtime plugins.vim
 runtime keyboard.vim
 runtime filetypes.vim
-runtime theme.vim
 runtime gui.vim
+runtime theme.vim
