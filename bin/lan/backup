@@ -118,6 +118,13 @@ def main():
         )
         sync("oc:/var/log/nginx/", dry_run=args.dry_run, traverse_links=True)
 
+        # trcustoms
+        sync(
+            "trcustoms:/home/trcustoms/",
+            dry_run=args.dry_run,
+        )
+        sync("trcustoms:/etc/", dry_run=args.dry_run, traverse_links=True)
+
     except CalledProcessError:
         logging.error("Error during sync, aborting")
         exit(1)
