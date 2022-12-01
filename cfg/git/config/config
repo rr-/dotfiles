@@ -117,3 +117,5 @@
     path = ~/.config/git/config-priv
 [credential "https://github.com"]
     helper = !/usr/bin/gh auth git-credential
+[includeIf "gitdir:~/work/indiebi/"]
+    path = ~/.config/git/config-priv
