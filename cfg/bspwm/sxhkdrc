@@ -49,6 +49,10 @@ super + b
 super + m
     bspc desktop -l next;
 
+# toggle monocle layout
+super + shift + r
+    bspc node '@parent' -R 90;
+
 # reload bspwm configuration
 alt + shift + F12
     bash -c '~/.config/bspwm/bspwmrc'
