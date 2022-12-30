@@ -145,7 +145,7 @@ function make_ps1 () {
     PS1+='%F{14}`__git_ps1`'
 
     # colored $ depending on last exit code
-    PS1+=$'%(?.%F{7}.%F{203})$ '
+    PS1+=$'%(?.%F{7}.%F{203})❯❯❯ '
 
     # reset colors
     PS1+="%f"
