@@ -1,0 +1,127 @@
+#!/usr/bin/env python3
+import argparse
+import re
+from collections import defaultdict
+from dataclasses import dataclass
+from datetime import date
+from html.parser import HTMLParser
+
+import requests
+
+
+@dataclass
+class Trip:
+    start: date
+    end: date
+    dates_unstable: bool
+    title: str
+    link: str
+
+
+def parse_date(text: str) -> date:
+    match = re.match("(?:\d+/)?(?P<day>\d+)\.(?P<month>\d+)", text)
+    return date(
+        year=date.today().year,
+        month=int(match.group("month")),
+        day=int(match.group("day")),
+    )
+
+
+def parse_dates(text: str) -> tuple[date, date, bool]:
+    parts = text.split(" - ", 2)
+    dates_unstable = any("/" in part for part in parts)
+    return (
+        *(parse_date(part) for part in parts),
+        dates_unstable,
+    )
+
+
+def parse_barents_trips(html_text: str) -> list[Trip]:
+    class Parser(HTMLParser):
+        def __init__(self):
+            super().__init__()
+            self.stack: dict[list] = defaultdict(list)
+            self.trips: list[Trip] = []
+            self.last_trip_date = ""
+
+        def handle_starttag(self, tag, attrs):
+            self.stack[tag].append(dict(attrs))
+            if tag == "ul":
+                self.last_trip_date = ""
+
+        def handle_endtag(self, tag):
+            self.stack[tag].pop()
+
+        def handle_data(self, data):
+            if self.stack["strong"] and data.strip():
+                self.last_trip_date = data.strip()
+            if (
+                self.stack["a"]
+                and self.stack["p"]
+                and data.strip()
+                and self.last_trip_date
+            ):
+                start, end, dates_unstable = parse_dates(self.last_trip_date)
+                self.trips.append(
+                    Trip(
+                        start=start,
+                        end=end,
+                        dates_unstable=dates_unstable,
+                        title=data.strip(),
+                        link=self.stack["a"][-1]["href"],
+                    )
+                )
+
+    parser = Parser()
+    parser.feed(html_text)
+    return parser.trips
+
+
+def print_table(rows: list[list[str]]) -> None:
+    if not rows:
+        return
+    widths = [max(len(row[i]) for row in rows) for i in range(len(rows[0]))]
+    for row in rows:
+        line = []
+        for i, col in enumerate(row):
+            line.append(col.ljust(widths[i]))
+        line.append(line.pop().strip())
+        print(" | ".join(line))
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "-l", "--length", help="sort by length", action="store_true"
+    )
+    return parser.parse_args()
+
+
+from pathlib import Path
+
+
+def main() -> None:
+    args = parse_args()
+
+    response = requests.get("https://www.barents.pl/kalendarz-wycieczek")
+    trips = parse_barents_trips(response.text)
+
+    if args.length:
+        trips.sort(key=lambda trip: trip.end - trip.start)
+
+    print_table(
+        [
+            [
+                str(trip.start),
+                str(trip.end),
+                f"{(trip.end - trip.start).days} dni"
+                + ("*" if trip.dates_unstable else " "),
+                f"{trip.title} - {trip.link}",
+            ]
+            for trip in trips
+        ]
+    )
+
+
+if __name__ == "__main__":
+    main()
