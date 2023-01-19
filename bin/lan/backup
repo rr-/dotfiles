@@ -1,33 +1,62 @@
-#!/usr/bin/env python3.10
+#!/usr/bin/env python3
 import argparse
 import shlex
-from subprocess import CalledProcessError, run
+import sys
+from dataclasses import dataclass
+from subprocess import PIPE, Popen
+from typing import Iterable
 
 from libdotfiles import logging
 
 
+@dataclass
+class SyncConfig:
+    source: str
+    traverse_links: bool = False
+    exclude: list[str] | None = None
+
+    @property
+    def source_machine(self) -> str:
+        return self.source.split(":", 1)[0]
+
+    @property
+    def source_path(self) -> str:
+        return self.source.split(":", 1)[1]
+
+    @property
+    def target(self) -> str:
+        return f"frost:/volume1/data/backup/{self.source_machine}/"
+
+    @property
+    def target_machine(self) -> str:
+        return self.target.split(":", 1)[0]
+
+    @property
+    def target_path(self) -> str:
+        return self.target.split(":", 1)[1]
+
+
+@dataclass
+class SyncResult:
+    status: int
+    errors: str
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
+    parser.add_argument("-M", "--source-machine")
+    parser.add_argument("-P", "--source-path")
     parser.add_argument("-d", "--dry-run", action="store_true")
     return parser.parse_args()
 
 
-def sync(
-    source: str,
-    dry_run: bool,
-    traverse_links: bool = False,
-    exclude: list[str] | None = None,
-) -> None:
-    source_machine, source_path = source.split(":", 1)
-    target_machine = "frost"
-    target_path = f"/volume1/data/backup/{source_machine}/"
-
+def sync(sync_config: SyncConfig, dry_run: bool) -> SyncResult:
     logging.info(
         "%s:%s → %s:%s",
-        source_machine,
-        source_path,
-        target_machine,
-        target_path,
+        sync_config.source_machine,
+        sync_config.source_path,
+        sync_config.target_machine,
+        sync_config.target_path,
     )
 
     target_machine_cmd = [
@@ -43,7 +72,7 @@ def sync(
         "--delete-during",
     ]
 
-    if traverse_links:
+    if sync_config.traverse_links:
         # traverse into symlinks and copy their contents
         target_machine_cmd.append("-L")
     else:
@@ -52,84 +81,119 @@ def sync(
 
     if dry_run:
         target_machine_cmd.append("--dry-run")
-    if exclude:
-        for pattern in exclude:
+    if sync_config.exclude:
+        for pattern in sync_config.exclude:
             target_machine_cmd.append(f"--exclude={pattern}")
 
-    target_machine_cmd += [f"{source_machine}:{source_path}", target_path]
+    target_machine_cmd += [
+        f"{sync_config.source_machine}:{sync_config.source_path}",
+        sync_config.target_path,
+    ]
 
-    args = ["ssh", "-A", target_machine] + list(
+    args = ["ssh", "-A", sync_config.target_machine] + list(
         map(shlex.quote, target_machine_cmd)
     )
 
-    run(args, check=True)
+    errors = ""
+    process = Popen(args, stderr=PIPE, universal_newlines=True, text=True)
+    for line in iter(process.stderr.readline, ""):
+        sys.stderr.write(line)
+        errors += line
+    process.stderr.close()
+    return_code = process.wait()
+    return SyncResult(status=return_code, errors=errors)
+
+
+def get_sync_configs() -> Iterable[SyncConfig]:
+    # main machine config
+    yield SyncConfig(source="lightning:/home/rr-/.local/", exclude=["vmware/"])
+    yield SyncConfig(
+        source="lightning:/home/rr-/.config/",
+        exclude=["chromium/", "nvim/", "skypeforlinux/", "discord/"],
+    )
+
+    # my work
+    yield SyncConfig(
+        source="lightning:/home/rr-/work/",
+        exclude=[
+            "python_modules/",
+            "node_modules/",
+            "pgdata/",
+            "*.pyc",
+            "/home/rr-/work/external",
+            "dh/*/db/",
+        ],
+    )
+
+    # dedibox
+    yield SyncConfig(
+        source="drizzle:/home/rr-/",
+        exclude=[
+            "/home/rr-/data",
+            "/home/rr-/.config/nvim/",
+            "yume.pl/db/",
+            "python_modules/",
+            "node_modules/",
+            "*.pyc",
+        ],
+    )
+
+    # OldCastle
+    yield SyncConfig(
+        source="oc:/home/rr-/",
+        exclude=["*.pyc", "torrent/data", "srv/website/mnt"],
+    )
+    yield SyncConfig(source="oc:/var/log/nginx/", traverse_links=True)
+
+    # TRCustoms
+    yield SyncConfig(source="trcustoms:/home/trcustoms/")
+    yield SyncConfig(source="trcustoms:/etc/", traverse_links=True)
+
+
+def should_process(sync_config: SyncConfig, args: argparse.Namespace) -> bool:
+    if (
+        args.source_machine
+        and args.source_machine != sync_config.source_machine
+    ):
+        return False
+
+    if args.source_path and args.source_path not in sync_config.source_path:
+        return False
+
+    return True
+
+
+def filter_sync_configs(
+    sync_configs: Iterable[SyncConfig], args: argparse.Namespace
+) -> Iterable[SyncConfig]:
+    for sync_config in sync_configs:
+        if should_process(sync_config, args):
+            yield sync_config
 
 
 def main():
     args = parse_args()
     logging.setup_colored_logs()
 
-    try:
-        # main machine config
-        sync(
-            "lightning:/home/rr-/.local/",
-            dry_run=args.dry_run,
-            exclude=["vmware/"],
-        )
-        sync(
-            "lightning:/home/rr-/.config/",
-            dry_run=args.dry_run,
-            exclude=["chromium/", "nvim/", "skypeforlinux/", "discord/"],
-        )
+    results: list[tuple[SyncConfig, SyncResult]] = []
+    for sync_config in filter_sync_configs(get_sync_configs(), args):
+        sync_result = sync(sync_config, dry_run=args.dry_run)
+        results.append((sync_config, sync_result))
 
-        # my work
-        sync(
-            "lightning:/home/rr-/work/",
-            dry_run=args.dry_run,
-            exclude=[
-                "python_modules/",
-                "node_modules/",
-                "pgdata/",
-                "*.pyc",
-                "/home/rr-/work/external",
-                "dh/*/db/",
-            ],
+    for sync_config, sync_result in results:
+        logging.log(
+            logging.ERROR if sync_result.errors else logging.INFO,
+            "%s:%s → %s:%s: %s",
+            sync_config.source_machine,
+            sync_config.source_path,
+            sync_config.target_machine,
+            sync_config.target_path,
+            sync_result.status,
         )
+        if sync_result.errors:
+            logging.warning(sync_result.errors)
 
-        # dedibox
-        sync(
-            "drizzle:/home/rr-/",
-            dry_run=args.dry_run,
-            exclude=[
-                "/home/rr-/data",
-                "/home/rr-/.config/nvim/",
-                "yume.pl/db/",
-                "python_modules/",
-                "node_modules/",
-                "*.pyc",
-            ],
-        )
-
-        # OldCastle
-        sync(
-            "oc:/home/rr-/",
-            dry_run=args.dry_run,
-            exclude=["*.pyc", "torrent/data"],
-        )
-        sync("oc:/var/log/nginx/", dry_run=args.dry_run, traverse_links=True)
-
-        # trcustoms
-        sync(
-            "trcustoms:/home/trcustoms/",
-            dry_run=args.dry_run,
-        )
-        sync("trcustoms:/etc/", dry_run=args.dry_run, traverse_links=True)
-
-    except CalledProcessError:
-        logging.error("Error during sync, aborting")
-        exit(1)
-
-    logging.info("Syncing finished without errors")
+    # logging.info("Syncing finished without errors")
 
 
 if __name__ == "__main__":

@@ -2,17 +2,7 @@
 import logging
 import os
 from collections.abc import Callable
-from logging import (
-    DEBUG,
-    ERROR,
-    INFO,
-    WARNING,
-    debug,
-    error,
-    getLogger,
-    info,
-    warning,
-)
+from logging import *
 from typing import Any
 
 try:
