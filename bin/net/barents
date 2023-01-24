@@ -73,7 +73,7 @@ def parse_barents_trips(html_text: str) -> list[Trip]:
                 )
 
     parser = Parser()
-    parser.feed(html_text)
+    parser.feed(html_text.replace("\u200b", ""))
     return parser.trips
 
 
