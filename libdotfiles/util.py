@@ -78,7 +78,7 @@ def copy_file(source: Path, target: Path) -> None:
 
 
 def create_symlinks(items: list[tuple[Path, Path]]) -> None:
-    for (source, target) in items:
+    for source, target in items:
         create_symlink(source, target)
 
 
