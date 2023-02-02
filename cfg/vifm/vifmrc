@@ -170,8 +170,8 @@ vnoremap yN :!printf '%%q ' %"f | clip<cr>
 " full path to selected file's directory
 nnoremap yd :!echo -n "'"%"d:gs!\!/!"'" %i | clip<cr>
 
-" Compatibility with vim vinegar
-nnoremap <f3> :cd ..<cr>
+" Create a dir in the other pane with the selected name
+nnoremap -m :!mkdir %"D/%"f:t &<cr>
 
 " Go to line
 nnoremap <cr> :<C-U>if v:count|exe 'norm! '.v:count.'Gl'|else|exe 'norm! l'|endif<CR>
