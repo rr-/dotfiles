@@ -3,4 +3,4 @@ mod="$@"
 mod=${mod//\//.}
 mod=${mod#cfg.}
 mod=cfg.$mod
-python3.10 -m ${mod}
+python3 -m ${mod}

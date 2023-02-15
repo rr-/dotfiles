@@ -1,5 +1,7 @@
-#!/usr/bin/env python3.10
+#!/usr/bin/env python3
+# requires: PyQt6
 import argparse
+import os
 import random
 import string
 import sys
@@ -9,35 +11,33 @@ from datetime import datetime
 from enum import Enum
 from pathlib import Path
 
-from PyQt5 import QtCore, QtGui, QtWidgets
+from PyQt6 import QtCore, QtGui, QtWidgets
 
 
 class InteractiveCaptureWindow(QtWidgets.QWidget):
     def __init__(self, rect: QtCore.QRect):
         super().__init__()
         self.rubberband = QtWidgets.QRubberBand(
-            QtWidgets.QRubberBand.Rectangle, self
+            QtWidgets.QRubberBand.Shape.Rectangle, self
         )
         self.setWindowFlags(
-            QtCore.Qt.FramelessWindowHint
-            | QtCore.Qt.WindowStaysOnTopHint
-            # | QtCore.Qt.X11BypassWindowManagerHint
+            QtCore.Qt.WindowType.FramelessWindowHint
+            | QtCore.Qt.WindowType.WindowStaysOnTopHint
+            # | QtCore.Qt.WindowType.X11BypassWindowManagerHint
         )
-        self.setAttribute(QtCore.Qt.WA_TranslucentBackground)
-        self.setGeometry(
-            QtWidgets.QApplication.instance().desktop().geometry()
-        )
+        self.setAttribute(QtCore.Qt.WidgetAttribute.WA_TranslucentBackground)
+        self.setGeometry(self.screen().geometry())
         if rect:
             self.rubberband.setGeometry(rect)
             self.rubberband.show()
         self.setMouseTracking(True)
-        self.setFocusPolicy(QtCore.Qt.TabFocus)
-        self.setCursor(QtCore.Qt.CrossCursor)
+        self.setFocusPolicy(QtCore.Qt.FocusPolicy.TabFocus)
+        self.setCursor(QtCore.Qt.CursorShape.CrossCursor)
         self.value = False
         self.origin = None
 
     def keyPressEvent(self, event):
-        if event.key() == QtCore.Qt.Key_Escape:
+        if event.key() == QtCore.Qt.Key.Key_Escape:
             self.close()
 
     def mousePressEvent(self, event):
@@ -127,10 +127,22 @@ def parse_args() -> argparse.Namespace:
 
 class WindowCapture:
     def __init__(self) -> None:
+        os.environ["QT_ENABLE_HIGHDPI_SCALING"] = "0"
         self.app = QtWidgets.QApplication(sys.argv)
 
     def get_desktop_rect(self) -> QtCore.QRect:
-        return self.app.desktop().geometry()
+        screens = self.get_screens()
+        rect = QtCore.QRect(
+            QtCore.QPoint(
+                min(screen.geometry().left() for screen in screens),
+                min(screen.geometry().top() for screen in screens),
+            ),
+            QtCore.QPoint(
+                max(screen.geometry().right() for screen in screens),
+                max(screen.geometry().bottom() for screen in screens),
+            ),
+        )
+        return rect
 
     def get_active_screen_rect(self) -> QtCore.QRect:
         return self.get_active_screen().geometry()
@@ -141,7 +153,7 @@ class WindowCapture:
     def get_interactive_rect(self, rect: QtCore.QRect) -> QtCore.QRect | None:
         window = InteractiveCaptureWindow(rect)
         window.show()
-        self.app.exec_()
+        self.app.exec()
         return window.value
 
     def get_active_screen(self) -> QtGui.QScreen:
@@ -152,13 +164,15 @@ class WindowCapture:
         raise RuntimeError("unable to determine active screen")
 
     def capture_region(self, rect: QtCore.QRect) -> QtGui.QPixmap:
-        screen = QtWidgets.QApplication.primaryScreen()
+        screen = sorted(
+            QtWidgets.QApplication.screens(),
+            key=lambda screen: screen.geometry().left(),
+        )[0]
         screenshot = screen.grabWindow(
-            self.app.desktop().winId(),
-            rect.x(),
-            rect.y(),
-            rect.width(),
-            rect.height(),
+            x=rect.x(),
+            y=rect.y(),
+            width=rect.width(),
+            height=rect.height(),
         )
         return screenshot
 

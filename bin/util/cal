@@ -1,4 +1,5 @@
-#!/usr/bin/env python3.10
+#!/usr/bin/env python3
+# requires: holidays
 import argparse
 import calendar
 import re
@@ -6,7 +7,7 @@ from datetime import date, timedelta
 from itertools import groupby
 from typing import Any
 
-from holidays import Polish
+from holidays import country_holidays
 
 COLOR_RESET = "\x1B[0m"
 COLOR_TODAY = "\x1B[38;5;%dm\x1B[48;5;%dm" % (232, 39)
@@ -27,7 +28,7 @@ MONTHS = [
     "December",
 ]
 WEEK_DAYS = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"]
-PL_HOLIDAYS = Polish()
+PL_HOLIDAYS = country_holidays("PL")
 
 
 def strip_ansi(text: str) -> str:

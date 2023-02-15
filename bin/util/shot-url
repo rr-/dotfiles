@@ -1,4 +1,5 @@
-#!/usr/bin/env python3.10
+#!/usr/bin/env python3
+# requires: selenium
 import argparse
 import urllib.parse
 from pathlib import Path
