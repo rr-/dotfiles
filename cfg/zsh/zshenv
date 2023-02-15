@@ -7,7 +7,7 @@ if whence -p dircolors >/dev/null; then
 fi
 
 # aliases
-alias p=python3.10
+alias p=python3.11
 alias pi=ipython3
 alias l="myls"
 alias ll="myls -l"

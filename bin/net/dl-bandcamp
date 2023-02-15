@@ -1,4 +1,5 @@
-#!/usr/bin/env python3.10
+#!/usr/bin/env python3
+# requires: python-dateutil lxml regex requests tqdm xdg
 import argparse
 import json
 import os
