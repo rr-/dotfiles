@@ -1,0 +1,31 @@
+#!/usr/bin/env python3
+print("edit me")
+exit(1)
+
+from pathlib import Path
+
+import numpy
+from PIL import Image
+
+paths = list(
+    sorted(
+        Path("/home/rr-.hdd/data.local/img/camera/2020-08-26/").glob("*.jpg")
+    )
+)
+
+paths = paths[0 : len(paths) // 8]
+
+image = Image.open(paths[0])
+width, height = Image.open(paths[0]).size
+
+arr = numpy.zeros((height, width, 3), numpy.float)
+for i, path in enumerate(paths):
+    print(f"{i/len(paths):%}: {path}")
+    imarr = numpy.array(Image.open(path), dtype=numpy.float)
+    arr = arr + imarr / len(paths)
+
+# Round values in array and cast as 8-bit integer
+arr = numpy.array(numpy.round(arr), dtype=numpy.uint8)
+
+out = Image.fromarray(arr, mode="RGB")
+out.save("average.png")

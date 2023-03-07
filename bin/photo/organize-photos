@@ -1,0 +1,235 @@
+#!/usr/bin/env python3
+import argparse
+import json
+import re
+from collections.abc import Callable, Iterable
+from datetime import date
+from pathlib import Path
+from subprocess import run
+
+import dateutil.parser
+
+ROOT_DIR = Path(__file__).parent
+
+FILENAME_REGEX = re.compile(
+    r"^(?:(?:IMG|PANO)_)?"
+    r"(?P<year>20\d{2})"
+    r"(?P<month>\d{2})"
+    r"(?P<day>\d{2})"
+    r"_"
+    r"\d{6}.*$"
+)
+
+IMAGE_SUFFIXES = {".png", ".jpg"}
+RAW_SUFFIXES = {".cr2", ".nef", ".raf"}
+VIDEO_SUFFIXES = {".mp4", ".mov", ".avi"}
+RAW_PROCESSING_SUFFIXES = {".xmp"}
+
+ALL_SUFFIXES = (
+    IMAGE_SUFFIXES | RAW_SUFFIXES | VIDEO_SUFFIXES | RAW_PROCESSING_SUFFIXES
+)
+
+
+def chunks(source, n):
+    n = max(1, n)
+    return (source[i : i + n] for i in range(0, len(source), n))
+
+
+def get_day_dir(root_dir: Path, day: date) -> Path:
+    year_dir = root_dir / str(day.year)
+    day_dir_prefix = f"{day.year:04d}-{day.month:02d}-{day.day:02d}"
+    if year_dir.exists():
+        for path in year_dir.iterdir():
+            if path.is_dir() and path.name.startswith(day_dir_prefix):
+                return path
+    return Path(day_dir_prefix)
+
+
+def get_date_from_filename(source_path: Path) -> date | None:
+    match = FILENAME_REGEX.match(source_path.stem)
+    if match:
+        return date(
+            year=int(match.group("year")),
+            month=int(match.group("month")),
+            day=int(match.group("day")),
+        )
+    return None
+
+
+def get_dates_from_filenames(
+    source_paths: Iterable[Path],
+) -> dict[Path, date | None]:
+    result: dict[Path, date | None] = {}
+    for source_path in source_paths:
+        result[source_path] = get_date_from_filename(source_path)
+    return result
+
+
+def get_date_from_ffmpeg(source_path: Path) -> date | None:
+    output = run(
+        [
+            "ffprobe",
+            "-i",
+            str(source_path),
+            "-print_format",
+            "json",
+            "-show_entries",
+            "format_tags=creation_time",
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+    ).stdout
+    try:
+        return dateutil.parser.parse(
+            json.loads(output)["format"]["tags"]["creation_time"]
+        )
+    except KeyError:
+        return None
+
+
+def get_dates_from_ffmpeg(
+    source_paths: Iterable[Path],
+) -> dict[Path, date | None]:
+    result: dict[Path, date | None] = {}
+    for source_path in source_paths:
+        result[source_path] = get_date_from_ffmpeg(source_path)
+    return result
+
+
+def get_dates_from_exiftool(
+    source_paths: Iterable[Path],
+) -> dict[Path, date | None]:
+    result: dict[Path, date | None] = {}
+
+    source_paths = list(source_paths)
+    if not source_paths:
+        return result
+
+    output = run(
+        [
+            "exiftool",
+            "-CreateDate",
+            "-j",
+            "-d",
+            "%Y-%m-%dT%H:%M:%S%z",
+            *source_paths,
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+    ).stdout
+
+    try:
+        items = json.loads(output)
+    except ValueError:
+        items = None
+
+    if items:
+        for source_path, item in zip(source_paths, items):
+            try:
+                date_string = item["CreateDate"]
+                day = dateutil.parser.parse(date_string).date()
+            except KeyError:
+                day = None
+            result[source_path] = day
+
+    return result
+
+
+TDateExtractRoutine = Callable[[Iterable[Path]], dict[Path, date | None]]
+
+DATE_EXTRACT_ROUTINES: list[TDateExtractRoutine] = [
+    get_dates_from_filenames,
+    get_dates_from_exiftool,
+    get_dates_from_ffmpeg,
+]
+
+
+def get_target_dirs(
+    root_dir: Path, source_paths: list[Path]
+) -> Iterable[tuple[Path, Path | None]]:
+    date_map: dict[Path, date | None] = {
+        source_path: None for source_path in source_paths
+    }
+    for func in DATE_EXTRACT_ROUTINES:
+        date_map.update(
+            func(path for path, date in date_map.items() if not date)
+        )
+
+    for source_path, day in date_map.items():
+        if day is not None:
+            day_dir = get_day_dir(root_dir, day)
+        else:
+            day_dir = None
+
+        yield (source_path, day_dir)
+
+
+def collect_files(path: Path, suffixes: Iterable[str]) -> Iterable[Path]:
+    return sorted(
+        (
+            path
+            for path in path.iterdir()
+            if path.is_file() and path.suffix.lower() in suffixes
+        ),
+        key=lambda path: path.name,
+    )
+
+
+def move(
+    source_path: Path,
+    target_dir: Path,
+    dry_run: bool,
+    overwrite_existing_files: bool,
+) -> None:
+    target_path = target_dir / source_path.name
+
+    if not dry_run:
+        target_dir.mkdir(parents=True, exist_ok=True)
+    if overwrite_existing_files or not target_path.exists():
+        print(f"Moving {source_path} to {target_path}")
+        if not dry_run:
+            source_path.rename(target_path)
+    elif target_path.read_bytes() == source_path.read_bytes():
+        print(f"Target already exists and is identical: {target_path}")
+        if not dry_run:
+            source_path.unlink()
+    else:
+        print(f"Target already exists and is different: {target_path}")
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("root_dir", type=Path, default=ROOT_DIR, nargs="?")
+    parser.add_argument("-d", "--dry-run", action="store_true")
+    parser.add_argument(
+        "-o",
+        "--overwrite",
+        action="store_true",
+        dest="overwrite_existing_files",
+    )
+    return parser.parse_args()
+
+
+def main() -> None:
+    args = parse_args()
+
+    for chunk in chunks(
+        collect_files(args.root_dir, suffixes=ALL_SUFFIXES), n=10
+    ):
+        for source_path, target_dir in get_target_dirs(args.root_dir, chunk):
+            if target_dir is None:
+                print(f"Unknown image: {source_path}")
+                continue
+
+            move(
+                source_path,
+                target_dir,
+                dry_run=args.dry_run,
+                overwrite_existing_files=args.overwrite_existing_files,
+            )
+
+
+if __name__ == "__main__":
+    main()

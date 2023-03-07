@@ -1,0 +1,94 @@
+#!/usr/bin/env python3
+import argparse
+import re
+from dataclasses import dataclass
+from pathlib import Path
+
+RAW_SUFFIXES = {".cr2", ".nef", ".raf"}
+JPEG_SUFFIXES = {".jpeg", ".jpg"}
+
+
+@dataclass
+class FileInfo:
+    path: Path
+    size: int
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        description=(
+            "Delete RAW files in given directories for which "
+            "corresponding JPEG files have been deleted."
+        )
+    )
+    parser.add_argument("-d", "--dry-run", action="store_true")
+    parser.add_argument("dir", type=Path, nargs="+")
+    return parser.parse_args()
+
+
+def format_size(count: int) -> str:
+    units = ["B", "KB", "MB", "GB"]
+    base = 1024.0
+    unit = units.pop(0)
+    while count >= base and units:
+        count /= base
+        unit = units.pop(0)
+    return f"{count:.02f} {unit}"
+
+
+def format_file_infos(files: list[FileInfo]) -> str:
+    size = sum(file.size for file in files)
+    return f"{format_size(size)}, {len(files)} files"
+
+
+def get_jpeg_path(raw_path: Path) -> Path:
+    for suffix in JPEG_SUFFIXES:
+        if (jpeg_path := raw_path.with_suffix(suffix.upper())).exists():
+            return jpeg_path
+        if (jpeg_path := raw_path.with_suffix(suffix.lower())).exists():
+            return jpeg_path
+        if (jpeg_path := raw_path.with_suffix(suffix)).exists():
+            return jpeg_path
+
+
+def organize_raws(
+    directories: list[Path],
+) -> tuple[list[FileInfo], list[FileInfo]]:
+    files_to_keep: list[FileInfo] = []
+    files_to_delete: list[FileInfo] = []
+
+    for directory in directories:
+        for path in sorted(directory.iterdir()):
+            if path.suffix.lower() not in [
+                suffix.lower() for suffix in RAW_SUFFIXES
+            ]:
+                continue
+            raw_path = path
+            jpeg_path = get_jpeg_path(raw_path)
+            raw_size = raw_path.stat().st_size
+            file_info = FileInfo(
+                path=raw_path,
+                size=raw_size,
+            )
+            if jpeg_path:
+                files_to_keep.append(file_info)
+            else:
+                files_to_delete.append(file_info)
+
+    return files_to_keep, files_to_delete
+
+
+def main() -> None:
+    args = parse_args()
+    files_to_keep, files_to_delete = organize_raws(args.dir)
+
+    for file in files_to_delete:
+        print(f"Removing {file.path}")
+        if not args.dry_run:
+            file.path.unlink()
+    print(f"Reclaimed space: {format_file_infos(files_to_delete)}")
+    print(f"Kept space: {format_file_infos(files_to_keep)}")
+
+
+if __name__ == "__main__":
+    main()
