@@ -1,0 +1,61 @@
+#!/usr/bin/env python3
+import argparse
+from subprocess import run
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("pattern", default="DSC_*.JPG", nargs="?")
+    parser.add_argument(
+        "-w",
+        "--width",
+        type=int,
+        default=1920,
+        choices=[1920, 1600, 1280, 960, 640],
+    )
+    parser.add_argument("-c", "--crf", type=int, default=15)
+    parser.add_argument("-b", "--bitrate", default="4m")
+    parser.add_argument("--fps", type=int, default=15)
+    parser.add_argument(
+        "--filter", help="example: curves=lighter,curves=increase_contrast"
+    )
+    return parser.parse_args()
+
+
+def main() -> None:
+    args = parse_args()
+    run(
+        [
+            "ffmpeg",
+            "-framerate",
+            f"{args.fps}",
+            "-f",
+            "image2",
+            "-pattern_type",
+            "glob",
+            "-i",
+            f"{args.pattern}",
+            "-flush_packets",
+            "1",
+            "-c:v",
+            "libvpx-vp9",
+            "-vf",
+            (
+                f"scale={args.width}:-1"
+                + (",{args.filter}" if args.filter else "")
+            ),
+            "-crf",
+            f"{args.crf}",
+            "-b:v",
+            f"{args.bitrate}",
+            "-r",
+            f"{args.fps}",
+            "-y",
+            "timelapse.webm",
+        ],
+        check=True,
+    )
+
+
+if __name__ == "__main__":
+    main()

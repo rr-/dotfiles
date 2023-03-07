@@ -1,0 +1,61 @@
+#!/usr/bin/env python3
+import argparse
+from pathlib import Path
+from subprocess import run
+
+
+def parse_args() -> None:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("path", type=Path, nargs="+")
+    parser.add_argument("-o", "--out", type=Path, default=Path("output.mp4"))
+    return parser.parse_args()
+
+
+def get_intermediate_file_path(path) -> None:
+    return path.with_suffix(".ts")
+
+
+def main() -> None:
+    args = parse_args()
+    for path in args.path:
+        intermediate_path = get_intermediate_file_path(path)
+        if not intermediate_path.exists():
+            run(
+                [
+                    "ffmpeg",
+                    "-i",
+                    path,
+                    "-c",
+                    "copy",
+                    "-bsf:v",
+                    "h264_mp4toannexb",
+                    "-f",
+                    "mpegts",
+                    str(intermediate_path),
+                ]
+            )
+    run(
+        [
+            "ffmpeg",
+            "-i",
+            "concat:"
+            + "|".join(
+                str(get_intermediate_file_path(path)) for path in args.path
+            ),
+            "-c",
+            "copy",
+            "-bsf:a",
+            "aac_adtstoasc",
+            args.out,
+        ]
+    )
+
+
+if __name__ == "__main__":
+    main()
+
+# ffmpeg -i 1.mp4 -c copy -bsf:v h264_mp4toannexb -f mpegts intermediate1.ts
+# ffmpeg -i 2.mp4 -c copy -bsf:v h264_mp4toannexb -f mpegts intermediate2.ts
+# ffmpeg -i 3.mp4 -c copy -bsf:v h264_mp4toannexb -f mpegts intermediate3.ts
+# ffmpeg -i 4.mp4 -c copy -bsf:v h264_mp4toannexb -f mpegts intermediate4.ts
+# ffmpeg -i "concat:intermediate1.ts|intermediate2.ts|intermediate3.ts|intermediate4.ts" -c copy -bsf:a aac_adtstoasc output.mp4
