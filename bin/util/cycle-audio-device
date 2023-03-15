@@ -51,9 +51,9 @@ MACHINE_SPECS = {
         ),
         # TV
         AudioDeviceSpec(
-            sink_regex=r"alsa_output\.pci-0000_01_00\.1\.hdmi-surround",
+            sink_regex=r"alsa_output\.pci-0000_01_00\.1\.hdmi.*",
             card_regex="alsa_card.pci-0000_01_00.1",
-            profile="output:hdmi-surround",
+            profile="output:hdmi-stereo-extra1",
         ),
         # headset
         AudioDeviceSpec(
@@ -125,26 +125,26 @@ def main() -> None:
         raise ValueError(f"unknown machine: {hostname}")
 
     all_cards = list(get_all_cards())
+
+    for card in all_cards:
+        for spec in specs:
+            if spec.match_card(card) and spec.matched_card and spec.profile:
+                set_card_profile(spec.matched_card, spec.profile)
+
     all_sinks = list(get_all_sinks())
     if not all_sinks:
         raise ValueError("unable to retrieve sinks")
-
-    for sink in all_sinks:
-        print(sink)
 
     matched_spec = None
     for spec in specs:
         for sink in all_sinks:
             if spec.match_sink(sink) and sink.default:
                 matched_spec = spec
-        for card in all_cards:
-            spec.match_card(card)
     if not matched_spec:
         matched_spec = specs[-1]
 
     while specs[-1] != matched_spec:
         specs.append(specs.pop(0))
-    print(specs)
 
     for spec in specs:
         if not spec.matched_sink:
