@@ -71,35 +71,102 @@ local function basename(pathname)
 end
 
 
-local function select_file()
-    local source_path = mp.get_property('path')
-    local source_name = mp.get_property('filename')
-    if source_name == nil then
-        return
-    end
-
-    local source_name_no_ext = source_name:match('(.*)[.]')
-    local source_dir = dirname(source_path)
-    local source_dir_name = basename(source_dir)
-
-    local target_dir = source_dir
-    target_dir = mp_utils.join_path(target_dir, '..')
-    target_dir = mp_utils.join_path(target_dir, 'selected')
-    target_dir = mp_utils.join_path(target_dir,source_dir_name)
-
+local function dir_create(target_path)
     mp.command_native({
         name = 'subprocess',
         playback_only = false,
-        args = {'mkdir', '-p', target_dir},
+        args = {'mkdir', '-p', target_path},
     })
+end
 
-    local files = mp_utils.readdir(source_dir, 'files')
+
+local function file_copy(source_path, target_path)
+    dir_create(dirname(target_path))
+    mp.commandv('run', 'cp', source_path, target_path)
+end
+
+
+local function file_rename(source_path, target_path, keep_file_in_playlist)
+    local old_pos = mp.get_property('playlist-pos')
+    local current_path = mp.get_property('playlist/' .. tostring(old_pos) .. '/filename')
+    if current_path == source_path then
+        mp.commandv('playlist-remove', old_pos)
+    end
+
+    dir_create(dirname(target_path))
+    mp.commandv('run', 'mv', source_path, target_path)
+
+    if keep_file_in_playlist and current_path == source_path then
+        mp.commandv('loadfile', target_path, 'append')
+        local new_pos = mp.get_property('playlist-count') - 1
+        mp.commandv('playlist-move', new_pos, old_pos)
+        mp.set_property('playlist-pos', old_pos)
+    end
+end
+
+
+local function select_file()
+    local current_path = mp.get_property('path')
+    local current_name = mp.get_property('filename')
+    if current_name == nil then
+        return
+    end
+
+    local current_name_no_ext = current_name:match('(.*)[.]')
+    local current_dir = dirname(current_path)
+
+    local files = mp_utils.readdir(current_dir, 'files')
     if files ~= nil then
         for _, file in pairs(files) do
-            if string.starts(file, source_name_no_ext) then
-                local file_path = mp_utils.join_path(source_dir, file)
-                mp.commandv('run', 'cp', file_path, target_dir)
-                mp.commandv('show-text', file .. ' copied to ' .. target_dir)
+            if string.starts(file, current_name_no_ext) then
+                local source_name = file
+                local source_path = mp_utils.join_path(current_dir, source_name)
+                local source_name_no_ext = source_name:match('(.*)[.]')
+                local source_name_ext = source_name:match('.*([.].*)')
+
+                local target_name
+                if string.find(source_name_no_ext, '-SELECTED') then
+                    target_name = source_name_no_ext:gsub('-SELECTED', '') .. source_name_ext
+                else
+                    target_name = source_name_no_ext .. '-SELECTED' .. source_name_ext
+                end
+                local target_path = mp_utils.join_path(current_dir, target_name)
+
+                mp.commandv('show-text', source_name .. ' renamed to ' .. target_name)
+                file_rename(source_path, target_path, true)
+            end
+        end
+    end
+end
+
+
+local function discard_file()
+    local current_path = mp.get_property('path')
+    local current_name = mp.get_property('filename')
+    if current_name == nil then
+        return
+    end
+
+    local current_name_no_ext = current_name:match('(.*)[.]')
+    local current_dir = dirname(current_path)
+
+    local files = mp_utils.readdir(current_dir, 'files')
+    if files ~= nil then
+        for _, file in pairs(files) do
+            if string.starts(file, current_name_no_ext) then
+                local source_name = file
+                local source_path = mp_utils.join_path(current_dir, source_name)
+
+                local target_name
+                if string.find(source_name, '~') then
+                    target_name = source_name:gsub('~', '')
+                else
+                    target_name = source_name .. '~'
+                end
+                local target_path = mp_utils.join_path(current_dir, target_name)
+
+                mp.commandv('show-text', source_name .. ' renamed to ' .. target_name)
+                file_rename(source_path, target_path, false)
             end
         end
     end
@@ -107,3 +174,4 @@ end
 
 
 mp.register_script_message('select-file', select_file)
+mp.register_script_message('discard-file', discard_file)
