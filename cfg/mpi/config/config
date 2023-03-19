@@ -28,4 +28,6 @@ osd-border-color='#aa000000'
 osd-blur=2
 osd-font-size=16
 sws-scaler=lanczos
+scale=lanczos
+scale-blur=2
 osd-bar=no
