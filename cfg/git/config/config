@@ -103,19 +103,9 @@
     path = ~/.config/git/config-postmedia
 [includeIf "gitdir:~/work/moto/"]
     path = ~/.config/git/config-moto
-[includeIf "gitdir:~/work/netguru/"]
-    path = ~/.config/git/config-netguru
-[includeIf "gitdir:~/work/dh/"]
-    path = ~/.config/git/config-dh
-[includeIf "gitdir:~/work/lantum/"]
-    path = ~/.config/git/config-lantum
 [includeIf "gitdir:~/work/nodal/"]
     path = ~/.config/git/config-nodal
-[includeIf "gitdir:~/work/decernis/"]
-    path = ~/.config/git/config-priv
 [includeIf "gitdir:~/work/invoices/"]
     path = ~/.config/git/config-priv
 [credential "https://github.com"]
     helper = !/usr/bin/gh auth git-credential
-[includeIf "gitdir:~/work/indiebi/"]
-    path = ~/.config/git/config-priv
