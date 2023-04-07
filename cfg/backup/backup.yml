@@ -1,0 +1,26 @@
+defaults: &defaults
+  exclude:
+  - "*.pyc"
+  - "__pycache__/"
+  - ".mypy_cache/"
+  - ".pytest_cache/"
+  - ".ipython/"
+  - "node_modules/"
+
+machines:
+  snowflake:
+  - name: work
+    <<: *defaults
+    source: "/home/rr-/data.local/work/./"
+    target: "drizzle:backup/work/./"
+    exclude+:
+    - "trcustoms/backend/volumes/"
+
+  lightning:
+  - name: work
+    <<: *defaults
+    source: "/home/rr-/work/./"
+    target: "drizzle:backup/work/./"
+    exclude+:
+    - "trcustoms/backend/volumes/"
+    - "webmail/backend/volumes/"

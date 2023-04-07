@@ -1,0 +1,204 @@
+#!/usr/bin/env python3
+# requires: pyyaml xdg
+import argparse
+import socket
+import sys
+from dataclasses import dataclass, field
+from enum import Enum, auto
+from pathlib import Path
+from subprocess import PIPE, Popen
+
+import xdg
+import yaml
+
+from libdotfiles import logging
+
+CONFIG_PATH = Path(xdg.XDG_CONFIG_HOME) / "backup.yml"
+
+
+@dataclass
+class CommandResult:
+    status: int = 0
+    errors: list[str] = field(default_factory=list)
+
+
+def run_command(cmd: list[str]) -> CommandResult:
+    errors: list[str] = []
+    process = Popen(cmd, stderr=PIPE, universal_newlines=True, text=True)
+    for line in iter(process.stderr.readline, ""):
+        sys.stderr.write(line)
+        errors.append(line)
+    process.stderr.close()
+    return_code = process.wait()
+    return CommandResult(status=return_code, errors=errors)
+
+
+@dataclass
+class URI:
+    uri: str
+    machine: str | None
+    path: str
+
+    def __init__(self, uri: str) -> None:
+        self.uri = uri
+        if ":" in uri:
+            self.machine, self.path = uri.split(":", 1)
+        else:
+            self.machine = None
+            self.path = self.uri
+
+    def __str__(self) -> str:
+        return self.uri
+
+
+class SyncMode(Enum):
+    push = "push"
+    pull = "pull"
+
+
+@dataclass
+class SyncConfig:
+    name: str
+    source: URI
+    target: URI
+    exclude: list[str]
+    traverse_links: bool = False
+
+
+class SyncResult(CommandResult):
+    source: URI
+    target: URI
+
+    def __init__(self, source: URI, target: URI) -> None:
+        super().__init__()
+        self.source = source
+        self.target = target
+
+    def __ior__(self, other: "CommandResult") -> "SyncResult":
+        if not self.status:
+            self.status = other.status
+        self.errors.extend(other.errors)
+        return self
+
+
+def get_sync_configs(machine_name: str) -> list[SyncConfig]:
+    document = yaml.safe_load(CONFIG_PATH.read_text())
+    return [
+        SyncConfig(
+            name=item["name"],
+            source=URI(item["source"]),
+            target=URI(item["target"]),
+            exclude=item.get("exclude", []),
+            traverse_links=item.get("traverse_links", False),
+        )
+        for item in document["machines"][machine_name]
+    ]
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-d", "--dry-run", action="store_true")
+    parser.add_argument("-D", "--delete", action="store_true")
+    parser.add_argument("mode", choices=list(SyncMode), type=SyncMode)
+    parser.add_argument("name", nargs="?")
+    return parser.parse_args()
+
+
+def create_remote_dir(uri: URI) -> CommandResult:
+    if not uri.machine:
+        return CommandResult(status=0, errors=[])
+    return run_command(["ssh", uri.machine, "mkdir", "-p", uri.path])
+
+
+def sync(
+    sync_config: SyncConfig, mode: SyncMode, dry_run: bool, delete: bool
+) -> SyncResult:
+    match mode:
+        case SyncMode.push:
+            source = sync_config.source
+            target = sync_config.target
+        case SyncMode.pull:
+            source = sync_config.target
+            target = sync_config.source
+        case _:
+            raise ValueError
+
+    result = SyncResult(source=source, target=target)
+    result |= create_remote_dir(source)
+    result |= create_remote_dir(target)
+
+    logging.info("%s → %s", source, target)
+
+    cmd = [
+        "rsync",
+        "--progress",
+        "--info=progress2",
+        # "--usermap=*:admin",
+        # "--groupmap=*:users",
+        "--chmod=D2775,F664",
+        "-t",  # preserve times
+        "-r",  # recurse
+        "-R",  # keep full paths
+        "-z",  # compress
+    ]
+
+    if mode == SyncMode.push or delete:
+        cmd += [
+            "--delete",
+            "--delete-excluded",
+        ]
+
+    if sync_config.traverse_links:
+        # traverse into symlinks and copy their contents
+        cmd.append("-L")
+    else:
+        # copy symlinks as-is
+        cmd.append("-l")
+        cmd.append("--copy-unsafe-links")
+
+    if dry_run:
+        cmd.append("--dry-run")
+    if sync_config.exclude:
+        for pattern in sync_config.exclude:
+            cmd.append(f"--exclude={pattern}")
+
+    cmd += [source.uri, target.uri]
+
+    result |= run_command(cmd)
+    return result
+
+
+def main() -> None:
+    logging.setup_colored_logs()
+
+    args = parse_args()
+    hostname = socket.gethostname()
+
+    sync_configs = get_sync_configs(hostname)
+    if args.name:
+        sync_configs = [c for c in sync_configs if c.name == args.name]
+
+    results: list[SyncResult] = []
+    for sync_config in sync_configs:
+        sync_result = sync(
+            sync_config,
+            mode=args.mode,
+            dry_run=args.dry_run,
+            delete=args.delete,
+        )
+        results.append(sync_result)
+
+    for sync_result in results:
+        logging.log(
+            logging.ERROR if sync_result.errors else logging.INFO,
+            "%s → %s: %s",
+            sync_result.source,
+            sync_result.target,
+            sync_result.status,
+        )
+        for error in sync_result.errors:
+            logging.warning("%s", error)
+
+
+if __name__ == "__main__":
+    main()
