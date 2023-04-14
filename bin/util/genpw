@@ -1,28 +1,29 @@
 #!/usr/bin/env python3
 import argparse
 import random
+import string
+
+DEFAULT_LENGTH = 25
+DEFAULT_ALPHA = string.ascii_letters + string.digits + "_-"
 
 
-def get_random_pass(length: int = 25) -> str:
-    alpha = "abcdefghijklmnopqrstuvwxyz"
-    alpha += "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-    alpha += "0123456789"
-    alpha += "_-"
+def get_random_pass(length: int, alphabet: str) -> str:
     while True:
-        password = "".join(random.choice(alpha) for _ in range(length))
+        password = "".join(random.choice(alphabet) for _ in range(length))
         if not password.startswith(" ") and not password.endswith(" "):
             return password
 
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
-    parser.add_argument("-l", "--length", default=25, type=int)
+    parser.add_argument("-l", "--length", default=DEFAULT_LENGTH, type=int)
+    parser.add_argument("-a", "--alphabet", default=DEFAULT_ALPHA)
     return parser.parse_args()
 
 
 def main() -> None:
     args = parse_args()
-    print(get_random_pass(args.length))
+    print(get_random_pass(length=args.length, alphabet=args.alphabet))
 
 
 if __name__ == "__main__":
