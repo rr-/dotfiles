@@ -8,6 +8,7 @@ import shlex
 import subprocess
 import sys
 import tempfile
+import time
 import zlib
 from getpass import getpass
 from pathlib import Path
@@ -102,13 +103,21 @@ def main() -> None:
     tmp_path = Path(tmp_file.name)
     tmp_path.write_text(content)
 
-    retval = subprocess.call(shlex.split(args.editor) + [str(tmp_path)])
-    if retval != 0:
-        raise EditorError(args.editor, retval)
+    def check_write(tmp_path: Path) -> None:
+        new_content = tmp_path.read_text()
+        if new_content != old_content:
+            write_encrypted_file(args.path, key, new_content)
 
-    new_content = tmp_path.read_text()
-    if new_content != old_content:
-        write_encrypted_file(args.path, key, new_content)
+    cmd = [*shlex.split(args.editor), str(tmp_path)]
+    process = subprocess.Popen(cmd)
+    while process.poll() is None:
+        check_write(tmp_path)
+        time.sleep(1)
+
+    if process.returncode != 0:
+        raise EditorError(args.editor, process.returncode)
+
+    check_write(tmp_path)
 
 
 if __name__ == "__main__":
