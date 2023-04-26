@@ -104,9 +104,11 @@ def main() -> None:
     tmp_path.write_text(content)
 
     def check_write(tmp_path: Path) -> None:
+        nonlocal old_content
         new_content = tmp_path.read_text()
         if new_content != old_content:
             write_encrypted_file(args.path, key, new_content)
+            old_content = new_content
 
     cmd = [*shlex.split(args.editor), str(tmp_path)]
     process = subprocess.Popen(cmd)
