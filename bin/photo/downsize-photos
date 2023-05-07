@@ -1,0 +1,96 @@
+#!/usr/bin/env python3
+import argparse
+from collections.abc import Iterable
+from pathlib import Path
+from subprocess import run
+
+from tqdm import tqdm
+
+WIDTH = 3840
+HEIGHT = 2160
+BIG_SUFFIX = "-lg"
+SMALL_SUFFIX = "-sm"
+
+ROOT_DIR = Path(__file__).parent
+IMAGE_SUFFIXES = {".png", ".jpg"}
+
+
+def add_path_suffix(source_path: Path, suffix: str) -> Path:
+    new_name = (source_path.stem + suffix) + source_path.suffix
+    return source_path.parent / new_name
+
+
+def collect_files(path: Path) -> Iterable[Path]:
+    return sorted(
+        (
+            path
+            for path in path.iterdir()
+            if path.is_file()
+            and path.suffix.lower() in IMAGE_SUFFIXES
+            and not path.stem.endswith((SMALL_SUFFIX, BIG_SUFFIX))
+        ),
+        key=lambda path: path.name,
+    )
+
+
+def resize(
+    source_path: Path,
+    target_path: Path,
+    dry_run: bool,
+) -> bool:
+    if target_path.exists():
+        return False
+
+    if not dry_run:
+        target_path.parent.mkdir(parents=True, exist_ok=True)
+        run(
+            [
+                "convert",
+                source_path,
+                "-resize",
+                f"{WIDTH}x{HEIGHT}",
+                target_path,
+            ],
+            check=True,
+        )
+
+    return True
+
+
+def move(source_path: Path, target_path: Path, dry_run: bool) -> bool:
+    if target_path.exists():
+        return False
+    if not dry_run:
+        target_path.parent.mkdir(parents=True, exist_ok=True)
+        source_path.rename(target_path)
+    return True
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("root_dir", type=Path, default=ROOT_DIR, nargs="?")
+    parser.add_argument("-d", "--dry-run", action="store_true")
+    return parser.parse_args()
+
+
+def main() -> None:
+    args = parse_args()
+
+    with tqdm(collect_files(args.root_dir)) as progress:
+        for source_path in progress:
+            small_path = add_path_suffix(source_path, SMALL_SUFFIX)
+            big_path = add_path_suffix(source_path, BIG_SUFFIX)
+
+            progress.set_description_str(
+                f"Resizing {source_path} to {small_path}"
+            )
+            resize(source_path, small_path, dry_run=args.dry_run)
+
+            progress.set_description_str(
+                f"Renaming {source_path} to {big_path}"
+            )
+            move(source_path, big_path, dry_run=args.dry_run)
+
+
+if __name__ == "__main__":
+    main()
