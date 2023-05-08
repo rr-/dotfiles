@@ -164,6 +164,9 @@ def sync(
 
     cmd += [source.uri, target.uri]
 
+    if dry_run:
+        logging.info(f"Running {cmd}")
+
     result |= run_command(cmd)
     return result
 
