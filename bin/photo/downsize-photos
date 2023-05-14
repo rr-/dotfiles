@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import argparse
+import re
 from collections.abc import Iterable
 from pathlib import Path
 from subprocess import run
@@ -8,16 +9,33 @@ from tqdm import tqdm
 
 WIDTH = 3840
 HEIGHT = 2160
-BIG_SUFFIX = "-lg"
-SMALL_SUFFIX = "-sm"
+
+SMALL_TOKEN = "sm"
+BIG_TOKEN = "lg"
+ALL_TOKENS = (SMALL_TOKEN, BIG_TOKEN)
+
+SUFFIX_FMT = "-{token}"
+ALL_TOKEN_SUFFIXES = tuple(
+    SUFFIX_FMT.format(token=token) for token in ALL_TOKENS
+)
 
 ROOT_DIR = Path(__file__).parent
-IMAGE_SUFFIXES = {".png", ".jpg"}
+SOURCE_FILENAME_REGEX = "dsc_.*\.(jpg|jpeg)"
 
 
 def add_path_suffix(source_path: Path, suffix: str) -> Path:
     new_name = (source_path.stem + suffix) + source_path.suffix
     return source_path.parent / new_name
+
+
+def add_path_subdir(source_path: Path, dir_name: str) -> Path:
+    return source_path.parent / dir_name / source_path.name
+
+
+def get_target_path(source_path: Path, token: str) -> Path:
+    path = add_path_suffix(source_path, SUFFIX_FMT.format(token=token))
+    path = add_path_subdir(path, token)
+    return path
 
 
 def collect_files(path: Path) -> Iterable[Path]:
@@ -26,8 +44,8 @@ def collect_files(path: Path) -> Iterable[Path]:
             path
             for path in path.iterdir()
             if path.is_file()
-            and path.suffix.lower() in IMAGE_SUFFIXES
-            and not path.stem.endswith((SMALL_SUFFIX, BIG_SUFFIX))
+            and re.match(SOURCE_FILENAME_REGEX, path.name, flags=re.I)
+            and not path.stem.endswith(ALL_TOKEN_SUFFIXES)
         ),
         key=lambda path: path.name,
     )
@@ -78,8 +96,8 @@ def main() -> None:
 
     with tqdm(collect_files(args.root_dir)) as progress:
         for source_path in progress:
-            small_path = add_path_suffix(source_path, SMALL_SUFFIX)
-            big_path = add_path_suffix(source_path, BIG_SUFFIX)
+            small_path = get_target_path(source_path, SMALL_TOKEN)
+            big_path = get_target_path(source_path, BIG_TOKEN)
 
             progress.set_description_str(
                 f"Resizing {source_path} to {small_path}"
