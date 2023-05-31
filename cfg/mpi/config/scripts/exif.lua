@@ -15,56 +15,28 @@ function round(number, decimals)
 end
 
 function update_from_exif(exif)
-    local file_items = {}
-    do
-        local width = mp.get_property('width')
-        local height = mp.get_property('height')
-        local filesize = mp.get_property('file-size') or 0
-        table.insert(file_items, width .. ' × ' .. height)
-        table.insert(file_items, round(filesize / 1024 / 1024, 2) .. ' MB')
-    end
-    local file_info = table.concat(file_items, ', ')
+    local file_info = table.concat({
+        mp.get_property('width') .. ' × ' .. mp.get_property('height'),
+        round((mp.get_property('file-size') or 0) / 1024 / 1024, 2) .. ' MB',
+    }, ', ')
 
-    local model_items = {}
-    do
-        if exif['Model'] then
-            table.insert(model_items, exif['Model'])
-        end
-        if exif['LensModel'] then
-            table.insert(model_items, exif['LensModel'])
-        end
-    end
-    local model_info = table.concat(model_items, ' + ')
+    local exposure_info = table.concat({
+        exif['FocalLength'] and exif['FocalLength'],
+        exif['ExposureTime'] and exif['ExposureTime'] .. ' s',
+        exif['Aperture'] and 'f/' ..  exif['Aperture'],
+        exif['ISO'] and 'ISO ' .. exif['ISO'],
+    }, ', ')
 
-    local exposure_items = {}
-    do
-        if exif['FocalLength'] then
-            table.insert(exposure_items, exif['FocalLength'])
-        end
-        if exif['ExposureTime'] then
-            table.insert(exposure_items, exif['ExposureTime'] .. ' s')
-        end
-        if exif['Aperture'] then
-            table.insert(exposure_items, 'f/' ..  exif['Aperture'])
-        end
-        if exif['ISO'] then
-            table.insert(exposure_items, 'ISO ' .. exif['ISO'])
-        end
-    end
-    local exposure_info = table.concat(exposure_items, ', ')
+    local model_info = table.concat({
+        exif['Model'],
+        exif['LensModel']
+    }, ' + ')
 
-    local rows = {}
-    do
-        if file_info and string.find(file_info, '%S') then
-            table.insert(rows, file_info)
-        end
-        if exposure_info and string.find(exposure_info, '%S') then
-            table.insert(rows, exposure_info)
-        end
-        if model_info and string.find(model_info, '%S') then
-            table.insert(rows, model_info)
-        end
-    end
+    local rows = {
+        string.find(file_info, '%S') and file_info,
+        string.find(exposure_info, '%S') and exposure_info,
+        string.find(model_info, '%S') and model_info,
+    }
 
     osd.data = "{\\an1}" .. table.concat(rows, '\\N')
     osd:update()
