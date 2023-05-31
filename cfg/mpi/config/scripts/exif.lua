@@ -15,30 +15,58 @@ function round(number, decimals)
 end
 
 function update_from_exif(exif)
-    local width = mp.get_property('width')
-    local height = mp.get_property('height')
-    local filesize = mp.get_property('file-size') or 0
+    local file_items = {}
+    do
+        local width = mp.get_property('width')
+        local height = mp.get_property('height')
+        local filesize = mp.get_property('file-size') or 0
+        table.insert(file_items, width .. ' × ' .. height)
+        table.insert(file_items, round(filesize / 1024 / 1024, 2) .. ' MB')
+    end
+    local file_info = table.concat(file_items, ', ')
 
-    local model = exif['Model']
-    local lens = exif['LensModel']
-    if model and lens then
-        model_lens = model .. ' + ' .. lens
-    elseif model then
-        model_lens = model
-    elseif lens then
-        model_lens = lens
+    local model_items = {}
+    do
+        if exif['Model'] then
+            table.insert(model_items, exif['Model'])
+        end
+        if exif['LensModel'] then
+            table.insert(model_items, exif['LensModel'])
+        end
+    end
+    local model_info = table.concat(model_items, ' + ')
+
+    local exposure_items = {}
+    do
+        if exif['FocalLength'] then
+            table.insert(exposure_items, exif['FocalLength'])
+        end
+        if exif['ExposureTime'] then
+            table.insert(exposure_items, exif['ExposureTime'] .. ' s')
+        end
+        if exif['Aperture'] then
+            table.insert(exposure_items, 'f/' ..  exif['Aperture'])
+        end
+        if exif['ISO'] then
+            table.insert(exposure_items, 'ISO ' .. exif['ISO'])
+        end
+    end
+    local exposure_info = table.concat(exposure_items, ', ')
+
+    local rows = {}
+    do
+        if file_info and string.find(file_info, '%S') then
+            table.insert(rows, file_info)
+        end
+        if exposure_info and string.find(exposure_info, '%S') then
+            table.insert(rows, exposure_info)
+        end
+        if model_info and string.find(model_info, '%S') then
+            table.insert(rows, model_info)
+        end
     end
 
-    osd.data = (
-        "{\\an1}"
-        .. width .. ' × ' .. height .. ', '
-        .. round(filesize / 1024 / 1024, 2) .. ' MB\\N'
-        .. exif['FocalLength'] .. ', '
-        .. exif['ExposureTime'] .. ' s, '
-        .. 'f/' .. exif['Aperture'] .. ', '
-        .. 'ISO ' .. exif['ISO'] .. '\\N'
-        .. model_lens
-    )
+    osd.data = "{\\an1}" .. table.concat(rows, '\\N')
     osd:update()
 end
 
