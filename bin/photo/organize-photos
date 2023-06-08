@@ -3,7 +3,9 @@ import argparse
 import json
 import re
 from collections.abc import Callable, Iterable
-from datetime import date
+from dataclasses import dataclass
+from datetime import datetime
+from functools import cache
 from pathlib import Path
 from subprocess import run
 
@@ -11,13 +13,16 @@ import dateutil.parser
 
 ROOT_DIR = Path(__file__).parent
 
-FILENAME_REGEX = re.compile(
+FILENAME_DATE_REGEX = re.compile(
     r"^(?:(?:IMG|PANO)_)?"
     r"(?P<year>20\d{2})"
     r"(?P<month>\d{2})"
     r"(?P<day>\d{2})"
     r"_"
-    r"\d{6}.*$"
+    r"(?P<hour>\d{2})"
+    r"(?P<minute>\d{2})"
+    r"(?P<second>\d{2})"
+    r".*$"
 )
 
 IMAGE_SUFFIXES = {".png", ".jpg"}
@@ -30,146 +35,175 @@ ALL_SUFFIXES = (
 )
 
 
+@dataclass
+class ImageInfo:
+    time: datetime | None
+    model: str | None
+    file_number: int | None
+
+
 def chunks(source, n):
     n = max(1, n)
     return (source[i : i + n] for i in range(0, len(source), n))
 
 
-def get_day_dir(root_dir: Path, day: date) -> Path:
-    year_dir = root_dir / str(day.year)
+@cache
+def get_target_path(root_dir: Path, day: datetime) -> Path:
     day_dir_prefix = f"{day.year:04d}-{day.month:02d}-{day.day:02d}"
+    result = root_dir / day_dir_prefix
+    if root_dir.name.startswith(day_dir_prefix):
+        result = root_dir
+    if root_dir.parent.name.startswith(day_dir_prefix):
+        result = root_dir.parent
+    year_dir = result.parent
     if year_dir.exists():
         for path in year_dir.iterdir():
             if path.is_dir() and path.name.startswith(day_dir_prefix):
                 return path
-    return Path(day_dir_prefix)
-
-
-def get_date_from_filename(source_path: Path) -> date | None:
-    match = FILENAME_REGEX.match(source_path.stem)
-    if match:
-        return date(
-            year=int(match.group("year")),
-            month=int(match.group("month")),
-            day=int(match.group("day")),
-        )
-    return None
-
-
-def get_dates_from_filenames(
-    source_paths: Iterable[Path],
-) -> dict[Path, date | None]:
-    result: dict[Path, date | None] = {}
-    for source_path in source_paths:
-        result[source_path] = get_date_from_filename(source_path)
     return result
 
 
-def get_date_from_ffmpeg(source_path: Path) -> date | None:
-    output = run(
-        [
-            "ffprobe",
-            "-i",
-            str(source_path),
-            "-print_format",
-            "json",
-            "-show_entries",
-            "format_tags=creation_time",
-        ],
-        check=False,
-        capture_output=True,
-        text=True,
-    ).stdout
-    try:
-        return dateutil.parser.parse(
-            json.loads(output)["format"]["tags"]["creation_time"]
-        )
-    except KeyError:
-        return None
+class ImageInfoFactory:
+    def get_from_path(self, source_path: Path) -> ImageInfo | None:
+        result = self.get_from_paths(source_path)
+        return result[source_path]
 
-
-def get_dates_from_ffmpeg(
-    source_paths: Iterable[Path],
-) -> dict[Path, date | None]:
-    result: dict[Path, date | None] = {}
-    for source_path in source_paths:
-        result[source_path] = get_date_from_ffmpeg(source_path)
-    return result
-
-
-def get_dates_from_exiftool(
-    source_paths: Iterable[Path],
-) -> dict[Path, date | None]:
-    result: dict[Path, date | None] = {}
-
-    source_paths = list(source_paths)
-    if not source_paths:
+    def get_from_paths(
+        self,
+        source_paths: Iterable[Path],
+    ) -> dict[Path, ImageInfo | None]:
+        result: dict[Path, ImageInfo | None] = {}
+        for source_path in source_paths:
+            result[source_path] = self.get_from_path(source_path)
         return result
 
-    output = run(
-        [
-            "exiftool",
-            "-CreateDate",
-            "-j",
-            "-d",
-            "%Y-%m-%dT%H:%M:%S%z",
-            *source_paths,
-        ],
-        check=False,
-        capture_output=True,
-        text=True,
-    ).stdout
 
-    try:
-        items = json.loads(output)
-    except ValueError:
-        items = None
+class ExifToolImageInfoFactory(ImageInfoFactory):
+    def get_from_paths(
+        self,
+        source_paths: Iterable[Path],
+    ) -> dict[Path, ImageInfo | None]:
+        result: dict[Path, ImageInfo | None] = {}
 
-    if items:
+        source_paths = list(source_paths)
+        if not source_paths:
+            return result
+
+        output = run(
+            [
+                "exiftool",
+                "-CreateDate",
+                "-Model",
+                "-FileNumber",
+                "-j",
+                "-d",
+                "%Y-%m-%dT%H:%M:%S%z",
+                *source_paths,
+            ],
+            check=False,
+            capture_output=True,
+            text=True,
+        ).stdout
+
+        try:
+            items = json.loads(output)
+        except ValueError:
+            items = None
+
+        if not items:
+            return result
+
         for source_path, item in zip(source_paths, items):
-            try:
-                date_string = item["CreateDate"]
-                day = dateutil.parser.parse(date_string).date()
-            except KeyError:
-                day = None
-            result[source_path] = day
+            result[source_path] = ImageInfo(
+                time=(
+                    dateutil.parser.parse(date_string)
+                    if (date_string := item["CreateDate"])
+                    else None
+                ),
+                model=item.get("Model"),
+                file_number=(
+                    int(value) if (value := item.get("FileNumber")) else None
+                ),
+            )
 
-    return result
-
-
-TDateExtractRoutine = Callable[[Iterable[Path]], dict[Path, date | None]]
-
-DATE_EXTRACT_ROUTINES: list[TDateExtractRoutine] = [
-    get_dates_from_filenames,
-    get_dates_from_exiftool,
-    get_dates_from_ffmpeg,
-]
+        return result
 
 
-def get_target_dirs(
+class FFMPEGImageInfoFactory(ImageInfoFactory):
+    def get_from_path(self, source_path: Path) -> ImageInfo | None:
+        output = run(
+            [
+                "ffprobe",
+                "-i",
+                str(source_path),
+                "-print_format",
+                "json",
+                "-show_entries",
+                "format_tags=creation_time",
+            ],
+            check=False,
+            capture_output=True,
+            text=True,
+        ).stdout
+        try:
+            return ImageInfo(
+                time=dateutil.parser.parse(
+                    json.loads(output)["format"]["tags"]["creation_time"]
+                ),
+                model=None,
+                file_number=None,
+            )
+        except KeyError:
+            return None
+
+
+def normalize_camera_model(model: str) -> str:
+    return {
+        "NIKON Z 8": "Z8",
+        "NIKON Z 9": "Z9",
+        "NIKON Z fc": "Zfc",
+        "Galaxy S23 Ultra": "S23U",
+    }.get(model, model.replace(" ", "-"))
+
+
+def get_target_paths(
     root_dir: Path, source_paths: list[Path]
 ) -> Iterable[tuple[Path, Path | None]]:
-    date_map: dict[Path, date | None] = {
+    info_map: dict[Path, ImageInfo | None] = {
         source_path: None for source_path in source_paths
     }
-    for func in DATE_EXTRACT_ROUTINES:
-        date_map.update(
-            func(path for path, date in date_map.items() if not date)
+    for factory_cls in ImageInfoFactory.__subclasses__():
+        factory = factory_cls()
+        info_map.update(
+            factory.get_from_paths(
+                path for path, info in info_map.items() if not info
+            )
         )
 
-    for source_path, day in date_map.items():
-        if day is not None:
-            day_dir = get_day_dir(root_dir, day)
-        else:
-            day_dir = None
+    for source_path, info in info_map.items():
+        if not info or not info.time:
+            continue
+        target_dir = get_target_path(source_path.parent, info.time)
 
-        yield (source_path, day_dir)
+        parts = [
+            f"{info.time:%Y%m%d_%H%M%S}",
+            normalize_camera_model(info.model) if info.model else None,
+            f"{info.file_number:04d}" if info.file_number else None,
+        ]
+        target_name = (
+            "_".join(str(part) for part in parts if part) + source_path.suffix
+        )
+
+        yield (
+            source_path,
+            target_dir / target_name,
+        )
 
 
 def collect_files(path: Path, suffixes: Iterable[str]) -> Iterable[Path]:
     return sorted(
         (
-            path
+            path.absolute()
             for path in path.iterdir()
             if path.is_file() and path.suffix.lower() in suffixes
         ),
@@ -178,25 +212,24 @@ def collect_files(path: Path, suffixes: Iterable[str]) -> Iterable[Path]:
 
 
 def move(
+    root_dir: Path,
     source_path: Path,
-    target_dir: Path,
+    target_path: Path,
     dry_run: bool,
     overwrite_existing_files: bool,
 ) -> None:
-    target_path = target_dir / source_path.name
-
     if not dry_run:
-        target_dir.mkdir(parents=True, exist_ok=True)
+        target_path.parent.mkdir(parents=True, exist_ok=True)
     if overwrite_existing_files or not target_path.exists():
-        print(f"Moving {source_path} to {target_path}")
+        print(
+            f"Moving {source_path.relative_to(root_dir)} to {target_path.relative_to(root_dir)}"
+        )
         if not dry_run:
             source_path.rename(target_path)
-    elif target_path.read_bytes() == source_path.read_bytes():
-        print(f"Target already exists and is identical: {target_path}")
-        if not dry_run:
-            source_path.unlink()
     else:
-        print(f"Target already exists and is different: {target_path}")
+        print(
+            f"Moving {source_path.relative_to(root_dir)} to {target_path.relative_to(root_dir)}: target already exists"
+        )
 
 
 def parse_args() -> argparse.Namespace:
@@ -216,16 +249,17 @@ def main() -> None:
     args = parse_args()
 
     for chunk in chunks(
-        collect_files(args.root_dir, suffixes=ALL_SUFFIXES), n=10
+        collect_files(args.root_dir, suffixes=ALL_SUFFIXES), n=100
     ):
-        for source_path, target_dir in get_target_dirs(args.root_dir, chunk):
-            if target_dir is None:
+        for source_path, target_path in get_target_paths(args.root_dir, chunk):
+            if target_path is None:
                 print(f"Unknown image: {source_path}")
                 continue
 
             move(
+                args.root_dir.absolute(),
                 source_path,
-                target_dir,
+                target_path,
                 dry_run=args.dry_run,
                 overwrite_existing_files=args.overwrite_existing_files,
             )
