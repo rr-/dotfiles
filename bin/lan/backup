@@ -1,199 +1,202 @@
 #!/usr/bin/env python3
+# requires: pyyaml xdg
 import argparse
-import shlex
 import sys
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from enum import Enum, auto
+from pathlib import Path
 from subprocess import PIPE, Popen
-from typing import Iterable
+
+import xdg
+import yaml
 
 from libdotfiles import logging
+
+CONFIG_PATH = Path(xdg.XDG_CONFIG_HOME) / "backup.yml"
+
+
+def flatten(data):
+    if isinstance(data, list):
+        flattened = []
+        for item in data:
+            flattened.extend(flatten(item))
+        return flattened
+    else:
+        return [data]
+
+
+def flatten_constructor(loader, node):
+    return flatten(loader.construct_sequence(node))
+
+
+@dataclass
+class CommandResult:
+    status: int = 0
+    errors: list[str] = field(default_factory=list)
+
+
+def run_command(cmd: list[str]) -> CommandResult:
+    errors: list[str] = []
+    process = Popen(cmd, stderr=PIPE, universal_newlines=True, text=True)
+    for line in iter(process.stderr.readline, ""):
+        sys.stderr.write(line)
+        errors.append(line)
+    process.stderr.close()
+    return_code = process.wait()
+    return CommandResult(status=return_code, errors=errors)
+
+
+@dataclass
+class URI:
+    uri: str
+    machine: str | None
+    path: str
+
+    def __init__(self, uri: str) -> None:
+        self.uri = uri
+        if ":" in uri:
+            self.machine, self.path = uri.split(":", 1)
+        else:
+            self.machine = None
+            self.path = self.uri
+
+    def __str__(self) -> str:
+        return self.uri
 
 
 @dataclass
 class SyncConfig:
-    source: str
+    source: URI
+    target: URI
+    exclude: list[str]
     traverse_links: bool = False
-    exclude: list[str] | None = None
-
-    @property
-    def source_machine(self) -> str:
-        return self.source.split(":", 1)[0]
-
-    @property
-    def source_path(self) -> str:
-        return self.source.split(":", 1)[1]
-
-    @property
-    def target(self) -> str:
-        return f"frost:/volume1/data/backup/{self.source_machine}/"
-
-    @property
-    def target_machine(self) -> str:
-        return self.target.split(":", 1)[0]
-
-    @property
-    def target_path(self) -> str:
-        return self.target.split(":", 1)[1]
 
 
-@dataclass
-class SyncResult:
-    status: int
-    errors: str
+class SyncResult(CommandResult):
+    source: URI
+    target: URI
+
+    def __init__(self, source: URI, target: URI) -> None:
+        super().__init__()
+        self.source = source
+        self.target = target
+
+    def __ior__(self, other: "CommandResult") -> "SyncResult":
+        if not self.status:
+            self.status = other.status
+        self.errors.extend(other.errors)
+        return self
+
+
+def get_sync_configs() -> list[SyncConfig]:
+    loader = yaml.SafeLoader(CONFIG_PATH.read_text())
+    loader.add_constructor("!flatten", flatten_constructor)
+    document = loader.get_data()
+
+    return [
+        SyncConfig(
+            source=URI(item["source"]),
+            target=URI(item["target"]),
+            exclude=item.get("exclude", []),
+            traverse_links=item.get("traverse_links", False),
+        )
+        for item in document["items"]
+    ]
 
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
-    parser.add_argument("-M", "--source-machine")
-    parser.add_argument("-P", "--source-path")
     parser.add_argument("-d", "--dry-run", action="store_true")
+    parser.add_argument("-D", "--delete", action="store_true")
     return parser.parse_args()
 
 
-def sync(sync_config: SyncConfig, dry_run: bool) -> SyncResult:
-    logging.info(
-        "%s:%s → %s:%s",
-        sync_config.source_machine,
-        sync_config.source_path,
-        sync_config.target_machine,
-        sync_config.target_path,
-    )
+def create_remote_dir(uri: URI) -> CommandResult:
+    if not uri.machine:
+        return CommandResult(status=0, errors=[])
+    return run_command(["ssh", uri.machine, "mkdir", "-p", uri.path])
 
-    target_machine_cmd = [
+
+def sync(sync_config: SyncConfig, dry_run: bool, delete: bool) -> SyncResult:
+    source = sync_config.source
+    target = sync_config.target
+
+    result = SyncResult(source=source, target=target)
+    result |= create_remote_dir(source)
+    result |= create_remote_dir(target)
+
+    logging.info("%s → %s", source, target)
+
+    cmd = [
+        "ssh",
+        "-A",
+        target.machine,
         "rsync",
         "--progress",
+        "--one-file-system",
+        # "--info=progress2",
         # "--usermap=*:admin",
         # "--groupmap=*:users",
-        "--chmod=D=rwxrwxrx,F=rwwr",
+        # "--chmod=D2775,F664",
         "-t",  # preserve times
         "-r",  # recurse
         "-R",  # keep full paths
-        "--delete-excluded",
-        "--delete-during",
+        "-z",  # compress
     ]
+
+    if delete:
+        cmd += [
+            "--delete",
+            "--delete-excluded",
+        ]
 
     if sync_config.traverse_links:
         # traverse into symlinks and copy their contents
-        target_machine_cmd.append("-L")
+        cmd.append("-L")
     else:
         # copy symlinks as-is
-        target_machine_cmd.append("-l")
+        cmd.append("-l")
 
     if dry_run:
-        target_machine_cmd.append("--dry-run")
+        cmd.append("--dry-run")
     if sync_config.exclude:
         for pattern in sync_config.exclude:
-            target_machine_cmd.append(f"--exclude={pattern}")
+            cmd.append(f"--exclude={pattern}")
 
-    target_machine_cmd += [
-        f"{sync_config.source_machine}:{sync_config.source_path}",
-        sync_config.target_path,
-    ]
+    cmd += [source.uri, target.path]
 
-    args = ["ssh", "-A", sync_config.target_machine] + list(
-        map(shlex.quote, target_machine_cmd)
-    )
+    if dry_run:
+        logging.info(f"Running {cmd}")
 
-    errors = ""
-    process = Popen(args, stderr=PIPE, universal_newlines=True, text=True)
-    for line in iter(process.stderr.readline, ""):
-        sys.stderr.write(line)
-        errors += line
-    process.stderr.close()
-    return_code = process.wait()
-    return SyncResult(status=return_code, errors=errors)
+    result |= run_command(cmd)
+    return result
 
 
-def get_sync_configs() -> Iterable[SyncConfig]:
-    # main machine config
-    yield SyncConfig(source="lightning:/home/rr-/.local/", exclude=["vmware/"])
-    yield SyncConfig(
-        source="lightning:/home/rr-/.config/",
-        exclude=["chromium/", "nvim/", "skypeforlinux/", "discord/"],
-    )
-
-    # my work
-    yield SyncConfig(
-        source="lightning:/home/rr-/work/",
-        exclude=[
-            "python_modules/",
-            "node_modules/",
-            "pgdata/",
-            "*.pyc",
-            "/home/rr-/work/external",
-            "dh/*/db/",
-        ],
-    )
-
-    # dedibox
-    yield SyncConfig(
-        source="drizzle:/home/rr-/",
-        exclude=[
-            "/home/rr-/data",
-            "/home/rr-/.config/nvim/",
-            "yume.pl/db/",
-            "python_modules/",
-            "node_modules/",
-            "*.pyc",
-        ],
-    )
-
-    # OldCastle
-    yield SyncConfig(
-        source="oc:/home/rr-/",
-        exclude=["*.pyc", "torrent/data", "srv/website/mnt"],
-    )
-    yield SyncConfig(source="oc:/var/log/nginx/", traverse_links=True)
-
-    # TRCustoms
-    yield SyncConfig(source="trcustoms:/home/trcustoms/")
-    yield SyncConfig(source="trcustoms:/etc/", traverse_links=True)
-
-
-def should_process(sync_config: SyncConfig, args: argparse.Namespace) -> bool:
-    if (
-        args.source_machine
-        and args.source_machine != sync_config.source_machine
-    ):
-        return False
-
-    if args.source_path and args.source_path not in sync_config.source_path:
-        return False
-
-    return True
-
-
-def filter_sync_configs(
-    sync_configs: Iterable[SyncConfig], args: argparse.Namespace
-) -> Iterable[SyncConfig]:
-    for sync_config in sync_configs:
-        if should_process(sync_config, args):
-            yield sync_config
-
-
-def main():
-    args = parse_args()
+def main() -> None:
     logging.setup_colored_logs()
 
-    results: list[tuple[SyncConfig, SyncResult]] = []
-    for sync_config in filter_sync_configs(get_sync_configs(), args):
-        sync_result = sync(sync_config, dry_run=args.dry_run)
-        results.append((sync_config, sync_result))
+    args = parse_args()
+    sync_configs = get_sync_configs()
 
-    for sync_config, sync_result in results:
+    results: list[SyncResult] = []
+    for sync_config in sync_configs:
+        sync_result = sync(
+            sync_config,
+            dry_run=args.dry_run,
+            delete=args.delete,
+        )
+        results.append(sync_result)
+
+    for sync_result in results:
         logging.log(
             logging.ERROR if sync_result.errors else logging.INFO,
-            "%s:%s → %s:%s: %s",
-            sync_config.source_machine,
-            sync_config.source_path,
-            sync_config.target_machine,
-            sync_config.target_path,
+            "%s → %s: %s",
+            sync_result.source,
+            sync_result.target,
             sync_result.status,
         )
-        if sync_result.errors:
-            logging.warning(sync_result.errors)
-
-    # logging.info("Syncing finished without errors")
+        for error in sync_result.errors:
+            logging.warning("%s", error)
 
 
 if __name__ == "__main__":

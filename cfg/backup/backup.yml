@@ -1,32 +1,47 @@
 defaults: &defaults
-  exclude:
+  exclude: &defaults_exclude
   - "*.pyc"
   - "__pycache__/"
   - ".mypy_cache/"
   - ".pytest_cache/"
   - ".ipython/"
   - "node_modules/"
+  - "python_modules/"
+  - "pgdata/"
 
-machines:
-  snowflake:
-  - name: work
-    <<: *defaults
-    source: "/home/rr-/data.local/work/./"
-    target: "drizzle:backup/work/./"
-    exclude+:
-    - "trcustoms/backend/volumes/"
+items:
+  - source: lightning:/home/rr-/
+    target: frost:data/backup/lightning/
+    exclude: !flatten
+    - *defaults_exclude
+    - "vmware/"
+    - "chromium/"
+    - "/home/rr-/.cache/"
 
-  lightning:
-  - name: work
+  - source: drizzle:/home/rr-/
+    target: frost:data/backup/drizzle/
     <<: *defaults
-    source: "/home/rr-/work/./"
-    target: "drizzle:backup/work/./"
-    exclude+:
-    - "trcustoms/backend/volumes/"
-    - "webmail/backend/volumes/"
+    exclude: !flatten
+    - *defaults_exclude
+    - "/home/rr-/.cache/"
 
-  trcustoms.org:
-  - name: srv
+  - source: oc:/home/rr-/
+    target: frost:data/backup/oc/
     <<: *defaults
-    source: "/home/rr-/./"
-    target: "lightning:backup/trcustoms/./"
+
+  - source: oc:/var/log/nginx/
+    target: frost:data/backup/oc/
+    <<: *defaults
+    traverse_links: true
+
+  - source: trcustoms:/home/trcustoms/
+    target: frost:data/backup/trcustoms/
+    <<: *defaults
+    exclude: !flatten
+    - *defaults_exclude
+    - "volumes/"
+
+  - source: trcustoms:/etc/
+    target: frost:data/backup/trcustoms/
+    <<: *defaults
+    traverse_links: true
