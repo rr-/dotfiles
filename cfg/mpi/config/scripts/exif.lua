@@ -15,8 +15,10 @@ function round(number, decimals)
 end
 
 function update_from_exif(exif)
+    local width = exif['ImageWidth'] or mp.get_property('width')
+    local height = exif['ImageHeight'] or mp.get_property('height')
     local file_info = table.concat({
-        mp.get_property('width') .. ' × ' .. mp.get_property('height'),
+        (width or '?') .. ' × ' .. (height or '?'),
         round((mp.get_property('file-size') or 0) / 1024 / 1024, 2) .. ' MB',
     }, ', ')
 
