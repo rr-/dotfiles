@@ -24,3 +24,9 @@ machines:
     exclude+:
     - "trcustoms/backend/volumes/"
     - "webmail/backend/volumes/"
+
+  trcustoms.org:
+  - name: srv
+    <<: *defaults
+    source: "/home/rr-/./"
+    target: "lightning:backup/trcustoms/./"
