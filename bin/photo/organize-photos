@@ -47,20 +47,43 @@ def chunks(source, n):
     return (source[i : i + n] for i in range(0, len(source), n))
 
 
-@cache
-def get_target_path(root_dir: Path, day: datetime) -> Path:
-    day_dir_prefix = f"{day.year:04d}-{day.month:02d}-{day.day:02d}"
-    result = root_dir / day_dir_prefix
-    if root_dir.name.startswith(day_dir_prefix):
-        result = root_dir
-    if root_dir.parent.name.startswith(day_dir_prefix):
-        result = root_dir.parent
-    year_dir = result.parent
-    if year_dir.exists():
-        for path in year_dir.iterdir():
-            if path.is_dir() and path.name.startswith(day_dir_prefix):
-                return path
-    return result
+def get_creation_date_from_exif(
+    source_path: Path, exif: dict
+) -> datetime | None:
+    filename_regex = (
+        r"(?!<\d)(?P<year>\d{4})([-_]?)(?P<month>\d{2})\2(?P<day>\d{2})[-_ ]"
+        r"(?P<hour>\d{2})([-_:]?)(?P<minute>\d{2})\6(?P<second>\d{2})(?!=\d)"
+    )
+    if match := re.search(filename_regex, source_path.name, flags=re.I):
+        year = int(match.group("year"))
+        month = int(match.group("month"))
+        day = int(match.group("day"))
+        hour = int(match.group("hour"))
+        minute = int(match.group("minute"))
+        second = int(match.group("second"))
+        try:
+            return datetime.strptime(
+                f"{year:04d}{month:02d}{day:02d}_{hour:02d}{minute:02d}{second:02d}",
+                "%Y%m%d_%H%M%S",
+            )
+        except ValueError:
+            pass
+    if value := exif["CreateDate"]:
+        return dateutil.parser.parse(value)
+    return None
+
+
+def get_file_number_from_exif(source_path: Path, exif: dict) -> int | None:
+    filename_regex = r"(?:dscf?|z9|z8|d850)_?(\d{4,5})\b"
+    if value := exif.get("FileNumber"):
+        return int(value)
+    if (value := exif.get("RawFileName")) and (
+        match := re.search(filename_regex, value, flags=re.I)
+    ):
+        return int(match.group(1))
+    if match := re.search(filename_regex, source_path.name, flags=re.I):
+        return int(match.group(1))
+    return None
 
 
 class ImageInfoFactory:
@@ -95,6 +118,7 @@ class ExifToolImageInfoFactory(ImageInfoFactory):
                 "-CreateDate",
                 "-Model",
                 "-FileNumber",
+                "-RawFileName",
                 "-j",
                 "-d",
                 "%Y-%m-%dT%H:%M:%S%z",
@@ -106,24 +130,18 @@ class ExifToolImageInfoFactory(ImageInfoFactory):
         ).stdout
 
         try:
-            items = json.loads(output)
+            exif_infos = json.loads(output)
         except ValueError:
-            items = None
+            exif_infos = None
 
-        if not items:
+        if not exif_infos:
             return result
 
-        for source_path, item in zip(source_paths, items):
+        for source_path, exif in zip(source_paths, exif_infos):
             result[source_path] = ImageInfo(
-                time=(
-                    dateutil.parser.parse(date_string)
-                    if (date_string := item["CreateDate"])
-                    else None
-                ),
-                model=item.get("Model"),
-                file_number=(
-                    int(value) if (value := item.get("FileNumber")) else None
-                ),
+                time=get_creation_date_from_exif(source_path, exif),
+                model=exif.get("Model"),
+                file_number=get_file_number_from_exif(source_path, exif),
             )
 
         return result
@@ -159,6 +177,7 @@ class FFMPEGImageInfoFactory(ImageInfoFactory):
 
 def normalize_camera_model(model: str) -> str:
     return {
+        "NIKON D850": "D850",
         "NIKON Z 8": "Z8",
         "NIKON Z 9": "Z9",
         "NIKON Z fc": "Zfc",
@@ -183,7 +202,6 @@ def get_target_paths(
     for source_path, info in info_map.items():
         if not info or not info.time:
             continue
-        target_dir = get_target_path(source_path.parent, info.time)
 
         parts = [
             f"{info.time:%Y%m%d_%H%M%S}",
@@ -193,11 +211,9 @@ def get_target_paths(
         target_name = (
             "_".join(str(part) for part in parts if part) + source_path.suffix
         )
+        target_path = source_path.parent / target_name
 
-        yield (
-            source_path,
-            target_dir / target_name,
-        )
+        yield (source_path, target_path)
 
 
 def collect_files(path: Path, suffixes: Iterable[str]) -> Iterable[Path]:
