@@ -12,7 +12,7 @@ slang=en,eng,English,pl,pol,Polish
 sub-codepage=utf8,cp1250
 volume-max=300
 
-video-aspect=no
+video-aspect-override=no
 no-input-default-bindings
 native-keyrepeat
 loop-file=yes
@@ -27,5 +27,5 @@ osd-font-size=16
 
 sws-scaler=lanczos
 scale=lanczos
-scale-blur=2
+scale-blur=1
 osd-bar=no
