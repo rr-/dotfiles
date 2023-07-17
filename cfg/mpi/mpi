@@ -4,27 +4,33 @@
 import argparse
 import os
 import re
+import sys
 import tempfile
 from pathlib import Path
 from subprocess import run
+from typing import Any
 
 MANAGED_EXTENSIONS = {
-    "jpg",
-    "jpeg",
-    "jfif",
-    "gif",
-    "png",
-    "tga",
-    "bmp",
-    "webm",
-    "webp",
-    "mkv",
-    "mp4",
+    ".JPG",
+    ".JPEG",
+    ".JFIF",
+    ".GIF",
+    ".PNG",
+    ".TGA",
+    ".BMP",
+    ".WEBM",
+    ".WEBP",
+    ".MKV",
+    ".MP4",
 }
+CONFIG_DIR = Path("~/.config/mpi").expanduser()
 
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Run mpv as image viewer")
+    parser.add_argument(
+        "-", "--playlist", type=str, help="Path to the playlist (- for stdin)"
+    )
     parser.add_argument(
         "-s",
         "--select",
@@ -34,9 +40,14 @@ def parse_args():
     )
     parser.add_argument(
         "-r",
-        "--recursive",
+        "--recurse",
         action="store_true",
         help="Scan directories recursively",
+    )
+    parser.add_argument(
+        "--vifm",
+        type=Path,
+        help="Run in vifm mode",
     )
     parser.add_argument(
         metavar="PATH",
@@ -67,65 +78,137 @@ def parse_args():
     return args, unknown_args
 
 
-def gather_playlist(paths, recursive):
-    def scan(path, depth=0):
-        if path.is_dir():
-            if recursive or not depth:
-                for subpath in path.iterdir():
-                    yield from scan(subpath, depth + 1)
-        elif path.is_file():
-            ext = path.suffix.lower().lstrip(".")
-            if ext in MANAGED_EXTENSIONS or not depth:
-                yield path
+def filter_path(path: Path) -> bool:
+    return path.is_file() and path.suffix.upper() in MANAGED_EXTENSIONS
 
-    for path in paths:
-        if isinstance(path, Path):
-            yield from scan(path)
-        else:
-            yield path
+
+def handle_vifm(vifm_selected_path: Path | None) -> bool:
+    if not vifm_selected_path:
+        return False
+
+    if not (vifm_server_name := get_vifm_server_name()):
+        return False
+
+    cmd = [
+        "vifm",
+        "--server-name",
+        vifm_server_name,
+        "--remote",
+        f"+%!mpi %Pl --select='{vifm_selected_path}' --playlist=- &>/dev/null &",
+    ]
+    run(cmd, check=True)
+    return True
+
+
+def get_playlist_from_playlist_file(playlist_file: str) -> tuple[list[Path]]:
+    if playlist_file == "-":
+        handle = sys.stdin
+    else:
+        handle = Path(playlist_file).open("r", encoding="utf-8")
+    paths = [Path(line.strip()) for line in handle.readlines()]
+    paths = [path for path in paths if filter_path(path)]
+    return paths
 
 
 def sort_playlist(playlist):
-    def convert(text):
+    def convert(text: str) -> Any:
         return int(text) if text.isdigit() else text
 
-    playlist.sort(
-        key=lambda key: [convert(c) for c in re.split(r"(\d+)", str(key))]
+    return sorted(
+        playlist,
+        key=lambda key: [convert(c) for c in re.split(r"(\d+)", str(key))],
     )
 
 
-def main():
-    args, unknown_args = parse_args()
-    config_dir = Path("~/.config/mpi").expanduser()
+def get_playlist_from_filesystem(
+    paths: list[str | Path], recurse: bool
+) -> list[Path]:
+    def scan(path, depth=0):
+        if path.is_dir():
+            if recurse or not depth:
+                for subpath in path.iterdir():
+                    yield from scan(subpath, depth + 1)
+        elif filter_path(path) or not depth:
+            yield path
 
-    playlist = list(gather_playlist(args.paths, args.recursive))
-    if args.selected_path:
-        playlist.append(args.selected_path)
-    playlist = list(set(playlist))  # remove duplicates
-    sort_playlist(playlist)
+    if not paths:
+        paths.append(Path("."))
+
+    results: list[Path] = []
+    for path in paths:
+        if isinstance(path, Path):
+            results.extend(list(scan(path)))
+        else:
+            results.append(Path(path))
+
+    results = list(set(results))  # remove duplicates
+    results = sort_playlist(results)
+    return results
+
+
+def get_vifm_server_name() -> str | None:
+    return os.environ.get("VIFM_SERVER_NAME")
+
+
+def get_playlist_with_position(
+    args: argparse.Namespace,
+) -> tuple[list[Path], int]:
+    if args.playlist:
+        playlist = get_playlist_from_playlist_file(args.playlist)
+    else:
+        playlist = get_playlist_from_filesystem(
+            paths=args.paths, recurse=args.recurse
+        )
+
+    playlist = [path for path in playlist if filter_path(path)]
+    if args.selected_path and args.selected_path not in playlist:
+        playlist.insert(0, args.selected_path)
 
     playlist_pos = (
         playlist.index(args.selected_path) if args.selected_path else 0
     )
 
-    # write the playlist
-    with tempfile.NamedTemporaryFile(
-        delete=False, mode="w", encoding="utf-8"
-    ) as handle:
-        handle.write("\n".join(str(path) for path in playlist))
+    return (playlist, playlist_pos)
 
+
+def write_playlist(playlist: list[Path]) -> Path:
+    with tempfile.NamedTemporaryFile(delete=False) as handle:
+        playlist_path = Path(handle.name)
+
+    playlist_path.write_text(
+        "\n".join(str(path) for path in playlist), encoding="utf-8"
+    )
+    return playlist_path
+
+
+def run_mpv(
+    playlist_path: Path, playlist_pos: int, unknown_args: list[str]
+) -> None:
+    cmd = [
+        "mpv",
+        f"--config-dir={CONFIG_DIR}",
+        f"--playlist={playlist_path}",
+        f"--playlist-start={playlist_pos}",
+    ] + unknown_args
+    run(cmd, check=True)
+
+
+def main():
+    args, unknown_args = parse_args()
+
+    if handle_vifm(args.vifm):
+        exit(0)
+
+    playlist, playlist_pos = get_playlist_with_position(args)
+    if not playlist:
+        print("No files to show", file=sys.stderr)
+        exit(1)
+
+    playlist_path = write_playlist(playlist)
     try:
-        run(
-            [
-                "mpv",
-                f"--config-dir={config_dir}",
-                f"--playlist={handle.name}",
-                f"--playlist-start={playlist_pos}",
-            ]
-            + unknown_args
-        )
+        run_mpv(playlist_path, playlist_pos, unknown_args)
     finally:
-        os.unlink(handle.name)
+        playlist_path.unlink()
 
 
 if __name__ == "__main__":

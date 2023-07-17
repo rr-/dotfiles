@@ -91,7 +91,7 @@ command! ln for x in %"f; do ln -s %d/"$x" %D; done
 " ------------------------------------------------------------------------------
 " how to open and preview certain file types
 
-filextype *.bmp,*.jpg,*.jpeg,*.png,*.gif,*.webm,*.tif mpi %d --select=%f 2>/dev/null &
+filextype *.bmp,*.jpg,*.jpeg,*.png,*.gif,*.webm,*.tif mpi --vifm %f 2>/dev/null &
 filextype * xdg-open %c || nvim %c
 
 " 7z and 7z archives
