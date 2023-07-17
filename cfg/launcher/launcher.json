@@ -3,6 +3,7 @@
 about:blank                                                         :: browser
 (https?|file)://.*                                                  :: browser
 .*\.(jpg|jpeg|gif|png|bmp|webm|webp)                                :: mpi
+.*\.(nef|cr2)                                                       :: /bin/true
 .*\.(odt|doc|docx|xls|xlsx|odp|pptx)                                :: libreoffice
 .*\.pdf                                                             :: browser
 .*\.html?                                                           :: browser
