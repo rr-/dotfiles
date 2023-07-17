@@ -42,7 +42,7 @@ function get_vifm_info(callback)
     table.insert(args, '--remote-expr')
     table.insert(args, 'paneisat("left").expand("\\n%c\\n%C\\n%d\\n%D")')
     local result = mp_utils.subprocess({args = args, cancellable = false})
-    local lines = result.stdout:split('\n')
+    local lines = result.stdout:gsub('\\', ''):split('\n')
     return {
         selected_pane = tonumber(lines[1]),
         current_file = lines[2],
