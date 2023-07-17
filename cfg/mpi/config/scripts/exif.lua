@@ -14,6 +14,14 @@ function round(number, decimals)
     return math.floor(number * power) / power
 end
 
+function clean_nils(source)
+  local result = {}
+  for _, item in pairs(source) do
+      table.insert(result, item)
+  end
+  return result
+end
+
 function update_from_exif(exif)
     local width = exif['ImageWidth'] or mp.get_property('width')
     local height = exif['ImageHeight'] or mp.get_property('height')
@@ -34,11 +42,11 @@ function update_from_exif(exif)
         exif['LensModel']
     }, ' + ')
 
-    local rows = {
+    local rows = clean_nils({
         string.find(file_info, '%S') and file_info,
         string.find(exposure_info, '%S') and exposure_info,
         string.find(model_info, '%S') and model_info,
-    }
+    })
 
     osd.data = "{\\an1}" .. table.concat(rows, '\\N')
     osd:update()
