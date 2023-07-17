@@ -97,6 +97,8 @@
     path = ~/.config/git/config-priv
 [includeIf "gitdir:~/dotfiles-priv/"]
     path = ~/.config/git/config-priv
+[includeIf "gitdir:~/work/ext/"]
+    path = ~/.config/git/config-priv
 [includeIf "gitdir:~/work/priv/"]
     path = ~/.config/git/config-priv
 [includeIf "gitdir:~/work/postmedia/"]
