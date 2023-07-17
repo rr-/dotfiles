@@ -53,7 +53,7 @@ MACHINE_SPECS = {
         AudioDeviceSpec(
             sink_regex=r"alsa_output\.pci-0000_01_00\.1\.hdmi.*",
             card_regex="alsa_card.pci-0000_01_00.1",
-            profile="output:hdmi-stereo-extra1",
+            profile="output:hdmi-stereo",
         ),
         # headset
         AudioDeviceSpec(
