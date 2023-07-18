@@ -160,13 +160,14 @@ def get_playlist_with_position(
             paths=args.paths, recurse=args.recurse
         )
 
-    playlist = [path for path in playlist if filter_path(path)]
-    if args.selected_path and args.selected_path not in playlist:
-        playlist.insert(0, args.selected_path)
-
-    playlist_pos = (
-        playlist.index(args.selected_path) if args.selected_path else 0
-    )
+    playlist = [path.resolve() for path in playlist if filter_path(path)]
+    if sel_path := args.selected_path:
+        sel_path = sel_path.resolve()
+        if sel_path not in playlist:
+            playlist.insert(0, sel_path)
+        playlist_pos = playlist.index(sel_path)
+    else:
+        playlist_pos = 0
 
     return (playlist, playlist_pos)
 
