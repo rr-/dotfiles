@@ -5,7 +5,7 @@ from subprocess import run
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
-    parser.add_argument("pattern", default="DSC_*.JPG", nargs="?")
+    parser.add_argument("pattern", default="*.JPG", nargs="?")
     parser.add_argument(
         "-w",
         "--width",
