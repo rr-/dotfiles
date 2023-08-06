@@ -1,1 +1,0 @@
-text/html; w3m -cols 160 -I %{charset} -T text/html; copiousoutput;
