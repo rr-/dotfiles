@@ -10,7 +10,7 @@
 [merge]
     conflictStyle = diff3
 [alias]
-    count-lines = "!f() { git grep --cached -Il ''|grep -vP 'package\\.|migrations/|\\.([mp]o|lock|json5?)$' | xargs wc -l; }; f"
+    count-lines = "!f() { git grep --cached -Il ''|grep -vP 'package\\.|migrations/|\\.([mp]o|lock|json5?|svg)$' | xargs wc -l; }; f"
     ri = rebase --interactive
     rc = rebase --continue
     set-upstream = !git branch --set-upstream-to=origin/`git symbolic-ref --short HEAD`
