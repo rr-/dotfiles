@@ -1,0 +1,76 @@
+#!/usr/bin/env python3
+# requires: pyyaml xdg
+import argparse
+import time
+from pathlib import Path
+from subprocess import run
+from typing import TypedDict
+
+import xdg
+import yaml
+
+CONFIG_PATH = Path(xdg.XDG_CONFIG_HOME) / "wifi.yml"
+WIFI_DEVICE = "wlan0"
+
+
+class Network(TypedDict):
+    ssid: str
+    passphrase: str
+
+
+def get_wifi_networks() -> list[Network]:
+    loader = yaml.SafeLoader(CONFIG_PATH.read_text())
+    networks = loader.get_data()
+    return networks
+
+
+def my_run(*args, **kwargs):
+    return run(*args, **kwargs, check=True)
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-d", "--disconnect", action="store_true")
+    return parser.parse_args()
+
+
+def connect(networks: list[Network]) -> None:
+    my_run(["sudo", "systemctl", "restart", "systemd-networkd"])
+    my_run(["sudo", "systemctl", "restart", "systemd-resolved"])
+    time.sleep(1)
+    my_run(["iwctl", "station", WIFI_DEVICE, "scan"])
+    time.sleep(1)
+    my_run(["iwctl", "station", WIFI_DEVICE, "get-networks"])
+    my_run(["iwctl", "station", WIFI_DEVICE, "disconnect"])
+    for network in networks:
+        run(
+            [
+                "iwctl",
+                *(
+                    ["--passphrase", passphrase]
+                    if (passphrase := network.get("passphrase"))
+                    else []
+                ),
+                "station",
+                WIFI_DEVICE,
+                "connect",
+                network["ssid"],
+            ]
+        )
+
+
+def disconnect() -> None:
+    raise NotImplementedError("not implemented")
+
+
+def main() -> None:
+    args = parse_args()
+    wifi_networks = get_wifi_networks()
+    if args.disconnect:
+        disconnect()
+    else:
+        connect(wifi_networks)
+
+
+if __name__ == "__main__":
+    main()
