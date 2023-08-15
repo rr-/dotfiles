@@ -21,7 +21,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "-l",
         "--levels",
-        help="0%,75% for -c darken, 25%,100% for -c lighten",
+        help="0%%,75%% for -c darken, 25%%,100%% for -c lighten",
         type=str,
         default="",
     )
