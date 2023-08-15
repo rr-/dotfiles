@@ -32,6 +32,16 @@ def my_run(cmd: list[str]) -> None:
     run(cmd, check=True)
 
 
+def filter_paths(input_paths: list[Path]) -> list[Path]:
+    results: list[Path] = []
+    for path in input_paths:
+        if path.exists():
+            results.append(path)
+        else:
+            print(f"warning: {path} does not exist")
+    return results
+
+
 def compose(
     input_paths: list[Path], output_path: Path, compose_mode: str, levels: str
 ) -> None:
@@ -76,8 +86,10 @@ def main() -> None:
         else f"{args.path[0].stem}..{args.path[-1].stem}{args.path[0].suffix}"
     )
 
+    input_paths = filter_paths(args.path)
+
     compose(
-        args.path,
+        input_paths=input_paths,
         output_path=output_path,
         compose_mode=args.compose_mode,
         levels=args.levels,
