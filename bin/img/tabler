@@ -1,0 +1,69 @@
+#!/usr/bin/env python3
+import argparse
+import re
+import sys
+from subprocess import run
+from urllib.parse import quote
+
+import requests
+
+SVG_MIME = "image/svg+xml"
+
+
+def download_icon_svg(icon_name: str) -> str:
+    url = f"https://tabler-icons.io/static/tabler-icons/icons/{icon_name}.svg"
+    response = requests.get(url)
+    response.raise_for_status()
+    return response.text
+
+
+def optimize_svg(input_svg: str) -> str:
+    svgo_cmd = ["svgo", "-i", "-", "-o", "-"]
+    result = run(
+        svgo_cmd,
+        input=input_svg,
+        capture_output=True,
+        text=True,
+    )
+
+    if result.returncode == 0:
+        output_svg = result.stdout
+    else:
+        print(f"error while optimizing SVG: {result.stderr}", file=sys.stderr)
+        output_svg = input_svg
+
+    output_svg = re.sub(' class="[^"]+"', "", output_svg)
+
+    return output_svg
+
+
+def convert_to_data_uri(content: str, mime: str) -> str:
+    encoded = quote(content).replace("%20", " ")
+    return f"data:{mime};charset=utf-8,{encoded}"
+
+
+def parse_args() -> None:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-d", "--data-uri", action="store_true")
+    parser.add_argument("-c", "--color", default="currentColor")
+    parser.add_argument("icon", nargs="+")
+    return parser.parse_args()
+
+
+def main() -> None:
+    args = parse_args()
+
+    for n, icon_name in enumerate(args.icon):
+        icon_svg = download_icon_svg(icon_name)
+        icon_svg = optimize_svg(icon_svg)
+        icon_svg = icon_svg.replace("currentColor", args.color)
+
+        end = "" if n == len(args.icon) - 1 else "\n"
+        if args.data_uri:
+            print(convert_to_data_uri(icon_svg, mime=SVG_MIME), end=end)
+        else:
+            print(icon_svg, end=end)
+
+
+if __name__ == "__main__":
+    main()
