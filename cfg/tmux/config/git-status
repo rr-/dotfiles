@@ -1,0 +1,228 @@
+#!/usr/bin/env python3
+import argparse
+import re
+from dataclasses import dataclass
+from pathlib import Path
+from subprocess import run
+
+SYMBOLS = {
+    "branch": "⎇ ",
+    "hashprefix": ":",
+    "ahead": "↑",
+    "behind": "↓",
+    "staged": "● ",
+    "conflict": "✖ ",
+    "modified": "✚ ",
+    "untracked": "… ",
+    "stashed": "⚑ ",
+    "clean": "✔",
+    "insertions": "Σ",
+    "deletions": "Δ",
+}
+
+
+def my_run(cmd: list[str], **kwargs) -> str | None:
+    result = run(
+        cmd,
+        capture_output=True,
+        text=True,
+        **kwargs,
+    )
+    if result.returncode == 0:
+        return result.stdout
+    return None
+
+
+@dataclass
+class GitStatus:
+    head: str | None = None
+    local_branch: str | None = None
+    remote_branch: str | None = None
+
+    is_detached: bool = False
+    is_initial: bool = False
+
+    conflicts: int = 0
+    modified: int = 0
+    staged: int = 0
+    untracked: int = 0
+
+    deletions: int = 0
+    insertions: int = 0
+
+    ahead_count: int = 0
+    behind_count: int = 0
+
+    def parse_upstream(self, source):
+        pos = source.find(" ")
+        if pos == -1:
+            self.remote_branch = source
+            return None
+
+        self.remote_branch = source[:pos]
+        source = source[pos + 1 :].strip("[]")
+
+        if match := re.search("ahead (\d+)", source):
+            self.ahead_count = int(match.group(1))
+        if match := re.search("behind (\d+)", source):
+            self.behind_count = int(match.group(1))
+
+        return None
+
+
+def fill_git_status_from_porcelain_header(
+    git_status: GitStatus, line: str
+) -> None:
+    INITIAL_PREFIX = "## No commits yet on "
+    DETACHED = "## HEAD (no branch)"
+
+    if line == DETACHED:
+        git_status.is_detached = True
+    elif line.startswith(INITIAL_PREFIX):
+        git_status.is_initial = True
+        git_status.local_branch = line[len(INITIAL_PREFIX) :]
+    else:
+        if len(line) < 4:
+            raise ValueError(f'unexpected string "{line}"')
+        pos = line.find("...")
+        if pos == -1:
+            if line[3:].find(" ") != -1:
+                raise ValueError(f'unexpected string "{line[3:]}"')
+            git_status.local_branch = line[3:]
+        else:
+            git_status.local_branch = line[3:pos]
+            git_status.parse_upstream(line[pos + 3 :])
+
+
+def fill_git_status_from_porcelain(
+    git_status: GitStatus, porcelain_output: str
+) -> None:
+    for line in porcelain_output.splitlines():
+        if not re.match(r"^(##|[ MADRCUT?!]{2}) .*$", line):
+            continue
+
+        first, second = line[0], line[1]
+
+        match (first, second):
+            case ("#", "#"):
+                fill_git_status_from_porcelain_header(git_status, line)
+            case ("U", "U") | ("A", "A"):
+                git_status.conflicts += 1
+            case ("A", "M") | ("M", "M") | ("M", "D") | ("R", "M") | (
+                "R",
+                "D",
+            ) | ("A", "T"):
+                git_status.modified += 1
+                git_status.staged += 1
+            case (_, "M") | (_, "D"):
+                git_status.modified += 1
+            case ("?", "?"):
+                git_status.untracked += 1
+            case _:
+                git_status.staged += 1
+
+
+def fill_git_status_from_rev_parse(
+    git_status: GitStatus, rev_parse_output: str
+) -> None:
+    git_status.head = rev_parse_output.strip()
+
+
+def fill_git_status_from_stats(
+    git_status: GitStatus, stats_output: str
+) -> None:
+    git_status.insertions = 0
+    git_status.deletions = 0
+
+    if match := re.search("(\d+) insertion", stats_output):
+        git_status.insertions = int(match.group(1))
+    if match := re.search("(\d+) deletion", stats_output):
+        git_status.deletions = int(match.group(1))
+
+
+def get_git_status(tmux_pane_path: Path) -> GitStatus | None:
+    git_status = GitStatus()
+
+    if not (
+        porcelain_output := my_run(
+            ["git", "status", "--porcelain=v1", "--branch"],
+            cwd=tmux_pane_path,
+        )
+    ):
+        return None
+
+    fill_git_status_from_porcelain(git_status, porcelain_output)
+
+    if rev_parse_output := my_run(
+        ["git", "describe", "--abbrev=7", "--tags", "--always", "HEAD"],
+        cwd=tmux_pane_path,
+    ):
+        fill_git_status_from_rev_parse(git_status, rev_parse_output)
+
+    if stats_output := my_run(
+        ["git", "diff", "--shortstat", "HEAD"],
+        cwd=tmux_pane_path,
+    ):
+        fill_git_status_from_stats(git_status, stats_output)
+
+    return git_status
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-p", "--path", type=Path, default=Path())
+    return parser.parse_args()
+
+
+def get_status_line() -> str:
+    args = parse_args()
+    git_status = get_git_status(args.path)
+    if not git_status:
+        return ""
+
+    head = git_status.head or ("initial" if git_status.is_initial else "?")
+
+    commit_stats_parts = (
+        [
+            f"#[fg=colour239]C#[fg=colour71]\N{HEAVY CHECK MARK}",
+        ]
+        if git_status.ahead_count == 0 and git_status.behind_count == 0
+        else [
+            f"#[fg=colour239]C#[fg=colour71]↑{git_status.ahead_count}",
+            f"#[fg=colour131]↓{git_status.behind_count}",
+        ]
+    )
+
+    line_stats_parts = (
+        [
+            f"#[fg=colour239]L#[fg=colour71]\N{HEAVY CHECK MARK}",
+        ]
+        if git_status.insertions == 0 and git_status.deletions == 0
+        else [
+            f"#[fg=colour239]L#[fg=colour149]+{git_status.insertions}",
+            f"#[fg=colour173]-{git_status.deletions}",
+        ]
+    )
+
+    parts = [
+        f"#[fg=colour75]⎇ {git_status.local_branch}",
+        f"#[fg=colour81]{git_status.remote_branch or 'untracked'}",
+        f"#[fg=colour239]{head}",
+        "".join(commit_stats_parts),
+    ]
+
+    if (num_dangerous := git_status.staged + git_status.modified) > 0:
+        parts.append(f"#[fg=colour208]↯{num_dangerous}")
+
+    parts.append("".join(line_stats_parts))
+
+    return " ".join(parts)
+
+
+def main() -> None:
+    if status_line := get_status_line():
+        print(f" {status_line} ")
+
+
+if __name__ == "__main__":
+    main()
