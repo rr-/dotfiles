@@ -13,3 +13,5 @@
 *.egg-info
 docker-compose.local.yml
 /.workrc
+
+venv/
