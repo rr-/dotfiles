@@ -103,8 +103,8 @@
     path = ~/.config/git/config-priv
 [includeIf "gitdir:~/work/postmedia/"]
     path = ~/.config/git/config-postmedia
-[includeIf "gitdir:~/work/nodal/"]
-    path = ~/.config/git/config-nodal
+[includeIf "gitdir:~/work/glopal/"]
+    path = ~/.config/git/config-glopal
 [includeIf "gitdir:~/work/invoices/"]
     path = ~/.config/git/config-priv
 [credential "https://github.com"]
