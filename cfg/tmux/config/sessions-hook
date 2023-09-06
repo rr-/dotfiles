@@ -1,0 +1,64 @@
+#!/usr/bin/env python3
+import socket
+from pathlib import Path
+from subprocess import run
+
+from libdotfiles import logging
+from libdotfiles.util import HOME_DIR
+
+try:
+    import yaml
+except ImportError:
+    yaml = None
+
+SESSIONS_PATH = HOME_DIR / ".config/tmux/sessions.yml"
+
+
+def renumber_sessions() -> None:
+    """Make sure that numeric sessions names appear in linear order."""
+    session_names = run(
+        ["tmux", "list-sessions", "-F", "#S"], capture_output=True, text=True
+    ).stdout.splitlines()
+    numeric_sessions = [int(name) for name in session_names if name.isdigit()]
+    for new_name, old_name in enumerate(numeric_sessions, 1):
+        run(["tmux", "rename", "-t", str(old_name), str(new_name)])
+
+
+def recreate_session(spec) -> None:
+    run(
+        [
+            "tmux",
+            "new-session",
+            "-d",
+            "-s",
+            spec["name"],
+            "-c",
+            Path(spec["cwd"]).expanduser(),
+        ]
+    )
+
+
+def recreate_sessions() -> None:
+    """Recreate sessions that should be persisted across machines."""
+    if not yaml:
+        logging.warn("pyyaml module not installed")
+        return
+    if not SESSIONS_PATH.exists():
+        logging.warn("sessions file does not exist")
+        return
+
+    config = yaml.safe_load(SESSIONS_PATH.read_text())
+    machine_name = socket.gethostname()
+
+    specs = config.get(machine_name, [])
+    for spec in specs:
+        recreate_session(spec)
+
+
+def main() -> None:
+    renumber_sessions()
+    recreate_sessions()
+
+
+if __name__ == "__main__":
+    main()
