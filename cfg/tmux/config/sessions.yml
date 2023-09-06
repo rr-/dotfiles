@@ -1,0 +1,17 @@
+lightning: &lightning
+  - name: aux
+    cwd: ~/
+
+  - name: tomb1main
+    cwd: ~/work/priv/Tomb1Main/
+
+  - name: trcustoms
+    cwd: ~/work/priv/trcustoms/
+
+  - name: glopal
+    cwd: ~/work/glopal/
+
+  - name: postmedia
+    cwd: ~/work/postmedia/
+
+snowflake: *lightning
