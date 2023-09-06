@@ -176,7 +176,15 @@ class PipPackageInstaller(PackageInstaller):
             return True
 
     def install(self, package: str) -> bool:
-        command = ["python3", "-m", "pip", "install", "--user", package]
+        command = [
+            "python3",
+            "-m",
+            "pip",
+            "install",
+            "--user",
+            "--break-system-packages",
+            package,
+        ]
         return run(command, check=False).returncode == 0
 
 
