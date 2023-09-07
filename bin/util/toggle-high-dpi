@@ -1,0 +1,98 @@
+#!/usr/bin/env python3
+from decimal import Decimal
+from subprocess import run
+
+import yaml
+
+from libdotfiles.util import HOME_DIR
+
+SCALE_FACTOR = Decimal("1.5")
+DPI_NORMAL = 96
+DPI_HIGH = int(DPI_NORMAL * SCALE_FACTOR)
+
+
+class BaseExecutor:
+    def get(self) -> bool:
+        raise NotImplementedError("not implemented")
+
+    def set(self, is_enabled: bool) -> None:
+        raise NotImplementedError("not implemented")
+
+
+class AlacrittyExecutor(BaseExecutor):
+    def __init__(self) -> None:
+        self.config_path = HOME_DIR / ".config" / "alacritty" / "alacritty.yml"
+
+    def get_config(self):
+        return yaml.safe_load(self.config_path.read_text())
+
+    def save_config(self, config):
+        self.config_path.write_text(yaml.dump(config))
+
+    def get(self) -> bool:
+        config = self.get_config()
+        return Decimal(
+            config.get("env", {}).get("WINIT_X11_SCALE_FACTOR", "1.0")
+        ) != Decimal(1)
+
+    def set(self, is_enabled: bool) -> None:
+        config = self.get_config()
+
+        if is_enabled:
+            if not "env" in config:
+                config["env"] = {}
+            config["env"]["WINIT_X11_SCALE_FACTOR"] = str(SCALE_FACTOR)
+        elif "env" in config:
+            config["env"].pop("WINIT_X11_SCALE_FACTOR", None)
+            if not config["env"]:
+                config.pop("env")
+
+        self.save_config(config)
+
+
+class XFontExecutor(BaseExecutor):
+    def get(self) -> bool:
+        result = run(
+            [
+                "xfconf-query",
+                "-c",
+                "xsettings",
+                "-p",
+                "/Xft/DPI",
+            ],
+            capture_output=True,
+            text=True,
+        )
+        if result.returncode != 0:
+            return False
+        return result.stdout.strip() != str(DPI_NORMAL)
+
+    def set(self, is_enabled: bool) -> None:
+        run(
+            [
+                "xfconf-query",
+                "-c",
+                "xsettings",
+                "-n",
+                "-t",
+                "int",
+                "-p",
+                "/Xft/DPI",
+                "-s",
+                str(DPI_HIGH if is_enabled else DPI_NORMAL),
+            ]
+        )
+
+
+def main() -> None:
+    executors = [cls() for cls in BaseExecutor.__subclasses__()]
+
+    is_enabled = any(executor.get() for executor in executors)
+    is_enabled = not is_enabled
+
+    for executor in executors:
+        executor.set(is_enabled)
+
+
+if __name__ == "__main__":
+    main()
