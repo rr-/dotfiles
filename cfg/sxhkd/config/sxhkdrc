@@ -59,13 +59,11 @@ super + q
 
 # maximize the window
 super + Up
-    wmctrl -r :ACTIVE: -b add,maximized_horz; \
-    wmctrl -r :ACTIVE: -b add,maximized_vert
+    wmctrl -r :ACTIVE: -b add,maximized_horz,maximized_vert
 
 # restore the window
 super + Down
-    wmctrl -r :ACTIVE: -b remove,maximized_horz; \
-    wmctrl -r :ACTIVE: -b remove,maximized_vert
+    wmctrl -r :ACTIVE: -b remove,maximized_horz,maximized_vert
 
 # set current window as fullscreen
 super + f
