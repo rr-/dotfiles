@@ -186,11 +186,14 @@ def normalize_camera_model(model: str) -> str:
 
 
 def get_target_paths(
-    root_dir: Path, source_paths: list[Path]
+    root_dir: Path,
+    source_paths: list[Path],
+    include_day_dir: bool,
 ) -> Iterable[tuple[Path, Path | None]]:
     info_map: dict[Path, ImageInfo | None] = {
         source_path: None for source_path in source_paths
     }
+
     for factory_cls in ImageInfoFactory.__subclasses__():
         factory = factory_cls()
         info_map.update(
@@ -211,7 +214,15 @@ def get_target_paths(
         target_name = (
             "_".join(str(part) for part in parts if part) + source_path.suffix
         )
-        target_path = source_path.parent / target_name
+
+        if include_day_dir:
+            target_path = (
+                source_path.parent
+                / info.time.strftime("%Y-%m-%d")
+                / target_name
+            )
+        else:
+            target_path = source_path.parent / target_name
 
         yield (source_path, target_path)
 
@@ -251,6 +262,12 @@ def move(
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument("root_dir", type=Path, default=ROOT_DIR, nargs="?")
+    parser.add_argument(
+        "-D",
+        "--day-dir",
+        action="store_true",
+        help="Include day directory in the target path",
+    )
     parser.add_argument("-d", "--dry-run", action="store_true")
     parser.add_argument(
         "-o",
@@ -267,7 +284,11 @@ def main() -> None:
     for chunk in chunks(
         collect_files(args.root_dir, suffixes=ALL_SUFFIXES), n=100
     ):
-        for source_path, target_path in get_target_paths(args.root_dir, chunk):
+        for source_path, target_path in get_target_paths(
+            root_dir=args.root_dir,
+            source_paths=chunk,
+            include_day_dir=args.day_dir,
+        ):
             if target_path is None:
                 print(f"Unknown image: {source_path}")
                 continue
