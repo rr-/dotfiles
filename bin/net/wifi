@@ -10,12 +10,74 @@ import xdg
 import yaml
 
 CONFIG_PATH = Path(xdg.XDG_CONFIG_HOME) / "wifi.yml"
-WIFI_DEVICE = "wlan0"
+DEFAULT_WIFI_DEVICE = "wlan0"
 
 
 class Network(TypedDict):
     ssid: str
     passphrase: str
+
+
+class NetworkManager:
+    def __init__(
+        self,
+        known_wifi_networks: list[Network],
+        wifi_device: str = DEFAULT_WIFI_DEVICE,
+    ) -> None:
+        self.known_wifi_networks = known_wifi_networks
+        self.wifi_device = wifi_device
+
+    def restart_systemd(self) -> None:
+        my_run(["sudo", "systemctl", "restart", "systemd-networkd"])
+        my_run(["sudo", "systemctl", "restart", "systemd-resolved"])
+
+    def scan_networks(self) -> None:
+        my_run(["iwctl", "station", self.wifi_device, "scan"])
+
+    def disconnect_wifi(self) -> None:
+        my_run(["iwctl", "station", self.wifi_device, "disconnect"])
+
+    def connect_wifi(self, ssid: str | None) -> Network | None:
+        self.scan_networks()
+
+        self.disconnect_wifi()
+        if ssid is not None:
+            networks = [
+                network
+                for network in self.known_wifi_networks
+                if network["ssid"].strip().lower() == ssid.strip().lower()
+            ]
+        else:
+            networks = self.known_wifi_networks
+
+        if not networks:
+            raise RuntimeError("no matching wifi network found")
+
+        for network in networks:
+            if self._try_connect_wifi_network(network):
+                return network
+        return False
+
+    def _try_connect_wifi_network(self, network: Network) -> bool:
+        result = my_run(
+            [
+                "iwctl",
+                *(
+                    ["--passphrase", passphrase]
+                    if (passphrase := network.get("passphrase"))
+                    else []
+                ),
+                "station",
+                self.wifi_device,
+                "connect",
+                network["ssid"],
+            ],
+            check=False,
+        )
+        return result.returncode == 0
+
+    def list_networks(self) -> None:
+        my_run(["iwctl", "station", self.wifi_device, "get-networks"])
 
 
 def get_wifi_networks_from_config() -> list[Network]:
@@ -25,60 +87,47 @@ def get_wifi_networks_from_config() -> list[Network]:
 
 
 def my_run(*args, **kwargs):
-    return run(*args, **kwargs, check=True)
+    print(args[0])
+    kwargs.setdefault("check", True)
+    return run(*args, **kwargs)
 
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
-    parser.add_argument("-c", "--connect", metavar="ssid")
-    parser.add_argument("-d", "--disconnect", action="store_true")
+    parser.add_argument(
+        "-l", "--list", action="store_true", help="Lists current networks"
+    )
+    parser.add_argument(
+        "-c",
+        "--connect",
+        metavar="ssid",
+        help="Connects to the given SSID (implies -d)",
+    )
+    parser.add_argument(
+        "-d",
+        "--disconnect",
+        action="store_true",
+        help="Disconnects WiFi and switches to Ethernet",
+    )
     return parser.parse_args()
-
-
-def connect(networks: list[Network]) -> None:
-    my_run(["sudo", "systemctl", "restart", "systemd-networkd"])
-    my_run(["sudo", "systemctl", "restart", "systemd-resolved"])
-    time.sleep(1)
-    my_run(["iwctl", "station", WIFI_DEVICE, "scan"])
-    time.sleep(1)
-    my_run(["iwctl", "station", WIFI_DEVICE, "disconnect"])
-    for network in networks:
-        run(
-            [
-                "iwctl",
-                *(
-                    ["--passphrase", passphrase]
-                    if (passphrase := network.get("passphrase"))
-                    else []
-                ),
-                "station",
-                WIFI_DEVICE,
-                "connect",
-                network["ssid"],
-            ]
-        )
-    my_run(["iwctl", "station", WIFI_DEVICE, "get-networks"])
-
-
-def disconnect() -> None:
-    raise NotImplementedError("not implemented")
 
 
 def main() -> None:
     args = parse_args()
-    all_wifi_networks = get_wifi_networks_from_config()
+    known_wifi_networks = get_wifi_networks_from_config()
+    network_manager = NetworkManager(known_wifi_networks)
     if args.disconnect:
-        disconnect()
-    elif args.connect:
-        connect(
-            [
-                network
-                for network in all_wifi_networks
-                if network["ssid"].lower() == args.connect.lower()
-            ]
-        )
-    else:
-        connect(all_wifi_networks)
+        network_manager.disconnect_wifi()
+    if args.connect:
+        if network := network_manager.connect_wifi(ssid=args.connect):
+            print(f'Connected to {network["ssid"]}')
+        else:
+            print("Failed to connect")
+    if args.list:
+        network_manager.list_networks()
+    if not args.connect and not args.disconnect and not args.list:
+        network_manager.connect_wifi(ssid=None)
+        network_manager.list_networks()
 
 
 if __name__ == "__main__":
