@@ -3,6 +3,8 @@ import argparse
 import re
 from subprocess import run
 
+import yaml
+
 from libdotfiles.util import HOME_DIR
 
 
@@ -14,9 +16,9 @@ def parse_args() -> argparse.Namespace:
 
 def update_alacritty_config(theme: str) -> None:
     config_path = HOME_DIR / ".config" / "alacritty" / "alacritty.yml"
-    config = config_path.read_text()
-    config = re.sub(r"\*(dark|light)", f"*{theme}", config)
-    config_path.write_text(config)
+    config = yaml.safe_load(config_path.read_text())
+    config["colors"] = config["schemes"][theme]
+    config_path.write_text(yaml.dump(config))
 
 
 def update_gtk2_config(theme: str) -> None:
