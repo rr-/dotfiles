@@ -18,7 +18,7 @@ class Network(TypedDict):
     passphrase: str
 
 
-def get_wifi_networks() -> list[Network]:
+def get_wifi_networks_from_config() -> list[Network]:
     loader = yaml.SafeLoader(CONFIG_PATH.read_text())
     networks = loader.get_data()
     return networks
@@ -30,6 +30,7 @@ def my_run(*args, **kwargs):
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
+    parser.add_argument("-c", "--connect", metavar="ssid")
     parser.add_argument("-d", "--disconnect", action="store_true")
     return parser.parse_args()
 
@@ -65,11 +66,19 @@ def disconnect() -> None:
 
 def main() -> None:
     args = parse_args()
-    wifi_networks = get_wifi_networks()
+    all_wifi_networks = get_wifi_networks_from_config()
     if args.disconnect:
         disconnect()
+    elif args.connect:
+        connect(
+            [
+                network
+                for network in all_wifi_networks
+                if network["ssid"].lower() == args.connect.lower()
+            ]
+        )
     else:
-        connect(wifi_networks)
+        connect(all_wifi_networks)
 
 
 if __name__ == "__main__":
