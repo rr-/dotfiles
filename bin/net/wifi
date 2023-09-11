@@ -41,7 +41,6 @@ def connect(networks: list[Network]) -> None:
     time.sleep(1)
     my_run(["iwctl", "station", WIFI_DEVICE, "scan"])
     time.sleep(1)
-    my_run(["iwctl", "station", WIFI_DEVICE, "get-networks"])
     my_run(["iwctl", "station", WIFI_DEVICE, "disconnect"])
     for network in networks:
         run(
@@ -58,6 +57,7 @@ def connect(networks: list[Network]) -> None:
                 network["ssid"],
             ]
         )
+    my_run(["iwctl", "station", WIFI_DEVICE, "get-networks"])
 
 
 def disconnect() -> None:
