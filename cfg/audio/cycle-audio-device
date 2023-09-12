@@ -1,0 +1,167 @@
+#!/usr/bin/env python3
+# requires: pyyaml xdg
+import json
+import platform
+import re
+import sys
+from collections.abc import Iterable
+from pathlib import Path
+from subprocess import run
+from typing import NotRequired, TypedDict, cast
+
+import xdg
+import yaml
+
+CONFIG_PATH = Path(xdg.XDG_CONFIG_HOME) / "audio-sources.yml"
+
+
+class AudioSourceSpec(TypedDict):
+    name: str
+    sink_regex: str
+    card_regex: NotRequired[str]
+    profile: NotRequired[str]
+
+
+class MachineConfig(TypedDict):
+    sources: list[AudioSourceSpec]
+    current_source: NotRequired[str]
+
+
+Config = dict[str, MachineConfig]
+
+
+class Card(TypedDict):
+    name: str
+
+
+class Sink(TypedDict):
+    name: str
+
+
+class ConfigManager:
+    def __init__(self, path: Path, machine_name: str) -> None:
+        self.path = path
+        self.machine_name = machine_name
+
+    def get_audio_source_specs(self) -> list[AudioSourceSpec]:
+        config = self.read()
+        if machine_config := config.get(self.machine_name):
+            return machine_config.get("sources", [])
+        return []
+
+    def get_current_audio_source_name(self) -> str | None:
+        config = self.read()
+        if machine_config := config.get(self.machine_name):
+            return machine_config.get("current_source")
+        return None
+
+    def set_current_audio_source_name(self, source_name: str) -> None:
+        config = self.read()
+        if machine_config := config.get(self.machine_name):
+            machine_config["current_source"] = source_name
+        self.write(config)
+
+    def read(self) -> Config:
+        loader = yaml.SafeLoader(self.path.read_text())
+        config = cast(Config, loader.get_data())
+        return config
+
+    def write(self, config: Config) -> None:
+        self.path.write_text(yaml.dump(config))
+
+
+class PulseAudioManager:
+    @staticmethod
+    def get_default_sink() -> str:
+        result = run(
+            ["pactl", "get-default-sink"],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        return result.stdout.strip()
+
+    @staticmethod
+    def get_all_cards() -> Iterable[Card]:
+        result = run(
+            ["pactl", "-f", "json", "list", "cards"],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        return cast(list[Card], json.loads(result.stdout))
+
+    @staticmethod
+    def get_all_sinks() -> Iterable[Sink]:
+        result = run(
+            ["pactl", "-f", "json", "list", "sinks"],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        return cast(list[Sink], json.loads(result.stdout))
+
+    @classmethod
+    def set_default_sink(cls, sink_name: str) -> bool:
+        print("setting default sink", sink_name)
+        run(["pactl", "set-default-sink", sink_name], check=True)
+        return cls.get_default_sink() == sink_name
+
+    @staticmethod
+    def set_card_profile(card_name: str, profile: str) -> None:
+        print("setting profile", profile, "for card", card_name)
+        run(["pacmd", "set-card-profile", card_name, profile], check=True)
+
+
+def get_next_spec(
+    specs: list[AudioSourceSpec], current_spec_name: str
+) -> AudioSourceSpec:
+    assert specs, "empty source specs"
+    last_spec = specs[0]
+    for spec in reversed(specs):
+        if spec["name"] == current_spec_name:
+            return last_spec
+        last_spec = spec
+    assert False, "no matching source specs"
+
+
+def apply_spec(pulse_audio: PulseAudioManager, spec: AudioSourceSpec) -> None:
+    all_cards = list(pulse_audio.get_all_cards())
+
+    for card in all_cards:
+        if re.match(spec["card_regex"], card["name"]) and spec["profile"]:
+            pulse_audio.set_card_profile(card["name"], spec["profile"])
+
+    all_sinks = list(pulse_audio.get_all_sinks())
+    for sink in all_sinks:
+        if re.match(spec["sink_regex"], sink["name"]):
+            pulse_audio.set_default_sink(sink["name"])
+
+
+def main() -> None:
+    machine_name = platform.node()
+
+    config = ConfigManager(path=CONFIG_PATH, machine_name=machine_name)
+    specs = config.get_audio_source_specs()
+    if not specs:
+        raise ValueError(f"unknown machine: {machine_name}")
+
+    current_spec_name = config.get_current_audio_source_name()
+    if not current_spec_name:
+        current_spec_name = specs[-1]["name"]
+
+    target_spec = get_next_spec(specs, current_spec_name)
+    print("current spec:", current_spec_name)
+    print("target spec:", target_spec["name"])
+
+    pulse_audio = PulseAudioManager()
+    apply_spec(pulse_audio, target_spec)
+    config.set_current_audio_source_name(target_spec["name"])
+
+
+if __name__ == "__main__":
+    try:
+        main()
+    except ValueError as ex:
+        print(str(ex), file=sys.stderr)
+        sys.exit(1)

@@ -1,0 +1,32 @@
+lightning:
+  sources:
+  - name: "laptop"
+    sink_regex: "alsa_output\\.pci-0000_00_1f\\.3\\.analog-stereo"
+
+  - name: "hdmi"
+    sink_regex: "alsa_output\\.pci-0000_01_00\\.1\\.hdmi.*"
+    card_regex: "alsa_card\\.pci-0000_01_00\\.1"
+    profile: "output:hdmi-stereo"
+
+  - name: "headset"
+    sink_regex: "bluez_sink\\..*"
+    card_regex: "bluez_card\\..*"
+    profile: "a2dp_sink"
+
+
+snowflake:
+  sources:
+  - name: "laptop"
+    sink_regex: "alsa_output\\..*"
+    card_regex: "alsa_card\\.pci-0000_00_1f\\.3"
+    profile: "output:analog-stereo"
+
+  - name: "headset-a2dp"
+    sink_regex: "bluez_sink\\..*"
+    card_regex: "bluez_card\\..*"
+    profile: "a2dp_sink"
+
+  - name: "headset-hfp"
+    sink_regex: "bluez_sink\\..*"
+    card_regex: "bluez_card\\..*"
+    profile: "handsfree_head_unit"

@@ -14,9 +14,6 @@ disable=
     # we're not java
     missing-docstring,
 
-    # covered better by pycodestyle
-    bad-continuation,
-
     # we're adults
     redefined-builtin,
     duplicate-code,
@@ -26,7 +23,6 @@ disable=
     too-many-instance-attributes,
 
     # plain stupid
-    no-self-use,
     too-few-public-methods
 
 [typecheck]
