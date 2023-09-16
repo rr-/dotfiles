@@ -14,6 +14,15 @@ create_symlink(
 
 os.chdir(REPO_ROOT_DIR / "opt" / "launcher")
 run(
-    ["python3", "-m", "pip", "install", "--user", "--upgrade", "."],
+    [
+        "python3",
+        "-m",
+        "pip",
+        "install",
+        "--user",
+        "--upgrade",
+        "--break-system-packages",
+        ".",
+    ],
     check=False,
 )
