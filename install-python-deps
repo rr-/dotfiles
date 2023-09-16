@@ -1,0 +1,20 @@
+#!/usr/bin/env python3
+import re
+from pathlib import Path
+
+from libdotfiles.packages import try_install
+
+RE = re.compile(r"^#\s*requires?: (?P<deps>\w+)$", flags=re.M)
+dependencies: set[str] = set()
+for path in Path(".").rglob("*"):
+    if path.is_file():
+        try:
+            content = path.read_text(encoding="utf-8")
+        except UnicodeDecodeError:
+            continue
+        if match := RE.search(content):
+            dependencies |= set(match.group("deps").split())
+for dependency in sorted(dependencies):
+    print("Installing", dependency)
+    try_install(dependency, method="pip")
+    print()
