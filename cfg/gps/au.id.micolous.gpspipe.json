@@ -1,0 +1,10 @@
+{
+	"name": "au.id.micolous.gpspipe",
+	"description": "gpspipew",
+	"path": "{PATH}",
+	"type": "stdio",
+	"allowed_origins": [
+		"chrome-extension://dmfdcjlppdohhegplckcbohgbbfcdfjd/",
+		"chrome-extension://monbdfbmjagijfkdeeldlcbhnjiiffoh/"
+	]
+}
