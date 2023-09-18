@@ -123,22 +123,20 @@ __git_ps1 () {
 function make_ps1 () {
     case $(hostname) in
         drizzle) PS1='%F{75}';;
-        cyclone) PS1='%F{162}';;
-        aurora) PS1='%F{215}';;
+        snowflake) PS1='%F{38}';;
+        lightning) PS1='%F{214}';;
         oldcastle) PS1='%F{150}';;
-        tornado) PS1='%F{203}';;
-        stx*) PS1='%F{156}';;
         *) PS1='%F{145}';;
     esac
 
     # user@host
-    PS1+='%n@%M'
+    PS1+='%B%n@%M%b'
 
     # colon
     PS1+="%F{7}:"
 
     # path relative to $HOME
-    PS1+="%F{2}%~"
+    PS1+="%F{15}%~"
 
     # git prompt
     setopt prompt_subst
