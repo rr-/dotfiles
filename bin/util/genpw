@@ -2,15 +2,29 @@
 import argparse
 import random
 import string
+from collections.abc import Callable, Iterable
 
-DEFAULT_LENGTH = 25
-DEFAULT_ALPHA = string.ascii_letters + string.digits + "_-"
+DEFAULT_LENGTH = 12
+SPECIAL_CHARS = "_-/"
+DEFAULT_ALPHA = string.ascii_letters + string.digits + SPECIAL_CHARS
+DEFAULT_REQUIREMENTS = [
+    lambda password: count_characters(password, string.ascii_lowercase) > 1,
+    lambda password: count_characters(password, string.ascii_uppercase) > 1,
+    lambda password: count_characters(password, string.digits) > 1,
+    lambda password: count_characters(password, SPECIAL_CHARS) > 1,
+]
 
 
-def get_random_pass(length: int, alphabet: str) -> str:
+def count_characters(source: str, characters: str) -> int:
+    return len([c for c in source if c in characters])
+
+
+def get_random_pass(
+    length: int, alphabet: str, requirements: Iterable[Callable[[str], bool]]
+) -> str:
     while True:
         password = "".join(random.choice(alphabet) for _ in range(length))
-        if not password.startswith(" ") and not password.endswith(" "):
+        if all(requirement(password) for requirement in requirements):
             return password
 
 
@@ -23,7 +37,17 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> None:
     args = parse_args()
-    print(get_random_pass(length=args.length, alphabet=args.alphabet))
+    if args.alphabet:
+        requirements = []
+    else:
+        requirements = DEFAULT_REQUIREMENTS
+    print(
+        get_random_pass(
+            length=args.length,
+            alphabet=args.alphabet,
+            requirements=requirements,
+        )
+    )
 
 
 if __name__ == "__main__":
