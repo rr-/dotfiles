@@ -169,6 +169,9 @@ def parse_args() -> None:
     parser.add_argument(
         "-n", "--next", action="store_const", dest="mode", const="next"
     )
+    parser.add_argument(
+        "-g", "--get", action="store_const", dest="mode", const="print"
+    )
     parser.add_argument("-s", "--spec")
     return parser.parse_args()
 
@@ -188,6 +191,9 @@ def main() -> None:
         target_spec = get_prev_spec(specs, current_spec_name)
     elif args.mode == "next":
         target_spec = get_next_spec(specs, current_spec_name)
+    elif args.mode == "print":
+        print(current_spec_name)
+        return
     elif args.spec:
         target_spec = get_matching_spec(specs, args.spec)
     else:
