@@ -1,0 +1,9 @@
+[global]
+width = 300
+frame_width = 0
+background = "#282a36"
+foreground = "#f8f8f2"
+frame_color = "#44475a"
+font = "Liberation Sans 10"
+horizontal_padding = 10
+show_age_threshold = 60
