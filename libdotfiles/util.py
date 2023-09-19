@@ -97,7 +97,7 @@ def get_distro_name() -> str:
     return "unknown"
 
 
-def current_username() -> str:
+def get_current_username() -> str:
     return run(
         ["whoami"], check=True, capture_output=True, text=True
     ).stdout.strip()
