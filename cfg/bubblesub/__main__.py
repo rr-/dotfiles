@@ -1,11 +1,11 @@
 from libdotfiles.packages import try_install
-from libdotfiles.util import distro_name
+from libdotfiles.util import get_distro_name
 
-if distro_name() == "arch":
+if get_distro_name() == "arch":
     try_install("python-pyqt5")
     try_install("ffms2-git")
     try_install("fftw")
-elif distro_name() == "linuxmint":
+elif get_distro_name() == "linuxmint":
     try_install("python3-setuptools")
     try_install("python3-pip")
     try_install("wheel", method="pip")

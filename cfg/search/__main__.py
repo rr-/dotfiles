@@ -5,17 +5,17 @@ from libdotfiles.util import (
     HOME_DIR,
     PKG_DIR,
     create_symlink,
-    distro_name,
+    get_distro_name,
     run,
 )
 
 FZF_DIR = HOME_DIR / ".fzf"
 
-if distro_name() == "arch":
+if get_distro_name() == "arch":
     try_install("fzf")  # super opener
     try_install("ripgrep")  # super grep
 
-elif distro_name() == "linuxmint":
+elif get_distro_name() == "linuxmint":
     if not has_installed("ripgrep"):
         run(
             [

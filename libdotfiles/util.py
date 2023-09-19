@@ -88,7 +88,7 @@ def _remove_symlink(path: Path) -> None:
         path.unlink()
 
 
-def distro_name() -> str:
+def get_distro_name() -> str:
     for line in Path("/etc/os-release").read_text().splitlines():
         key, value = line.split("=", 1)
         key = key.lower()

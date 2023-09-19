@@ -2,12 +2,17 @@ import tempfile
 from pathlib import Path
 
 from libdotfiles.packages import try_install
-from libdotfiles.util import current_username, distro_name, download_file, run
+from libdotfiles.util import (
+    current_username,
+    download_file,
+    get_distro_name,
+    run,
+)
 
-if distro_name() == "linux":
+if get_distro_name() == "linux":
     try_install("docker")
     try_install("docker-compose")
-elif distro_name() == "linuxmint":
+elif get_distro_name() == "linuxmint":
     with tempfile.TemporaryDirectory() as tmpdir:
         target_file = Path(tmpdir) / "docker-key.gpg"
         download_file(
