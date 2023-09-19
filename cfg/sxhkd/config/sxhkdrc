@@ -45,9 +45,11 @@ super + {x,X}
 
 # cycle between devices
 super + c
-    cycle-audio-device -n
+    cycle-audio-device -n; \
+    notify-send "Switched audio to $(cycle-audio-device -g)" -t 3000
 super + C
-    cycle-audio-device -p
+    cycle-audio-device -p; \
+    notify-send "Switched audio to $(cycle-audio-device -g)" -t 3000
 
 
 
