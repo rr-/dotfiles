@@ -7,6 +7,7 @@ try_install("feh")  # wallpaper renderer
 try_install("i3lock")  # lock screen
 try_install("arc-gtk-theme")  # dark GTK theme
 try_install("dunst")  # notification manager
+try_install("xfconf")  # toggle-high-dpi
 
 create_symlinks(
     [
