@@ -3,8 +3,8 @@ from pathlib import Path
 
 from libdotfiles.packages import try_install
 from libdotfiles.util import (
-    current_username,
     download_file,
+    get_current_username,
     get_distro_name,
     run,
 )
@@ -44,4 +44,4 @@ elif get_distro_name() == "linuxmint":
 
 run(["sudo", "systemctl", "start", "docker"], check=False)
 run(["sudo", "systemctl", "enable", "docker"], check=False)
-run(["sudo", "usermod", "-aG", "docker", current_username()], check=False)
+run(["sudo", "usermod", "-aG", "docker", get_current_username()], check=False)
