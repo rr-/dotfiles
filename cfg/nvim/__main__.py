@@ -6,18 +6,18 @@ from libdotfiles.util import (
     create_file,
     create_symlink,
     create_symlinks,
-    distro_name,
     download_file,
+    get_distro_name,
     run,
 )
 
 NVIM_DIR = HOME_DIR / ".config" / "nvim"
 NVIM_SPELL_DIR = NVIM_DIR / "spell"
 
-if distro_name() == "arch":
+if get_distro_name() == "arch":
     try_install("neovim")
     try_install("pynvim", method="pip")
-elif distro_name() == "linuxmint":
+elif get_distro_name() == "linuxmint":
     try_install("neovim")
     try_install("python3-neovim")
 try_install("black", method="pip")

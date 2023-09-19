@@ -2,9 +2,9 @@ import os
 import tempfile
 
 from libdotfiles.packages import try_install
-from libdotfiles.util import distro_name, run
+from libdotfiles.util import get_distro_name, run
 
-if distro_name() == "arch":
+if get_distro_name() == "arch":
     try_install("patch")
     try_install("expac")
     try_install("fakechroot")

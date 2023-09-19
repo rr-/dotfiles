@@ -1,7 +1,7 @@
 from libdotfiles.packages import try_install
-from libdotfiles.util import HOME_DIR, PKG_DIR, create_symlink, distro_name
+from libdotfiles.util import HOME_DIR, PKG_DIR, create_symlink, get_distro_name
 
-if distro_name() == "arch":
+if get_distro_name() == "arch":
     try_install("mujs")
     try_install("luajit")
 

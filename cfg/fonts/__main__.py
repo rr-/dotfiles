@@ -7,12 +7,12 @@ from libdotfiles.util import (
     create_dir,
     create_symlink,
     create_symlinks,
-    distro_name,
+    get_distro_name,
     has_executable,
     run,
 )
 
-if distro_name() == "arch":
+if get_distro_name() == "arch":
     try_install("ttf-dejavu")
     try_install("ttf-ms-fonts")
     try_install("ttf-ipa-mona")

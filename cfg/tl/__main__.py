@@ -2,11 +2,11 @@ import os
 import tempfile
 
 from libdotfiles.packages import try_install
-from libdotfiles.util import distro_name, run
+from libdotfiles.util import get_distro_name, run
 
-if distro_name() == "arch":
+if get_distro_name() == "arch":
     try_install("translate-shell-git")
-elif distro_name() == "linuxmint":
+elif get_distro_name() == "linuxmint":
     with tempfile.TemporaryDirectory() as tmp_dir:
         os.chdir(tmp_dir)
         run(

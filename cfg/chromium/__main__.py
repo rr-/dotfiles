@@ -1,7 +1,7 @@
 from libdotfiles.packages import try_install
-from libdotfiles.util import HOME_DIR, create_file, distro_name
+from libdotfiles.util import HOME_DIR, create_file, get_distro_name
 
-if distro_name() == "arch":
+if get_distro_name() == "arch":
     try_install("chromium")
 
 create_file(
