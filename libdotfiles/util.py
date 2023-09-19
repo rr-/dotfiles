@@ -3,6 +3,7 @@ import logging
 import os
 import shlex
 import shutil
+import socket
 import subprocess
 import urllib.request
 from pathlib import Path
@@ -95,6 +96,10 @@ def get_distro_name() -> str:
         if key == "id":
             return value.strip('"')
     return "unknown"
+
+
+def get_hostname() -> str:
+    return socket.gethostname()
 
 
 def get_current_username() -> str:
