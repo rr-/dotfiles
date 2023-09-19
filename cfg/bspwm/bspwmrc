@@ -50,4 +50,10 @@ fi
 pkill -f -9 picom &>/dev/null
 picom "${picomflags[@]}" & # -b broke on pacman -Syu at 2016-03-14
 
+# notification manager
+if which dunst >/dev/null 2>&1; then
+    pkill -f -9 dunst &>/dev/null
+    dunst &
+fi
+
 feh --no-fehbg --bg-fill ~/.wallpaper.jpg
