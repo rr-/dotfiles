@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 # requires: pyyaml xdg
+import argparse
 import json
 import platform
 import re
@@ -113,8 +114,30 @@ class PulseAudioManager:
         run(["pacmd", "set-card-profile", card_name, profile], check=True)
 
 
-def get_next_spec(
+def get_matching_spec(
+    specs: list[AudioSourceSpec], chosen_spec_name: str
+) -> AudioSourceSpec:
+    assert specs, "empty source specs"
+    for spec in specs:
+        if spec["name"] == chosen_spec_name:
+            return spec
+    raise RuntimeError("no matching source spec")
+
+
+def get_prev_spec(
     specs: list[AudioSourceSpec], current_spec_name: str
+) -> AudioSourceSpec:
+    assert specs, "empty source specs"
+    last_spec = specs[-1]
+    for spec in specs:
+        if spec["name"] == current_spec_name:
+            return last_spec
+        last_spec = spec
+    return last_spec
+
+
+def get_next_spec(
+    specs: list[AudioSourceSpec], current_spec_name: str | None
 ) -> AudioSourceSpec:
     assert specs, "empty source specs"
     last_spec = specs[0]
@@ -122,7 +145,7 @@ def get_next_spec(
         if spec["name"] == current_spec_name:
             return last_spec
         last_spec = spec
-    assert False, "no matching source specs"
+    return last_spec
 
 
 def apply_spec(pulse_audio: PulseAudioManager, spec: AudioSourceSpec) -> None:
@@ -138,7 +161,20 @@ def apply_spec(pulse_audio: PulseAudioManager, spec: AudioSourceSpec) -> None:
             pulse_audio.set_default_sink(sink["name"])
 
 
+def parse_args() -> None:
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "-p", "--prev", action="store_const", dest="mode", const="prev"
+    )
+    parser.add_argument(
+        "-n", "--next", action="store_const", dest="mode", const="next"
+    )
+    parser.add_argument("-s", "--spec")
+    return parser.parse_args()
+
+
 def main() -> None:
+    args = parse_args()
     machine_name = platform.node()
 
     config = ConfigManager(path=CONFIG_PATH, machine_name=machine_name)
@@ -147,10 +183,16 @@ def main() -> None:
         raise ValueError(f"unknown machine: {machine_name}")
 
     current_spec_name = config.get_current_audio_source_name()
-    if not current_spec_name:
-        current_spec_name = specs[-1]["name"]
 
-    target_spec = get_next_spec(specs, current_spec_name)
+    if args.mode == "prev":
+        target_spec = get_prev_spec(specs, current_spec_name)
+    elif args.mode == "next":
+        target_spec = get_next_spec(specs, current_spec_name)
+    elif args.spec:
+        target_spec = get_matching_spec(specs, args.spec)
+    else:
+        raise RuntimeError("unknown mode; needs -p, -n or -s")
+
     print("current spec:", current_spec_name)
     print("target spec:", target_spec["name"])
 
@@ -162,6 +204,6 @@ def main() -> None:
 if __name__ == "__main__":
     try:
         main()
-    except ValueError as ex:
+    except (RuntimeError, ValueError) as ex:
         print(str(ex), file=sys.stderr)
         sys.exit(1)
