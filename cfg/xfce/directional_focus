@@ -1,0 +1,168 @@
+#!/usr/bin/env python3
+import argparse
+import sys
+from collections.abc import Iterable
+from dataclasses import dataclass
+from decimal import Decimal
+from enum import StrEnum, auto
+from typing import cast
+
+from Xlib import X, Xatom
+from Xlib.display import Display
+from Xlib.protocol.event import ClientMessage
+
+
+class Direction(StrEnum):
+    LEFT = auto()
+    RIGHT = auto()
+    UP = auto()
+    DOWN = auto()
+
+
+@dataclass
+class Geometry:
+    window_id: int
+    x: int
+    y: int
+    width: int
+    height: int
+
+
+def get_desktop_windows(disp: Display, desktop_id: int) -> Iterable[int]:
+    for window_id in get_window_ids(disp):
+        if get_desktop_id(disp, window_id) == desktop_id:
+            yield window_id
+
+
+def get_window_extents(
+    disp: Display, window_id: int
+) -> tuple[int, int, int, int]:
+    return cast(
+        tuple[int, int, int, int],
+        tuple(get_window_property(disp, "_NET_FRAME_EXTENTS", window_id)),
+    )
+
+
+def get_screen_property(disp: Display, name: str) -> tuple[int, ...]:
+    atom = disp.intern_atom(name)
+    result = disp.screen().root.get_full_property(atom, 0)
+    assert result
+    assert result.value
+    return cast(tuple[int, ...], result.value)
+
+
+def get_window_property(
+    disp: Display, name: str, window_id: int
+) -> tuple[int, ...]:
+    atom = disp.intern_atom(name)
+    window = disp.create_resource_object("window", window_id)
+    result = window.get_full_property(atom, 0)
+    assert result
+    assert result.value
+    return cast(tuple[int, ...], result.value)
+
+
+def get_desktop_id(disp: Display, window_id: int) -> int:
+    return get_window_property(disp, "_NET_WM_DESKTOP", window_id)[0]
+
+
+def get_window_ids(disp: Display) -> list[int]:
+    return cast(list[int], get_screen_property(disp, "_NET_CLIENT_LIST"))
+
+
+def get_window_geometry(disp: Display, window_id: int) -> Geometry:
+    window = disp.create_resource_object("window", window_id)
+    geometry = window.get_geometry()
+
+    root_window = disp.screen().root
+    coords = window.translate_coords(root_window, 0, 0)
+    extents = get_window_extents(disp, window_id)
+    return Geometry(
+        window_id=window_id,
+        x=-coords.x + geometry.x - extents[0],
+        y=-coords.y + geometry.y - extents[2],
+        width=geometry.width + extents[0] + extents[1],
+        height=geometry.height + extents[2] + extents[3],
+    )
+
+
+def manhattan_distance(geometry1: Geometry, geometry2: Geometry) -> float:
+    return abs(geometry1.x - geometry2.x) + abs(geometry1.y - geometry2.y)
+
+
+def in_specified_direction(
+    geometry1: Geometry, geometry2: Geometry, direction: Direction
+) -> bool:
+    match direction:
+        case Direction.UP:
+            return geometry2.y < geometry1.y
+        case Direction.RIGHT:
+            return geometry2.x > geometry1.x
+        case Direction.LEFT:
+            return geometry2.x < geometry1.x
+        case Direction.DOWN:
+            return geometry2.y > geometry1.y
+    return False
+
+
+def get_closest_geometry(
+    active_geometry: Geometry, geometries: list[Geometry], direction: Direction
+) -> Geometry | None:
+    closest_geometry = None
+    min_distance = float("inf")
+    for geometry in geometries:
+        if geometry.window_id == active_geometry.window_id:
+            continue
+        distance = manhattan_distance(active_geometry, geometry)
+        if (
+            in_specified_direction(active_geometry, geometry, direction)
+            and distance < min_distance
+        ):
+            min_distance = distance
+            closest_geometry = geometry
+    return closest_geometry
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-d", "--dir", choices=list(Direction))
+    return parser.parse_args()
+
+
+def main() -> None:
+    args = parse_args()
+    disp = Display()
+
+    root_window = disp.screen().root
+    active_window_id = disp.get_input_focus().focus.id
+    active_window_geometry = get_window_geometry(disp, active_window_id)
+
+    desktop_id = get_desktop_id(disp, active_window_id)
+    desktop_window_ids = list(get_desktop_windows(disp, desktop_id))
+
+    best_distance = float("inf")
+    best_window_id = -1
+    desktop_window_geometries = [
+        get_window_geometry(disp, window_id)
+        for window_id in desktop_window_ids
+    ]
+    closest_geometry = get_closest_geometry(
+        active_window_geometry, desktop_window_geometries, args.dir
+    )
+
+    if not closest_geometry:
+        print("no window to focus", file=sys.stderr)
+        exit(1)
+
+    closest_window = disp.create_resource_object(
+        "window", closest_geometry.window_id
+    )
+    closest_window.set_input_focus(X.RevertToParent, X.CurrentTime)
+    closest_window.configure(stack_mode=X.Above)
+
+    disp.flush()
+    disp.close()
+
+
+if __name__ == "__main__":
+    main()
