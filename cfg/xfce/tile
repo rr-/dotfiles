@@ -72,21 +72,18 @@ def get_window_extents(
 
 def unmaximize_window(disp: Display, window_id: int) -> None:
     root = disp.screen().root
-    event = ClientMessage(
-        window=window_id,
-        client_type=disp.intern_atom("_NET_WM_STATE"),
-        data=(
-            32,
-            [
-                0,
-                disp.intern_atom("_NET_WM_STATE_MAXIMIZED_HORZ"),
-                disp.intern_atom("_NET_WM_STATE_MAXIMIZED_VERT"),
-                disp.intern_atom("_NET_WM_STATE_FULLSCREEN"),
-                0,
-            ],
-        ),
-    )
-    root.send_event(event, event_mask=X.SubstructureNotifyMask)
+    atoms = [
+        disp.intern_atom("_NET_WM_STATE_FULLSCREEN"),
+        disp.intern_atom("_NET_WM_STATE_MAXIMIZED_HORZ"),
+        disp.intern_atom("_NET_WM_STATE_MAXIMIZED_VERT"),
+    ]
+    for atom in atoms:
+        event = ClientMessage(
+            window=window_id,
+            client_type=disp.intern_atom("_NET_WM_STATE"),
+            data=(32, [0, atom, 0, 0, 0]),
+        )
+        root.send_event(event, event_mask=X.SubstructureNotifyMask)
 
 
 def partition_desktop_windows(
