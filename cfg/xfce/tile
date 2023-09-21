@@ -49,12 +49,6 @@ def get_desktop_geometry(
     return (left, right, top, bottom)
 
 
-def get_desktop_windows(disp: Display, desktop_id: int) -> Iterable[int]:
-    for window_id in get_window_ids(disp):
-        if get_desktop_id(disp, window_id) == desktop_id:
-            yield window_id
-
-
 def get_window_extents(
     disp: Display, window_id: int
 ) -> tuple[int, int, int, int]:
@@ -89,7 +83,7 @@ def unmaximize_window(disp: Display, window_id: int) -> None:
 def partition_desktop_windows(
     disp: Display, desktop_id: int, ratio: Decimal
 ) -> None:
-    desktop_windows = list(get_desktop_windows(disp, desktop_id))
+    desktop_windows = list(get_desktop_window_ids(disp, desktop_id))
 
     (
         workspace_x,
@@ -172,6 +166,12 @@ def get_desktop_id(disp: Display, window_id: int) -> int | None:
 
 def get_window_ids(disp: Display) -> list[int]:
     return cast(list[int], get_property(disp, "_NET_CLIENT_LIST").value)
+
+
+def get_desktop_window_ids(disp: Display, desktop_id: int) -> Iterable[int]:
+    for window_id in get_window_ids(disp):
+        if get_desktop_id(disp, window_id) == desktop_id:
+            yield window_id
 
 
 def parse_args() -> argparse.Namespace:
