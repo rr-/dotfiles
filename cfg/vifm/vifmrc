@@ -140,6 +140,7 @@ vnoremap gm :move<cr>
 nnoremap I cw<c-a>
 nnoremap C cw<c-u>
 nnoremap A cw
+nnoremap R :rename<cr>
 
 " New tab
 nnoremap gn :tabnew<cr>
