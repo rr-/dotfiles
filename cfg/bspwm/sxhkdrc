@@ -49,7 +49,7 @@ super + b
 super + m
     bspc desktop -l next;
 
-# toggle monocle layout
+# rotate layout
 super + shift + r
     bspc node '@parent' -R 90;
 

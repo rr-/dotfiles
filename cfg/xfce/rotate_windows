@@ -1,0 +1,216 @@
+#!/usr/bin/env python3
+import argparse
+import sys
+from collections.abc import Iterable
+from decimal import Decimal
+from enum import StrEnum, auto
+from typing import cast
+
+from Xlib import X, Xatom
+from Xlib.display import Display
+from Xlib.protocol.event import ClientMessage
+from Xlib.xobject.drawable import Window
+
+
+class RotateMode(StrEnum):
+    FORWARD = auto()
+    BACKWARD = auto()
+
+
+def unmaximize_window(disp: Display, window_id: int) -> None:
+    root = disp.screen().root
+    atoms = [
+        disp.intern_atom("_NET_WM_STATE_FULLSCREEN"),
+        disp.intern_atom("_NET_WM_STATE_MAXIMIZED_HORZ"),
+        disp.intern_atom("_NET_WM_STATE_MAXIMIZED_VERT"),
+    ]
+    for atom in atoms:
+        event = ClientMessage(
+            window=window_id,
+            client_type=disp.intern_atom("_NET_WM_STATE"),
+            data=(32, [0, atom, 0, 0, 0]),
+        )
+        root.send_event(event, event_mask=X.SubstructureNotifyMask)
+
+
+def get_window_extents(
+    disp: Display, window_id: int
+) -> tuple[int, int, int, int]:
+    result = get_window_property_values(disp, "_NET_FRAME_EXTENTS", window_id)
+    if result is None:
+        raise RuntimeError("cannot retrieve window extents")
+    (
+        left,
+        right,
+        top,
+        bottom,
+    ) = result
+    return left, right, top, bottom
+
+
+def get_window_geometry(
+    disp: Display, window_id: int
+) -> tuple[int, int, int, int]:
+    window = disp.create_resource_object("window", window_id)
+    geometry = window.get_geometry()
+
+    (
+        border_left,
+        border_right,
+        border_top,
+        border_bottom,
+    ) = get_window_extents(disp, window_id)
+
+    root_window = disp.screen().root
+    coords = window.translate_coords(root_window, 0, 0)
+    extents = get_window_extents(disp, window_id)
+    x = -coords.x + geometry.x - extents[0]
+    y = -coords.y + geometry.y - extents[2]
+    width = geometry.width + extents[0] + extents[1]
+    height = geometry.height + extents[2] + extents[3]
+    return (x, y, width, height)
+
+
+def set_window_geometry(
+    disp: Display, window_id: int, x: int, y: int, width: int, height: int
+) -> None:
+    window = disp.create_resource_object("window", window_id)
+
+    (
+        border_left,
+        border_right,
+        border_top,
+        border_bottom,
+    ) = get_window_extents(disp, window_id)
+
+    x -= border_left
+    y -= border_top
+    width -= border_left + border_right
+    height -= border_top + border_bottom
+    window.configure(x=x, y=y, width=width, height=height)
+
+
+def swap_window_geometries(
+    disp: Display, source_window_id: int, target_window_id: int
+) -> None:
+    unmaximize_window(disp, source_window_id)
+    unmaximize_window(disp, target_window_id)
+
+    disp.flush()
+
+    source_geometry = get_window_geometry(disp, source_window_id)
+    target_geometry = get_window_geometry(disp, target_window_id)
+
+    set_window_geometry(disp, source_window_id, *target_geometry)
+    set_window_geometry(disp, target_window_id, *source_geometry)
+
+    root = disp.screen().root
+    prop = root.get_full_property(
+        disp.intern_atom("_NET_CLIENT_LIST"), X.AnyPropertyType
+    )
+    window_ids = prop.value.tolist()
+    old_index = window_ids.index(source_window_id)
+    new_index = window_ids.index(target_window_id)
+    window_ids[old_index], window_ids[new_index] = (
+        window_ids[new_index],
+        window_ids[old_index],
+    )
+    root.change_property(
+        disp.intern_atom("_NET_CLIENT_LIST"),
+        Xatom.INTEGER,
+        32,
+        window_ids,
+        X.PropModeReplace,
+    )
+
+
+def get_property(disp: Display, name: str):
+    atom = disp.intern_atom(name)
+    return disp.screen().root.get_full_property(atom, 0)
+
+
+def get_window_property(disp: Display, name: str, window_id: int):
+    atom = disp.intern_atom(name)
+    window = disp.create_resource_object("window", window_id)
+    return window.get_full_property(atom, 0)
+
+
+def get_window_property_value(
+    disp: Display, name: str, window_id: int
+) -> int | None:
+    if result := get_window_property(disp, name, window_id):
+        return cast(int, result.value[0])
+    return None
+
+
+def get_window_property_values(
+    disp: Display, name: str, window_id: int
+) -> list[int] | None:
+    if result := get_window_property(disp, name, window_id):
+        return list(result.value)
+    return None
+
+
+def get_desktop_id(disp: Display, window_id: int) -> int | None:
+    return get_window_property_value(disp, "_NET_WM_DESKTOP", window_id)
+
+
+def get_window_ids(disp: Display) -> list[int]:
+    return cast(list[int], get_property(disp, "_NET_CLIENT_LIST").value)
+
+
+def get_desktop_window_ids(disp: Display, desktop_id: int) -> Iterable[int]:
+    for window_id in get_window_ids(disp):
+        if get_desktop_id(disp, window_id) == desktop_id:
+            yield window_id
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "-f",
+        "--forward",
+        action="store_const",
+        dest="mode",
+        const=RotateMode.FORWARD,
+    )
+    parser.add_argument(
+        "-b",
+        "--backward",
+        action="store_const",
+        dest="mode",
+        const=RotateMode.BACKWARD,
+    )
+    return parser.parse_args()
+
+
+def main() -> None:
+    args = parse_args()
+    disp = Display()
+
+    root_window = disp.screen().root
+    active_window_id = disp.get_input_focus().focus.id
+    if (desktop_id := get_desktop_id(disp, active_window_id)) is not None:
+        desktop_window_ids = list(get_desktop_window_ids(disp, desktop_id))
+        active_window_idx = desktop_window_ids.index(active_window_id)
+        match args.mode:
+            case RotateMode.FORWARD:
+                delta = 1
+            case RotateMode.BACKWARD:
+                delta = -1
+            case _:
+                print("Must choose either -f or -b", file=sys.stderr)
+                exit(1)
+        next_window_idx = (active_window_idx + delta) % len(desktop_window_ids)
+        next_window_id = desktop_window_ids[next_window_idx]
+        if next_window_id == active_window_id:
+            print("No windows to swap with", file=sys.stderr)
+            exit(1)
+        swap_window_geometries(disp, active_window_id, next_window_id)
+
+    disp.flush()
+    disp.close()
+
+
+if __name__ == "__main__":
+    main()

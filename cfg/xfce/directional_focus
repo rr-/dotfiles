@@ -28,12 +28,6 @@ class Geometry:
     height: int
 
 
-def get_desktop_windows(disp: Display, desktop_id: int) -> Iterable[int]:
-    for window_id in get_window_ids(disp):
-        if get_desktop_id(disp, window_id) == desktop_id:
-            yield window_id
-
-
 def get_window_extents(
     disp: Display, window_id: int
 ) -> tuple[int, int, int, int]:
@@ -68,6 +62,12 @@ def get_desktop_id(disp: Display, window_id: int) -> int:
 
 def get_window_ids(disp: Display) -> list[int]:
     return cast(list[int], get_screen_property(disp, "_NET_CLIENT_LIST"))
+
+
+def get_desktop_windows(disp: Display, desktop_id: int) -> Iterable[int]:
+    for window_id in get_window_ids(disp):
+        if get_desktop_id(disp, window_id) == desktop_id:
+            yield window_id
 
 
 def get_window_geometry(disp: Display, window_id: int) -> Geometry:
