@@ -1,0 +1,200 @@
+#!/usr/bin/env python3
+import argparse
+from collections.abc import Iterable
+from decimal import Decimal
+from typing import cast
+
+from Xlib import X
+from Xlib.display import Display
+from Xlib.protocol.event import ClientMessage
+
+DEFAULT_RATIO = Decimal("0.5")
+
+
+def calculate_partitions(
+    x: int,
+    y: int,
+    width: int,
+    height: int,
+    n: int,
+    ratio: Decimal,
+) -> Iterable[tuple[int, int, int, int]]:
+    x1 = x
+    y1 = y
+    x2 = x + width
+    y2 = y + height
+
+    for i in range(n):
+        last = i == n - 1
+        if width >= height:
+            # Partition horizontally
+            partition_width = width if last else int(width * ratio)
+            yield (x1, y1, x1 + partition_width, y2)
+            x1 += partition_width
+            width -= partition_width
+        else:
+            # Partition vertically
+            partition_height = height if last else int(height * ratio)
+            yield (x1, y1, x2, y1 + partition_height)
+            y1 += partition_height
+            height -= partition_height
+
+
+def get_desktop_geometry(
+    disp: Display, desktop_id: int
+) -> tuple[int, int, int, int]:
+    root = disp.screen().root
+    result: list[int] = get_window_property_values(disp, "_NET_WORKAREA", root)
+    left, right, top, bottom = result[desktop_id * 4 : desktop_id * 4 + 4]
+    return (left, right, top, bottom)
+
+
+def get_desktop_windows(disp: Display, desktop_id: int) -> Iterable[int]:
+    for window_id in get_window_ids(disp):
+        if get_desktop_id(disp, window_id) == desktop_id:
+            yield window_id
+
+
+def get_window_extents(
+    disp: Display, window_id: int
+) -> tuple[int, int, int, int]:
+    result = get_window_property_values(disp, "_NET_FRAME_EXTENTS", window_id)
+    if result is None:
+        raise RuntimeError("cannot retrieve window extents")
+    (
+        left,
+        right,
+        top,
+        bottom,
+    ) = result
+    return left, right, top, bottom
+
+
+def unmaximize_window(disp: Display, window_id: int) -> None:
+    root = disp.screen().root
+    event = ClientMessage(
+        window=window_id,
+        client_type=disp.intern_atom("_NET_WM_STATE"),
+        data=(
+            32,
+            [
+                0,
+                disp.intern_atom("_NET_WM_STATE_MAXIMIZED_HORZ"),
+                disp.intern_atom("_NET_WM_STATE_MAXIMIZED_VERT"),
+                disp.intern_atom("_NET_WM_STATE_FULLSCREEN"),
+                0,
+            ],
+        ),
+    )
+    root.send_event(event, event_mask=X.SubstructureNotifyMask)
+
+
+def partition_desktop_windows(
+    disp: Display, desktop_id: int, ratio: Decimal
+) -> None:
+    desktop_windows = list(get_desktop_windows(disp, desktop_id))
+
+    (
+        workspace_x,
+        workspace_y,
+        workspace_width,
+        workspace_height,
+    ) = get_desktop_geometry(disp, desktop_id)
+
+    for window_id in desktop_windows:
+        unmaximize_window(disp, window_id)
+
+    disp.flush()
+
+    for window_id, (x1, y1, x2, y2) in zip(
+        desktop_windows,
+        calculate_partitions(
+            workspace_x,
+            workspace_y,
+            workspace_width,
+            workspace_height,
+            n=len(desktop_windows),
+            ratio=ratio,
+        ),
+    ):
+        (
+            border_left,
+            border_right,
+            border_top,
+            border_bottom,
+        ) = get_window_extents(disp, window_id)
+
+        set_window_geometry(
+            disp,
+            window_id,
+            x=x1,
+            y=y1,
+            width=x2 - x1 - border_left - border_right,
+            height=y2 - y1 - border_top - border_bottom,
+        )
+
+
+def set_window_geometry(
+    disp: Display, window_id: int, x: int, y: int, width: int, height: int
+) -> None:
+    window = disp.create_resource_object("window", window_id)
+    print(window, x, y, width, height)
+    window.configure(x=x, y=y, width=width, height=height)
+
+
+def get_property(disp: Display, name: str):
+    atom = disp.intern_atom(name)
+    return disp.screen().root.get_full_property(atom, 0)
+
+
+def get_window_property(disp: Display, name: str, window_id: int):
+    atom = disp.intern_atom(name)
+    window = disp.create_resource_object("window", window_id)
+    return window.get_full_property(atom, 0)
+
+
+def get_window_property_value(
+    disp: Display, name: str, window_id: int
+) -> int | None:
+    if result := get_window_property(disp, name, window_id):
+        return cast(int, result.value[0])
+    return None
+
+
+def get_window_property_values(
+    disp: Display, name: str, window_id: int
+) -> list[int] | None:
+    if result := get_window_property(disp, name, window_id):
+        return list(result.value)
+    return None
+
+
+def get_desktop_id(disp: Display, window_id: int) -> int | None:
+    return get_window_property_value(disp, "_NET_WM_DESKTOP", window_id)
+
+
+def get_window_ids(disp: Display) -> list[int]:
+    return cast(list[int], get_property(disp, "_NET_CLIENT_LIST").value)
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-r", "--ratio", type=Decimal, default=DEFAULT_RATIO)
+    return parser.parse_args()
+
+
+def main() -> None:
+    args = parse_args()
+    disp = Display()
+
+    root_window = disp.screen().root
+    active_window_id = disp.get_input_focus().focus.id
+    if (desktop_id := get_desktop_id(disp, active_window_id)) is not None:
+        partition_desktop_windows(disp, desktop_id, ratio=args.ratio)
+
+    disp.flush()
+    disp.close()
+
+
+if __name__ == "__main__":
+    main()

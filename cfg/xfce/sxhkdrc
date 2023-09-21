@@ -1,3 +1,7 @@
+# tile windows
+super + t
+    ~/dotfiles/cfg/xfce/tile
+
 # focus workspace
 super + {1,2,3,4,5,6}
     TARGET={0,1,2,3,4,5}; \
