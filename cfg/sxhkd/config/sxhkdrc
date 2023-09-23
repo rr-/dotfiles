@@ -10,9 +10,7 @@ super + {r, d}
 alt + ctrl + bracketleft
     xdotool search --classname local_terminal windowactivate; \
     if [ $? -ne 0 ]; then; \
-        alacritty --class local_terminal -e zsh -ilc 'tmux attach-session || tmux new-session -c ~'; \
-    else; \
-        tmux new-window -t work; \
+        alacritty --class local_terminal -e zsh -ilc '~/.config/tmux/sessions-hook &>/dev/null; tmux attach-session -t aux'; \
     fi
 
 # spawn plain terminal
