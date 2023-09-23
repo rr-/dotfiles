@@ -5,6 +5,12 @@ lightning: &lightning
   - name: tomb1main
     cwd: ~/work/priv/Tomb1Main/
 
+  - name: tomb2main
+    cwd: ~/work/priv/Tomb2Main/
+
+  - name: wind_garden
+    cwd: ~/work/priv/wind.garden/
+
   - name: trcustoms
     cwd: ~/work/priv/trcustoms/
 
