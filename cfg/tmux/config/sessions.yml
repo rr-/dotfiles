@@ -2,11 +2,11 @@ lightning: &lightning
   - name: aux
     cwd: ~/
 
-  - name: tomb1main
-    cwd: ~/work/priv/Tomb1Main/
+  - name: tr1x
+    cwd: ~/work/priv/TR1X/
 
-  - name: tomb2main
-    cwd: ~/work/priv/Tomb2Main/
+  - name: tr2x
+    cwd: ~/work/priv/TR2X/
 
   - name: wind_garden
     cwd: ~/work/priv/wind.garden/
