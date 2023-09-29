@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 import socket
 from pathlib import Path
-from subprocess import run
+from subprocess import check_output, run
+from typing import TypedDict
 
 from libdotfiles import logging
 from libdotfiles.util import HOME_DIR
@@ -14,6 +15,19 @@ except ImportError:
 SESSIONS_PATH = HOME_DIR / ".config/tmux/sessions.yml"
 
 
+class WindowSpec(TypedDict):
+    window_name: str
+    cwd: str
+
+
+class SessionSpec(TypedDict):
+    name: str
+    windows: list[WindowSpec]
+
+
+Spec = list[SessionSpec]
+
+
 def renumber_sessions() -> None:
     """Make sure that numeric sessions names appear in linear order."""
     session_names = run(
@@ -24,8 +38,8 @@ def renumber_sessions() -> None:
         run(["tmux", "rename", "-t", str(old_name), str(new_name)])
 
 
-def recreate_session(spec) -> None:
-    run(
+def recreate_session(spec: SessionSpec) -> None:
+    result = run(
         [
             "tmux",
             "new-session",
@@ -33,9 +47,42 @@ def recreate_session(spec) -> None:
             "-s",
             spec["name"],
             "-c",
-            Path(spec["cwd"]).expanduser(),
+            Path(spec["windows"][0]["cwd"]).expanduser(),
         ]
     )
+
+    created = result.returncode == 0
+    existing_windows = check_output(
+        ["tmux", "list-windows", "-t", spec["name"], "-F", "#{window_name}"],
+        text=True,
+    ).splitlines()
+
+    for window in reversed(spec["windows"]):
+        if window["window_name"] not in existing_windows:
+            run(
+                [
+                    "tmux",
+                    "new-window",
+                    "-d",
+                    "-a",
+                    "-t",
+                    spec["name"] + ":" + existing_windows[0],
+                    "-n",
+                    window["window_name"],
+                    "-c",
+                    Path(window["cwd"]).expanduser(),
+                ]
+            )
+
+    if created:
+        run(
+            [
+                "tmux",
+                "kill-window",
+                "-t",
+                spec["name"] + ":" + existing_windows[0],
+            ]
+        )
 
 
 def recreate_sessions() -> None:
