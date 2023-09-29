@@ -1,23 +1,45 @@
 lightning: &lightning
   - name: aux
-    cwd: ~/
+    windows:
+    - window_name: main
+      cwd: ~/
 
   - name: tr1x
-    cwd: ~/work/priv/TR1X/
+    windows:
+    - window_name: main
+      cwd: ~/work/priv/TR1X/
 
   - name: tr2x
-    cwd: ~/work/priv/TR2X/
+    windows:
+    - window_name: TR1X
+      cwd: ~/work/priv/TR1X/
+    - window_name: TR2X
+      cwd: ~/work/priv/TR2X/
+    - window_name: TR2Main
+      cwd: ~/work/ext/TR2Main/
+    - window_name: TOMB21
+      cwd: ~/work/ext/TOMB21/
+    - window_name: ida
+      cwd: ~/data.local/ida/
 
   - name: wind_garden
-    cwd: ~/work/priv/wind.garden/
+    windows:
+    - window_name: main
+      cwd: ~/work/priv/wind.garden/
 
   - name: trcustoms
-    cwd: ~/work/priv/trcustoms/
+    windows:
+    - window_name: main
+      cwd: ~/work/priv/trcustoms/
 
   - name: glopal
-    cwd: ~/work/glopal/
+    windows:
+    - window_name: main
+      cwd: ~/work/glopal/
 
   - name: postmedia
-    cwd: ~/work/postmedia/
+    windows:
+    - window_name: main
+      cwd: ~/work/postmedia/
 
 snowflake: *lightning
