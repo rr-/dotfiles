@@ -38,6 +38,8 @@ lightning: &lightning
       cwd: ~/work/glopal/
     - window_name: proofreading
       cwd: ~/work/glopal/main/gl-proxy2-proofreading
+    - window_name: glossary
+      cwd: ~/work/glopal/translator/gl-translator-glossary/
     - window_name: memory
       cwd: ~/work/glopal/translator/gl-translator-memory/
     - window_name: worker
