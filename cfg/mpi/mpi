@@ -22,6 +22,9 @@ MANAGED_EXTENSIONS = {
     ".WEBP",
     ".MKV",
     ".MP4",
+    ".PSD",
+    ".TIF",
+    ".ICO",
 }
 CONFIG_DIR = Path("~/.config/mpi").expanduser()
 
