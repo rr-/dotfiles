@@ -86,13 +86,14 @@ def main() -> None:
 
     full_invocation = ["sh", "-c", command.invocation, "--"] + sys.argv[2:]
 
-    run(
+    result = run(
         full_invocation,
         input=sys.stdin.read() if not sys.stdin.isatty() else None,
         text=True,
-        check=True,
+        check=False,
         env=merge_environment(os.environ, environment, command.environment),
     )
+    exit(result.returncode)
 
 
 if __name__ == "__main__":
