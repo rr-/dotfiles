@@ -3,6 +3,12 @@ window:
     x: 2
     y: 2
 
+font:
+  normal:
+    family: 'Input Mono'
+  bold:
+    family: 'Input Mono'
+
 hints:
   alphabet: "jfkdls;ahgurieowpq"
   enabled:
