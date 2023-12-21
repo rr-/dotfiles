@@ -29,7 +29,7 @@ class ClientData:
             raise ValueError("period must be a positive integer")
 
 
-class DuplicateKeyError(KeyError):
+class MissingKeyError(KeyError):
     pass
 
 
@@ -48,28 +48,9 @@ class ClientFile:
             for item in json.loads(self.path.read_text(encoding="utf-8"))
         ]
 
-    def save(self, client_data_list: list[ClientData]) -> None:
-        self.path.parent.mkdir(parents=True, exist_ok=True, mode=0o755)
-        data = json.dumps(
-            [asdict(cd) for cd in client_data_list],
-            indent=4,
-        )
-        self.path.write_text(data, encoding="utf-8")
-
-    def add_client_data(self, cd_new: ClientData) -> None:
-        cds_existing = self.load()
-        for cd_existing in cds_existing:
-            if cd_new.client_id == cd_existing.client_id:
-                raise DuplicateKeyError("That configuration already exists.")
-        cds_new = [*cds_existing, cd_new]
-        self.save(cds_new)
-
-    def update_client_data(self, cd: ClientData) -> None:
-        changed = False
+    def get_client_data(self, client_id: str) -> ClientData:
         cds = self.load()
-        for i in range(0, len(cds)):
-            if cd.client_id == cds[i].client_id:
-                cds[i] = cd
-                changed = True
-        if changed:
-            self.save(cds)
+        for cd in cds:
+            if cd.client_id == client_id:
+                return cd
+        raise MissingKeyError("That configuration does not exist.")
