@@ -9,5 +9,5 @@ setup(
     entry_points={
         "console_scripts": ["authenticator = authenticator.__main__:main"]
     },
-    install_requires=["xdg", "python-dateutil", "cryptography"],
+    install_requires=["xdg", "python-dateutil", "pyotp"],
 )

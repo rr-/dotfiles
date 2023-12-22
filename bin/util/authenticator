@@ -1,0 +1,165 @@
+#!/usr/bin/env python3
+# requires: xdg pyotp
+import argparse
+import json
+import sys
+import time
+from dataclasses import dataclass
+from datetime import datetime
+from pathlib import Path
+
+import xdg
+from pyotp import TOTP
+
+DATA_FILE = Path(xdg.XDG_CONFIG_HOME) / "authenticator/devices.json"
+THROBBER_CHARS = "  ▏▎▍▌▋▊▉█"
+
+
+@dataclass
+class ClientData:
+    client_id: str
+    shared_secret: str
+    interval: int = 30
+    digits: int = 6
+
+    def __post_init__(self) -> None:
+        # Validate types
+        for field_name, field_type in self.__annotations__.items():
+            if not isinstance(getattr(self, field_name), field_type):
+                error_message = (
+                    f"{field_name} should be of type {field_type.__name__}"
+                )
+                raise TypeError(error_message)
+
+        if not self.client_id:
+            raise ValueError("client_id cannot be empty")
+        if not self.shared_secret:
+            raise ValueError("shared_secret cannot be empty")
+        if self.digits < 1 or self.digits > 10:
+            raise ValueError("digits must be between 1 and 10")
+        if self.interval <= 0:
+            raise ValueError("interval must be a positive integer")
+
+    def generate(self) -> tuple[str, float]:
+        totp = TOTP(
+            self.shared_secret, digits=self.digits, interval=self.interval
+        )
+        code_string = totp.now()
+        remaining_seconds = (
+            totp.interval - datetime.now().timestamp() % totp.interval
+        )
+        return code_string, remaining_seconds
+
+
+class MissingKeyError(KeyError):
+    pass
+
+
+class ClientFile:
+    def __init__(self, path: Path) -> None:
+        self.path = path
+
+    def exists(self) -> bool:
+        return self.path.exists()
+
+    def load(self) -> list[ClientData]:
+        if not self.path.exists():
+            return []
+        return [
+            ClientData(**item)
+            for item in json.loads(self.path.read_text(encoding="utf-8"))
+        ]
+
+    def get_client_data(self, client_id: str) -> ClientData:
+        cds = self.load()
+        for cd in cds:
+            if cd.client_id == client_id:
+                return cd
+        raise MissingKeyError("That configuration does not exist.")
+
+
+def move_cursor_up(num: int) -> None:
+    sys.stdout.write("\x1B[{}F".format(num))
+
+
+def erase_whole_line() -> None:
+    sys.stdout.write("\x1B[999D\x1B[K")
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("client_id", nargs="?")
+    return parser.parse_args()
+
+
+def get_throbber(current_value: float | int, max_value: int) -> str:
+    return THROBBER_CHARS[
+        ((len(THROBBER_CHARS) - 1) * int(current_value)) // max_value
+    ]
+
+
+def generate(cds_to_calc: list[ClientData]) -> float | None:
+    expiration_guard = float(10**6)
+    most_recent_expiration: float = expiration_guard
+
+    for cd in cds_to_calc:
+        code_string, remaining_seconds = cd.generate()
+        most_recent_expiration = min(most_recent_expiration, remaining_seconds)
+        erase_whole_line()
+        print(
+            get_throbber(remaining_seconds, cd.interval),
+            f"{cd.client_id}: {code_string} "
+            f"(expires in {remaining_seconds:.0f} seconds)",
+        )
+
+    move_cursor_up(len(cds_to_calc))
+
+    if most_recent_expiration >= expiration_guard:
+        return None
+
+    return most_recent_expiration
+
+
+def run_once(cd: ClientData) -> None:
+    code_string, remaining_seconds = cd.generate()
+    print(code_string)
+
+
+def run_continuously(cds: list[ClientData]) -> None:
+    while True:
+        soonest_expiration = generate(cds)
+        if soonest_expiration is None:
+            break
+        time.sleep(1)
+
+
+def run() -> None:
+    args = parse_args()
+
+    file = ClientFile(DATA_FILE)
+    cds: list[ClientData] = []
+    if file.exists():
+        cds = file.load()
+
+    if not cds:
+        print("No TOTP configurations found.", file=sys.stderr)
+        return
+
+    if args.client_id:
+        try:
+            run_once(file.get_client_data(args.client_id))
+        except MissingKeyError:
+            print("No matching TOTP configuration found.", file=sys.stderr)
+    else:
+        run_continuously(cds)
+
+
+def main() -> None:
+    try:
+        run()
+    except KeyboardInterrupt:
+        pass
+
+
+if __name__ == "__main__":
+    main()
