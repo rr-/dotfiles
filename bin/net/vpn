@@ -1,0 +1,97 @@
+#!/usr/bin/env python3
+"""Start VPN automatically. Can automate user, password and 2fa challenges."""
+import argparse
+import shlex
+import shutil
+import time
+from pathlib import Path
+from subprocess import PIPE, Popen, check_output, run
+
+# to disable annoying console prompts:
+# sudo systemctl stop systemd-ask-password-wall.path
+# sudo systemctl stop systemd-ask-password-wall.path
+# sudo systemctl mask systemd-ask-password-wall.service
+# sudo systemctl mask systemd-ask-password-wall.service
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--profile")
+    parser.add_argument("-u", "--user")
+    parser.add_argument("-p", "--password")
+    parser.add_argument(
+        "-c", "--client-id", help="client id for 2-factor authentication"
+    )
+    return parser.parse_args()
+
+
+def get_askpass_socket_path(timeout: int = 5) -> Path:
+    start = time.time()
+    while True:
+        current = time.time()
+        elapsed = current - start
+        if elapsed > timeout:
+            raise TimeoutError("timeout")
+        results = list(Path("/run/systemd/ask-password").glob("sck.*"))
+        if results:
+            return results[0]
+        time.sleep(0.1)
+
+
+def supply_systemd_password(password: str) -> None:
+    askpass_socket_path = get_askpass_socket_path()
+    run(
+        [
+            "sudo",
+            "sh",
+            "-c",
+            shlex.join(
+                [
+                    "pkexec",
+                    "/lib/systemd/systemd-reply-password",
+                    "1",
+                    str(askpass_socket_path),
+                ]
+            ),
+        ],
+        check=True,
+        input=password,
+        text=True,
+    )
+
+
+def get_2fa_challenge(client_id: str) -> str:
+    return check_output(["authenticator", client_id], text=True).strip()
+
+
+def main() -> None:
+    args = parse_args()
+
+    # run openvpn
+    ovpn_process = Popen(
+        [
+            "sudo",
+            "openvpn",
+            "--config",
+            str(args.profile),
+            "--auth-user-pass",
+            "/dev/stdin",
+        ],
+        text=True,
+        stdin=PIPE,
+    )
+    ovpn_process.stdin.write("\n".join([args.user, args.password]))
+    ovpn_process.stdin.close()
+
+    if args.client_id:
+        # get authenticator response
+        challenge = get_2fa_challenge(args.client_id)
+        print(challenge)
+
+        supply_systemd_password(challenge)
+
+    ovpn_process.communicate()
+
+
+if __name__ == "__main__":
+    main()
