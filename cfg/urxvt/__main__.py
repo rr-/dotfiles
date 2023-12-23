@@ -1,5 +1,3 @@
-from pathlib import Path
-
 from libdotfiles.packages import try_install
 from libdotfiles.util import HOME_DIR, PKG_DIR, create_symlinks
 

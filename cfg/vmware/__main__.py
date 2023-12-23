@@ -1,6 +1,3 @@
-import os
-import tempfile
-
 from libdotfiles.packages import try_install
 from libdotfiles.util import get_distro_name, run
 
