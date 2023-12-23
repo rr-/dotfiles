@@ -42,7 +42,9 @@ class ClientData:
 
     def generate(self) -> tuple[str, float]:
         totp = TOTP(
-            self.shared_secret, digits=self.digits, interval=self.interval
+            self.shared_secret.replace(" ", ""),
+            digits=self.digits,
+            interval=self.interval,
         )
         code_string = totp.now()
         remaining_seconds = (
