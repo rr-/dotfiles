@@ -1,5 +1,3 @@
-from pathlib import Path
-
 from libdotfiles.packages import has_installed, try_install
 from libdotfiles.util import (
     HOME_DIR,

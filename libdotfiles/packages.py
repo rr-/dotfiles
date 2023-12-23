@@ -1,6 +1,4 @@
 import logging
-import re
-import sys
 from functools import lru_cache
 
 from libdotfiles.util import has_executable, run

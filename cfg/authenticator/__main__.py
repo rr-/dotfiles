@@ -1,7 +1,7 @@
 import os
 
 from libdotfiles.packages import try_install
-from libdotfiles.util import HOME_DIR, PKG_DIR, REPO_ROOT_DIR, run
+from libdotfiles.util import REPO_ROOT_DIR, run
 
 try_install("xdg", method="pip")  # for XDG_CONFIG_HOME
 

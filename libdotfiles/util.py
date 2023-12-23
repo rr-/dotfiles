@@ -1,4 +1,3 @@
-import glob
 import logging
 import os
 import shlex
@@ -7,7 +6,7 @@ import socket
 import subprocess
 import urllib.request
 from pathlib import Path
-from subprocess import PIPE, CompletedProcess, Popen, call
+from subprocess import CompletedProcess
 from typing import Any
 
 import __main__

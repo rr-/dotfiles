@@ -1,5 +1,9 @@
 #!/usr/bin/env python
 import sys
+from os import environ
+from os.path import dirname, realpath
+from struct import pack
+from subprocess import PIPE, Popen
 
 """
 Wraps gpspipe in order to pass Chrome Native Messaging protocol messages.
@@ -24,12 +28,6 @@ gpspipe must be in your PATH for this script to work.
 
 ref: https://developer.chrome.com/extensions/nativeMessaging
 """
-
-from os import environ
-from os.path import dirname, realpath
-from struct import pack
-from subprocess import PIPE, Popen
-from sys import stdout
 
 # Make a copy of the environment, and stuff in extra places to try.
 # On OSX, $PATH when launched from the Dock or Finder is sparse.
@@ -66,5 +64,5 @@ except KeyboardInterrupt:
 finally:
     try:
         process.kill()
-    except:
+    except Exception:
         pass
