@@ -90,6 +90,7 @@ Message = dict
 @dataclass
 class ChatContext:
     model: str
+    temperature: float
     messages: list[Message] = field(default_factory=list)
 
     @property
@@ -116,7 +117,7 @@ class ChatContext:
 DEFAULT_CONFIG = {
     "api-key": "INSERT API KEY HERE",
     "model": "gpt-3.5-turbo",
-    "temperature": 1,
+    "temperature": 1.0,
     # 'max_tokens': 500,
 }
 
@@ -232,6 +233,7 @@ def run_prompt(
     stream = client.chat.completions.create(
         model=chat_context.model,
         messages=chat_context.messages,
+        temperature=chat_context.temperature,
         stream=True,
     )
 
@@ -257,6 +259,13 @@ def parse_args() -> argparse.Namespace:
         "-c", "--context", type=Path, nargs="+", help="Path to a context file"
     )
     parser.add_argument("-m", "--model", help="Set the model")
+    parser.add_argument(
+        "-t",
+        "--temperature",
+        type=float,
+        help="Set the temperature (default: 1)",
+        default=1.0,
+    )
     parser.add_argument(
         "-ml",
         "--multiline",
@@ -290,7 +299,9 @@ def main() -> None:
                 {"role": "system", "content": path.read_text().strip()}
             )
 
-    chat_context = ChatContext(model=config["model"])
+    chat_context = ChatContext(
+        model=config["model"], temperature=config["temperature"]
+    )
     atexit.register(display_expense, chat_context=chat_context)
 
     client = OpenAI(api_key=config["api-key"])
