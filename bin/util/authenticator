@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 # requires: xdg pyotp
 import argparse
-import json
 import sys
 import time
 from dataclasses import dataclass
@@ -9,9 +8,10 @@ from datetime import datetime
 from pathlib import Path
 
 import xdg
+import yaml
 from pyotp import TOTP
 
-DATA_FILE = Path(xdg.XDG_CONFIG_HOME) / "authenticator/devices.json"
+DATA_FILE = Path(xdg.XDG_CONFIG_HOME) / "authenticator.yml"
 THROBBER_CHARS = "  ▏▎▍▌▋▊▉█"
 
 
@@ -67,9 +67,10 @@ class ClientFile:
     def load(self) -> list[ClientData]:
         if not self.path.exists():
             return []
+        doc = yaml.load(self.path.read_text(encoding="utf-8"), yaml.SafeLoader)
         return [
-            ClientData(**item)
-            for item in json.loads(self.path.read_text(encoding="utf-8"))
+            ClientData(client_id=client_id, **item)
+            for client_id, item in doc.items()
         ]
 
     def get_client_data(self, client_id: str) -> ClientData:
