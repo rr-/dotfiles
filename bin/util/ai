@@ -132,7 +132,7 @@ def load_config(config_file: Path) -> dict:
     if not config_file.exists():
         config_file.parent.mkdir(exist_ok=True, parents=True)
         config_file.write_text(
-            yaml.dumps(DEFAULT_CONFIG, file, default_flow_style=False)
+            yaml.dump(DEFAULT_CONFIG)
         )
         print(f"New config file initialized: {config_file}")
 
