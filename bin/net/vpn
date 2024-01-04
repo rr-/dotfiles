@@ -5,13 +5,7 @@ import shlex
 import shutil
 import time
 from pathlib import Path
-from subprocess import PIPE, Popen, check_output, run
-
-# to disable annoying console prompts:
-# sudo systemctl stop systemd-ask-password-wall.path
-# sudo systemctl stop systemd-ask-password-wall.path
-# sudo systemctl mask systemd-ask-password-wall.service
-# sudo systemctl mask systemd-ask-password-wall.service
+from subprocess import PIPE, Popen, check_call, check_output, run
 
 
 def parse_args() -> argparse.Namespace:
@@ -23,6 +17,16 @@ def parse_args() -> argparse.Namespace:
         "-c", "--client-id", help="client id for 2-factor authentication"
     )
     return parser.parse_args()
+
+
+def disable_systemd_wall_spam() -> None:
+    services = [
+        "systemd-ask-password-wall.path",
+        "systemd-ask-password-wall.service",
+    ]
+    for service in services:
+        check_call(["sudo", "systemctl", "stop", service])
+        check_call(["sudo", "systemctl", "mask", service])
 
 
 def get_askpass_socket_path(timeout: int = 5) -> Path:
@@ -67,6 +71,8 @@ def get_2fa_challenge(client_id: str) -> str:
 def main() -> None:
     args = parse_args()
 
+    disable_systemd_wall_spam()
+
     # run openvpn
     ovpn_process = Popen(
         [
@@ -86,8 +92,6 @@ def main() -> None:
     if args.client_id:
         # get authenticator response
         challenge = get_2fa_challenge(args.client_id)
-        print(challenge)
-
         supply_systemd_password(challenge)
 
     ovpn_process.communicate()
