@@ -38,7 +38,7 @@ indent_size = 2
 [*.vue]
 indent_size = 2
 
-[*.yaml]
+[{*.yaml,.workrc}]
 indent_size = 2
 
 [{Makefile,*.mk}]
