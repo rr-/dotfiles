@@ -1,0 +1,983 @@
+[[colors.indexed_colors]]
+index = 231
+color = "#000000"
+
+[[colors.indexed_colors]]
+index = 189
+color = "#00005F"
+
+[[colors.indexed_colors]]
+index = 147
+color = "#000087"
+
+[[colors.indexed_colors]]
+index = 105
+color = "#0000AF"
+
+[[colors.indexed_colors]]
+index = 63
+color = "#0000D7"
+
+[[colors.indexed_colors]]
+index = 21
+color = "#0000FF"
+
+[[colors.indexed_colors]]
+index = 194
+color = "#005F00"
+
+[[colors.indexed_colors]]
+index = 195
+color = "#005F5F"
+
+[[colors.indexed_colors]]
+index = 153
+color = "#005F87"
+
+[[colors.indexed_colors]]
+index = 111
+color = "#005FAF"
+
+[[colors.indexed_colors]]
+index = 69
+color = "#005FD7"
+
+[[colors.indexed_colors]]
+index = 27
+color = "#005FFF"
+
+[[colors.indexed_colors]]
+index = 157
+color = "#008700"
+
+[[colors.indexed_colors]]
+index = 158
+color = "#00875F"
+
+[[colors.indexed_colors]]
+index = 159
+color = "#008787"
+
+[[colors.indexed_colors]]
+index = 117
+color = "#0087AF"
+
+[[colors.indexed_colors]]
+index = 75
+color = "#0087D7"
+
+[[colors.indexed_colors]]
+index = 33
+color = "#0087FF"
+
+[[colors.indexed_colors]]
+index = 120
+color = "#00AF00"
+
+[[colors.indexed_colors]]
+index = 121
+color = "#00AF5F"
+
+[[colors.indexed_colors]]
+index = 122
+color = "#00AF87"
+
+[[colors.indexed_colors]]
+index = 123
+color = "#00AFAF"
+
+[[colors.indexed_colors]]
+index = 81
+color = "#00AFD7"
+
+[[colors.indexed_colors]]
+index = 39
+color = "#009FFF"
+
+[[colors.indexed_colors]]
+index = 83
+color = "#00D700"
+
+[[colors.indexed_colors]]
+index = 84
+color = "#00D75F"
+
+[[colors.indexed_colors]]
+index = 85
+color = "#00D787"
+
+[[colors.indexed_colors]]
+index = 86
+color = "#00D7AF"
+
+[[colors.indexed_colors]]
+index = 87
+color = "#00D7D7"
+
+[[colors.indexed_colors]]
+index = 45
+color = "#00D7FF"
+
+[[colors.indexed_colors]]
+index = 46
+color = "#00FF00"
+
+[[colors.indexed_colors]]
+index = 47
+color = "#00FF5F"
+
+[[colors.indexed_colors]]
+index = 48
+color = "#00FF87"
+
+[[colors.indexed_colors]]
+index = 49
+color = "#00FFAF"
+
+[[colors.indexed_colors]]
+index = 50
+color = "#00FFD7"
+
+[[colors.indexed_colors]]
+index = 51
+color = "#00FFFF"
+
+[[colors.indexed_colors]]
+index = 224
+color = "#5F0000"
+
+[[colors.indexed_colors]]
+index = 225
+color = "#5F005F"
+
+[[colors.indexed_colors]]
+index = 183
+color = "#5F0087"
+
+[[colors.indexed_colors]]
+index = 141
+color = "#5F00AF"
+
+[[colors.indexed_colors]]
+index = 99
+color = "#5F00D7"
+
+[[colors.indexed_colors]]
+index = 57
+color = "#5F00FF"
+
+[[colors.indexed_colors]]
+index = 230
+color = "#5F5F00"
+
+[[colors.indexed_colors]]
+index = 188
+color = "#5F5F5F"
+
+[[colors.indexed_colors]]
+index = 146
+color = "#5F5F87"
+
+[[colors.indexed_colors]]
+index = 104
+color = "#5F5FAF"
+
+[[colors.indexed_colors]]
+index = 62
+color = "#5F5FD7"
+
+[[colors.indexed_colors]]
+index = 20
+color = "#5F5FFF"
+
+[[colors.indexed_colors]]
+index = 193
+color = "#5F8700"
+
+[[colors.indexed_colors]]
+index = 151
+color = "#5F875F"
+
+[[colors.indexed_colors]]
+index = 152
+color = "#5F8787"
+
+[[colors.indexed_colors]]
+index = 110
+color = "#5F87AF"
+
+[[colors.indexed_colors]]
+index = 68
+color = "#5F87D7"
+
+[[colors.indexed_colors]]
+index = 26
+color = "#5F87FF"
+
+[[colors.indexed_colors]]
+index = 156
+color = "#5FAF00"
+
+[[colors.indexed_colors]]
+index = 114
+color = "#5FAF5F"
+
+[[colors.indexed_colors]]
+index = 115
+color = "#5FAF87"
+
+[[colors.indexed_colors]]
+index = 116
+color = "#5FAFAF"
+
+[[colors.indexed_colors]]
+index = 74
+color = "#5FAFD7"
+
+[[colors.indexed_colors]]
+index = 32
+color = "#5FAFFF"
+
+[[colors.indexed_colors]]
+index = 119
+color = "#5FD700"
+
+[[colors.indexed_colors]]
+index = 77
+color = "#5FD75F"
+
+[[colors.indexed_colors]]
+index = 78
+color = "#5FD787"
+
+[[colors.indexed_colors]]
+index = 79
+color = "#5FD7AF"
+
+[[colors.indexed_colors]]
+index = 80
+color = "#5FD7D7"
+
+[[colors.indexed_colors]]
+index = 38
+color = "#5FD7FF"
+
+[[colors.indexed_colors]]
+index = 82
+color = "#5FFF00"
+
+[[colors.indexed_colors]]
+index = 40
+color = "#5FFF5F"
+
+[[colors.indexed_colors]]
+index = 41
+color = "#5FFF87"
+
+[[colors.indexed_colors]]
+index = 42
+color = "#5FFFAF"
+
+[[colors.indexed_colors]]
+index = 43
+color = "#5FFFD7"
+
+[[colors.indexed_colors]]
+index = 44
+color = "#5FFFFF"
+
+[[colors.indexed_colors]]
+index = 217
+color = "#870000"
+
+[[colors.indexed_colors]]
+index = 218
+color = "#87005F"
+
+[[colors.indexed_colors]]
+index = 219
+color = "#870087"
+
+[[colors.indexed_colors]]
+index = 177
+color = "#8700AF"
+
+[[colors.indexed_colors]]
+index = 135
+color = "#8700D7"
+
+[[colors.indexed_colors]]
+index = 93
+color = "#8700FF"
+
+[[colors.indexed_colors]]
+index = 223
+color = "#875F00"
+
+[[colors.indexed_colors]]
+index = 181
+color = "#875F5F"
+
+[[colors.indexed_colors]]
+index = 182
+color = "#875F87"
+
+[[colors.indexed_colors]]
+index = 140
+color = "#875FAF"
+
+[[colors.indexed_colors]]
+index = 98
+color = "#875FD7"
+
+[[colors.indexed_colors]]
+index = 56
+color = "#875FFF"
+
+[[colors.indexed_colors]]
+index = 229
+color = "#878700"
+
+[[colors.indexed_colors]]
+index = 187
+color = "#87875F"
+
+[[colors.indexed_colors]]
+index = 102
+color = "#878787"
+
+[[colors.indexed_colors]]
+index = 103
+color = "#8787AF"
+
+[[colors.indexed_colors]]
+index = 61
+color = "#8787D7"
+
+[[colors.indexed_colors]]
+index = 19
+color = "#8787FF"
+
+[[colors.indexed_colors]]
+index = 192
+color = "#87AF00"
+
+[[colors.indexed_colors]]
+index = 150
+color = "#87AF5F"
+
+[[colors.indexed_colors]]
+index = 108
+color = "#87AF87"
+
+[[colors.indexed_colors]]
+index = 109
+color = "#87AFAF"
+
+[[colors.indexed_colors]]
+index = 67
+color = "#87AFD7"
+
+[[colors.indexed_colors]]
+index = 25
+color = "#87AFFF"
+
+[[colors.indexed_colors]]
+index = 155
+color = "#87D700"
+
+[[colors.indexed_colors]]
+index = 113
+color = "#87D75F"
+
+[[colors.indexed_colors]]
+index = 71
+color = "#87D787"
+
+[[colors.indexed_colors]]
+index = 72
+color = "#87D7AF"
+
+[[colors.indexed_colors]]
+index = 73
+color = "#87D7D7"
+
+[[colors.indexed_colors]]
+index = 31
+color = "#87D7FF"
+
+[[colors.indexed_colors]]
+index = 118
+color = "#87FF00"
+
+[[colors.indexed_colors]]
+index = 76
+color = "#87FF5F"
+
+[[colors.indexed_colors]]
+index = 34
+color = "#87FF87"
+
+[[colors.indexed_colors]]
+index = 35
+color = "#87FFAF"
+
+[[colors.indexed_colors]]
+index = 36
+color = "#87FFD7"
+
+[[colors.indexed_colors]]
+index = 37
+color = "#87FFFF"
+
+[[colors.indexed_colors]]
+index = 210
+color = "#AF0000"
+
+[[colors.indexed_colors]]
+index = 211
+color = "#AF005F"
+
+[[colors.indexed_colors]]
+index = 212
+color = "#AF0087"
+
+[[colors.indexed_colors]]
+index = 213
+color = "#AF00AF"
+
+[[colors.indexed_colors]]
+index = 171
+color = "#AF00D7"
+
+[[colors.indexed_colors]]
+index = 129
+color = "#AF00FF"
+
+[[colors.indexed_colors]]
+index = 216
+color = "#AF5F00"
+
+[[colors.indexed_colors]]
+index = 174
+color = "#AF5F5F"
+
+[[colors.indexed_colors]]
+index = 175
+color = "#AF5F87"
+
+[[colors.indexed_colors]]
+index = 176
+color = "#AF5FAF"
+
+[[colors.indexed_colors]]
+index = 134
+color = "#AF5FD7"
+
+[[colors.indexed_colors]]
+index = 92
+color = "#AF5FFF"
+
+[[colors.indexed_colors]]
+index = 222
+color = "#AF8700"
+
+[[colors.indexed_colors]]
+index = 180
+color = "#AF875F"
+
+[[colors.indexed_colors]]
+index = 138
+color = "#AF8787"
+
+[[colors.indexed_colors]]
+index = 139
+color = "#AF87AF"
+
+[[colors.indexed_colors]]
+index = 97
+color = "#AF87D7"
+
+[[colors.indexed_colors]]
+index = 55
+color = "#AF87FF"
+
+[[colors.indexed_colors]]
+index = 228
+color = "#AFAF00"
+
+[[colors.indexed_colors]]
+index = 186
+color = "#AFAF5F"
+
+[[colors.indexed_colors]]
+index = 144
+color = "#AFAF87"
+
+[[colors.indexed_colors]]
+index = 145
+color = "#AFAFAF"
+
+[[colors.indexed_colors]]
+index = 60
+color = "#AFAFD7"
+
+[[colors.indexed_colors]]
+index = 18
+color = "#AFAFFF"
+
+[[colors.indexed_colors]]
+index = 191
+color = "#AFD700"
+
+[[colors.indexed_colors]]
+index = 149
+color = "#AFD75F"
+
+[[colors.indexed_colors]]
+index = 107
+color = "#AFD787"
+
+[[colors.indexed_colors]]
+index = 65
+color = "#AFD7AF"
+
+[[colors.indexed_colors]]
+index = 66
+color = "#AFD7D7"
+
+[[colors.indexed_colors]]
+index = 24
+color = "#AFD7FF"
+
+[[colors.indexed_colors]]
+index = 154
+color = "#AFFF00"
+
+[[colors.indexed_colors]]
+index = 112
+color = "#AFFF5F"
+
+[[colors.indexed_colors]]
+index = 70
+color = "#AFFF87"
+
+[[colors.indexed_colors]]
+index = 28
+color = "#AFFFAF"
+
+[[colors.indexed_colors]]
+index = 29
+color = "#AFFFD7"
+
+[[colors.indexed_colors]]
+index = 30
+color = "#AFFFFF"
+
+[[colors.indexed_colors]]
+index = 203
+color = "#D70000"
+
+[[colors.indexed_colors]]
+index = 204
+color = "#D7005F"
+
+[[colors.indexed_colors]]
+index = 205
+color = "#D70087"
+
+[[colors.indexed_colors]]
+index = 206
+color = "#D700AF"
+
+[[colors.indexed_colors]]
+index = 207
+color = "#D700D7"
+
+[[colors.indexed_colors]]
+index = 165
+color = "#D700FF"
+
+[[colors.indexed_colors]]
+index = 209
+color = "#D75F00"
+
+[[colors.indexed_colors]]
+index = 167
+color = "#D75F5F"
+
+[[colors.indexed_colors]]
+index = 168
+color = "#D75F87"
+
+[[colors.indexed_colors]]
+index = 169
+color = "#D75FAF"
+
+[[colors.indexed_colors]]
+index = 170
+color = "#D75FD7"
+
+[[colors.indexed_colors]]
+index = 128
+color = "#D75FFF"
+
+[[colors.indexed_colors]]
+index = 215
+color = "#D78700"
+
+[[colors.indexed_colors]]
+index = 173
+color = "#D7875F"
+
+[[colors.indexed_colors]]
+index = 131
+color = "#D78787"
+
+[[colors.indexed_colors]]
+index = 132
+color = "#D787AF"
+
+[[colors.indexed_colors]]
+index = 133
+color = "#D787D7"
+
+[[colors.indexed_colors]]
+index = 91
+color = "#D787FF"
+
+[[colors.indexed_colors]]
+index = 221
+color = "#D7AF00"
+
+[[colors.indexed_colors]]
+index = 179
+color = "#D7AF5F"
+
+[[colors.indexed_colors]]
+index = 137
+color = "#D7AF87"
+
+[[colors.indexed_colors]]
+index = 95
+color = "#D7AFAF"
+
+[[colors.indexed_colors]]
+index = 96
+color = "#D7AFD7"
+
+[[colors.indexed_colors]]
+index = 54
+color = "#D7AFFF"
+
+[[colors.indexed_colors]]
+index = 227
+color = "#D7D700"
+
+[[colors.indexed_colors]]
+index = 185
+color = "#D7D75F"
+
+[[colors.indexed_colors]]
+index = 143
+color = "#D7D787"
+
+[[colors.indexed_colors]]
+index = 101
+color = "#D7D7AF"
+
+[[colors.indexed_colors]]
+index = 59
+color = "#D7D7D7"
+
+[[colors.indexed_colors]]
+index = 17
+color = "#D7D7FF"
+
+[[colors.indexed_colors]]
+index = 190
+color = "#D7FF00"
+
+[[colors.indexed_colors]]
+index = 148
+color = "#D7FF5F"
+
+[[colors.indexed_colors]]
+index = 106
+color = "#D7FF87"
+
+[[colors.indexed_colors]]
+index = 64
+color = "#D7FFAF"
+
+[[colors.indexed_colors]]
+index = 22
+color = "#D7FFD7"
+
+[[colors.indexed_colors]]
+index = 23
+color = "#D7FFFF"
+
+[[colors.indexed_colors]]
+index = 196
+color = "#FF0000"
+
+[[colors.indexed_colors]]
+index = 197
+color = "#FF005F"
+
+[[colors.indexed_colors]]
+index = 198
+color = "#FF0087"
+
+[[colors.indexed_colors]]
+index = 199
+color = "#FF00AF"
+
+[[colors.indexed_colors]]
+index = 200
+color = "#FF00D7"
+
+[[colors.indexed_colors]]
+index = 201
+color = "#FF00FF"
+
+[[colors.indexed_colors]]
+index = 202
+color = "#FF5F00"
+
+[[colors.indexed_colors]]
+index = 160
+color = "#FF5F5F"
+
+[[colors.indexed_colors]]
+index = 161
+color = "#FF5F87"
+
+[[colors.indexed_colors]]
+index = 162
+color = "#FF5FAF"
+
+[[colors.indexed_colors]]
+index = 163
+color = "#FF5FD7"
+
+[[colors.indexed_colors]]
+index = 164
+color = "#FF5FFF"
+
+[[colors.indexed_colors]]
+index = 208
+color = "#FF8700"
+
+[[colors.indexed_colors]]
+index = 166
+color = "#FF875F"
+
+[[colors.indexed_colors]]
+index = 124
+color = "#FF8787"
+
+[[colors.indexed_colors]]
+index = 125
+color = "#FF87AF"
+
+[[colors.indexed_colors]]
+index = 126
+color = "#FF87D7"
+
+[[colors.indexed_colors]]
+index = 127
+color = "#FF87FF"
+
+[[colors.indexed_colors]]
+index = 214
+color = "#FFAF00"
+
+[[colors.indexed_colors]]
+index = 172
+color = "#FFAF5F"
+
+[[colors.indexed_colors]]
+index = 130
+color = "#FFAF87"
+
+[[colors.indexed_colors]]
+index = 88
+color = "#FFAFAF"
+
+[[colors.indexed_colors]]
+index = 89
+color = "#FFAFD7"
+
+[[colors.indexed_colors]]
+index = 90
+color = "#FFAFFF"
+
+[[colors.indexed_colors]]
+index = 220
+color = "#FFD700"
+
+[[colors.indexed_colors]]
+index = 178
+color = "#FFD75F"
+
+[[colors.indexed_colors]]
+index = 136
+color = "#FFD787"
+
+[[colors.indexed_colors]]
+index = 94
+color = "#FFD7AF"
+
+[[colors.indexed_colors]]
+index = 52
+color = "#FFD7D7"
+
+[[colors.indexed_colors]]
+index = 53
+color = "#FFD7FF"
+
+[[colors.indexed_colors]]
+index = 226
+color = "#FFFF00"
+
+[[colors.indexed_colors]]
+index = 184
+color = "#FFFF5F"
+
+[[colors.indexed_colors]]
+index = 142
+color = "#FFFF87"
+
+[[colors.indexed_colors]]
+index = 100
+color = "#FFFFAF"
+
+[[colors.indexed_colors]]
+index = 58
+color = "#FFFFD7"
+
+[[colors.indexed_colors]]
+index = 16
+color = "#FFFFFF"
+
+[[colors.indexed_colors]]
+index = 232
+color = "#FDFDFD"
+
+[[colors.indexed_colors]]
+index = 233
+color = "#F2F2F2"
+
+[[colors.indexed_colors]]
+index = 234
+color = "#E7E7E7"
+
+[[colors.indexed_colors]]
+index = 235
+color = "#DCDCDC"
+
+[[colors.indexed_colors]]
+index = 236
+color = "#D1D1D1"
+
+[[colors.indexed_colors]]
+index = 237
+color = "#C6C6C6"
+
+[[colors.indexed_colors]]
+index = 238
+color = "#BBBBBB"
+
+[[colors.indexed_colors]]
+index = 239
+color = "#B0B0B0"
+
+[[colors.indexed_colors]]
+index = 240
+color = "#A5A5A5"
+
+[[colors.indexed_colors]]
+index = 241
+color = "#9A9A9A"
+
+[[colors.indexed_colors]]
+index = 242
+color = "#8F8F8F"
+
+[[colors.indexed_colors]]
+index = 243
+color = "#848484"
+
+[[colors.indexed_colors]]
+index = 244
+color = "#797979"
+
+[[colors.indexed_colors]]
+index = 245
+color = "#6E6E6E"
+
+[[colors.indexed_colors]]
+index = 246
+color = "#636363"
+
+[[colors.indexed_colors]]
+index = 247
+color = "#585858"
+
+[[colors.indexed_colors]]
+index = 248
+color = "#4D4D4D"
+
+[[colors.indexed_colors]]
+index = 249
+color = "#424242"
+
+[[colors.indexed_colors]]
+index = 250
+color = "#373737"
+
+[[colors.indexed_colors]]
+index = 251
+color = "#2C2C2C"
+
+[[colors.indexed_colors]]
+index = 252
+color = "#212121"
+
+[[colors.indexed_colors]]
+index = 253
+color = "#161616"
+
+[[colors.indexed_colors]]
+index = 254
+color = "#0B0B0B"
+
+[[colors.indexed_colors]]
+index = 255
+color = "#000000"
+
+[colors.primary]
+background = "#FBFBFB"
+foreground = "#101010"
+
+[colors.normal]
+black = "#D4D4D4"
+red = "#870000"
+green = "#0F670F"
+yellow = "#875F00"
+blue = "#005FAF"
+magenta = "#6F3F6F"
+cyan = "#006767"
+white = "#808080"
+
+[colors.bright]
+black = "#BEBEBE"
+red = "#D70000"
+green = "#2FA72F"
+yellow = "#D7AF00"
+blue = "#00AFFF"
+magenta = "#BF7FBF"
+cyan = "#00B7B7"
+white = "#414141"

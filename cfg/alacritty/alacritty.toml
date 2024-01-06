@@ -1,0 +1,43 @@
+[colors]
+draw_bold_text_with_bright_colors = true
+
+[font.bold]
+family = "Input Mono"
+
+[font.normal]
+family = "Input Mono"
+
+[hints]
+alphabet = "jfkdls;ahgurieowpq"
+
+[[hints.enabled]]
+command = "xdg-open"
+hyperlinks = true
+post_processing = true
+regex = "(ipfs:|ipns:|magnet:|mailto:|gemini:|gopher:|https:|http:|news:|file:|git:|ssh:|ftp:)[^<>\"\\s{-}\\^⟨⟩`]+"
+
+[hints.enabled.binding]
+key = "U"
+mods = "Alt"
+
+[hints.enabled.mouse]
+enabled = true
+mods = "None"
+
+[[hints.enabled]]
+action = "Copy"
+hyperlinks = true
+post_processing = true
+regex = "(ipfs:|ipns:|magnet:|mailto:|gemini:|gopher:|https:|http:|news:|file:|git:|ssh:|ftp:)[^<>\"\\s{-}\\^⟨⟩`]+"
+
+[hints.enabled.binding]
+key = "Y"
+mods = "Alt"
+
+[hints.enabled.mouse]
+enabled = true
+mods = "Control"
+
+[window.padding]
+x = 2
+y = 2
