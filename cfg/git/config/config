@@ -107,5 +107,7 @@
     path = ~/.config/git/config-glopal
 [includeIf "gitdir:~/work/invoices/"]
     path = ~/.config/git/config-priv
+[includeIf "gitdir:~/work/oskar/"]
+    path = ~/.config/git/config-oskar
 [credential "https://github.com"]
     helper = !/usr/bin/gh auth git-credential
