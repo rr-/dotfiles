@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import re
 from decimal import Decimal
 from subprocess import run
 
@@ -17,6 +18,36 @@ class BaseExecutor:
 
     def set(self, is_enabled: bool) -> None:
         raise NotImplementedError("not implemented")
+
+
+class WeztermExecutor(BaseExecutor):
+    def __init__(self) -> None:
+        self.config_path = HOME_DIR / ".config" / "wezterm" / "runtime.lua"
+
+    def get_config(self):
+        return self.config_path.read_text()
+
+    def save_config(self, config):
+        self.config_path.write_text(config)
+
+    def get(self) -> bool:
+        return self.get_dpi() > 96
+
+    def get_dpi(self) -> float:
+        config = self.get_config()
+        return float(
+            re.search("config\.dpi\s*=\s*(\d+(?:\.\d+)?)", config).group(1)
+        )
+
+    def set(self, is_enabled: bool) -> None:
+        config = self.get_config()
+        dpi = DPI_NORMAL
+        if is_enabled:
+            dpi *= SCALE_FACTOR
+        config = re.sub(
+            "config\.dpi\s*=\s*(\d+(?:\.\d+)?)", f"config.dpi = {dpi}", config
+        )
+        self.save_config(config)
 
 
 class AlacrittyExecutor(BaseExecutor):
