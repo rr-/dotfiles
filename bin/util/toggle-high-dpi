@@ -50,37 +50,6 @@ class WeztermExecutor(BaseExecutor):
         self.save_config(config)
 
 
-class AlacrittyExecutor(BaseExecutor):
-    def __init__(self) -> None:
-        self.config_path = HOME_DIR / ".config" / "alacritty" / "alacritty.yml"
-
-    def get_config(self):
-        return yaml.safe_load(self.config_path.read_text())
-
-    def save_config(self, config):
-        self.config_path.write_text(yaml.dump(config))
-
-    def get(self) -> bool:
-        config = self.get_config()
-        return Decimal(
-            config.get("env", {}).get("WINIT_X11_SCALE_FACTOR", "1.0")
-        ) != Decimal(1)
-
-    def set(self, is_enabled: bool) -> None:
-        config = self.get_config()
-
-        if is_enabled:
-            if not "env" in config:
-                config["env"] = {}
-            config["env"]["WINIT_X11_SCALE_FACTOR"] = str(SCALE_FACTOR)
-        elif "env" in config:
-            config["env"].pop("WINIT_X11_SCALE_FACTOR", None)
-            if not config["env"]:
-                config.pop("env")
-
-        self.save_config(config)
-
-
 class XFontExecutor(BaseExecutor):
     def get(self) -> bool:
         result = run(

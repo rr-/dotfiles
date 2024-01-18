@@ -14,19 +14,6 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def update_alacritty_config(theme: str) -> None:
-    config_dir = HOME_DIR / ".config" / "alacritty"
-
-    output_config_path = config_dir / "alacritty.toml"
-    base_config_path = config_dir / "alacritty.base.toml"
-    theme_config_path = config_dir / f"alacritty.{theme}.toml"
-
-    base_config = toml.load(base_config_path)
-    theme_config = toml.load(theme_config_path)
-    output_config = {**base_config, **theme_config}
-    output_config_path.write_text(toml.dumps(output_config))
-
-
 def update_wezterm_config(theme: str) -> None:
     config_dir = HOME_DIR / ".config" / "wezterm"
     theme_config_path = config_dir / "runtime.lua"
@@ -79,7 +66,6 @@ def main() -> None:
     args = parse_args()
     for func in [
         update_wezterm_config,
-        update_alacritty_config,
         update_gtk2_config,
         update_gtk3_config,
     ]:
