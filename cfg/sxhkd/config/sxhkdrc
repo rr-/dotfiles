@@ -10,12 +10,12 @@ super + {r, d}
 alt + ctrl + bracketleft
     xdotool search --classname local_terminal windowactivate; \
     if [ $? -ne 0 ]; then; \
-        alacritty --class local_terminal -e zsh -ilc '~/.config/tmux/sessions-hook &>/dev/null; tmux attach-session -t aux'; \
+        wezterm start --class local_terminal -- zsh -ilc '~/.config/tmux/sessions-hook &>/dev/null; tmux attach-session -t aux'; \
     fi
 
 # spawn plain terminal
 alt + ctrl + shift + bracketleft
-    cd && alacritty
+    cd && wezterm
 
 # spawn web browser
 alt + ctrl + semicolon
