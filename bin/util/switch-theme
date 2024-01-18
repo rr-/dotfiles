@@ -27,6 +27,14 @@ def update_alacritty_config(theme: str) -> None:
     output_config_path.write_text(toml.dumps(output_config))
 
 
+def update_wezterm_config(theme: str) -> None:
+    config_dir = HOME_DIR / ".config" / "wezterm"
+    theme_config_path = config_dir / "runtime.lua"
+    theme_config = theme_config_path.read_text()
+    theme_config = re.sub(r"dash_\w+", f"dash_{theme}", theme_config)
+    theme_config_path.write_text(theme_config)
+
+
 def update_gtk2_config(theme: str) -> None:
     config_path = HOME_DIR / ".gtkrc-2.0"
     if config_path.exists():
@@ -70,6 +78,7 @@ def update_gtk3_config(theme: str) -> None:
 def main() -> None:
     args = parse_args()
     for func in [
+        update_wezterm_config,
         update_alacritty_config,
         update_gtk2_config,
         update_gtk3_config,
