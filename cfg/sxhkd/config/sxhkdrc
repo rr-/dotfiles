@@ -17,14 +17,6 @@ alt + ctrl + bracketleft
 alt + ctrl + shift + bracketleft
     cd && alacritty
 
-# focus or spawn irc
-alt + ctrl + m
-    ~/.config/sxhkd/run-or-raise -cn drizzle -p "alacritty --class drizzle -e zsh -ilc 'while :; do ssh drizzle -t "'"zsh -ilc tmux\ attach\ -t\ main\|\|tmux\ new-session\ -t\ main"'"; sleep 1; done'"
-
-# focus or spawn irc, and detach all other sessions
-alt + ctrl + shift + m
-    ~/.config/sxhkd/run-or-raise -cn drizzle -p "alacritty --class drizzle -e zsh -ilc 'ssh drizzle -t "'"zsh -ilc tmux\ attach\ -d\ -t\ main\|\|tmux\ new-session\ -t\ main"'"'"
-
 # spawn web browser
 alt + ctrl + semicolon
     ~/.config/sxhkd/run-or-raise -n browser -p "xdg-open 'about:blank'"
