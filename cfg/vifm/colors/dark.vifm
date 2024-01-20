@@ -1,17 +1,17 @@
-highlight Win cterm=none ctermfg=248 ctermbg=232
+highlight Win cterm=none ctermfg=248 ctermbg=none
 
 highlight TopLine cterm=none ctermfg=245 ctermbg=234
 highlight TopLineSel cterm=bold ctermfg=250 ctermbg=234
 highlight StatusLine cterm=bold ctermfg=250 ctermbg=234
 highlight Border cterm=none ctermfg=250 ctermbg=234
 highlight TabLine cterm=none ctermfg=245 ctermbg=235
-highlight TabLineSel cterm=none ctermfg=255 ctermbg=232
+highlight TabLineSel cterm=none ctermfg=255 ctermbg=none
 
 highlight Selected cterm=bold ctermfg=magenta ctermbg=default
 highlight CurrLine cterm=bold ctermfg=195 ctermbg=24
 
 highlight WildMenu cterm=underline,reverse ctermfg=white ctermbg=black
-highlight CmdLine cterm=none ctermfg=248 ctermbg=232
+highlight CmdLine cterm=none ctermfg=248 ctermbg=none
 highlight JobLine cterm=bold,reverse ctermfg=250 ctermbg=234
 highlight ErrorMsg cterm=none ctermfg=red ctermbg=234
 
