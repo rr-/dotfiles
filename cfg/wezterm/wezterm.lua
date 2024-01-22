@@ -3,10 +3,7 @@ local runtime = require 'runtime'
 
 local config = wezterm.config_builder()
 
-runtime.apply_to_config(config)
-
 config.font = wezterm.font 'Input Mono'
-config.font_size = 11
 
 config.adjust_window_size_when_changing_font_size = false
 config.enable_tab_bar = false
@@ -37,5 +34,7 @@ config.keys = {
     }
   }},
 }
+
+runtime.apply_to_config(config)
 
 return config

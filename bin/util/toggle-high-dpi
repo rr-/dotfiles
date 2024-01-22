@@ -23,6 +23,8 @@ class BaseExecutor:
 class WeztermExecutor(BaseExecutor):
     def __init__(self) -> None:
         self.config_path = HOME_DIR / ".config" / "wezterm" / "runtime.lua"
+        self.font_size_small = 11
+        self.font_size_high = self.font_size_small * SCALE_FACTOR
 
     def get_config(self):
         return self.config_path.read_text()
@@ -31,21 +33,23 @@ class WeztermExecutor(BaseExecutor):
         self.config_path.write_text(config)
 
     def get(self) -> bool:
-        return self.get_dpi() > 96
+        return self.get_font_size() != self.font_size_small
 
-    def get_dpi(self) -> float:
+    def get_font_size(self) -> float:
         config = self.get_config()
-        return float(
-            re.search("config\.dpi\s*=\s*(\d+(?:\.\d+)?)", config).group(1)
-        )
+        if match := re.search(
+            "config\.font_size\s*=\s*(\d+(?:\.\d+)?)", config
+        ):
+            return float(match.group(1))
+        return self.font_size_small
 
     def set(self, is_enabled: bool) -> None:
         config = self.get_config()
-        dpi = DPI_NORMAL
-        if is_enabled:
-            dpi *= SCALE_FACTOR
+        font_size = self.font_size_small * (SCALE_FACTOR if is_enabled else 1)
         config = re.sub(
-            "config\.dpi\s*=\s*(\d+(?:\.\d+)?)", f"config.dpi = {dpi}", config
+            "config\.font_size\s*=\s*(\d+(?:\.\d+)?)",
+            f"config.font_size = {font_size}",
+            config,
         )
         self.save_config(config)
 
