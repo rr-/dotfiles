@@ -122,15 +122,16 @@ __git_ps1 () {
 
 function make_ps1 () {
     case $(hostname) in
-        drizzle) PS1='%F{75}';;
-        snowflake) PS1='%F{38}';;
-        lightning) PS1='%F{214}';;
-        oldcastle) PS1='%F{150}';;
-        *) PS1='%F{145}';;
+        drizzle) color1='%F{75}';;
+        snowflake) color1='%F{#00DDDD}'; color2='%F{#00AADD}';;
+        lightning) color1='%F{#FFAA00}'; color2='%F{#EE8800}';;
+        oldcastle) color1='%B%F{150}';;
+        nebula) color1='%F{#FF99EE}'; color2='%F{#DD77DD}';;
+        *) color1='%B%F{145}';;
     esac
 
     # user@host
-    PS1+='%B%n@%M%b'
+    PS1='${color1}%n@${color2}%m%b'
 
     # colon
     PS1+="%F{7}:"
@@ -143,7 +144,7 @@ function make_ps1 () {
     PS1+='%F{14}`__git_ps1`'
 
     # colored $ depending on last exit code
-    PS1+=$'%(?.%F{7}.%F{203})❯❯❯ '
+    PS1+=$'%(?.%F{7}.%F{203})$%f%k '
 
     # reset colors
     PS1+="%f"
