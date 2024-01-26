@@ -20,6 +20,9 @@ if get_distro_name() == "arch":
 elif get_distro_name() == "linuxmint":
     try_install("neovim")
     try_install("python3-neovim")
+elif get_distro_name() == "ubuntu":
+    try_install("neovim")
+    try_install("pynvim", method="pip")
 try_install("black", method="pip")
 try_install("isort", method="pip")
 

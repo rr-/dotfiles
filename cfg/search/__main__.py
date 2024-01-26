@@ -9,7 +9,7 @@ from libdotfiles.util import (
 
 FZF_DIR = HOME_DIR / ".fzf"
 
-if get_distro_name() == "arch":
+if get_distro_name() in ["arch", "ubuntu"]:
     try_install("fzf")  # super opener
     try_install("ripgrep")  # super grep
 
