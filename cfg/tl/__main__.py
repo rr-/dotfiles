@@ -25,7 +25,7 @@ def install_dict() -> None:
 def install_translate_shell() -> None:
     if get_distro_name() == "arch":
         try_install("translate-shell-git")
-    elif get_distro_name() == "linuxmint":
+    elif get_distro_name() in ["linuxmint", "ubuntu"]:
         with tempfile.TemporaryDirectory() as tmp_dir:
             os.chdir(tmp_dir)
             run(
