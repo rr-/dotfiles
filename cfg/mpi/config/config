@@ -29,3 +29,6 @@ sws-scaler=lanczos
 scale=lanczos
 scale-blur=1
 osd-bar=no
+
+prefetch-playlist=yes
+cache=yes
