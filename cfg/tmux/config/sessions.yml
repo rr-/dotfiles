@@ -32,21 +32,6 @@ lightning: &lightning
     - window_name: main
       cwd: ~/work/priv/trcustoms/
 
-  - name: glopal
-    windows:
-    - window_name: vpn
-      cwd: ~/work/glopal/
-    - window_name: proofreading
-      cwd: ~/work/glopal/main/gl-proxy2-proofreading
-    - window_name: glossary
-      cwd: ~/work/glopal/translator/gl-translator-glossary/
-    - window_name: memory
-      cwd: ~/work/glopal/translator/gl-translator-memory/
-    - window_name: worker
-      cwd: ~/work/glopal/translator/gl-translator-worker/
-    - window_name: chrometranslate
-      cwd: ~/work/glopal/translator/chrometranslate/
-
   - name: postmedia
     windows:
     - window_name: main
