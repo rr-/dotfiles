@@ -11,13 +11,10 @@ indent_size = 4
 max_line_length = 79
 trim_trailing_whitespace = true
 
-[*.html]
+[{*.htm,*.html}]
 indent_size = 2
 
 [*.jinja]
-indent_size = 2
-
-[*.htm]
 indent_size = 2
 
 [*.svg]
@@ -38,7 +35,7 @@ indent_size = 2
 [*.vue]
 indent_size = 2
 
-[{*.yaml,.workrc}]
+[{*.yml,*.yaml,.workrc}]
 indent_size = 2
 
 [{Makefile,*.mk}]
