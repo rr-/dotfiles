@@ -67,8 +67,11 @@ class NetworkManager:
         )
 
     def scan_networks(self) -> None:
-        check_call(["iwctl", "station", self.wifi_device, "scan"])
-        self.wait_for_scan_finish()
+        try:
+            check_call(["iwctl", "station", self.wifi_device, "scan"])
+            self.wait_for_scan_finish()
+        except Exception:
+            pass
 
     def disconnect_wifi(self) -> None:
         check_call(["iwctl", "station", self.wifi_device, "disconnect"])
