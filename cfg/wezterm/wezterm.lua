@@ -14,6 +14,7 @@ config.window_padding = {
   bottom = 0,
 }
 
+config.warn_about_missing_glyphs = false
 config.hyperlink_rules = wezterm.default_hyperlink_rules()
 
 config.keys = {
