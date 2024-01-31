@@ -48,14 +48,19 @@ tl() {
     target="$1"; shift
     trans -s "$source" -t "$target" "$@"|less -rFX
 }
+atl() {
+    source="$1"; shift
+    target="$1"; shift
+    echo "$@" | ai --context "Translate input text from the following language: ${source}' to: ${target}." 2>/dev/null | less -rFX
+}
 alias plen='tl pl en'
 alias enpl='tl en pl'
 alias enja='tl en ja'
 alias jaen='tl ja en'
-alias aplen='a --context "Przetłumacz z polskiego na angielski."'
-alias aenpl='tl en pl'
-alias aenja='tl en ja'
-alias ajaen='tl ja en'
+alias aplen='atl pl en'
+alias aenpl='atl en pl'
+alias aenja='atl en ja'
+alias ajaen='atl ja en'
 
 alias pyup='pip install --user --upgrade --no-deps .'
 
