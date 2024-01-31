@@ -131,9 +131,7 @@ def load_config(config_file: Path) -> dict:
     # If the config file does not exist, create one with default configurations
     if not config_file.exists():
         config_file.parent.mkdir(exist_ok=True, parents=True)
-        config_file.write_text(
-            yaml.dump(DEFAULT_CONFIG)
-        )
+        config_file.write_text(yaml.dump(DEFAULT_CONFIG))
         print(f"New config file initialized: {config_file}")
 
     # Load existing config
@@ -256,7 +254,14 @@ def run_prompt(
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "-c", "--context", type=Path, nargs="+", help="Path to a context file"
+        "-c", "--context", nargs="+", help="Additional context"
+    )
+    parser.add_argument(
+        "-C",
+        "--context-path",
+        type=Path,
+        nargs="+",
+        help="Path to a context file",
     )
     parser.add_argument("-m", "--model", help="Set the model")
     parser.add_argument(
@@ -292,15 +297,23 @@ def main() -> None:
 
     print("ChatGPT CLI")
     print(f"Model in use: {config['model']}")
-    if args.context:
-        for path in args.context:
+
+    messages: list[Message] = []
+    if args.context_path:
+        for path in args.context_path:
             print(f"Context file: {path.name}")
             messages.append(
                 {"role": "system", "content": path.read_text().strip()}
             )
+    elif args.context:
+        for text in args.context:
+            print(f"Context: {text}")
+            messages.append({"role": "system", "content": text.strip()})
 
     chat_context = ChatContext(
-        model=config["model"], temperature=config["temperature"]
+        model=config["model"],
+        temperature=config["temperature"],
+        messages=messages,
     )
     atexit.register(display_expense, chat_context=chat_context)
 
