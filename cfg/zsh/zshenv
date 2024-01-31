@@ -52,6 +52,10 @@ alias plen='tl pl en'
 alias enpl='tl en pl'
 alias enja='tl en ja'
 alias jaen='tl ja en'
+alias aplen='a --context "Przetłumacz z polskiego na angielski."'
+alias aenpl='tl en pl'
+alias aenja='tl en ja'
+alias ajaen='tl ja en'
 
 alias pyup='pip install --user --upgrade --no-deps .'
 
