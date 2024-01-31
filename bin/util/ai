@@ -89,6 +89,7 @@ Message = dict
 
 @dataclass
 class ChatContext:
+    client: OpenAI
     model: str
     temperature: float
     messages: list[Message] = field(default_factory=list)
@@ -132,7 +133,7 @@ def load_config(config_file: Path) -> dict:
     if not config_file.exists():
         config_file.parent.mkdir(exist_ok=True, parents=True)
         config_file.write_text(yaml.dump(DEFAULT_CONFIG))
-        print(f"New config file initialized: {config_file}")
+        print(f"New config file initialized: {config_file}", file=sys.stderr)
 
     # Load existing config
     user_config = yaml.load(config_file.read_text(), Loader=yaml.FullLoader)
@@ -141,16 +142,16 @@ def load_config(config_file: Path) -> dict:
     return {**DEFAULT_CONFIG, **user_config}
 
 
-def save_history(chat_context: ChatContext) -> None:
+def save_history(context: ChatContext) -> None:
     """Save the conversation history in JSON format."""
     SAVE_FILE.parent.mkdir(exist_ok=True, parents=True)
     SAVE_FILE.write_text(
         json.dumps(
             {
-                "model": chat_context.model,
-                "messages": chat_context.messages,
-                "prompt_tokens": chat_context.prompt_tokens,
-                "completion_tokens": chat_context.completion_tokens,
+                "model": context.model,
+                "messages": context.messages,
+                "prompt_tokens": context.prompt_tokens,
+                "completion_tokens": context.completion_tokens,
             },
             indent=4,
             ensure_ascii=False,
@@ -189,49 +190,38 @@ def calculate_expense(
     return expense
 
 
-def display_expense(chat_context: ChatContext) -> None:
+def display_expense(context: ChatContext) -> None:
     """
     Given the model used, display total tokens used and estimated expense
     """
     print(
-        f"\nTotal tokens used: {chat_context.prompt_tokens + chat_context.completion_tokens}"
+        f"\nTotal tokens used: {context.prompt_tokens + context.completion_tokens}",
+        file=sys.stderr,
     )
 
-    if chat_context.model in MODEL_INFO:
+    if context.model in MODEL_INFO:
         total_expense = calculate_expense(
-            chat_context.prompt_tokens,
-            chat_context.completion_tokens,
-            MODEL_INFO[chat_context.model]["prompt"],
-            MODEL_INFO[chat_context.model]["completion"],
+            context.prompt_tokens,
+            context.completion_tokens,
+            MODEL_INFO[context.model]["prompt"],
+            MODEL_INFO[context.model]["completion"],
         )
-        print(f"Estimated expense: ${total_expense}")
+        print(f"Estimated expense: ${total_expense}", file=sys.stderr)
     else:
-        print(f"No expense estimate available for model {chat_context.model}")
-
-
-def run_prompt(
-    client: OpenAI, session: PromptSession, chat_context: ChatContext
-) -> None:
-    """Ask the user for input, build the request and perform it."""
-    message = session.prompt(
-        HTML(
-            f"<b>[{chat_context.prompt_tokens + chat_context.completion_tokens}] >>> </b>"
+        print(
+            f"No expense estimate available for model {context.model}",
+            file=sys.stderr,
         )
-    )
 
-    if message.lower() == ".exit":
-        raise EOFError
-    if message.lower() == "":
-        raise KeyboardInterrupt
 
-    chat_context.messages.append({"role": "user", "content": message})
+def run_prompt(context: ChatContext, message: str) -> None:
+    """Ask the user for input, build the request and perform it."""
+    context.messages.append({"role": "user", "content": message})
 
-    print()
-
-    stream = client.chat.completions.create(
-        model=chat_context.model,
-        messages=chat_context.messages,
-        temperature=chat_context.temperature,
+    stream = context.client.chat.completions.create(
+        model=context.model,
+        messages=context.messages,
+        temperature=context.temperature,
         stream=True,
     )
 
@@ -241,14 +231,11 @@ def run_prompt(
             if chunk.choices[0].delta.content is not None:
                 print(chunk.choices[0].delta.content, end="", flush=True)
                 output += chunk.choices[0].delta.content
-        chat_context.messages.append({"role": "assistant", "content": output})
+        context.messages.append({"role": "assistant", "content": output})
     except KeyboardInterrupt:
         pass
     finally:
         stream.response.close()
-
-    print()
-    print()
 
 
 def parse_args() -> argparse.Namespace:
@@ -280,52 +267,94 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def main() -> None:
-    args = parse_args()
+import select
+import sys
 
+
+def stdin_has_data():
+    return select.select([sys.stdin], [], [], 0) == ([sys.stdin], [], [])
+
+
+def run_interactive(context: ChatContext, args: argparse.Namespace) -> None:
     history = FileHistory(HISTORY_FILE)
     session = PromptSession(history=history, multiline=args.multiline)
+
+    print("ChatGPT CLI", file=sys.stderr)
+    print(f"Model in use: {context.model}", file=sys.stderr)
+
+    atexit.register(display_expense, context=context)
+
+    while True:
+        try:
+            print(file=sys.stderr)
+            message = session.prompt(
+                HTML(
+                    f"<b>[{context.prompt_tokens + context.completion_tokens}] >>> </b>"
+                )
+            )
+
+            if message.lower() == ".exit":
+                raise EOFError
+            if message.lower() == "":
+                raise KeyboardInterrupt
+
+            run_prompt(context, message)
+            print(file=sys.stderr)
+            print(file=sys.stderr)
+        except KeyboardInterrupt:
+            continue
+        except EOFError:
+            break
+    save_history(context)
+
+
+def run_non_interactive(
+    context: ChatContext, args: argparse.Namespace
+) -> None:
+    if args.multiline:
+        run_prompt(context, sys.stdin.read())
+    else:
+        for line in sys.stdin.readlines():
+            run_prompt(context, line)
+
+    save_history(context)
+
+
+def main() -> None:
+    args = parse_args()
 
     try:
         config = load_config(CONFIG_FILE)
     except FileNotFoundError:
-        print("Configuration file not found")
+        print("Configuration file not found", file=sys.stderr)
         sys.exit(1)
 
     if args.model:
         config["model"] = args.model
 
-    print("ChatGPT CLI")
-    print(f"Model in use: {config['model']}")
-
     messages: list[Message] = []
     if args.context_path:
         for path in args.context_path:
-            print(f"Context file: {path.name}")
+            print(f"Context file: {path.name}", file=sys.stderr)
             messages.append(
                 {"role": "system", "content": path.read_text().strip()}
             )
     elif args.context:
         for text in args.context:
-            print(f"Context: {text}")
+            print(f"Context: {text}", file=sys.stderr)
             messages.append({"role": "system", "content": text.strip()})
 
-    chat_context = ChatContext(
+    context = ChatContext(
+        client=OpenAI(api_key=config["api-key"]),
         model=config["model"],
         temperature=config["temperature"],
         messages=messages,
     )
-    atexit.register(display_expense, chat_context=chat_context)
 
-    client = OpenAI(api_key=config["api-key"])
-    while True:
-        try:
-            run_prompt(client, session, chat_context)
-        except KeyboardInterrupt:
-            continue
-        except EOFError:
-            break
-    save_history(chat_context)
+    if stdin_has_data():
+        run_non_interactive(context, args)
+    else:
+        run_interactive(context, args)
 
 
 if __name__ == "__main__":
