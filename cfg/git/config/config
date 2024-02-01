@@ -11,8 +11,6 @@
     conflictStyle = diff3
 [alias]
     count-lines = "!f() { git grep --cached -Il ''|grep -vP 'package\\.|migrations/|\\.([mp]o|lock|json5?|svg)$' | xargs wc -l; }; f"
-    ri = rebase --interactive
-    rc = rebase --continue
     set-upstream = !git branch --set-upstream-to=origin/`git symbolic-ref --short HEAD`
     amen = commit --amend
     ramen = commit --amend --all --no-edit
@@ -23,51 +21,6 @@
         git push "$remote" "$commit":"$branch" "$@"; \
     }; f"
     hist = log --pretty=format:\"%Cred%h%Creset %ad %Cblue%<(50,trunc)%s%Creset [%an <%ae>]%d\" --graph --date=short
-    cl = "!f() { git log \"$1\" --pretty=tformat:'- %H: %s'|tac; }; f"
-    sq = "!f() { \
-            if [ \"$1\" == --root ]; then \
-                log_since=""; \
-                rebase_args="--root"; \
-            elif [ ! -z \"$1\" ]; then \
-                log_since=\"$1\"..; \
-                rebase_args=\"$1\"; \
-            else \
-                log_since="@{u}.."; \
-                rebase_args=""; \
-            fi; \
-            git diff --cached --exit-code &>/dev/null; anything_staged=$?; \
-            git diff --exit-code &>/dev/null; anything_unstaged=$?; \
-            if [ "$anything_staged" == 0 ]; then \
-                echo "Nothing staged"; \
-                return; \
-            fi; \
-            hash=`git log --pretty=\"format:%h %<(50,trunc)%s%d\" $log_since|fzf --no-sort`; \
-            if [ "$?" != 0 ]; then \
-                echo "Cancelled."; \
-                exit 1; \
-            fi; \
-            hash=`echo "$hash"|cut -f1 -d' '`; \
-            message=`git log -n 1 --pretty=format:%s $hash`; \
-            git commit -m \"fixup! $message\"; \
-            if [ "$anything_unstaged" == 1 ]; then \
-                git commit -a -m temporary; \
-                staged_hash=`git rev-parse HEAD`; \
-                git reset --hard HEAD^; \
-            fi; \
-            if ! git rebase -i --autosquash $rebase_args; then \
-                echo "Rebase failed, you\\'re on your own. Good luck."; \
-                if [ "$anything_unstaged" == 1 ]; then \
-                    echo "Remember to cherry-pick $staged_hash to recover unstaged changes."; \
-                fi; \
-                return; \
-            fi; \
-            if [ "$anything_unstaged" == 1 ]; then \
-                git cherry-pick $staged_hash; \
-                git reset HEAD^; \
-            fi; \
-        }; f"
-    pr  = "!f() { git fetch -fu ${2:-$(git remote |grep ^upstream || echo origin)} refs/pull/$1/head:pr/$1 && git checkout pr/$1; }; f"
-    pr-clean = "!git for-each-ref refs/heads/pr/* --format='%(refname)' | while read ref ; do branch=${ref#refs/heads/} ; git branch -D $branch ; done"
 [diff]
     tool = meld
 [push]
