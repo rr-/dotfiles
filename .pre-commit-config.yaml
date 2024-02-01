@@ -9,11 +9,7 @@ repos:
   rev: 23.1.0
   hooks:
   - id: black
-- repo: local
+- repo: https://github.com/pre-commit/mirrors-mypy
+  rev: main
   hooks:
   - id: mypy
-    name: mypy
-    entry: zsh -c 'set -e; mypy cfg; for x in opt/*(/); do mypy "$x"; done'
-    language: system
-    types: [python]
-    pass_filenames: false

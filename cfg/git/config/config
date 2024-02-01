@@ -1,14 +1,18 @@
 [github]
     user = rr-
+
 [branch]
     autosetuprebase = always
+
 [core]
     excludesfile = ~/.gitignore
     autocrlf = false
     eol = lf
     whitespace = tab-in-indent
+
 [merge]
     conflictStyle = diff3
+
 [alias]
     count-lines = "!f() { git grep --cached -Il ''|grep -vP 'package\\.|migrations/|\\.([mp]o|lock|json5?|svg)$' | xargs wc -l; }; f"
     set-upstream = !git branch --set-upstream-to=origin/`git symbolic-ref --short HEAD`
@@ -21,23 +25,32 @@
         git push "$remote" "$commit":"$branch" "$@"; \
     }; f"
     hist = log --pretty=format:\"%Cred%h%Creset %ad %Cblue%<(50,trunc)%s%Creset [%an <%ae>]%d\" --graph --date=short
+    yearly-stats = !~/.config/git/yearly_stats
+
 [diff]
     tool = meld
+
 [push]
     default = current
     followTags = true
+
 [status]
     showUntrackedFiles = all
+
 [color "diff"]
     old = red reverse
     new = green reverse
     whitespace = blue reverse
+
 [commit]
     gpgsign = true
+
 [pull]
     ff = only
+
 [gpg]
     program = gpg
+
 [includeIf "gitdir:*/oc/"]
     path = ~/.config/git/config-priv
 [includeIf "gitdir:*/srv/"]

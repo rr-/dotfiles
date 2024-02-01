@@ -1,0 +1,122 @@
+#!/usr/bin/env python3
+import argparse
+import os
+import re
+import sys
+from dataclasses import dataclass, replace
+from datetime import datetime
+from pathlib import Path
+from subprocess import check_output, run
+
+
+@dataclass
+class Stats:
+    num_files: int = 0
+    num_insertions: int = 0
+    num_deletions: int = 0
+    num_commits: int = 0
+
+    def __iadd__(self, other: "Stats") -> "Stats":
+        self.num_files += other.num_files
+        self.num_insertions += other.num_insertions
+        self.num_deletions += other.num_deletions
+        self.num_commits += other.num_commits
+        return self
+
+    def __add__(self, other: "Stats") -> "Stats":
+        result = replace(self)
+        result += other
+        return result
+
+
+def find_git_repos(root_dir: Path) -> list[Path]:
+    return [
+        path.absolute()
+        for path in [root_dir, *root_dir.iterdir()]
+        if (path / ".git").exists()
+    ]
+
+
+def get_repo_age(
+    repo_dir: Path,
+) -> datetime:
+    cmd = ["git", "rev-list", "--max-parents=0", "HEAD"]
+    first_commit = check_output(cmd, text=True).strip()
+
+    cmd = ["git", "show", "-s", "--format=%ct", first_commit]
+    timestamp = int(check_output(cmd, text=True))
+
+    return datetime.fromtimestamp(timestamp)
+
+
+def get_year_stats(
+    repo_dir: Path,
+    date_start: datetime | None = None,
+    date_end: datetime | None = None,
+    author: str | None = None,
+) -> Stats:
+    stats = Stats()
+
+    os.chdir(repo_dir)
+    cmd = ["git", "--no-pager", "log", "--stat"]
+    if author:
+        cmd.extend(["--author", author])
+    if date_start:
+        cmd.extend(["--after", date_start.strftime("%Y-%m-%d %H:%M:%S")])
+    if date_end:
+        cmd.extend(["--before", date_end.strftime("%Y-%m-%d %H:%M:%S")])
+
+    result = run(cmd, text=True, capture_output=True)
+
+    for line in result.stdout.splitlines():
+        if match := re.search(r"(\d+) files? changed", line):
+            stats.num_files += int(match.group(1))
+            stats.num_commits += 1
+            if match := re.search(r"(\d+) insertions?", line):
+                stats.num_insertions += int(match.group(1))
+            if match := re.search(r"(\d+) deletions?", line):
+                stats.num_deletions += int(match.group(1))
+
+    return stats
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-a", "--author")
+    parser.add_argument("-p", "--path", type=Path, default=Path("."))
+    return parser.parse_args()
+
+
+def main() -> None:
+    args = parse_args()
+
+    repo_dirs = find_git_repos(args.path)
+    if not repo_dirs:
+        print("no git repos found", file=sys.stderr)
+        exit(1)
+
+    min_year = min(get_repo_age(repo_dir) for repo_dir in repo_dirs).year
+    max_year = datetime.today().year + 1
+    for year in range(min_year, max_year):
+        date_start = datetime(year, 1, 1, 0, 0, 0)
+        date_end = datetime(year + 1, 1, 1, 0, 0, 0)
+        stats = Stats()
+        for repo_dir in repo_dirs:
+            stats += get_year_stats(
+                repo_dir=repo_dir,
+                date_start=date_start,
+                date_end=date_end,
+                author=args.author,
+            )
+
+        print(
+            f"{year}: "
+            f"{stats.num_insertions} insertions, "
+            f"{stats.num_deletions} deletions in "
+            f"{stats.num_files} files and "
+            f"{stats.num_commits} commits"
+        )
+
+
+if __name__ == "__main__":
+    main()
