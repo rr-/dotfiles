@@ -26,6 +26,7 @@
     }; f"
     hist = log --pretty=format:\"%Cred%h%Creset %ad %Cblue%<(50,trunc)%s%Creset [%an <%ae>]%d\" --graph --date=short
     yearly-stats = !~/.config/git/yearly_stats
+    delete-old-branches = !~/.config/git/delete_old_branches
 
 [diff]
     tool = meld
