@@ -26,10 +26,10 @@ class WeztermExecutor(BaseExecutor):
         self.font_size_small = 11
         self.font_size_high = self.font_size_small * SCALE_FACTOR
 
-    def get_config(self):
+    def get_config(self) -> str:
         return self.config_path.read_text()
 
-    def save_config(self, config):
+    def save_config(self, config: str) -> None:
         self.config_path.write_text(config)
 
     def get(self) -> bool:
@@ -45,7 +45,9 @@ class WeztermExecutor(BaseExecutor):
 
     def set(self, is_enabled: bool) -> None:
         config = self.get_config()
-        font_size = self.font_size_small * (SCALE_FACTOR if is_enabled else 1)
+        font_size = self.font_size_small * (
+            SCALE_FACTOR if is_enabled else Decimal(1)
+        )
         config = re.sub(
             "config\.font_size\s*=\s*(\d+(?:\.\d+)?)",
             f"config.font_size = {font_size}",

@@ -6,6 +6,7 @@ from dataclasses import dataclass, field
 from enum import Enum, auto
 from pathlib import Path
 from subprocess import PIPE, Popen
+from typing import TypeVar
 
 import xdg
 import yaml
@@ -14,8 +15,10 @@ from libdotfiles import logging
 
 CONFIG_PATH = Path(xdg.XDG_CONFIG_HOME) / "backup.yml"
 
+T = TypeVar("T")
 
-def flatten(data):
+
+def flatten(data: list[T] | T) -> list[T]:
     if isinstance(data, list):
         flattened = []
         for item in data:
@@ -25,7 +28,9 @@ def flatten(data):
         return [data]
 
 
-def flatten_constructor(loader, node):
+def flatten_constructor(
+    loader: yaml.Loader, node: yaml.SequenceNode
+) -> list[str]:
     return flatten(loader.construct_sequence(node))
 
 
@@ -38,6 +43,7 @@ class CommandResult:
 def run_command(cmd: list[str]) -> CommandResult:
     errors: list[str] = []
     process = Popen(cmd, stderr=PIPE, universal_newlines=True, text=True)
+    assert process.stderr
     for line in iter(process.stderr.readline, ""):
         sys.stderr.write(line)
         errors.append(line)
@@ -91,7 +97,7 @@ class SyncResult(CommandResult):
 def get_sync_configs() -> list[SyncConfig]:
     loader = yaml.SafeLoader(CONFIG_PATH.read_text())
     loader.add_constructor("!flatten", flatten_constructor)
-    document = loader.get_data()
+    document = loader.get_data()  # type: ignore
 
     return [
         SyncConfig(
@@ -126,6 +132,7 @@ def sync(sync_config: SyncConfig, dry_run: bool, delete: bool) -> SyncResult:
     result |= create_remote_dir(target)
 
     logging.info("%s → %s", source, target)
+    assert target.machine
 
     cmd = [
         "ssh",
@@ -163,7 +170,7 @@ def sync(sync_config: SyncConfig, dry_run: bool, delete: bool) -> SyncResult:
         for pattern in sync_config.exclude:
             cmd.append(f"--exclude={pattern}")
 
-    cmd += [source.uri, target.path]
+    cmd += [source.uri, str(target.path)]
 
     if dry_run:
         logging.info(f"Running {cmd}")

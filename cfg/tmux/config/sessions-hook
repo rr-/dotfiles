@@ -9,8 +9,10 @@ from libdotfiles.util import HOME_DIR
 
 try:
     import yaml
+
+    HAS_YAML = True
 except ImportError:
-    yaml = None
+    HAS_YAML = False
 
 SESSIONS_PATH = HOME_DIR / ".config/tmux/sessions.yml"
 
@@ -87,9 +89,10 @@ def recreate_session(spec: SessionSpec) -> None:
 
 def recreate_sessions() -> None:
     """Recreate sessions that should be persisted across machines."""
-    if not yaml:
+    if not HAS_YAML:
         logging.warn("pyyaml module not installed")
         return
+
     if not SESSIONS_PATH.exists():
         logging.warn("sessions file does not exist")
         return

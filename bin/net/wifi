@@ -76,7 +76,7 @@ class NetworkManager:
     def disconnect_wifi(self) -> None:
         check_call(["iwctl", "station", self.wifi_device, "disconnect"])
 
-    def get_station_info(self):
+    def get_station_info(self) -> dict[str, str | None]:
         output_lines = (
             remove_ansi_escapes(
                 run(
@@ -94,7 +94,7 @@ class NetworkManager:
         except IndexError:
             station = None
 
-        properties = {}
+        properties: dict[str, str] = {}
         for line in output_lines[3:]:
             parts = re.split(r"\s{2,}", line.strip())
             if len(parts) == 2:
@@ -124,7 +124,7 @@ class NetworkManager:
         for network in networks:
             if self._try_connect_wifi_network(network):
                 return network
-        return False
+        return None
 
     def _try_connect_wifi_network(self, network: Network) -> bool:
         result = run(
@@ -150,7 +150,7 @@ class NetworkManager:
 
 def get_wifi_networks_from_config() -> list[Network]:
     loader = yaml.SafeLoader(CONFIG_PATH.read_text())
-    networks = loader.get_data()
+    networks: list[Network] = loader.get_data()  # type: ignore
     return networks
 
 

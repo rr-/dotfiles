@@ -2,6 +2,7 @@
 # requires: requests
 import argparse
 import re
+import sys
 from collections import defaultdict
 from dataclasses import dataclass
 from datetime import date
@@ -21,6 +22,8 @@ class Trip:
 
 def parse_date(text: str) -> date:
     match = re.match("(?:\d+/)?(?P<day>\d+)\.(?P<month>\d+)", text)
+    if not match:
+        raise ValueError(f"Invalid date: {text}")
     return date(
         year=date.today().year,
         month=int(match.group("month")),
@@ -29,49 +32,66 @@ def parse_date(text: str) -> date:
 
 
 def parse_dates(text: str) -> tuple[date, date, bool]:
-    parts = text.split(" - ", 2)
-    dates_unstable = any("/" in part for part in parts)
+    start, end = text.split(" - ", maxsplit=2)
+    dates_unstable = "/" in start or "/" in end
     return (
-        *(parse_date(part) for part in parts),
+        parse_date(start),
+        parse_date(end),
         dates_unstable,
     )
 
 
 def parse_barents_trips(html_text: str) -> list[Trip]:
     class Parser(HTMLParser):
-        def __init__(self):
+        def __init__(self) -> None:
             super().__init__()
-            self.stack: dict[list] = defaultdict(list)
+            self.stack: dict[str, list[dict[str, str | None]]] = defaultdict(
+                list
+            )
             self.trips: list[Trip] = []
             self.last_trip_date = ""
 
-        def handle_starttag(self, tag, attrs):
+        def handle_starttag(
+            self, tag: str, attrs: list[tuple[str, str | None]]
+        ) -> None:
             self.stack[tag].append(dict(attrs))
             if tag == "ul":
                 self.last_trip_date = ""
 
-        def handle_endtag(self, tag):
+        def handle_endtag(self, tag: str) -> None:
             self.stack[tag].pop()
 
-        def handle_data(self, data):
+        def handle_data(self, data: str) -> None:
             if self.stack["strong"] and data.strip():
                 self.last_trip_date = data.strip()
-            if (
+
+            if not (
                 self.stack["a"]
                 and self.stack["p"]
                 and data.strip()
                 and self.last_trip_date
             ):
+                return
+
+            try:
                 start, end, dates_unstable = parse_dates(self.last_trip_date)
-                self.trips.append(
-                    Trip(
-                        start=start,
-                        end=end,
-                        dates_unstable=dates_unstable,
-                        title=data.strip(),
-                        link=self.stack["a"][-1]["href"],
-                    )
+            except Exception as ex:
+                print(
+                    "Error parsing dates for",
+                    self.last_trip_date,
+                    file=sys.stderr,
                 )
+                return
+
+            self.trips.append(
+                Trip(
+                    start=start,
+                    end=end,
+                    dates_unstable=dates_unstable,
+                    title=data.strip(),
+                    link=self.stack["a"][-1]["href"] or "?",
+                )
+            )
 
     parser = Parser()
     parser.feed(html_text.replace("\u200b", ""))

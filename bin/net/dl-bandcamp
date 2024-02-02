@@ -7,8 +7,11 @@ import pathlib
 import shelve
 import sys
 import tempfile
-import urllib.parse
 import zlib
+from collections.abc import Sequence
+from pathlib import Path
+from typing import TypeVar
+from urllib.parse import urlparse, urlunparse
 
 import dateutil.parser
 import lxml.html
@@ -18,10 +21,12 @@ import tqdm
 import xdg
 
 BUFFER_SIZE = 32 * 1024
-SHELVE_PATH = pathlib.Path(xdg.XDG_CACHE_HOME) / "dl-bandcamp.dat"
+SHELVE_PATH = Path(xdg.XDG_CACHE_HOME) / "dl-bandcamp.dat"
+
+T = TypeVar("T")
 
 
-def download_file(source_url, target_path, desc):
+def download_file(source_url: str, target_path: Path, desc: str) -> None:
     if target_path.exists():
         print(f'{desc}: "{target_path}" already exists, skipping')
         return
@@ -41,7 +46,7 @@ def download_file(source_url, target_path, desc):
         os.link(handle.name, target_path)
 
 
-def download_page(url, use_cache=True):
+def download_page(url: str, use_cache: bool = True) -> str:
     with shelve.open(str(SHELVE_PATH)) as cache:
         if use_cache and url in cache:
             return zlib.decompress(cache[url]).decode()
@@ -52,23 +57,23 @@ def download_page(url, use_cache=True):
         return ret
 
 
-def uniq(seq):
-    seen = set()
-    return [x for x in seq if not (x in seen or seen.add(x))]
+def uniq(seq: Sequence[T]) -> list[T]:
+    seen: set[T] = set()
+    return [x for x in seq if not (x in seen or seen.add(x))]  # type: ignore
 
 
-def parse_args():
+def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument("url")
-    parser.add_argument("--directory", default=".", type=pathlib.Path)
+    parser.add_argument("--directory", default=".", type=Path)
     return parser.parse_args()
 
 
-def is_artist_page(url):
+def is_artist_page(url: str) -> bool:
     return len(get_artist_album_links(url)) > 0
 
 
-def is_album_page(url):
+def is_album_page(url: str) -> bool:
     return "/album/" in url or "/track" in url
 
 
@@ -76,7 +81,7 @@ def safe_file_name(text: str) -> str:
     return text.replace("/", "·")
 
 
-def download_album(album_url, target_directory):
+def download_album(album_url: str, target_directory: Path) -> None:
     print("Downloading album", album_url)
     response_text = download_page(album_url)
     document = lxml.html.fromstring(response_text)
@@ -121,20 +126,20 @@ def download_album(album_url, target_directory):
             )
 
 
-def get_album_track_links(album_url):
+def get_album_track_links(album_url: str) -> list[str]:
     response_text = download_page(album_url)
     document = lxml.html.fromstring(response_text)
     document.make_links_absolute(base_url=album_url)
     return uniq(
         [
-            urllib.parse.splitquery(link)[0]
+            urlunparse(urlparse(link)._replace(query=""))
             for link in document.xpath("//a/@href")
             if "/track/" in link
         ]
     )
 
 
-def get_artist_album_links(artist_url):
+def get_artist_album_links(artist_url: str) -> list[str]:
     response_text = download_page(artist_url, use_cache=False)
     document = lxml.html.fromstring(response_text)
     document.make_links_absolute(base_url=artist_url)
@@ -147,7 +152,7 @@ def get_artist_album_links(artist_url):
     )
 
 
-def main():
+def main() -> None:
     args = parse_args()
     args.directory = args.directory.expanduser()
     if is_album_page(args.url):

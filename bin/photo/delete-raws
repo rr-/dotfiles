@@ -26,7 +26,7 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def format_size(count: int) -> str:
+def format_size(count: int | float) -> str:
     units = ["B", "KB", "MB", "GB"]
     base = 1024.0
     unit = units.pop(0)
@@ -41,7 +41,7 @@ def format_file_infos(files: list[FileInfo]) -> str:
     return f"{format_size(size)}, {len(files)} files"
 
 
-def get_jpeg_path(raw_path: Path) -> Path:
+def get_jpeg_path(raw_path: Path) -> Path | None:
     for suffix in JPEG_SUFFIXES:
         if (jpeg_path := raw_path.with_suffix(suffix.upper())).exists():
             return jpeg_path
@@ -49,6 +49,7 @@ def get_jpeg_path(raw_path: Path) -> Path:
             return jpeg_path
         if (jpeg_path := raw_path.with_suffix(suffix)).exists():
             return jpeg_path
+    return None
 
 
 def organize_raws(

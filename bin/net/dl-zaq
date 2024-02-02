@@ -50,12 +50,13 @@ def download_video(page_url: str, directory: Path) -> None:
     video_file_extension = document.xpath(
         '//div[@id="video_player"]/@data-file-extension'
     )[0]
-    file_id = int(
-        re.search(
-            r"vid/(\d+)",
-            document.xpath('//div[@id="video_player"]/@data-video-url')[0],
-        ).group(1)
+
+    match = re.search(
+        r"vid/(\d+)",
+        document.xpath('//div[@id="video_player"]/@data-video-url')[0],
     )
+    assert match
+    file_id = int(match.group(1))
 
     target_path = (directory / video_file_name).with_suffix(
         "." + video_file_extension

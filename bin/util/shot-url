@@ -58,9 +58,8 @@ def main() -> None:
         url = Path(args.url).absolute().as_uri()
     else:
         url = args.url
-    output = str(args.output)
 
-    save_screenshot(url, output)
+    save_screenshot(url, output=args.output)
 
 
 if __name__ == "__main__":

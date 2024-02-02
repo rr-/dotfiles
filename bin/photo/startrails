@@ -51,14 +51,22 @@ def compose(
         work_path = Path(tmpdir) / "output.tif"
 
         layer_path = input_paths[0]
-        my_run(["convert", f"{layer_path}[0]", "-alpha", "off", work_path])
+        my_run(
+            [
+                "convert",
+                f"{layer_path}[0]",
+                "-alpha",
+                "off",
+                str(work_path),
+            ]
+        )
         pbar.update()
 
         for layer_path in input_paths[1:]:
             my_run(
                 [
                     "convert",
-                    work_path,
+                    str(work_path),
                     "(",
                     f"{layer_path}[0]",
                     *(["-level", levels] if levels else []),
@@ -68,12 +76,12 @@ def compose(
                     "-gravity",
                     "center",
                     "-composite",
-                    work_path,
+                    str(work_path),
                 ]
             )
             pbar.update()
 
-        my_run(["convert", work_path, output_path])
+        my_run(["convert", str(work_path), str(output_path)])
         pbar.update()
 
 

@@ -4,6 +4,7 @@ import re
 from dataclasses import dataclass
 from pathlib import Path
 from subprocess import run
+from typing import Any, cast
 
 SYMBOLS = {
     "branch": "⎇ ",
@@ -21,7 +22,7 @@ SYMBOLS = {
 }
 
 
-def my_run(cmd: list[str], **kwargs) -> str | None:
+def my_run(cmd: list[str], **kwargs: Any) -> str | None:
     result = run(
         cmd,
         capture_output=True,
@@ -29,7 +30,7 @@ def my_run(cmd: list[str], **kwargs) -> str | None:
         **kwargs,
     )
     if result.returncode == 0:
-        return result.stdout
+        return cast(str, result.stdout)
     return None
 
 
@@ -53,11 +54,11 @@ class GitStatus:
     ahead_count: int = 0
     behind_count: int = 0
 
-    def parse_upstream(self, source):
+    def parse_upstream(self, source: str) -> None:
         pos = source.find(" ")
         if pos == -1:
             self.remote_branch = source
-            return None
+            return
 
         self.remote_branch = source[:pos]
         source = source[pos + 1 :].strip("[]")
@@ -66,8 +67,6 @@ class GitStatus:
             self.ahead_count = int(match.group(1))
         if match := re.search("behind (\d+)", source):
             self.behind_count = int(match.group(1))
-
-        return None
 
 
 def fill_git_status_from_porcelain_header(
@@ -108,10 +107,17 @@ def fill_git_status_from_porcelain(
                 fill_git_status_from_porcelain_header(git_status, line)
             case ("U", "U") | ("A", "A"):
                 git_status.conflicts += 1
-            case ("A", "M") | ("M", "M") | ("M", "D") | ("R", "M") | (
-                "R",
-                "D",
-            ) | ("A", "T"):
+            case (
+                ("A", "M")
+                | ("M", "M")
+                | ("M", "D")
+                | ("R", "M")
+                | (
+                    "R",
+                    "D",
+                )
+                | ("A", "T")
+            ):
                 git_status.modified += 1
                 git_status.staged += 1
             case (_, "M") | (_, "D"):

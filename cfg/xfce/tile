@@ -2,7 +2,7 @@
 import argparse
 from collections.abc import Iterable
 from decimal import Decimal
-from typing import cast
+from typing import Any, cast
 
 from Xlib import X
 from Xlib.display import Display
@@ -44,7 +44,10 @@ def get_desktop_geometry(
     disp: Display, desktop_id: int
 ) -> tuple[int, int, int, int]:
     root = disp.screen().root
-    result: list[int] = get_window_property_values(disp, "_NET_WORKAREA", root)
+    result: list[int] | None = get_window_property_values(
+        disp, "_NET_WORKAREA", root
+    )
+    assert result
     left, right, top, bottom = result[desktop_id * 4 : desktop_id * 4 + 4]
     return (left, right, top, bottom)
 
@@ -133,12 +136,12 @@ def set_window_geometry(
     window.configure(x=x, y=y, width=width, height=height)
 
 
-def get_property(disp: Display, name: str):
+def get_property(disp: Display, name: str) -> Any:
     atom = disp.intern_atom(name)
     return disp.screen().root.get_full_property(atom, 0)
 
 
-def get_window_property(disp: Display, name: str, window_id: int):
+def get_window_property(disp: Display, name: str, window_id: int) -> Any:
     atom = disp.intern_atom(name)
     window = disp.create_resource_object("window", window_id)
     return window.get_full_property(atom, 0)

@@ -73,13 +73,7 @@ alias synonim='p -m dict -e synonim'
 alias edict='p -m dict -e edict'
 alias jmdict='p -m dict -e jmdict'
 
-alias dl-gelbooru='dl-booru --config=~/.config/dl-gelbooru.conf'
-alias dl-pixiv='dl-booru --config=~/.config/dl-pixiv.conf'
-alias dl-yume='dl-booru --config=~/.config/dl-yume.conf'
-alias ul-gelbooru='ul-booru --config=~/.config/ul-gelbooru.conf'
-alias ul-yume='ul-booru --config=~/.config/ul-yume.conf'
 alias tmp=ul-tmp
-alias 0x0=ul-0x0
 
 alias pw='aes-edit ~/.config/pw.dat'
 

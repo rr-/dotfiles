@@ -4,11 +4,14 @@ import argparse
 import email
 import pathlib
 import re
+from typing import Any, cast
 
 import eml_parser
 
+Message = Any
 
-def parse_args():
+
+def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument(
         dest="paths", metavar="path", type=pathlib.Path, nargs="+"
@@ -16,7 +19,7 @@ def parse_args():
     return parser.parse_args()
 
 
-def get_body_text(parsed):
+def get_body_text(parsed: Message) -> str | None:
     # first search for body in the body, then in the attachments
     for key in ("body", "attachment"):
         # first look for plain text version, then accept html
@@ -36,14 +39,14 @@ def get_body_text(parsed):
 
                 if attachment_mime == mime:
                     try:
-                        return attachment["content"]
+                        return cast(str, attachment["content"])
                     except LookupError:
-                        return attachment["raw"]
+                        return cast(str, attachment["raw"])
 
     return None
 
 
-def main():
+def main() -> None:
     args = parse_args()
 
     parser = eml_parser.EmlParser(

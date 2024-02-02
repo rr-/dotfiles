@@ -4,7 +4,7 @@ import sys
 from collections.abc import Iterable
 from decimal import Decimal
 from enum import StrEnum, auto
-from typing import cast
+from typing import Any, cast
 
 from Xlib import X, Xatom
 from Xlib.display import Display
@@ -124,12 +124,12 @@ def swap_window_geometries(
     )
 
 
-def get_property(disp: Display, name: str):
+def get_property(disp: Display, name: str) -> Any:
     atom = disp.intern_atom(name)
     return disp.screen().root.get_full_property(atom, 0)
 
 
-def get_window_property(disp: Display, name: str, window_id: int):
+def get_window_property(disp: Display, name: str, window_id: int) -> Any:
     atom = disp.intern_atom(name)
     window = disp.create_resource_object("window", window_id)
     return window.get_full_property(atom, 0)
