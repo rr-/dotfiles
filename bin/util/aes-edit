@@ -54,7 +54,7 @@ class AESCipher:
             chk = handle.read(AES.block_size)
             if chk != self.chk:
                 raise InvalidKey
-            data = unpad(handle.read(), AES.block_size)
+            data: bytes = unpad(handle.read(), AES.block_size)
 
         return data
 
@@ -62,7 +62,7 @@ class AESCipher:
 def read_encrypted_file(path: Path, key: str) -> str:
     aes = AESCipher(key)
     if not path.exists():
-        return {}
+        return ""
     return zlib.decompress(aes.decrypt(path.read_bytes())).decode()
 
 

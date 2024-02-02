@@ -6,15 +6,19 @@ from collections.abc import Iterable
 from dataclasses import dataclass
 from pathlib import Path
 from subprocess import run
+from typing import Any, cast
 
 import yaml
+
+YamlDocument = dict[str, Any]
+Environment = dict[str, str | None]
 
 
 @dataclass
 class Command:
     name: str
     invocation: str
-    environment: dict[str, str | None] | None = None
+    environment: Environment | None = None
 
     @property
     def usage(self) -> str:
@@ -23,7 +27,7 @@ class Command:
         return self.invocation
 
 
-def get_environment(doc) -> dict[str, str | None] | None:
+def get_environment(doc: YamlDocument) -> Environment | None:
     env = doc.get("environment")
     if not env:
         return env
@@ -32,14 +36,12 @@ def get_environment(doc) -> dict[str, str | None] | None:
     }
 
 
-def merge_environment(
-    *envs: dict[str, str | None] | None
-) -> dict[str, str] | None:
-    envs = [env for env in envs if env]
-    if not envs:
+def merge_environment(*envs: Environment | None) -> dict[str, str] | None:
+    nonempty_envs: list[Environment] = [env for env in envs if env]
+    if not nonempty_envs:
         return None
-    ret = envs[0].copy()
-    for env in envs[1:]:
+    ret = nonempty_envs[0].copy()
+    for env in nonempty_envs[1:]:
         for key, value in env.items():
             if value is None:
                 ret.pop(key, None)
@@ -49,14 +51,16 @@ def merge_environment(
     } or None
 
 
-def get_commands(doc) -> Iterable[Command]:
+def get_commands(doc: YamlDocument) -> Iterable[Command]:
     yield from (
-        Command(name=key, invocation=value)
-        if isinstance(value, str)
-        else Command(
-            name=key,
-            invocation=value["command"],
-            environment=get_environment(value),
+        (
+            Command(name=key, invocation=value)
+            if isinstance(value, str)
+            else Command(
+                name=key,
+                invocation=value["command"],
+                environment=get_environment(value),
+            )
         )
         for key, value in doc["tasks"].items()
     )
@@ -67,7 +71,7 @@ def main() -> None:
 
     if not workrc_path.exists():
         raise RuntimeError("Missing .workrc file")
-    doc = yaml.safe_load(workrc_path.read_text())
+    doc: YamlDocument = yaml.safe_load(workrc_path.read_text())
 
     environment = get_environment(doc)
     commands = list(get_commands(doc))
@@ -93,7 +97,9 @@ def main() -> None:
             text=True,
             check=False,
             env=merge_environment(
-                os.environ, environment, command.environment
+                cast(dict[str, str | None], os.environ),
+                environment,
+                command.environment,
             ),
         )
         exit(result.returncode)

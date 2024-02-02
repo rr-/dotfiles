@@ -71,7 +71,15 @@ def parse_args() -> argparse.Namespace:
 
 
 def make_pto_file(pto_file: Path, input_files: list[Path]) -> None:
-    run(["pto_gen", "-o", pto_file] + input_files, check=True)
+    run(
+        [
+            "pto_gen",
+            "-o",
+            str(pto_file),
+            *(str(path) for path in input_files),
+        ],
+        check=True,
+    )
 
 
 def find_control_points(pto_file: Path) -> None:
@@ -225,7 +233,7 @@ def stitch_images(pto_file: Path, tmp_dir: Path) -> Path:
             "enblend",
             "--primary-seam-generator=graph-cut",
             "-o",
-            tmp_output_file,
+            str(tmp_output_file),
         ]
         + remapped_paths,
         check=True,

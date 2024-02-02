@@ -2,47 +2,49 @@
 # requires: progress xdg
 import argparse
 import hashlib
-import pathlib
 import pickle
+from collections.abc import Callable, Iterable
+from pathlib import Path
+from typing import Any
 
 import progress.bar
 import xdg
 
-CACHE_PATH = pathlib.Path(xdg.XDG_CACHE_HOME) / "dups.dat"
+CACHE_PATH = Path(xdg.XDG_CACHE_HOME) / "dups.dat"
 
 
-def parse_args():
+def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
-    parser.add_argument("dir", type=pathlib.Path)
+    parser.add_argument("dir", type=Path)
     parser.add_argument("-d", "--delete", action="store_true")
     parser.add_argument("-N", "--no-confirm", action="store_true")
     return parser.parse_args()
 
 
-def load_cache():
+def load_cache() -> dict[str, bytes]:
     if CACHE_PATH.exists():
-        return pickle.loads(CACHE_PATH.read_bytes())
+        return pickle.loads(CACHE_PATH.read_bytes())  # type: ignore
     return {}
 
 
-def save_cache(cache):
+def save_cache(cache: dict[str, bytes]) -> None:
     CACHE_PATH.parent.mkdir(parents=True, exist_ok=True)
     CACHE_PATH.write_bytes(pickle.dumps(cache))
 
 
-def clean_cache(cache):
+def clean_cache(cache: dict[str, bytes]) -> None:
     for path, checksum in list(cache.items()):
-        if not pathlib.Path(path).exists():
+        if not Path(path).exists():
             del cache[path]
 
 
-def get_file_hash(path):
+def get_file_hash(path: Path) -> bytes:
     hash_obj = hashlib.md5()
     hash_obj.update(path.read_bytes())
     return hash_obj.digest()
 
 
-def collect_files(root_dir):
+def collect_files(root_dir: Path) -> Iterable[Path]:
     for path in root_dir.iterdir():
         if path.is_file():
             yield path
@@ -50,8 +52,10 @@ def collect_files(root_dir):
             yield from collect_files(path)
 
 
-def construct_size_to_path_dict(paths):
-    ret = {}
+def construct_size_to_path_dict(
+    paths: Iterable[Path],
+) -> dict[int, list[Path]]:
+    ret: dict[int, list[Path]] = {}
     for path in paths:
         size = path.stat().st_size
         if not size in ret:
@@ -60,8 +64,12 @@ def construct_size_to_path_dict(paths):
     return ret
 
 
-def construct_hash_to_path_dict(paths, cache, progress_callback):
-    ret = {}
+def construct_hash_to_path_dict(
+    paths: Iterable[Path],
+    cache: dict[str, bytes],
+    progress_callback: Callable[[], None],
+) -> dict[bytes, list[Path]]:
+    ret: dict[bytes, list[Path]] = {}
     for path in paths:
         cache_key = str(path.resolve())
         if cache_key in cache:
@@ -78,7 +86,7 @@ def construct_hash_to_path_dict(paths, cache, progress_callback):
 
 
 class ProgressBar(progress.bar.IncrementalBar):
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs: Any) -> None:
         super().__init__(
             "Working",
             suffix="%(percent).1f%% - %(eta_td)s",
@@ -92,7 +100,7 @@ class ProgressBar(progress.bar.IncrementalBar):
     #     return self.remaining * (now_ts - self.start_ts) / max(1, self.index)
 
 
-def main():
+def main() -> None:
     args = parse_args()
     if not args.dir.exists():
         raise RuntimeError(f'Directory "{args.dir}" does not exist')
@@ -108,9 +116,10 @@ def main():
     print("Collected", len(all_files), "files")
 
     print("Constructing size-path dictionary...")
-    size_to_path = construct_size_to_path_dict(all_files)
     size_to_path = {
-        size: files for size, files in size_to_path.items() if len(files) > 1
+        size: files
+        for size, files in construct_size_to_path_dict(all_files).items()
+        if len(files) > 1
     }
 
     print("Checking for duplicates...")
@@ -121,7 +130,7 @@ def main():
     )
     for size, files in size_to_path.items():
 
-        def update():
+        def update() -> None:
             bar.next()
             if bar.index % 1000 == 999:
                 save_cache(cache)
@@ -161,9 +170,8 @@ def main():
             if choice == "a":
                 continue
 
-            choice = int(choice)
             for num, path in choices.items():
-                if num != choice:
+                if num != int(choice):
                     path.unlink()
 
     print("Removing non-existing entries from cache...")

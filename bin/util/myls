@@ -67,7 +67,7 @@ def collect_paths(path: Path) -> Iterable[Path]:
         yield path
 
 
-def format_size(num: int) -> str:
+def format_size(num: float | int) -> str:
     units = ["B"] + [x + "iB" for x in "KMGTPEZ"]
     for unit in units:
         if num < 1024.0:

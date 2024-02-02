@@ -3,7 +3,7 @@ import argparse
 from pathlib import Path
 
 
-def is_small(path: Path, max_files) -> bool:
+def is_small(path: Path, max_files: int) -> bool:
     return len(list(filter(Path.is_file, path.iterdir()))) <= max_files
 
 

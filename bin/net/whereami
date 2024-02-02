@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
+from typing import cast
+
 import requests
 
 
 def get_ipv4() -> str:
     response = requests.get("https://api.ipify.org?format=json")
     response.raise_for_status()
-    return response.json()["ip"]
+    return cast(str, response.json()["ip"])
 
 
 def main() -> None:

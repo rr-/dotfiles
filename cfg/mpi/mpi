@@ -6,6 +6,7 @@ import os
 import re
 import sys
 import tempfile
+from collections.abc import Iterable
 from pathlib import Path
 from subprocess import run
 from typing import Any
@@ -29,7 +30,7 @@ MANAGED_EXTENSIONS = {
 CONFIG_DIR = Path("~/.config/mpi").expanduser()
 
 
-def parse_args():
+def parse_args() -> tuple[argparse.Namespace, list[str]]:
     parser = argparse.ArgumentParser(description="Run mpv as image viewer")
     parser.add_argument(
         "-", "--playlist", type=str, help="Path to the playlist (- for stdin)"
@@ -67,9 +68,11 @@ def parse_args():
 
     if args.paths:
         args.paths = [
-            path
-            if path.startswith("http")
-            else Path(path).expanduser().resolve()
+            (
+                path
+                if path.startswith("http")
+                else Path(path).expanduser().resolve()
+            )
             for path in args.paths
         ]
     else:
@@ -103,7 +106,7 @@ def handle_vifm(vifm_selected_path: Path | None) -> bool:
     return True
 
 
-def get_playlist_from_playlist_file(playlist_file: str) -> tuple[list[Path]]:
+def get_playlist_from_playlist_file(playlist_file: str) -> list[Path]:
     if playlist_file == "-":
         handle = sys.stdin
     else:
@@ -113,7 +116,7 @@ def get_playlist_from_playlist_file(playlist_file: str) -> tuple[list[Path]]:
     return paths
 
 
-def sort_playlist(playlist):
+def sort_playlist(playlist: list[Path]) -> list[Path]:
     def convert(text: str) -> Any:
         return int(text) if text.isdigit() else text
 
@@ -126,7 +129,7 @@ def sort_playlist(playlist):
 def get_playlist_from_filesystem(
     paths: list[str | Path], recurse: bool
 ) -> list[Path]:
-    def scan(path, depth=0):
+    def scan(path: Path, depth: int = 0) -> Iterable[Path]:
         if path.is_dir():
             if recurse or not depth:
                 for subpath in path.iterdir():
@@ -197,7 +200,7 @@ def run_mpv(
     run(cmd, check=True)
 
 
-def main():
+def main() -> None:
     args, unknown_args = parse_args()
 
     if handle_vifm(args.vifm):

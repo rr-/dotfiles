@@ -28,7 +28,7 @@ def send_osc(*args: Any) -> None:
                 if term.startswith("rxvt"):
                     with open(tty, "w") as handle:
                         handle.write(msg)
-    elif os.getenv("TERM").startswith("rxvt"):
+    elif os.getenv("TERM", "").startswith("rxvt"):
         sys.stderr.write(msg)
     sys.stderr.write("\a")
 

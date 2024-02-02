@@ -1,29 +1,29 @@
 #!/usr/bin/env python3
 # requires: python-dateutil
 import argparse
-import datetime
+from datetime import datetime, timedelta
 
 import dateutil.parser
 
 
-def parse_date(text):
+def parse_date(text: str) -> datetime:
     text = text.strip().lower()
     if text == "yesterday":
-        return datetime.datetime.now() - datetime.timedelta(days=1)
+        return datetime.now() - timedelta(days=1)
     return dateutil.parser.parse(text)
 
 
-def parse_args():
+def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument("date1")
     parser.add_argument("date2", default=None, nargs="?")
     return parser.parse_args()
 
 
-def main():
+def main() -> None:
     args = parse_args()
     date1 = parse_date(args.date1)
-    date2 = parse_date(args.date2) if args.date2 else datetime.datetime.now()
+    date2 = parse_date(args.date2) if args.date2 else datetime.now()
     diff = abs(date2 - date1)
     diff_seconds = diff.total_seconds()
 

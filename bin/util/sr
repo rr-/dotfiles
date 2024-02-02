@@ -5,6 +5,7 @@ import subprocess
 import sys
 import tempfile
 from pathlib import Path
+from typing import cast
 
 import speech_recognition as sr
 
@@ -32,7 +33,7 @@ def recognize(path: Path, language: str) -> str:
             audio = r.record(source)
 
     try:
-        return r.recognize_google(audio, language=language)
+        return cast(str, r.recognize_google(audio, language=language))
     except sr.UnknownValueError:
         raise RecognitionError(
             "Google Speech Recognition could not understand audio"
@@ -44,7 +45,7 @@ def recognize(path: Path, language: str) -> str:
         )
 
 
-def main():
+def main() -> None:
     args = parse_args()
 
     if not args.file.exists():

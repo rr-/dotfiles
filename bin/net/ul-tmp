@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # Uploads files to tmp.sakuya.pl via SSH and outputs copyable links
 
+import argparse
 import io
 import os
 import shlex
@@ -8,18 +9,19 @@ import subprocess
 import sys
 import tarfile
 import urllib.parse
+from collections.abc import Iterable
 
 BASE_DIR = "/home/rr-/srv/tmp.sakuya.pl/f/"
 BASE_URL = "https://tmp.sakuya.pl/f/"
 REMOTE_HOST = "sakuya.pl"
 
 
-def collect_single_file(arg):
+def collect_single_file(arg: str) -> tuple[str, str]:
     target_name = os.path.basename(arg)
     return (arg, target_name)
 
 
-def collect_files_from_dir(top):
+def collect_files_from_dir(top: str) -> Iterable[tuple[str, str]]:
     for root, _, filenames in os.walk(top):
         for filename in filenames:
             path = os.path.join(root, filename)
@@ -28,7 +30,7 @@ def collect_files_from_dir(top):
             yield (path, target_name)
 
 
-def collect_files(args):
+def collect_files(args: list[str]) -> Iterable[tuple[str, str]]:
     for arg in args:
         if not os.path.exists(arg):
             print("File does not exist: %s" % arg, file=sys.stderr)
@@ -36,11 +38,10 @@ def collect_files(args):
         if os.path.isfile(arg):
             yield collect_single_file(arg)
         elif os.path.isdir(arg):
-            for name in collect_files_from_dir(arg):
-                yield name
+            yield from collect_files_from_dir(arg)
 
 
-def send(src_paths):
+def send(src_paths: list[tuple[str, str]]) -> None:
     if not src_paths:
         print("Nothing to send.", file=sys.stderr)
         return
@@ -85,7 +86,7 @@ def send(src_paths):
         sys.exit(1)
 
 
-def main():
+def main() -> None:
     send(list(collect_files(sys.argv[1:])))
 
 

@@ -36,27 +36,26 @@ class InteractiveCaptureWindow(QtWidgets.QWidget):
         self.value = False
         self.origin = None
 
-    def keyPressEvent(self, event):
+    def keyPressEvent(self, event: QtCore.QEvent) -> None:
         if event.key() == QtCore.Qt.Key.Key_Escape:
             self.close()
 
-    def mousePressEvent(self, event):
+    def mousePressEvent(self, event: QtCore.QEvent) -> None:
         self.origin = event.pos()
         self.rubberband.setGeometry(QtCore.QRect(self.origin, QtCore.QSize()))
         self.rubberband.show()
         super().mousePressEvent(event)
 
-    def mouseMoveEvent(self, event):
+    def mouseMoveEvent(self, event: QtCore.QEvent) -> None:
         if self.origin:
             self.rubberband.setGeometry(
                 QtCore.QRect(self.origin, event.pos()).normalized()
             )
         super().mouseMoveEvent(event)
 
-    def mouseReleaseEvent(self, event):
+    def mouseReleaseEvent(self, event: QtCore.QEvent) -> None:
         if self.rubberband.isVisible():
             self.rubberband.hide()
-            selected = []
             rect = QtCore.QRect(
                 self.mapToGlobal(self.rubberband.geometry().topLeft()),
                 self.mapToGlobal(self.rubberband.geometry().bottomRight()),
@@ -180,7 +179,7 @@ class WindowCapture:
         return QtGui.QCursor.pos()
 
     def get_screens(self) -> Iterable[QtGui.QScreen]:
-        return self.app.screens()
+        return self.app.screens()  # type: ignore
 
 
 def main() -> None:

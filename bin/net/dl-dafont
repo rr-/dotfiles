@@ -4,6 +4,7 @@ import argparse
 import io
 import sys
 import zipfile
+from collections.abc import Iterable
 from pathlib import Path
 
 import lxml.html
@@ -28,7 +29,9 @@ def download_file(session: requests.Session, source_url: str) -> bytes:
         return handle.read()
 
 
-def get_font_pkg_urls(session: requests.Session, page_url: str) -> None:
+def get_font_pkg_urls(
+    session: requests.Session, page_url: str
+) -> Iterable[str]:
     response = session.get(page_url)
     response.raise_for_status()
     document = lxml.html.fromstring(response.text)

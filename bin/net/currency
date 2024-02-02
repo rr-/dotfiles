@@ -41,7 +41,7 @@ CURRENCIES = [
 ]
 
 
-def parse_args():
+def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument("num", type=float)
     parser.add_argument("src", type=str.upper, choices=CURRENCIES)
@@ -49,7 +49,7 @@ def parse_args():
     return parser.parse_args()
 
 
-def main():
+def main() -> None:
     args = parse_args()
     src_price = args.num
     src_currency = args.src

@@ -5,9 +5,12 @@ import shlex
 import subprocess
 import sys
 import tempfile
+from io import TextIOWrapper
+
+XAttrs = dict[str, str]
 
 
-def parse_args():
+def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="xattrvi - modify xattributes of files the simple way"
     )
@@ -32,15 +35,20 @@ def parse_args():
     return args
 
 
-def newline_escape(string):
+def newline_escape(string: str) -> str:
     return string.replace("\n", "\\n")
 
 
-def newline_unescape(string):
+def newline_unescape(string: str) -> str:
     return string.replace("\\n", "\n")
 
 
-def dump(path, user_xattrs, other_xattrs, handle):
+def dump(
+    path: str,
+    user_xattrs: XAttrs,
+    other_xattrs: XAttrs,
+    handle: TextIOWrapper,
+) -> None:
     handle.write(f"# file {path}\n")
     handle.write("# attributes in namespace 'user'\n")
 
@@ -61,7 +69,7 @@ def dump(path, user_xattrs, other_xattrs, handle):
             "\n".join(
                 [
                     f'#{key + ":":10s} {newline_escape(value)}'
-                    for key, value in other_xattrs
+                    for key, value in other_xattrs.items()
                 ]
             )
         )
@@ -70,8 +78,8 @@ def dump(path, user_xattrs, other_xattrs, handle):
     handle.write("\n")
 
 
-def parse(handle):
-    ret = {}
+def parse(handle: TextIOWrapper) -> dict[str, XAttrs]:
+    ret: dict[str, XAttrs] = {}
 
     path = None
     for i, line in enumerate(handle):
@@ -103,9 +111,9 @@ def parse(handle):
     return ret
 
 
-def get_xattrs(path):
-    user_xattrs = {}
-    other_xattrs = {}
+def get_xattrs(path: str) -> tuple[XAttrs, XAttrs]:
+    user_xattrs: XAttrs = {}
+    other_xattrs: XAttrs = {}
     for full_key in os.listxattr(path):
         value = os.getxattr(path, full_key, follow_symlinks=True).decode()
         namespace, key = full_key.split(".", 1)
@@ -116,7 +124,7 @@ def get_xattrs(path):
     return (user_xattrs, other_xattrs)
 
 
-def set_user_xattrs(path, new_user_xattrs):
+def set_user_xattrs(path: str, new_user_xattrs: XAttrs) -> None:
     user_xattrs, _other_xattrs = get_xattrs(path)
 
     for key, value in new_user_xattrs.items():
@@ -137,7 +145,7 @@ def set_user_xattrs(path, new_user_xattrs):
         os.removexattr(path, "user." + key)
 
 
-def main():
+def main() -> None:
     args = parse_args()
 
     tmpfile = tempfile.NamedTemporaryFile()

@@ -4,19 +4,20 @@ from pathlib import Path
 from subprocess import run
 
 
-def parse_args() -> None:
+def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument("path", type=Path, nargs="+")
     parser.add_argument("-o", "--out", type=Path, default=Path("output.mp4"))
     return parser.parse_args()
 
 
-def get_intermediate_file_path(path) -> None:
+def get_intermediate_file_path(path: Path) -> Path:
     return path.with_suffix(".ts")
 
 
 def main() -> None:
     args = parse_args()
+
     for path in args.path:
         intermediate_path = get_intermediate_file_path(path)
         if not intermediate_path.exists():
@@ -34,6 +35,7 @@ def main() -> None:
                     str(intermediate_path),
                 ]
             )
+
     run(
         [
             "ffmpeg",

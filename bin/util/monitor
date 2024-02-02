@@ -3,13 +3,14 @@ import argparse
 import hashlib
 import subprocess
 import time
+from collections.abc import Iterable
 from datetime import datetime
 from pathlib import Path
 
 DEFAULT_EXCLUDE = ["__pycache__"]
 
 
-def _get_paths(target_paths: list[Path], exclude: list[str]) -> list[str]:
+def _get_paths(target_paths: list[Path], exclude: list[str]) -> Iterable[Path]:
     for target_path in target_paths:
         if target_path.name in exclude:
             continue
@@ -20,7 +21,7 @@ def _get_paths(target_paths: list[Path], exclude: list[str]) -> list[str]:
                 yield from _get_paths([path], exclude)
 
 
-def _get_checksum(paths: list[str]) -> str:
+def _get_checksum(paths: list[Path]) -> str:
     digest = hashlib.md5()
     for path in paths:
         try:

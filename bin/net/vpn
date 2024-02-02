@@ -86,6 +86,7 @@ def main() -> None:
         text=True,
         stdin=PIPE,
     )
+    assert ovpn_process.stdin
     ovpn_process.stdin.write("\n".join([args.user, args.password]))
     ovpn_process.stdin.close()
 

@@ -42,7 +42,7 @@ def convert_to_data_uri(content: str, mime: str) -> str:
     return f"data:{mime};charset=utf-8,{encoded}"
 
 
-def parse_args() -> None:
+def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument("-d", "--data-uri", action="store_true")
     parser.add_argument("-c", "--color", default="currentColor")

@@ -9,6 +9,7 @@ from datetime import datetime
 from functools import cache
 from pathlib import Path
 from subprocess import TimeoutExpired, run
+from typing import TypeVar
 
 import dateutil.parser
 
@@ -36,6 +37,8 @@ ALL_SUFFIXES = (
     IMAGE_SUFFIXES | RAW_SUFFIXES | VIDEO_SUFFIXES | RAW_PROCESSING_SUFFIXES
 )
 
+T = TypeVar("T")
+
 
 @dataclass
 class ImageInfo:
@@ -44,13 +47,13 @@ class ImageInfo:
     discriminator: str | None
 
 
-def chunks(source, n):
+def chunks(source: list[T], n: int) -> Iterable[list[T]]:
     n = max(1, n)
     return (source[i : i + n] for i in range(0, len(source), n))
 
 
 def get_creation_date_from_exif(
-    source_path: Path, exif: dict
+    source_path: Path, exif: dict[str, str]
 ) -> datetime | None:
     filename_regex = (
         r"(?!<\d)(?P<year>\d{4})([-_]?)(?P<month>\d{2})\2(?P<day>\d{2})[-_ ]"
@@ -75,7 +78,9 @@ def get_creation_date_from_exif(
     return None
 
 
-def get_file_number_from_exif(source_path: Path, exif: dict) -> int | None:
+def get_file_number_from_exif(
+    source_path: Path, exif: dict[str, str]
+) -> int | None:
     filename_regex = r"(?:dscf?|z9|z8|d850)_?(\d{4,5})\b"
     if value := exif.get("FileNumber"):
         return int(value)
@@ -90,7 +95,7 @@ def get_file_number_from_exif(source_path: Path, exif: dict) -> int | None:
 
 class ImageInfoFactory:
     def get_from_path(self, source_path: Path) -> ImageInfo | None:
-        result = self.get_from_paths(source_path)
+        result = self.get_from_paths([source_path])
         return result[source_path]
 
     def get_from_paths(
