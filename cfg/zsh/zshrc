@@ -170,6 +170,10 @@ if [ ! -v DISPLAY ]; then
     export DISPLAY=:0.0
 fi
 
+# set env variables for certain commands
+export HOST_USER_UID=$(id -u)
+export HOST_USER_GID=$(id -g)
+
 # change cursor for vim insert mode
 zle-line-init zle-keymap-select () {
     case $KEYMAP in
