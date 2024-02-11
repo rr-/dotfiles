@@ -11,9 +11,9 @@ import tarfile
 import urllib.parse
 from collections.abc import Iterable
 
-BASE_DIR = "/home/rr-/srv/tmp.sakuya.pl/f/"
-BASE_URL = "https://tmp.sakuya.pl/f/"
-REMOTE_HOST = "sakuya.pl"
+BASE_DIR = "/home/dash/data/pub/"
+BASE_URL = "https://nebula.wind.garden/serve/pub/"
+REMOTE_HOST = "nebula"
 
 
 def collect_single_file(arg: str) -> tuple[str, str]:
