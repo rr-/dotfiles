@@ -1,0 +1,32 @@
+#!/usr/bin/env python3
+import argparse
+import json
+from pathlib import Path
+from subprocess import check_output
+from urllib.parse import quote
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("path", type=Path, nargs="+")
+    return parser.parse_args()
+
+
+def get_gps_position(path: Path) -> str | None:
+    output = check_output(["exiftool", "-json", path])
+    if isinstance(position := json.loads(output)[0].get("GPSPosition"), str):
+        return position.replace(" deg ", "° ")
+    return None
+
+
+def main() -> None:
+    args = parse_args()
+    for path in args.path:
+        if position := get_gps_position(path):
+            print(f"{path}: https://maps.google.com/?q={quote(position)}")
+        else:
+            print(f"{path}: unknown")
+
+
+if __name__ == "__main__":
+    main()
