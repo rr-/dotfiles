@@ -53,6 +53,7 @@ atl() {
     target="$1"; shift
     echo "$@" | ai --context "Translate input text from the following language: ${source}' to: ${target}." 2>/dev/null | less -rFX
 }
+alias kind='ai -ml --context "Reword the input to sound more kind. Use to the point, casual wording." 2>/dev/null'
 alias plen='tl pl en'
 alias enpl='tl en pl'
 alias enja='tl en ja'
