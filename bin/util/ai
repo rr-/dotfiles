@@ -161,10 +161,7 @@ def save_history(context: ChatContext) -> None:
 
 def num_tokens_from_messages(messages: list[Message], model: str) -> int:
     """Returns the number of tokens used by a list of messages."""
-    try:
-        encoding = tiktoken.encoding_for_model(model)
-    except KeyError:
-        encoding = tiktoken.get_encoding("cl100k_base")
+    encoding = tiktoken.get_encoding("cl100k_base")
     num_tokens = 0
     for message in messages:
         for key, value in message.items():
