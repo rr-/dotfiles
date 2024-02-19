@@ -8,7 +8,8 @@ fi
 
 # aliases
 alias a=ai
-alias p=python3.11
+alias p=python3
+alias pip='python3 -m pip'
 alias pi=ipython3
 alias l="myls"
 alias ll="myls -l"
