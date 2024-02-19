@@ -1,0 +1,33 @@
+#!/usr/bin/env python3
+import re
+from pathlib import Path
+
+
+def get_dependencies(path: Path) -> set[str]:
+    result: set[str] = set()
+    try:
+        with path.open("r", encoding="utf-8") as handle:
+            for line in handle:
+                if match := re.match(r"^#\s*requires:\s*(.+)", line):
+                    result |= set(re.split(r",?\s+", match.group(1)))
+    except UnicodeDecodeError:
+        return result
+    return result
+
+
+def get_all_dependencies() -> set[str]:
+    result: set[str] = set()
+    for path in Path(".").rglob("**/*"):
+        if path.is_file():
+            result |= get_dependencies(path)
+    return result
+
+
+def main() -> None:
+    dependencies = get_all_dependencies()
+    for dependency in sorted(dependencies):
+        print(dependency)
+
+
+if __name__ == "__main__":
+    main()
