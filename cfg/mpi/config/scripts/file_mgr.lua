@@ -3,13 +3,14 @@
 
 local mp_utils = require('mp.utils')
 
+local last_removals = {}
 
 function string.starts(input, prefix)
    return string.sub(input, 1, string.len(prefix)) == prefix
 end
 
 
-local function dirname(pathname)
+local function get_path_dirname(pathname)
     if pathname == nil then
         return '.'
     elseif type(pathname) ~= 'string' then
@@ -46,7 +47,7 @@ local function dirname(pathname)
 end
 
 
-local function basename(pathname)
+local function get_path_basename(pathname)
     if pathname == nil then
         return '.'
     elseif type(pathname) ~= 'string' then
@@ -71,6 +72,32 @@ local function basename(pathname)
 end
 
 
+local function playlist_get_pos()
+    return mp.get_property_number('playlist-pos')
+end
+
+
+local function playlist_get_size()
+    return mp.get_property_number('playlist-count')
+end
+
+local function playlist_set_pos(index)
+    mp.set_property('playlist-pos', index)
+end
+
+
+local function playlist_pop_current()
+    local old_pos = playlist_get_pos()
+    mp.commandv('playlist-remove', old_pos)
+end
+
+
+local function playlist_insert(index, target_path)
+    mp.commandv('loadfile', target_path, 'append')
+    mp.commandv('playlist-move', playlist_get_size() - 1, index)
+end
+
+
 local function dir_create(target_path)
     mp.command_native({
         name = 'subprocess',
@@ -81,97 +108,114 @@ end
 
 
 local function file_copy(source_path, target_path)
-    dir_create(dirname(target_path))
+    dir_create(get_path_dirname(target_path))
     mp.commandv('run', 'cp', source_path, target_path)
 end
 
 
 local function file_rename(source_path, target_path, keep_file_in_playlist)
-    local old_pos = mp.get_property('playlist-pos')
-    local current_path = mp.get_property('playlist/' .. tostring(old_pos) .. '/filename')
-    if current_path == source_path then
-        mp.commandv('playlist-remove', old_pos)
-    end
-
-    dir_create(dirname(target_path))
+    dir_create(get_path_dirname(target_path))
     mp.commandv('run', 'mv', source_path, target_path)
 
-    if keep_file_in_playlist and current_path == source_path then
-        mp.commandv('loadfile', target_path, 'append')
-        local new_pos = mp.get_property('playlist-count') - 1
-        mp.commandv('playlist-move', new_pos, old_pos)
-        mp.set_property('playlist-pos', old_pos)
+    mp.commandv('show-text', get_path_basename(source_path) .. ' renamed to ' .. get_path_basename(target_path))
+
+    local playlist_pos = playlist_get_pos()
+    local current_path = mp.get_property('path')
+    if current_path == source_path then
+        playlist_pop_current()
+        if keep_file_in_playlist then
+            playlist_insert(playlist_pos, target_path)
+            playlist_set_pos(playlist_pos)
+        end
     end
 end
 
 
-local function select_file()
+local function collect_file_group()
     local current_path = mp.get_property('path')
     local current_name = mp.get_property('filename')
     if current_name == nil then
-        return
+        return {}
     end
 
     local current_name_no_ext = current_name:match('(.*)[.]')
-    local current_dir = dirname(current_path)
+    local current_dir = get_path_dirname(current_path)
 
     local files = mp_utils.readdir(current_dir, 'files')
-    if files ~= nil then
-        for _, file in pairs(files) do
-            if string.starts(file, current_name_no_ext) then
-                local source_name = file
-                local source_path = mp_utils.join_path(current_dir, source_name)
-                local source_name_no_ext = source_name:match('(.*)[.]')
-                local source_name_ext = source_name:match('.*([.].*)')
+    if files == nil then
+        return {}
+    end
 
-                local target_name
-                if string.find(source_name_no_ext, '-SELECTED') then
-                    target_name = source_name_no_ext:gsub('-SELECTED', '') .. source_name_ext
-                else
-                    target_name = source_name_no_ext .. '-SELECTED' .. source_name_ext
-                end
-                local target_path = mp_utils.join_path(current_dir, target_name)
-
-                mp.commandv('show-text', source_name .. ' renamed to ' .. target_name)
-                file_rename(source_path, target_path, true)
-            end
+    local result = {}
+    for _, file in ipairs(files) do
+        if string.starts(file, current_name_no_ext) then
+            local source_path = mp_utils.join_path(current_dir, file)
+            table.insert(result, source_path)
         end
+    end
+    return result
+end
+
+
+local function select_file()
+    for _, source_path in ipairs(collect_file_group()) do
+        local source_name = get_path_basename(source_path)
+        local source_name_no_ext = source_name:match('(.*)[.]')
+        local source_name_ext = source_name:match('.*([.].*)')
+
+        local target_name
+        if string.find(source_name_no_ext, '-SELECTED') then
+            target_name = source_name_no_ext:gsub('-SELECTED', '') .. source_name_ext
+        else
+            target_name = source_name_no_ext .. '-SELECTED' .. source_name_ext
+        end
+        local target_path = mp_utils.join_path(get_path_dirname(source_path), target_name)
+
+        file_rename(source_path, target_path, true)
     end
 end
 
 
 local function discard_file()
+    local old_pos = playlist_get_pos()
     local current_path = mp.get_property('path')
-    local current_name = mp.get_property('filename')
-    if current_name == nil then
+    local removals = {}
+
+    for _, source_path in ipairs(collect_file_group()) do
+        local target_path = source_path .. '~'
+        file_rename(source_path, target_path, false)
+        table.insert(removals, {source_path, target_path})
+    end
+
+    table.insert(
+        last_removals,
+        {
+            old_pos = old_pos,
+            current_path = current_path,
+            removals = removals,
+        }
+    )
+end
+
+
+local function undo_discard_file()
+    if #last_removals < 1 then
+        mp.commandv('show-text', 'Nothing to undo')
         return
     end
 
-    local current_name_no_ext = current_name:match('(.*)[.]')
-    local current_dir = dirname(current_path)
-
-    local files = mp_utils.readdir(current_dir, 'files')
-    if files ~= nil then
-        for _, file in pairs(files) do
-            if string.starts(file, current_name_no_ext) then
-                local source_name = file
-                local source_path = mp_utils.join_path(current_dir, source_name)
-
-                local target_name
-                if string.find(source_name, '~') then
-                    target_name = source_name:gsub('~', '')
-                else
-                    target_name = source_name .. '~'
-                end
-                local target_path = mp_utils.join_path(current_dir, target_name)
-
-                mp.commandv('show-text', source_name .. ' renamed to ' .. target_name)
-                file_rename(source_path, target_path, false)
-            end
-        end
+    local last_removal = table.remove(last_removals)
+    for _, removal in ipairs(last_removal.removals) do
+        local source_path = removal[1]
+        local target_path = removal[2]
+        file_rename(target_path, source_path, false)
     end
+
+    playlist_insert(last_removal.old_pos, last_removal.current_path)
+    playlist_set_pos(last_removal.old_pos)
 end
 
 
 mp.register_script_message('select-file', select_file)
 mp.register_script_message('discard-file', discard_file)
+mp.register_script_message('undo-discard-file', undo_discard_file)
