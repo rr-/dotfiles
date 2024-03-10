@@ -6,6 +6,10 @@
 super + {r, d}
     dmenu_run
 
+# rofimoji (emoji picker)
+super + u
+    rofimoji
+
 # focus or spawn local tmux
 alt + ctrl + bracketleft
     xdotool search --classname local_terminal windowactivate; \
