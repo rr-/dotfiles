@@ -2,6 +2,7 @@
 import argparse
 import json
 from collections.abc import Iterable
+from dataclasses import dataclass, fields
 from pathlib import Path
 from subprocess import call, check_output, run
 from typing import TypedDict
@@ -9,13 +10,19 @@ from typing import TypedDict
 HOME_DIR = Path("~").expanduser()
 MOUNT_PATHS: dict[str, Path] = {
     "NIKON Z 8": HOME_DIR / "mnt",
+    "NIKON Z 9": HOME_DIR / "mnt",
 }
 
 
-class DiskInfo(TypedDict):
+@dataclass
+class DiskInfo:
     label: str | None
     mountpoint: str | None
     name: str
+
+    @property
+    def path(self) -> str:
+        return f"/dev/{self.name}"
 
 
 def get_disk_devices() -> Iterable[DiskInfo]:
@@ -26,7 +33,13 @@ def get_disk_devices() -> Iterable[DiskInfo]:
     while stack:
         device = stack.pop(0)
         stack.extend(device.get("children", []))
-        yield device
+        yield DiskInfo(
+            **{
+                field.name: device.get(field.name)
+                for field in fields(DiskInfo)
+                if field.name in device
+            }
+        )
 
 
 def unmount(path: Path) -> None:
@@ -35,32 +48,46 @@ def unmount(path: Path) -> None:
     path.rmdir()
 
 
-def mount(device_name: str, path: Path) -> None:
-    print(f"Mounting {device_name} to {path}")
+def mount(device_path: str, path: Path) -> None:
+    print(f"Mounting {device_path} to {path}")
     path.mkdir(parents=True, exist_ok=True)
-    run(["sudo", "mount", f"/dev/{device_name}", str(path)])
+    run(["sudo", "mount", f"{device_path}", str(path)])
 
 
 def is_mounted(path: Path) -> bool:
     return run(["findmnt", path], capture_output=True).returncode == 0
 
 
-def unmount_known() -> None:
+def unmount_known_disks() -> None:
     for path in MOUNT_PATHS.values():
         if is_mounted(path):
             unmount(path)
 
 
-def mount_known() -> None:
-    disk_devices = list(get_disk_devices())
+def mount_known_disks(disk_devices: list[DiskInfo]) -> None:
     for device in disk_devices:
-        label = device["label"]
+        label = device.label
         if label:
             target_mounth_path = MOUNT_PATHS.get(label)
             if target_mounth_path:
                 if is_mounted(target_mounth_path):
                     unmount(target_mounth_path)
-                mount(device["name"], MOUNT_PATHS[label])
+                mount(device.path, MOUNT_PATHS[label])
+
+
+def print_disks(disk_devices: list[DiskInfo]) -> None:
+    print("Known devices:")
+    for i, device in enumerate(disk_devices, 1):
+        extra_parts = []
+        if device.label:
+            extra_parts.append(f"label: {device.label!r}")
+        if device.mountpoint:
+            extra_parts.append(f"mounted in: {device.mountpoint}")
+        print(
+            f"{i}. {device.path}"
+            + (f" ({', '.join(extra_parts)})" if extra_parts else "")
+        )
+    print()
 
 
 def parse_args() -> argparse.Namespace:
@@ -73,9 +100,11 @@ def main() -> None:
     args = parse_args()
 
     if args.unmount:
-        unmount_known()
+        unmount_known_disks()
     else:
-        mount_known()
+        disk_devices = list(get_disk_devices())
+        print_disks(disk_devices)
+        mount_known_disks(disk_devices)
 
 
 if __name__ == "__main__":
