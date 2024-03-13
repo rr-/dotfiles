@@ -59,9 +59,13 @@ def is_mounted(path: Path) -> bool:
 
 
 def unmount_known_disks() -> None:
+    unmounted_anything = False
     for path in MOUNT_PATHS.values():
         if is_mounted(path):
             unmount(path)
+            unmounted_anything = True
+    if not unmounted_anything:
+        print("Nothing to unmount")
 
 
 def mount_known_disks(disk_devices: list[DiskInfo]) -> None:
