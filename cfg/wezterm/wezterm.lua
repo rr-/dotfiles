@@ -18,6 +18,7 @@ config.warn_about_missing_glyphs = false
 config.hyperlink_rules = wezterm.default_hyperlink_rules()
 
 config.keys = {
+  { key = 'V', mods = 'CTRL|SHIFT', action = wezterm.action.PasteFrom 'PrimarySelection', },
   { key = 'Enter', mods = 'ALT', action = wezterm.action.DisableDefaultAssignment, },
   { key = 'y', mods = 'ALT', action = wezterm.action.QuickSelect },
   { key = 'u', mods = 'ALT', action = wezterm.action{
