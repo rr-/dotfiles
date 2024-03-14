@@ -82,10 +82,10 @@ super + grave
 # screenshots
 # window
 super + i
-    sh -c 'shot -s && mpv ~/.local/share/beep-shot.mp3 >/dev/null'|clip
+    shot -s|clip
 # interactive
 super + shift + i
-    sh -c 'shot -i && mpv ~/.local/share/beep-shot.mp3 >/dev/null'|clip
+    shot -i|clip
 # desktop
 super + alt + i
-    sh -c 'shot -d && mpv ~/.local/share/beep-shot.mp3 >/dev/null'|clip
+    shot -d|clip
