@@ -39,25 +39,40 @@ def renumber_sessions() -> None:
 
 
 def recreate_session(spec: SessionSpec) -> None:
+    windows_to_create = spec["windows"]
+    if not windows_to_create:
+        return
+
     result = run(
-        [
-            "tmux",
-            "new-session",
-            "-d",
-            "-s",
-            spec["name"],
-            "-c",
-            Path(spec["windows"][0]["cwd"]).expanduser(),
-        ]
+        ["tmux", "list-windows", "-t", spec["name"], "-F", "#{window_name}"],
+        capture_output=True,
+        text=True,
     )
 
-    created = result.returncode == 0
-    existing_windows = check_output(
-        ["tmux", "list-windows", "-t", spec["name"], "-F", "#{window_name}"],
-        text=True,
-    ).splitlines()
+    existing_windows: list[str] = []
+    if result.returncode == 0:
+        existing_windows = result.stdout.splitlines()
 
-    for window in reversed(spec["windows"]):
+    if existing_windows:
+        last_created_window = spec["name"] + ":" + existing_windows[-1]
+    else:
+        first_window = windows_to_create.pop(0)
+        last_created_window = spec["name"] + ":" + first_window["window_name"]
+        run(
+            [
+                "tmux",
+                "new-session",
+                "-d",
+                "-s",
+                spec["name"],
+                "-n",
+                first_window["window_name"],
+                "-c",
+                Path(first_window["cwd"]).expanduser(),
+            ]
+        )
+
+    for window in windows_to_create:
         if window["window_name"] not in existing_windows:
             run(
                 [
@@ -66,23 +81,14 @@ def recreate_session(spec: SessionSpec) -> None:
                     "-d",
                     "-a",
                     "-t",
-                    spec["name"] + ":" + existing_windows[0],
+                    last_created_window,
                     "-n",
                     window["window_name"],
                     "-c",
                     Path(window["cwd"]).expanduser(),
                 ]
             )
-
-    if created:
-        run(
-            [
-                "tmux",
-                "kill-window",
-                "-t",
-                spec["name"] + ":" + existing_windows[0],
-            ]
-        )
+        last_created_window = spec["name"] + ":" + window["window_name"]
 
 
 def recreate_sessions() -> None:
