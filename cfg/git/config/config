@@ -72,7 +72,7 @@
     path = ~/.config/git/config-postmedia
 [includeIf "gitdir:~/work/invoices/"]
     path = ~/.config/git/config-priv
-[includeIf "gitdir:~/work/oskar/"]
-    path = ~/.config/git/config-oskar
+[includeIf "gitdir:~/work/cloudlinux/"]
+    path = ~/.config/git/config-cloudlinux
 [credential "https://github.com"]
     helper = !/usr/bin/gh auth git-credential

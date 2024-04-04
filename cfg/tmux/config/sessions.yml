@@ -4,6 +4,14 @@ lightning: &lightning
     - window_name: main
       cwd: ~/
 
+  - name: cloudlinux
+    windows:
+    - window_name: vpn
+      cwd: ~/work/cloudlinux/
+      program: work vpn
+    - window_name: main
+      cwd: ~/work/cloudlinux/defence360/
+
   - name: tr1x
     windows:
     - window_name: main
