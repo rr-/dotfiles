@@ -13,5 +13,6 @@
 *.egg-info
 docker-compose.local.yml
 /.workrc
+justfile.user
 
 venv/
