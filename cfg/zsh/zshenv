@@ -42,6 +42,7 @@ alias g='command git'
     alias gst='command git stash'
     alias gref='command git reflog'
 alias w='work'
+alias j='myjust'
 jisho() { command jisho "$@"|less -rFX }
 edict() { command edict "$@"|less -rFX }
 tl() {
