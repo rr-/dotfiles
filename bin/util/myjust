@@ -8,21 +8,9 @@ def main() -> int:
     user_justfile = Path("justfile.user")
 
     if user_justfile.exists():
-        if sys.argv[1:] == ["-l"]:
-            run(["just", "-f", str(user_justfile), "-l"])
-            return run(["just", "-l"]).returncode
-
-        elif len(sys.argv) > 1:
-            result = run(
-                ["just", "-f", str(user_justfile), "--summary"],
-                capture_output=True,
-                text=True,
-            )
-
-            if sys.argv[1] in result.stdout.split():
-                return run(
-                    ["just", "-f", str(user_justfile), *sys.argv[1:]]
-                ).returncode
+        return run(
+            ["just", "-f", str(user_justfile), *sys.argv[1:]]
+        ).returncode
 
     return run(["just", *sys.argv[1:]]).returncode
 
