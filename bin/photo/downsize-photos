@@ -1,59 +1,44 @@
 #!/usr/bin/env python3
 import argparse
-import re
 from collections.abc import Iterable
+from concurrent.futures import ThreadPoolExecutor
+from functools import partial
 from pathlib import Path
 from subprocess import run
 
 from tqdm import tqdm
 
-WIDTH = 3840
-HEIGHT = 2160
-
-SMALL_TOKEN = "sm"
-BIG_TOKEN = "lg"
-ALL_TOKENS = (SMALL_TOKEN, BIG_TOKEN)
-
-SUFFIX_FMT = "-{token}"
-ALL_TOKEN_SUFFIXES = tuple(
-    SUFFIX_FMT.format(token=token) for token in ALL_TOKENS
-)
-
-ROOT_DIR = Path(__file__).parent
-SOURCE_FILENAME_REGEX = "dsc_.*\.(jpg|jpeg)"
+DEFAULT_WIDTH = 3840
+DEFAULT_HEIGHT = 2160
+DOWNSIZED_SUFFIX = "-sm"
+SUFFIXES = (".jpg", ".JPG")
 
 
-def add_path_suffix(source_path: Path, suffix: str) -> Path:
-    new_name = (source_path.stem + suffix) + source_path.suffix
-    return source_path.parent / new_name
-
-
-def add_path_subdir(source_path: Path, dir_name: str) -> Path:
-    return source_path.parent / dir_name / source_path.name
-
-
-def get_target_path(source_path: Path, token: str) -> Path:
-    path = add_path_suffix(source_path, SUFFIX_FMT.format(token=token))
-    path = add_path_subdir(path, token)
-    return path
+def get_target_path(source_path: Path) -> Path:
+    return source_path.with_stem(f"{source_path.stem}{DOWNSIZED_SUFFIX}")
 
 
 def collect_files(path: Path) -> Iterable[Path]:
-    return sorted(
-        (
-            path
-            for path in path.iterdir()
-            if path.is_file()
-            and re.match(SOURCE_FILENAME_REGEX, path.name, flags=re.I)
-            and not path.stem.endswith(ALL_TOKEN_SUFFIXES)
-        ),
-        key=lambda path: path.name,
-    )
+    if isinstance(path, list):
+        for subpath in path:
+            yield from collect_files(subpath)
+    elif path.is_dir():
+        for subpath in path.iterdir():
+            if subpath.is_file() and subpath.suffix in SUFFIXES:
+                yield from (collect_files(subpath))
+    elif (
+        path.is_file()
+        and not path.stem.endswith(DOWNSIZED_SUFFIX)
+        and not get_target_path(path).exists()
+    ):
+        yield path
 
 
 def resize(
     source_path: Path,
     target_path: Path,
+    width: int,
+    height: int,
     dry_run: bool,
 ) -> bool:
     if target_path.exists():
@@ -66,7 +51,7 @@ def resize(
                 "convert",
                 source_path,
                 "-resize",
-                f"{WIDTH}x{HEIGHT}",
+                f"{width}x{height}",
                 target_path,
             ],
             check=True,
@@ -86,28 +71,38 @@ def move(source_path: Path, target_path: Path, dry_run: bool) -> bool:
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
-    parser.add_argument("root_dir", type=Path, default=ROOT_DIR, nargs="?")
+    parser.add_argument("path", type=Path, default=Path("."), nargs="*")
+    parser.add_argument("-w", "--width", type=int, default=DEFAULT_WIDTH)
+    parser.add_argument("-H", "--height", type=int, default=DEFAULT_HEIGHT)
     parser.add_argument("-d", "--dry-run", action="store_true")
     return parser.parse_args()
 
 
+def resize_with_progress(
+    source_path: Path, progress: tqdm, args: argparse.Namespace
+) -> None:
+    target_path = get_target_path(source_path)
+    progress.set_description(f"Resizing {source_path} to {target_path}")
+    progress.update()
+    resize(
+        source_path,
+        target_path,
+        width=args.width,
+        height=args.height,
+        dry_run=args.dry_run,
+    )
+
+
 def main() -> None:
     args = parse_args()
+    files = sorted(collect_files(args.path))
 
-    with tqdm(collect_files(args.root_dir)) as progress:
-        for source_path in progress:
-            small_path = get_target_path(source_path, SMALL_TOKEN)
-            big_path = get_target_path(source_path, BIG_TOKEN)
-
-            progress.set_description_str(
-                f"Resizing {source_path} to {small_path}"
+    with tqdm(total=len(files)) as progress:
+        with ThreadPoolExecutor() as pool:
+            pool.map(
+                partial(resize_with_progress, progress=progress, args=args),
+                files,
             )
-            resize(source_path, small_path, dry_run=args.dry_run)
-
-            progress.set_description_str(
-                f"Renaming {source_path} to {big_path}"
-            )
-            move(source_path, big_path, dry_run=args.dry_run)
 
 
 if __name__ == "__main__":
