@@ -1,6 +1,9 @@
 [github]
     user = rr-
 
+[receive]
+    denyCurrentBranch = warn
+
 [branch]
     autosetuprebase = always
 
