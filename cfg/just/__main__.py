@@ -1,12 +1,10 @@
-import tempfile
 from pathlib import Path
-from subprocess import check_call
 from typing import cast
 
 import requests
 
 from libdotfiles.packages import has_installed, try_install
-from libdotfiles.util import HOME_DIR, get_distro_name, git_clone, run
+from libdotfiles.util import get_distro_name, run
 
 
 def sudo_write(target_path: Path, content: bytes) -> None:
