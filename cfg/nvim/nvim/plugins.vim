@@ -76,6 +76,7 @@ require("zen-mode").setup(
     width = 81,
     options = {
         cursorline = true,
+        colorcolumn = "0",
     },
   },
   plugins = {
