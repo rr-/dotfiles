@@ -67,6 +67,8 @@ command! -bang -nargs=* Rg
 
 "configure zen-mode
 lua << EOF
+local oldwrap = vim.wo.wrap
+
 require("zen-mode").setup(
 {
   window = {
@@ -81,6 +83,13 @@ require("zen-mode").setup(
     tmux = { enabled = true },
     wezterm = { enabled = true },
   },
+  on_open = function(win)
+      oldwrap = vim.wo.wrap
+      vim.wo.wrap = true
+  end,
+  on_close = function()
+      vim.wo.wrap = oldwrap
+  end,
 }
 )
 EOF
