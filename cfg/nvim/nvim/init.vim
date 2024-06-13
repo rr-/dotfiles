@@ -14,6 +14,7 @@ Plug 'editorconfig/editorconfig-vim'    "respect .editorconfig
 Plug 'Asheq/close-buffers.vim'          "close hidden buffers
 Plug 'lambdalisue/fern.vim'             "alternative to buggy and unwieldy netrw
 Plug 'lambdalisue/fern-hijack.vim'      "replace netrw
+Plug 'folke/zen-mode.nvim'
 call plug#end()
 
 runtime editor.vim

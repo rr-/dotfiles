@@ -11,12 +11,9 @@ nnoremap <silent> <C-s> :update<CR>
 "ctrl+c = copy
 inoremap <silent> <C-c> <Esc>"+y
 nnoremap <silent> <C-c> "+y
-"ctrl+z = open shell
-if has('nvim')
-  nnoremap <silent> <C-z> :te<CR>
-else
-  nnoremap <silent> <C-z> :sh<CR>
-endif
+"ctrl+z = zenmode
+inoremap <silent> <C-z> <Esc>:ZenMode<CR>
+nnoremap <silent> <C-z> <Esc>:ZenMode<CR>
 "ctrl+q = close window
 inoremap <silent> <C-q> <Esc>:q<CR>
 nnoremap <silent> <C-q> :q<CR>

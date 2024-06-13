@@ -64,3 +64,23 @@ command! -bang -nargs=* Rg
   \ call fzf#vim#grep(
   \   'rg --hidden --column --line-number --no-heading --color=always --smart-case -- '.shellescape(<q-args>), 1,
   \   fzf#vim#with_preview(), <bang>0)
+
+"configure zen-mode
+lua << EOF
+require("zen-mode").setup(
+{
+  window = {
+    backdrop = 0.0,
+    width = 81,
+    options = {
+        cursorline = true,
+    },
+  },
+  plugins = {
+    options = { enabled = true },
+    tmux = { enabled = true },
+    wezterm = { enabled = true },
+  },
+}
+)
+EOF
