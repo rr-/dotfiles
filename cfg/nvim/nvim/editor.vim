@@ -37,6 +37,7 @@ set enc=utf-8                 "character encoding of ui
 set fencs=utf-8,cp932         "preferred character encodings
 set ff=unix ffs=unix,dos      "preferred eol styles
 set nowrap                    "don't wrap long lines
+set linebreak                 "wrap lines at word boundaries
 
 "automatic aids
 set formatoptions-=t          "disable autowrapping text
