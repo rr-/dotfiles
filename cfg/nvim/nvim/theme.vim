@@ -45,6 +45,7 @@ highlight TabLineFill  term=NONE      cterm=NONE ctermbg=234
 highlight TabLine      term=NONE      cterm=NONE ctermfg=250 ctermbg=238
 highlight TabLineSel   term=NONE      cterm=NONE ctermfg=255 ctermbg=232
 
+highlight ZenBg         term=NONE     ctermbg=233
 highlight! link Pmenu Normal
 
 set cursorline
