@@ -3,7 +3,9 @@
 "----------------------------------------
 
 " Remove all existing highlighting and set the defaults.
-colorscheme default
+colorscheme vim
+set notermguicolors
+set background=dark
 
 " Remove all highlighting
 highlight clear Constant
