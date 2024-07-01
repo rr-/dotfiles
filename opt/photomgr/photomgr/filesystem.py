@@ -2,7 +2,7 @@ from collections.abc import Iterable, Sequence
 from functools import cache
 from pathlib import Path
 
-from photomgr.common import JPEG_SUFFIXES, RAW_SUFFIXES
+from photomgr.common import FILENAME_DATE_REGEX, JPEG_SUFFIXES, RAW_SUFFIXES
 
 
 @cache
@@ -37,16 +37,27 @@ def find_matching_path(
     source_path: Path, source_directory: Path, suffixes: Sequence[str]
 ) -> Path | None:
     stem = source_path.stem
-
-    for suffix in suffixes:
-        if raw_path := case_insensitive_exists(
+    try_paths = [
+        *[source_directory / (stem + suffix) for suffix in suffixes],
+        *[
             source_directory / source_path.parent / (stem + suffix)
-        ):
+            for suffix in suffixes
+        ],
+    ]
+
+    if match := FILENAME_DATE_REGEX.match(source_path.name):
+        discriminator = match.group("discriminator")
+        try_paths.append(
+            source_directory / f"{discriminator[0:3]}NCZ_8/DSC_{discriminator[3:]}.NEF"
+        )
+        try_paths.append(
+            source_directory / f"{discriminator[0:3]}NCZ_9/DSC_{discriminator[3:]}.NEF"
+        )
+
+    for try_path in try_paths:
+        if raw_path := case_insensitive_exists(try_path):
             return raw_path
 
-    for suffix in suffixes:
-        if raw_path := case_insensitive_exists(source_directory / (stem + suffix)):
-            return raw_path
     return None
 
 
