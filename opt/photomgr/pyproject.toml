@@ -1,0 +1,9 @@
+[project]
+name = "photomgr"
+version = "0.0.0"
+
+[project.scripts]
+photomgr = "photomgr:__main__.main"
+[build-system]
+requires = ["setuptools>=46.4.0"]
+build-backend = "setuptools.build_meta"
