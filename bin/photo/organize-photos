@@ -4,10 +4,9 @@ import argparse
 import json
 import re
 import sys
-from collections.abc import Callable, Iterable
+from collections.abc import Iterable
 from dataclasses import dataclass
 from datetime import datetime
-from functools import cache
 from pathlib import Path
 from subprocess import TimeoutExpired, run
 from typing import TypeVar
@@ -24,8 +23,8 @@ FILENAME_DATE_REGEX = re.compile(
     r"(?P<hour>\d{2})"
     r"(?P<minute>\d{2})"
     r"(?P<second>\d{2})"
-    r"_(?P<device>\w+)"
-    r"(?:_(?P<discriminator>\w+))?"
+    r"_(?P<device>[^_]+)"
+    r"(?:_(?P<discriminator>\d{7}))?"
     r"(?P<extension>\.\w+)$"
 )
 
@@ -76,6 +75,14 @@ def get_creation_date_from_exif(
             pass
     if value := exif.get("CreateDate"):
         return dateutil.parser.parse(value)
+    return None
+
+
+def get_directory_number_from_exif(
+    source_path: Path, exif: dict[str, str]
+) -> int | None:
+    if value := exif.get("DirectoryNumber"):
+        return int(value)
     return None
 
 
@@ -149,6 +156,7 @@ class ExifToolImageInfoFactory(ImageInfoFactory):
                     "exiftool",
                     "-CreateDate",
                     "-Model",
+                    "-DirectoryNumber",
                     "-FileNumber",
                     "-RawFileName",
                     "-j",
@@ -178,11 +186,18 @@ class ExifToolImageInfoFactory(ImageInfoFactory):
 
         for source_path, exif in zip(source_paths, exif_infos):
             creation_date = get_creation_date_from_exif(source_path, exif)
+            directory_number = get_directory_number_from_exif(
+                source_path, exif
+            )
             file_number = get_file_number_from_exif(source_path, exif)
             result[source_path] = ImageInfo(
                 time=creation_date,
                 device=exif.get("Model"),
-                discriminator=f"{file_number:04d}" if file_number else None,
+                discriminator=(
+                    f"{directory_number:03d}{file_number:04d}"
+                    if directory_number and file_number
+                    else f"XXX{file_number:04d}" if file_number else None
+                ),
             )
 
         return result
