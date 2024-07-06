@@ -4,13 +4,13 @@ import json
 from collections.abc import Iterable
 from dataclasses import dataclass, fields
 from pathlib import Path
-from subprocess import call, check_output, run
-from typing import TypedDict
+from subprocess import check_output, run
 
 HOME_DIR = Path("~").expanduser()
 MOUNT_PATHS: dict[str, Path] = {
     "NIKON Z 8": HOME_DIR / "mnt",
     "NIKON Z 9": HOME_DIR / "mnt",
+    "NIKON Z FC": HOME_DIR / "mnt",
 }
 
 
