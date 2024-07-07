@@ -1,31 +1,54 @@
 #!/usr/bin/env python3
-print("edit me")
-exit(1)
-
+import argparse
+from collections.abc import Iterable
 from pathlib import Path
 
 import numpy
 from PIL import Image
 
-paths = list(
-    sorted(
-        Path("/home/rr-.hdd/data.local/img/camera/2020-08-26/").glob("*.jpg")
+from libdotfiles import logging
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("path", type=Path, nargs="+", default=Path("."))
+    parser.add_argument(
+        "-o", "--output", type=Path, default=Path("average.jpg")
     )
-)
+    return parser.parse_args()
 
-paths = paths[0 : len(paths) // 8]
 
-image = Image.open(paths[0])
-width, height = Image.open(paths[0]).size
+def find_image_paths(paths: list[Path]) -> Iterable[Path]:
+    for path in paths:
+        if path.is_dir():
+            yield from path.glob("*.jpg")
+        else:
+            yield path
 
-arr = numpy.zeros((height, width, 3), numpy.float)
-for i, path in enumerate(paths):
-    print(f"{i/len(paths):%}: {path}")
-    imarr = numpy.array(Image.open(path), dtype=numpy.float)
-    arr = arr + imarr / len(paths)
 
-# Round values in array and cast as 8-bit integer
-arr = numpy.array(numpy.round(arr), dtype=numpy.uint8)
+def average_images(paths: list[Path]) -> Image:
+    image = Image.open(paths[0])
+    width, height = image.size
 
-out = Image.fromarray(arr, mode="RGB")
-out.save("average.png")
+    arr = numpy.zeros((height, width, 3), dtype=float)
+    for i, path in enumerate(paths):
+        logging.info(f"{i/len(paths):.02%}: {path}")
+        subimage = numpy.array(Image.open(path), dtype=float)
+        arr = arr + subimage / len(paths)
+
+    # Round values in array and cast as 8-bit integer
+    arr = numpy.array(numpy.round(arr), dtype=numpy.uint8)
+
+    return Image.fromarray(arr, mode="RGB")
+
+
+def main() -> None:
+    args = parse_args()
+    paths = list(find_image_paths(args.path))
+
+    image = average_images(paths)
+    image.save(args.output)
+
+
+if __name__ == "__main__":
+    main()
