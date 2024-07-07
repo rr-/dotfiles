@@ -2,7 +2,7 @@
 import logging
 import os
 from collections.abc import Callable
-from logging import *
+from logging import *  # noqa: F403
 from typing import Any
 
 try:
