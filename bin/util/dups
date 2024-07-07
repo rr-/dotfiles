@@ -58,7 +58,7 @@ def construct_size_to_path_dict(
     ret: dict[int, list[Path]] = {}
     for path in paths:
         size = path.stat().st_size
-        if not size in ret:
+        if size not in ret:
             ret[size] = []
         ret[size].append(path)
     return ret

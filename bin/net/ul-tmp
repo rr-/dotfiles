@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 # Uploads files to tmp.sakuya.pl via SSH and outputs copyable links
 
-import argparse
 import io
 import os
 import shlex

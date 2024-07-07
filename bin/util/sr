@@ -55,7 +55,7 @@ def main() -> None:
     try:
         result = recognize(args.file, args.language)
         print(result)
-    except RecognitionError as ex:
+    except RecognitionError:
         print(file=sys.stderr)
         sys.exit(1)
 

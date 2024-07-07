@@ -2,7 +2,6 @@
 """Start VPN automatically. Can automate user, password and 2fa challenges."""
 import argparse
 import shlex
-import shutil
 import time
 from pathlib import Path
 from subprocess import PIPE, Popen, check_call, check_output, run

@@ -24,8 +24,6 @@
 # THE SOFTWARE.
 
 import argparse
-import glob
-import os
 import sys
 import tempfile
 from collections.abc import Iterable
