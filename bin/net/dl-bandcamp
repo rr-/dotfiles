@@ -3,7 +3,6 @@
 import argparse
 import json
 import os
-import pathlib
 import shelve
 import sys
 import tempfile
@@ -15,7 +14,6 @@ from urllib.parse import urlparse, urlunparse
 
 import dateutil.parser
 import lxml.html
-import regex
 import requests
 import tqdm
 import xdg

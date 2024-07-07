@@ -2,14 +2,12 @@
 import argparse
 import sys
 from collections.abc import Iterable
-from decimal import Decimal
 from enum import StrEnum, auto
 from typing import Any, cast
 
 from Xlib import X, Xatom
 from Xlib.display import Display
 from Xlib.protocol.event import ClientMessage
-from Xlib.xobject.drawable import Window
 
 
 class RotateMode(StrEnum):
@@ -188,7 +186,6 @@ def main() -> None:
     args = parse_args()
     disp = Display()
 
-    root_window = disp.screen().root
     active_window_id = disp.get_input_focus().focus.id
     if (desktop_id := get_desktop_id(disp, active_window_id)) is not None:
         desktop_window_ids = list(get_desktop_window_ids(disp, desktop_id))

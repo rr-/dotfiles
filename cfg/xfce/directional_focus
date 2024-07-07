@@ -3,13 +3,11 @@ import argparse
 import sys
 from collections.abc import Iterable
 from dataclasses import dataclass
-from decimal import Decimal
 from enum import StrEnum, auto
 from typing import cast
 
-from Xlib import X, Xatom
+from Xlib import X
 from Xlib.display import Display
-from Xlib.protocol.event import ClientMessage
 
 
 class Direction(StrEnum):
@@ -133,15 +131,12 @@ def main() -> None:
     args = parse_args()
     disp = Display()
 
-    root_window = disp.screen().root
     active_window_id = disp.get_input_focus().focus.id
     active_window_geometry = get_window_geometry(disp, active_window_id)
 
     desktop_id = get_desktop_id(disp, active_window_id)
     desktop_window_ids = list(get_desktop_windows(disp, desktop_id))
 
-    best_distance = float("inf")
-    best_window_id = -1
     desktop_window_geometries = [
         get_window_geometry(disp, window_id)
         for window_id in desktop_window_ids

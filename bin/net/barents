@@ -75,7 +75,7 @@ def parse_barents_trips(html_text: str) -> list[Trip]:
 
             try:
                 start, end, dates_unstable = parse_dates(self.last_trip_date)
-            except Exception as ex:
+            except Exception:
                 print(
                     "Error parsing dates for",
                     self.last_trip_date,
@@ -116,9 +116,6 @@ def parse_args() -> argparse.Namespace:
         "-l", "--length", help="sort by length", action="store_true"
     )
     return parser.parse_args()
-
-
-from pathlib import Path
 
 
 def main() -> None:

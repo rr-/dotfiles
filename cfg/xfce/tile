@@ -187,7 +187,6 @@ def main() -> None:
     args = parse_args()
     disp = Display()
 
-    root_window = disp.screen().root
     active_window_id = disp.get_input_focus().focus.id
     if (desktop_id := get_desktop_id(disp, active_window_id)) is not None:
         partition_desktop_windows(disp, desktop_id, ratio=args.ratio)
