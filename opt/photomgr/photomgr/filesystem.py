@@ -1,3 +1,4 @@
+import re
 from collections.abc import Iterable, Sequence
 from functools import cache
 from pathlib import Path
@@ -56,6 +57,12 @@ def find_matching_path(
                 source_directory
                 / f"{discriminator[0:3]}NCZ_9/DSC_{discriminator[3:]}.{suffix}"
             )
+
+    if "-" in stem:
+        try_paths.extend(
+            source_directory / (re.sub("-.*", "", stem) + suffix)
+            for suffix in suffixes
+        )
 
     for try_path in try_paths:
         if raw_path := case_insensitive_exists(try_path):

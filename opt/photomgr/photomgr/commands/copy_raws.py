@@ -21,6 +21,7 @@ class CopyRawsCommand(BaseCommand):
     def run(self, args: argparse.Namespace) -> None:
         jpeg_paths = list(find_jpegs(args.target, recursive=args.recursive))
         print("Found", len(jpeg_paths), "jpeg files")
+
         for i, jpeg_path in enumerate(jpeg_paths):
             rel_path = jpeg_path.relative_to(args.target)
             raw_dir = args.source / jpeg_path.parent.relative_to(args.target)
