@@ -47,14 +47,15 @@ def find_matching_path(
 
     if match := FILENAME_DATE_REGEX.match(source_path.name):
         discriminator = match.group("discriminator")
-        try_paths.append(
-            source_directory
-            / f"{discriminator[0:3]}NCZ_8/DSC_{discriminator[3:]}.NEF"
-        )
-        try_paths.append(
-            source_directory
-            / f"{discriminator[0:3]}NCZ_9/DSC_{discriminator[3:]}.NEF"
-        )
+        for suffix in suffixes:
+            try_paths.append(
+                source_directory
+                / f"{discriminator[0:3]}NCZ_8/DSC_{discriminator[3:]}.{suffix}"
+            )
+            try_paths.append(
+                source_directory
+                / f"{discriminator[0:3]}NCZ_9/DSC_{discriminator[3:]}.{suffix}"
+            )
 
     for try_path in try_paths:
         if raw_path := case_insensitive_exists(try_path):
