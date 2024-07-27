@@ -42,8 +42,8 @@
     showUntrackedFiles = all
 
 [color "diff"]
-    old = red reverse
-    new = green reverse
+    old = normal 130
+    new = normal 64
     whitespace = blue reverse
 
 [commit]
