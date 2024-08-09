@@ -12,13 +12,12 @@ def parse_args() -> argparse.Namespace:
         "--width",
         type=int,
         default=1920,
-        choices=[3840, 1920, 1600, 1280, 960, 640],
     )
     parser.add_argument("-c", "--crf", type=int, default=15)
     parser.add_argument("-b", "--bitrate", default="4m")
     parser.add_argument("--fps", type=int, default=15)
     parser.add_argument(
-        "-o", "--output", type=Path, default=Path("timelapse.ewbm")
+        "-o", "--output", type=Path, default=Path("timelapse.webm")
     )
     parser.add_argument(
         "--filter", help="example: curves=lighter,curves=increase_contrast"
@@ -28,6 +27,13 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> None:
     args = parse_args()
+    vf_filters = []
+    if args.width > 0:
+        vf_filters.append(f"scale={args.width}:-1")
+    if args.filter:
+        vf_filters.append(args.filter)
+
+    filter_args = ["-vf", ",".join(vf_filters)] if vf_filters else []
     run(
         [
             "ffmpeg",
@@ -41,11 +47,7 @@ def main() -> None:
             f"{args.pattern}",
             "-flush_packets",
             "1",
-            "-vf",
-            (
-                f"scale={args.width}:-1"
-                + (",{args.filter}" if args.filter else "")
-            ),
+            *filter_args,
             "-crf",
             f"{args.crf}",
             "-b:v",
