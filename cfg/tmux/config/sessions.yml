@@ -28,7 +28,7 @@ lightning: &lightning
     - window_name: TOMB21
       cwd: ~/work/ext/TOMB21/
     - window_name: ida
-      cwd: ~/data.local/ida/
+      cwd: ~/work/priv/TR2X/
 
   - name: wind_garden
     windows:
