@@ -1,12 +1,13 @@
-#!/bin/env python
+#!/usr/bin/env python
 # requires openai tiktoken pyyaml prompt-toolkit xdg-base-dirs
 
 import argparse
 import atexit
+import dataclasses as dc
 import datetime
 import json
+import select
 import sys
-from dataclasses import dataclass, field
 from decimal import Decimal
 from pathlib import Path
 
@@ -31,64 +32,89 @@ SAVE_FILE = (
 )
 BASE_ENDPOINT = "https://api.openai.com/v1"
 
-MODEL_INFO = {
-    "gpt-3.5-turbo": {
-        "prompt": Decimal("0.001"),
-        "completion": Decimal("0.002"),
-        "tokens": 4096,
-    },
-    "gpt-3.5-turbo-1106": {
-        "prompt": Decimal("0.001"),
-        "completion": Decimal("0.002"),
-        "tokens": 16385,
-    },
-    "gpt-3.5-turbo-0613": {
-        "prompt": Decimal("0.001"),
-        "completion": Decimal("0.002"),
-        "tokens": 16385,
-    },
-    "gpt-3.5-turbo-16k": {
-        "prompt": Decimal("0.001"),
-        "completion": Decimal("0.002"),
-        "tokens": 16385,
-    },
-    "gpt-4": {
-        "prompt": Decimal("0.03"),
-        "completion": Decimal("0.06"),
-        "tokens": 8192,
-    },
-    "gpt-4-0613": {
-        "prompt": Decimal("0.03"),
-        "completion": Decimal("0.06"),
-        "tokens": 8192,
-    },
-    "gpt-4-32k": {
-        "prompt": Decimal("0.06"),
-        "completion": Decimal("0.12"),
-        "tokens": 32768,
-    },
-    "gpt-4-32k-0613": {
-        "prompt": Decimal("0.06"),
-        "completion": Decimal("0.12"),
-        "tokens": 32768,
-    },
-    "gpt-4-1106-preview": {
-        "prompt": Decimal("0.01"),
-        "completion": Decimal("0.03"),
-        "tokens": 128000,
-    },
-}
+
+@dc.dataclass
+class ModelInfo:
+    name: str
+    prompt: Decimal
+    completion: Decimal
+    tokens: int
 
 
-Message = dict
+MODEL_INFO = [
+    ModelInfo(
+        name="gpt-3.5-turbo",
+        prompt=Decimal("0.001"),
+        completion=Decimal("0.002"),
+        tokens=4096,
+    ),
+    ModelInfo(
+        name="gpt-3.5-turbo-1106",
+        prompt=Decimal("0.001"),
+        completion=Decimal("0.002"),
+        tokens=16385,
+    ),
+    ModelInfo(
+        name="gpt-3.5-turbo-0613",
+        prompt=Decimal("0.001"),
+        completion=Decimal("0.002"),
+        tokens=16385,
+    ),
+    ModelInfo(
+        name="gpt-3.5-turbo-16k",
+        prompt=Decimal("0.001"),
+        completion=Decimal("0.002"),
+        tokens=16385,
+    ),
+    ModelInfo(
+        name="gpt-4",
+        prompt=Decimal("0.03"),
+        completion=Decimal("0.06"),
+        tokens=8192,
+    ),
+    ModelInfo(
+        name="gpt-4-0613",
+        prompt=Decimal("0.03"),
+        completion=Decimal("0.06"),
+        tokens=8192,
+    ),
+    ModelInfo(
+        name="gpt-4-32k",
+        prompt=Decimal("0.06"),
+        completion=Decimal("0.12"),
+        tokens=32768,
+    ),
+    ModelInfo(
+        name="gpt-4-32k-0613",
+        prompt=Decimal("0.06"),
+        completion=Decimal("0.12"),
+        tokens=32768,
+    ),
+    ModelInfo(
+        name="gpt-4-1106-preview",
+        prompt=Decimal("0.01"),
+        completion=Decimal("0.03"),
+        tokens=128000,
+    ),
+]
 
 
-@dataclass
+Message = dict[str, str]
+
+
+def get_model_info(model_name: str) -> ModelInfo | None:
+    for model_info in MODEL_INFO:
+        if model_name == model_info.name:
+            return model_info
+    return None
+
+
+@dc.dataclass
 class ChatContext:
     client: OpenAI
     model: str
     temperature: float
-    messages: list[Message] = field(default_factory=list)
+    messages: list[Message] = dc.field(default_factory=list)
 
     @property
     def user_messages(self) -> list[Message]:
@@ -111,15 +137,14 @@ class ChatContext:
         return num_tokens_from_messages(self.completion_messages, self.model)
 
 
-DEFAULT_CONFIG = {
-    "api-key": "INSERT API KEY HERE",
-    "model": "gpt-4o",
-    "temperature": 1.0,
-    # 'max_tokens': 500,
-}
+@dc.dataclass
+class Config:
+    api_key: str = "INSERT API KEY HERE"
+    model: str = "gpt-4o"
+    temperature: float = 1.0
 
 
-def load_config(config_file: Path) -> dict:
+def load_config(config_file: Path) -> Config:
     """
     Read a YAML config file and returns its content as a dictionary.
     If the config file is missing, create one with default values.
@@ -128,14 +153,21 @@ def load_config(config_file: Path) -> dict:
     # If the config file does not exist, create one with default configurations
     if not config_file.exists():
         config_file.parent.mkdir(exist_ok=True, parents=True)
-        config_file.write_text(yaml.dump(DEFAULT_CONFIG))
+        config_file.write_text(yaml.dump(dc.asdict(Config())))
         print(f"New config file initialized: {config_file}", file=sys.stderr)
 
     # Load existing config
     user_config = yaml.load(config_file.read_text(), Loader=yaml.FullLoader)
 
     # Fill missing values with defaults
-    return {**DEFAULT_CONFIG, **user_config}
+    result = Config()
+    for field in dc.fields(result):
+        key = field.name
+        keys_to_try = {key, key.replace("_", "-")}
+        for user_key in keys_to_try:
+            if user_key in user_config:
+                setattr(result, key, user_config[user_key])
+    return result
 
 
 def save_history(context: ChatContext) -> None:
@@ -168,19 +200,15 @@ def num_tokens_from_messages(messages: list[Message], model: str) -> int:
 def calculate_expense(
     prompt_tokens: int,
     completion_tokens: int,
-    prompt_pricing: float,
-    completion_pricing: float,
+    prompt_pricing: Decimal,
+    completion_pricing: Decimal,
 ) -> Decimal:
     """
     Calculate the expense, given the number of tokens and the pricing rates
     """
-    expense = ((Decimal(prompt_tokens) / Decimal(1000)) * prompt_pricing) + (
+    return ((Decimal(prompt_tokens) / Decimal(1000)) * prompt_pricing) + (
         (Decimal(completion_tokens) / Decimal(1000)) * completion_pricing
     )
-
-    expense = "{:.6f}".format(round(expense, 6))
-
-    return expense
 
 
 def display_expense(context: ChatContext) -> None:
@@ -192,14 +220,14 @@ def display_expense(context: ChatContext) -> None:
         file=sys.stderr,
     )
 
-    if context.model in MODEL_INFO:
+    if model_info := get_model_info(context.model):
         total_expense = calculate_expense(
             context.prompt_tokens,
             context.completion_tokens,
-            MODEL_INFO[context.model]["prompt"],
-            MODEL_INFO[context.model]["completion"],
+            model_info.prompt,
+            model_info.completion,
         )
-        print(f"Estimated expense: ${total_expense}", file=sys.stderr)
+        print(f"Estimated expense: ${total_expense:.6f}", file=sys.stderr)
     else:
         print(
             f"No expense estimate available for model {context.model}",
@@ -260,11 +288,7 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-import select
-import sys
-
-
-def stdin_has_data():
+def stdin_has_data() -> bool:
     return select.select([sys.stdin], [], [], 0) == ([sys.stdin], [], [])
 
 
@@ -323,9 +347,9 @@ def main() -> None:
         sys.exit(1)
 
     if args.model:
-        config["model"] = args.model
+        config.model = args.model
     if args.temperature is not None:
-        config["temperature"] = args.temperature
+        config.temperature = args.temperature
 
     messages: list[Message] = []
     if args.context_path:
@@ -340,9 +364,9 @@ def main() -> None:
             messages.append({"role": "system", "content": text.strip()})
 
     context = ChatContext(
-        client=OpenAI(api_key=config["api-key"]),
-        model=config["model"],
-        temperature=config["temperature"],
+        client=OpenAI(api_key=config.api_key),
+        model=config.model,
+        temperature=config.temperature,
         messages=messages,
     )
 
