@@ -50,6 +50,8 @@ def main() -> None:
             *filter_args,
             "-crf",
             f"{args.crf}",
+            "-pix_fmt",
+            "yuv420p",
             "-b:v",
             f"{args.bitrate}",
             "-r",
