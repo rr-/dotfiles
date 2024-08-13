@@ -3,7 +3,7 @@
 #
 
 # dmenu (a program launcher)
-super + {r, d}
+super + d
     dmenu_run
 
 # rofimoji (emoji picker)
@@ -56,11 +56,11 @@ super + q
     wmctrl -c :ACTIVE:
 
 # maximize the window
-super + Up
+super + {Up,m}
     wmctrl -r :ACTIVE: -b add,maximized_horz,maximized_vert
 
 # restore the window
-super + Down
+super + {Down,r}
     wmctrl -r :ACTIVE: -b remove,maximized_horz,maximized_vert
 
 # set current window as fullscreen
