@@ -36,6 +36,9 @@ nnoremap <C-l> :Buffers<CR>
 nnoremap gn :tabnew<CR>
 "go to line
 nnoremap <expr> <silent> <CR> v:count ? ":<C-U><Esc>" . v:count . "G" : "<CR>"
+"quickfix navigation
+nnoremap <M-c> :cn<CR>
+nnoremap <M-C> :cp<CR>
 
 "exit terminal mode via escape
 tnoremap <Esc> <C-\><C-n>
