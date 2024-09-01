@@ -20,13 +20,7 @@ indent_size = 2
 [*.svg]
 indent_size = 2
 
-[*.css]
-indent_size = 2
-
-[*.scss]
-indent_size = 2
-
-[*.qss]
+[*.{css,scss,qss}]
 indent_size = 2
 
 [*.{js,jsx,ts,tsx}]
@@ -36,6 +30,9 @@ indent_size = 2
 indent_size = 2
 
 [{*.yml,*.yaml,.workrc}]
+indent_size = 2
+
+[*.lua]
 indent_size = 2
 
 [{Makefile,*.mk}]
