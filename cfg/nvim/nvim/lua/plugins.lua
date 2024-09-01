@@ -22,3 +22,10 @@ vim.keymap.set("n", "<c-e>", function()
 end, { desc = "Fzf grep" })
 vim.keymap.set("n", "<c-p>", require('fzf-lua').files, { desc = "Fzf files" })
 vim.keymap.set("n", "<c-l>", require('fzf-lua').buffers, { desc = "Fzf open buffers" })
+
+vim.api.nvim_create_user_command(
+    'SudoSave',
+    function()
+        vim.cmd('w !sudo tee >/dev/null %')
+    end, {}
+)

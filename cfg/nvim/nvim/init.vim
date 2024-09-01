@@ -19,6 +19,6 @@ call plug#end()
 lua require('editor')
 lua require('indent')
 runtime plugins.vim
-runtime keyboard.vim
+lua require('keyboard')
 lua require('file-types')
 lua require('theme')
