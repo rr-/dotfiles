@@ -30,7 +30,7 @@ for dirname in ["undo", "backup", "swap", "spell"]:
     create_dir(NVIM_DIR / dirname)
 
 create_symlinks(
-    [(path, NVIM_DIR / path.name) for path in (PKG_DIR / "nvim").glob("*.vim")]
+    [(path, NVIM_DIR / path.name) for path in (PKG_DIR / "nvim").glob("*")]
 )
 
 create_symlinks(

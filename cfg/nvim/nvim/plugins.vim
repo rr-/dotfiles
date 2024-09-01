@@ -2,16 +2,6 @@
 "- plugin options
 "----------------------------------------
 
-"fzf
-if has('nvim')
-  let g:fzf_nvim_statusline = 0
-  function! s:fzf_statusline()
-    "don't set any colors explicitly
-    setlocal statusline=%#fzf1#\ >\ %#fzf2#fz%#fzf3#f
-  endfunction
-  autocmd! User FzfStatusLine call <SID>fzf_statusline()
-endif
-
 "config vim-move
 let g:move_map_keys = 0
 let g:move_key_modifier = 'C'           "c-j and c-k rather than default binding
@@ -60,11 +50,6 @@ augroup my-fern
   autocmd FileType fern call s:init_fern()
 augroup END
 
-command! -bang -nargs=* Rg
-  \ call fzf#vim#grep(
-  \   'rg --hidden --column --line-number --no-heading --color=always --smart-case -- '.shellescape(<q-args>), 1,
-  \   fzf#vim#with_preview(), <bang>0)
-
 "configure zen-mode
 lua << EOF
 local oldwrap = vim.wo.wrap
@@ -94,3 +79,5 @@ require("zen-mode").setup(
 }
 )
 EOF
+
+lua require("plugins")

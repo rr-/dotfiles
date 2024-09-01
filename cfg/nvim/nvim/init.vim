@@ -1,6 +1,5 @@
 call plug#begin()
-Plug 'junegunn/fzf', { 'dir': '~/.fzf', 'do': './install --all' }
-Plug 'junegunn/fzf.vim'                 "open files using fuzzy matching
+Plug 'ibhagwan/fzf-lua'                 "open files using fuzzy matching
 Plug 'ntpeters/vim-better-whitespace'   "highlight and strip trailing whitespace
 Plug 'matze/vim-move'                   "move lines up/down with c-k/c-j
 Plug 'rr-/vim-hexdec'                   "convert hex to dec and vice versa

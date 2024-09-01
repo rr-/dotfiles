@@ -28,10 +28,6 @@ vnoremap <silent> <S-K> <nop>
 "easier formatting of paragraphs
 vnoremap Q gq
 nnoremap Q gqap
-"fuzzy file finder
-nnoremap <C-e> :Rg<CR>
-nnoremap <C-p> :Files<CR>
-nnoremap <C-l> :Buffers<CR>
 "convenient new tab
 nnoremap gn :tabnew<CR>
 "go to line
