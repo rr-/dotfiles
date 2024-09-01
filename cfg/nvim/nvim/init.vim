@@ -20,5 +20,5 @@ runtime editor.vim
 runtime indent.vim
 runtime plugins.vim
 runtime keyboard.vim
-runtime filetypes.vim
+lua require('file-types')
 lua require('theme')
