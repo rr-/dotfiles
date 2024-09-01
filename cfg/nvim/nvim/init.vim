@@ -17,7 +17,7 @@ Plug 'folke/zen-mode.nvim'
 call plug#end()
 
 runtime editor.vim
-runtime indent.vim
+lua require('indent')
 runtime plugins.vim
 runtime keyboard.vim
 lua require('file-types')
