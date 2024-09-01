@@ -16,7 +16,7 @@ Plug 'lambdalisue/fern-hijack.vim'      "replace netrw
 Plug 'folke/zen-mode.nvim'
 call plug#end()
 
-runtime editor.vim
+lua require('editor')
 lua require('indent')
 runtime plugins.vim
 runtime keyboard.vim
