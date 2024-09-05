@@ -1,3 +1,16 @@
+local actions = require "fzf-lua.actions"
+
+local M = {}
+
+M.file_edit_and_qf = function(selected, opts)
+  if #selected > 1 then
+    local result = actions.file_sel_to_qf(selected, opts)
+    vim.cmd('cfirst')
+    return result
+  end
+  return actions.file_edit(selected, opts)
+end
+
 require('fzf-lua').setup(
   {
     fzf_opts = {
@@ -5,6 +18,12 @@ require('fzf-lua').setup(
     },
     grep = {
       rg_opts = "--column --line-number --no-heading --color=always --smart-case --max-columns=4096 -e",
+    },
+    actions = {
+      files = {
+        true,
+        ["enter"] = M.file_edit_and_qf,
+      },
     },
     keymap = {
       fzf = {
