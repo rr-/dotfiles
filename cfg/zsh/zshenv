@@ -7,7 +7,7 @@ if whence -p dircolors >/dev/null; then
 fi
 
 # aliases
-alias a=ai
+alias a='ai -c "Answer succinctly, no introductions or disclaimers."'
 alias p=python3
 alias pip='python3 -m pip'
 alias pi=ipython3
