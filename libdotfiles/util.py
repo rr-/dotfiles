@@ -71,6 +71,13 @@ def create_symlink(source: Path, target: Path) -> None:
     os.symlink(source, target)
 
 
+def create_symlinks_tree(source_dir: Path, target_dir: Path) -> None:
+    for source_path in source_dir.rglob("**/*"):
+        if source_path.is_file():
+            source_rel_path = source_path.relative_to(source_dir)
+            create_symlink(source_path, target_dir / source_rel_path)
+
+
 def copy_file(source: Path, target: Path) -> None:
     _remove_symlink(target)
     if target.exists() and not target.is_file():
