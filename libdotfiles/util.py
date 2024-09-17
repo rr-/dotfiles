@@ -58,6 +58,9 @@ def create_dir(path: Path) -> None:
 
 
 def create_symlink(source: Path, target: Path) -> None:
+    if target.exists() and source.samefile(target):
+        logger.info("Link %s already links to %s", target, source)
+        return
     _remove_symlink(target)
     if target.exists() and not target.is_symlink():
         raise RuntimeError(
