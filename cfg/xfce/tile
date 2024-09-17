@@ -4,9 +4,11 @@ from collections.abc import Iterable
 from decimal import Decimal
 from typing import Any, cast
 
-from Xlib import X
+import Xlib.ext.randr
+from Xlib import X, Xatom
 from Xlib.display import Display
 from Xlib.protocol.event import ClientMessage
+from Xlib.xobject.drawable import Window
 
 DEFAULT_RATIO = Decimal("0.5")
 
@@ -38,6 +40,89 @@ def calculate_partitions(
             yield (x1, y1, x2, y1 + partition_height)
             y1 += partition_height
             height -= partition_height
+
+
+def get_active_monitor_working_area(
+    disp: Display,
+) -> tuple[int, int, int, int] | None:
+    root = disp.screen().root
+
+    # Get XRandR screen resources
+    res = Xlib.ext.randr.get_screen_resources(root)
+
+    # Get the primary output
+    primary_output = Xlib.ext.randr.get_output_primary(root).output
+    primary_output_info = Xlib.ext.randr.get_output_info(
+        disp, primary_output, res.config_timestamp
+    )
+
+    if primary_output_info.crtc == 0:
+        return None
+
+    # Get the geometry of the primary monitor
+    crtc_info = Xlib.ext.randr.get_crtc_info(
+        disp, primary_output_info.crtc, res.config_timestamp
+    )
+    monitor_x, monitor_y, monitor_w, monitor_h = (
+        crtc_info.x,
+        crtc_info.y,
+        crtc_info.width,
+        crtc_info.height,
+    )
+
+    # Get the window manager struts (_NET_WM_STRUT and _NET_WM_STRUT_PARTIAL)
+    strut_atom = disp.intern_atom("_NET_WM_STRUT", True)
+    strut_partial_atom = disp.intern_atom("_NET_WM_STRUT_PARTIAL", True)
+
+    def get_struts(
+        window: Window, strut_atom: int, strut_partial_atom: int
+    ) -> list[int] | None:
+        try:
+            struts = window.get_property(strut_atom, Xatom.CARDINAL, 0, 4)
+            if not struts:
+                struts = window.get_property(
+                    strut_partial_atom, Xatom.CARDINAL, 0, 12
+                )
+
+            if struts:
+                return cast(list[int], struts.value)
+        except Xlib.error.XError:
+            pass
+
+        return None
+
+    def traverse_windows(
+        window: Window, strut_atom: int, strut_partial_atom: int
+    ) -> Iterable[list[int]]:
+        struts = get_struts(window, strut_atom, strut_partial_atom)
+        if struts:
+            yield struts
+
+        try:
+            children = window.query_tree().children
+            for child in children:
+                yield from traverse_windows(
+                    child, strut_atom, strut_partial_atom
+                )
+        except Xlib.error.XError:
+            pass
+
+    left, right, top, bottom = 0, 0, 0, 0
+
+    for struts in traverse_windows(root, strut_atom, strut_partial_atom):
+        if len(struts) >= 4:
+            left = max(left, max(struts[0] - monitor_x, 0))
+            top = max(top, max(struts[2] - monitor_y, 0))
+            right = max(right, max(struts[1] - monitor_x - monitor_w, 0))
+            bottom = max(bottom, max(struts[3] - monitor_y - monitor_h, 0))
+
+    # Calculate working area within the primary monitor
+    work_area_x = monitor_x + left
+    work_area_y = monitor_y + top
+    work_area_width = monitor_w - left - right
+    work_area_height = monitor_h - top - bottom
+
+    return work_area_x, work_area_y, work_area_width, work_area_height
 
 
 def get_desktop_geometry(
@@ -88,12 +173,16 @@ def partition_desktop_windows(
 ) -> None:
     desktop_windows = list(get_desktop_window_ids(disp, desktop_id))
 
+    workspace = get_active_monitor_working_area(disp)
+    if not workspace:
+        workspace = get_desktop_geometry(disp, desktop_id)
+
     (
         workspace_x,
         workspace_y,
         workspace_width,
         workspace_height,
-    ) = get_desktop_geometry(disp, desktop_id)
+    ) = workspace
 
     for window_id in desktop_windows:
         unmaximize_window(disp, window_id)
@@ -132,7 +221,6 @@ def set_window_geometry(
     disp: Display, window_id: int, x: int, y: int, width: int, height: int
 ) -> None:
     window = disp.create_resource_object("window", window_id)
-    print(window, x, y, width, height)
     window.configure(x=x, y=y, width=width, height=height)
 
 
