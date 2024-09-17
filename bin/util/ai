@@ -15,7 +15,10 @@ import tiktoken
 import yaml
 from openai import OpenAI
 from prompt_toolkit import HTML, PromptSession
+from prompt_toolkit.enums import DEFAULT_BUFFER
+from prompt_toolkit.filters import Condition, HasFocus
 from prompt_toolkit.history import FileHistory
+from prompt_toolkit.key_binding import KeyBindings, KeyPressEvent
 from xdg_base_dirs import xdg_config_home
 
 BASE = Path(xdg_config_home(), "ai")
@@ -293,8 +296,30 @@ def stdin_has_data() -> bool:
 
 
 def run_interactive(context: ChatContext, args: argparse.Namespace) -> None:
+    is_multiline = [args.multiline]
+    multiline = Condition(lambda: is_multiline[0])
+    kb = KeyBindings()
+
+    @kb.add("escape", "m")  # type: ignore
+    def handle_alt_m(event: KeyPressEvent) -> None:
+        is_multiline[0] = not is_multiline[0]
+
+    @kb.add("c-m", filter=HasFocus(DEFAULT_BUFFER) & multiline)  # type: ignore
+    def handle_newline_multiline(event: KeyPressEvent) -> None:
+        event.app.current_buffer.newline()
+
+    @kb.add("c-m", filter=HasFocus(DEFAULT_BUFFER) & ~multiline)  # type: ignore
+    def handle_newline_single_line(event: KeyPressEvent) -> None:
+        event.app.current_buffer.validate_and_handle()
+
     history = FileHistory(HISTORY_FILE)
-    session = PromptSession(history=history, multiline=args.multiline)
+    session = PromptSession(history=history, multiline=True, key_bindings=kb)
+
+    def get_prompt() -> HTML:
+        prompt = ">>>" if is_multiline[0] else ">"
+        return HTML(
+            f"<b>[{context.prompt_tokens + context.completion_tokens}] {prompt}</b> "
+        )
 
     print("ChatGPT CLI", file=sys.stderr)
     print(f"Model in use: {context.model}", file=sys.stderr)
@@ -304,11 +329,7 @@ def run_interactive(context: ChatContext, args: argparse.Namespace) -> None:
     while True:
         try:
             print(file=sys.stderr)
-            message = session.prompt(
-                HTML(
-                    f"<b>[{context.prompt_tokens + context.completion_tokens}] >>> </b>"
-                )
-            )
+            message = session.prompt(get_prompt)
 
             if message.lower() == ".exit":
                 raise EOFError
