@@ -17,8 +17,9 @@ def _get_paths(target_paths: list[Path], exclude: list[str]) -> Iterable[Path]:
         if target_path.is_file():
             yield target_path
         elif target_path.is_dir():
-            for path in target_path.iterdir():
-                yield from _get_paths([path], exclude)
+            yield from _get_paths(
+                [path for path in target_path.iterdir()], exclude
+            )
 
 
 def _get_checksum(paths: list[Path]) -> str:
