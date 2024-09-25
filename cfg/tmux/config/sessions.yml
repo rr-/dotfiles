@@ -40,11 +40,6 @@ lightning: &lightning
     - window_name: main
       cwd: ~/work/priv/trcustoms/
 
-  - name: servicebell
-    windows:
-    - window_name: main
-      cwd: ~/work/servicebell/
-
   - name: postmedia
     windows:
     - window_name: main
