@@ -118,6 +118,6 @@ docker() {
 }
 
 # load additional modules
-for x in ~/.config/zsh/*.{zsh,sh}; do
+for x in ~/.config/zsh/*.*sh; do
     source "$x"
-done &>/dev/null
+done
