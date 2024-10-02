@@ -12,6 +12,7 @@ if get_distro_name() == "arch":
     try_install("gtest")
     try_install("jq")
     try_install("gcc")
+    try_install("debugedit")
     try_install("pkgconfig")
     try_install("make")
     try_install("meson")
