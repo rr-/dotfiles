@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# requires openai tiktoken pyyaml prompt-toolkit xdg-base-dirs
+# requires: openai tiktoken pyyaml prompt-toolkit xdg-base-dirs
 
 import argparse
 import atexit
