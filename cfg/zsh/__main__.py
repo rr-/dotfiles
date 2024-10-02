@@ -11,6 +11,7 @@ from libdotfiles.util import (
 if get_distro_name() == "arch":
     try_install("inetutils")  # hostname in PS1
 try_install("zsh")
+try_install("less")  # for lesskey
 
 create_symlinks(
     [
