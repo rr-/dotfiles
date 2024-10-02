@@ -4,7 +4,7 @@ from pathlib import Path
 
 from libdotfiles.packages import try_install
 
-RE = re.compile(r"^#\s*requires?: (?P<deps>\w+)$", flags=re.M)
+RE = re.compile(r"^#\s*requires?: (?P<deps>.*+)$", flags=re.M)
 dependencies: set[str] = set()
 for path in Path(".").rglob("*"):
     if path.is_file():
