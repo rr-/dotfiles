@@ -12,9 +12,9 @@ super + u
 
 # focus or spawn local tmux
 alt + ctrl + bracketleft
-    xdotool search --classname local_terminal windowactivate; \
+    xdotool search --classname tmux_terminal windowactivate; \
     if [ $? -ne 0 ]; then; \
-        wezterm start --class local_terminal -- zsh -ilc '~/.config/tmux/sessions-hook &>/dev/null; tmux attach-session -t aux'; \
+        wezterm start --class tmux_terminal -- zsh -ilc '~/.config/tmux/sessions-hook &>/dev/null; tmux new-session -A -t main'; \
     fi
 
 # spawn plain terminal
