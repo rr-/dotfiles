@@ -1,4 +1,4 @@
-lightning: &lightning
+fw:
   - name: aux
     windows:
     - window_name: main
@@ -12,23 +12,18 @@ lightning: &lightning
     - window_name: main
       cwd: ~/work/cloudlinux/defence360/
 
-  - name: tr1x
+  - name: trx
     windows:
-    - window_name: main
-      cwd: ~/work/priv/TR1X/
-
-  - name: tr2x
-    windows:
-    - window_name: TR1X
-      cwd: ~/work/priv/TR1X/
-    - window_name: TR2X
-      cwd: ~/work/priv/TR2X/
+    - window_name: TR1
+      cwd: ~/work/priv/TRX/
+    - window_name: TR2
+      cwd: ~/work/priv/TRX/
     - window_name: TR2Main
       cwd: ~/work/ext/TR2Main/
     - window_name: TOMB21
       cwd: ~/work/ext/TOMB21/
     - window_name: ida
-      cwd: ~/work/priv/TR2X/
+      cwd: ~/work/priv/TRX/
 
   - name: wind_garden
     windows:
@@ -44,5 +39,3 @@ lightning: &lightning
     windows:
     - window_name: main
       cwd: ~/work/postmedia/
-
-snowflake: *lightning
