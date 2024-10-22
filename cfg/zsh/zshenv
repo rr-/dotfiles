@@ -43,6 +43,8 @@ alias g='command git'
     alias gref='command git reflog'
 alias w='work'
 alias j='myjust'
+alias rg='rg -.'
+
 jisho() { command jisho "$@"|less -rFX }
 edict() { command edict "$@"|less -rFX }
 tl() {
@@ -55,7 +57,8 @@ atl() {
     target="$1"; shift
     echo "$@" | ai --context "Translate input text from the following language: ${source}' to: ${target}." 2>/dev/null | less -rFX
 }
-alias kind='ai -ml --context "Reword the input to sound more kind. Use to the point, casual wording." 2>/dev/null'
+
+alias kind='ai -ml -c "Reword the input to sound more kind. Use to the point, casual wording."'
 alias plen='tl pl en'
 alias enpl='tl en pl'
 alias enja='tl en ja'
