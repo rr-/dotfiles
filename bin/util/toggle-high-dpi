@@ -21,8 +21,8 @@ class BaseExecutor:
 class WeztermExecutor(BaseExecutor):
     def __init__(self) -> None:
         self.config_path = HOME_DIR / ".config" / "wezterm" / "runtime.lua"
-        self.font_size_small = 11
-        self.font_size_high = self.font_size_small * SCALE_FACTOR
+        self.font_size_small = 8
+        self.font_size_high = 11
 
     def get_config(self) -> str:
         return self.config_path.read_text()
@@ -43,9 +43,7 @@ class WeztermExecutor(BaseExecutor):
 
     def set(self, is_enabled: bool) -> None:
         config = self.get_config()
-        font_size = self.font_size_small * (
-            SCALE_FACTOR if is_enabled else Decimal(1)
-        )
+        font_size = self.font_size_high if is_enabled else self.font_size_small
         config = re.sub(
             "config\.font_size\s*=\s*(\d+(?:\.\d+)?)",
             f"config.font_size = {font_size}",
