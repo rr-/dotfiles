@@ -7,7 +7,7 @@ if whence -p dircolors >/dev/null; then
 fi
 
 # aliases
-alias a='ai -c "Answer succinctly, no introductions or disclaimers."'
+alias a='ai -c "Answer succinctly. No introductions or disclaimers. In code answers do not explain anything."'
 alias p=python3
 alias pip='python3 -m pip'
 alias pi=ipython3
@@ -62,7 +62,10 @@ atl() {
     echo "$@" | ai --context "Translate input text from the following language: ${source}' to: ${target}." 2>/dev/null | less -rFX
 }
 
-alias kind='ai -ml -c "Reword the input to sound more kind. Use to the point, casual wording."'
+alias kind='ai -c "Reword the input to make it kinder and friendlier, keeping it concise and welcoming."'
+alias rephrase='ai -c "Rewrite the input for a better structure. Be succint and friendly in your wording. No introductions."'
+alias grammar='ai -c "Rewrite the input so that it is grammatically correct. Keep structure and word choices. Explain your changes succinctly in a bulleted list. Pay attention to tenses."'
+alias shorten='ai -c "Rewrite the input to make it shorter. Be succint, but kind in your wording."'
 alias plen='tl pl en'
 alias enpl='tl en pl'
 alias enja='tl en ja'
