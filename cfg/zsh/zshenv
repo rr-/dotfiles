@@ -45,6 +45,10 @@ alias w='work'
 alias j='myjust'
 alias rg='rg -.'
 
+kill-defunct() {
+    ps -ef|grep defunct|awk '{print $2}'|grep -v '^1$'|sort|uniq|xargs kill || /bin/true
+}
+
 jisho() { command jisho "$@"|less -rFX }
 edict() { command edict "$@"|less -rFX }
 tl() {
