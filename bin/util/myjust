@@ -1,19 +1,32 @@
 #!/usr/bin/env python3
+import os
 import sys
 from pathlib import Path
-from subprocess import run
 
 
-def main() -> int:
+def which(command: str) -> str | None:
+    paths = os.environ.get("PATH", "").split(os.pathsep)
+    for path in paths:
+        full_path = Path(path) / command
+        if full_path.is_file() and os.access(full_path, os.X_OK):
+            return str(full_path)
+    return None
+
+
+def exec_process(cmdline: list[str]) -> None:
+    exe = which(cmdline[0])
+    assert exe is not None
+    os.execv(exe, cmdline)
+
+
+def main() -> None:
     user_justfile = Path("justfile.user")
 
     if user_justfile.exists():
-        return run(
-            ["just", "-f", str(user_justfile), *sys.argv[1:]]
-        ).returncode
-
-    return run(["just", *sys.argv[1:]]).returncode
+        exec_process(["just", "-f", str(user_justfile), *sys.argv[1:]])
+    else:
+        exec_process(["just", *sys.argv[1:]])
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    main()
