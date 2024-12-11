@@ -19,6 +19,7 @@ MANAGED_EXTENSIONS = {
     ".GIF",
     ".PNG",
     ".TGA",
+    ".PCX",
     ".BMP",
     ".WEBM",
     ".WEBP",
