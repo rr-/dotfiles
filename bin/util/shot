@@ -1,74 +1,30 @@
 #!/usr/bin/env python3
-# requires: PyQt6
 import argparse
-import os
 import random
+import re
 import string
-import sys
-import time
-from collections.abc import Iterable
+from dataclasses import dataclass
 from datetime import datetime
-from enum import Enum
+from enum import IntEnum
 from pathlib import Path
-
-from PyQt6 import QtCore, QtGui, QtWidgets
-
-
-class InteractiveCaptureWindow(QtWidgets.QWidget):
-    def __init__(self, rect: QtCore.QRect):
-        super().__init__()
-        self.rubberband = QtWidgets.QRubberBand(
-            QtWidgets.QRubberBand.Shape.Rectangle, self
-        )
-        self.setWindowFlags(
-            QtCore.Qt.WindowType.FramelessWindowHint
-            | QtCore.Qt.WindowType.WindowStaysOnTopHint
-            # | QtCore.Qt.WindowType.X11BypassWindowManagerHint
-        )
-        self.setAttribute(QtCore.Qt.WidgetAttribute.WA_TranslucentBackground)
-        self.setGeometry(self.screen().geometry())
-        if rect:
-            self.rubberband.setGeometry(rect)
-            self.rubberband.show()
-        self.setMouseTracking(True)
-        self.setFocusPolicy(QtCore.Qt.FocusPolicy.TabFocus)
-        self.setCursor(QtCore.Qt.CursorShape.CrossCursor)
-        self.value = False
-        self.origin = None
-
-    def keyPressEvent(self, event: QtCore.QEvent) -> None:
-        if event.key() == QtCore.Qt.Key.Key_Escape:
-            self.close()
-
-    def mousePressEvent(self, event: QtCore.QEvent) -> None:
-        self.origin = event.pos()
-        self.rubberband.setGeometry(QtCore.QRect(self.origin, QtCore.QSize()))
-        self.rubberband.show()
-        super().mousePressEvent(event)
-
-    def mouseMoveEvent(self, event: QtCore.QEvent) -> None:
-        if self.origin:
-            self.rubberband.setGeometry(
-                QtCore.QRect(self.origin, event.pos()).normalized()
-            )
-        super().mouseMoveEvent(event)
-
-    def mouseReleaseEvent(self, event: QtCore.QEvent) -> None:
-        if self.rubberband.isVisible():
-            self.rubberband.hide()
-            rect = QtCore.QRect(
-                self.mapToGlobal(self.rubberband.geometry().topLeft()),
-                self.mapToGlobal(self.rubberband.geometry().bottomRight()),
-            )
-            self.value = rect
-        self.close()
-        super().mouseReleaseEvent(event)
+from subprocess import check_call, check_output
 
 
-class CaptureMode(Enum):
+class CaptureMode(IntEnum):
     desktop = 1
-    active_screen = 2
-    active_window = 3
+    active_window = 2
+    active_screen = 3
+
+
+@dataclass
+class Geometry:
+    x: int
+    y: int
+    w: int
+    h: int
+
+    def __str__(self) -> str:
+        return f"{self.w}x{self.h}+{self.x}+{self.y}"
 
 
 def get_default_filename(suffix: str) -> str:
@@ -85,11 +41,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--output-dir", type=Path, default=Path.home(), nargs="?"
     )
-    parser.add_argument(
-        "--output-filename",
-        type=str,
-        nargs="?",
-    )
+    parser.add_argument("--output-filename", type=str, nargs="?")
     parser.add_argument(
         "-F",
         "--output-format",
@@ -108,105 +60,80 @@ def parse_args() -> argparse.Namespace:
         const=CaptureMode.desktop,
     )
     group.add_argument(
-        "-s",
-        "--screen",
-        action="store_const",
-        dest="capture_mode",
-        const=CaptureMode.active_screen,
-    )
-    group.add_argument(
         "-w",
         "--window",
         action="store_const",
         dest="capture_mode",
         const=CaptureMode.active_window,
     )
+    group.add_argument(
+        "-s",
+        "--screen",
+        action="store_const",
+        dest="capture_mode",
+        const=CaptureMode.active_screen,
+    )
     return parser.parse_args()
 
 
-class WindowCapture:
-    def __init__(self) -> None:
-        os.environ["QT_ENABLE_HIGHDPI_SCALING"] = "0"
-        self.app = QtWidgets.QApplication(sys.argv)
+def get_active_screen_geometry() -> Geometry | None:
+    mouse_location = check_output(
+        ["xdotool", "getmouselocation"], text=True
+    ).strip()
+    match = re.search(r"x:(\d+) y:(\d+)", mouse_location)
+    assert match is not None
+    x, y = map(int, match.groups())
 
-    def get_desktop_rect(self) -> QtCore.QRect:
-        screens = self.get_screens()
-        rect = QtCore.QRect(
-            QtCore.QPoint(
-                min(screen.geometry().left() for screen in screens),
-                min(screen.geometry().top() for screen in screens),
-            ),
-            QtCore.QPoint(
-                max(screen.geometry().right() for screen in screens),
-                max(screen.geometry().bottom() for screen in screens),
-            ),
-        )
-        return rect
+    xrandr_output = check_output(["xrandr"], text=True).strip()
+    for line in xrandr_output.splitlines():
+        if "connected" in line:
+            match = re.search(r"(\d+)x(\d+)\+(\d+)\+(\d+)", line)
+            if match:
+                width, height, x_offset, y_offset = map(int, match.groups())
+                if (
+                    x_offset <= x < x_offset + width
+                    and y_offset <= y < y_offset + height
+                ):
+                    return Geometry(x=x_offset, y=y_offset, w=width, h=height)
 
-    def get_active_screen_rect(self) -> QtCore.QRect:
-        return self.get_active_screen().geometry()
+    return None
 
-    def get_active_window_rect(self) -> QtCore.QRect:
-        raise NotImplementedError("not implemented")
 
-    def get_interactive_rect(self, rect: QtCore.QRect) -> QtCore.QRect | None:
-        window = InteractiveCaptureWindow(rect)
-        window.show()
-        self.app.exec()
-        return window.value
-
-    def get_active_screen(self) -> QtGui.QScreen:
-        mouse_pos = self.get_mouse_pos()
-        for screen in self.get_screens():
-            if mouse_pos in screen.geometry():
-                return screen
-        raise RuntimeError("unable to determine active screen")
-
-    def capture_region(self, rect: QtCore.QRect) -> QtGui.QPixmap:
-        screen = sorted(
-            QtWidgets.QApplication.screens(),
-            key=lambda screen: screen.geometry().left(),
-        )[0]
-        screenshot = screen.grabWindow(
-            x=rect.x(),
-            y=rect.y(),
-            width=rect.width(),
-            height=rect.height(),
-        )
-        return screenshot
-
-    def get_mouse_pos(self) -> QtCore.QPoint:
-        return QtGui.QCursor.pos()
-
-    def get_screens(self) -> Iterable[QtGui.QScreen]:
-        return self.app.screens()  # type: ignore
+def capture_screenshot(maim_args: list[str]) -> None:
+    cmd = ["maim", *maim_args]
+    check_call(cmd)
 
 
 def main() -> None:
     args = parse_args()
-    capture = WindowCapture()
-    method = {
-        CaptureMode.desktop: capture.get_desktop_rect,
-        CaptureMode.active_screen: capture.get_active_screen_rect,
-        CaptureMode.active_window: capture.get_active_window_rect,
-    }.get(args.capture_mode)
-    rect = method() if method else None
+    output_path = str(
+        args.output_dir
+        / (args.output_filename or get_default_filename(args.output_format))
+    )
+    maim_args: list[str] = []
+
+    match args.capture_mode:
+        case CaptureMode.active_window:
+            maim_args += [
+                "-i",
+                check_output(
+                    ["xdotool", "getactivewindow"], text=True
+                ).strip(),
+            ]
+        case CaptureMode.active_screen:
+            geometry = get_active_screen_geometry()
+            assert geometry is not None
+            maim_args = ["--geometry", str(geometry)]
+        case CaptureMode.desktop:
+            # default operation of maim
+            pass
 
     if args.interactive:
-        rect = capture.get_interactive_rect(rect)
-        if not rect:
-            sys.exit(1)
-        time.sleep(0.1)
-    elif not rect:
-        rect = capture.get_desktop_rect()
+        maim_args.append("--select")
+    maim_args.append(output_path)
 
-    screenshot = capture.capture_region(rect)
-    path = args.output_dir / (
-        args.output_filename or get_default_filename(args.output_format)
-    )
-    print(path, end="")
-    screenshot.save(str(path), args.output_format)
-    sys.exit(0)
+    capture_screenshot(maim_args)
+    print(output_path, end="")
 
 
 if __name__ == "__main__":
