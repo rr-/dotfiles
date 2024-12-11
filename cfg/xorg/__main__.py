@@ -11,6 +11,7 @@ try_install("autocutsel")  # sync primary and selection clipboards
 try_install("clipit")  # keep clipboard data after process exit
 try_install("pkg-config")  # for picom
 try_install("picom")  # for shadows, transparency and vsync
+try_install("maim")  # for screenshots
 try_install("xdg", method="pip")  # for XDG_CONFIG_HOME
 
 create_symlinks(
