@@ -296,6 +296,12 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="Use the multiline input mode",
     )
+    parser.add_argument(
+        "-l",
+        "--list-models",
+        action="store_true",
+        help="List the available models",
+    )
     return parser.parse_args()
 
 
@@ -387,8 +393,15 @@ def main() -> None:
             print(f"Context: {text}", file=sys.stderr)
             messages.append({"role": "system", "content": text.strip()})
 
+    client = OpenAI(api_key=config.api_key)
+    if args.list_models:
+        models = client.models.list()
+        for model in models:
+            print(model.id)
+        exit(0)
+
     context = ChatContext(
-        client=OpenAI(api_key=config.api_key),
+        client=client,
         model=config.model,
         temperature=config.temperature,
         messages=messages,
