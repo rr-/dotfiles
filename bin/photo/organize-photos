@@ -47,7 +47,7 @@ class ImageInfo:
     discriminator: str | None
 
 
-def chunks(source: list[T], n: int) -> Iterable[list[T]]:
+def make_chunks(source: list[T], n: int) -> Iterable[list[T]]:
     n = max(1, n)
     return (source[i : i + n] for i in range(0, len(source), n))
 
@@ -351,14 +351,15 @@ def parse_args() -> argparse.Namespace:
 def main() -> None:
     args = parse_args()
 
-    for i, chunk in enumerate(
-        chunks(
+    chunks = list(
+        make_chunks(
             collect_files(args.root_dir, suffixes=ALL_SUFFIXES),
             n=args.chunk_size,
-        ),
-        1,
-    ):
-        print(f"processing chunk #{i}", file=sys.stderr)
+        )
+    )
+    for i, chunk in enumerate(chunks, 1):
+        percent = i / len(chunks)
+        print(f"processing chunk #{i} ({percent:.02%})", file=sys.stderr)
         for source_path, target_path in get_target_paths(
             root_dir=args.root_dir,
             source_paths=chunk,
