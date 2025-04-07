@@ -14,12 +14,14 @@ Plug 'Asheq/close-buffers.vim'          "close hidden buffers
 Plug 'lambdalisue/fern.vim'             "alternative to buggy and unwieldy netrw
 Plug 'lambdalisue/fern-hijack.vim'      "replace netrw
 Plug 'nvim-treesitter/nvim-treesitter', {'do': ':TSUpdate'} "syntax highlighting
+Plug 'stevearc/aerial.nvim'
 
 call plug#end()
 
 lua require('editor')
 lua require('indent')
 runtime plugins.vim
+lua require('other')
 lua require('keyboard')
 lua require('file-types')
 lua require('theme')
