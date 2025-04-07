@@ -80,9 +80,12 @@ super + grave
     toggle-high-dpi
 
 # screenshots
-# window
+# screen
 super + i
     shot -s|clip
+# window
+super + ctrl + i
+    shot -w|clip
 # interactive
 super + shift + i
     shot -i|clip
