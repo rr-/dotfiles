@@ -3,6 +3,7 @@
 ----------------------------------------
 
 local map = vim.keymap.set
+vim.g.mapleader = vim.api.nvim_replace_termcodes('<BS>', false, false, true)
 
 -- movement over visual lines, not physical lines
 map('n', 'k', 'gk', { buffer = true, silent = true })
