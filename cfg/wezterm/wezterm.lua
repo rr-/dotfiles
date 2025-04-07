@@ -3,6 +3,17 @@ local runtime = require 'runtime'
 
 local config = wezterm.config_builder()
 
+config.background = {
+  {
+    source = {
+      File = '/home/dash/.config/wezterm/stardust-light.png',
+    },
+    width = '700',
+    height = '700',
+  },
+}
+
+config.window_decorations = "NONE"
 config.font = wezterm.font 'Input Mono'
 
 config.adjust_window_size_when_changing_font_size = false
