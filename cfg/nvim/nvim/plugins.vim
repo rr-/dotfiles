@@ -50,34 +50,4 @@ augroup my-fern
   autocmd FileType fern call s:init_fern()
 augroup END
 
-"configure zen-mode
-lua << EOF
-local oldwrap = vim.wo.wrap
-
-require("zen-mode").setup(
-{
-  window = {
-    backdrop = 0.0,
-    width = 81,
-    options = {
-        cursorline = true,
-        colorcolumn = "0",
-    },
-  },
-  plugins = {
-    options = { enabled = true },
-    tmux = { enabled = true },
-    wezterm = { enabled = true },
-  },
-  on_open = function(win)
-      oldwrap = vim.wo.wrap
-      vim.wo.wrap = true
-  end,
-  on_close = function()
-      vim.wo.wrap = oldwrap
-  end,
-}
-)
-EOF
-
 lua require("plugins")

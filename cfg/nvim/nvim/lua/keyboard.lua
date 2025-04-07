@@ -18,10 +18,6 @@ map('n', '<C-s>', ':update<CR>', { silent = true })
 map('i', '<C-c>', '<Esc>"+y', { silent = true })
 map('n', '<C-c>', '"+y', { silent = true })
 
--- ctrl+z = zenmode
-map('i', '<C-z>', '<Esc>:ZenMode<CR>', { silent = true })
-map('n', '<C-z>', '<Esc>:ZenMode<CR>', { silent = true })
-
 -- ctrl+q = close window
 map('i', '<C-q>', '<Esc>:q<CR>', { silent = true })
 map('n', '<C-q>', ':q<CR>', { silent = true })
