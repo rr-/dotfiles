@@ -1,0 +1,93 @@
+#!/usr/bin/env python3
+import argparse
+from pathlib import Path
+from subprocess import check_call
+
+
+def crop_image(
+    image_path: Path,
+    width_percentage: float,
+    height_percentage: float,
+    x_offset_percentage: float,
+    y_offset_percentage: float,
+) -> Path:
+    # Ensure percentages are valid
+    if not (0 < width_percentage <= 100 and 0 < height_percentage <= 100):
+        raise ValueError(
+            "Width and height percentages must be between 1 and 100"
+        )
+
+    if not (
+        -50 <= x_offset_percentage <= 50 and -50 <= y_offset_percentage <= 50
+    ):
+        raise ValueError("Offset percentages must be between -50 and 50")
+
+    # Construct ImageMagick 'convert' command
+    output_path = image_path.with_name(
+        f"{image_path.stem}_cropped{image_path.suffix}"
+    )
+    crop_expression = (
+        f"%[fx:w*{width_percentage/100}]x%[fx:h*{height_percentage/100}]"
+        f"+%[fx:w*{x_offset_percentage/100}]+%[fx:h*{y_offset_percentage/100}]"
+    )
+
+    command = [
+        "magick",
+        str(image_path),
+        "-gravity",
+        "center",
+        "-crop",
+        crop_expression,
+        "+repage",
+        str(output_path),
+    ]
+
+    print(command)
+    check_call(command)
+    return output_path
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        description="Crop an image by percentage using ImageMagick."
+    )
+    parser.add_argument("image_path", type=Path, help="Path to the image file")
+    parser.add_argument(
+        "width_percentage",
+        type=float,
+        help="Percentage to crop the image width",
+    )
+    parser.add_argument(
+        "height_percentage",
+        type=float,
+        help="Percentage to crop the image height",
+    )
+    parser.add_argument(
+        "x_offset_percentage",
+        type=float,
+        help="Horizontal center offset percentage (-50 to 50)",
+        default=0,
+    )
+    parser.add_argument(
+        "y_offset_percentage",
+        type=float,
+        help="Vertical center offset percentage (-50 to 50)",
+        default=0,
+    )
+    return parser.parse_args()
+
+
+def main() -> None:
+    args = parse_args()
+    output_image = crop_image(
+        args.image_path,
+        args.width_percentage,
+        args.height_percentage,
+        args.x_offset_percentage,
+        args.y_offset_percentage,
+    )
+    print(f"Cropped image saved to: {output_image}")
+
+
+if __name__ == "__main__":
+    main()
