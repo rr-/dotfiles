@@ -40,6 +40,15 @@ alias g='command git'
     alias gcp='command git cherry-pick'
     alias gm='command git merge'
     alias gb='command git branch'
+    alias gbd='command git branch -D'
+    gbl() {
+      git for-each-ref --sort=-committerdate refs/heads/ \
+      --format="%(color:red)%(objectname:short)%(color:reset) \
+%(color:green)%(align:40,left)%(refname:short)%(end)%(color:reset) \
+%(committerdate:short) \
+%(color:blue)%(align:56,left)%(contents:subject)%(end)%(color:reset) \
+%(authorname) (%(upstream:short))"
+    }
     alias gres='command git reset'
     alias grev='command git revert'
     alias gret='command git restore'
