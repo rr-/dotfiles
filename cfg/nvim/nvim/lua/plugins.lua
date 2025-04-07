@@ -11,6 +11,8 @@ M.file_edit_and_qf = function(selected, opts)
   return actions.file_edit(selected, opts)
 end
 
+vim.g['fern#hide_cursor'] = 0
+
 require('fzf-lua').setup(
   {
     fzf_opts = {
