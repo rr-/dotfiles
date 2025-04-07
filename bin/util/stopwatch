@@ -1,0 +1,67 @@
+#!/usr/bin/env python3
+import select
+import sys
+import time
+
+
+def format_time(seconds: float) -> str:
+    hours, remainder = divmod(seconds, 3600)
+    minutes, seconds = divmod(remainder, 60)
+    milliseconds = (seconds - int(seconds)) * 1000
+    return f"{int(hours):02}:{int(minutes):02}:{int(seconds):02}.{int(milliseconds):03}"
+
+
+def capture_lap(start_time: float) -> float:
+    return time.time() - start_time
+
+
+def print_elapsed_time(lap_number: int, elapsed_time: float) -> None:
+    formatted_time = format_time(elapsed_time)
+    print(f"lap {lap_number}: {formatted_time}", end="\r")
+
+
+def show_grand_stats(lap_times: list[float], lap_number: int) -> None:
+    print("\n--- Grand Stats ---")
+    total_time = sum(lap_times)
+    formatted_total_time = format_time(total_time)
+    print(f"Total time: {formatted_total_time}")
+    print(f"Number of laps: {lap_number}")
+    if lap_number > 0:
+        average_time = total_time / lap_number
+        formatted_avg_time = format_time(average_time)
+        print(f"Average lap time: {formatted_avg_time}")
+
+
+def main() -> None:
+    lap_number = 0
+    lap_times: list[float] = []
+
+    print("Press Enter to record a lap. Press Ctrl-C to stop.")
+    try:
+        start_time = time.time()
+        while True:
+            while sys.stdin in select.select([sys.stdin], [], [], 0)[0]:
+                line = sys.stdin.readline()
+                if line:
+                    elapsed_time = capture_lap(start_time)
+                    lap_number += 1
+                    lap_times.append(elapsed_time)
+                    print_elapsed_time(lap_number, elapsed_time)
+                    start_time = elapsed_time
+                else:
+                    break
+            elapsed_time = capture_lap(start_time)
+            print_elapsed_time(lap_number + 1, elapsed_time)
+            time.sleep(0.1)
+
+    except KeyboardInterrupt:
+        # Capture the last lap on Ctrl-C
+        elapsed_time = capture_lap(start_time)
+        lap_number += 1
+        lap_times.append(elapsed_time)
+        print_elapsed_time(lap_number, elapsed_time)
+        show_grand_stats(lap_times, lap_number)
+
+
+if __name__ == "__main__":
+    main()
