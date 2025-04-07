@@ -238,28 +238,36 @@ def display_expense(context: ChatContext) -> None:
         )
 
 
-def run_prompt(context: ChatContext, message: str) -> None:
+def run_prompt(
+    context: ChatContext, message: str, stream: bool = True
+) -> None:
     """Ask the user for input, build the request and perform it."""
     context.messages.append({"role": "user", "content": message})
 
-    stream = context.client.chat.completions.create(
+    result = context.client.chat.completions.create(
         model=context.model,
         messages=context.messages,
         temperature=context.temperature,
-        stream=True,
+        stream=stream,
     )
 
-    try:
-        output = ""
-        for chunk in stream:
-            if chunk.choices[0].delta.content is not None:
-                print(chunk.choices[0].delta.content, end="", flush=True)
-                output += chunk.choices[0].delta.content
-        context.messages.append({"role": "assistant", "content": output})
-    except KeyboardInterrupt:
-        pass
-    finally:
-        stream.response.close()
+    if stream:
+        try:
+            output = ""
+            for chunk in result:
+                if chunk.choices[0].delta.content is not None:
+                    print(chunk.choices[0].delta.content, end="", flush=True)
+                    output += chunk.choices[0].delta.content
+            context.messages.append({"role": "assistant", "content": output})
+        except KeyboardInterrupt:
+            pass
+        finally:
+            result.response.close()
+    else:
+        print(result.choices[0].message.content, end="", flush=True)
+        context.messages.append(
+            {"role": "assistant", "content": result.choices[0].message.content}
+        )
 
 
 def parse_args() -> argparse.Namespace:
@@ -336,7 +344,7 @@ def run_interactive(context: ChatContext, args: argparse.Namespace) -> None:
             if message.lower() == "":
                 raise KeyboardInterrupt
 
-            run_prompt(context, message)
+            run_prompt(context, message, stream=True)
             print(file=sys.stderr)
             print(file=sys.stderr)
         except KeyboardInterrupt:
@@ -349,12 +357,7 @@ def run_interactive(context: ChatContext, args: argparse.Namespace) -> None:
 def run_non_interactive(
     context: ChatContext, args: argparse.Namespace
 ) -> None:
-    if args.multiline:
-        run_prompt(context, sys.stdin.read())
-    else:
-        for line in sys.stdin.readlines():
-            run_prompt(context, line)
-
+    run_prompt(context, sys.stdin.read(), stream=False)
     save_history(context)
 
 
