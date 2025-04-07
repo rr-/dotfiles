@@ -16,7 +16,9 @@ def update_wezterm_config(theme: str) -> None:
     config_dir = HOME_DIR / ".config" / "wezterm"
     theme_config_path = config_dir / "runtime.lua"
     theme_config = theme_config_path.read_text()
-    theme_config = re.sub(r"dash_\w+", f"dash_{theme}", theme_config)
+    theme_config = re.sub(
+        r"((dash|stardust)[_-])\w+", rf"\1{theme}", theme_config
+    )
     theme_config_path.write_text(theme_config)
 
 
