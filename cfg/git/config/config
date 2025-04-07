@@ -30,7 +30,7 @@
         branch=$(git rev-parse --abbrev-ref HEAD); \
         git push "$remote" "$commit":"$branch" "$@"; \
     }; f"
-    hist = log --pretty=format:\"%Cred%h%Creset %ad %Cblue%<(50,trunc)%s%Creset [%an <%ae>]%d\" --graph --date=short
+    hist = log --pretty=format:\"%Cred%h%Creset %ad %Cblue%<(50,trunc)%s%Creset [%an <%ae>]%C(auto)%(decorate:tag=)\" --graph --date=short
     yearly-stats = !~/.config/git/yearly_stats
     delete-old-branches = !~/.config/git/delete_old_branches
 
@@ -43,6 +43,12 @@
 
 [status]
     showUntrackedFiles = all
+
+[color "decorate"]
+    HEAD = cyan bold
+    branch = green
+    remoteBranch = red
+    tag = blue bold reverse
 
 [color "diff"]
     old = normal 130
