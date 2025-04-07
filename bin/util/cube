@@ -3,9 +3,9 @@
 
 import re
 
-SYSTEM_TEMPLATE = "\x1B[{fgbg};5;{color}m-{color:03d}-\x1B[0m"
-CUBE_TEMPLATE = "\x1B[{fgbg};5;{color}m#{color:03d}\x1B[0m"
-RAMP_TEMPLATE = CUBE_TEMPLATE
+SYSTEM_TEMPLATE = "\x1B[{fgbg};5;{color}m·{color:03d}·\x1B[0m"
+CUBE_TEMPLATE = "\x1B[{fgbg};5;{color}m{color:03d} \x1B[0m"
+RAMP_TEMPLATE = SYSTEM_TEMPLATE
 
 PALETTE_SYSTEM = {
     0x0: [0x00, 0x00, 0x00],
@@ -311,55 +311,57 @@ def join_templates(templates: list[str]) -> str:
     return "\n\n".join(templates)
 
 
-def render_system_colors() -> None:
+def render_system_colors(fgbg: int) -> None:
     """Renders basic system color (i.e. the 16 color palette) ramp."""
     templates = []
-    for fgbg in [48, 38]:
-        template = ""
-        for color in range(16):
-            template += SYSTEM_TEMPLATE.format(fgbg=fgbg, color=color)
-            template += "\n" if color % 8 == 7 else ""
-        templates.append(template.strip())
+    template = ""
+    for color in range(16):
+        template += SYSTEM_TEMPLATE.format(fgbg=fgbg, color=color)
+        template += "\n" if color % 8 == 7 else ""
+    templates.append(template.strip())
     print(join_templates(templates))
-    print()
 
 
-def render_grayscale_ramp() -> None:
+def render_grayscale_ramp(fgbg: int) -> None:
     """Renders basic grayscale ramp."""
-    for fgbg in [48, 38]:
-        print("", end="")
-        for color in range(232, 256):
-            print(RAMP_TEMPLATE.format(fgbg=fgbg, color=color), end="")
-        print("")
+    for color in range(232, 256, 2):
+        print(RAMP_TEMPLATE.format(fgbg=fgbg, color=color), end="")
+    print("")
+    for color in range(233, 256, 2):
+        print(RAMP_TEMPLATE.format(fgbg=fgbg, color=color), end="")
     print("")
 
 
-def render_color_cube() -> None:
+def render_color_cube(fgbg: int) -> None:
     """Renders the XTerm 216 color cube."""
     templates = []
-    for fgbg in [48, 38]:
 
-        def _replace_callback(match: re.Match[str], fgbg: int = fgbg) -> str:
-            color = [int(x, 16) * 16 + int(x, 16) for x in match.group(1)]
-            min_diff = None
-            ret = ""
-            for key, other_color in PALETTE_256.items():
-                diff = sum(abs(other_color[i] - color[i]) for i in range(3))
-                if min_diff is None or diff < min_diff:
-                    ret = CUBE_TEMPLATE.format(fgbg=fgbg, color=key)
-                    min_diff = diff
-            return ret
+    def _replace_callback(match: re.Match[str], fgbg: int = fgbg) -> str:
+        color = [int(x, 16) * 16 + int(x, 16) for x in match.group(1)]
+        min_diff = None
+        ret = ""
+        for key, other_color in PALETTE_256.items():
+            diff = sum(abs(other_color[i] - color[i]) for i in range(3))
+            if min_diff is None or diff < min_diff:
+                ret = CUBE_TEMPLATE.format(fgbg=fgbg, color=key)
+                min_diff = diff
+        return ret
 
-        template = re.sub(r"#([0-9a-fA-F]{3})", _replace_callback, CUBE_256)
-        templates.append(template)
-
+    template = re.sub(r"#([0-9a-fA-F]{3})", _replace_callback, CUBE_256)
+    templates.append(template)
     print(join_templates(templates))
 
 
 def main() -> None:
-    render_system_colors()
-    render_grayscale_ramp()
-    render_color_cube()
+    for fgbg in [48, 38]:
+        render_grayscale_ramp(fgbg)
+        print()
+        render_system_colors(fgbg)
+        print()
+        render_color_cube(fgbg)
+        if fgbg == 48:
+            print()
+            print()
 
 
 if __name__ == "__main__":
