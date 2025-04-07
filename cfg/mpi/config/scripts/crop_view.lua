@@ -17,7 +17,7 @@ function make_ass_rect(x, y, color, rect)
   local y0 = rect.y0
   local x1 = rect.x1
   local y1 = rect.y1
-  return  string.format(
+  return string.format(
     "{\\an7\\pos(%d,%d)\\shad0\\blur0\\be0\\bord1\\1a&HFF&\\3c&H%s&\\p1}" ..
     "m %d %d l %d %d l %d %d l %d %d l %d %d{\\p0}",
     x, y, color, x0, y0, x1, y0, x1, y1, x0, y1, x0, y0)
@@ -67,6 +67,7 @@ function update()
     rotate = mp.get_property_native("video-rotate"), -- TODO: support rotations
   }
 
+  local osd_w, osd_h, osd_ar = mp.get_osd_size()
   local opts = {
     monitor_par = 1,
     keepaspect = mp.get_property_native("keepaspect"),
@@ -89,7 +90,7 @@ function update()
     scale_y = mp.get_property_number("scale-x", 1),
     window_w = mp.get_property_native("display-width"),
     window_h = mp.get_property_native("display-height"),
-    play_res_x = 1280,
+    play_res_x = 720 * osd_ar,
     play_res_y = 720,
     osd_margin_x = mp.get_property_native("osd-margin-x"),
     osd_margin_y = mp.get_property_native("osd-margin-y"),
@@ -104,8 +105,8 @@ function update()
   local viewport_rect = get_viewport_rect(opts)
   local adjusted_src_rect = adjust_rect(src_rect, video_rect, viewport_rect)
 
-  local target_x = opts.play_res_x + opts.osd_margin_x - options.margin_x - (viewport_rect.x1 - viewport_rect.x0)
-  local target_y = opts.play_res_y + opts.osd_margin_y - options.margin_y - (viewport_rect.y1 - viewport_rect.y0)
+  local target_x = opts.play_res_x + opts.osd_margin_x - options.margin_x - math.abs(viewport_rect.x1 - viewport_rect.x0)
+  local target_y = opts.play_res_y + opts.osd_margin_y - options.margin_y - math.abs(viewport_rect.y1 - viewport_rect.y0)
   osd1.data = make_ass_rect(target_x, target_y, "FFFFFF", viewport_rect)
   osd2.data = make_ass_rect(target_x, target_y, "00FFFF", adjusted_src_rect)
   osd1:update()
