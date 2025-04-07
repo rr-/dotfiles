@@ -131,7 +131,10 @@ nnoremap gb :file &<cr>l
 " Copy selected files
 nnoremap gc :copy<cr>
 vnoremap gc :copy<cr>
+nnoremap gR :!rclone sync -v %d %D --retries 10 --retries-sleep=2 --low-level-retries 30 --size-only<cr>
+vnoremap gR :!rclone sync -v %d %D --retries 10 --retries-sleep=2 --low-level-retries 30 --size-only<cr>
 nnoremap gr :!rsync --info=progress2 -vta %f %D<cr>
+vnoremap gr :!rsync --info=progress2 -vta %f %D<cr>
 
 " Move selected files
 nnoremap gm :move<cr>
