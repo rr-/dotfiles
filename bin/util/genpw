@@ -2,17 +2,53 @@
 import argparse
 import random
 import string
+from collections import defaultdict
 from collections.abc import Callable, Iterable
+from itertools import groupby
+
+
+def max_consecutive_counts(arr: list[int]) -> dict[int, int]:
+    max_counts: dict[int, int] = defaultdict(int)
+    for key, group in groupby(arr):
+        max_counts[key] = max(max_counts[key], len(list(group)))
+    return dict(max_counts)
+
+
+def is_consonant_followed_by_vowel_or_special(password: str) -> bool:
+    return all(
+        curr_char not in CONSONANTS or next_char in VOWELS
+        for curr_char, next_char in zip(password, password[1:])
+        if curr_char.isalpha() and curr_char not in VOWELS
+    )
+
+
+def not_too_many_in_a_group(password: str) -> bool:
+    groups = {
+        c: i
+        for i, g in enumerate([VOWELS, CONSONANTS, SPECIAL_CHARS])
+        for c in g
+    }
+    indices = [groups.get(p, -1) for p in password]
+    group_sizes = max_consecutive_counts(indices)
+    return all(
+        group_size <= MAX_CONSECUTIVES for group_size in group_sizes.values()
+    )
+
 
 DEFAULT_LENGTH = 12
 SPECIAL_CHARS = "_-/@#%!:"
 DEFAULT_ALPHA = string.ascii_letters + string.digits + SPECIAL_CHARS
+VOWELS = set("aeiouAEIOU")
+CONSONANTS = set(string.ascii_letters) - VOWELS
+MAX_CONSECUTIVES = 1
 DEFAULT_REQUIREMENTS = [
     lambda password: count_characters(password, string.ascii_lowercase) >= 1,
     lambda password: count_characters(password, string.ascii_uppercase) >= 1,
     lambda password: count_characters(password, string.digits) >= 1,
     lambda password: count_characters(password, SPECIAL_CHARS) >= 1,
     lambda password: password and password[0] not in SPECIAL_CHARS,
+    is_consonant_followed_by_vowel_or_special,
+    not_too_many_in_a_group,
 ]
 
 
@@ -31,6 +67,7 @@ def get_random_pass(
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
+    parser.add_argument("-n", "--num", default=1, type=int)
     parser.add_argument("-l", "--length", default=DEFAULT_LENGTH, type=int)
     parser.add_argument("-a", "--alphabet", default=DEFAULT_ALPHA)
     return parser.parse_args()
@@ -42,13 +79,14 @@ def main() -> None:
         requirements = []
     else:
         requirements = DEFAULT_REQUIREMENTS
-    print(
-        get_random_pass(
-            length=args.length,
-            alphabet=args.alphabet,
-            requirements=requirements,
+    for i in range(args.num):
+        print(
+            get_random_pass(
+                length=args.length,
+                alphabet=args.alphabet,
+                requirements=requirements,
+            )
         )
-    )
 
 
 if __name__ == "__main__":
