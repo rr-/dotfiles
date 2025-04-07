@@ -20,7 +20,7 @@
     conflictStyle = diff3
 
 [alias]
-    count-lines = "!f() { git grep --cached -Il ''|grep -vP 'package\\.|migrations/|\\.([mp]o|lock|json5?|svg)$' | xargs wc -l; }; f"
+    count-lines = "!f() { git grep --cached -Il '' \"$@\" |grep -vP 'package\\.|migrations/|\\.([mp]o|lock|json5?|svg|ai)$' | xargs wc -l; }; f"
     set-upstream = !git branch --set-upstream-to=origin/`git symbolic-ref --short HEAD`
     amen = commit --amend
     ramen = commit --amend --all --no-edit
