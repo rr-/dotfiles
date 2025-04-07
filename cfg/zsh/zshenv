@@ -31,6 +31,11 @@ alias g='command git'
     alias gf='command git fetch'
     alias gpl='command git pull'
     alias gps='command git push'
+    gpsf() {
+      echo -n "Force push? (y/n) "
+      read confirmation
+      [[ $confirmation == "y" ]] && command git push --force-with-lease
+    }
     alias gcp='command git cherry-pick'
     alias gm='command git merge'
     alias gb='command git branch'
