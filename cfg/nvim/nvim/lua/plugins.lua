@@ -48,3 +48,7 @@ vim.api.nvim_create_user_command(
         vim.cmd('w !sudo tee >/dev/null %')
     end, {}
 )
+
+require("aerial").setup({
+  post_jump_cmd = "",
+})
