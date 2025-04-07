@@ -1,3 +1,6 @@
+[advice]
+    forceDeleteBranch = false
+
 [github]
     user = rr-
 
