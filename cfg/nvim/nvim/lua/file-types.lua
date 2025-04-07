@@ -25,6 +25,14 @@ vim.api.nvim_create_autocmd('FileType', {
   end
 })
 
+-- set c/c++ options
+vim.api.nvim_create_autocmd('FileType', {
+  pattern = 'c,cc,cxx,cpp,h,hpp',
+  callback = function()
+    vim.bo.commentstring = '// %s'
+  end
+})
+
 -- enable spellcheck and hard wrapping for text files
 vim.api.nvim_create_autocmd('FileType', {
   pattern = 'text,markdown',
