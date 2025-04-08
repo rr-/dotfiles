@@ -80,8 +80,8 @@
     path = ~/.config/git/config-priv
 [includeIf "gitdir:~/work/priv/"]
     path = ~/.config/git/config-priv
-[includeIf "gitdir:~/work/postmedia/"]
-    path = ~/.config/git/config-postmedia
+[includeIf "gitdir:~/work/nordhealth/"]
+    path = ~/.config/git/config-nordhealth
 [includeIf "gitdir:~/work/invoices/"]
     path = ~/.config/git/config-priv
 [includeIf "gitdir:~/work/cloudlinux/"]
