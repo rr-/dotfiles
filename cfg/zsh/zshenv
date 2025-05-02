@@ -9,6 +9,7 @@ fi
 # aliases
 alias a='ai -c "Answer succinctly. No introductions or disclaimers. In code answers do not explain anything."'
 alias p=python3
+alias pipi='python3 -m pip install --user --break-system-packages'
 alias pip='python3 -m pip'
 alias pi=ipython3
 alias l="myls"
