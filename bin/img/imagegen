@@ -1,19 +1,25 @@
 #!/usr/bin/env python3
+# requires: piexif openai python-magic Pillow
 import argparse
 import asyncio
 import base64
+import json
 import math
 import mimetypes
 import os
-import shutil
 import tempfile
 import time
+import warnings
 from datetime import datetime
+from io import BytesIO
 from itertools import cycle
 from pathlib import Path
+from typing import Any
 
 import magic
+import piexif
 from openai import AsyncOpenAI, BadRequestError
+from PIL import Image, PngImagePlugin
 
 
 def parse_arguments() -> argparse.Namespace:
@@ -49,27 +55,64 @@ def parse_arguments() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def save_image(encoded_data: str, output_dir: Path) -> None:
-    decoded_data = base64.b64decode(encoded_data)
+def get_file_name(data: bytes, default_ext: str = ".bin") -> str:
+    """Detect mime type, determine file extension and construct final file name."""
+    mime_type = magic.Magic(mime=True).from_buffer(data)
+    extension = mimetypes.guess_extension(mime_type) or default_ext
+    file_name = f"image_{datetime.now().strftime('%Y%m%d_%H%M%S')}{extension}"
+    return file_name
 
+
+def save_image(
+    data: bytes, output_dir: Path, metadata: dict[str, str] | None = None
+) -> None:
+    # a backup in case something goes wrong
     with tempfile.NamedTemporaryFile(delete=False) as temp_file:
-        temp_file.write(decoded_data)
-        temp_file.flush()
-        temp_file.seek(0)
-        mime_type = magic.Magic(mime=True).from_file(temp_file.name)
-        extension = mimetypes.guess_extension(mime_type) or ".bin"
-        temp_file.close()  # Close the file to move it
+        temp_file.write(data)
 
-        file_name = (
-            f"image_{datetime.now().strftime('%Y%m%d%H%M%S')}{extension}"
-        )
-        output_path = output_dir / file_name
-        shutil.move(temp_file.name, output_path)
+    output_path = output_dir / get_file_name(data)
+    if not metadata:
+        output_path.write_bytes(data)
+    else:
+        ext_lower = output_path.suffix.lower()
+        json_str = json.dumps(metadata)
+        if ext_lower == ".png":
+            pnginfo = PngImagePlugin.PngInfo()
+            pnginfo.add_text("imagegen", json_str)
+            print(json_str)
+            img = Image.open(BytesIO(data))
+            img.save(output_path, pnginfo=pnginfo)
+        elif ext_lower in (".jpg", ".jpeg", ".webp"):
+            exif_dict: dict[str, Any] = {
+                "0th": {},
+                "Exif": {},
+                "GPS": {},
+                "1st": {},
+                "thumbnail": None,
+            }
+            # UserComment tag: 8-byte charset code prefix + data
+            user_comment = b"ASCII\x00\x00\x00" + json_str.encode("utf-8")
+            exif_dict["Exif"][piexif.ExifIFD.UserComment] = user_comment
+            exif_bytes = piexif.dump(exif_dict)
+            save_kwargs = {"exif": exif_bytes}
+            img = Image.open(BytesIO(data))
+            if ext_lower == ".webp":
+                img.save(output_path, format="WEBP", **save_kwargs)
+            else:
+                img.save(output_path, format="JPEG", **save_kwargs)
+        else:
+            warnings.warn(
+                f"Unknown file extension: {ext_lower}, discarding metadata"
+            )
+            output_path.write_bytes(data)
 
     print(f"Saved image to {output_path}")
 
+    # manual deletion to prevent exceptions from deleting the file
+    Path(temp_file.name).unlink()
 
-async def _timer() -> None:
+
+async def timer() -> None:
     start = time.monotonic()
     throbber = cycle("⠈⠐⠠⢀⡀⠄⠂⠁")
     while True:
@@ -82,9 +125,17 @@ async def _timer() -> None:
         await asyncio.sleep(0.25)
 
 
-async def _main_async(args: argparse.Namespace) -> None:
+def construct_metadata(args: argparse.Namespace) -> dict[str, str]:
+    return {
+        k: v for k, v in vars(args).items() if k not in ["output_dir", "num"]
+    }
+
+
+async def main_async(args: argparse.Namespace) -> None:
     client = AsyncOpenAI(api_key=os.environ["OPENAI_API_KEY"])
-    timer_task = asyncio.create_task(_timer())
+    metadata = construct_metadata(args)
+    timer_task = asyncio.create_task(timer())
+
     try:
         response = await client.images.generate(
             prompt=args.prompt,
@@ -100,7 +151,9 @@ async def _main_async(args: argparse.Namespace) -> None:
     else:
         print()  # clear timer line
         for image in response.data:
-            save_image(image.b64_json, args.output_dir)
+            save_image(
+                base64.b64decode(image.b64_json), args.output_dir, metadata
+            )
     finally:
         timer_task.cancel()
         try:
@@ -111,7 +164,7 @@ async def _main_async(args: argparse.Namespace) -> None:
 
 def main() -> None:
     args = parse_arguments()
-    asyncio.run(_main_async(args))
+    asyncio.run(main_async(args))
 
 
 if __name__ == "__main__":
