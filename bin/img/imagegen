@@ -26,6 +26,8 @@ Metadata = dict[str, str]
 
 
 def parse_arguments() -> argparse.Namespace:
+    # Determine default output directory from environment, fallback to current directory
+    default_output_dir = Path(os.environ.get("IMAGEGEN_DEFAULT_DIR", "."))
     parser = argparse.ArgumentParser(
         description="Generate images using OpenAI API or inspect existing image metadata"
     )
@@ -58,8 +60,8 @@ def parse_arguments() -> argparse.Namespace:
     parser.add_argument(
         "--output-dir",
         type=Path,
-        default=Path("."),
-        help="Directory to save the image",
+        default=default_output_dir,
+        help="Directory to save the image (can be set via $IMAGEGEN_DEFAULT_DIR)",
     )
     parser.add_argument(
         "-i",
