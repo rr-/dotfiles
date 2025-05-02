@@ -90,6 +90,7 @@ def save_image(
         temp_file.write(data)
 
     output_path = output_dir / get_file_name(data)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
     if not metadata:
         output_path.write_bytes(data)
     else:
