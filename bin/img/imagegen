@@ -1,15 +1,19 @@
 #!/usr/bin/env python3
 import argparse
+import asyncio
 import base64
+import math
 import mimetypes
 import os
 import shutil
 import tempfile
+import time
 from datetime import datetime
+from itertools import cycle
 from pathlib import Path
 
 import magic
-from openai import BadRequestError, OpenAI
+from openai import AsyncOpenAI, BadRequestError
 
 
 def parse_arguments() -> argparse.Namespace:
@@ -65,13 +69,24 @@ def save_image(encoded_data: str, output_dir: Path) -> None:
     print(f"Saved image to {output_path}")
 
 
-def main() -> None:
-    args = parse_arguments()
+async def _timer() -> None:
+    start = time.monotonic()
+    throbber = cycle("⠈⠐⠠⢀⡀⠄⠂⠁")
+    while True:
+        elapsed = math.floor(time.monotonic() - start)
+        print(
+            f"\r{next(throbber)} Generating images… Elapsed time: {elapsed:.0f}s",
+            end="",
+            flush=True,
+        )
+        await asyncio.sleep(0.25)
 
-    client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
 
+async def _main_async(args: argparse.Namespace) -> None:
+    client = AsyncOpenAI(api_key=os.environ["OPENAI_API_KEY"])
+    timer_task = asyncio.create_task(_timer())
     try:
-        response = client.images.generate(
+        response = await client.images.generate(
             prompt=args.prompt,
             n=args.num,
             size=args.size,
@@ -80,11 +95,23 @@ def main() -> None:
             moderation="low",
         )
     except BadRequestError as ex:
-        print("Error:")
-        print(ex.body["message"])
+        print("\nError:")
+        print(ex.body.get("message", ex))
     else:
+        print()  # clear timer line
         for image in response.data:
             save_image(image.b64_json, args.output_dir)
+    finally:
+        timer_task.cancel()
+        try:
+            await timer_task
+        except asyncio.CancelledError:
+            pass
+
+
+def main() -> None:
+    args = parse_arguments()
+    asyncio.run(_main_async(args))
 
 
 if __name__ == "__main__":
