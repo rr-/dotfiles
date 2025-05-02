@@ -76,4 +76,5 @@ map("n", "<leader>a", "<cmd>AerialToggle!<CR>")
 -- inoreabbr <expr> ts# strftime("%Y-%m-%d")
 vim.cmd [[inoreabbr <expr> ts# strftime("%Y-%m-%d")]]
 
-
+-- evaluate with Python
+map('x', '<Leader>p', [[c<C-R>=py3eval(@")<CR><Esc>]], { noremap = true, silent = true })
