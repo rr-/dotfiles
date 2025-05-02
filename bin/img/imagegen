@@ -7,6 +7,7 @@ import json
 import math
 import mimetypes
 import os
+import sys
 import tempfile
 import time
 import warnings
@@ -14,19 +15,27 @@ from datetime import datetime
 from io import BytesIO
 from itertools import cycle
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import magic
 import piexif
 from openai import AsyncOpenAI, BadRequestError
 from PIL import Image, PngImagePlugin
 
+Metadata = dict[str, str]
+
 
 def parse_arguments() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Generate images using OpenAI API"
+        description="Generate images using OpenAI API or inspect existing image metadata"
     )
-    parser.add_argument("prompt", type=str, help="Prompt to generate image")
+    parser.add_argument(
+        "prompt",
+        type=str,
+        nargs="?",
+        default=None,
+        help="Prompt to generate image (required unless --inspect is used)",
+    )
     parser.add_argument(
         "-s",
         "--size",
@@ -52,7 +61,17 @@ def parse_arguments() -> argparse.Namespace:
         default=Path("."),
         help="Directory to save the image",
     )
-    return parser.parse_args()
+    parser.add_argument(
+        "-i",
+        "--inspect",
+        type=Path,
+        help="Path to an image to inspect for metadata (overrides generation mode)",
+    )
+    args = parser.parse_args()
+    # Require either a prompt for generation or an inspect path
+    if args.inspect is None and args.prompt is None:
+        parser.error("Either a prompt or --inspect must be specified")
+    return args
 
 
 def get_file_name(data: bytes, default_ext: str = ".bin") -> str:
@@ -64,7 +83,7 @@ def get_file_name(data: bytes, default_ext: str = ".bin") -> str:
 
 
 def save_image(
-    data: bytes, output_dir: Path, metadata: dict[str, str] | None = None
+    data: bytes, output_dir: Path, metadata: Metadata | None = None
 ) -> None:
     # a backup in case something goes wrong
     with tempfile.NamedTemporaryFile(delete=False) as temp_file:
@@ -79,7 +98,6 @@ def save_image(
         if ext_lower == ".png":
             pnginfo = PngImagePlugin.PngInfo()
             pnginfo.add_text("imagegen", json_str)
-            print(json_str)
             img = Image.open(BytesIO(data))
             img.save(output_path, pnginfo=pnginfo)
         elif ext_lower in (".jpg", ".jpeg", ".webp"):
@@ -112,6 +130,47 @@ def save_image(
     Path(temp_file.name).unlink()
 
 
+def read_image_metadata(path: Path) -> Metadata:
+    """Inspect an image for embedded metadata and return it as a dict."""
+    if not path.exists():
+        raise FileNotFoundError(f"file not found: {path}")
+    ext_lower = path.suffix.lower()
+    if ext_lower == ".png":
+        try:
+            img = Image.open(path)
+        except Exception as e:
+            raise RuntimeError(f"unable to open image: {path}") from e
+        metadata_json = img.info.get("imagegen")
+        if metadata_json is None:
+            raise RuntimeError("no metadata found in image")
+        return cast(Metadata, json.loads(metadata_json))
+    elif ext_lower in (".jpg", ".jpeg", ".webp"):
+        try:
+            exif_dict = piexif.load(str(path))
+        except Exception as e:
+            raise RuntimeError(
+                f"unable to load EXIF data from image: {path}"
+            ) from e
+        exif_data = exif_dict.get("Exif") or {}
+        user_comment = exif_data.get(piexif.ExifIFD.UserComment)
+        if not user_comment:
+            raise RuntimeError("no metadata found in image")
+        if (
+            isinstance(user_comment, (bytes, bytearray))
+            and len(user_comment) >= 8
+        ):
+            json_bytes = user_comment[8:]
+            try:
+                json_str = json_bytes.decode("utf-8")
+            except Exception as e:
+                raise RuntimeError("failed to decode metadata") from e
+            return cast(Metadata, json.loads(json_str))
+        else:
+            raise RuntimeError("corrupted metadata in image")
+    else:
+        raise RuntimeError(f"unrecognized file extension: {ext_lower}")
+
+
 async def timer() -> None:
     start = time.monotonic()
     throbber = cycle("⠈⠐⠠⢀⡀⠄⠂⠁")
@@ -125,13 +184,15 @@ async def timer() -> None:
         await asyncio.sleep(0.25)
 
 
-def construct_metadata(args: argparse.Namespace) -> dict[str, str]:
+def construct_metadata(args: argparse.Namespace) -> Metadata:
     return {
-        k: v for k, v in vars(args).items() if k not in ["output_dir", "num"]
+        "size": args.size,
+        "quality": args.quality,
+        "prompt": args.prompt,
     }
 
 
-async def main_async(args: argparse.Namespace) -> None:
+async def run_prompt(args: argparse.Namespace) -> None:
     client = AsyncOpenAI(api_key=os.environ["OPENAI_API_KEY"])
     metadata = construct_metadata(args)
     timer_task = asyncio.create_task(timer())
@@ -164,7 +225,17 @@ async def main_async(args: argparse.Namespace) -> None:
 
 def main() -> None:
     args = parse_arguments()
-    asyncio.run(main_async(args))
+    if args.inspect:
+        try:
+            metadata = read_image_metadata(args.inspect)
+        except Exception as e:
+            print(f"Error: {e}", file=sys.stderr)
+            sys.exit(1)
+        print(f'size: {metadata.get("size")}')
+        print(f'quality: {metadata.get("quality")}')
+        print(f'\n{metadata.get("prompt")}')
+    else:
+        asyncio.run(run_prompt(args))
 
 
 if __name__ == "__main__":
