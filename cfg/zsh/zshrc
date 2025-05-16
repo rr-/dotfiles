@@ -1,5 +1,6 @@
 # autocomplete
 autoload -Uz compinit                   # initialize autocompletion engine
+autoload -Uz edit-command-line          # initialize additional modules
 compinit -i                             # initialize autocompletion engine (2)
 zstyle ':completion:*' matcher-list \
     'm:{a-zA-Z}={A-Za-z}' \
@@ -43,6 +44,7 @@ zshaddhistory() {
 if [[ $- == *i* ]]; then
     bindkey -e                # use Emacs keybindings
     bindkey "\e" vi-cmd-mode  # ...but allow going to Vi mode
+    bindkey '^X^E' edit-command-line
     export KEYTIMEOUT=1       # ...and don't block other hotkeys for too long
     stty -ixon                # reclaim ctrl+q for Neovim
     stty stop undef           # reclaim ctrl+s for Neovim
@@ -195,6 +197,7 @@ zle-line-init zle-keymap-select () {
 }
 zle -N zle-line-init
 zle -N zle-keymap-select
+zle -N edit-command-line
 
 # pyenv
 export PYENV_ROOT="$HOME/.pyenv"
