@@ -73,6 +73,8 @@ def parse_arguments() -> argparse.Namespace:
     # Require either a prompt for generation or an inspect path
     if args.inspect is None and args.prompt is None:
         parser.error("Either a prompt or --inspect must be specified")
+    if args.prompt is not None:
+        args.prompt = args.prompt.strip()
     return args
 
 
