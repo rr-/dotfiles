@@ -35,7 +35,7 @@ fw:
     - window_name: main
       cwd: ~/work/priv/trcustoms/
 
-  - name: postmedia
+  - name: nordhealth
     windows:
-    - window_name: main
-      cwd: ~/work/postmedia/
+    - window_name: kraken-main
+      cwd: ~/work/nordhealth/kraken/
