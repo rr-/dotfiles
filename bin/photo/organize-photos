@@ -297,35 +297,54 @@ def get_target_paths(
 def collect_files(path: Path, suffixes: Iterable[str]) -> list[Path]:
     return sorted(
         (
-            path.absolute()
-            for path in path.iterdir()
-            if path.is_file() and path.suffix.lower() in suffixes
+            subpath.absolute()
+            for subpath in path.iterdir()
+            if subpath.is_file() and subpath.suffix.lower() in suffixes
         ),
         key=lambda path: path.name,
     )
 
 
-def move(
+def process_file(
     root_dir: Path,
     source_path: Path,
     target_path: Path,
     dry_run: bool,
     overwrite_existing_files: bool,
+    allow_rename: bool,
 ) -> None:
     if target_path.exists() and source_path.samefile(target_path):
         return
     if not dry_run:
         target_path.parent.mkdir(parents=True, exist_ok=True)
-    if overwrite_existing_files or not target_path.exists():
-        print(
-            f"Moving {source_path.relative_to(root_dir)} to {target_path.relative_to(root_dir)}"
-        )
+
+    def get_message() -> str:
+        return f"Moving {source_path.relative_to(root_dir)} to {target_path.relative_to(root_dir)}"
+
+    if not target_path.exists():
+        print(get_message())
+        if not dry_run:
+            source_path.rename(target_path)
+    elif overwrite_existing_files:
+        print(f"{get_message()}: overwriting")
+        if not dry_run:
+            source_path.rename(target_path)
+    elif allow_rename:
+        target_dir = target_path.parent
+        stem = target_path.stem
+        suffix = target_path.suffix
+        for i in range(10):
+            target_path = target_dir / f"{stem}_{i}{suffix}"
+            if not target_path.exists():
+                break
+        else:
+            print(f"{get_message()}: target already exists")
+            return
+        print(f"{get_message()}: renaming")
         if not dry_run:
             source_path.rename(target_path)
     else:
-        print(
-            f"Moving {source_path.relative_to(root_dir)} to {target_path.relative_to(root_dir)}: target already exists"
-        )
+        print(f"{get_message()}: target already exists")
 
 
 def parse_args() -> argparse.Namespace:
@@ -369,12 +388,13 @@ def main() -> None:
                 print(f"Unknown image: {source_path}")
                 continue
 
-            move(
+            process_file(
                 args.root_dir.absolute(),
                 source_path,
                 target_path,
                 dry_run=args.dry_run,
                 overwrite_existing_files=args.overwrite_existing_files,
+                allow_rename=not args.overwrite_existing_files,
             )
 
 
