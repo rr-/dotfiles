@@ -8,6 +8,12 @@ vim.api.nvim_create_autocmd({'BufRead', 'BufNewFile'}, {
   command = 'set filetype=text'
 })
 
+-- correct .def filetype from assembler to c
+vim.api.nvim_create_autocmd({'BufRead', 'BufNewFile'}, {
+  pattern = '*.def',
+  command = 'set syntax=c'
+})
+
 -- screw buggy markdown syntax highlighting
 vim.api.nvim_create_autocmd({'BufRead', 'BufNewFile'}, {
   pattern = '*.md',
