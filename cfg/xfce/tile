@@ -52,11 +52,31 @@ def get_active_monitor_working_area(
     res = Xlib.ext.randr.get_screen_resources(root)
 
     # Get the primary output
-    primary_output = Xlib.ext.randr.get_output_primary(root).output
-    primary_output_info = Xlib.ext.randr.get_output_info(
-        disp, primary_output, res.config_timestamp
-    )
+    outputs = {
+        output: Xlib.ext.randr.get_output_info(
+            disp, output, res.config_timestamp
+        )
+        for output in Xlib.ext.randr.get_screen_resources(root).outputs
+    }
 
+    primary_output = Xlib.ext.randr.get_output_primary(root).output
+    if not primary_output:
+        for output, info in outputs.items():
+            print(
+                f"id={output:<3d} crtc:{info.crtc:<3d} size={info.mm_width}×{info.mm_height}"
+            )
+            if info.crtc and (
+                primary_output not in outputs
+                or info.mm_width > outputs[primary_output].mm_width
+            ):
+                primary_output = output
+
+    try:
+        primary_output_info = outputs[primary_output]
+    except KeyError:
+        return None
+
+    print(primary_output_info.crtc)
     if primary_output_info.crtc == 0:
         return None
 
@@ -153,7 +173,11 @@ def get_window_extents(
     return left, right, top, bottom
 
 
-def unmaximize_window(disp: Display, window_id: int) -> None:
+def unmaximize_window(
+    disp: Display, window_id: int, dry_run: bool = False
+) -> None:
+    if dry_run:
+        return
     root = disp.screen().root
     atoms = [
         disp.intern_atom("_NET_WM_STATE_FULLSCREEN"),
@@ -170,7 +194,7 @@ def unmaximize_window(disp: Display, window_id: int) -> None:
 
 
 def partition_desktop_windows(
-    disp: Display, desktop_id: int, ratio: Decimal
+    disp: Display, desktop_id: int, ratio: Decimal, dry_run: bool = False
 ) -> None:
     desktop_windows = list(get_desktop_window_ids(disp, desktop_id))
 
@@ -186,7 +210,7 @@ def partition_desktop_windows(
     ) = workspace
 
     for window_id in desktop_windows:
-        unmaximize_window(disp, window_id)
+        unmaximize_window(disp, window_id, dry_run=dry_run)
 
     disp.flush()
 
@@ -215,14 +239,24 @@ def partition_desktop_windows(
             y=y1,
             width=x2 - x1 - border_left - border_right,
             height=y2 - y1 - border_top - border_bottom,
+            dry_run=dry_run,
         )
 
 
 def set_window_geometry(
-    disp: Display, window_id: int, x: int, y: int, width: int, height: int
+    disp: Display,
+    window_id: int,
+    x: int,
+    y: int,
+    width: int,
+    height: int,
+    dry_run: bool = False,
 ) -> None:
     window = disp.create_resource_object("window", window_id)
-    window.configure(x=x, y=y, width=width, height=height)
+    if dry_run:
+        print(window_id, x, y, width, height)
+    else:
+        window.configure(x=x, y=y, width=width, height=height)
 
 
 def get_property(disp: Display, name: str) -> Any:
@@ -269,6 +303,7 @@ def get_desktop_window_ids(disp: Display, desktop_id: int) -> Iterable[int]:
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument("-r", "--ratio", type=Decimal, default=DEFAULT_RATIO)
+    parser.add_argument("-d", "--dry-run", action="store_true")
     return parser.parse_args()
 
 
@@ -278,7 +313,9 @@ def main() -> None:
 
     active_window_id = disp.get_input_focus().focus.id
     if (desktop_id := get_desktop_id(disp, active_window_id)) is not None:
-        partition_desktop_windows(disp, desktop_id, ratio=args.ratio)
+        partition_desktop_windows(
+            disp, desktop_id, ratio=args.ratio, dry_run=args.dry_run
+        )
 
     disp.flush()
     disp.close()
