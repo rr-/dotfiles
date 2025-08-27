@@ -79,7 +79,28 @@ atl() {
     echo "$@" | ai --context "Translate input text from the following language: ${source}' to: ${target}." 2>/dev/null | less -rFX
 }
 
-alias kind='ai -c "Reword the input to make it kinder and friendlier, keeping it concise and welcoming."'
+c() {
+    codex --sandbox workspace-write -a never ${@}
+}
+ai_cr() {
+  mode=$1
+  shift
+  case $mode in
+    light)
+      c "Do a light code review of my last commit looking for any immediate mistakes. Prioritize time."
+      ;;
+    arch)
+      c "Perform an architectural review of my last commit considering design patterns and maintainability."
+      ;;
+    *)
+      echo "Invalid mode. Use 'light' or 'arch'."
+      ;;
+  esac
+}
+
+alias ai-cr='ai_cr'
+alias kind='ai -c "Given a draft of a message, reword it so that it sounds kind and sweet, but keep it natural and avoid groveling or excessive empathy. Avoid sounding like ChatGPT. Additional user prompts will be prefixed with >, otherwise reword all inputs."'
+alias kind-reply='ai -c "Given a draft of a reply to someone"'"'"'" post, reword it so that it sounds kind and sweet, but keep it natural and avoid groveling or excessive empathy. Avoid sounding like ChatGPT. The original post is prefixed with >, the reply draft is not prefixed."'
 alias rephrase='ai -c "Rewrite the input for a better structure. Be succint and friendly in your wording. No introductions."'
 alias grammar='ai -c "Rewrite the input so that it is grammatically correct. Keep structure and word choices. Explain your changes succinctly in a bulleted list. Pay attention to tenses."'
 alias shorten='ai -c "Rewrite the input to make it shorter. Be succint, but kind in your wording."'

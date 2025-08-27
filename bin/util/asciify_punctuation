@@ -1,0 +1,40 @@
+#!/usr/bin/env python3
+import sys
+
+unicode_to_ascii: dict[str, str] = {
+    "“": '"',
+    "”": '"',
+    "‘": "'",
+    "’": "'",
+    "—": " – ",
+    "…": "…",
+    "«": '"',
+    "»": '"',
+    "‚": ",",
+    "„": '"',
+    "‒": "-",
+    "―": "-",
+    "‹": "<",
+    "›": ">",
+    "‼": "!!",
+    "‽": "?!",
+    "⁄": "/",
+    "⁇": "??",
+}
+
+
+def asciify_unicode(line: str) -> str:
+    return (
+        "".join(unicode_to_ascii.get(ch, ch) for ch in line)
+        .replace("...", "…")
+        .replace("  –  ", " – ")
+    )
+
+
+def clean_stdin() -> None:
+    for line in sys.stdin:
+        print(asciify_unicode(line), end="")
+
+
+if __name__ == "__main__":
+    clean_stdin()
