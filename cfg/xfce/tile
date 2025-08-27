@@ -21,26 +21,54 @@ def calculate_partitions(
     height: int,
     n: int,
     ratio: Decimal,
+    gaps: int = 0,
 ) -> Iterable[tuple[int, int, int, int]]:
-    x1 = x
-    y1 = y
-    x2 = x + width
-    y2 = y + height
+    """
+    Split the rectangle (x, y, width, height) into `n` sub-rectangles.
+
+    If width ≥ height we slice vertically (left → right); otherwise we
+    slice horizontally (top → bottom).
+
+    `ratio` governs how big each non-final slice is compared to what’s
+    still unallocated. `gaps` is the empty space (in pixels) inserted
+    *between* consecutive slices. Gaps are not added before the first
+    or after the last slice.
+
+    Yields
+    ------
+    Tuples of (x1, y1, x2, y2) for each partition.
+    """
+    x1, y1 = x, y
+    x2, y2 = x + width, y + height
+
+    # How many gaps will ultimately live on the cutting axis?
+    total_gap = gaps * (n - 1)
 
     for i in range(n):
         last = i == n - 1
+
         if width >= height:
-            # Partition horizontally
-            partition_width = width if last else int(width * ratio)
-            yield (x1, y1, x1 + partition_width, y2)
-            x1 += partition_width
-            width -= partition_width
+            # === horizontal (left-to-right) cuts ===
+            # Remaining pixel budget *excluding* future gaps:
+            usable = width - total_gap
+            part_w = usable if last else int(Decimal(usable) * ratio)
+            yield (x1, y1, x1 + part_w, y2)
+
+            # Advance cursor: slice + *one* gap (unless this was last)
+            x1 += part_w + (gaps if not last else 0)
+            width -= part_w
         else:
-            # Partition vertically
-            partition_height = height if last else int(height * ratio)
-            yield (x1, y1, x2, y1 + partition_height)
-            y1 += partition_height
-            height -= partition_height
+            # === vertical (top-to-bottom) cuts ===
+            usable = height - total_gap
+            part_h = usable if last else int(Decimal(usable) * ratio)
+            yield (x1, y1, x2, y1 + part_h)
+
+            y1 += part_h + (gaps if not last else 0)
+            height -= part_h
+
+        # One gap has now been spent (except after final slice)
+        if not last:
+            total_gap -= gaps
 
 
 def get_active_monitor_working_area(
@@ -194,7 +222,11 @@ def unmaximize_window(
 
 
 def partition_desktop_windows(
-    disp: Display, desktop_id: int, ratio: Decimal, dry_run: bool = False
+    disp: Display,
+    desktop_id: int,
+    ratio: Decimal,
+    dry_run: bool = False,
+    gaps: int = 0,
 ) -> None:
     desktop_windows = list(get_desktop_window_ids(disp, desktop_id))
 
@@ -217,12 +249,13 @@ def partition_desktop_windows(
     for window_id, (x1, y1, x2, y2) in zip(
         desktop_windows,
         calculate_partitions(
-            workspace_x,
-            workspace_y,
-            workspace_width,
-            workspace_height,
+            workspace_x + gaps,
+            workspace_y + gaps,
+            workspace_width - gaps * 2,
+            workspace_height - gaps * 2,
             n=len(desktop_windows),
             ratio=ratio,
+            gaps=gaps,
         ),
     ):
         (
@@ -235,8 +268,8 @@ def partition_desktop_windows(
         set_window_geometry(
             disp,
             window_id,
-            x=x1,
-            y=y1,
+            x=x1 + border_left,
+            y=y1 + border_top,
             width=x2 - x1 - border_left - border_right,
             height=y2 - y1 - border_top - border_bottom,
             dry_run=dry_run,
@@ -304,6 +337,7 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument("-r", "--ratio", type=Decimal, default=DEFAULT_RATIO)
     parser.add_argument("-d", "--dry-run", action="store_true")
+    parser.add_argument("-g", "--gaps", type=int, default=96)
     return parser.parse_args()
 
 
@@ -314,7 +348,11 @@ def main() -> None:
     active_window_id = disp.get_input_focus().focus.id
     if (desktop_id := get_desktop_id(disp, active_window_id)) is not None:
         partition_desktop_windows(
-            disp, desktop_id, ratio=args.ratio, dry_run=args.dry_run
+            disp,
+            desktop_id,
+            ratio=args.ratio,
+            dry_run=args.dry_run,
+            gaps=args.gaps,
         )
 
     disp.flush()
