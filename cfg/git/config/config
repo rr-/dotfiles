@@ -1,6 +1,9 @@
 [advice]
     forceDeleteBranch = false
 
+[init]
+    defaultBranch = main
+
 [github]
     user = rr-
 
