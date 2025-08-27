@@ -1,3 +1,9 @@
+# transparency
+super + {button5,button4}
+    picom-trans -c {-,+}5
+super + {z,Z}
+    picom-trans -c {-,+}5
+
 # focus window in given direction
 super + {h,j,k,l}
     DIR={left,down,up,right}; \
