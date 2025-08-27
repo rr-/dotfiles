@@ -73,6 +73,16 @@ map("n", "<M-[>", "<cmd>AerialPrev<CR>", { buffer = bufnr })
 map("n", "<M-]>", "<cmd>AerialNext<CR>", { buffer = bufnr })
 map("n", "<leader>a", "<cmd>AerialToggle!<CR>")
 
+-- Formatting
+vim.api.nvim_set_keymap('n', '<C-b>', '', {callback = function()
+  if vim.bo.filetype == 'json' then
+    vim.cmd('%!jq .')
+  else
+    vim.cmd('Isort')
+    vim.cmd('Black')
+  end
+end, noremap = true, silent = true })
+
 -- inoreabbr <expr> ts# strftime("%Y-%m-%d")
 vim.cmd [[inoreabbr <expr> ts# strftime("%Y-%m-%d")]]
 
