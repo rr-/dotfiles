@@ -47,7 +47,7 @@ def main() -> None:
                     lap_number += 1
                     lap_times.append(elapsed_time)
                     print_elapsed_time(lap_number, elapsed_time)
-                    start_time = elapsed_time
+                    start_time = time.time()
                 else:
                     break
             elapsed_time = capture_lap(start_time)
