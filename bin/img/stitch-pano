@@ -24,6 +24,7 @@
 # THE SOFTWARE.
 
 import argparse
+import re
 import sys
 import tempfile
 from collections.abc import Iterable
@@ -43,21 +44,105 @@ class ControlPoint(Point):
     img: int
 
 
+def tokenize(s: str) -> list[str]:
+    # Split into word/digit/non-alnum tokens
+    return re.findall(r"[A-Za-z]+|\d+|[^A-Za-z\d]+", s)
+
+
+def common_prefix(a: str, b: str) -> str:
+    a_tokens, b_tokens = tokenize(a), tokenize(b)
+    prefix = ""
+    for at, bt in zip(a_tokens, b_tokens):
+        if at == bt:
+            prefix += at
+        else:
+            break
+    return prefix
+
+
+def common_suffix(a: str, b: str) -> str:
+    a_tokens, b_tokens = tokenize(a)[::-1], tokenize(b)[::-1]
+    suffix = ""
+    for at, bt in zip(a_tokens, b_tokens):
+        if at == bt:
+            suffix = at + suffix
+        else:
+            break
+    return suffix
+
+
+def infer_output_name(input_files: list[Path]) -> Path:
+    sorted_files = sorted(input_files, key=lambda p: p.name)
+    first = sorted_files[0].stem
+    last = sorted_files[-1].stem
+    ext = sorted_files[0].suffix or ".jpg"
+
+    prefix = common_prefix(first, last)
+    suffix = common_suffix(first, last)
+    middle = "…"
+
+    first_core = first[len(prefix) : len(first) - len(suffix) or None]
+    last_core = last[len(prefix) : len(last) - len(suffix) or None]
+
+    if first_core and last_core and (first_core != last_core):
+        name = f"{prefix}{first_core}{middle}{last_core}{suffix}{ext}"
+    else:
+        name = f"{prefix}{middle}{suffix}{ext}"
+
+    return Path(name)
+
+
+def expand_input_files(raw_inputs: list[Path]) -> list[Path]:
+    """Expand directories into *.jpg, or default to '.' if empty."""
+    input_files: list[Path] = []
+
+    # If no inputs, use current directory
+    if not raw_inputs:
+        raw_inputs = [Path(".")]
+
+    for path in raw_inputs:
+        if path.is_dir():
+            # Collect all .jpg in this directory (non-recursive)
+            input_files.extend(sorted(path.glob("*.jpg")))
+        else:
+            input_files.append(path)
+
+    return input_files
+
+
+def filter_input_files(input_files: list[Path]) -> list[Path]:
+    """Filter out files containing the ellipsis '…' and warn about them."""
+    filtered = []
+    for file in input_files:
+        if "…" in file.name:
+            print(
+                f"⚠️  Skipping file '{file.name}' – "
+                "filenames containing '…' are ignored.",
+                file=sys.stderr,
+            )
+        else:
+            filtered.append(file)
+
+    if not filtered:
+        raise SystemExit("error: No valid input files.")
+    return filtered
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Stitch scanned segments.")
     parser.add_argument(
         "input_files",
         metavar="N",
-        nargs="+",
-        help="files to be stitched",
+        nargs="*",
+        help="files or directories to be stitched (default: *.jpg in current directory)",
         type=Path,
     )
     parser.add_argument(
         "-o",
         "--output",
         dest="output_file",
-        default=Path("output.jpg"),
-        help="output name (default: output.jpg)",
+        default=None,
+        help="output name (default: inferred from inputs)",
         type=Path,
     )
     parser.add_argument(
@@ -65,7 +150,20 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="keep the .pto panorama spec file",
     )
-    return parser.parse_args()
+
+    args = parser.parse_args()
+
+    # Expand directories and defaults
+    expanded = expand_input_files(args.input_files)
+
+    # Filter out unwanted names
+    args.input_files = filter_input_files(expanded)
+
+    # Infer output if not given
+    if args.output_file is None:
+        args.output_file = infer_output_name(args.input_files)
+
+    return args
 
 
 def make_pto_file(pto_file: Path, input_files: list[Path]) -> None:
