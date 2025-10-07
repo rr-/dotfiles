@@ -169,3 +169,5 @@ docker() {
 for x in ~/.config/zsh/*.*sh; do
     source "$x"
 done
+
+alias assume=". assume"
