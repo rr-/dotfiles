@@ -1,22 +1,129 @@
-#!/bin/bash
-src="$1"
-if [ ! -r "$src" ] ; then
-    echo "Usage: $0 <image> [<lameopts>]"
-    exit 1
-fi
+#!/usr/bin/env python3
+import argparse
+import sys
+import tempfile
+from pathlib import Path
+from subprocess import check_output, run
+from typing import Any
 
-shift
-args=$*
-size="$(identify "$src" | tr ' ' '\n' | egrep '[0-9]+x[0-9]+' | head -1 | tr x ' ')"
 
-for channel in r g b a; do
-    convert "$src" -channel $channel -separate mp3img.gray || exit 1
-    lame -r -s 24 --resample 24 --bitwidth 8 -m m $args mp3img.gray mp3img.mp3 || exit 1
-    lame --decode --unsigned -x -t mp3img.mp3 mp3img.gray || exit 1
-    python2 -c "import sys;sys.stdout.write('P5\n$size\n255\n'+''.join([chr((ord(c)+128)&255) for c in sys.stdin.read()[::2]]))" <mp3img.gray >mp3img-$channel.pgm
-done
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        description="MP3 image glitch converter (IMv7 safe)"
+    )
+    parser.add_argument("-i", "--input", required=True, type=Path)
+    parser.add_argument("-o", "--output", required=True, type=Path)
+    parser.add_argument(
+        "--shift",
+        type=int,
+        default=0,
+        help="Number of bytes to skip at the start of decoded data to compensate for MP3 delay (e.g. 529)",
+    )
+    parser.add_argument("lame_args", nargs=argparse.REMAINDER)
+    result = parser.parse_args()
+    if len(result.lame_args) > 0 and result.lame_args[0] == "--":
+        result.lame_args = result.lame_args[1:]
+    return result
 
-convert mp3img-r.pgm mp3img-g.pgm mp3img-b.pgm mp3img-a.pgm -set colorspace RGBA -combine mp3img.png || exit 1
 
-rm -f mp3img.{gray,mp3}
-rm -f mp3img-{r,g,b,a}.pgm
+def get_image_size(path: Path) -> tuple[int, int]:
+    info = check_output(
+        ["magick", "identify", "-format", "%wx%h", path], text=True
+    ).strip()
+    width, height = info.split("x")
+    return (int(width), int(height))
+
+
+def compress_channel(
+    source: Path,
+    output: Path,
+    channel: str,
+    lame_args: Any,
+    shift: int,
+) -> None:
+    width, height = get_image_size(source)
+
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        gray = Path(tmp_dir) / "mp3img.gray"
+        mp3 = Path(tmp_dir) / "mp3img.mp3"
+
+        # extract single channel as raw grayscale
+        run(
+            ["magick", source, "-channel", channel, "-separate", gray],
+            check=True,
+        )
+
+        # encode → decode
+        run(
+            [
+                "lame",
+                "-r",
+                "-s",
+                "24",
+                "--resample",
+                "24",
+                "--bitwidth",
+                "8",
+                "-m",
+                "m",
+                *lame_args,
+                gray,
+                mp3,
+            ],
+            check=True,
+        )
+        run(
+            ["lame", "--decode", "--unsigned", "-x", "-t", mp3, gray],
+            check=True,
+        )
+
+        raw = gray.read_bytes()
+        if not raw:
+            raise RuntimeError(f"{channel} channel produced empty data")
+
+        # Apply shift compensation
+        if shift > 0:
+            if shift >= len(raw):
+                raise RuntimeError(
+                    f"Shift {shift} exceeds decoded data length"
+                )
+            raw = raw[shift:]
+
+        # Convert signed → unsigned and crop to correct image size
+        fixed = bytes(((b + 128) & 255) for b in raw[::2])
+        fixed = fixed[: width * height]
+
+        output.write_bytes(f"P5\n{width} {height}\n255\n".encode() + fixed)
+
+
+def main() -> None:
+    args = parse_args()
+
+    if not args.input.exists():
+        sys.exit(f"can't read {args.input}")
+
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        channels = ["r", "g", "b", "a"]
+        channel_files = [Path(tmp_dir) / f"mp3img-{ch}.pgm" for ch in channels]
+
+        for ch, out_path in zip(channels, channel_files):
+            compress_channel(
+                args.input, out_path, ch, args.lame_args, args.shift
+            )
+
+        run(
+            [
+                "magick",
+                *channel_files,
+                "-set",
+                "colorspace",
+                "RGBA",
+                "-combine",
+                args.output,
+            ],
+            check=True,
+        )
+
+
+if __name__ == "__main__":
+    main()
