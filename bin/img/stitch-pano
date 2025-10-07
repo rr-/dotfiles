@@ -196,7 +196,9 @@ def morph_images_to_fit_control_points(
             ],
             check=True,
         )
-        pto_content = pto_content.replace(str(input_file), str(image_name))
+        pto_content = pto_content.replace(
+            str(input_file.absolute()), str(image_name)
+        )
 
     pto_file.write_text(pto_content)
 
@@ -218,6 +220,7 @@ def stitch_images(pto_file: Path, tmp_dir: Path) -> Path:
         ],
         check=True,
     )
+    assert pto_file.exists()
 
     run(["nona", "-o", tmp_dir / "remapped", pto_file], check=True)
 
