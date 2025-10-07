@@ -14,12 +14,6 @@ vim.api.nvim_create_autocmd({'BufRead', 'BufNewFile'}, {
   command = 'set syntax=c'
 })
 
--- screw buggy markdown syntax highlighting
-vim.api.nvim_create_autocmd({'BufRead', 'BufNewFile'}, {
-  pattern = '*.md',
-  command = 'set filetype=text'
-})
-
 -- strip trailing whitespace for common source code
 vim.api.nvim_create_autocmd('FileType', {
   pattern = 'c,cc,cxx,cpp,h,hpp,java,php,python,ruby,vim',
