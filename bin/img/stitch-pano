@@ -182,7 +182,7 @@ def morph_images_to_fit_control_points(
         image_name = tmp_dir / f"m{i}.tif"
         run(
             [
-                "convert",
+                "magick",
                 input_file,
                 "-compress",
                 "LZW",
