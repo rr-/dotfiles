@@ -87,10 +87,6 @@
     path = ~/.config/git/config-nordhealth
 [includeIf "gitdir:~/work/invoices/"]
     path = ~/.config/git/config-priv
-[includeIf "gitdir:~/work/cloudlinux/"]
-    path = ~/.config/git/config-cloudlinux
-[includeIf "gitdir:~/work/servicebell/"]
-    path = ~/.config/git/config-servicebell
 [credential "https://github.com"]
     helper = !/usr/bin/gh auth git-credential
 [protocol "file"]
