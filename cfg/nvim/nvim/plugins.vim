@@ -38,6 +38,7 @@ let g:EditorConfig_preserve_formatoptions = 1
 "hide cursor in the file explorer
 let g:fern#default_exclude = '__pycache__'
 let g:fern#hide_cursor = 1
+let g:fern#drawer_keep = 1
 function! s:init_fern() abort
   "pressing <F3> in fern causes it to go up
   nmap <buffer> <F3> <BS>
