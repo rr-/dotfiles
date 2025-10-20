@@ -42,6 +42,10 @@ alias g='command git'
     alias gm='command git merge'
     alias gb='command git branch'
     alias gbd='command git branch -D'
+    alias gBs='git bisect start'
+    alias gBr='git bisect reset'
+    alias gBG='git bisect good'
+    alias gBB='git bisect bad'
     gbl() {
       git for-each-ref --sort=-committerdate refs/heads/ \
       --format="%(color:red)%(objectname:short)%(color:reset) \
