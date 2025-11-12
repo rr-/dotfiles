@@ -1,0 +1,82 @@
+#!/usr/bin/env python3
+import argparse
+from pathlib import Path
+from subprocess import check_call
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("input", type=Path)
+    parser.add_argument("-o", "--output", type=Path)
+    parser.add_argument(
+        "--from",
+        dest="start",
+        help="Start time/frame (timestamp or frame number)",
+    )
+    parser.add_argument(
+        "--to", dest="end", help="End time/frame (timestamp or frame number)"
+    )
+    parser.add_argument(
+        "--height", type=int, default=720, help="Target video height."
+    )
+    return parser.parse_args()
+
+
+def is_timestamp(value: str) -> bool:
+    return ":" in value
+
+
+def main() -> None:
+    args = parse_args()
+    input_path = args.input
+    output_path = args.output or input_path.with_name(
+        input_path.stem + "-compressed.mp4"
+    )
+
+    ffmpeg_cmd = ["ffmpeg", "-i", str(input_path)]
+
+    # Handle timestamp trimming directly
+    if args.start and is_timestamp(args.start):
+        ffmpeg_cmd += ["-ss", args.start]
+
+    ffmpeg_cmd += ["-i", str(input_path)]
+
+    if args.end and is_timestamp(args.end):
+        ffmpeg_cmd += ["-to", args.end]
+
+    # Frame-based selection (using select filter on input, but not overwriting main -vf)
+    if args.start and not is_timestamp(args.start):
+        frame_start = int(args.start)
+        frame_end = (
+            int(args.end)
+            if args.end and not is_timestamp(args.end)
+            else 99999999
+        )
+        ffmpeg_cmd += [
+            "-filter_complex",
+            f"select='between(n,{frame_start},{frame_end})',setpts=N/FRAME_RATE/TB,scale=-1:{args.height}",
+        ]
+    else:
+        ffmpeg_cmd += ["-vf", "scale=-1:{args.height}"]
+
+    ffmpeg_cmd += [
+        "-b:v",
+        "2M",
+        "-preset",
+        "fast",
+        "-c:a",
+        "aac",
+        "-b:a",
+        "128k",
+        "-ar",
+        "44100",
+        "-strict",
+        "-2",
+        "-y",
+        str(output_path),
+    ]
+    check_call(ffmpeg_cmd)
+
+
+if __name__ == "__main__":
+    main()
