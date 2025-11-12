@@ -1,0 +1,255 @@
+#!/usr/bin/env -S uv run --script
+#
+# /// script
+# requires-python = ">=3.12"
+# dependencies = ["tqdm", "pycryptodome", "requests"]
+# ///
+
+import argparse
+import base64
+import hashlib
+import json
+import re
+import shutil
+import tempfile
+import xml.etree.ElementTree as ET
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from pathlib import Path
+from subprocess import check_output
+from typing import Any, cast
+from urllib.parse import urljoin
+
+import requests
+from Crypto.Cipher import AES
+from Crypto.Util.Padding import unpad
+from tqdm import tqdm
+
+secret = "Wcb26arWkvkcAZc378eR"  # hardcoded in the .js
+app_key = "bywebabcd1234"  # hardcoded in the .js
+did = "fYTeKbaNpymHBE4JcDhH7rRm"  # ????
+
+
+def decrypt(secret_key: str, secret_iv: str, text: str) -> str:
+    ciphertext = base64.b64decode(text)
+    cipher = AES.new(secret_key.encode(), AES.MODE_CBC, secret_iv.encode())
+    decoded = cipher.decrypt(ciphertext)
+    plaintext = cast(bytes, unpad(decoded, AES.block_size))
+    return plaintext.decode()
+
+
+def request_hitv(url: str) -> dict[str, Any]:
+    response = requests.get(
+        url,
+        headers={
+            "accept": "application/json, text/plain, */*",
+            "accept-language": "en;q=0.9",
+            "did": did,
+            "origin": "https://home.hitv.vip",
+            "platform": "pc",
+        },
+    )
+    key_iv = hashlib.md5(
+        hashlib.md5(did.encode() + str(response.json().get("ts")).encode())
+        .hexdigest()
+        .encode()
+        + secret.encode()
+    ).hexdigest()
+    key = key_iv[:16]
+    iv = key_iv[16:]
+    response.raise_for_status()
+    return cast(
+        dict[str, Any], json.loads(decrypt(key, iv, response.json()["data"]))
+    )
+
+
+def fetch_episode_info(episode_id: str) -> dict[str, Any]:
+    return request_hitv(
+        f"https://api.hitv.vip/s1/w/series/api/episode/detail?eid={episode_id}"
+    )
+
+
+def fetch_source_info(
+    series_id: str, episode_id: str, source_id: str, source_quality: int
+) -> dict[str, Any]:
+    sign = hashlib.md5(
+        f"eid={episode_id}"
+        f"&scid={source_id}"
+        f"&sid={series_id}"
+        f"&sq={source_quality}"
+        f"&appkey={app_key}".encode()
+    ).hexdigest()
+    url = (
+        f"https://api.hitv.vip/s1/w/series/api/series/rslv"
+        f"?sid={series_id}"
+        f"&eid={episode_id}"
+        f"&scid={source_id}"
+        f"&sq={source_quality}"
+        f"&sign={sign}"
+    )
+    return request_hitv(url)
+
+
+def fetch_playlist(url: str) -> tuple[str, str]:
+    response = requests.get(url)
+    return url, response.text
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("url", nargs="+")
+    parser.add_argument("-o", "--output-dir", default=Path())
+    return parser.parse_args()
+
+
+def download_chunks(
+    playlist_url: str, playlist_path: Path, output_dir: Path
+) -> list[Path]:
+    playlist_content = playlist_path.read_text(encoding="utf-8")
+    matches = [m.group(0) for m in re.finditer(r".*-.*\.ts", playlist_content)]
+
+    def fetch(filename: str) -> Path:
+        tmp_path = output_dir / filename
+        if not tmp_path.exists():
+            chunk_url = urljoin(playlist_url, filename)
+            r = requests.get(chunk_url)
+            r.raise_for_status()
+            tmp_path.write_bytes(r.content)
+        return tmp_path
+
+    results = []
+    with ThreadPoolExecutor(max_workers=8) as ex, tqdm(
+        total=len(matches), desc="Downloading chunks", unit="chunk"
+    ) as pbar:
+        futures = {ex.submit(fetch, fn): fn for fn in matches}
+        for f in as_completed(futures):
+            results.append(f.result())
+            pbar.update(1)
+    return results
+
+
+def mux(playlist_path: Path, output_path: Path) -> None:
+    check_output(
+        [
+            "ffmpeg",
+            "-v",
+            "quiet",
+            "-i",
+            str(playlist_path),
+            "-c",
+            "copy",
+            "-y",
+            str(output_path),
+        ],
+    )
+
+
+def transform_subs(source: str, key: str) -> str:
+    root = ET.fromstring(source)
+
+    def to_srt_time(t: str) -> str:
+        h, m, s = t.split(":")
+        s, ms = s.split(".")
+        return f"{int(h):02}:{int(m):02}:{int(s):02},{int(ms)*10:03}"
+
+    entries = []
+    for i, dia in enumerate(root.findall("dia"), 1):
+        st = (dia.findtext("st") or "").strip()
+        et = (dia.findtext("et") or "").strip()
+        con = (dia.findtext("con") or "").strip()
+        text = decrypt(secret_iv=key[16:], secret_key=key[:16], text=con)
+        entries.append(
+            f"{i}\n{to_srt_time(st)} --> {to_srt_time(et)}\n{text}\n"
+        )
+
+    return "\n".join(entries)
+
+
+def download_subs(url: str, key: str, output_path: Path) -> None:
+    response = requests.get(url)
+    response.raise_for_status()
+    output_path.write_text(
+        transform_subs(response.text, key), encoding="utf-8"
+    )
+
+
+def download_playlist(url: str, output_path: Path) -> None:
+    response = requests.get(url)
+    response.raise_for_status()
+    output_path.write_text(response.text, encoding="utf-8")
+
+
+def get_episode_id_from_url(url: str) -> str | None:
+    response = requests.get(url)
+    response.raise_for_status()
+    if match := re.search('eid="(.*?)"', response.text):
+        return match.group(1)
+    return None
+
+
+def get_streams_info(episode_id: str) -> dict[str, Any]:
+    episode_info = fetch_episode_info(episode_id)
+    series_id = episode_info["episode"]["sid"]
+    source_id = episode_info["episode"]["sources"][0]["scid"]
+    qualities = episode_info["episode"]["sources"][0]["qualities"]
+    highest_quality = max(
+        (q for q in qualities if q["own"]),
+        key=lambda q: int(q["resolution"].rstrip("P")),
+    )["value"]
+    source_info = fetch_source_info(
+        series_id=series_id,
+        episode_id=episode_id,
+        source_id=source_id,
+        source_quality=highest_quality,
+    )
+    m3u8_url = source_info["datas"][0]["data"]
+    all_subtitles = source_info["subtitles"]
+    english_subtitles = next(
+        item for item in all_subtitles if item["langCode"] == "en-US"
+    )
+    return {
+        "slug": f"{episode_info['episode']['sidAlias']}_{episode_info['episode']['serialNo']}",
+        "m3u8_url": m3u8_url,
+        "subtitle_url": english_subtitles["url"],
+        "subtitle_key": english_subtitles["key"],
+    }
+
+
+def main() -> None:
+    tmp_dir = Path(tempfile.mkdtemp(prefix="hitv_"))
+    tmp_dir.mkdir(exist_ok=True)
+
+    args = parse_args()
+    for url in args.url:
+        episode_id = get_episode_id_from_url(url)
+        if not episode_id:
+            print("Unknown URL", url)
+            continue
+
+        streams_info = get_streams_info(episode_id)
+        video_output_path = args.output_dir / (streams_info["slug"] + ".mp4")
+        sub_output_path = video_output_path.with_suffix(".srt")
+        playlist_path = tmp_dir / "playlist.m3u8"
+
+        download_playlist(
+            url=streams_info["m3u8_url"], output_path=playlist_path
+        )
+        download_chunks(
+            playlist_url=streams_info["m3u8_url"],
+            playlist_path=playlist_path,
+            output_dir=tmp_dir,
+        )
+        mux(playlist_path=playlist_path, output_path=video_output_path)
+        print("Saved movie in ", video_output_path)
+
+        download_subs(
+            url=streams_info["subtitle_url"],
+            key=streams_info["subtitle_key"],
+            output_path=sub_output_path,
+        )
+        print("Saved subtitles in ", sub_output_path)
+
+    shutil.rmtree(tmp_dir, ignore_errors=True)
+
+
+if __name__ == "__main__":
+    main()
