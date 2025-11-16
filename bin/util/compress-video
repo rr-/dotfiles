@@ -57,7 +57,7 @@ def main() -> None:
             f"select='between(n,{frame_start},{frame_end})',setpts=N/FRAME_RATE/TB,scale=-1:{args.height}",
         ]
     else:
-        ffmpeg_cmd += ["-vf", "scale=-1:{args.height}"]
+        ffmpeg_cmd += ["-vf", f"scale=-1:{args.height}"]
 
     ffmpeg_cmd += [
         "-b:v",
