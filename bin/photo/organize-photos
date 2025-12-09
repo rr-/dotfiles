@@ -5,10 +5,12 @@ import json
 import re
 import sys
 from collections.abc import Iterable
+from concurrent.futures import ThreadPoolExecutor, wait
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 from subprocess import TimeoutExpired, run
+from threading import Lock
 from typing import TypeVar
 
 import dateutil.parser
@@ -367,23 +369,20 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def main() -> None:
-    args = parse_args()
-
-    chunks = list(
-        make_chunks(
-            collect_files(args.root_dir, suffixes=ALL_SUFFIXES),
-            n=args.chunk_size,
-        )
-    )
-    for i, chunk in enumerate(chunks, 1):
-        percent = i / len(chunks)
-        print(f"processing chunk #{i} ({percent:.02%})", file=sys.stderr)
-        for source_path, target_path in get_target_paths(
+def process_chunk(
+    i: int, total: int, lock: Lock, chunk: list[Path], args: argparse.Namespace
+) -> None:
+    target_paths = list(
+        get_target_paths(
             root_dir=args.root_dir,
             source_paths=chunk,
             include_day_dir=args.day_dir,
-        ):
+        )
+    )
+
+    with lock:
+        print(f"processing chunk #{i} ({i / total:.02%})", file=sys.stderr)
+        for source_path, target_path in target_paths:
             if target_path is None:
                 print(f"Unknown image: {source_path}")
                 continue
@@ -396,6 +395,35 @@ def main() -> None:
                 overwrite_existing_files=args.overwrite_existing_files,
                 allow_rename=not args.overwrite_existing_files,
             )
+
+
+def main() -> None:
+    args = parse_args()
+
+    chunks = list(
+        make_chunks(
+            collect_files(args.root_dir, suffixes=ALL_SUFFIXES),
+            n=args.chunk_size,
+        )
+    )
+
+    lock = Lock()
+    with ThreadPoolExecutor(max_workers=4) as executor:
+        futures = {
+            executor.submit(
+                process_chunk, i, len(chunks), lock, chunk, args
+            ): i
+            for i, chunk in enumerate(chunks, 1)
+        }
+        try:
+            while futures:
+                done, _ = wait(futures, timeout=0.1)
+                for fut in done:
+                    fut.result()
+                    del futures[fut]
+        except KeyboardInterrupt:
+            executor.shutdown(cancel_futures=True)
+            raise
 
 
 if __name__ == "__main__":
