@@ -12,6 +12,7 @@ slang=en,eng,English,pl,pol,Polish
 sub-codepage=utf8,cp1250
 volume-max=300
 
+keepaspect-window=no
 video-aspect-override=no
 no-input-default-bindings
 native-keyrepeat
