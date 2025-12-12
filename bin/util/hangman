@@ -1,0 +1,52 @@
+#!/usr/bin/env python3
+import argparse
+import locale
+
+
+def play(args: argparse.Namespace) -> None:
+    word = args.word.lower()
+    attempts = args.n
+    guessed: set[str] = set()
+
+    while attempts > 0:
+        display = " ".join([ch if ch in guessed else "_" for ch in word])
+        print(display, end="")
+        print(f" ({attempts}/{args.n},", end="")
+        print(
+            f" {''.join(sorted(guessed, key=locale.strxfrm)) if guessed else '-'})"
+        )
+
+        if all(ch in guessed for ch in word):
+            print("You win!")
+            break
+
+        guess = input("").lower().strip()
+        if len(guess) != 1 or not guess.isalpha():
+            print("Invalid input. Enter a single letter.")
+            continue
+
+        if guess in guessed:
+            print("Already used that letter.")
+            continue
+
+        guessed.add(guess)
+        if guess not in word:
+            attempts -= 1
+    else:
+        print(f"Game over. The word was '{word}'.")
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description="Hangman game.")
+    parser.add_argument("word", help="The word to guess.")
+    parser.add_argument(
+        "-n", type=int, default=10, help="Number of attempts (default: 10)."
+    )
+    args = parser.parse_args()
+
+    locale.setlocale(locale.LC_COLLATE, "pl_PL.UTF-8")
+    play(args)
+
+
+if __name__ == "__main__":
+    main()
