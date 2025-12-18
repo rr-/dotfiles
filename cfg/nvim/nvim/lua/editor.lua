@@ -3,6 +3,7 @@ vim.cmd('syntax on')                        -- enable syntax highlighting
 vim.opt.synmaxcol = 256                     -- highlight up to X columns (binary files)
 vim.opt.number = true                       -- enable line numbers
 vim.opt.relativenumber = true               -- show relative line numbers
+vim.opt.signcolumn = 'yes'                  -- enable error column
 
 -- show white characters
 vim.opt.list = true
@@ -98,3 +99,5 @@ vim.api.nvim_create_autocmd('InsertLeave', {
         vim.opt.timeoutlen = 1000
     end,
 })
+
+vim.lsp.enable('ty')
