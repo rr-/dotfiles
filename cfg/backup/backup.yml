@@ -10,25 +10,29 @@ defaults: &defaults
   - "pgdata/"
 
 items:
-  - source: lightning:/home/rr-/
-    target: frost:data/backup/lightning/
+  - source: fw:/home/dash/
+    target: frost:data/backup/fw/
     exclude: !flatten
     - *defaults_exclude
-    - "vmware/"
-    - "chromium/"
-    - "/home/rr-/.cache/"
+    - "/home/dash/.cache/"
 
-  - source: drizzle:/home/rr-/
-    target: frost:data/backup/drizzle/
-    <<: *defaults
+  - source: nebula:/home/dash/
+    target: frost:data/backup/nebula/
     exclude: !flatten
     - *defaults_exclude
-    - "/home/rr-/.cache/"
+    - "/home/dash/.cache/"
+  - source: nebula:/etc/supervisor/
+    target: frost:data/backup/nebula/
+    exclude:
+    - *defaults_exclude
+  - source: nebula:/etc/nginx/
+    target: frost:data/backup/nebula/
+    exclude:
+    - *defaults_exclude
 
   - source: oc:/home/rr-/
     target: frost:data/backup/oc/
     <<: *defaults
-
   - source: oc:/var/log/nginx/
     target: frost:data/backup/oc/
     <<: *defaults
@@ -40,7 +44,6 @@ items:
     exclude: !flatten
     - *defaults_exclude
     - "volumes/"
-
   - source: trcustoms:/etc/
     target: frost:data/backup/trcustoms/
     <<: *defaults

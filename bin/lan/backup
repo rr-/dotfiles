@@ -116,10 +116,14 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def create_remote_dir(uri: URI) -> CommandResult:
+def create_remote_dir(uri: URI, dry_run: bool) -> CommandResult:
     if not uri.machine:
-        return CommandResult(status=0, errors=[])
-    return run_command(["ssh", uri.machine, "mkdir", "-p", uri.path])
+        return CommandResult()
+    cmd = ["ssh", uri.machine, "mkdir", "-p", uri.path]
+    if dry_run:
+        logging.info(f"Running {cmd}")
+        return CommandResult()
+    return run_command(cmd)
 
 
 def sync(sync_config: SyncConfig, dry_run: bool, delete: bool) -> SyncResult:
@@ -127,8 +131,8 @@ def sync(sync_config: SyncConfig, dry_run: bool, delete: bool) -> SyncResult:
     target = sync_config.target
 
     result = SyncResult(source=source, target=target)
-    result |= create_remote_dir(source)
-    result |= create_remote_dir(target)
+    result |= create_remote_dir(source, dry_run=dry_run)
+    result |= create_remote_dir(target, dry_run=dry_run)
 
     logging.info("%s → %s", source, target)
     assert target.machine
