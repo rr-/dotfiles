@@ -10,8 +10,8 @@ import tarfile
 import urllib.parse
 from collections.abc import Iterable
 
-BASE_DIR = "/home/dash/srv/nebula/data/pub/"
-BASE_URL = "https://nebula.wind.garden/serve/pub/"
+BASE_DIR = "/home/dash/srv/files/data/pub/"
+BASE_URL = "https://files.bad.pink/serve/pub/"
 REMOTE_HOST = "wind.garden"
 
 
