@@ -1,0 +1,30 @@
+#!/usr/bin/env python3
+import argparse
+import random
+import string
+from datetime import datetime
+from pathlib import Path
+
+
+def rename_files(paths: list[Path], dry_run: bool) -> None:
+    for path in paths:
+        timestamp = datetime.fromtimestamp(path.stat().st_mtime).strftime(
+            "%Y%m%d_%H%M%S"
+        )
+        rand_chars = "".join(random.choices(string.ascii_lowercase, k=3))
+        new_path = path.with_name(f"{timestamp}_{rand_chars}{path.suffix}")
+        print(f"{path} → {new_path}")
+        if not dry_run:
+            path.rename(new_path)
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("files", nargs="+", type=Path)
+    parser.add_argument("-d", "--dry-run", action="store_true")
+    args = parser.parse_args()
+    rename_files(args.files, args.dry_run)
+
+
+if __name__ == "__main__":
+    main()
