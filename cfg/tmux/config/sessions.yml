@@ -9,10 +9,10 @@ fw:
     - window_name: TRX
       cwd: ~/work/priv/TRX/
 
-  - name: wind_garden
+  - name: bad.pink
     windows:
     - window_name: main
-      cwd: ~/work/priv/wind.garden/
+      cwd: ~/work/priv/bad.pink/
 
   - name: trcustoms
     windows:
