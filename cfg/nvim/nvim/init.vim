@@ -12,7 +12,7 @@ Plug 'editorconfig/editorconfig-vim'    "respect .editorconfig
 Plug 'Asheq/close-buffers.vim'          "close hidden buffers
 Plug 'lambdalisue/fern.vim'             "alternative to buggy and unwieldy netrw
 Plug 'lambdalisue/fern-hijack.vim'      "replace netrw
-Plug 'nvim-treesitter/nvim-treesitter', {'do': ':TSUpdate'} "syntax highlighting
+"Plug 'nvim-treesitter/nvim-treesitter', {'branch': 'master', 'do': ':TSUpdate'} "syntax highlighting
 Plug 'stevearc/aerial.nvim'
 
 call plug#end()
