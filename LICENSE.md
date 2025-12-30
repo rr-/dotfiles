@@ -1,6 +1,6 @@
 The MIT License (MIT)
 
-Copyright (c) 2015 Marcin Kurczewski
+Copyright (c) 2015 Laura Kurczewska
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
