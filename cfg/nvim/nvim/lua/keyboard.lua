@@ -79,7 +79,14 @@ vim.api.nvim_set_keymap('n', '<C-b>', '', {callback = function()
     vim.cmd('%!jq .')
   else
     vim.cmd('Isort')
-    vim.cmd('Black')
+    local buf = vim.api.nvim_get_current_buf()
+    local content = table.concat(vim.api.nvim_buf_get_lines(buf, 0, -1, false), "\n")
+    local formatted = vim.fn.systemlist({ "black", "-q", "-l79", "-" }, content)
+    if vim.v.shell_error == 0 then
+      vim.api.nvim_buf_set_lines(buf, 0, -1, false, formatted)
+    else
+      print(table.concat(formatted, "\n"))
+    end
   end
 end, noremap = true, silent = true })
 
