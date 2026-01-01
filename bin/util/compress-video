@@ -37,11 +37,11 @@ def main() -> None:
 
     ffmpeg_cmd = ["ffmpeg", "-i", str(input_path)]
 
+    ffmpeg_cmd += ["-i", str(input_path)]
+
     # Handle timestamp trimming directly
     if args.start and is_timestamp(args.start):
         ffmpeg_cmd += ["-ss", args.start]
-
-    ffmpeg_cmd += ["-i", str(input_path)]
 
     if args.end and is_timestamp(args.end):
         ffmpeg_cmd += ["-to", args.end]
