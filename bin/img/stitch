@@ -3,23 +3,40 @@ import argparse
 from subprocess import run
 
 
-def _parse_args() -> argparse.Namespace:
+def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser("Stitch images vertically")
     parser.add_argument("-o", "--output", default="stitched.jpg")
+    parser.add_argument(
+        "-w", "--width", type=int, help="Constrain width of final image"
+    )
+    parser.add_argument(
+        "--height", type=int, help="Constrain height of final image"
+    )
+    parser.add_argument(
+        "-H",
+        "--horizontal",
+        action="store_true",
+        help="Stitch horizontally instead",
+    )
     parser.add_argument("input", nargs="+")
     return parser.parse_args()
 
 
 def main() -> None:
-    args = _parse_args()
-    source_files: list[str] = args.input
-    target_file: str = args.output
+    args = parse_args()
 
-    run(
-        ["convert", "-border", "0x1", "-bordercolor", "black"]
-        + source_files
-        + ["-append", "-trim", target_file]
-    )
+    cmd = ["convert", "-border", "0x1", "-bordercolor", "black"]
+    cmd += args.input
+    cmd += ["+append" if args.horizontal else "-append"]
+    cmd += ["-trim"]
+
+    if args.width:
+        cmd += ["-resize", f"{args.width}x"]
+    if args.height:
+        cmd += ["-resize", f"x{args.height}"]
+
+    cmd.append(args.output)
+    run(cmd)
 
 
 if __name__ == "__main__":
