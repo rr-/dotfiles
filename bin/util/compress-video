@@ -27,7 +27,13 @@ def parse_args() -> argparse.Namespace:
         "--to", dest="end", help="End time (hh:mm:ss[.ms]) or frame number"
     )
     p.add_argument("--preset", default="fast", help="x264 preset")
-    return p.parse_args()
+    p.add_argument(
+        "--gif", action="store_true", help="Export as GIF instead of video"
+    )
+    args = p.parse_args()
+    if args.gif:
+        args.no_audio = True
+    return args
 
 
 def is_timestamp(value: str) -> bool:
@@ -121,7 +127,8 @@ def main() -> None:
     args = parse_args()
     input_path: Path = args.input
     output_path: Path = args.output or input_path.with_name(
-        input_path.stem + "-compressed.mp4"
+        input_path.stem
+        + ("-compressed.gif" if args.gif else "-compressed.mp4")
     )
 
     cmd = ["ffmpeg", "-hide_banner", "-y"]
@@ -141,6 +148,53 @@ def main() -> None:
             "Do not mix frame numbers and timestamps. Use one style for --from/--to."
         )
 
+    # --- GIF MODE ---
+    if args.gif:
+        args.no_audio = True  # There’s no audio in GIFs.
+        if frame_mode:
+            fps = probe_fps(input_path)
+            frame_start = (
+                int(start) if (start and not is_timestamp(start)) else 0
+            )
+            frame_end = int(end) if (end and not is_timestamp(end)) else None
+            fc, v_label, _ = build_filter_complex_for_frame_trim(
+                fps, frame_start, frame_end, args.height, False
+            )
+            cmd = [
+                "ffmpeg",
+                "-hide_banner",
+                "-y",
+                "-i",
+                str(input_path),
+                "-filter_complex",
+                f"{fc};{v_label}split[v1][v2];[v1]palettegen=stats_mode=diff[p];[v2][p]paletteuse=new=1",
+                "-loop",
+                "0",
+                str(output_path),
+            ]
+        else:
+            trim_flags = []
+            if start_is_ts:
+                trim_flags += ["-ss", start]
+            if end_is_ts:
+                trim_flags += ["-to", end]
+            cmd = [
+                "ffmpeg",
+                "-hide_banner",
+                "-y",
+                *trim_flags,
+                "-i",
+                str(input_path),
+                "-vf",
+                f"scale=-2:{args.height}:flags=lanczos,split[s0][s1];[s0]palettegen=stats_mode=diff[p];[s1][p]paletteuse=new=1",
+                "-loop",
+                "0",
+                str(output_path),
+            ]
+        subprocess.check_call(cmd)
+        return
+
+    # --- VIDEO MODE ---
     cmd += ["-i", str(input_path)]
 
     # Video encoding settings (H.264 + bitrate + preset).
