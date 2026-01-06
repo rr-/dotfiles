@@ -3,8 +3,11 @@ import argparse
 import json
 import re
 import subprocess
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional, Tuple
+from typing import Literal
+
+_ts_re = re.compile(r"^(?:(\d+):)?(\d{1,2}):(\d{1,2})(?:\.(\d+))?$")
 
 
 def parse_args() -> argparse.Namespace:
@@ -15,53 +18,113 @@ def parse_args() -> argparse.Namespace:
     p.add_argument(
         "--quality", default="2M", help="Target video bitrate, e.g. 2M"
     )
-    p.add_argument(
-        "--height", type=int, default=720, help="Target video height"
-    )
-    p.add_argument(
-        "--from",
-        dest="start",
-        help="Start time (hh:mm:ss[.ms]) or frame number",
-    )
-    p.add_argument(
-        "--to", dest="end", help="End time (hh:mm:ss[.ms]) or frame number"
-    )
-    p.add_argument("--preset", default="fast", help="x264 preset")
-    p.add_argument(
-        "--gif", action="store_true", help="Export as GIF instead of video"
-    )
+    p.add_argument("--height", type=int, default=720, help="Target height")
+    p.add_argument("--from", dest="start", help="Start time or frame #")
+    p.add_argument("--to", dest="end", help="End time or frame #")
+    p.add_argument("--preset", default="fast", help="Preset (video only)")
+    p.add_argument("--gif", action="store_true", help="Output .gif, not .mp4")
     args = p.parse_args()
     if args.gif:
         args.no_audio = True
     return args
 
 
-def is_timestamp(value: str) -> bool:
-    return ":" in value
+def is_timestamp(v: str) -> bool:
+    return ":" in v
 
 
-_ts_re = re.compile(r"^(?:(\d+):)?(\d{1,2}):(\d{1,2})(?:\.(\d+))?$")
-
-
-def parse_timestamp_to_seconds(ts: str) -> float:
-    """
-    Accepts:
-      hh:mm:ss[.ms]
-      mm:ss[.ms]
-    """
-    m = _ts_re.match(ts.strip())
+def parse_timestamp_seconds(v: str) -> float:
+    m = _ts_re.match(v.strip())
     if not m:
-        raise ValueError(f"Invalid timestamp: {ts!r}")
-    hh, mm, ss, frac = m.groups()
-    h = int(hh) if hh is not None else 0
-    m_ = int(mm)
-    s = int(ss)
-    f = float(f"0.{frac}") if frac else 0.0
-    return h * 3600 + m_ * 60 + s + f
+        raise ValueError(f"Invalid timestamp: {v!r}")
+    h_s, m_s, s_s, frac_s = m.groups()
+    hours = int(h_s) if h_s else 0
+    minutes = int(m_s)
+    seconds = int(s_s)
+    frac = float(f"0.{frac_s}") if frac_s else 0.0
+    return hours * 3600 + minutes * 60 + seconds + frac
 
 
-def probe_fps(input_path: Path) -> float:
-    # Get avg_frame_rate or r_frame_rate from the first video stream.
+@dataclass(frozen=True, slots=True)
+class TrimWindow:
+    mode: Literal["none", "timestamps", "frames"]
+    start: float
+    end: float | None
+
+    @classmethod
+    def mode_from_args(
+        cls, args: argparse.Namespace
+    ) -> Literal["none", "timestamps", "frames"]:
+        start_raw = args.start
+        end_raw = args.end
+        if not start_raw and not end_raw:
+            return "none"
+
+        start_ts = bool(start_raw and is_timestamp(start_raw))
+        end_ts = bool(end_raw and is_timestamp(end_raw))
+        frame_mode = any(
+            not is_timestamp(v) for v in (start_raw, end_raw) if v
+        )
+
+        if frame_mode and (start_ts or end_ts):
+            raise SystemExit("Pick timestamps OR frames, sis, not both.")
+
+        return "frames" if frame_mode else "timestamps"
+
+    @classmethod
+    def from_args(
+        cls, args: argparse.Namespace, *, fps: float | None = None
+    ) -> "TrimWindow":
+        start_raw = args.start
+        end_raw = args.end
+        if not start_raw and not end_raw:
+            return cls(mode="none", start=0.0, end=None)
+
+        mode = cls.mode_from_args(args)
+        if mode == "frames":
+            assert fps is not None
+            return cls(
+                mode="frames",
+                start=float(start_raw) if start_raw else 0.0,
+                end=float(end_raw) if end_raw else None,
+            )
+        else:
+            return cls(
+                mode="timestamps",
+                start=parse_timestamp_seconds(start_raw) if start_raw else 0.0,
+                end=parse_timestamp_seconds(end_raw) if end_raw else None,
+            )
+
+    def ffmpeg_timestamp_flags(self) -> list[str]:
+        if self.mode not in ("timestamps",):
+            return []
+        flags: list[str] = []
+        if self.start:
+            flags += ["-ss", str(self.start)]
+        if self.end is not None:
+            flags += ["-to", str(self.end)]
+        return flags
+
+    def frame_range(self) -> tuple[int, int | None]:
+        assert self.mode == "frames"
+        start_i = int(self.start)
+        if start_i != self.start:
+            raise ValueError("frame start must be an integer")
+        end_i = None if self.end is None else int(self.end)
+        if end_i is not None and end_i != self.end:
+            raise ValueError("frame end must be an integer")
+        return start_i, end_i
+
+    def seconds_range(self, *, fps: float) -> tuple[float, float | None]:
+        if self.mode == "frames":
+            start_i, end_i = self.frame_range()
+            start_s = start_i / fps
+            end_s = (end_i + 1) / fps if end_i is not None else None
+            return start_s, end_s
+        return self.start, self.end
+
+
+def probe_fps(path: Path) -> float:
     cmd = [
         "ffprobe",
         "-v",
@@ -72,177 +135,151 @@ def probe_fps(input_path: Path) -> float:
         "stream=avg_frame_rate,r_frame_rate",
         "-of",
         "json",
-        str(input_path),
+        str(path),
     ]
     out = subprocess.check_output(cmd, text=True)
     data = json.loads(out)
-    stream = data["streams"][0]
-
-    rate = stream.get("avg_frame_rate") or stream.get("r_frame_rate")
-    if not rate or rate == "0/0":
-        raise RuntimeError("Could not determine FPS via ffprobe.")
-    num, den = rate.split("/")
-    return float(num) / float(den)
+    r = data["streams"][0].get("avg_frame_rate") or data["streams"][0].get(
+        "r_frame_rate"
+    )
+    if not r or r == "0/0":
+        raise RuntimeError("Cannot read FPS.")
+    n, d = map(float, r.split("/"))
+    return n / d
 
 
 def build_filter_complex_for_frame_trim(
-    fps: float,
-    frame_start: int,
-    frame_end: Optional[int],
-    height: int,
-    keep_audio: bool,
-) -> Tuple[str, str, Optional[str]]:
-    """
-    Returns (filter_complex, v_label, a_label_or_None)
-    """
-    start_sec = frame_start / fps
-    # Make end exclusive-ish. If user provides an inclusive frame_end, we trim up to (frame_end+1)/fps.
-    end_sec = None
-    if frame_end is not None:
-        end_sec = (frame_end + 1) / fps
-
-    # Video: select frames, reset timestamps, scale.
-    # between() is inclusive on both ends, so it's consistent with end being inclusive.
-    v_end_for_between = frame_end if frame_end is not None else 999999999
-    v_chain = (
-        f"[0:v]select='between(n\\,{frame_start}\\,{v_end_for_between})',"
-        f"setpts=PTS-STARTPTS,scale=-2:{height}[vout]"
-    )
-
+    trim: TrimWindow, fps: float, height: int, keep_audio: bool
+) -> tuple[str, str, str | None]:
+    assert trim.mode == "frames"
+    fstart, fend = trim.frame_range()
+    start_s, end_s = trim.seconds_range(fps=fps)
+    vend = fend if fend is not None else 999999999
+    vchain = f"[0:v]select='between(n\\,{fstart}\\,{vend})',setpts=PTS-STARTPTS,scale=-2:{height}[vout]"
     if not keep_audio:
-        return v_chain, "[vout]", None
-
-    # Audio: trim by seconds to match the selected frame window, reset timestamps.
-    # atrim end is seconds (exclusive-ish), good enough for sync.
-    if end_sec is None:
-        a_chain = f"[0:a]atrim=start={start_sec},asetpts=PTS-STARTPTS[aout]"
+        return vchain, "[vout]", None
+    if end_s is None:
+        achain = f"[0:a]atrim=start={start_s},asetpts=PTS-STARTPTS[aout]"
     else:
-        a_chain = f"[0:a]atrim=start={start_sec}:end={end_sec},asetpts=PTS-STARTPTS[aout]"
+        achain = f"[0:a]atrim=start={start_s}:end={end_s},asetpts=PTS-STARTPTS[aout]"
+    return f"{vchain};{achain}", "[vout]", "[aout]"
 
-    fc = f"{v_chain};{a_chain}"
-    return fc, "[vout]", "[aout]"
+
+class BaseCompressor:
+    def __init__(self, args: argparse.Namespace):
+        self.args = args
+        self.input: Path = args.input
+        self.output: Path = args.output or self.default_output()
+        self.fps: float | None = None
+
+    def default_output(self) -> Path:
+        raise NotImplementedError
+
+    def base_cmd(self) -> list[str]:
+        return ["ffmpeg", "-hide_banner", "-loglevel", "error", "-stats", "-y"]
+
+    def run(self) -> None:
+        cmd = self.build_cmd()
+        subprocess.check_call(cmd)
+
+    def trim_window(self) -> TrimWindow:
+        mode = TrimWindow.mode_from_args(self.args)
+        if mode == "frames":
+            self.fps = probe_fps(self.input)
+            return TrimWindow.from_args(self.args, fps=self.fps)
+        return TrimWindow.from_args(self.args)
+
+    def build_cmd(self) -> list[str]:
+        raise NotImplementedError("not implemented")
+
+
+class GifCompressor(BaseCompressor):
+    def default_output(self) -> Path:
+        return self.input.with_name(self.input.stem + "-compressed.gif")
+
+    def build_cmd(self) -> list[str]:
+        cmd = self.base_cmd()
+
+        palette_vf = (
+            f"scale=-2:{self.args.height}:flags=lanczos,"
+            f"split[s0][s1];[s0]palettegen=stats_mode=diff[p];"
+            f"[s1][p]paletteuse=new=1"
+        )
+
+        trim = self.trim_window()
+        if trim.mode == "frames":
+            assert self.fps is not None
+            fc, v_label, _ = build_filter_complex_for_frame_trim(
+                trim, self.fps, self.args.height, keep_audio=False
+            )
+            chain = (
+                f"{fc};{v_label}split[v1][v2];"
+                f"[v1]palettegen=stats_mode=diff[p];[v2][p]paletteuse=new=1"
+            )
+            cmd += ["-i", str(self.input)]
+            cmd += ["-filter_complex", chain]
+        else:
+            cmd += trim.ffmpeg_timestamp_flags()
+            cmd += ["-i", str(self.input)]
+            cmd += ["-vf", palette_vf]
+
+        cmd += ["-loop", "0"]
+        cmd += [str(self.output)]
+        return cmd
+
+
+class VideoCompressor(BaseCompressor):
+    def default_output(self) -> Path:
+        return self.input.with_name(self.input.stem + "-compressed.mp4")
+
+    def video_codec_flags(self) -> list[str]:
+        return [
+            "-c:v",
+            "libx264",
+            "-b:v",
+            self.args.quality,
+            "-preset",
+            self.args.preset,
+        ]
+
+    def audio_codec_flags(self) -> list[str]:
+        return (
+            ["-an"]
+            if self.args.no_audio
+            else ["-c:a", "aac", "-b:a", "128k", "-ar", "44100"]
+        )
+
+    def build_cmd(self) -> list[str]:
+        cmd = self.base_cmd()
+        cmd += ["-i", str(self.input)]
+
+        trim = self.trim_window()
+        if trim.mode == "frames":
+            assert self.fps is not None
+            fc, v_label, a_label = build_filter_complex_for_frame_trim(
+                trim,
+                self.fps,
+                self.args.height,
+                keep_audio=not self.args.no_audio,
+            )
+            cmd += ["-filter_complex", fc]
+            cmd += ["-map", v_label]
+            if a_label:
+                cmd += ["-map", a_label]
+        else:
+            cmd += trim.ffmpeg_timestamp_flags()
+            cmd += ["-vf", f"scale=-2:{self.args.height}"]
+
+        cmd += self.video_codec_flags()
+        cmd += self.audio_codec_flags()
+        cmd += ["-movflags", "+faststart", str(self.output)]
+        return cmd
 
 
 def main() -> None:
     args = parse_args()
-    input_path: Path = args.input
-    output_path: Path = args.output or input_path.with_name(
-        input_path.stem
-        + ("-compressed.gif" if args.gif else "-compressed.mp4")
-    )
-
-    cmd = ["ffmpeg", "-hide_banner", "-y"]
-
-    # Decide mode: timestamp trim or frame trim or none.
-    start = args.start
-    end = args.end
-
-    start_is_ts = bool(start and is_timestamp(start))
-    end_is_ts = bool(end and is_timestamp(end))
-
-    frame_mode = bool(start and not start_is_ts) or bool(end and not end_is_ts)
-    ts_mode = bool(start_is_ts or end_is_ts)
-
-    if frame_mode and ts_mode:
-        raise SystemExit(
-            "Do not mix frame numbers and timestamps. Use one style for --from/--to."
-        )
-
-    # --- GIF MODE ---
-    if args.gif:
-        args.no_audio = True  # There’s no audio in GIFs.
-        if frame_mode:
-            fps = probe_fps(input_path)
-            frame_start = (
-                int(start) if (start and not is_timestamp(start)) else 0
-            )
-            frame_end = int(end) if (end and not is_timestamp(end)) else None
-            fc, v_label, _ = build_filter_complex_for_frame_trim(
-                fps, frame_start, frame_end, args.height, False
-            )
-            cmd = [
-                "ffmpeg",
-                "-hide_banner",
-                "-y",
-                "-i",
-                str(input_path),
-                "-filter_complex",
-                f"{fc};{v_label}split[v1][v2];[v1]palettegen=stats_mode=diff[p];[v2][p]paletteuse=new=1",
-                "-loop",
-                "0",
-                str(output_path),
-            ]
-        else:
-            trim_flags = []
-            if start_is_ts:
-                trim_flags += ["-ss", start]
-            if end_is_ts:
-                trim_flags += ["-to", end]
-            cmd = [
-                "ffmpeg",
-                "-hide_banner",
-                "-y",
-                *trim_flags,
-                "-i",
-                str(input_path),
-                "-vf",
-                f"scale=-2:{args.height}:flags=lanczos,split[s0][s1];[s0]palettegen=stats_mode=diff[p];[s1][p]paletteuse=new=1",
-                "-loop",
-                "0",
-                str(output_path),
-            ]
-        subprocess.check_call(cmd)
-        return
-
-    # --- VIDEO MODE ---
-    cmd += ["-i", str(input_path)]
-
-    # Video encoding settings (H.264 + bitrate + preset).
-    vcodec = ["-c:v", "libx264", "-b:v", args.quality, "-preset", args.preset]
-
-    # Audio settings.
-    if args.no_audio:
-        acodec = ["-an"]
-    else:
-        acodec = ["-c:a", "aac", "-b:a", "128k", "-ar", "44100"]
-
-    if frame_mode:
-        fps = probe_fps(input_path)
-
-        frame_start = int(start) if (start and not is_timestamp(start)) else 0
-        frame_end = int(end) if (end and not is_timestamp(end)) else None
-
-        fc, v_label, a_label = build_filter_complex_for_frame_trim(
-            fps=fps,
-            frame_start=frame_start,
-            frame_end=frame_end,
-            height=args.height,
-            keep_audio=not args.no_audio,
-        )
-
-        cmd += ["-filter_complex", fc]
-        cmd += ["-map", v_label]
-        if a_label is not None:
-            cmd += ["-map", a_label]
-        cmd += vcodec + acodec
-
-    elif ts_mode:
-        # Accurate trimming: place -ss/-to AFTER -i (slower, but correct and predictable).
-        if start_is_ts:
-            cmd += ["-ss", start]
-        if end_is_ts:
-            cmd += ["-to", end]
-        cmd += ["-vf", f"scale=-2:{args.height}"]
-        cmd += vcodec + acodec
-
-    else:
-        # No trim.
-        cmd += ["-vf", f"scale=-2:{args.height}"]
-        cmd += vcodec + acodec
-
-    cmd += ["-movflags", "+faststart", str(output_path)]
-
-    subprocess.check_call(cmd)
+    compressor = GifCompressor(args) if args.gif else VideoCompressor(args)
+    compressor.run()
 
 
 if __name__ == "__main__":
