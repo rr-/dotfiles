@@ -1,5 +1,10 @@
-#!/usr/bin/python3 -u
-# requires: pyyaml
+#!/usr/bin/env -S uv run --script
+#
+# /// script
+# requires-python = ">=3.12"
+# dependencies = ["pyyaml"]
+# ///
+
 import os
 import sys
 from collections.abc import Iterable

@@ -1,5 +1,10 @@
-#!/usr/bin/env python3
-# requires: requests lxml requests
+#!/usr/bin/env -S uv run --script
+#
+# /// script
+# requires-python = ">=3.12"
+# dependencies = ["requests", "lxml"]
+# ///
+
 import argparse
 import os
 import tempfile

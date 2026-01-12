@@ -1,5 +1,10 @@
-#!/usr/bin/env python3
-# requires: xdg pyotp
+#!/usr/bin/env -S uv run --script
+#
+# /// script
+# requires-python = ">=3.12"
+# dependencies = ["xdg", "pyotp"]
+# ///
+
 import argparse
 import sys
 import time
