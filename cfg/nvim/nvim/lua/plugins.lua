@@ -41,6 +41,9 @@ require('fzf-lua').setup(
 vim.keymap.set("n", "<c-e>", function()
   require('fzf-lua').grep_project({ fzf_opts = { ["--nth"] = false } })
 end, { desc = "Fzf grep" })
+vim.keymap.set("n", "<m-e>", function()
+  require('fzf-lua').live_grep_native({ fzf_opts = { ["--nth"] = false } })
+end, { desc = "Fzf grep" })
 vim.keymap.set("n", "<c-p>", require('fzf-lua').files, { desc = "Fzf files" })
 vim.keymap.set("n", "<c-l>", require('fzf-lua').buffers, { desc = "Fzf open buffers" })
 
