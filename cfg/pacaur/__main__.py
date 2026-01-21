@@ -17,6 +17,7 @@ if get_distro_name() == "arch":
     try_install("make")
     try_install("meson")
     try_install("sudo")
+    try_install("glaze")
 
     with tempfile.TemporaryDirectory() as tmp_dir:
         os.chdir(tmp_dir)
