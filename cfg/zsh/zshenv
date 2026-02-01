@@ -84,7 +84,16 @@ atl() {
     echo "$@" | ai --context "Translate input text from the following language: ${source}' to: ${target}." 2>/dev/null | less -rFX
 }
 
-c() {
+c-nh() {
+    cp -f ~/.codex/auth_nh.json ~/.codex/auth.json
+    codex --sandbox workspace-write -a never ${@}
+}
+c-api() {
+    cp -f ~/.codex/auth_api.json ~/.codex/auth.json
+    codex --sandbox workspace-write -a never ${@}
+}
+c-web() {
+    cp -f ~/.codex/auth_web.json ~/.codex/auth.json
     codex --sandbox workspace-write -a never ${@}
 }
 ai_cr() {
