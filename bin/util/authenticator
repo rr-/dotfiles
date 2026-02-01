@@ -2,7 +2,7 @@
 #
 # /// script
 # requires-python = ">=3.12"
-# dependencies = ["xdg", "pyotp"]
+# dependencies = ["xdg", "pyotp", "pyyaml"]
 # ///
 
 import argparse
