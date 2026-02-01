@@ -23,6 +23,10 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--to", dest="end", help="End time or frame #")
     p.add_argument("--preset", default="fast", help="Preset (video only)")
     p.add_argument("--gif", action="store_true", help="Output .gif, not .mp4")
+    p.add_argument(
+        "--crop",
+        help="Center-crop to width,height percent (e.g. 0.5 or 50%% or 0.5,0.7)",
+    )
     args = p.parse_args()
     if args.gif:
         args.no_audio = True
@@ -43,6 +47,71 @@ def parse_timestamp_seconds(v: str) -> float:
     seconds = int(s_s)
     frac = float(f"0.{frac_s}") if frac_s else 0.0
     return hours * 3600 + minutes * 60 + seconds + frac
+
+
+def _parse_percent(raw: str) -> float:
+    value = float(raw.strip().rstrip("%"))
+    if not (0.0 <= value <= 1.0):
+        raise ValueError("crop value must be within 0..1")
+    return value
+
+
+def parse_crop_percent(
+    v: str,
+) -> tuple[float, float, float | None, float | None]:
+    raw = v.strip()
+    if not raw:
+        raise ValueError("crop value is empty")
+
+    if "+" in raw:
+        size_raw, offset_raw = (part.strip() for part in raw.split("+", 1))
+    else:
+        size_raw, offset_raw = raw, None
+
+    size_parts = re.split(r"[x,]", size_raw)
+    if not 1 <= len(size_parts) <= 2:
+        raise ValueError(f"Invalid crop size: {v!r}")
+    if len(size_parts) == 1:
+        size_parts = [size_parts[0], size_parts[0]]
+
+    w = _parse_percent(size_parts[0])
+    h = _parse_percent(size_parts[1])
+
+    if offset_raw is None:
+        return w, h, None, None
+
+    offset_parts = re.split(r"[x,]", offset_raw)
+    if not 1 <= len(offset_parts) <= 2:
+        raise ValueError(f"Invalid crop offset: {v!r}")
+    if len(offset_parts) == 1:
+        offset_parts = [offset_parts[0], offset_parts[0]]
+
+    x_offset = _parse_percent(offset_parts[0])
+    y_offset = _parse_percent(offset_parts[1])
+    return w, h, x_offset, y_offset
+
+
+def crop_filter_from_args(args: argparse.Namespace) -> str | None:
+    if not args.crop:
+        return None
+    w, h, x_offset, y_offset = parse_crop_percent(args.crop)
+    x_offset = (
+        (1.0 - w) * x_offset if x_offset is not None else (1.0 - w) / 2.0
+    )
+    y_offset = (
+        (1.0 - h) * y_offset if y_offset is not None else (1.0 - h) / 2.0
+    )
+    return (
+        f"crop=iw*{w:.6f}:ih*{h:.6f}" f":iw*{x_offset:.6f}:ih*{y_offset:.6f}"
+    )
+
+
+def build_video_filter(height: int, crop_filter: str | None) -> str:
+    parts: list[str] = []
+    if crop_filter:
+        parts.append(crop_filter)
+    parts.append(f"scale=-2:{height}")
+    return ",".join(parts)
 
 
 @dataclass(frozen=True, slots=True)
@@ -149,13 +218,24 @@ def probe_fps(path: Path) -> float:
 
 
 def build_filter_complex_for_frame_trim(
-    trim: TrimWindow, fps: float, height: int, keep_audio: bool
+    trim: TrimWindow,
+    fps: float,
+    height: int,
+    keep_audio: bool,
+    crop_filter: str | None,
 ) -> tuple[str, str, str | None]:
     assert trim.mode == "frames"
     fstart, fend = trim.frame_range()
     start_s, end_s = trim.seconds_range(fps=fps)
     vend = fend if fend is not None else 999999999
-    vchain = f"[0:v]select='between(n\\,{fstart}\\,{vend})',setpts=PTS-STARTPTS,scale=-2:{height}[vout]"
+    v_parts = [
+        f"select='between(n\\,{fstart}\\,{vend})'",
+        "setpts=PTS-STARTPTS",
+    ]
+    if crop_filter:
+        v_parts.append(crop_filter)
+    v_parts.append(f"scale=-2:{height}")
+    vchain = f"[0:v]{','.join(v_parts)}[vout]"
     if not keep_audio:
         return vchain, "[vout]", None
     if end_s is None:
@@ -171,6 +251,7 @@ class BaseCompressor:
         self.input: Path = args.input
         self.output: Path = args.output or self.default_output()
         self.fps: float | None = None
+        self.crop_filter = crop_filter_from_args(args)
 
     def default_output(self) -> Path:
         raise NotImplementedError
@@ -200,17 +281,25 @@ class GifCompressor(BaseCompressor):
     def build_cmd(self) -> list[str]:
         cmd = self.base_cmd()
 
-        palette_vf = (
-            f"scale=-2:{self.args.height}:flags=lanczos,"
-            f"split[s0][s1];[s0]palettegen=stats_mode=diff[p];"
-            f"[s1][p]paletteuse=new=1"
+        crop_prefix = f"{self.crop_filter}," if self.crop_filter else ""
+        palette_vf = "".join(
+            [
+                f"{crop_prefix}scale=-2:{self.args.height}:flags=lanczos,",
+                "split[s0][s1];",
+                "[s0]palettegen=stats_mode=diff[p];",
+                "[s1][p]paletteuse=new=1",
+            ]
         )
 
         trim = self.trim_window()
         if trim.mode == "frames":
             assert self.fps is not None
             fc, v_label, _ = build_filter_complex_for_frame_trim(
-                trim, self.fps, self.args.height, keep_audio=False
+                trim,
+                self.fps,
+                self.args.height,
+                keep_audio=False,
+                crop_filter=self.crop_filter,
             )
             chain = (
                 f"{fc};{v_label}split[v1][v2];"
@@ -261,6 +350,7 @@ class VideoCompressor(BaseCompressor):
                 self.fps,
                 self.args.height,
                 keep_audio=not self.args.no_audio,
+                crop_filter=self.crop_filter,
             )
             cmd += ["-filter_complex", fc]
             cmd += ["-map", v_label]
@@ -268,7 +358,10 @@ class VideoCompressor(BaseCompressor):
                 cmd += ["-map", a_label]
         else:
             cmd += trim.ffmpeg_timestamp_flags()
-            cmd += ["-vf", f"scale=-2:{self.args.height}"]
+            cmd += [
+                "-vf",
+                build_video_filter(self.args.height, self.crop_filter),
+            ]
 
         cmd += self.video_codec_flags()
         cmd += self.audio_codec_flags()
