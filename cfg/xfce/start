@@ -1,2 +1,3 @@
 #!/bin/sh
-exec startxfce4
+exec dbus-launch --sh-syntax --exit-with-session startxfce4
+# exec startxfce4
