@@ -23,6 +23,7 @@ from prompt_toolkit.enums import DEFAULT_BUFFER
 from prompt_toolkit.filters import Condition, HasFocus
 from prompt_toolkit.history import FileHistory
 from prompt_toolkit.key_binding import KeyBindings, KeyPressEvent
+from prompt_toolkit.keys import Keys
 from xdg_base_dirs import xdg_config_home
 
 BASE_DIR = Path(xdg_config_home(), "ai")
@@ -330,6 +331,11 @@ def run_interactive(context: ChatContext, args: argparse.Namespace) -> None:
     @kb.add("c-m", filter=HasFocus(DEFAULT_BUFFER) & ~multiline)  # type: ignore
     def handle_newline_single_line(event: KeyPressEvent) -> None:
         event.app.current_buffer.validate_and_handle()
+
+    @kb.add(Keys.BracketedPaste, filter=HasFocus(DEFAULT_BUFFER) & ~multiline)  # type: ignore
+    def handle_single_line_paste(event: KeyPressEvent) -> None:
+        data = event.data.replace("\r\n", "\n").replace("\r", "\n")
+        event.app.current_buffer.insert_text(data)
 
     history = FileHistory(HISTORY_FILE)
     session = PromptSession(history=history, multiline=True, key_bindings=kb)
