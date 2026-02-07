@@ -332,6 +332,10 @@ def run_interactive(context: ChatContext, args: argparse.Namespace) -> None:
     def handle_newline_single_line(event: KeyPressEvent) -> None:
         event.app.current_buffer.validate_and_handle()
 
+    @kb.add("c-j", filter=HasFocus(DEFAULT_BUFFER))  # type: ignore
+    def handle_ctrl_j(event: KeyPressEvent) -> None:
+        event.app.current_buffer.newline()
+
     @kb.add(Keys.BracketedPaste, filter=HasFocus(DEFAULT_BUFFER) & ~multiline)  # type: ignore
     def handle_single_line_paste(event: KeyPressEvent) -> None:
         data = event.data.replace("\r\n", "\n").replace("\r", "\n")
