@@ -1,8 +1,15 @@
 #!/usr/bin/env -S uv run --script
 #
 # /// script
-# requires-python = ">=3.12"
-# dependencies = ["requests"]
+# requires-python = ">=3.13"
+# dependencies = [
+#     "requests",
+#     "coloredlogs",
+#     "libdotfiles",
+# ]
+#
+# [tool.uv.sources]
+# libdotfiles = { path = "../../libdotfiles" }
 # ///
 
 # Downloads movie subtitles from Napiprojekt database
