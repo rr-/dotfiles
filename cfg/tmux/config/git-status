@@ -23,6 +23,7 @@ SYMBOLS = {
 
 
 def my_run(cmd: list[str], **kwargs: Any) -> str | None:
+    cmd = ["env", "GIT_OPTIONAL_LOCKS=0", *cmd]
     result = run(
         cmd,
         capture_output=True,
