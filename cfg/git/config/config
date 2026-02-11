@@ -54,8 +54,14 @@
     tag = blue bold reverse
 
 [color "diff"]
-    old = normal 130
-    new = normal 64
+    meta = 255 234 dim
+    frag = 255 23 bold noreverse
+    old = noreverse normal 130
+    new = noreverse normal 64
+    oldBold = 9 noreverse
+    oldDimmed = 9 noreverse
+    newBold = 10 noreverse
+    newDimmed = 10 noreverse
     whitespace = blue reverse
 
 [commit]
