@@ -1,0 +1,171 @@
+#!/usr/bin/env python3
+import argparse
+import json
+import os
+import sys
+import urllib.error
+import urllib.request
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import cast
+
+
+def parse_env_file(path: Path) -> dict[str, str]:
+    values: dict[str, str] = {}
+    if not path.exists():
+        return values
+
+    for raw_line in path.read_text(encoding="utf-8").splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, value = line.split("=", 1)
+        key = key.strip()
+        value = value.strip().strip("'").strip('"')
+        if key:
+            values[key] = value
+    return values
+
+
+def default_config_path() -> Path:
+    base = os.getenv("xdg_config_dir")
+    if base:
+        return Path(base) / "anime_tracker.conf"
+
+    fallback = os.getenv("XDG_CONFIG_HOME")
+    if fallback:
+        return Path(fallback) / "anime_tracker.conf"
+    return Path.home() / ".config" / "anime_tracker.conf"
+
+
+def parse_args() -> argparse.Namespace:
+    file_values = parse_env_file(default_config_path())
+    parser = argparse.ArgumentParser(
+        description="Minimal REPL that sends anime watch paths to a tracking endpoint."
+    )
+    parser.add_argument(
+        "--endpoint",
+        default=file_values.get(
+            "ANIME_TRACKER_ENDPOINT", os.getenv("ANIME_TRACKER_ENDPOINT", "")
+        ),
+        help="Tracking endpoint URL (for example: https://bad.pink/anime/track/).",
+    )
+    parser.add_argument(
+        "--password",
+        default=file_values.get(
+            "ANIME_TRACKER_PASSWORD", os.getenv("ANIME_TRACKER_PASSWORD", "")
+        ),
+        help="Tracking password.",
+    )
+    parser.add_argument(
+        "--failed-log",
+        default=file_values.get(
+            "ANIME_TRACKER_FAILED_LOG", "anime_track_failed.log"
+        ),
+        help="Path to append failed submissions.",
+    )
+    parser.add_argument(
+        "paths",
+        nargs="*",
+        help="Optional paths/titles to send immediately without entering REPL.",
+    )
+    return parser.parse_args()
+
+
+def send_event(
+    endpoint: str, password: str, path: str, timeout_seconds: int = 10
+) -> int:
+    payload = json.dumps({"password": password, "path": path}).encode("utf-8")
+    request = urllib.request.Request(
+        endpoint,
+        data=payload,
+        method="POST",
+        headers={"Content-Type": "application/json"},
+    )
+    with urllib.request.urlopen(request, timeout=timeout_seconds) as response:
+        response.read()
+        return cast(int, response.status)
+
+
+def append_failure(log_path: Path, line: str) -> None:
+    timestamp = datetime.now(timezone.utc).isoformat()
+    with log_path.open("a", encoding="utf-8") as handle:
+        handle.write(f"{timestamp}\t{line}\n")
+
+
+def submit_line(
+    endpoint: str, password: str, failed_log: Path, line: str
+) -> bool:
+    try:
+        status = send_event(endpoint, password, line)
+    except urllib.error.HTTPError as exc:
+        append_failure(failed_log, line)
+        print(f"HTTP {exc.code}; logged to {failed_log}", file=sys.stderr)
+        return False
+    except urllib.error.URLError as exc:
+        append_failure(failed_log, line)
+        print(
+            f"network error ({exc.reason}); logged to {failed_log}",
+            file=sys.stderr,
+        )
+        return False
+
+    if 200 <= status < 300:
+        print("ok")
+        return True
+
+    append_failure(failed_log, line)
+    print(
+        f"unexpected status={status}; logged to {failed_log}", file=sys.stderr
+    )
+    return False
+
+
+def main() -> int:
+    args = parse_args()
+    endpoint: str = args.endpoint.strip()
+    password: str = args.password
+    failed_log = Path(args.failed_log)
+
+    if not endpoint:
+        print(
+            "Missing --endpoint (or ANIME_TRACKER_ENDPOINT).", file=sys.stderr
+        )
+        return 2
+    if not password:
+        print(
+            "Missing --password (or ANIME_TRACKER_PASSWORD).", file=sys.stderr
+        )
+        return 2
+
+    if args.paths:
+        exit_code = 0
+        for raw in args.paths:
+            line = raw.strip()
+            if not line:
+                continue
+            if not submit_line(endpoint, password, failed_log, line):
+                exit_code = 1
+        return exit_code
+
+    print(f"tracking -> {endpoint}")
+    print("Enter watched path/title. Ctrl+C or Ctrl+D to quit.")
+
+    try:
+        while True:
+            try:
+                line = input("> ").strip()
+            except EOFError:
+                print()
+                return 0
+            if not line:
+                continue
+
+            submit_line(endpoint, password, failed_log, line)
+    except KeyboardInterrupt:
+        print()
+        return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
