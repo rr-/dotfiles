@@ -2,7 +2,7 @@ from setuptools import find_packages, setup
 
 setup(
     author="rr-",
-    author_email="dash@wind.garden",
+    author_email="dash@bad.pink",
     name="authenticator",
     long_description="CLI 2FA authenticator",
     packages=find_packages(),
