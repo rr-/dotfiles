@@ -8,13 +8,14 @@
 # Uploads files to my dedibox via SSH and outputs copyable links
 
 import io
-import os
 import shlex
 import subprocess
 import sys
 import tarfile
 import urllib.parse
 from collections.abc import Callable, Iterable
+from dataclasses import dataclass
+from pathlib import Path, PurePosixPath
 from typing import BinaryIO
 
 from tqdm import tqdm
@@ -22,6 +23,13 @@ from tqdm import tqdm
 BASE_DIR = "/home/dash/srv/files/data/pub/"
 BASE_URL = "https://files.bad.pink/serve/pub/"
 REMOTE_HOST = "bad.pink"
+
+
+@dataclass(frozen=True)
+class UploadItem:
+    src_path: Path
+    target_name: PurePosixPath
+    is_dir: bool = False
 
 
 class ProgressReader(io.RawIOBase):
@@ -42,58 +50,95 @@ class ProgressReader(io.RawIOBase):
         return chunk
 
 
-def collect_single_file(arg: str) -> tuple[str, str]:
-    target_name = os.path.basename(arg)
-    return (arg, target_name)
+def warn(message: str) -> None:
+    print(message, file=sys.stderr)
 
 
-def collect_files_from_dir(top: str) -> Iterable[tuple[str, str]]:
-    for root, _, filenames in os.walk(top):
-        for filename in filenames:
-            path = os.path.join(root, filename)
-            target_name = os.path.relpath(path, top)
-            target_name = os.path.join(os.path.basename(top), target_name)
-            yield (path, target_name)
+def collect_single_file(path: Path) -> UploadItem:
+    return UploadItem(path, PurePosixPath(path.name))
 
 
-def collect_files(args: list[str]) -> Iterable[tuple[str, str]]:
-    for arg in args:
-        if not os.path.exists(arg):
-            print("File does not exist: %s" % arg, file=sys.stderr)
+def collect_dir(top: Path) -> Iterable[UploadItem]:
+    yield UploadItem(top, PurePosixPath(top.name), is_dir=True)
+    for path in top.rglob("*"):
+        if path.is_symlink():
+            warn(f"Skipping symlink: {path}")
             continue
-        if os.path.isfile(arg):
-            yield collect_single_file(arg)
-        elif os.path.isdir(arg):
-            yield from collect_files_from_dir(arg)
+        target_name = PurePosixPath(top.name) / path.relative_to(top)
+        if path.is_dir():
+            yield UploadItem(path, target_name, is_dir=True)
+        elif path.is_file():
+            yield UploadItem(path, target_name)
 
 
-def send(src_paths: list[tuple[str, str]]) -> None:
-    if not src_paths:
+def collect_files(args: list[str]) -> Iterable[UploadItem]:
+    for arg in args:
+        path = Path(arg)
+        if not path.exists():
+            warn(f"File does not exist: {path}")
+            continue
+        if path.is_symlink():
+            warn(f"Skipping symlink: {path}")
+            continue
+        if path.is_file():
+            yield collect_single_file(path)
+        elif path.is_dir():
+            yield from collect_dir(path)
+
+
+def build_remote_path(target_name: PurePosixPath) -> str:
+    return BASE_DIR + str(target_name)
+
+
+def build_url(target_name: PurePosixPath) -> str:
+    return BASE_URL + urllib.parse.quote(str(target_name), safe="/")
+
+
+def add_to_tar(
+    tar: tarfile.TarFile,
+    item: UploadItem,
+    progress: tqdm,
+) -> None:
+    tar_info = tar.gettarinfo(item.src_path, arcname=str(item.target_name))
+    if item.is_dir:
+        tar.addfile(tar_info)
+        return
+
+    with item.src_path.open("rb") as handle:
+        reader = ProgressReader(handle, progress.update)
+        tar.addfile(tar_info, reader)
+
+
+def send(items: list[UploadItem]) -> None:
+    if not items:
         print("Nothing to send.", file=sys.stderr)
         return
 
-    urls = []
-    commands = []
-    total_bytes = sum(os.path.getsize(src_path) for src_path, _ in src_paths)
+    files = [item for item in items if not item.is_dir]
+    urls = [build_url(item.target_name) for item in files]
+    commands: list[str] = []
+    total_bytes = sum(item.src_path.stat().st_size for item in files)
 
-    dirs = set()
-    for src_path, target_name in src_paths:
-        dirs.add(os.path.dirname(os.path.join(BASE_DIR, target_name)))
+    dirs = {build_remote_path(item.target_name) for item in items if item.is_dir}
+    dirs.update(
+        str(PurePosixPath(build_remote_path(item.target_name)).parent)
+        for item in files
+    )
 
-    for dir_name in dirs:
+    sorted_dirs = sorted(dirs)
+    for dir_name in sorted_dirs:
         commands.append("mkdir -p %s" % shlex.quote(dir_name))
-        commands.append("chmod 0755 %s" % shlex.quote(dir_name))
 
     commands.append("tar x -C %s" % shlex.quote(BASE_DIR))
 
-    for src_path, target_name in src_paths:
-        dst_path = os.path.join(BASE_DIR, target_name)
-        commands.append("chmod 0644 %s" % shlex.quote(dst_path))
-        urls.append(
-            BASE_URL + urllib.parse.quote(target_name.replace("\\", "/"))
-        )
+    for dir_name in sorted_dirs:
+        commands.append("chmod 0755 %s" % shlex.quote(dir_name))
 
-    cmdline = ["ssh", REMOTE_HOST, ";".join(commands)]
+    for item in files:
+        dst_path = build_remote_path(item.target_name)
+        commands.append("chmod 0644 %s" % shlex.quote(dst_path))
+
+    cmdline = ["ssh", REMOTE_HOST, " && ".join(commands)]
 
     proc = subprocess.Popen(
         cmdline,
@@ -101,6 +146,7 @@ def send(src_paths: list[tuple[str, str]]) -> None:
         stdout=subprocess.DEVNULL,
     )
     assert proc.stdin is not None
+    upload_error: str | None = None
     with tqdm(
         total=total_bytes,
         unit="B",
@@ -109,23 +155,34 @@ def send(src_paths: list[tuple[str, str]]) -> None:
         dynamic_ncols=True,
         desc="Uploading",
     ) as progress:
-        with tarfile.open(mode="w|", fileobj=proc.stdin) as tar:
-            for index, (src_path, target_name) in enumerate(src_paths, 1):
-                progress.set_postfix(
-                    file=src_path,
-                    files=f"{index}/{len(src_paths)}",
-                    refresh=True,
-                )
-                tar_info = tar.gettarinfo(src_path, arcname=target_name)
-                with open(src_path, "rb") as handle:
-                    reader = ProgressReader(handle, progress.update)
-                    tar.addfile(tar_info, reader)
-    proc.stdin.close()
+        try:
+            with tarfile.open(mode="w|", fileobj=proc.stdin) as tar:
+                for index, item in enumerate(files, 1):
+                    progress.set_postfix(
+                        file=str(item.src_path),
+                        files=f"{index}/{len(files)}",
+                        refresh=True,
+                    )
+                    add_to_tar(tar, item, progress)
+                for item in items:
+                    if item.is_dir:
+                        add_to_tar(tar, item, progress)
+            proc.stdin.close()
+        except BrokenPipeError:
+            proc.wait()
+            upload_error = "Upload failed: remote command closed the connection."
+    if upload_error is not None:
+        print(upload_error, file=sys.stderr)
+        sys.exit(1)
     proc.wait()
+    if proc.returncode != 0:
+        print(
+            f"Upload failed: ssh exited with status {proc.returncode}.",
+            file=sys.stderr,
+        )
+        sys.exit(1)
     for url in urls:
         print(url)
-    if proc.returncode != 0:
-        sys.exit(1)
 
 
 def main() -> None:
