@@ -1,5 +1,11 @@
-#!/usr/bin/env python3
-# Uploads files to tmp.sakuya.pl via SSH and outputs copyable links
+#!/usr/bin/env -S uv run --script
+#
+# /// script
+# requires-python = ">=3.12"
+# dependencies = ["tqdm"]
+# ///
+#
+# Uploads files to my dedibox via SSH and outputs copyable links
 
 import io
 import os
@@ -8,11 +14,32 @@ import subprocess
 import sys
 import tarfile
 import urllib.parse
-from collections.abc import Iterable
+from collections.abc import Callable, Iterable
+from typing import BinaryIO
+
+from tqdm import tqdm
 
 BASE_DIR = "/home/dash/srv/files/data/pub/"
 BASE_URL = "https://files.bad.pink/serve/pub/"
 REMOTE_HOST = "bad.pink"
+
+
+class ProgressReader(io.RawIOBase):
+    def __init__(
+        self,
+        handle: BinaryIO,
+        on_progress: Callable[[int], object],
+    ) -> None:
+        self.handle = handle
+        self.on_progress = on_progress
+
+    def readable(self) -> bool:
+        return True
+
+    def read(self, size: int = -1) -> bytes:
+        chunk = self.handle.read(size)
+        self.on_progress(len(chunk))
+        return chunk
 
 
 def collect_single_file(arg: str) -> tuple[str, str]:
@@ -45,11 +72,9 @@ def send(src_paths: list[tuple[str, str]]) -> None:
         print("Nothing to send.", file=sys.stderr)
         return
 
-    tar_stream = io.BytesIO()
-    tar = tarfile.open(mode="w", fileobj=tar_stream)
-
     urls = []
     commands = []
+    total_bytes = sum(os.path.getsize(src_path) for src_path, _ in src_paths)
 
     dirs = set()
     for src_path, target_name in src_paths:
@@ -63,7 +88,6 @@ def send(src_paths: list[tuple[str, str]]) -> None:
 
     for src_path, target_name in src_paths:
         dst_path = os.path.join(BASE_DIR, target_name)
-        tar.add(src_path, arcname=target_name)
         commands.append("chmod 0644 %s" % shlex.quote(dst_path))
         urls.append(
             BASE_URL + urllib.parse.quote(target_name.replace("\\", "/"))
@@ -74,14 +98,33 @@ def send(src_paths: list[tuple[str, str]]) -> None:
     proc = subprocess.Popen(
         cmdline,
         stdin=subprocess.PIPE,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
+        stdout=subprocess.DEVNULL,
     )
-    _, err = proc.communicate(input=tar_stream.getvalue())
+    assert proc.stdin is not None
+    with tqdm(
+        total=total_bytes,
+        unit="B",
+        unit_scale=True,
+        unit_divisor=1024,
+        dynamic_ncols=True,
+        desc="Uploading",
+    ) as progress:
+        with tarfile.open(mode="w|", fileobj=proc.stdin) as tar:
+            for index, (src_path, target_name) in enumerate(src_paths, 1):
+                progress.set_postfix(
+                    file=src_path,
+                    files=f"{index}/{len(src_paths)}",
+                    refresh=True,
+                )
+                tar_info = tar.gettarinfo(src_path, arcname=target_name)
+                with open(src_path, "rb") as handle:
+                    reader = ProgressReader(handle, progress.update)
+                    tar.addfile(tar_info, reader)
+    proc.stdin.close()
+    proc.wait()
     for url in urls:
         print(url)
-    if err:
-        print(err.decode("utf8"), file=sys.stderr)
+    if proc.returncode != 0:
         sys.exit(1)
 
 
