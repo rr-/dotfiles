@@ -33,7 +33,17 @@
         branch=$(git rev-parse --abbrev-ref HEAD); \
         git push "$remote" "$commit":"$branch" "$@"; \
     }; f"
-    hist = log --pretty=format:\"%Cred%h%Creset %ad %Cblue%<(50,trunc)%s%Creset [%an <%ae>]%C(auto)%(decorate:tag=)\" --graph --date=short
+    hist = "!f() { \
+        fmt='%Cred%h%Creset %ad %Cblue%<(50,trunc)%s%Creset [%G? %an <%ae>]%C(auto)%(decorate:tag=)'; \
+        if [ -t 1 ]; then \
+            git log --color=always --pretty=format:\"$fmt\" --graph --date=short \"$@\" \
+                | sed -E 's/[[]N /[/; s/[[]B /[⚠️  /; s/[[][GUXYRE] /[🔑 /' \
+                | ${GIT_PAGER:-${PAGER:-less -FRX}}; \
+        else \
+            git log --pretty=format:\"$fmt\" --graph --date=short \"$@\" \
+                | sed -E 's/[[]N /[/; s/[[]B /[⚠️  /; s/[[][GUXYRE] /[🔑 /'; \
+        fi; \
+    }; f"
     yearly-stats = !~/.config/git/yearly_stats
     delete-old-branches = !~/.config/git/delete_old_branches
 
