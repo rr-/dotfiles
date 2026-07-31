@@ -12,7 +12,6 @@ alias p=python3
 alias pipi='python3 -m pip install --user --break-system-packages'
 alias uvup='curl -LsSf https://astral.sh/uv/install.sh | sh'
 alias pip='python3 -m pip'
-alias pi=ipython3
 alias l="myls"
 alias ll="myls -l"
 alias la="myls -la"
