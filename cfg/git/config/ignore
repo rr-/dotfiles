@@ -16,3 +16,6 @@ docker-compose.local.yml
 justfile.user
 
 venv/
+/.codex
+
+**/.claude/settings.local.json
