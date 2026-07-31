@@ -95,6 +95,16 @@ c-web() {
     cp -f ~/.codex/auth_web.json ~/.codex/auth.json
     codex --sandbox workspace-write -a never ${@}
 }
+
+claude-nh() {
+    export CLAUDE_CONFIG_DIR=~/.claude-nh
+    claude ${@}
+}
+claude-personal() {
+    export CLAUDE_CONFIG_DIR=~/.claude
+    claude ${@}
+}
+
 ai_cr() {
   mode=$1
   shift
