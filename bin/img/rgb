@@ -1,0 +1,553 @@
+#!/usr/bin/env -S uv run --script
+#
+# /// script
+# requires-python = ">=3.12"
+# dependencies = ["pyqt6"]
+# ///
+"""Preview any file as raw pixels.
+
+The same idea as github.com/rr-/ida-images, minus the disassembler: point it
+at a file, say how wide the image is and how its pixels are packed, and walk
+through the bytes until something recognizable shows up.
+
+Everything is on the keyboard. Plain hjkl moves through the file the way it
+moves through a buffer; alt+hjkl reshapes the image instead. Press ? for the
+whole list.
+"""
+
+import argparse
+import sys
+from dataclasses import dataclass
+from functools import partial
+from math import ceil
+from pathlib import Path
+from typing import Callable
+
+from PyQt6.QtCore import QSize, Qt
+from PyQt6.QtGui import (
+    QCursor,
+    QImage,
+    QKeySequence,
+    QPixmap,
+    QShortcut,
+    QShowEvent,
+)
+from PyQt6.QtWidgets import (
+    QWIDGETSIZE_MAX,
+    QApplication,
+    QFrame,
+    QInputDialog,
+    QLabel,
+    QMainWindow,
+    QScrollArea,
+)
+
+QFORMAT = QImage.Format
+
+
+@dataclass(frozen=True)
+class PixelFormat:
+    name: str
+    bits: int
+    qt_format: QImage.Format
+    swap_rgb: bool = False
+    invert_alpha: bool = False
+
+
+# In the order the plugin lists them, so cycling with f feels the same. Qt's
+# 32 bit formats are byte ordered on little endian, which is why BGRA lands on
+# ARGB32 and RGBA on RGBA8888 without either needing a swap.
+FORMATS = [
+    PixelFormat("G1>", 1, QFORMAT.Format_MonoLSB),
+    PixelFormat("G1<", 1, QFORMAT.Format_Mono),
+    PixelFormat("G8", 8, QFORMAT.Format_Grayscale8),
+    PixelFormat("BGR555", 16, QFORMAT.Format_RGB555),
+    PixelFormat("BGR565", 16, QFORMAT.Format_RGB16),
+    PixelFormat("BGR888", 24, QFORMAT.Format_BGR888),
+    PixelFormat("BGRA8888", 32, QFORMAT.Format_ARGB32),
+    PixelFormat("BGRa8888", 32, QFORMAT.Format_ARGB32, invert_alpha=True),
+    PixelFormat("BGRx8888", 32, QFORMAT.Format_RGB32),
+    PixelFormat("RGB555", 16, QFORMAT.Format_RGB555, swap_rgb=True),
+    PixelFormat("RGB565", 16, QFORMAT.Format_RGB16, swap_rgb=True),
+    PixelFormat("RGB888", 24, QFORMAT.Format_RGB888),
+    PixelFormat("RGBA8888", 32, QFORMAT.Format_RGBA8888),
+    PixelFormat("RGBa8888", 32, QFORMAT.Format_RGBA8888, invert_alpha=True),
+    PixelFormat("RGBx8888", 32, QFORMAT.Format_RGBX8888),
+]
+FORMAT_INDEX = {fmt.name: index for index, fmt in enumerate(FORMATS)}
+
+
+@dataclass
+class Params:
+    """Everything the preview is made of, and all of the mutable state."""
+
+    paths: list[Path]
+    file_index: int = 0
+    offset: int = 0
+    width: int = 800
+    height: int = 600
+    format_index: int = FORMAT_INDEX["G8"]
+    zoom: int = 1
+    flip: bool = False
+    brightness: int = 50
+
+    @property
+    def path(self) -> Path:
+        return self.paths[self.file_index]
+
+    @property
+    def format(self) -> PixelFormat:
+        return FORMATS[self.format_index]
+
+    @property
+    def stride(self) -> int:
+        return (self.width * self.format.bits + 7) // 8
+
+    @property
+    def shown_bytes(self) -> int:
+        return self.stride * self.height
+
+
+@dataclass(frozen=True)
+class Binding:
+    keys: tuple[str, ...]
+    actions: tuple[Callable[[], None], ...]
+    description: str
+
+    @property
+    def label(self) -> str:
+        """What you press, rather than how Qt spells it.
+
+        Qt parses "H" as the unshifted H key, the same as "h", and answers
+        two shortcuts claiming one sequence by firing neither - so a shifted
+        binding has to say Shift+H. Nobody wants to read that in a help
+        screen, so a capital letter stands for it here.
+        """
+        return " ".join(
+            (
+                key.replace("Shift+", "")
+                if "Shift+" in key
+                else (
+                    key[:-1] + key[-1].lower()
+                    if key.startswith("Alt+")
+                    else key
+                )
+            )
+            for key in self.keys
+        )
+
+
+class Viewer(QMainWindow):
+    def __init__(self, params: Params) -> None:
+        super().__init__()
+        self.params = params
+        self.data = b""  # QImage does not copy: this has to outlive it
+
+        self.canvas = QLabel()
+        self.canvas.setAlignment(Qt.AlignmentFlag.AlignTop)
+        area = QScrollArea()
+        area.setWidget(self.canvas)
+        area.setFocusPolicy(Qt.FocusPolicy.NoFocus)  # the keys stay ours
+        area.setFrameShape(QFrame.Shape.NoFrame)  # nothing around the bitmap
+        self.setCentralWidget(area)
+        self.statusBar().setSizeGripEnabled(False)  # it widens the window
+
+        self.help = QLabel(self)
+        self.help.setStyleSheet(
+            "background: rgba(0, 0, 0, 220); color: #eeeeee;"
+            " font-family: monospace; padding: 12px"
+        )
+        self.help.hide()
+
+        bindings = self.bindings()
+        for binding in bindings:
+            for key, action in zip(binding.keys, binding.actions):
+                QShortcut(QKeySequence(key), self, action)
+        self.help.setText(
+            "\n".join(f"  {b.label:<22}{b.description}" for b in bindings)
+        )
+
+        self.centered = False
+        self.resize(1000, 700)
+        self.render()
+
+    def viewport_size(self) -> QSize:
+        """How much of the bitmap is actually visible."""
+        area = self.centralWidget()
+        assert isinstance(area, QScrollArea)
+        return area.viewport().size()
+
+    def showEvent(self, event: QShowEvent) -> None:
+        """Open in the middle of the screen the pointer is on.
+
+        Waiting for the first show rather than doing this in the constructor
+        means frameGeometry knows how big the decorations are, so the window
+        ends up centred rather than off by a title bar.
+        """
+        super().showEvent(event)
+        if self.centered:
+            return
+        self.centered = True
+        screen = QApplication.screenAt(QCursor.pos())
+        screen = screen or self.screen() or QApplication.primaryScreen()
+        if screen is None:
+            return
+        available = screen.availableGeometry()
+
+        # Let the layout work out what the bitmap needs rather than adding up
+        # the parts: with fractional scaling the arithmetic lands between two
+        # pixels, and being one short is enough for a scroll bar to appear
+        # over a sliver of image.
+        area = self.centralWidget()
+        area.setFixedSize(self.canvas.size())
+        self.adjustSize()
+        area.setMinimumSize(0, 0)
+        area.setMaximumSize(QWIDGETSIZE_MAX, QWIDGETSIZE_MAX)
+
+        # the limit applies to the frame, so leave room for the decorations
+        decorations = self.frameGeometry().size() - self.size()
+        self.resize(self.size().boundedTo(available.size() - decorations))
+        frame = self.frameGeometry()
+        frame.moveCenter(available.center())
+        self.move(frame.topLeft())
+
+    def bindings(self) -> list[Binding]:
+        """Keys, what they do, and how to describe them, in help order.
+
+        The shortcuts and the help overlay are both built from this, so they
+        can't drift apart.
+        """
+        return [
+            Binding(
+                ("h", "l"),
+                (partial(self.seek_bytes, -1), partial(self.seek_bytes, 1)),
+                "back/forward a byte",
+            ),
+            Binding(
+                ("k", "j"),
+                (partial(self.seek_rows, -1), partial(self.seek_rows, 1)),
+                "back/forward a row",
+            ),
+            Binding(
+                ("Shift+H", "Shift+L"),
+                (partial(self.seek_bytes, -16), partial(self.seek_bytes, 16)),
+                "back/forward 16 bytes",
+            ),
+            Binding(
+                ("Shift+K", "Shift+J"),
+                (partial(self.seek_rows, -8), partial(self.seek_rows, 8)),
+                "back/forward 8 rows",
+            ),
+            Binding(
+                ("Ctrl+U", "Ctrl+D"),
+                (
+                    partial(self.seek_screens, -0.5),
+                    partial(self.seek_screens, 0.5),
+                ),
+                "back/forward half a screen",
+            ),
+            Binding(
+                ("Ctrl+B", "Ctrl+F"),
+                (
+                    partial(self.seek_screens, -1),
+                    partial(self.seek_screens, 1),
+                ),
+                "back/forward a screen",
+            ),
+            Binding(
+                ("g", "Shift+G"),
+                (partial(self.jump, 0), partial(self.jump, None)),
+                "start/end of file",
+            ),
+            Binding(("o",), (self.ask_offset,), "jump to offset"),
+            Binding(
+                ("Alt+H", "Alt+L"),
+                (partial(self.reshape, -1, 0), partial(self.reshape, 1, 0)),
+                "narrower/wider by 1",
+            ),
+            Binding(
+                ("Alt+K", "Alt+J"),
+                (partial(self.reshape, 0, -1), partial(self.reshape, 0, 1)),
+                "shorter/taller by 1",
+            ),
+            Binding(
+                ("Alt+Shift+H", "Alt+Shift+L"),
+                (partial(self.reshape, -25, 0), partial(self.reshape, 25, 0)),
+                "narrower/wider by 25",
+            ),
+            Binding(
+                ("Alt+Shift+K", "Alt+Shift+J"),
+                (partial(self.reshape, 0, -25), partial(self.reshape, 0, 25)),
+                "shorter/taller by 25",
+            ),
+            Binding(
+                ("w", "e"),
+                (
+                    partial(self.ask_number, "width"),
+                    partial(self.ask_number, "height"),
+                ),
+                "set width/height",
+            ),
+            Binding(
+                ("f", "Shift+F"),
+                (
+                    partial(self.cycle_format, 1),
+                    partial(self.cycle_format, -1),
+                ),
+                "next/previous pixel format",
+            ),
+            Binding(("v",), (self.toggle_flip,), "flip vertically"),
+            Binding(
+                ("b", "Shift+B"),
+                (partial(self.brighten, -5), partial(self.brighten, 5)),
+                "darker/brighter",
+            ),
+            Binding(
+                ("-", "="),
+                (partial(self.zoom, -1), partial(self.zoom, 1)),
+                "zoom out/in",
+            ),
+            Binding(("0",), (partial(self.zoom, None),), "zoom 1:1"),
+            Binding(
+                ("p", "n"),
+                (partial(self.cycle_file, -1), partial(self.cycle_file, 1)),
+                "previous/next file",
+            ),
+            Binding(("r",), (self.render,), "re-read the file"),
+            Binding(("s",), (self.save,), "save the view as png"),
+            Binding(("?",), (self.toggle_help,), "this help"),
+            Binding(("q",), (self.close,), "quit"),
+        ]
+
+    # --------------------------------------------------------------- actions
+
+    def seek_bytes(self, count: int) -> None:
+        self.jump(self.params.offset + count)
+
+    def seek_rows(self, count: int) -> None:
+        self.jump(self.params.offset + count * self.params.stride)
+
+    def seek_screens(self, count: float) -> None:
+        self.jump(self.params.offset + int(count * self.params.shown_bytes))
+
+    def jump(self, offset: int | None) -> None:
+        """None means the end of the file, one screen back from it."""
+        size = self.file_size()
+        if offset is None:
+            offset = max(0, size - self.params.shown_bytes)
+        self.params.offset = max(0, min(offset, size))
+        self.render()
+
+    def reshape(self, width: int, height: int) -> None:
+        self.params.width = max(1, self.params.width + width)
+        self.params.height = max(1, self.params.height + height)
+        self.render()
+
+    def cycle_format(self, step: int) -> None:
+        self.params.format_index += step
+        self.params.format_index %= len(FORMATS)
+        self.render()
+
+    def cycle_file(self, step: int) -> None:
+        p = self.params
+        if len(p.paths) == 1:
+            # only one file was named, so walk the directory it sits in - the
+            # neighbours are usually what you want to look at next
+            current = p.path  # p.path moves with p.paths, so read it first
+            try:
+                siblings = sorted(
+                    entry
+                    for entry in current.parent.iterdir()
+                    if entry.is_file()
+                )
+            except OSError:
+                siblings = []
+            if current in siblings:
+                p.paths = siblings
+                p.file_index = siblings.index(current)
+        p.file_index = (p.file_index + step) % len(p.paths)
+        p.offset = 0
+        self.render()
+
+    def brighten(self, step: int) -> None:
+        self.params.brightness = min(
+            100, max(0, self.params.brightness + step)
+        )
+        self.render()
+
+    def zoom(self, step: int | None) -> None:
+        """None resets to 1:1."""
+        self.params.zoom = (
+            1 if step is None else min(32, max(1, self.params.zoom + step))
+        )
+        self.render()
+
+    def toggle_flip(self) -> None:
+        self.params.flip = not self.params.flip
+        self.render()
+
+    def toggle_help(self) -> None:
+        self.help.setVisible(not self.help.isVisible())
+        self.help.adjustSize()
+        self.help.move(10, 10)
+
+    def ask_offset(self) -> None:
+        text, ok = QInputDialog.getText(self, "Jump to offset", "offset:")
+        if not ok or not text.strip():
+            return
+        try:
+            self.jump(int(text, 0))  # 0x… for hex, plain for decimal
+        except ValueError:
+            self.statusBar().showMessage(f"not a number: {text}", 3000)
+
+    def ask_number(self, attribute: str) -> None:
+        value, ok = QInputDialog.getInt(
+            self,
+            f"Set {attribute}",
+            attribute,
+            getattr(self.params, attribute),
+            1,
+        )
+        if ok:
+            setattr(self.params, attribute, value)
+            self.render()
+
+    def save(self) -> None:
+        p = self.params
+        name = (
+            f"{p.path.stem}-{p.offset:08x}-{p.width}x{p.height}"
+            f"-{p.format.name}.png"
+        )
+        self.canvas.pixmap().save(name, "PNG")
+        self.statusBar().showMessage(f"saved {name}", 3000)
+
+    # --------------------------------------------------------------- drawing
+
+    def file_size(self) -> int:
+        return self.params.path.stat().st_size
+
+    def read(self) -> bytes:
+        p = self.params
+        with p.path.open("rb") as handle:
+            handle.seek(p.offset)
+            data = handle.read(p.shown_bytes)
+        # QImage neither copies nor bounds checks what it is given, so a short
+        # read - the tail of a file, or one still being written - has to be
+        # padded up to the size the geometry asks for
+        return data.ljust(p.shown_bytes, b"\0")
+
+    def render(self) -> None:
+        p = self.params
+        data = self.read()
+
+        if p.flip:
+            data = b"".join(
+                data[row * p.stride : (row + 1) * p.stride]
+                for row in reversed(range(p.height))
+            )
+
+        if p.brightness != 50:
+            # 0 is 1/256th, 50 leaves it alone, 100 is 256x; a 256 entry table
+            # lets bytes.translate do the arithmetic in C
+            multiplier = 2 ** ((p.brightness - 50) / (50 / 8))
+            data = data.translate(
+                bytes(
+                    min(255, int(value * multiplier)) for value in range(256)
+                )
+            )
+
+        self.data = data
+        image = QImage(
+            self.data, p.width, p.height, p.stride, p.format.qt_format
+        )
+        if p.format.swap_rgb:
+            image = image.rgbSwapped()
+        if p.format.invert_alpha:
+            # invert every channel, then put the color ones back
+            image.invertPixels(QImage.InvertMode.InvertRgba)
+            image.invertPixels(QImage.InvertMode.InvertRgb)
+
+        pixmap = QPixmap.fromImage(image)
+        if p.zoom > 1:
+            pixmap = pixmap.scaled(
+                pixmap.width() * p.zoom,
+                pixmap.height() * p.zoom,
+                Qt.AspectRatioMode.KeepAspectRatio,
+                Qt.TransformationMode.FastTransformation,  # keep pixels crisp
+            )
+
+        # On a scaled desktop - 144dpi here means 1.5x - Qt would otherwise
+        # stretch the bitmap by that factor and smooth it, so one byte stops
+        # being one pixel. Telling the pixmap it is already at device
+        # resolution maps it 1:1 instead, and leaves zoom the only thing that
+        # magnifies.
+        ratio = self.devicePixelRatioF()
+        pixmap.setDevicePixelRatio(ratio)
+        self.canvas.setPixmap(pixmap)
+        self.canvas.resize(
+            QSize(ceil(pixmap.width() / ratio), ceil(pixmap.height() / ratio))
+        )
+        self.show_status()
+
+    def show_status(self) -> None:
+        p = self.params
+        size = self.file_size()
+        self.setWindowTitle(f"{p.path.name} @ {p.offset:#x}")
+        self.statusBar().showMessage(
+            f"{p.path.name}  {p.offset:#010x}/{size:#x}"
+            f" ({100 * p.offset / size if size else 0:.1f}%)"
+            f"  {p.width}x{p.height}  {p.format.name}  zoom {p.zoom}x"
+            f"  bright {p.brightness}  flip {'on' if p.flip else 'off'}"
+            f"  [{p.file_index + 1}/{len(p.paths)}]  ? for keys"
+        )
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        description="Preview a file as raw pixels.",
+        epilog="press ? in the window for the key bindings",
+    )
+    parser.add_argument("paths", metavar="FILE", nargs="+", type=Path)
+    parser.add_argument("--width", type=int, default=800)
+    parser.add_argument("--height", type=int, default=600)
+    parser.add_argument(
+        "-f",
+        "--format",
+        choices=list(FORMAT_INDEX),
+        default="G8",
+        help="pixel format (default: G8)",
+    )
+    parser.add_argument(
+        "-o",
+        "--offset",
+        type=lambda text: int(text, 0),
+        default=0,
+        help="where in the file to start, 0x… for hex",
+    )
+    parser.add_argument("--flip", action="store_true")
+    parser.add_argument("--brightness", type=int, default=50)
+    return parser.parse_args()
+
+
+def main() -> None:
+    args = parse_args()
+    params = Params(
+        paths=args.paths,
+        offset=args.offset,
+        width=args.width,
+        height=args.height,
+        format_index=FORMAT_INDEX[args.format],
+        flip=args.flip,
+        brightness=args.brightness,
+    )
+
+    app = QApplication(sys.argv)
+    # a top level widget is owned by Python, so dropping the last reference to
+    # it destroys the window: keep the name alive until exec() returns
+    viewer = Viewer(params)
+    viewer.show()
+    sys.exit(app.exec())
+
+
+if __name__ == "__main__":
+    main()
