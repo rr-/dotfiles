@@ -1,0 +1,15 @@
+# Rendered per theme into ~/.config/theme.d/{{theme}}.colors.gitconfig - edit this
+# template and cfg/theme/roles.toml, not the output.
+#
+# Both halves of every pair are given: a terminal that kept its own palette
+# would otherwise pick its own "normal" foreground and put black on dark red.
+[color "diff"]
+	meta = "{{diff.meta.fg}}" "{{diff.meta.bg}}" dim
+	frag = "{{diff.frag.fg}}" "{{diff.frag.bg}}" bold noreverse
+	old = noreverse "{{diff.del.fg}}" "{{diff.del.bg}}"
+	new = noreverse "{{diff.add.fg}}" "{{diff.add.bg}}"
+	oldBold = "{{diff.del.accent}}" noreverse
+	oldDimmed = "{{diff.del.accent}}" noreverse
+	newBold = "{{diff.add.accent}}" noreverse
+	newDimmed = "{{diff.add.accent}}" noreverse
+	whitespace = "{{diff.whitespace}}" reverse

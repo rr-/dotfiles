@@ -63,16 +63,12 @@
     remoteBranch = red
     tag = blue bold reverse
 
-[color "diff"]
-    meta = 255 234 dim
-    frag = 255 23 bold noreverse
-    old = noreverse normal 130
-    new = noreverse normal 64
-    oldBold = 9 noreverse
-    oldDimmed = 9 noreverse
-    newBold = 10 noreverse
-    newDimmed = 10 noreverse
-    whitespace = blue reverse
+# Diff colors are rendered from cfg/theme/roles.toml into ~/.config/theme.d
+# and switched by theme(1). This one follows the machine's own theme,
+# which is the best git can do on its own; a shell that knows better - because
+# it asked the terminal, or was told over ssh - overrides it via GIT_CONFIG_*.
+[include]
+    path = ~/.config/theme.d/current.gitconfig
 
 [commit]
     gpgsign = true

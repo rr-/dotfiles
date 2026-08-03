@@ -12,6 +12,56 @@ source ~/.zprofile
 eval "$(zoxide init zsh)"
 
 
+# color theme
+# theme(1) writes the machine's theme to ~/.config/theme and renders every
+# consumer's colors into ~/.config/theme.d - see cfg/theme/render.py. That
+# marker is the only thing we read: never the terminal, and never what we
+# inherited, which is a snapshot of some earlier theme and is how a pane comes
+# up light on a black terminal. Export it so nothing downstream has to guess.
+THEME=
+[[ -r ~/.config/theme ]] && THEME=$(<~/.config/theme)
+[[ $THEME == (light|dark) ]] || THEME=light
+export THEME
+
+# everything in this shell that depends on the theme, rebuilt from scratch.
+# Called at the end of this file, once make_ps1 exists.
+__apply_theme() {
+    local fragment=~/.config/theme.d/$THEME.colors.zsh
+    [[ -r $fragment ]] && source $fragment
+    # The terminal is the one consumer that isn't on this machine - over ssh it
+    # keeps its own ANSI 0-15, background and cursor, and never sees theme.d at
+    # all. Hand it the palette as escapes; see cfg/theme/osc.py. theme(1) does
+    # this for every client attached at the time, so this is for the panes that
+    # start afterwards, and the .tmux copy is the same bytes tunnelled past a
+    # pane's own tty. $(<...) is a builtin read, not a fork.
+    if [[ -o interactive && -t 1 ]]; then
+        local palette=~/.config/theme.d/$THEME.palette${TMUX:+.tmux}.osc
+        [[ -r $palette ]] && print -rn -- "$(<$palette)"
+    fi
+    make_ps1
+    [[ -n $__fzf_base_opts ]] \
+        && export FZF_DEFAULT_OPTS="$__fzf_base_opts --color=$theme_fzf_colors"
+    return 0
+}
+
+# theme(1) rewrites the marker and sends every zsh a WINCH - WINCH rather than
+# USR1 because shells that predate this config redraw instead of dying. The
+# precmd read catches the shells that were busy when the signal arrived.
+__refresh_theme() {
+    local was=$THEME
+    [[ -r ~/.config/theme ]] && THEME=$(<~/.config/theme)
+    [[ $THEME == (light|dark) ]] || THEME=$was
+    [[ $THEME != $was ]] && __apply_theme
+    return 0
+}
+TRAPWINCH() {
+    __refresh_theme
+    zle && zle reset-prompt
+    return 0
+}
+precmd_functions+=(__refresh_theme)
+
+
 # miscellaneous
 unsetopt beep                           # disable beep on errors
 setopt correct                          # enable [nyae] correction
@@ -127,30 +177,28 @@ __git_ps1 () {
 }
 
 function make_ps1 () {
-    case $(hostname) in
-        drizzle) color1='%F{75}';;
-        snowflake) color1='%F{#00DDDD}'; color2='%F{#00AADD}';;
-        lightning) color1='%F{#FFAA00}'; color2='%F{#EE8800}';;
-        oldcastle) color1='%B%F{150}';;
-        nebula) color1='%F{#FF99EE}'; color2='%F{#DD77DD}';;
-        *) color1='%B%F{145}';;
-    esac
+    # the colors come from ~/.config/theme.d/$THEME.colors.zsh, which
+    # __apply_theme sourced just before calling us. color1 and color2 stay
+    # global on purpose: PS1 expands them at prompt time
+    local host=$(hostname)
+    color1=${theme_ps1_host[$host]:-$theme_ps1_host[default]}
+    color2=${theme_ps1_host2[$host]}
 
     # user@host
     PS1='${color1}%n@${color2}%m%b'
 
     # colon
-    PS1+="%F{7}:"
+    PS1+="$theme_ps1_punct:"
 
     # path relative to $HOME
-    PS1+="%F{15}%~"
+    PS1+="$theme_ps1_path%~"
 
     # git prompt
     setopt prompt_subst
-    PS1+='%F{14}`__git_ps1`'
+    PS1+="$theme_ps1_git"'`__git_ps1`'
 
     # colored $ depending on last exit code
-    PS1+=$'%(?.%F{7}.%F{203})$%f%k '
+    PS1+="%(?.$theme_ps1_ok.$theme_ps1_err)\$%f%k "
 
     # reset colors
     PS1+="%f"
@@ -160,12 +208,18 @@ function make_ps1 () {
         PS1+=$'%{\e]0;%n@%M:%~\007%}'
     fi
 }
-make_ps1
-
 # config fzf
 if [ -f ~/.fzf.zsh ]; then
     export FZF_DEFAULT_COMMAND='rg --files --hidden'
-    export FZF_DEFAULT_OPTS="$FZF_DEFAULT_OPTS --inline-info --color=dark"
+    # Kept apart from --color so that __apply_theme can rebuild the option,
+    # and stripped of anything we added ourselves in a parent shell: its
+    # --color describes the theme that shell was on, and both it and
+    # --inline-info would otherwise fold in again at every level of nesting.
+    __fzf_opts=(${(z)FZF_DEFAULT_OPTS})
+    __fzf_opts=(${__fzf_opts:#(--color=*|--inline-info)})
+    __fzf_base_opts="$__fzf_opts --inline-info"
+    unset __fzf_opts
+    export FZF_DEFAULT_OPTS="$__fzf_base_opts --color=$theme_fzf_colors"
     source ~/.fzf.zsh
     bindkey '\C-o' fzf-file-widget  # choose c-o for file opener
     bindkey '\C-t' transpose-chars  # restore default binding for c-t
@@ -209,3 +263,6 @@ if [[ -d $PYENV_ROOT/bin ]]; then
     export PATH="$PYENV_ROOT/bin:$PATH"
     eval "$(pyenv init -)"
 fi
+
+# paint the prompt and friends now that everything they need is defined
+__apply_theme

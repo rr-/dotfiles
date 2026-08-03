@@ -32,6 +32,11 @@ export GPG_TTY=$(tty)
 # ensure imagegen always outputs to ~/
 export IMAGEGEN_DEFAULT_DIR=~/
 
+# Claude Code drops to 256 colors the moment it sees $TMUX, without asking tmux
+# whether it can do better - and ours has advertised RGB and Tc for years.
+# Not setting it breaks theme remapper.
+export CLAUDE_CODE_TMUX_TRUECOLOR=1
+
 if [ -z "${DISPLAY}" ] && [ "${XDG_VTNR}" -eq 1 ]; then
     startx
 fi

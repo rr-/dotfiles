@@ -1,117 +1,148 @@
--- ----------------------------------------
--- color scheme settings
--- ----------------------------------------
+-- Colors by role from ~/.config/theme.d/<theme>.colors.lua, rendered by
+-- theme(1) - see cfg/theme/roles.toml.
 
-vim.cmd('colorscheme vim')
+local THEME_FILE = vim.fn.expand('~/.config/theme')
+local COLORS_DIR = vim.fn.expand('~/.config/theme.d')
+
+-- fzf-lua overrides only the match colors, so the picker otherwise keeps
+-- whatever $FZF_DEFAULT_OPTS this neovim inherited. Put ours back on every
+-- repaint.
+local FZF_BASE_OPTS = (vim.env.FZF_DEFAULT_OPTS or ''):gsub('%-%-color[=%s]%S+', '')
+
+-- $THEME first: it describes the terminal we're on, and loses to nothing.
+-- 'background' is last because its default is dark, so only was_set means
+-- the terminal actually answered. Second return: did we find a real answer.
+local function detect_background()
+  local env = vim.env.THEME
+  if env == 'dark' or env == 'light' then
+    return env, true
+  end
+  local ok, lines = pcall(vim.fn.readfile, THEME_FILE)
+  if ok and lines[1] then
+    local theme = vim.trim(lines[1])
+    if theme == 'dark' or theme == 'light' then
+      return theme, true
+    end
+  end
+  if vim.api.nvim_get_option_info2('background', {}).was_set then
+    return vim.o.background, false
+  end
+  return 'light', false
+end
+
+-- Neovim keeps a TermResponse handler that rewrites 'background' from any OSC
+-- 11 answer, for life - it only drops it for a 'background' set from
+-- vimscript, and this is lua. tmux passes the query on only while the pane is
+-- in front of a client, so the answer can land when you switch back to the
+-- window, hours later, and repaint a running editor. Drop the handler.
+local function ignore_terminal_background()
+  local ok, autocmds = pcall(vim.api.nvim_get_autocmds, {
+    group = 'nvim.tty',
+    event = 'TermResponse',
+  })
+  for _, autocmd in ipairs(ok and autocmds or {}) do
+    if autocmd.desc and autocmd.desc:find("'background'", 1, true) then
+      pcall(vim.api.nvim_del_autocmd, autocmd.id)
+    end
+  end
+end
+
+local function load_colors(theme)
+  local path = COLORS_DIR .. '/' .. theme .. '.colors.lua'
+  local chunk = loadfile(path)
+  if not chunk then
+    vim.notify('no colors for ' .. theme .. ' - run theme', vim.log.levels.WARN)
+    return setmetatable({}, { __index = function() return nil end })
+  end
+  return chunk()
+end
+
+local function apply_highlights()
+  local p = load_colors(vim.o.background)
+  local hl = vim.api.nvim_set_hl
+
+  hl(0, 'Number',                { fg = p.syntax_number_alt, ctermfg = 217 })
+  hl(0, 'PreProc',               { fg = p.syntax_preproc, ctermfg = 4 })
+  hl(0, 'Special',               { })
+  hl(0, 'Constant',              { fg = p.syntax_constant_alt, ctermfg = 174 })
+  hl(0, 'String',                { ctermfg = 'green' })
+  hl(0, 'Identifier',            { fg = p.syntax_identifier, ctermfg = 252 })
+  hl(0, 'Statement',             { fg = p.syntax_special_key, ctermfg = 167 })
+  hl(0, 'Type',                  { fg = p.syntax_type, ctermfg = 146 })
+  hl(0, 'Comment',               { fg = p.syntax_comment, ctermfg = 107 })
+  hl(0, 'Error',                 { bg = p.syntax_error_bg, fg = p.syntax_error_fg, ctermbg = 196, ctermfg = 16 })
+  hl(0, 'Todo',                  { bg = p.state_attention_bg, ctermbg = 58 })
+  hl(0, 'NonText',               { ctermfg = 'yellow', bold = true })
+  hl(0, 'SpecialKey',            { fg = p.syntax_special_key, ctermfg = 167 })
+  hl(0, 'LineNr',                { fg = p.surface_overlay, ctermfg = 238 })
+  hl(0, 'ErrorMsg',              { bg = p.syntax_error_bg, fg = p.syntax_error_fg, ctermbg = 196, ctermfg = 16 })
+  hl(0, 'StatusLine',            { bg = p.surface_raised, ctermbg = 235 })
+  hl(0, 'StatusLineNC',          { bg = p.surface_raised, ctermbg = 235 })
+  hl(0, 'Folded',                { bg = p.editor_folded_bg, fg = p.text_faint, ctermfg = 242, ctermbg = 233 })
+  hl(0, 'ColorColumn',           { bg = p.state_error_bg, ctermbg = 52 })
+  hl(0, 'SignColumn',            { bg = p.state_attention_bg, ctermbg = 58 })
+  hl(0, 'SpellBad',              { bg = p.state_error_bg, ctermbg = 52 })
+  hl(0, 'SpellCap',              { bg = p.state_attention_bg, ctermbg = 58 })
+  hl(0, 'SpellRare',             { bg = p.state_info_bg, ctermbg = 23 })
+  hl(0, 'SpellLocal',            { bg = p.state_info_bg, ctermbg = 23 })
+  hl(0, 'Search',                { bg = p.editor_search_bg, fg = p.text_strong, ctermbg = 142, ctermfg = 255 })
+  hl(0, 'Cursor',                { bg = p.editor_cursor_bg, fg = p.editor_cursor_fg })
+  hl(0, 'CursorLine',            { bg = p.editor_cursorline })
+  hl(0, 'CursorLineNr',          { fg = p.state_warning, ctermfg = 173 })
+  hl(0, 'VertSplit',             { fg = p.surface_raised, bg = p.surface_raised, ctermfg = 235, ctermbg = 235 })
+  hl(0, 'EndOfBuffer',           { fg = p.surface_sunken, ctermfg = 232 })
+  hl(0, 'TabLineFill',           { fg = p.surface_base, ctermbg = 234 })
+  hl(0, 'TabLine',               { fg = p.text_dim, bg = p.surface_overlay, ctermfg = 250, ctermbg = 238 })
+  hl(0, 'TabLineSel',            { fg = p.text_strong, bg = p.surface_sunken, ctermfg = 255, ctermbg = 232 })
+
+  hl(0, 'pythonFunction',        { fg = p.editor_function_fg, bg = p.editor_folded_bg, ctermfg = 111, ctermbg = 233 })
+  hl(0, 'FzfLuaCursorLine',      { bg = p.editor_search_bg, ctermbg = 142 })
+  hl(0, 'FzfLuaCursorLineNr',    { })
+
+  hl(0, '@identifier',           { fg = p.text_strong, ctermfg = 255 })
+  hl(0, '@comment',              { fg = p.syntax_comment, ctermfg = 107 })
+  hl(0, '@comment.todo',         { bg = p.state_attention_bg, ctermbg = 58 })
+  hl(0, '@type',                 { fg = p.syntax_type_alt, ctermfg = 138 })
+  hl(0, '@type.builtin',         { link = '@type' })
+  hl(0, '@keyword',              { fg = p.syntax_keyword, ctermfg = 203 })
+  hl(0, '@keyword.type',         { link = '@keyword' })
+  hl(0, '@keyword.repeat',       { link = '@keyword' })
+  hl(0, '@keyword.conditional',  { link = '@keyword' })
+  hl(0, '@null',                 { link = '@keyword' })
+  hl(0, '@label',                { fg = p.syntax_keyword, ctermfg = 203 })
+  hl(0, '@operator',             { })
+  hl(0, '@constant',             { fg = p.syntax_constant, ctermfg = 75 })
+  hl(0, '@string',               { fg = p.syntax_string, bg = p.syntax_string_bg, ctermfg = 156, bold = true })
+  hl(0, '@string.documentation', { fg = p.text_faint, ctermfg = 242 })
+  hl(0, '@character',            { link = '@string' })
+  hl(0, '@number',               { fg = p.syntax_number, ctermfg = 217 })
+  hl(0, '@number.float',         { link = '@number' })
+  hl(0, '@boolean',              { link = '@number' })
+  hl(0, '@function',             { fg = p.syntax_function, ctermfg = 15, bold = true })
+  hl(0, '@struct.specifier',     { link = '@keyword' })
+
+  hl(0, 'Pmenu',                 { link = 'Normal' })
+
+  if p.fzf_colors then
+    vim.env.FZF_DEFAULT_OPTS = FZF_BASE_OPTS .. ' --color=' .. p.fzf_colors
+  end
+end
 
 vim.o.termguicolors = true
-vim.o.background = 'light'
+local background, ours = detect_background()
+if ours then
+  ignore_terminal_background()
+end
+vim.o.background = background
 
-vim.api.nvim_set_hl(0, 'Number',                { fg = '#ff0000', ctermfg = 217 })
-vim.api.nvim_set_hl(0, 'PreProc',               { fg = "#005FAF", ctermfg = 4 })
-vim.api.nvim_set_hl(0, 'Special',               { })
-vim.api.nvim_set_hl(0, 'Constant',              { fg = "#AF5F5F", ctermfg = 174 })
-vim.api.nvim_set_hl(0, 'String',                { ctermfg = 'green' })
-vim.api.nvim_set_hl(0, 'Identifier',            { fg = "#212121", ctermfg = 252 })
-vim.api.nvim_set_hl(0, 'Statement',             { fg = "#D75F5F", ctermfg = 167 })
-vim.api.nvim_set_hl(0, 'Type',                  { fg = "#5F5F87", ctermfg = 146 })
-vim.api.nvim_set_hl(0, 'Comment',               { fg = "#6F8F3A", ctermfg = 107})
-vim.api.nvim_set_hl(0, 'Error',                 { bg = "#FF0000", fg = "#ffffff", ctermbg = 196, ctermfg = 16 })
-vim.api.nvim_set_hl(0, 'Todo',                  { bg = "#FFFFD7", ctermbg = 58 })
-vim.api.nvim_set_hl(0, 'NonText',               { ctermfg = 'yellow', bold = true })
-vim.api.nvim_set_hl(0, 'SpecialKey',            { fg = "#D75F5F", ctermfg = 167 })
-vim.api.nvim_set_hl(0, 'LineNr',                { fg = "#BBBBBB", ctermfg = 238 })
-vim.api.nvim_set_hl(0, 'ErrorMsg',              { bg = "#FF0000", fg = "#ffffff", ctermbg = 196, ctermfg = 16 })
-vim.api.nvim_set_hl(0, 'StatusLine',            { bg = "#DCDCDC", ctermbg = 235 })
-vim.api.nvim_set_hl(0, 'StatusLineNC',          { bg = "#DCDCDC", ctermbg = 235 })
-vim.api.nvim_set_hl(0, 'Folded',                { bg = "#F2F2F2", fg = "#8F8F8F", ctermfg = 242, ctermbg = 233 })
-vim.api.nvim_set_hl(0, 'ColorColumn',           { bg = "#FFD7D7", ctermbg = 52 })
-vim.api.nvim_set_hl(0, 'SignColumn',            { bg = "#FFFFD7", ctermbg = 58 })
-vim.api.nvim_set_hl(0, 'SpellBad',              { bg = "#FFD7D7", ctermbg = 52 })
-vim.api.nvim_set_hl(0, 'SpellCap',              { bg = "#FFFFD7", ctermbg = 58 })
-vim.api.nvim_set_hl(0, 'SpellRare',             { bg = "#D7FFFF", ctermbg = 23 })
-vim.api.nvim_set_hl(0, 'SpellLocal',            { bg = "#D7FFFF", ctermbg = 23 })
-vim.api.nvim_set_hl(0, 'Search',                { bg = "#FFFF87", fg = "#000000", ctermbg = 142, ctermfg = 255 })
-vim.api.nvim_set_hl(0, 'Cursor',                { bg = "#40AF40", fg = "#FFFFFF" })
-vim.api.nvim_set_hl(0, 'CursorLine',            { bg = "#F4F8EA" })
-vim.api.nvim_set_hl(0, 'CursorLineNr',          { fg = "#D7875F", ctermfg = 173 })
-vim.api.nvim_set_hl(0, 'VertSplit',             { fg = "#DCDCDC", bg = "#DCDCDC", ctermfg = 235, ctermbg = 235 })
-vim.api.nvim_set_hl(0, 'EndOfBuffer',           { fg = "#FDFDFD", ctermfg = 232 })
-vim.api.nvim_set_hl(0, 'TabLineFill',           { fg = "#E7E7E7", ctermbg = 234 })
-vim.api.nvim_set_hl(0, 'TabLine',               { fg = "#373737", bg = "#BBBBBB", ctermfg = 250, ctermbg = 238 })
-vim.api.nvim_set_hl(0, 'TabLineSel',            { fg = "#000000", bg = "#FDFDFD", ctermfg = 255, ctermbg = 232 })
+vim.cmd('colorscheme vim')
+apply_highlights()
 
-vim.api.nvim_set_hl(0, 'pythonFunction',        { fg = "#005FAF", bg = "#F2F2F2", ctermfg = 111, ctermbg = 233 })
-vim.api.nvim_set_hl(0, 'FzfLuaCursorLine',      { bg = "#FFFF87", ctermbg = 142 })
-vim.api.nvim_set_hl(0, 'FzfLuaCursorLineNr',    { })
-
-vim.api.nvim_set_hl(0, '@identifier',           { fg = "#000000", ctermfg = 255 })
-vim.api.nvim_set_hl(0, '@comment',              { fg = "#6F8F3A", ctermfg = 107 })
-vim.api.nvim_set_hl(0, '@comment.todo',         { bg = "#FFFFD7", ctermbg = 58 })
-vim.api.nvim_set_hl(0, '@type',                 { fg = "#408000", ctermfg = 138 })
-vim.api.nvim_set_hl(0, '@type.builtin',         { link = '@type' })
-vim.api.nvim_set_hl(0, '@keyword',              { fg = "#D70000", ctermfg = 203 })
-vim.api.nvim_set_hl(0, '@keyword.type',         { link = '@keyword' })
-vim.api.nvim_set_hl(0, '@keyword.repeat',       { link = '@keyword' })
-vim.api.nvim_set_hl(0, '@keyword.conditional',  { link = '@keyword' })
-vim.api.nvim_set_hl(0, '@null',                 { link = '@keyword' })
-vim.api.nvim_set_hl(0, '@label',                { fg = "#D70000", ctermfg = 203 })
-vim.api.nvim_set_hl(0, '@operator',             { })
-vim.api.nvim_set_hl(0, '@constant',             { fg = "#0087D7", ctermfg = 75 })
-vim.api.nvim_set_hl(0, '@string',               { fg = "#5FAF00", bg = "#F8FFF0", ctermfg = 156, bold = true })
-vim.api.nvim_set_hl(0, '@string.documentation', { fg = "#8F8F8F", ctermfg = 242 })
-vim.api.nvim_set_hl(0, '@character',            { link = '@string' })
-vim.api.nvim_set_hl(0, '@number',               { fg = "#D78000", ctermfg = 217 })
-vim.api.nvim_set_hl(0, '@number.float',         { link = '@number' })
-vim.api.nvim_set_hl(0, '@boolean',              { link = '@number' })
-vim.api.nvim_set_hl(0, '@function',             { fg = "#414141", ctermfg = 15, bold = true })
-vim.api.nvim_set_hl(0, '@struct.specifier',     { link = '@keyword' })
-
-vim.api.nvim_set_hl(0, 'Pmenu',                 { link = 'Normal' })
+-- theme(1) sets 'background' over the rpc socket, which reloads the color
+-- scheme and wipes our highlights - so hook the reload, not OptionSet, which
+-- fires before it.
+vim.api.nvim_create_autocmd('ColorScheme', { callback = apply_highlights })
 
 vim.o.cursorline = true
 vim.o.statusline = '%f %m%r%=Col:%c Line:%l/%L'
 vim.g.c_no_curly_error = 1  -- breaks in the simplest __VA_ARGS__ macros
-
--- LUA support broken as of 2025-12-30
--- require 'nvim-treesitter.config'.setup {
---   -- A list of parser names, or "all" (the listed parsers MUST always be installed)
---   ensure_installed = { "c", "lua", "vim", "vimdoc", "query", "markdown", "markdown_inline" },
---
---   -- Install parsers synchronously (only applied to `ensure_installed`)
---   sync_install = false,
---
---   -- Automatically install missing parsers when entering buffer
---   -- Recommendation: set to false if you don't have `tree-sitter` CLI installed locally
---   auto_install = true,
---
---   -- List of parsers to ignore installing (or "all")
---   ignore_install = { "javascript" },
---
---   ---- If you need to change the installation directory of the parsers (see -> Advanced Setup)
---   -- parser_install_dir = "/some/path/to/store/parsers", -- Remember to run vim.opt.runtimepath:append("/some/path/to/store/parsers")!
---
---   highlight = {
---     enable = true,
---
---     -- NOTE: these are the names of the parsers and not the filetype. (for example if you want to
---     -- disable highlighting for the `tex` filetype, you need to include `latex` in this list as this is
---     -- the name of the parser)
---     -- list of language that will be disabled
---     disable = { "c", "rust" },
---     -- Or use a function for more flexibility, e.g. to disable slow treesitter highlight for large files
---     disable = function(lang, buf)
---         local max_filesize = 100 * 1024 -- 100 KB
---         local ok, stats = pcall(vim.loop.fs_stat, vim.api.nvim_buf_get_name(buf))
---         if ok and stats and stats.size > max_filesize then
---             return true
---         end
---     end,
---
---     -- Setting this to true will run `:h syntax` and tree-sitter at the same time.
---     -- Set this to `true` if you depend on 'syntax' being enabled (like for indentation).
---     -- Using this option may slow down your editor, and you may see some duplicate highlights.
---     -- Instead of true it can also be a list of languages
---     additional_vim_regex_highlighting = false,
---   },
--- }

@@ -73,7 +73,7 @@ alt + F12
 
 # switch between light and dark themes
 shift + {F11,F12}
-    switch-theme {light,dark}
+    theme {light,dark}
 
 # toggle bigger and smaller font
 super + grave

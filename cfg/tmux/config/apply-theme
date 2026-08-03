@@ -1,0 +1,6 @@
+#!/bin/sh
+# Load the status bar colors for the theme this machine is on. theme(1)
+# sources them into a running server itself; this is for a server starting up.
+theme=$(cat "${XDG_CONFIG_HOME:-$HOME/.config}/theme" 2>/dev/null)
+[ "$theme" = light ] || theme=dark
+tmux source-file "${XDG_CONFIG_HOME:-$HOME/.config}/theme.d/$theme.colors.conf"
