@@ -12,7 +12,14 @@ export PATH                             # export modified var for subprocesses
 export LC_CTYPE=en_US.UTF-8
 export LC_ALL=en_US.UTF-8
 
-export LD_LIBRARY_PATH=/usr/local/lib:/usr/lib:$LD_LIBRARY_PATH
+# /usr/local/lib is not in the loader's default search path, so it has to be
+# named here; /usr/lib is (built into ld.so), and naming it anyway does more
+# than nothing - LD_LIBRARY_PATH outranks the RPATH of programs that ship
+# their own libraries, so a uv script with a bundled Qt would load the system
+# one against its own and die on the version mismatch. Tied to an array so
+# that re-sourcing this file doesn't keep growing the variable.
+typeset -TUx LD_LIBRARY_PATH ld_library_path
+ld_library_path=(/usr/local/lib ${ld_library_path:#(/usr/lib|/lib)})
 export INCLUDE_PATH=/usr/local/include:/usr/include:$INCLUDE_PATH
 export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig:/usr/lib/pkgconfig:$PKG_CONFIG_PATH
 
