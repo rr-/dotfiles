@@ -36,7 +36,9 @@ setopt hist_reduce_blanks       # remove extra blanks before recording entry
 setopt hist_verify              # don't execute immediately upon expansion
 
 # don't remember certain commands
-HISTORY_IGNORE="(plen*|enpl*|jaen*|tl*|edict*|reverso*|glosbe*|sjp*|urban*|rg*)"
+# `rg` and nothing else: `rg*` also swallowed rgb, and would swallow any
+# other command that happens to start with those two letters
+HISTORY_IGNORE="(plen*|enpl*|jaen*|tl*|edict*|reverso*|glosbe*|sjp*|urban*|rg|rg *)"
 zshaddhistory() {
   emulate -L zsh
   [[ $1 != ${~HISTORY_IGNORE} ]]
