@@ -51,6 +51,24 @@ def create_file(
                 handle.write(content)
 
 
+def create_script(module: str, name: str) -> None:
+    """Put an executable on PATH that runs `python3 -m <module>`.
+
+    Only ./install puts the repo on sys.path, so the launcher has to carry it
+    itself; writing it at install time is what lets the checkout live wherever
+    this machine keeps it.
+    """
+    path = HOME_DIR / ".local" / "bin" / name
+    create_dir(path.parent)
+    logger.info("Creating script %s...", path)
+    path.write_text(
+        "#!/bin/sh\n"
+        f"export PYTHONPATH={shlex.quote(str(REPO_ROOT_DIR))}\n"
+        f'exec python3 -m {module} "$@"\n'
+    )
+    path.chmod(0o755)
+
+
 def create_dir(path: Path) -> None:
     if not path.exists():
         logger.info("Creating directory %s...", path)

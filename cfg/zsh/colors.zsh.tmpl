@@ -1,0 +1,74 @@
+# Rendered per theme into ~/.config/theme.d/{{theme}}.colors.zsh - edit this template
+# and cfg/theme/roles.toml, not the output.
+#
+# .zshrc sources this every time the theme changes, so everything here has to
+# be safe to run twice. Colors are rgb because the terminal on the other end
+# of an ssh connection has its own palette and its own idea of what 15 means.
+
+# prompt
+theme_ps1_punct='{{text.muted|zsh}}'
+theme_ps1_path='{{text.bright|zsh}}'
+theme_ps1_git='{{accent.link|zsh}}'
+theme_ps1_ok='{{text.muted|zsh}}'
+theme_ps1_err='{{state.error|zsh}}'
+
+typeset -gA theme_ps1_host theme_ps1_host2
+theme_ps1_host=(
+    default   '{{host.default|zsh}}'
+    drizzle   '{{host.drizzle|zsh}}'
+    oldcastle '{{host.oldcastle|zsh}}'
+    snowflake '{{host.snowflake|zsh}}'
+    lightning '{{host.lightning|zsh}}'
+    nebula    '{{host.nebula|zsh}}'
+)
+theme_ps1_host2=(
+    snowflake '{{host2.snowflake|zsh}}'
+    lightning '{{host2.lightning|zsh}}'
+    nebula    '{{host2.nebula|zsh}}'
+)
+
+# man pager, which only speaks raw escapes
+theme_less_mb=$'\e[01;{{state.error|sgr}}m'
+theme_less_md=$'\e[01;{{accent.info|sgr}}m'
+theme_less_us=$'\e[04;{{syntax.type|sgr}}m'
+
+# fzf
+theme_fzf_colors='fg:{{text.dim}},bg:-1,hl:{{state.error}}'
+theme_fzf_colors+=',fg+:{{text.strong}},bg+:{{surface.raised}},hl+:{{state.error}}'
+theme_fzf_colors+=',info:{{text.faint}},border:{{surface.overlay}}'
+theme_fzf_colors+=',prompt:{{accent.link}},pointer:{{accent.primary}}'
+theme_fzf_colors+=',marker:{{state.success}},header:{{text.faint}}'
+
+# ls
+export LS_COLORS='di=01;{{file.dir|sgr}}:ln=01;{{file.link|sgr}}:ex=01;{{file.executable|sgr}}'
+LS_COLORS+=':or={{file.broken|sgr}}:pi={{file.special|sgr}}:so={{file.special|sgr}}'
+LS_COLORS+=':bd={{file.special|sgr}}:cd={{file.special|sgr}}'
+for ext in tar tgz zip gz bz2 xz zst 7z rar deb rpm; do
+    LS_COLORS+=":*.$ext={{file.archive|sgr}}"
+done
+for ext in jpg jpeg png gif webp svg tif mp3 flac ogg mp4 mkv webm avi pdf; do
+    LS_COLORS+=":*.$ext={{file.media|sgr}}"
+done
+unset ext
+
+# git, which has no way to ask what theme its terminal is on. These take
+# precedence over ~/.config/git/config, which carries the local theme only.
+export GIT_CONFIG_COUNT=9
+export GIT_CONFIG_KEY_0='color.diff.meta'
+export GIT_CONFIG_VALUE_0='{{diff.meta.fg}} {{diff.meta.bg}} dim'
+export GIT_CONFIG_KEY_1='color.diff.frag'
+export GIT_CONFIG_VALUE_1='{{diff.frag.fg}} {{diff.frag.bg}} bold noreverse'
+export GIT_CONFIG_KEY_2='color.diff.old'
+export GIT_CONFIG_VALUE_2='noreverse {{diff.del.fg}} {{diff.del.bg}}'
+export GIT_CONFIG_KEY_3='color.diff.new'
+export GIT_CONFIG_VALUE_3='noreverse {{diff.add.fg}} {{diff.add.bg}}'
+export GIT_CONFIG_KEY_4='color.diff.oldBold'
+export GIT_CONFIG_VALUE_4='{{diff.del.accent}} noreverse'
+export GIT_CONFIG_KEY_5='color.diff.oldDimmed'
+export GIT_CONFIG_VALUE_5='{{diff.del.accent}} noreverse'
+export GIT_CONFIG_KEY_6='color.diff.newBold'
+export GIT_CONFIG_VALUE_6='{{diff.add.accent}} noreverse'
+export GIT_CONFIG_KEY_7='color.diff.newDimmed'
+export GIT_CONFIG_VALUE_7='{{diff.add.accent}} noreverse'
+export GIT_CONFIG_KEY_8='color.diff.whitespace'
+export GIT_CONFIG_VALUE_8='{{diff.whitespace}} reverse'

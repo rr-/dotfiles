@@ -1,0 +1,18 @@
+# Rendered per theme into ~/.config/theme.d/{{theme}}.colors.conf - edit this
+# template and cfg/theme/roles.toml, not the output.
+#
+# rgb rather than palette indices: a client that ignores our OSC 4 remap keeps
+# its own palette, where colour235 is anybody's guess.
+
+set -g message-command-style "bg={{state.success}}"
+set -g message-style "bg={{surface.raised}} fg={{text.dim}}"
+set -g status-style "bg={{surface.raised}} fg={{text.dim}}"
+set -g status-left-style "bg={{surface.raised}} fg={{text.dim}}"
+set -g status-right-style "bg={{surface.raised}} fg={{text.dim}}"
+setw -g mode-style "bg={{surface.raised}}"
+setw -g window-status-current-style "bg={{surface.sunken}} fg={{text.strong}}"
+setw -g window-status-style "bg={{surface.overlay}} fg={{text.dim}}"
+setw -g window-status-bell-style "bg={{state.warning}} fg={{text.inverse}} bold"
+set -g pane-border-style "bg=default fg={{surface.border}}"
+set -g pane-active-border-style "bg=default fg={{accent.primary}} bold"
+set -g pane-border-format '#[fg={{accent.info}}] #(ps --no-headers -t #{pane_tty} -o args -O-c)'

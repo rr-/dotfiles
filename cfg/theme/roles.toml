@@ -1,0 +1,131 @@
+# What each color is FOR. The colors themselves live in cfg/wezterm/colors,
+# and the syntax each program wants them in lives in that program's *.tmpl.
+#
+# A value is a palette index (looked up per theme in dash_light.toml and
+# dash_dark.toml), a literal "#rrggbb", or "fg"/"bg" for the terminal's own
+# foreground and background. Where a role can't be expressed as one index -
+# because the two themes were hand-tuned apart - give both:
+#
+#     comment = { light = "#6F8F3A", dark = "#9DBF63" }
+#
+# and `attrs = ["bold"]` rides along for the consumers that can use it.
+#
+# Nothing here mentions a program by name. If you find yourself wanting
+# `tmux.status.bg`, add a tone instead and let the template pick it.
+
+# foreground tones, strongest to faintest
+[text]
+strong = 255
+bright = 15
+normal = "fg"
+muted = 7
+dim = 250
+faint = 242
+inverse = 232
+
+# background tones, deepest to closest to the surface
+[surface]
+sunken = 232
+base = 234
+raised = 235
+overlay = 238
+border = 234
+
+[accent]
+primary = 39    # the thing you're on: active border, selection
+bright = 75     # a lighter primary, for constants and one of the hosts
+info = 110      # supporting detail: pane titles, docstrings
+link = 14       # branches, urls, anything you'd follow
+
+[state]
+error = 203
+warning = 173
+success = 150
+# muted backgrounds to lay behind a whole line
+error_bg = 52
+attention_bg = 58
+info_bg = 23
+# the gold Claude Code uses for "auto mode on", turned down
+warning_dim = { light = "#8A7220", dark = "#8A7220" }
+
+[diff]
+whitespace = 4
+
+[diff.add]
+fg = "fg"
+bg = 64
+# the changed words within a changed line, and a diff already dealt with
+emph = 70
+quiet = 22
+accent = 10
+
+[diff.del]
+fg = "fg"
+bg = 130
+emph = 166
+quiet = 94
+accent = 9
+
+[diff.meta]
+fg = 255
+bg = 234
+
+[diff.frag]
+fg = 255
+bg = 23
+
+# what kind of thing a file is
+[file]
+dir = 4
+link = 14
+executable = 10
+archive = 9
+media = 13
+broken = 203
+special = 11
+
+# who you're talking to. These are identities rather than tones, which is why
+# three of them are the same on both themes - they were picked by hand.
+[host]
+default = { value = 145, attrs = ["bold"] }
+drizzle = 75
+oldcastle = { value = 150, attrs = ["bold"] }
+snowflake = "#00DDDD"
+lightning = "#FFAA00"
+nebula = "#FF99EE"
+
+# the second half of a two-tone host name, where it has one
+[host2]
+snowflake = "#00AADD"
+lightning = "#EE8800"
+nebula = "#DD77DD"
+
+[syntax]
+comment = { light = "#6F8F3A", dark = "#9DBF63" }
+doc = 242
+string = { light = "#5FAF00", dark = "#99FF66" }
+string_bg = { light = "#F8FFF0", dark = "#0A1004" }
+character = { light = "#5FAF00", dark = "#99FF66" }
+number = { light = "#D78000", dark = "#E0A040" }
+number_alt = { light = "#ff0000", dark = "#FF5555" }
+constant = 75
+constant_alt = 174
+keyword = 203
+statement = 167
+type = 146
+type_alt = { light = "#408000", dark = "#8FBF40" }
+preproc = 4
+identifier = 252
+function = 15
+special_key = 167
+error_fg = "#ffffff"
+error_bg = "#FF0000"
+
+[editor]
+cursor_fg = "#FFFFFF"
+cursor_bg = "#40AF40"
+cursorline = { light = "#F4F8EA", dark = "#0F140A" }
+search_bg = 142
+folded_bg = 233
+function_bg = 233
+function_fg = 111

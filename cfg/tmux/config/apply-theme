@@ -1,0 +1,15 @@
+#!/bin/sh
+# Restyle the status bar for the theme this machine is on.
+#
+# Runs when the config loads and again whenever a client attaches, which is
+# what picks up a theme(1) that ran while the server had nobody looking.
+
+theme=$(cat "${XDG_CONFIG_HOME:-$HOME/.config}/theme" 2>/dev/null)
+[ "$theme" = light ] || theme=dark
+
+tmux source-file "${XDG_CONFIG_HOME:-$HOME/.config}/theme.d/$theme.colors.conf"
+
+# the shells read the marker back out when they get the signal
+tmux list-panes -s -F '#{pane_pid}' 2>/dev/null | while read -r pid; do
+    kill -WINCH "$pid" 2>/dev/null
+done

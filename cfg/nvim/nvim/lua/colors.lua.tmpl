@@ -1,0 +1,51 @@
+-- Rendered per theme into ~/.config/theme.d/{{theme}}.colors.lua - edit this
+-- template and cfg/theme/roles.toml, not the output.
+--
+-- theme.lua asks for colors by role, so the same tone that paints the tmux
+-- status bar paints the statusline here without either of them knowing.
+return {
+  text_strong   = '{{text.strong}}',
+  text_bright   = '{{text.bright}}',
+  text_normal   = '{{text.normal}}',
+  text_dim      = '{{text.dim}}',
+  text_faint    = '{{text.faint}}',
+  text_inverse  = '{{text.inverse}}',
+
+  surface_sunken  = '{{surface.sunken}}',
+  surface_base    = '{{surface.base}}',
+  surface_raised  = '{{surface.raised}}',
+  surface_overlay = '{{surface.overlay}}',
+
+  state_error        = '{{state.error}}',
+  state_warning      = '{{state.warning}}',
+  state_error_bg     = '{{state.error_bg}}',
+  state_attention_bg = '{{state.attention_bg}}',
+  state_info_bg      = '{{state.info_bg}}',
+
+  syntax_comment      = '{{syntax.comment}}',
+  syntax_doc          = '{{syntax.doc}}',
+  syntax_string       = '{{syntax.string}}',
+  syntax_string_bg    = '{{syntax.string_bg}}',
+  syntax_number       = '{{syntax.number}}',
+  syntax_number_alt   = '{{syntax.number_alt}}',
+  syntax_constant     = '{{syntax.constant}}',
+  syntax_constant_alt = '{{syntax.constant_alt}}',
+  syntax_keyword      = '{{syntax.keyword}}',
+  syntax_statement    = '{{syntax.statement}}',
+  syntax_type         = '{{syntax.type}}',
+  syntax_type_alt     = '{{syntax.type_alt}}',
+  syntax_preproc      = '{{syntax.preproc}}',
+  syntax_identifier   = '{{syntax.identifier}}',
+  syntax_function     = '{{syntax.function}}',
+  syntax_special_key  = '{{syntax.special_key}}',
+  syntax_error_fg     = '{{syntax.error_fg}}',
+  syntax_error_bg     = '{{syntax.error_bg}}',
+
+  editor_cursor_fg   = '{{editor.cursor_fg}}',
+  editor_cursor_bg   = '{{editor.cursor_bg}}',
+  editor_cursorline  = '{{editor.cursorline}}',
+  editor_search_bg   = '{{editor.search_bg}}',
+  editor_folded_bg   = '{{editor.folded_bg}}',
+  editor_function_bg = '{{editor.function_bg}}',
+  editor_function_fg = '{{editor.function_fg}}',
+}
