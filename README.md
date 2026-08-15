@@ -18,8 +18,8 @@ Every module can be installed with `./install` like this:
 
 ```console
 ./install zsh
-./install vim
-./install urxvt
+./install nvim
+./install wezterm
 ```
 
 Most things are installed using symbolic links.

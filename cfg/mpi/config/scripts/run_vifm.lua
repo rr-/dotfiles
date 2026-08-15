@@ -54,7 +54,7 @@ end
 
 function run_vifm()
     if not is_vifm_running() then
-        mp_utils.subprocess_detached({args = {'urxvt', '-e', 'vifm'}})
+        mp_utils.subprocess_detached({args = {'wezterm', 'start', '--', 'vifm'}})
         mp.command('quit')
     end
 

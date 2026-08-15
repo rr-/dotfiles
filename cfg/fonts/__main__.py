@@ -19,7 +19,7 @@ if get_distro_name() == "arch":
     try_install("adobe-source-han-sans-otc-fonts")
     try_install("adobe-source-han-serif-otc-fonts")
     try_install("noto-fonts")  # for fallback unicode characters
-    try_install("noto-fonts-emoji")  # for emoji in alacritty
+    try_install("noto-fonts-emoji")  # for emoji in the terminal
 else:
     try_install("xfonts-utils")
     try_install("fonts-ipafont")
