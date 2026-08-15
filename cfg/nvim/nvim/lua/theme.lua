@@ -11,40 +11,23 @@ local FZF_BASE_OPTS = (vim.env.FZF_DEFAULT_OPTS or ''):gsub('%-%-color[=%s]%S+',
 
 -- $THEME first: it describes the terminal we're on, and loses to nothing.
 -- 'background' is last because its default is dark, so only was_set means
--- the terminal actually answered. Second return: did we find a real answer.
+-- the terminal actually answered.
 local function detect_background()
   local env = vim.env.THEME
   if env == 'dark' or env == 'light' then
-    return env, true
+    return env
   end
   local ok, lines = pcall(vim.fn.readfile, THEME_FILE)
   if ok and lines[1] then
     local theme = vim.trim(lines[1])
     if theme == 'dark' or theme == 'light' then
-      return theme, true
+      return theme
     end
   end
   if vim.api.nvim_get_option_info2('background', {}).was_set then
-    return vim.o.background, false
+    return vim.o.background
   end
-  return 'light', false
-end
-
--- Neovim keeps a TermResponse handler that rewrites 'background' from any OSC
--- 11 answer, for life - it only drops it for a 'background' set from
--- vimscript, and this is lua. tmux passes the query on only while the pane is
--- in front of a client, so the answer can land when you switch back to the
--- window, hours later, and repaint a running editor. Drop the handler.
-local function ignore_terminal_background()
-  local ok, autocmds = pcall(vim.api.nvim_get_autocmds, {
-    group = 'nvim.tty',
-    event = 'TermResponse',
-  })
-  for _, autocmd in ipairs(ok and autocmds or {}) do
-    if autocmd.desc and autocmd.desc:find("'background'", 1, true) then
-      pcall(vim.api.nvim_del_autocmd, autocmd.id)
-    end
-  end
+  return 'light'
 end
 
 local function load_colors(theme)
@@ -128,12 +111,13 @@ local function apply_highlights()
   end
 end
 
+-- Neovim keeps a TermResponse handler that rewrites 'background' from any OSC
+-- 11 answer - and tmux passes the query on only while the pane is in front of
+-- a client, so the answer can land when you switch back to the window, hours
+-- later, and repaint a running editor. Setting 'background' ourselves is
+-- enough: neovim drops that handler on VimEnter once the option was set.
 vim.o.termguicolors = true
-local background, ours = detect_background()
-if ours then
-  ignore_terminal_background()
-end
-vim.o.background = background
+vim.o.background = detect_background()
 
 vim.cmd('colorscheme vim')
 apply_highlights()
