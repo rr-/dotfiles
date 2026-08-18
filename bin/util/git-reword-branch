@@ -1,0 +1,578 @@
+#!/usr/bin/env -S uv run --script
+#
+# /// script
+# requires-python = ">=3.12"
+# dependencies = ["openai", "pyyaml", "xdg-base-dirs"]
+# ///
+"""Reword every commit on the current branch through the OpenAI API.
+
+Collects the commit messages between the branch and its base, sends them off
+with a rewriting prompt, and applies whatever comes back. Every message must
+satisfy the 50/72 rule and, where the repository ships one, its
+tools/check_commit_msg. A message that fails goes back to the model with the
+complaints attached, up to --attempts times; a progress bar reports which
+attempt is running and how many messages already pass.
+
+History is not touched until every message passes. If the rebase itself
+stops, it is left standing for manual cleanup.
+
+The API key and default model come from the config that `ai` uses:
+$XDG_CONFIG_HOME/ai/config.yaml.
+"""
+
+import argparse
+import itertools
+import os
+import re
+import shlex
+import subprocess
+import sys
+import tempfile
+import threading
+import time
+from pathlib import Path
+
+import yaml
+from openai import OpenAI
+from xdg_base_dirs import xdg_config_home
+
+MARKER_RE = re.compile(r"^#{5} COMMIT ([0-9a-f]{40}) #{5}$")
+BEFORE_RE = re.compile(r"^#{5} BEFORE [0-9a-f]+ #{5}$")
+FENCE_RE = re.compile(r"^\s*```")
+ERROR_PREFIX = "!! "
+NOTE_PREFIX = "# "
+SUBJECT_RE = re.compile(r"^(?P<prefix>[^\s:]+:\s*)?(?P<rest>.*)$")
+MODELINE = (
+    "# vim: set filetype=gitcommit textwidth=72 colorcolumn=51,73 :"
+)
+BASE_CANDIDATES = ("develop", "main", "master")
+CONFIG_FILE = Path(xdg_config_home(), "ai", "config.yaml")
+SUBJECT_LIMIT = 50
+BODY_LIMIT = 72
+
+PROMPT = """\
+Rewrite each commit message below so it reads more human and simplified, fixing
+another model's roundabout prose that almost reads like poetry because of
+watermarking.
+
+No metaphors, no invented actors, no arguing for the design. To shorten, cut
+whole clauses rather than compressing them.
+
+Keep the subject at most 50 characters, opening with its `module-prefix: `
+and an imperative verb. Never change the capitalization of a subject: keep
+the prefix exactly as it is and start the rest with the same case the
+original used. Leave the second line blank. Wrap body lines at 72
+characters. Keep every `Resolves` line and every issue reference exactly as
+it stands. Description avoids imperative and is descriptive (bad: "Let xxx",
+good: "Lets xxx").
+
+Each commit is introduced by a `##### COMMIT <sha> #####` marker line, and
+its message is the prose that follows, up to the next marker.
+
+Reply with the whole block and nothing else: no preamble, no commentary. Edit
+only the prose between the markers. Do not add, remove, or reorder a marker
+line, and do not touch the `#` characters in one.
+"""
+
+
+def run(args, **kwargs):
+    return subprocess.run(args, text=True, capture_output=True, **kwargs)
+
+
+def git(*args):
+    result = run(["git", *args])
+    if result.returncode != 0:
+        sys.exit(f"git {' '.join(args)} failed:\n{result.stderr.strip()}")
+    return result.stdout
+
+
+def fail(message):
+    sys.exit(f"error: {message}")
+
+
+def load_config():
+    if not CONFIG_FILE.exists():
+        fail(f"no config file at {CONFIG_FILE}")
+    config = yaml.safe_load(CONFIG_FILE.read_text(encoding="utf-8")) or {}
+    key = config.get("api_key") or config.get("api-key")
+    if not key or key == "INSERT API KEY HERE":
+        fail(f"no api_key in {CONFIG_FILE}")
+    return key, config.get("model", "gpt-4o")
+
+
+def resolve_base(explicit):
+    if explicit is not None:
+        if run(["git", "rev-parse", "--verify", explicit]).returncode != 0:
+            fail(f"no such base revision: {explicit}")
+        return explicit
+    head = git("rev-parse", "--abbrev-ref", "HEAD").strip()
+    for candidate in BASE_CANDIDATES:
+        if candidate == head:
+            continue
+        if run(["git", "rev-parse", "--verify", candidate]).returncode == 0:
+            return candidate
+    fail("could not guess the base branch; pass --base")
+
+
+def collect_commits(merge_base):
+    shas = git("rev-list", "--reverse", f"{merge_base}..HEAD").split()
+    if not shas:
+        fail("no commits between the base and HEAD")
+    merges = [
+        sha
+        for sha in shas
+        if len(git("rev-list", "--parents", "-1", sha).split()) > 2
+    ]
+    if merges:
+        fail(f"branch contains merge commits: {', '.join(merges[:3])}")
+    return [(sha, git("log", "-1", "--format=%B", sha).strip()) for sha in shas]
+
+
+def check_state():
+    if run(["git", "rev-parse", "--git-dir"]).returncode != 0:
+        fail("not inside a git repository")
+    git_dir = Path(git("rev-parse", "--git-dir").strip())
+    for name in ("rebase-merge", "rebase-apply"):
+        if (git_dir / name).exists():
+            fail("a rebase is already in progress")
+    if git("rev-parse", "--abbrev-ref", "HEAD").strip() == "HEAD":
+        fail("HEAD is detached")
+    if git("status", "--porcelain", "--untracked-files=no").strip():
+        fail("the working tree has changes; commit or stash them first")
+
+
+def compose(commits, errors):
+    parts = []
+    if errors:
+        parts.append("Your previous attempt was rejected:")
+        parts.extend(ERROR_PREFIX + line for line in errors)
+        parts.append("")
+    for sha, message in commits:
+        parts.append(f"##### COMMIT {sha} #####")
+        parts.append("")
+        parts.append(message)
+        parts.append("")
+    return "\n".join(parts).strip() + "\n"
+
+
+def parse(text, expected):
+    sections = []
+    current = None
+    for line in text.splitlines():
+        match = MARKER_RE.match(line)
+        if match is not None:
+            current = (match.group(1), [])
+            sections.append(current)
+        elif current is not None:
+            if FENCE_RE.match(line) or BEFORE_RE.match(line):
+                continue
+            if line == NOTE_PREFIX.rstrip():
+                continue
+            if line.startswith(NOTE_PREFIX):
+                continue
+            current[1].append(line)
+
+    errors = []
+    seen = [sha for sha, _ in sections]
+    if seen != expected:
+        missing = [sha for sha in expected if sha not in seen]
+        unknown = [sha for sha in seen if sha not in expected]
+        duplicate = {sha for sha in seen if seen.count(sha) > 1}
+        if missing:
+            errors.append(f"marker missing for: {', '.join(missing)}")
+        if unknown:
+            errors.append(f"marker for an unknown commit: {', '.join(unknown)}")
+        if duplicate:
+            errors.append(f"marker repeated: {', '.join(sorted(duplicate))}")
+        if not (missing or unknown or duplicate):
+            errors.append("markers are out of order; keep the original order")
+        return None, errors
+
+    parsed = []
+    for sha, lines in sections:
+        message = "\n".join(lines).strip()
+        if not message:
+            errors.append(f"{sha[:9]}: message is empty")
+        parsed.append((sha, message))
+    return (None, errors) if errors else (parsed, [])
+
+
+def check_wrapping(message):
+    """Complain about anything that breaks the 50/72 rule."""
+    errors = []
+    lines = message.split("\n")
+    subject = lines[0]
+    if len(subject) > SUBJECT_LIMIT:
+        errors.append(
+            f"subject is {len(subject)} characters, "
+            f"the limit is {SUBJECT_LIMIT}: {subject!r}"
+        )
+    if subject.strip() != subject:
+        errors.append("subject has leading or trailing whitespace")
+    if subject.endswith("."):
+        errors.append("subject ends with a period")
+    if len(lines) > 1 and lines[1].strip():
+        errors.append("the second line must be blank")
+    for number, line in enumerate(lines[2:], start=3):
+        if len(line) > BODY_LIMIT and len(line.split()) > 1:
+            errors.append(
+                f"line {number} is {len(line)} characters, "
+                f"the limit is {BODY_LIMIT}"
+            )
+    return errors
+
+
+def preserve_case(before, after):
+    """Restore the original capitalization of a rewritten subject."""
+    old_lines = before.split("\n")
+    new_lines = after.split("\n")
+    old = SUBJECT_RE.match(old_lines[0])
+    new = SUBJECT_RE.match(new_lines[0])
+
+    prefix = new.group("prefix") or ""
+    old_prefix = old.group("prefix") or ""
+    if prefix and old_prefix and prefix.lower() == old_prefix.lower():
+        prefix = old_prefix
+
+    rest = new.group("rest")
+    old_rest = old.group("rest")
+    if rest and old_rest and rest[0].isalpha() and old_rest[0].isalpha():
+        rest = (
+            rest[0].upper() + rest[1:]
+            if old_rest[0].isupper()
+            else rest[0].lower() + rest[1:]
+        )
+
+    new_lines[0] = prefix + rest
+    return "\n".join(new_lines)
+
+
+def validate(parsed, linter, work_dir):
+    """Return the per-commit complaints, keyed by sha."""
+    problems = {}
+    for sha, message in parsed:
+        errors = check_wrapping(message)
+        if linter is not None:
+            path = work_dir / f"lint-{sha[:9]}"
+            path.write_text(message + "\n", encoding="utf-8")
+            result = run([str(linter), str(path)])
+            if result.returncode != 0:
+                detail = (result.stdout + result.stderr).strip().splitlines()
+                errors.extend(line.strip() for line in detail if line.strip())
+        if errors:
+            problems[sha] = errors
+    return problems
+
+
+def flatten(problems):
+    return [
+        f"{sha[:9]}: {error}"
+        for sha, errors in problems.items()
+        for error in errors
+    ]
+
+
+def compose_review(parsed, original, errors):
+    """Build the file the user edits: the old message, then the new one."""
+    before = dict(original)
+    parts = []
+    if errors:
+        parts.extend(ERROR_PREFIX + line for line in errors)
+        parts.append("")
+    parts.append(NOTE_PREFIX + "Edit the messages below, save and quit.")
+    parts.append(
+        NOTE_PREFIX + f"Lines starting with {NOTE_PREFIX.strip()} are ignored;"
+        " keep every marker line as it stands."
+    )
+    for sha, message in parsed:
+        parts.append("")
+        parts.append(f"##### BEFORE {sha[:9]} #####")
+        parts.extend(
+            (NOTE_PREFIX + line).rstrip()
+            for line in before[sha].split("\n")
+        )
+        parts.append("")
+        parts.append(f"##### COMMIT {sha} #####")
+        parts.append("")
+        parts.append(message)
+    parts.append("")
+    parts.append(MODELINE)
+    return "\n".join(parts) + "\n"
+
+
+def edit(path):
+    editor = os.environ.get("EDITOR") or git("var", "GIT_EDITOR").strip()
+    if not editor:
+        fail("no $EDITOR set")
+    return subprocess.run([*shlex.split(editor), str(path)]).returncode
+
+
+def review(parsed, original, expected, linter, work_dir):
+    """Open the rewrite in $EDITOR until it parses and validates."""
+    path = work_dir / "COMMIT_MESSAGES"
+    draft = parsed
+    errors = []
+    while True:
+        path.write_text(
+            compose_review(draft, original, errors), encoding="utf-8"
+        )
+        code = edit(path)
+        if code != 0:
+            sys.exit(f"$EDITOR exited with {code}; nothing was changed")
+        edited, errors = parse(path.read_text(encoding="utf-8"), expected)
+        if edited is None:
+            continue
+        draft = edited
+        problems = validate(edited, linter, work_dir)
+        if not problems:
+            return edited
+        errors = flatten(problems)
+
+
+class Progress:
+    """A one-line bar on stderr, or plain lines when it is not a terminal."""
+
+    FRAMES = "⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏"
+
+    def __init__(self, total_commits, attempts):
+        self.total = total_commits
+        self.attempts = attempts
+        self.attempt = 0
+        self.passing = 0
+        self.tty = sys.stderr.isatty()
+        self.started = time.monotonic()
+        self.stop_event = threading.Event()
+        self.thread = None
+
+    def update(self, attempt=None, passing=None):
+        if attempt is not None:
+            self.attempt = attempt
+        if passing is not None:
+            self.passing = passing
+        if not self.tty:
+            print(
+                f"attempt {self.attempt}/{self.attempts}: "
+                f"{self.passing}/{self.total} messages pass",
+                file=sys.stderr,
+                flush=True,
+            )
+
+    def render(self, frame):
+        width = 24
+        filled = round(width * self.passing / self.total) if self.total else 0
+        bar = "█" * filled + "░" * (width - filled)
+        elapsed = int(time.monotonic() - self.started)
+        return (
+            f"\r{frame} [{bar}] {self.passing}/{self.total} ok · "
+            f"attempt {self.attempt}/{self.attempts} · {elapsed}s"
+        )
+
+    def spin(self):
+        for frame in itertools.cycle(self.FRAMES):
+            if self.stop_event.wait(0.1):
+                return
+            sys.stderr.write(self.render(frame))
+            sys.stderr.flush()
+
+    def __enter__(self):
+        if self.tty:
+            self.thread = threading.Thread(target=self.spin, daemon=True)
+            self.thread.start()
+        return self
+
+    def __exit__(self, *exc):
+        self.stop_event.set()
+        if self.thread is not None:
+            self.thread.join()
+            sys.stderr.write("\r" + self.render(" ").lstrip("\r") + "\n")
+            sys.stderr.flush()
+
+
+def rewrite(client, model, temperature, block):
+    """Ask the model for one rewritten block."""
+    result = client.chat.completions.create(
+        model=model,
+        temperature=temperature,
+        messages=[
+            {"role": "system", "content": PROMPT},
+            {"role": "user", "content": block},
+        ],
+    )
+    return result.choices[0].message.content or ""
+
+
+HELPER = r'''
+import os, re, sys
+from pathlib import Path
+
+work = Path(os.environ["REWORD_DIR"])
+targets = (work / "targets.txt").read_text().split()
+mode, target_file = sys.argv[1], Path(sys.argv[2])
+
+if mode == "seq":
+    lines = []
+    for line in target_file.read_text().splitlines():
+        match = re.match(r"^pick ([0-9a-f]+) ", line)
+        if match is not None and any(
+            sha.startswith(match.group(1)) for sha in targets
+        ):
+            line = "reword" + line[4:]
+        lines.append(line)
+    target_file.write_text("\n".join(lines) + "\n")
+else:
+    counter = work / "counter"
+    index = int(counter.read_text()) if counter.exists() else 0
+    counter.write_text(str(index + 1))
+    target_file.write_text(
+        (work / f"msg-{targets[index]}").read_text()
+    )
+'''
+
+
+def apply(parsed, original, merge_base, work_dir):
+    changed = [
+        (sha, message)
+        for (sha, message), (_, before) in zip(parsed, original)
+        if message != before
+    ]
+    if not changed:
+        print("every message is unchanged; nothing to do")
+        return 0
+
+    helper = work_dir / "helper.py"
+    helper.write_text(HELPER, encoding="utf-8")
+    (work_dir / "targets.txt").write_text(
+        "\n".join(sha for sha, _ in changed) + "\n", encoding="utf-8"
+    )
+    for sha, message in changed:
+        (work_dir / f"msg-{sha}").write_text(message + "\n", encoding="utf-8")
+
+    env = os.environ.copy()
+    env["REWORD_DIR"] = str(work_dir)
+    quoted = f"{shlex.quote(sys.executable)} {shlex.quote(str(helper))}"
+    env["GIT_SEQUENCE_EDITOR"] = f"{quoted} seq"
+    env["GIT_EDITOR"] = f"{quoted} msg"
+
+    print(f"rewording {len(changed)} of {len(parsed)} commits", flush=True)
+    result = subprocess.run(
+        ["git", "-c", "core.commentChar=;", "rebase", "-i", merge_base],
+        env=env,
+    )
+    if result.returncode != 0:
+        sys.stderr.write(
+            "the rebase stopped; it is left standing for you to clean up\n"
+        )
+    return result.returncode
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--base", help="base revision (default: auto)")
+    parser.add_argument("--model", help="model to use (default: the ai config)")
+    parser.add_argument(
+        "-t",
+        "--temperature",
+        type=float,
+        default=1.0,
+        help="sampling temperature (default: 1)",
+    )
+    parser.add_argument(
+        "-n",
+        "--attempts",
+        type=int,
+        default=5,
+        help="how many times to retry a rejected rewrite (default: 5)",
+    )
+    parser.add_argument(
+        "--no-review",
+        action="store_true",
+        help="apply the rewrite without opening it in $EDITOR",
+    )
+    parser.add_argument(
+        "--no-lint",
+        action="store_true",
+        help="skip the repository's tools/check_commit_msg",
+    )
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="print the rewritten messages, but do not rewrite history",
+    )
+    args = parser.parse_args()
+
+    check_state()
+    api_key, model = load_config()
+    model = args.model or model
+    base = resolve_base(args.base)
+    merge_base = git("merge-base", base, "HEAD").strip()
+    commits = collect_commits(merge_base)
+    expected = [sha for sha, _ in commits]
+
+    root = Path(git("rev-parse", "--show-toplevel").strip())
+    candidate = root / "tools" / "check_commit_msg"
+    linter = (
+        candidate
+        if not args.no_lint and os.access(candidate, os.X_OK)
+        else None
+    )
+
+    client = OpenAI(api_key=api_key)
+    print(f"rewriting {len(commits)} commits with {model}", file=sys.stderr)
+
+    with tempfile.TemporaryDirectory(prefix="reword-") as tmp:
+        work_dir = Path(tmp)
+        draft = commits
+        errors = []
+        parsed = None
+
+        with Progress(len(commits), args.attempts) as progress:
+            for attempt in range(1, args.attempts + 1):
+                progress.update(attempt=attempt)
+                block = compose(draft, errors)
+                try:
+                    reply = rewrite(
+                        client, model, args.temperature, block
+                    )
+                except Exception as error:  # noqa: BLE001 - report and stop
+                    fail(f"the API call failed: {error}")
+
+                candidate_parsed, errors = parse(reply, expected)
+                if candidate_parsed is None:
+                    progress.update(passing=0)
+                    continue
+
+                candidate_parsed = [
+                    (sha, preserve_case(before, message))
+                    for (sha, message), (_, before) in zip(
+                        candidate_parsed, commits
+                    )
+                ]
+                draft = candidate_parsed
+                problems = validate(candidate_parsed, linter, work_dir)
+                progress.update(passing=len(commits) - len(problems))
+                if not problems:
+                    parsed = candidate_parsed
+                    break
+                errors = flatten(problems)
+
+        if parsed is None:
+            sys.stderr.write(
+                f"gave up after {args.attempts} attempts; "
+                "history was not touched\n"
+            )
+            for line in errors:
+                sys.stderr.write(f"  {line}\n")
+            return 1
+
+        if not args.no_review:
+            parsed = review(parsed, commits, expected, linter, work_dir)
+
+        if args.dry_run:
+            for sha, message in parsed:
+                print(f"##### {sha[:9]} #####\n{message}\n")
+            return 0
+        return apply(parsed, commits, merge_base, work_dir)
+
+
+if __name__ == "__main__":
+    sys.exit(main())
