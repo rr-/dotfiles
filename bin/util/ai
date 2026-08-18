@@ -279,6 +279,11 @@ def run_prompt(
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument(
+        "prompt",
+        nargs="*",
+        help="Prompt to send; appended to piped input if any",
+    )
+    parser.add_argument(
         "-c", "--context", nargs="+", help="Additional context"
     )
     parser.add_argument(
@@ -378,7 +383,14 @@ def run_interactive(context: ChatContext, args: argparse.Namespace) -> None:
 def run_non_interactive(
     context: ChatContext, args: argparse.Namespace
 ) -> None:
-    run_prompt(context, sys.stdin.read(), stream=False)
+    parts = []
+    if stdin_has_data():
+        parts.append(sys.stdin.read().strip())
+    if args.prompt:
+        parts.append(" ".join(args.prompt).strip())
+
+    message = "\n\n".join(part for part in parts if part)
+    run_prompt(context, message, stream=False)
     save_history(context)
 
 
@@ -427,7 +439,7 @@ def main() -> None:
         messages=messages,
     )
 
-    if stdin_has_data():
+    if args.prompt or stdin_has_data():
         run_non_interactive(context, args)
     else:
         run_interactive(context, args)
