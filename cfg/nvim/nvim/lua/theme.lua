@@ -9,20 +9,22 @@ local COLORS_DIR = vim.fn.expand('~/.config/theme.d')
 -- repaint.
 local FZF_BASE_OPTS = (vim.env.FZF_DEFAULT_OPTS or ''):gsub('%-%-color[=%s]%S+', '')
 
--- $THEME first: it describes the terminal we're on, and loses to nothing.
--- 'background' is last because its default is dark, so only was_set means
--- the terminal actually answered.
+-- The marker first, like cfg/zsh/zshrc: $THEME is whatever our parent started
+-- with, and a parent older than the last switch hands down the old theme. It
+-- is the fallback for a machine with no marker, which over ssh is the only
+-- thing describing the terminal. 'background' is last because its default is
+-- dark, so only was_set means the terminal answered.
 local function detect_background()
-  local env = vim.env.THEME
-  if env == 'dark' or env == 'light' then
-    return env
-  end
   local ok, lines = pcall(vim.fn.readfile, THEME_FILE)
   if ok and lines[1] then
     local theme = vim.trim(lines[1])
     if theme == 'dark' or theme == 'light' then
       return theme
     end
+  end
+  local env = vim.env.THEME
+  if env == 'dark' or env == 'light' then
+    return env
   end
   if vim.api.nvim_get_option_info2('background', {}).was_set then
     return vim.o.background
@@ -111,13 +113,25 @@ local function apply_highlights()
   end
 end
 
--- Neovim keeps a TermResponse handler that rewrites 'background' from any OSC
--- 11 answer - and tmux passes the query on only while the pane is in front of
--- a client, so the answer can land when you switch back to the window, hours
--- later, and repaint a running editor. Setting 'background' ourselves is
--- enough: neovim drops that handler on VimEnter once the option was set.
+-- Neovim rewrites 'background' from any OSC 11 answer, and tmux can deliver
+-- that hours late, when the pane comes back in front. Setting 'background'
+-- does not drop the handler: the VimEnter check that would skips values set
+-- from lua (last_set_sid == -8, runtime/lua/vim/_core/defaults.lua), which is
+-- every value this file sets. So drop it here.
 vim.o.termguicolors = true
 vim.o.background = detect_background()
+
+pcall(function()
+  local handlers = vim.api.nvim_get_autocmds({
+    group = 'nvim.tty',
+    event = 'TermResponse',
+  })
+  for _, handler in ipairs(handlers) do
+    if (handler.desc or ''):find('background') then
+      vim.api.nvim_del_autocmd(handler.id)
+    end
+  end
+end)
 
 vim.cmd('colorscheme vim')
 apply_highlights()

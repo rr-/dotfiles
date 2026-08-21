@@ -39,6 +39,10 @@ __apply_theme() {
         [[ -r $palette ]] && print -rn -- "$(<$palette)"
     fi
     make_ps1
+    # wezterm's shell integration snapshots PS1 at precmd and restores it at
+    # preexec, undoing the rebuild for good - by then $THEME matches the
+    # marker, so nothing rebuilds it again. Move the snapshot with it.
+    [[ -n ${__wezterm_save_ps1+x} ]] && __wezterm_save_ps1=$PS1
     [[ -n $__fzf_base_opts ]] \
         && export FZF_DEFAULT_OPTS="$__fzf_base_opts --color=$theme_fzf_colors"
     return 0
@@ -266,3 +270,6 @@ fi
 
 # paint the prompt and friends now that everything they need is defined
 __apply_theme
+
+# claudish-to-english: rewrite provider key (kept out of this file)
+[ -f ~/.claude/.claudish-key ] && export CLAUDISH_ANTHROPIC_KEY="$(cat ~/.claude/.claudish-key)"

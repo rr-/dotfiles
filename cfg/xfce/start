@@ -1,3 +1,13 @@
 #!/bin/sh
+# The bus systemd already made, because shells, user services and the portals
+# are all on it. dbus-launch here puts the desktop on a second bus instead,
+# where xfsettingsd and xfdesktop cannot hear a thing said from a terminal.
+bus="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/bus"
+if [ -S "$bus" ]; then
+    DBUS_SESSION_BUS_ADDRESS="unix:path=$bus"
+    export DBUS_SESSION_BUS_ADDRESS
+    exec startxfce4
+fi
+
+# no systemd user bus here, so the session makes its own
 exec dbus-launch --sh-syntax --exit-with-session startxfce4
-# exec startxfce4
