@@ -16,6 +16,8 @@ from cfg.theme.render import (
     current_theme,
     generate,
     install_theme,
+    load_roles,
+    to_rgb,
 )
 from libdotfiles.util import HOME_DIR
 
@@ -169,6 +171,43 @@ def update_xfce_theme(theme: str) -> None:
     )
 
 
+def update_panel_background(theme: str) -> None:
+    """The panel is another pane, so it takes the pane's own film.
+
+    Style 1 is a color of our own; on style 0 the panel follows the gtk
+    theme and the rgba below is never looked at. The alpha matches the
+    frame-opacity in cfg/xfce/picom.conf, which blurs behind the panel too.
+    """
+    film = load_roles()["pane.film"].color(theme)
+    channels = [f"{value / 255:.6f}" for value in to_rgb(film)]
+    quiet(
+        "xfconf-query",
+        "-c",
+        "xfce4-panel",
+        "-p",
+        "/panels/panel-1/background-style",
+        "-t",
+        "int",
+        "-s",
+        "1",
+        "--create",
+    )
+    quiet(
+        "xfconf-query",
+        "-c",
+        "xfce4-panel",
+        "-p",
+        "/panels/panel-1/background-rgba",
+        *[word for _ in range(4) for word in ("-t", "double")],
+        *[
+            word
+            for channel in [*channels, "0.620000"]
+            for word in ("-s", channel)
+        ],
+        "--create",
+    )
+
+
 def update_gtk_config(theme: str) -> None:
     # gtk3's ini parser takes the quotes gtk2 wants for part of the name
     for path, header, name in [
@@ -224,6 +263,7 @@ def main() -> None:
     update_gtk_config(theme)
     update_xfce_theme(theme)
     update_xfwm_theme(theme)
+    update_panel_background(theme)
     update_wallpaper(theme)
 
 
