@@ -9,7 +9,7 @@ import re
 from pathlib import Path
 from subprocess import DEVNULL, TimeoutExpired, run
 
-from cfg.theme import osc
+from cfg.theme import osc, xfwm
 from cfg.theme.render import (
     MARKER_PATH,
     THEMES,
@@ -129,6 +129,19 @@ def point_xfdesktop_at(image: Path) -> None:
             )
 
 
+def update_xfwm_theme(theme: str) -> None:
+    """A theme per name, so the switch is a name change and xfwm4 reloads."""
+    quiet(
+        "xfconf-query",
+        "-c",
+        "xfwm4",
+        "-p",
+        "/general/theme",
+        "-s",
+        xfwm.theme_name(theme),
+    )
+
+
 def update_xfce_theme(theme: str) -> None:
     """xfsettingsd overrides the gtk config files, so it needs telling too."""
     quiet(
@@ -200,6 +213,7 @@ def main() -> None:
     # on the next switch
     generate()
     osc.generate()
+    xfwm.generate()
     install_theme(theme)
     update_wezterm_config(theme)
     osc.repaint(theme)
@@ -209,6 +223,7 @@ def main() -> None:
     update_running_zsh()
     update_gtk_config(theme)
     update_xfce_theme(theme)
+    update_xfwm_theme(theme)
     update_wallpaper(theme)
 
 

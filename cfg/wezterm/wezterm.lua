@@ -31,7 +31,9 @@ config.background = {
   },
 }
 
-config.window_decorations = "NONE"
+config.window_decorations = "RESIZE"
+-- measured off the running window, which picom-trans had been carrying
+config.window_background_opacity = 0.93
 config.font = wezterm.font 'Input Mono'
 
 config.adjust_window_size_when_changing_font_size = false

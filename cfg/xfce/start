@@ -1,4 +1,10 @@
 #!/bin/sh
+# the glass bezel needs a compositor that blurs. xfwm4's own does not, and
+# cfg/xfce/__main__.py turns it off, so picom takes over here. bspwm runs its
+# own picom off the leaner cfg/xorg/picom.conf.
+pkill -x picom 2>/dev/null
+picom --config "$HOME/.config/picom-xfce.conf" &
+
 # The bus systemd already made, because shells, user services and the portals
 # are all on it. dbus-launch here puts the desktop on a second bus instead,
 # where xfsettingsd and xfdesktop cannot hear a thing said from a terminal.
