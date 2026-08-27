@@ -129,10 +129,10 @@ function_fg = 111
 # reads these - they exist so the panel, window frames and browser chrome can
 # be their own thing without dragging the editor's colors along.
 [pane]
-film = { light = "#E5F0FD", dark = "#0E1A33" }
-film_deep = { light = "#CDE4FC", dark = "#16233F" }
-edge = { light = "#9CBEF7", dark = "#3E5885" }
-ink = { light = "#182858", dark = "#DCEAFC" }
+film = { light = "#67A6E5", dark = "#0E1A33" }
+film_deep = { light = "#5293D0", dark = "#16233F" }
+edge = { light = "#2E67A4", dark = "#3E5885" }
+ink = { light = "#EAF3FB", dark = "#DCEAFC" }
 ink_faint = { light = "#5F7FBE", dark = "#7FA3E4" }
-accent = { light = "#1E6FD9", dark = "#78A8F8" }
+accent = { light = "#0A4276", dark = "#78A8F8" }
 hot = { light = "#B33FA0", dark = "#EEB7F0" }

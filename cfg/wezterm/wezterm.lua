@@ -28,6 +28,7 @@ config.background = {
     },
     width = '700',
     height = '700',
+    opacity = 0.93,
   },
 }
 

@@ -28,6 +28,7 @@ Colour = tuple[int, ...]
 THEMES_DIR = HOME_DIR / ".themes"
 BORDER = 24
 TITLE = BORDER  # a bezel the same weight the whole way round
+RULE = 2  # how thick the lines along the bezel's two edges are drawn
 BUTTON = 22
 
 
@@ -45,15 +46,31 @@ def _slab(
     """A slab of film carrying a 1px rule on each named side."""
     image = Image.new("RGBA", (width, height), film)
     draw = ImageDraw.Draw(image)
+    # rectangles rather than lines: a line of even width straddles its own
+    # coordinate and lands half a pixel off the edge it is meant to sit on
     if "l" in rules:
-        draw.line([(0, 0), (0, height - 1)], fill=edge)
+        draw.rectangle([0, 0, RULE - 1, height - 1], fill=edge)
     if "r" in rules:
-        draw.line([(width - 1, 0), (width - 1, height - 1)], fill=edge)
+        draw.rectangle([width - RULE, 0, width - 1, height - 1], fill=edge)
     if "t" in rules:
-        draw.line([(0, 0), (width - 1, 0)], fill=edge)
+        draw.rectangle([0, 0, width - 1, RULE - 1], fill=edge)
     if "b" in rules:
-        draw.line([(0, height - 1), (width - 1, height - 1)], fill=edge)
+        draw.rectangle([0, height - RULE, width - 1, height - 1], fill=edge)
     return image
+
+
+def _turn(image: Image.Image, edge: Colour, right: bool, bottom: bool) -> None:
+    """Fill the block where the inner rule turns the corner.
+
+    A whole rule along the side instead would run the line out across the
+    border the corner sits next to.
+    """
+    width, height = image.size
+    x = width - RULE if right else 0
+    y = height - RULE if bottom else 0
+    ImageDraw.Draw(image).rectangle(
+        [x, y, x + RULE - 1, y + RULE - 1], fill=edge
+    )
 
 
 def _glyph(kind: str, colour: Colour, film: Colour) -> Image.Image:
@@ -106,15 +123,20 @@ def generate(target_dir: Path = THEMES_DIR) -> None:
             save(_slab(BORDER, 32, paper, rule, "lr"), "left")
             save(_slab(BORDER, 32, paper, rule, "lr"), "right")
             save(_slab(32, BORDER, paper, rule, "tb"), "bottom")
-            save(_slab(BORDER, BORDER, paper, rule, "lb"), "bottom-left")
-            save(_slab(BORDER, BORDER, paper, rule, "rb"), "bottom-right")
-            # the top row's inner rule spans the client and stops there: a
-            # full bottom rule on a corner spills the line across the border
+            corner = _slab(BORDER, BORDER, paper, rule, "lb")
+            _turn(corner, rule, right=True, bottom=False)
+            save(corner, "bottom-left")
+            corner = _slab(BORDER, BORDER, paper, rule, "rb")
+            _turn(corner, rule, right=False, bottom=False)
+            save(corner, "bottom-right")
+            # every corner carries the one pixel where the inner rule turns.
+            # A whole rule on a corner instead would spill the line sideways
+            # across the border it sits next to
             corner = _slab(BORDER, TITLE, paper, rule, "lt")
-            corner.putpixel((BORDER - 1, TITLE - 1), rule)
+            _turn(corner, rule, right=True, bottom=True)
             save(corner, "top-left")
             corner = _slab(BORDER, TITLE, paper, rule, "rt")
-            corner.putpixel((0, TITLE - 1), rule)
+            _turn(corner, rule, right=False, bottom=True)
             save(corner, "top-right")
             for piece in range(1, 6):
                 save(_slab(8, TITLE, paper, rule, "tb"), f"title-{piece}")
