@@ -10,3 +10,9 @@ create_file(
     overwrite=True,
 )
 (HOME_DIR / ".local" / "bin" / "browser").chmod(0o777)
+
+# the theme switcher renders into here; brave loads it as an unpacked
+# extension, which needs the directory to exist before the first switch
+(HOME_DIR / ".config" / "theme.d" / "brave-theme").mkdir(
+    parents=True, exist_ok=True
+)

@@ -134,6 +134,8 @@ def to_rgb(color: str) -> tuple[int, int, int]:
 FILTERS: dict[str, Callable[[Role, str], str]] = {
     "hex": lambda role, theme: role.color(theme),
     "sgr": lambda role, theme: "38;2;%d;%d;%d" % to_rgb(role.color(theme)),
+    # chrome themes spell a color as a json array of three 0-255 channels
+    "rgb": lambda role, theme: "%d, %d, %d" % to_rgb(role.color(theme)),
     "sgrbg": lambda role, theme: "48;2;%d;%d;%d" % to_rgb(role.color(theme)),
     "zsh": lambda role, theme: (
         ("%B" if "bold" in role.attrs else "") + f"%F{{{role.color(theme)}}}"
@@ -174,6 +176,8 @@ def generate(target_dir: Path = THEME_DIR) -> None:
 INSTALLED = {
     "colors.gitconfig": THEME_DIR / "current.gitconfig",
     "claude.json": HOME_DIR / ".claude" / "themes" / f"{CLAUDE_SLUG}.json",
+    # brave reads a theme as an unpacked extension directory
+    "brave.manifest.json": THEME_DIR / "brave-theme" / "manifest.json",
 }
 
 
