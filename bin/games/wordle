@@ -1,0 +1,147 @@
+#!/usr/bin/env python3
+"""A terminal Wordle clone that draws its answers from a dictionary file."""
+
+import argparse
+import random
+import sys
+from collections import Counter
+
+GREEN = "\033[42;30m"
+YELLOW = "\033[43;30m"
+GREY = "\033[100;97m"
+RESET = "\033[0m"
+
+
+def load_words(path: str, length: int) -> list[str]:
+    words: set[str] = set()
+    with open(path, encoding="utf-8", errors="replace") as handle:
+        for line in handle:
+            word = line.strip().lower()
+            if len(word) == length and word.isalpha() and word.isascii():
+                words.add(word)
+    return sorted(words)
+
+
+def score(guess: str, answer: str) -> list[str]:
+    """Return a list of 'green', 'yellow' or 'grey' per letter."""
+    result = ["grey"] * len(guess)
+    leftover: Counter[str] = Counter()
+    for i, (g, a) in enumerate(zip(guess, answer)):
+        if g == a:
+            result[i] = "green"
+        else:
+            leftover[a] += 1
+    for i, g in enumerate(guess):
+        if result[i] == "green":
+            continue
+        if leftover[g] > 0:
+            result[i] = "yellow"
+            leftover[g] -= 1
+    return result
+
+
+def render(guess: str, marks: list[str], color: bool) -> str:
+    if not color:
+        symbols = {"green": "*", "yellow": "?", "grey": "."}
+        return (
+            " ".join(g.upper() for g in guess)
+            + "  "
+            + "".join(symbols[m] for m in marks)
+        )
+    styles = {"green": GREEN, "yellow": YELLOW, "grey": GREY}
+    return "".join(
+        f"{styles[m]} {g.upper()} {RESET}" for g, m in zip(guess, marks)
+    )
+
+
+def play(words: list[str], answer: str, tries: int, color: bool) -> bool:
+    valid = set(words)
+    used: list[str] = []
+    for attempt in range(1, tries + 1):
+        try:
+            guess = input(f"Guess {attempt}/{tries}: ").strip().lower()
+        except (EOFError, KeyboardInterrupt):
+            print(f"\nBailing. The word was {answer.upper()}.")
+            return False
+        if len(guess) != len(answer):
+            print(f"Needs to be {len(answer)} letters.")
+            continue
+        if guess not in valid:
+            print("Not in the dictionary.")
+            continue
+        marks = score(guess, answer)
+        used.append(render(guess, marks, color))
+        print("\n".join(used))
+        if guess == answer:
+            print(f"Got it in {len(used)}.")
+            return True
+    print(f"Out of guesses. The word was {answer.upper()}.")
+    return False
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(
+        description="Play Wordle against a dictionary file."
+    )
+    parser.add_argument(
+        "dictionary",
+        help="file with one word per line (e.g. /usr/share/dict/words)",
+    )
+    parser.add_argument(
+        "-l", "--length", type=int, default=5, help="word length (default 5)"
+    )
+    parser.add_argument(
+        "-t",
+        "--tries",
+        type=int,
+        default=6,
+        help="number of guesses (default 6)",
+    )
+    parser.add_argument(
+        "-s",
+        "--seed",
+        type=int,
+        help="seed the answer pick for a reproducible game",
+    )
+    parser.add_argument(
+        "-a", "--answer", help="force a specific answer instead of picking one"
+    )
+    parser.add_argument(
+        "--no-color",
+        action="store_true",
+        help="use *?. instead of colored blocks",
+    )
+    args = parser.parse_args(argv)
+
+    if args.length < 1:
+        parser.error("length must be positive")
+    if args.tries < 1:
+        parser.error("tries must be positive")
+
+    try:
+        words = load_words(args.dictionary, args.length)
+    except OSError as exc:
+        parser.error(f"cannot read {args.dictionary}: {exc}")
+
+    if not words:
+        parser.error(
+            f"no {args.length}-letter words found in {args.dictionary}"
+        )
+
+    if args.answer:
+        answer = args.answer.strip().lower()
+        if len(answer) != args.length:
+            parser.error(f"answer must be {args.length} letters")
+    else:
+        rng = random.Random(args.seed)
+        answer = rng.choice(words)
+
+    color = not args.no_color and sys.stdout.isatty()
+    print(
+        f"{len(words)} words loaded. {args.length} letters, {args.tries} guesses."
+    )
+    return 0 if play(words, answer, args.tries, color) else 1
+
+
+if __name__ == "__main__":
+    sys.exit(main())

@@ -1,0 +1,320 @@
+#!/usr/bin/env python3
+"""Interactive Wordle solver: it suggests guesses, you feed back the colors.
+
+Feedback is one character per letter, in any of these alphabets:
+    g / y / b      green, yellow, black(grey)
+    * / ? / .      hit, present, miss
+    2 / 1 / 0
+
+Commands at the prompt: 'list' shows remaining candidates, 'undo' steps back
+one guess, 'quit' exits.
+"""
+
+import argparse
+import math
+import random
+import sys
+from collections import Counter
+
+MARKS: dict[str, str] = {
+    "g": "g",
+    "y": "y",
+    "b": "b",
+    "*": "g",
+    "?": "y",
+    ".": "b",
+    "_": "b",
+    "-": "b",
+    "2": "g",
+    "1": "y",
+    "0": "b",
+}
+
+
+def load_words(path: str, length: int) -> list[str]:
+    words: set[str] = set()
+    with open(path, encoding="utf-8", errors="replace") as handle:
+        for line in handle:
+            word = line.strip().lower()
+            if len(word) == length and word.isalpha() and word.isascii():
+                words.add(word)
+    return sorted(words)
+
+
+def pattern(guess: str, answer: str) -> str:
+    """The feedback string Wordle would show for `guess` against `answer`."""
+    marks = ["b"] * len(guess)
+    leftover: Counter[str] = Counter()
+    for i, (g, a) in enumerate(zip(guess, answer)):
+        if g == a:
+            marks[i] = "g"
+        else:
+            leftover[a] += 1
+    for i, g in enumerate(guess):
+        if marks[i] == "b" and leftover[g] > 0:
+            marks[i] = "y"
+            leftover[g] -= 1
+    return "".join(marks)
+
+
+def consistent(candidates: list[str], guess: str, feedback: str) -> list[str]:
+    return [w for w in candidates if pattern(guess, w) == feedback]
+
+
+def heuristic_rank(words: list[str], candidates: list[str]) -> list[str]:
+    """Cheap pre-filter: words whose letters best split the live candidates.
+
+    Scoring a letter by how evenly it divides the candidate set (peaking at a
+    50/50 split) drops letters already known absent or known present in every
+    candidate, which carry no information left to give.
+    """
+    freq: Counter[str] = Counter()
+    for w in candidates:
+        freq.update(set(w))
+    total = len(candidates)
+
+    def score(word: str) -> int:
+        return sum(freq[c] * (total - freq[c]) for c in set(word))
+
+    return sorted(words, key=lambda w: (-score(w), w))
+
+
+def entropy(guess: str, candidates: list[str]) -> float:
+    counts: Counter[str] = Counter()
+    for answer in candidates:
+        counts[pattern(guess, answer)] += 1
+    total = len(candidates)
+    return -sum((n / total) * math.log2(n / total) for n in counts.values())
+
+
+def best_guesses(
+    candidates: list[str],
+    allowed: list[str] | None,
+    top: int,
+    pool_cap: int,
+    sample_cap: int,
+    rng: random.Random,
+) -> list[tuple[str, float]]:
+    """Rank guesses by expected information gain. Returns [(word, bits), ...]."""
+    if len(candidates) <= 2:
+        return [(w, 0.0) for w in candidates[:top]]
+
+    pool = allowed if allowed is not None else candidates
+    notes: list[str] = []
+    if len(pool) > pool_cap:
+        ranked = heuristic_rank(pool, candidates)[:pool_cap]
+        if len(candidates) <= pool_cap:
+            # Few enough left that we can guarantee the answer stays scorable.
+            pool = sorted(set(ranked) | set(candidates))
+        else:
+            pool = ranked
+        notes.append(f"scoring {len(pool)} pre-filtered guesses")
+    sample = candidates
+    if len(candidates) > sample_cap:
+        sample = rng.sample(candidates, sample_cap)
+        notes.append(f"estimating over {sample_cap} sampled answers")
+    if notes:
+        print("  (" + "; ".join(notes) + ")")
+
+    candidate_set = set(candidates)
+    scored = [(entropy(g, sample), g in candidate_set, g) for g in pool]
+    scored.sort(key=lambda t: (-t[0], not t[1], t[2]))
+    return [(g, bits) for bits, _, g in scored[:top]]
+
+
+def parse_feedback(raw: str, length: int) -> str:
+    """Normalize a feedback entry to g/y/b, or raise ValueError explaining why not."""
+    cleaned = "".join(ch for ch in raw.strip().lower() if not ch.isspace())
+    if len(cleaned) != length:
+        raise ValueError(
+            f"feedback needs exactly {length} marks, got {len(cleaned)}"
+        )
+    try:
+        return "".join(MARKS[ch] for ch in cleaned)
+    except KeyError as exc:
+        raise ValueError(
+            f"unknown mark {exc.args[0]!r}; use g/y/b, */?/. or 2/1/0"
+        ) from exc
+
+
+def ask(prompt: str) -> str | None:
+    try:
+        return input(prompt)
+    except (EOFError, KeyboardInterrupt):
+        print()
+        return None
+
+
+def solve(
+    words: list[str], args: argparse.Namespace, rng: random.Random
+) -> int:
+    allowed = None if args.guess_candidates_only else words
+    candidates = list(words)
+    history: list[tuple[list[str], int]] = []
+    length = args.length
+    turn = 1
+
+    while turn <= args.tries:
+        if not candidates:
+            print(
+                "No words left. The feedback is contradictory, or the answer "
+                "isn't in this dictionary."
+            )
+            return 1
+        if len(candidates) == 1:
+            print(f"It's {candidates[0].upper()}.")
+            return 0
+
+        print(
+            f"\n-- guess {turn}/{args.tries}: {len(candidates)} candidates remain"
+        )
+        ranked = best_guesses(
+            candidates,
+            allowed,
+            args.top,
+            args.pool_cap,
+            args.sample_cap,
+            rng,
+        )
+        candidate_set = set(candidates)
+        for i, (word, bits) in enumerate(ranked, 1):
+            tag = "" if word in candidate_set else "  (probe)"
+            print(f"  {i}. {word.upper()}  {bits:.2f} bits{tag}")
+
+        suggestion = ranked[0][0]
+        advance: bool | None = None
+        while advance is None:
+            raw = ask(f"Played [{suggestion}] + feedback: ")
+            if raw is None or raw.strip().lower() in ("quit", "q", "exit"):
+                print("Owari.")
+                return 130
+            entry = raw.strip().lower()
+            if entry in ("list", "ls"):
+                print(
+                    "  "
+                    + " ".join(
+                        w.upper() for w in candidates[: args.list_limit]
+                    )
+                )
+                if len(candidates) > args.list_limit:
+                    print(
+                        f"  ... and {len(candidates) - args.list_limit} more"
+                    )
+                continue
+            if entry == "undo":
+                if not history:
+                    print("Nothing to undo.")
+                    continue
+                candidates, turn = history.pop()
+                print(
+                    f"Rolled back to guess {turn}: {len(candidates)} candidates."
+                )
+                advance = False
+                continue
+            parts = entry.split()
+            if len(parts) == 2:
+                guess, raw_feedback = parts
+            elif len(parts) == 1:
+                guess, raw_feedback = suggestion, parts[0]
+            else:
+                print(
+                    "Enter the feedback, or 'word feedback' if you played "
+                    "something else."
+                )
+                continue
+            if len(guess) != length:
+                print(f"That guess isn't {length} letters.")
+                continue
+            try:
+                feedback = parse_feedback(raw_feedback, length)
+            except ValueError as exc:
+                print(exc)
+                continue
+            if feedback == "g" * length:
+                print(f"Solved in {turn}: {guess.upper()}.")
+                return 0
+            history.append((list(candidates), turn))
+            candidates = consistent(candidates, guess, feedback)
+            advance = True
+
+        if advance:
+            turn += 1
+
+    print(
+        "Out of guesses. Still possible: "
+        + " ".join(w.upper() for w in candidates[: args.list_limit])
+    )
+    return 1
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(
+        description="Interactive Wordle solver driven by a dictionary file.",
+        epilog="Feedback marks: g/y/b, */?/. or 2/1/0 (green/yellow/grey).",
+    )
+    parser.add_argument("dictionary", help="file with one word per line")
+    parser.add_argument(
+        "-l", "--length", type=int, default=5, help="word length (default 5)"
+    )
+    parser.add_argument(
+        "-t",
+        "--tries",
+        type=int,
+        default=6,
+        help="guesses allowed (default 6)",
+    )
+    parser.add_argument(
+        "-n",
+        "--top",
+        type=int,
+        default=5,
+        help="suggestions to show each turn (default 5)",
+    )
+    parser.add_argument(
+        "-c",
+        "--guess-candidates-only",
+        action="store_true",
+        help="only suggest words that could be the answer, no probe guesses",
+    )
+    parser.add_argument(
+        "--pool-cap",
+        type=int,
+        default=600,
+        help="max guesses scored per turn (default 600)",
+    )
+    parser.add_argument(
+        "--sample-cap",
+        type=int,
+        default=1500,
+        help="max candidates used to estimate entropy (default 1500)",
+    )
+    parser.add_argument(
+        "--list-limit",
+        type=int,
+        default=50,
+        help="candidates printed by 'list' (default 50)",
+    )
+    parser.add_argument(
+        "-s", "--seed", type=int, help="seed the entropy sampling"
+    )
+    args = parser.parse_args(argv)
+
+    for name in ("length", "tries", "top", "pool_cap", "sample_cap"):
+        if getattr(args, name) < 1:
+            parser.error(f"--{name.replace('_', '-')} must be positive")
+
+    try:
+        words = load_words(args.dictionary, args.length)
+    except OSError as exc:
+        parser.error(f"cannot read {args.dictionary}: {exc}")
+    if not words:
+        parser.error(
+            f"no {args.length}-letter words found in {args.dictionary}"
+        )
+
+    print(f"{len(words)} words of length {args.length} loaded.")
+    return solve(words, args, random.Random(args.seed))
+
+
+if __name__ == "__main__":
+    sys.exit(main())
