@@ -11,16 +11,26 @@
 
 set -e
 
+# Ceiling for the iGPU, in MHz. The burst above this is what the charger cannot
+# cover; the clocks below it are what makes the desktop feel responsive.
+GPU_MAX_MHZ=${GPU_MAX_MHZ:-1600}
+
 apply_on() {
-    sudo sh -c '
+    sudo GPU_MAX_MHZ="$GPU_MAX_MHZ" sh -c '
         echo 0 >/sys/devices/system/cpu/cpufreq/boost
         for policy in /sys/devices/system/cpu/cpufreq/policy*; do
             echo 3000000 >"$policy/scaling_max_freq"
-            echo power >"$policy/energy_performance_preference"
+            echo balance_power >"$policy/energy_performance_preference"
         done
         echo low-power >/sys/firmware/acpi/platform_profile
-        for card in /sys/class/drm/card*/device/power_dpm_force_performance_level; do
-            echo low >"$card"
+        # Cap the top DPM state rather than pinning the card to its lowest one:
+        # the overdrive ceiling only applies in manual mode, and switching back
+        # to auto discards it, so the clamp has to hold the card in manual.
+        for card in /sys/class/drm/card*/device; do
+            [ -e "$card/pp_od_clk_voltage" ] || continue
+            echo manual >"$card/power_dpm_force_performance_level"
+            echo "s 1 $GPU_MAX_MHZ" >"$card/pp_od_clk_voltage"
+            echo c >"$card/pp_od_clk_voltage"
         done
     '
 }
@@ -33,6 +43,7 @@ apply_off() {
             echo balance_performance >"$policy/energy_performance_preference"
         done
         echo balanced >/sys/firmware/acpi/platform_profile
+        # auto resets the overdrive ceiling along with the forced level.
         for card in /sys/class/drm/card*/device/power_dpm_force_performance_level; do
             echo auto >"$card"
         done
@@ -46,8 +57,11 @@ status() {
     printf 'epp: %s\n' \
         "$(cat /sys/devices/system/cpu/cpufreq/policy0/energy_performance_preference)"
     printf 'platform: %s\n' "$(cat /sys/firmware/acpi/platform_profile)"
-    for card in /sys/class/drm/card*/device/power_dpm_force_performance_level; do
-        printf 'gpu (%s): %s\n' "$card" "$(cat "$card")"
+    for card in /sys/class/drm/card*/device; do
+        [ -e "$card/pp_dpm_sclk" ] || continue
+        printf 'gpu (%s): %s, max %s\n' "${card%/device}" \
+            "$(cat "$card/power_dpm_force_performance_level")" \
+            "$(awk 'END {print $2}' "$card/pp_dpm_sclk")"
     done
 }
 
