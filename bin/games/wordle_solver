@@ -1,4 +1,8 @@
-#!/usr/bin/env python3
+#!/usr/bin/env -S uv run --script
+# /// script
+# requires-python = ">=3.10"
+# dependencies = ["numpy"]
+# ///
 """Interactive Wordle solver: it suggests guesses, you feed back the colors.
 
 Feedback is one character per letter, in any of these alphabets:
@@ -11,10 +15,15 @@ one guess, 'quit' exits.
 """
 
 import argparse
-import math
+import hashlib
+import json
+import os
 import random
 import sys
 from collections import Counter
+from pathlib import Path
+
+import numpy as np
 
 MARKS: dict[str, str] = {
     "g": "g",
@@ -79,12 +88,82 @@ def heuristic_rank(words: list[str], candidates: list[str]) -> list[str]:
     return sorted(words, key=lambda w: (-score(w), w))
 
 
-def entropy(guess: str, candidates: list[str]) -> float:
-    counts: Counter[str] = Counter()
-    for answer in candidates:
-        counts[pattern(guess, answer)] += 1
-    total = len(candidates)
-    return -sum((n / total) * math.log2(n / total) for n in counts.values())
+def encode(words: list[str], length: int) -> "np.ndarray":
+    """Words as a (n, length) array of byte values."""
+    joined = "".join(words).encode("ascii")
+    return np.frombuffer(joined, dtype=np.uint8).reshape(len(words), length)
+
+
+def pattern_codes(
+    guesses: "np.ndarray", answers: "np.ndarray", pow3: "np.ndarray"
+) -> "np.ndarray":
+    """Feedback for every guess x answer pair, as base-3 codes (b=0,y=1,g=2)."""
+    eq = guesses[:, None, :] == answers[None, :, :]
+    codes = 2 * np.tensordot(eq, pow3, axes=([2], [0]))
+    for c in np.unique(guesses):
+        # Only guesses actually containing c can score on it; skipping the rest
+        # is what keeps this loop from costing 26 full passes over the pairs.
+        rows = np.flatnonzero((guesses == c).any(1))
+        in_guess = guesses[rows] == c
+        sub = eq[rows]
+        green = (sub & in_guess[:, None, :]).sum(2)
+        # Yellows left for this letter once the greens have taken their share.
+        spare = (
+            np.minimum(
+                in_guess.sum(1)[:, None], (answers == c).sum(1)[None, :]
+            )
+            - green
+        )
+        if not (spare > 0).any():
+            continue
+        # Non-green occurrences of c in the guess, earliest ones marked first.
+        loose = in_guess[:, None, :] & ~sub
+        rank = np.cumsum(loose, axis=2, dtype=pow3.dtype) - loose
+        codes[rows] += np.tensordot(
+            loose & (rank < spare[:, :, None]), pow3, axes=([2], [0])
+        )
+    return codes
+
+
+def entropies(
+    pool: list[str],
+    answers: list[str],
+    length: int,
+    progress: bool = False,
+) -> "np.ndarray":
+    """Expected information gain, in bits, for each word in `pool`."""
+    guesses = encode(pool, length)
+    targets = encode(answers, length)
+    total = len(answers)
+    ncodes = 3**length
+    dtype = np.int16 if ncodes < 2**14 else np.int64
+    pow3 = (3 ** np.arange(length)).astype(dtype)
+
+    # Chunk the pool so neither the pair matrix nor the histogram gets huge.
+    chunk = max(1, min(20_000_000 // (total * length), 5_000_000 // ncodes))
+    out = np.empty(len(pool))
+    for start in range(0, len(pool), chunk):
+        block = guesses[start : start + chunk]
+        codes = pattern_codes(block, targets, pow3)
+        rows = np.arange(len(block))[:, None] * ncodes
+        counts = np.bincount(
+            (codes + rows).ravel(), minlength=len(block) * ncodes
+        ).reshape(len(block), ncodes)
+        p = counts / total
+        out[start : start + len(block)] = -np.where(
+            p > 0, p * np.log2(np.where(p > 0, p, 1)), 0.0
+        ).sum(1)
+        if progress:
+            done = min(start + chunk, len(pool))
+            print(
+                f"\r  scoring... {100 * done // len(pool)}%",
+                end="",
+                file=sys.stderr,
+                flush=True,
+            )
+    if progress:
+        print("\r" + " " * 20 + "\r", end="", file=sys.stderr, flush=True)
+    return out
 
 
 def best_guesses(
@@ -101,7 +180,7 @@ def best_guesses(
 
     pool = allowed if allowed is not None else candidates
     notes: list[str] = []
-    if len(pool) > pool_cap:
+    if pool_cap and len(pool) > pool_cap:
         ranked = heuristic_rank(pool, candidates)[:pool_cap]
         if len(candidates) <= pool_cap:
             # Few enough left that we can guarantee the answer stays scorable.
@@ -110,16 +189,21 @@ def best_guesses(
             pool = ranked
         notes.append(f"scoring {len(pool)} pre-filtered guesses")
     sample = candidates
-    if len(candidates) > sample_cap:
+    if sample_cap and len(candidates) > sample_cap:
         sample = rng.sample(candidates, sample_cap)
         notes.append(f"estimating over {sample_cap} sampled answers")
     if notes:
         print("  (" + "; ".join(notes) + ")")
 
     candidate_set = set(candidates)
-    scored = [(entropy(g, sample), g in candidate_set, g) for g in pool]
+    bits = entropies(
+        pool, sample, len(candidates[0]), progress=len(pool) * len(sample) > 5e6
+    )
+    scored = [
+        (bits[i], g in candidate_set, g) for i, g in enumerate(pool)
+    ]
     scored.sort(key=lambda t: (-t[0], not t[1], t[2]))
-    return [(g, bits) for bits, _, g in scored[:top]]
+    return [(g, b) for b, _, g in scored[:top]]
 
 
 def parse_feedback(raw: str, length: int) -> str:
@@ -145,10 +229,50 @@ def ask(prompt: str) -> str | None:
         return None
 
 
+OPENING_CACHE_TOP = 50
+
+
+def cache_dir() -> Path:
+    root = os.environ.get("XDG_CACHE_HOME") or Path.home() / ".cache"
+    return Path(root) / "wordle_solver"
+
+
+def opening_key(words: list[str], args: argparse.Namespace) -> str:
+    """Identify an opening ranking by everything that can change it."""
+    digest = hashlib.sha1("\n".join(words).encode("ascii"))
+    for part in (
+        args.length,
+        args.pool_cap,
+        args.sample_cap,
+        args.seed,
+        args.guess_candidates_only,
+    ):
+        digest.update(f"\x00{part}".encode("ascii"))
+    return digest.hexdigest()
+
+
+def load_opening(key: str) -> list[tuple[str, float]] | None:
+    try:
+        raw = (cache_dir() / f"{key}.json").read_text(encoding="ascii")
+        return [(w, float(b)) for w, b in json.loads(raw)]
+    except (OSError, ValueError, TypeError):
+        return None
+
+
+def save_opening(key: str, ranked: list[tuple[str, float]]) -> None:
+    path = cache_dir() / f"{key}.json"
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps(ranked), encoding="ascii")
+    except OSError:
+        pass  # A cache we cannot write is not worth failing a game over.
+
+
 def solve(
     words: list[str], args: argparse.Namespace, rng: random.Random
 ) -> int:
     allowed = None if args.guess_candidates_only else words
+    key = "" if args.no_cache else opening_key(words, args)
     candidates = list(words)
     history: list[tuple[list[str], int]] = []
     length = args.length
@@ -168,14 +292,22 @@ def solve(
         print(
             f"\n-- guess {turn}/{args.tries}: {len(candidates)} candidates remain"
         )
-        ranked = best_guesses(
-            candidates,
-            allowed,
-            args.top,
-            args.pool_cap,
-            args.sample_cap,
-            rng,
-        )
+        # The opening never depends on play, so an exact one is worth caching.
+        cached = load_opening(key) if turn == 1 and key else None
+        if cached is not None and len(cached) >= args.top:
+            ranked = cached[: args.top]
+        else:
+            ranked = best_guesses(
+                candidates,
+                allowed,
+                max(args.top, OPENING_CACHE_TOP) if turn == 1 else args.top,
+                args.pool_cap,
+                args.sample_cap,
+                rng,
+            )
+            if turn == 1 and key:
+                save_opening(key, ranked)
+            ranked = ranked[: args.top]
         candidate_set = set(candidates)
         for i, (word, bits) in enumerate(ranked, 1):
             tag = "" if word in candidate_set else "  (probe)"
@@ -279,14 +411,14 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--pool-cap",
         type=int,
-        default=600,
-        help="max guesses scored per turn (default 600)",
+        default=0,
+        help="max guesses scored per turn (0 = the whole dictionary)",
     )
     parser.add_argument(
         "--sample-cap",
         type=int,
-        default=1500,
-        help="max candidates used to estimate entropy (default 1500)",
+        default=0,
+        help="max candidates used to estimate entropy (0 = all of them)",
     )
     parser.add_argument(
         "--list-limit",
@@ -297,11 +429,19 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "-s", "--seed", type=int, help="seed the entropy sampling"
     )
+    parser.add_argument(
+        "--no-cache",
+        action="store_true",
+        help="recompute the opening instead of reusing the cached ranking",
+    )
     args = parser.parse_args(argv)
 
-    for name in ("length", "tries", "top", "pool_cap", "sample_cap"):
+    for name in ("length", "tries", "top"):
         if getattr(args, name) < 1:
             parser.error(f"--{name.replace('_', '-')} must be positive")
+    for name in ("pool_cap", "sample_cap"):
+        if getattr(args, name) < 0:
+            parser.error(f"--{name.replace('_', '-')} cannot be negative")
 
     try:
         words = load_words(args.dictionary, args.length)
