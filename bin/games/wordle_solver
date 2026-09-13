@@ -1,7 +1,7 @@
 #!/usr/bin/env -S uv run --script
 # /// script
 # requires-python = ">=3.10"
-# dependencies = ["numpy"]
+# dependencies = ["numpy", "wordfreq"]
 # ///
 """Interactive Wordle solver: it suggests guesses, you feed back the colors.
 
@@ -10,6 +10,10 @@ Feedback is one character per letter, in any of these alphabets:
     * / ? / .      hit, present, miss
     2 / 1 / 0
 
+Candidates are weighted by how common the word actually is, so a plausible
+answer outranks an obscure string of the same shape. Frequencies come from the
+`wordfreq` corpus by default, or from a "word count" file via --freq-file.
+
 Commands at the prompt: 'list' shows remaining candidates, 'undo' steps back
 one guess, 'quit' exits.
 """
@@ -17,10 +21,12 @@ one guess, 'quit' exits.
 import argparse
 import hashlib
 import json
+import math
 import os
 import random
 import sys
 from collections import Counter
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 import numpy as np
@@ -50,6 +56,98 @@ def load_words(path: str, length: int) -> list[str]:
     return sorted(words)
 
 
+def corpus_words(length: int, lang: str, size: int) -> list[str]:
+    """The corpus's own vocabulary, for when no dictionary file is given."""
+    from wordfreq import top_n_list
+
+    return sorted(
+        w
+        for w in top_n_list(lang, size)
+        if len(w) == length and w.isalpha() and w.isascii()
+    )
+
+
+def load_freq_file(path: str) -> dict[str, float]:
+    """Read a "word count" list (Norvig's count_1w.txt and friends)."""
+    counts: dict[str, float] = {}
+    with open(path, encoding="utf-8", errors="replace") as handle:
+        for line in handle:
+            parts = line.split()
+            if len(parts) < 2:
+                continue
+            try:
+                counts[parts[0].strip().lower()] = float(parts[1])
+            except ValueError:
+                continue
+    total = sum(counts.values())
+    if not total:
+        raise ValueError(f"no usable counts in {path}")
+    # Per billion, matching the scale wordfreq's zipf values decode to.
+    return {w: 1e9 * c / total for w, c in counts.items()}
+
+
+def corpus_frequency(
+    words: list[str], args: argparse.Namespace
+) -> dict[str, float]:
+    """Occurrences per billion for each word, 0.0 if the corpus never saw it."""
+    if args.freq_file:
+        table = load_freq_file(args.freq_file)
+        return {w: table.get(w, 0.0) for w in words}
+    from wordfreq import zipf_frequency
+
+    freq: dict[str, float] = {}
+    for w in words:
+        zipf = zipf_frequency(w, args.lang)
+        freq[w] = 10**zipf if zipf > 0 else 0.0
+    return freq
+
+
+def word_weights(
+    freq: dict[str, float], alpha: float, unseen_zipf: float
+) -> dict[str, float]:
+    """Prior probability that each word is the answer.
+
+    Frequencies span six orders of magnitude, which would let a handful of
+    common words swamp the entropy sums; `alpha` flattens the curve, and the
+    floor keeps words the corpus never saw in the running rather than
+    excluding them outright.
+    """
+    floor = 10**unseen_zipf
+    weights = {w: max(f, floor) ** alpha for w, f in freq.items()}
+    total = sum(weights.values())
+    return {w: x / total for w, x in weights.items()}
+
+
+# How sharply playability turns on around the midpoint, in zipf units. One
+# decade of frequency either side of the midpoint is roughly the whole swing.
+PLAYABLE_SLOPE = 1.5
+
+
+def playability(
+    freq: dict[str, float], midpoint_zipf: float
+) -> dict[str, float]:
+    """Odds the game accepts each word, as a logistic in log-frequency.
+
+    Bits are only worth anything if the word can actually be played, and a
+    large dictionary is mostly strings no Wordle will take. Rather than
+    curating a list, read it off the corpus: the rarer a word is in real
+    English, the likelier the game rejects it, so discount its score.
+    """
+    out: dict[str, float] = {}
+    for w, f in freq.items():
+        zipf = math.log10(f) if f > 0 else 0.0
+        out[w] = 1.0 / (
+            1.0 + math.exp(-(zipf - midpoint_zipf) * PLAYABLE_SLOPE)
+        )
+    return out
+
+
+def weight_array(words: list[str], weights: dict[str, float]) -> "np.ndarray":
+    return np.fromiter(
+        (weights[w] for w in words), dtype=np.float64, count=len(words)
+    )
+
+
 def pattern(guess: str, answer: str) -> str:
     """The feedback string Wordle would show for `guess` against `answer`."""
     marks = ["b"] * len(guess)
@@ -70,20 +168,40 @@ def consistent(candidates: list[str], guess: str, feedback: str) -> list[str]:
     return [w for w in candidates if pattern(guess, w) == feedback]
 
 
-def heuristic_rank(words: list[str], candidates: list[str]) -> list[str]:
+def heuristic_rank(
+    words: list[str],
+    candidates: list[str],
+    weights: dict[str, float],
+    playable: dict[str, float],
+) -> list[str]:
     """Cheap pre-filter: words whose letters best split the live candidates.
 
-    Scoring a letter by how evenly it divides the candidate set (peaking at a
-    50/50 split) drops letters already known absent or known present in every
-    candidate, which carry no information left to give.
-    """
-    freq: Counter[str] = Counter()
-    for w in candidates:
-        freq.update(set(w))
-    total = len(candidates)
+    A letter earns its place twice over: by being present at all, which splits
+    the field into yellows and greys, and by sitting in a given slot, which
+    splits it again into greens and yellows. Counting only presence cannot
+    tell two anagrams apart, so the positional half is what lets this stand in
+    for the exact ranking rather than fight it.
 
-    def score(word: str) -> int:
-        return sum(freq[c] * (total - freq[c]) for c in set(word))
+    Either way the value of a split peaks at 50/50, so a letter already known
+    absent, or known present in every candidate, contributes nothing.
+    """
+    total = sum(weights[w] for w in candidates)
+    seen: Counter[str] = Counter()
+    placed: list[Counter[str]] = [Counter() for _ in candidates[0]]
+    for w in candidates:
+        for c in set(w):
+            seen[c] += weights[w]
+        for k, c in enumerate(w):
+            placed[k][c] += weights[w]
+
+    def score(word: str) -> float:
+        # Discounted the same way the exact ranking will discount it, so the
+        # pre-filter cannot drop a playable word in favour of filler.
+        presence = sum(seen[c] * (total - seen[c]) for c in set(word))
+        position = sum(
+            placed[k][c] * (total - placed[k][c]) for k, c in enumerate(word)
+        )
+        return playable[word] * (presence + position)
 
     return sorted(words, key=lambda w: (-score(w), w))
 
@@ -94,20 +212,51 @@ def encode(words: list[str], length: int) -> "np.ndarray":
     return np.frombuffer(joined, dtype=np.uint8).reshape(len(words), length)
 
 
-def pattern_codes(
+def letter_counts(answers: "np.ndarray") -> "np.ndarray":
+    """(256, n) table: how many times each byte value occurs in each answer."""
+    counts = np.zeros((256, len(answers)), dtype=np.uint8)
+    for c in np.unique(answers):
+        counts[c] = (answers == c).sum(1)
+    return counts
+
+
+def simple_codes(
+    guesses: "np.ndarray",
+    answers: "np.ndarray",
+    counts: "np.ndarray",
+    pow3: "np.ndarray",
+) -> "np.ndarray":
+    """Feedback codes for guesses whose letters are all distinct.
+
+    Without a repeat there is nothing to ration: a letter is green where it
+    lines up and yellow whenever the answer holds it anywhere. That turns the
+    per-letter sweep into one table lookup per position.
+    """
+    codes = np.zeros((len(guesses), len(answers)), dtype=pow3.dtype)
+    for k in range(guesses.shape[1]):
+        column = guesses[:, k]
+        present = counts[column] > 0
+        green = column[:, None] == answers[None, :, k]
+        codes += pow3[k] * np.where(green, 2, present)
+    return codes
+
+
+def rationed_codes(
     guesses: "np.ndarray", answers: "np.ndarray", pow3: "np.ndarray"
 ) -> "np.ndarray":
-    """Feedback for every guess x answer pair, as base-3 codes (b=0,y=1,g=2)."""
+    """Feedback codes for guesses that repeat a letter.
+
+    Repeats have to share out the answer's copies of the letter: greens take
+    theirs first, then the leftmost remaining occurrences turn yellow until
+    the supply runs out.
+    """
     eq = guesses[:, None, :] == answers[None, :, :]
     codes = 2 * np.tensordot(eq, pow3, axes=([2], [0]))
     for c in np.unique(guesses):
-        # Only guesses actually containing c can score on it; skipping the rest
-        # is what keeps this loop from costing 26 full passes over the pairs.
         rows = np.flatnonzero((guesses == c).any(1))
         in_guess = guesses[rows] == c
         sub = eq[rows]
         green = (sub & in_guess[:, None, :]).sum(2)
-        # Yellows left for this letter once the greens have taken their share.
         spare = (
             np.minimum(
                 in_guess.sum(1)[:, None], (answers == c).sum(1)[None, :]
@@ -125,45 +274,125 @@ def pattern_codes(
     return codes
 
 
+def pattern_codes(
+    guesses: "np.ndarray",
+    answers: "np.ndarray",
+    pow3: "np.ndarray",
+    counts: "np.ndarray | None" = None,
+) -> "np.ndarray":
+    """Feedback for every guess x answer pair, as base-3 codes (b=0,y=1,g=2)."""
+    if counts is None:
+        counts = letter_counts(answers)
+    ordered = np.sort(guesses, axis=1)
+    repeats = (ordered[:, 1:] == ordered[:, :-1]).any(1)
+    if not repeats.any():
+        return simple_codes(guesses, answers, counts, pow3)
+    if repeats.all():
+        return rationed_codes(guesses, answers, pow3)
+    codes = np.empty((len(guesses), len(answers)), dtype=pow3.dtype)
+    plain = np.flatnonzero(~repeats)
+    codes[plain] = simple_codes(guesses[plain], answers, counts, pow3)
+    doubled = np.flatnonzero(repeats)
+    codes[doubled] = rationed_codes(guesses[doubled], answers, pow3)
+    return codes
+
+
 def entropies(
     pool: list[str],
     answers: list[str],
+    answer_weights: "np.ndarray",
     length: int,
+    jobs: int = 1,
     progress: bool = False,
 ) -> "np.ndarray":
-    """Expected information gain, in bits, for each word in `pool`."""
+    """Expected information gain, in bits, for each word in `pool`.
+
+    Each answer counts for its prior probability rather than one vote, so a
+    guess is judged on how well it splits the mass we actually expect.
+    """
     guesses = encode(pool, length)
     targets = encode(answers, length)
-    total = len(answers)
+    total = float(answer_weights.sum())
     ncodes = 3**length
     dtype = np.int16 if ncodes < 2**14 else np.int64
     pow3 = (3 ** np.arange(length)).astype(dtype)
 
     # Chunk the pool so neither the pair matrix nor the histogram gets huge.
-    chunk = max(1, min(20_000_000 // (total * length), 5_000_000 // ncodes))
+    # Threads hold a chunk each, so the memory budget is split between them,
+    # and the pool is cut into at least one chunk per thread to keep them fed.
+    workers = max(1, min(jobs, len(pool)))
+    chunk = max(
+        1,
+        min(
+            20_000_000 // (len(answers) * length * workers),
+            5_000_000 // (ncodes * workers),
+            -(-len(pool) // workers),
+        ),
+    )
+    starts = list(range(0, len(pool), chunk))
     out = np.empty(len(pool))
-    for start in range(0, len(pool), chunk):
+    done = 0
+    letters = letter_counts(targets)
+
+    def score_chunk(start: int) -> None:
         block = guesses[start : start + chunk]
-        codes = pattern_codes(block, targets, pow3)
+        codes = pattern_codes(block, targets, pow3, letters)
         rows = np.arange(len(block))[:, None] * ncodes
         counts = np.bincount(
-            (codes + rows).ravel(), minlength=len(block) * ncodes
+            (codes + rows).ravel(),
+            weights=np.broadcast_to(answer_weights, codes.shape).ravel(),
+            minlength=len(block) * ncodes,
         ).reshape(len(block), ncodes)
         p = counts / total
         out[start : start + len(block)] = -np.where(
             p > 0, p * np.log2(np.where(p > 0, p, 1)), 0.0
         ).sum(1)
+
+    def report(n: int) -> None:
         if progress:
-            done = min(start + chunk, len(pool))
             print(
-                f"\r  scoring... {100 * done // len(pool)}%",
+                f"\r  scoring... {100 * n // len(pool)}%",
                 end="",
                 file=sys.stderr,
                 flush=True,
             )
+
+    if workers > 1 and len(starts) > 1:
+        # The heavy numpy calls release the GIL, so threads actually overlap,
+        # and every chunk writes to its own disjoint slice of `out`.
+        with ThreadPoolExecutor(
+            max_workers=min(workers, len(starts))
+        ) as pool_x:
+            for _ in pool_x.map(score_chunk, starts):
+                done += chunk
+                report(min(done, len(pool)))
+    else:
+        for start in starts:
+            score_chunk(start)
+            done = min(done + chunk, len(pool))
+            report(done)
     if progress:
         print("\r" + " " * 20 + "\r", end="", file=sys.stderr, flush=True)
     return out
+
+
+def weighted_sample(
+    candidates: list[str],
+    weights: dict[str, float],
+    k: int,
+    rng: random.Random,
+) -> list[str]:
+    """Draw k candidates with probability proportional to their prior.
+
+    The Gumbel top-k trick: perturbing each log-weight by Gumbel noise and
+    taking the largest k is exactly sampling without replacement, so the draw
+    itself carries the prior and the sample can then be weighted uniformly.
+    """
+    gen = np.random.default_rng(rng.getrandbits(64))
+    logw = np.log(weight_array(candidates, weights))
+    keys = logw + gen.gumbel(size=len(candidates))
+    picked = np.argpartition(-keys, k)[:k]
+    return [candidates[i] for i in picked]
 
 
 def best_guesses(
@@ -173,15 +402,36 @@ def best_guesses(
     pool_cap: int,
     sample_cap: int,
     rng: random.Random,
-) -> list[tuple[str, float]]:
-    """Rank guesses by expected information gain. Returns [(word, bits), ...]."""
+    weights: dict[str, float],
+    playable: dict[str, float],
+    jobs: int,
+) -> list[tuple[str, float, float]]:
+    """Rank guesses by expected information gain, plus the chance of a hit.
+
+    Returns [(word, expected bits, probability it is the answer), ...], the
+    bits being what the guess is worth after discounting by the odds the game
+    accepts the word at all -- which is what keeps obscure dictionary filler
+    from crowding out openers you can actually play.
+
+    Guessing the
+    answer outright resolves everything still unknown, so a word that could be
+    the answer is credited the full remaining entropy times its probability of
+    being it. Early on that term is worth thousandths of a bit and information
+    decides; once the field narrows it dominates, and a common candidate wins
+    over a probe that is only marginally more informative.
+    """
+    mass = sum(weights[w] for w in candidates)
+    probs = {w: weights[w] / mass for w in candidates}
     if len(candidates) <= 2:
-        return [(w, 0.0) for w in candidates[:top]]
+        ordered = sorted(candidates, key=lambda w: (-probs[w], w))
+        return [(w, 0.0, probs[w]) for w in ordered[:top]]
 
     pool = allowed if allowed is not None else candidates
     notes: list[str] = []
     if pool_cap and len(pool) > pool_cap:
-        ranked = heuristic_rank(pool, candidates)[:pool_cap]
+        ranked = heuristic_rank(
+            pool, candidates, weights, playable
+        )[:pool_cap]
         if len(candidates) <= pool_cap:
             # Few enough left that we can guarantee the answer stays scorable.
             pool = sorted(set(ranked) | set(candidates))
@@ -189,21 +439,35 @@ def best_guesses(
             pool = ranked
         notes.append(f"scoring {len(pool)} pre-filtered guesses")
     sample = candidates
+    sample_weights = weight_array(candidates, probs)
     if sample_cap and len(candidates) > sample_cap:
-        sample = rng.sample(candidates, sample_cap)
+        sample = weighted_sample(candidates, weights, sample_cap, rng)
+        # The draw already encodes the prior, so the sample votes uniformly.
+        sample_weights = np.full(len(sample), 1.0 / len(sample))
         notes.append(f"estimating over {sample_cap} sampled answers")
     if notes:
         print("  (" + "; ".join(notes) + ")")
 
-    candidate_set = set(candidates)
     bits = entropies(
-        pool, sample, len(candidates[0]), progress=len(pool) * len(sample) > 5e6
+        pool,
+        sample,
+        sample_weights,
+        len(candidates[0]),
+        jobs=jobs,
+        progress=len(pool) * len(sample) > 5e6,
     )
+    # Bits still unknown about the answer, and so what a correct guess is worth.
+    remaining = -sum(q * np.log2(q) for q in probs.values() if q > 0)
     scored = [
-        (bits[i], g in candidate_set, g) for i, g in enumerate(pool)
+        (
+            playable[g] * (bits[i] + remaining * probs.get(g, 0.0)),
+            probs.get(g, 0.0),
+            g,
+        )
+        for i, g in enumerate(pool)
     ]
-    scored.sort(key=lambda t: (-t[0], not t[1], t[2]))
-    return [(g, b) for b, _, g in scored[:top]]
+    scored.sort(key=lambda t: (-t[0], -t[1], t[2]))
+    return [(g, b, p) for b, p, g in scored[:top]]
 
 
 def parse_feedback(raw: str, length: int) -> str:
@@ -246,20 +510,25 @@ def opening_key(words: list[str], args: argparse.Namespace) -> str:
         args.sample_cap,
         args.seed,
         args.guess_candidates_only,
+        args.lang,
+        args.freq_file,
+        args.prior_alpha,
+        args.unseen_zipf,
+        args.playable_zipf,
     ):
         digest.update(f"\x00{part}".encode("ascii"))
     return digest.hexdigest()
 
 
-def load_opening(key: str) -> list[tuple[str, float]] | None:
+def load_opening(key: str) -> list[tuple[str, float, float]] | None:
     try:
         raw = (cache_dir() / f"{key}.json").read_text(encoding="ascii")
-        return [(w, float(b)) for w, b in json.loads(raw)]
+        return [(w, float(b), float(p)) for w, b, p in json.loads(raw)]
     except (OSError, ValueError, TypeError):
         return None
 
 
-def save_opening(key: str, ranked: list[tuple[str, float]]) -> None:
+def save_opening(key: str, ranked: list[tuple[str, float, float]]) -> None:
     path = cache_dir() / f"{key}.json"
     try:
         path.parent.mkdir(parents=True, exist_ok=True)
@@ -269,7 +538,11 @@ def save_opening(key: str, ranked: list[tuple[str, float]]) -> None:
 
 
 def solve(
-    words: list[str], args: argparse.Namespace, rng: random.Random
+    words: list[str],
+    weights: dict[str, float],
+    playable: dict[str, float],
+    args: argparse.Namespace,
+    rng: random.Random,
 ) -> int:
     allowed = None if args.guess_candidates_only else words
     key = "" if args.no_cache else opening_key(words, args)
@@ -304,13 +577,18 @@ def solve(
                 args.pool_cap,
                 args.sample_cap,
                 rng,
+                weights,
+                playable,
+                args.jobs,
             )
             if turn == 1 and key:
                 save_opening(key, ranked)
             ranked = ranked[: args.top]
-        candidate_set = set(candidates)
-        for i, (word, bits) in enumerate(ranked, 1):
-            tag = "" if word in candidate_set else "  (probe)"
+        for i, (word, bits, prob) in enumerate(ranked, 1):
+            if not prob:
+                tag = "  (probe)"
+            else:
+                tag = f"  p={100 * prob:.1f}%" if prob >= 0.001 else "  p<0.1%"
             print(f"  {i}. {word.upper()}  {bits:.2f} bits{tag}")
 
         suggestion = ranked[0][0]
@@ -322,10 +600,13 @@ def solve(
                 return 130
             entry = raw.strip().lower()
             if entry in ("list", "ls"):
+                likeliest = sorted(
+                    candidates, key=lambda w: (-weights[w], w)
+                )
                 print(
                     "  "
                     + " ".join(
-                        w.upper() for w in candidates[: args.list_limit]
+                        w.upper() for w in likeliest[: args.list_limit]
                     )
                 )
                 if len(candidates) > args.list_limit:
@@ -372,9 +653,10 @@ def solve(
         if advance:
             turn += 1
 
+    likeliest = sorted(candidates, key=lambda w: (-weights[w], w))
     print(
         "Out of guesses. Still possible: "
-        + " ".join(w.upper() for w in candidates[: args.list_limit])
+        + " ".join(w.upper() for w in likeliest[: args.list_limit])
     )
     return 1
 
@@ -384,7 +666,11 @@ def main(argv: list[str] | None = None) -> int:
         description="Interactive Wordle solver driven by a dictionary file.",
         epilog="Feedback marks: g/y/b, */?/. or 2/1/0 (green/yellow/grey).",
     )
-    parser.add_argument("dictionary", help="file with one word per line")
+    parser.add_argument(
+        "dictionary",
+        nargs="?",
+        help="file with one word per line; omit to use the corpus vocabulary",
+    )
     parser.add_argument(
         "-l", "--length", type=int, default=5, help="word length (default 5)"
     )
@@ -427,6 +713,48 @@ def main(argv: list[str] | None = None) -> int:
         help="candidates printed by 'list' (default 50)",
     )
     parser.add_argument(
+        "--freq-file",
+        help="'word count' frequency list to use instead of the wordfreq corpus",
+    )
+    parser.add_argument(
+        "--corpus-size",
+        type=int,
+        default=200_000,
+        help="corpus words considered when no dictionary is given "
+        "(default 200000)",
+    )
+    parser.add_argument(
+        "--lang",
+        default="en",
+        help="wordfreq language for the frequency prior (default en)",
+    )
+    parser.add_argument(
+        "--prior-alpha",
+        type=float,
+        default=0.7,
+        help="how hard frequency counts: 0 = uniform, 1 = raw (default 0.7)",
+    )
+    parser.add_argument(
+        "--playable-zipf",
+        type=float,
+        default=2.5,
+        help="corpus zipf at which a word is 50%% likely to be accepted by "
+        "the game, i.e. worth suggesting (default 2.5)",
+    )
+    parser.add_argument(
+        "--unseen-zipf",
+        type=float,
+        default=1.0,
+        help="zipf floor for words the corpus never saw (default 1.0)",
+    )
+    parser.add_argument(
+        "-j",
+        "--jobs",
+        type=int,
+        default=0,
+        help="threads used to score guesses (0 = one per CPU)",
+    )
+    parser.add_argument(
         "-s", "--seed", type=int, help="seed the entropy sampling"
     )
     parser.add_argument(
@@ -442,18 +770,41 @@ def main(argv: list[str] | None = None) -> int:
     for name in ("pool_cap", "sample_cap"):
         if getattr(args, name) < 0:
             parser.error(f"--{name.replace('_', '-')} cannot be negative")
+    if args.jobs < 0:
+        parser.error("--jobs cannot be negative")
+    if not args.jobs:
+        args.jobs = os.cpu_count() or 1
+    if not 0 <= args.prior_alpha <= 1:
+        parser.error("--prior-alpha must be between 0 and 1")
+
+    if args.dictionary:
+        try:
+            words = load_words(args.dictionary, args.length)
+        except OSError as exc:
+            parser.error(f"cannot read {args.dictionary}: {exc}")
+        source = args.dictionary
+    elif args.freq_file:
+        parser.error("--freq-file needs a dictionary to draw words from")
+    else:
+        if args.corpus_size < 1:
+            parser.error("--corpus-size must be positive")
+        words = corpus_words(args.length, args.lang, args.corpus_size)
+        source = f"the top {args.corpus_size} {args.lang} words"
+    if not words:
+        parser.error(f"no {args.length}-letter words found in {source}")
 
     try:
-        words = load_words(args.dictionary, args.length)
-    except OSError as exc:
-        parser.error(f"cannot read {args.dictionary}: {exc}")
-    if not words:
-        parser.error(
-            f"no {args.length}-letter words found in {args.dictionary}"
-        )
+        freq = corpus_frequency(words, args)
+    except (OSError, ValueError) as exc:
+        parser.error(str(exc))
+    weights = word_weights(freq, args.prior_alpha, args.unseen_zipf)
+    playable = playability(freq, args.playable_zipf)
 
-    print(f"{len(words)} words of length {args.length} loaded.")
-    return solve(words, args, random.Random(args.seed))
+    print(
+        f"{len(words)} words of length {args.length} from {source}, "
+        f"weighted by {args.freq_file or 'wordfreq/' + args.lang}."
+    )
+    return solve(words, weights, playable, args, random.Random(args.seed))
 
 
 if __name__ == "__main__":
