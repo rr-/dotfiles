@@ -12,6 +12,7 @@ import datetime
 import json
 import select
 import sys
+import time
 from decimal import Decimal
 from pathlib import Path
 
@@ -39,6 +40,14 @@ SAVE_FILE = (
     )
 )
 BASE_ENDPOINT = "https://api.openai.com/v1"
+
+# Terminals without bracketed paste (or ones too slow to deliver a paste as a
+# single chunk) hand us pasted text as plain key presses. Nothing arrives that
+# fast from a human, so treat a burst of keys as a paste and keep treating keys
+# as part of it for a short grace period, since a slow terminal splits one paste
+# across several reads.
+PASTE_KEY_INTERVAL = 0.01
+PASTE_BURST_GRACE = 0.2
 SYSTEM_PROMPT_FILE = BASE_DIR / "system.txt"
 
 
@@ -316,6 +325,32 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
+class PasteDetector:
+    """Guess whether the key currently being handled came from a paste."""
+
+    def __init__(
+        self,
+        interval: float = PASTE_KEY_INTERVAL,
+        grace: float = PASTE_BURST_GRACE,
+    ) -> None:
+        self.interval = interval
+        self.grace = grace
+        self.last_key_time = 0.0
+        self.burst_until = 0.0
+
+    def observe(self, *_: object) -> None:
+        now = time.monotonic()
+        if now - self.last_key_time < self.interval:
+            self.burst_until = now + self.grace
+        self.last_key_time = now
+
+    def in_paste(self, event: KeyPressEvent) -> bool:
+        # More keys already buffered behind this one: definitely not typed.
+        if event.app.key_processor.input_queue:
+            return True
+        return time.monotonic() <= self.burst_until
+
+
 def stdin_has_data() -> bool:
     return select.select([sys.stdin], [], [], 0) == ([sys.stdin], [], [])
 
@@ -323,6 +358,7 @@ def stdin_has_data() -> bool:
 def run_interactive(context: ChatContext, args: argparse.Namespace) -> None:
     is_multiline = [args.multiline]
     multiline = Condition(lambda: is_multiline[0])
+    paste = PasteDetector()
     kb = KeyBindings()
 
     @kb.add("escape", "m")  # type: ignore
@@ -335,7 +371,11 @@ def run_interactive(context: ChatContext, args: argparse.Namespace) -> None:
 
     @kb.add("c-m", filter=HasFocus(DEFAULT_BUFFER) & ~multiline)  # type: ignore
     def handle_newline_single_line(event: KeyPressEvent) -> None:
-        event.app.current_buffer.validate_and_handle()
+        if paste.in_paste(event):
+            # copy_margin would re-indent lines that already carry their own.
+            event.app.current_buffer.newline(copy_margin=False)
+        else:
+            event.app.current_buffer.validate_and_handle()
 
     @kb.add("c-j", filter=HasFocus(DEFAULT_BUFFER))  # type: ignore
     def handle_ctrl_j(event: KeyPressEvent) -> None:
@@ -348,6 +388,7 @@ def run_interactive(context: ChatContext, args: argparse.Namespace) -> None:
 
     history = FileHistory(HISTORY_FILE)
     session = PromptSession(history=history, multiline=True, key_bindings=kb)
+    session.app.key_processor.before_key_press += paste.observe
 
     def get_prompt() -> HTML:
         prompt = ">>>" if is_multiline[0] else ">"
