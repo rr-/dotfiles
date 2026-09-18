@@ -94,6 +94,12 @@ GIT_TIMEOUT = 30
 # also hand over a unified diff for git to apply.
 MAX_CONTEXT_LINES = 20
 
+# "/name arg" at the start of a prompt is replaced by the body of
+# commands/name.md, the way a saved prompt or a skill would be.
+COMMANDS_DIR = BASE_DIR / "commands"
+COMMAND_RE = re.compile(r"^/([A-Za-z0-9_-]+)(?:\s+(.*))?$", re.DOTALL)
+FRONTMATTER_RE = re.compile(r"\A---\n(.*?)\n---\n", re.DOTALL)
+
 # Writes need a human to confirm them; --yes stands in when there is no
 # terminal to ask on.
 ASSUME_YES = [False]
@@ -618,6 +624,68 @@ WRITE_TOOLS = [
 ]
 
 
+def read_command(path: Path) -> tuple[str, str]:
+    """Split a command file into its description and its prompt body."""
+    text = path.read_text()
+    description = ""
+    if match := FRONTMATTER_RE.match(text):
+        meta = yaml.safe_load(match.group(1)) or {}
+        description = str(meta.get("description", "")).strip()
+        text = text[match.end() :]
+    return description, text.strip()
+
+
+def list_commands() -> list[tuple[str, str]]:
+    """Every command file, as (name, description) pairs."""
+    commands = []
+    for path in sorted(COMMANDS_DIR.glob("*.md")):
+        try:
+            description, _ = read_command(path)
+        except (OSError, UnicodeDecodeError, yaml.YAMLError) as error:
+            print(f"Could not read {path}: {error}", file=sys.stderr)
+            continue
+        commands.append((path.stem, description))
+    return commands
+
+
+def print_commands() -> None:
+    commands = list_commands()
+    if not commands:
+        print(f"No commands in {COMMANDS_DIR}.", file=sys.stderr)
+        return
+    width = max(len(name) for name, _ in commands)
+    for name, description in commands:
+        print(f"/{name:<{width}}  {description}", file=sys.stderr)
+
+
+def expand_command(message: str) -> str | None:
+    """Replace a leading "/name" with the prompt its command file holds.
+
+    Returns the message unchanged when it names no command, and None when
+    there is nothing left to send: /help printed the list, or the command
+    does not exist.
+    """
+    match = COMMAND_RE.match(message.strip())
+    if not match:
+        return message
+    name, arguments = match.group(1), (match.group(2) or "").strip()
+
+    if name == "help":
+        print_commands()
+        return None
+
+    path = COMMANDS_DIR / f"{name}.md"
+    if not path.is_file():
+        print(f"No command named /{name}; /help lists them.", file=sys.stderr)
+        return None
+
+    print(f"Command: {show(path)}", file=sys.stderr)
+    _, body = read_command(path)
+    if "$ARGUMENTS" in body:
+        return body.replace("$ARGUMENTS", arguments)
+    return f"{body}\n\n{arguments}".strip()
+
+
 def expand_mentions(message: str) -> str:
     """Inline the contents of every readable @path in the message."""
     attachments = []
@@ -801,8 +869,11 @@ def run_prompt(
     context: ChatContext, message: str, stream: bool = True
 ) -> None:
     """Ask the user for input, build the request and perform it."""
+    expanded = expand_command(message)
+    if expanded is None:
+        return
     context.messages.append(
-        {"role": "user", "content": expand_mentions(message)}
+        {"role": "user", "content": expand_mentions(expanded)}
     )
 
     tools = READ_TOOLS + WRITE_TOOLS
@@ -898,8 +969,8 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-class MentionCompleter(Completer):
-    """Complete filesystem paths for the @mention currently being typed."""
+class PromptCompleter(Completer):
+    """Complete the @mention or the leading /command being typed."""
 
     def __init__(self) -> None:
         self.paths = PathCompleter(expanduser=True)
@@ -908,12 +979,22 @@ class MentionCompleter(Completer):
         self, document: Document, complete_event: CompleteEvent
     ):
         text = document.text_before_cursor
-        match = re.search(r"@(\S*)$", text)
-        if not match:
+        if match := re.fullmatch(r"/([A-Za-z0-9_-]*)", text):
+            prefix = match.group(1)
+            commands = [("help", "List the commands")] + list_commands()
+            for name, description in commands:
+                if name.startswith(prefix):
+                    yield Completion(
+                        name,
+                        start_position=-len(prefix),
+                        display_meta=description,
+                    )
             return
-        prefix = match.group(1)
-        sub = Document(prefix, len(prefix))
-        yield from self.paths.get_completions(sub, complete_event)
+        if match := re.search(r"@(\S*)$", text):
+            prefix = match.group(1)
+            yield from self.paths.get_completions(
+                Document(prefix, len(prefix)), complete_event
+            )
 
 
 class PasteDetector:
@@ -982,7 +1063,7 @@ def run_interactive(context: ChatContext, args: argparse.Namespace) -> None:
         history=history,
         multiline=True,
         key_bindings=kb,
-        completer=MentionCompleter(),
+        completer=PromptCompleter(),
         complete_while_typing=True,
     )
     session.app.key_processor.before_key_press += paste.observe
@@ -995,6 +1076,8 @@ def run_interactive(context: ChatContext, args: argparse.Namespace) -> None:
 
     print("ChatGPT CLI", file=sys.stderr)
     print(f"Model in use: {context.model}", file=sys.stderr)
+    if list_commands():
+        print("/help lists the saved commands.", file=sys.stderr)
 
     atexit.register(display_expense, context=context)
 
