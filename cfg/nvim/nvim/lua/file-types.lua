@@ -84,3 +84,19 @@ vim.api.nvim_create_autocmd('FileType', {
   pattern = '*',
   command = 'setlocal iskeyword=@,48-57,_,192-255'
 })
+
+-- a uv script hides python behind "env -S uv run", which the shebang
+-- detection does not read as an interpreter it knows
+vim.filetype.add({
+  pattern = {
+    ['.*'] = {
+      priority = -math.huge,
+      function(_, bufnr)
+        local line = vim.api.nvim_buf_get_lines(bufnr, 0, 1, false)[1] or ''
+        if line:match('^#!.*%f[%w]uv%f[%W].*%-%-script') then
+          return 'python'
+        end
+      end,
+    },
+  },
+})
