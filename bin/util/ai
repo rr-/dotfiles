@@ -111,67 +111,44 @@ SYSTEM_PROMPT_FILE = BASE_DIR / "system.txt"
 @dc.dataclass
 class ModelInfo:
     name: str
-    prompt: Decimal
-    completion: Decimal
-    tokens: int
+    input: Decimal
+    output: Decimal
 
 
+# Dollars per million tokens, as OpenAI listed them in September 2026. A model
+# is looked up by the longest name it starts with, so a dated snapshot or a
+# "-latest" alias is priced like the family it belongs to.
 MODEL_INFO = [
-    ModelInfo(
-        name="gpt-3.5-turbo",
-        prompt=Decimal("0.001"),
-        completion=Decimal("0.002"),
-        tokens=4096,
-    ),
-    ModelInfo(
-        name="gpt-3.5-turbo-1106",
-        prompt=Decimal("0.001"),
-        completion=Decimal("0.002"),
-        tokens=16385,
-    ),
-    ModelInfo(
-        name="gpt-3.5-turbo-0613",
-        prompt=Decimal("0.001"),
-        completion=Decimal("0.002"),
-        tokens=16385,
-    ),
-    ModelInfo(
-        name="gpt-3.5-turbo-16k",
-        prompt=Decimal("0.001"),
-        completion=Decimal("0.002"),
-        tokens=16385,
-    ),
-    ModelInfo(
-        name="gpt-4",
-        prompt=Decimal("0.03"),
-        completion=Decimal("0.06"),
-        tokens=8192,
-    ),
-    ModelInfo(
-        name="gpt-4-0613",
-        prompt=Decimal("0.03"),
-        completion=Decimal("0.06"),
-        tokens=8192,
-    ),
-    ModelInfo(
-        name="gpt-4-32k",
-        prompt=Decimal("0.06"),
-        completion=Decimal("0.12"),
-        tokens=32768,
-    ),
-    ModelInfo(
-        name="gpt-4-32k-0613",
-        prompt=Decimal("0.06"),
-        completion=Decimal("0.12"),
-        tokens=32768,
-    ),
-    ModelInfo(
-        name="gpt-4-1106-preview",
-        prompt=Decimal("0.01"),
-        completion=Decimal("0.03"),
-        tokens=128000,
-    ),
+    ModelInfo("gpt-4o", Decimal("2.50"), Decimal("10.00")),
+    ModelInfo("gpt-4o-mini", Decimal("0.15"), Decimal("0.60")),
+    ModelInfo("gpt-4.1", Decimal("2.00"), Decimal("8.00")),
+    ModelInfo("gpt-4.1-mini", Decimal("0.40"), Decimal("1.60")),
+    ModelInfo("gpt-4.1-nano", Decimal("0.10"), Decimal("0.40")),
+    ModelInfo("gpt-5", Decimal("1.25"), Decimal("10.00")),
+    ModelInfo("gpt-5-mini", Decimal("0.25"), Decimal("2.00")),
+    ModelInfo("gpt-5-nano", Decimal("0.05"), Decimal("0.40")),
+    ModelInfo("gpt-5-pro", Decimal("15.00"), Decimal("120.00")),
+    ModelInfo("gpt-5.1", Decimal("1.25"), Decimal("10.00")),
+    ModelInfo("gpt-5.2", Decimal("1.75"), Decimal("14.00")),
+    ModelInfo("gpt-5.2-pro", Decimal("21.00"), Decimal("168.00")),
+    ModelInfo("gpt-5.4", Decimal("2.50"), Decimal("15.00")),
+    ModelInfo("gpt-5.4-mini", Decimal("0.75"), Decimal("4.50")),
+    ModelInfo("gpt-5.4-nano", Decimal("0.20"), Decimal("1.25")),
+    ModelInfo("gpt-5.4-pro", Decimal("30.00"), Decimal("180.00")),
+    ModelInfo("gpt-5.5", Decimal("5.00"), Decimal("30.00")),
+    ModelInfo("gpt-5.5-pro", Decimal("30.00"), Decimal("180.00")),
+    ModelInfo("gpt-5.6-luna", Decimal("0.20"), Decimal("1.20")),
+    ModelInfo("gpt-5.6-terra", Decimal("2.00"), Decimal("12.00")),
+    ModelInfo("gpt-5.6-sol", Decimal("4.00"), Decimal("20.00")),
+    ModelInfo("gpt-6-astra", Decimal("10.00"), Decimal("50.00")),
+    ModelInfo("o1", Decimal("15.00"), Decimal("60.00")),
+    ModelInfo("o1-pro", Decimal("150.00"), Decimal("600.00")),
+    ModelInfo("o3", Decimal("2.00"), Decimal("8.00")),
+    ModelInfo("o3-mini", Decimal("1.10"), Decimal("4.40")),
+    ModelInfo("o3-pro", Decimal("20.00"), Decimal("80.00")),
+    ModelInfo("o4-mini", Decimal("1.10"), Decimal("4.40")),
 ]
+TOKENS_PER_PRICE_UNIT = Decimal(1_000_000)
 
 
 Message = dict[str, Any]
@@ -255,10 +232,15 @@ def tool(description: str, **parameter_docs: str) -> Callable:
 
 
 def get_model_info(model_name: str) -> ModelInfo | None:
-    for model_info in MODEL_INFO:
-        if model_name == model_info.name:
-            return model_info
-    return None
+    """Price a model by the longest listed name it starts with."""
+    candidates = [
+        model_info
+        for model_info in MODEL_INFO
+        if model_name.startswith(model_info.name)
+    ]
+    if not candidates:
+        return None
+    return max(candidates, key=lambda model_info: len(model_info.name))
 
 
 @dc.dataclass
@@ -353,15 +335,16 @@ def num_tokens_from_messages(messages: list[Message], model: str) -> int:
 def calculate_expense(
     prompt_tokens: int,
     completion_tokens: int,
-    prompt_pricing: Decimal,
-    completion_pricing: Decimal,
+    input_pricing: Decimal,
+    output_pricing: Decimal,
 ) -> Decimal:
     """
     Calculate the expense, given the number of tokens and the pricing rates
     """
-    return ((Decimal(prompt_tokens) / Decimal(1000)) * prompt_pricing) + (
-        (Decimal(completion_tokens) / Decimal(1000)) * completion_pricing
-    )
+    return (
+        Decimal(prompt_tokens) * input_pricing
+        + Decimal(completion_tokens) * output_pricing
+    ) / TOKENS_PER_PRICE_UNIT
 
 
 def display_expense(context: ChatContext) -> None:
@@ -377,8 +360,8 @@ def display_expense(context: ChatContext) -> None:
         total_expense = calculate_expense(
             context.prompt_tokens,
             context.completion_tokens,
-            model_info.prompt,
-            model_info.completion,
+            model_info.input,
+            model_info.output,
         )
         print(f"Estimated expense: ${total_expense:.6f}", file=sys.stderr)
     else:
@@ -386,112 +369,6 @@ def display_expense(context: ChatContext) -> None:
             f"No expense estimate available for model {context.model}",
             file=sys.stderr,
         )
-
-
-READ_TOOLS = [
-    {
-        "type": "function",
-        "function": {
-            "name": "list_dir",
-            "description": "List the entries of a directory under the "
-            "working directory.",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "path": {
-                        "type": "string",
-                        "description": "Defaults to the working directory.",
-                    }
-                },
-            },
-        },
-    },
-    {
-        "type": "function",
-        "function": {
-            "name": "read_file",
-            "description": (
-                "Read a text file under the working directory, or just the "
-                "lines from 'start' to 'end' of it."
-            ),
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "path": {"type": "string"},
-                    "start": {
-                        "type": "integer",
-                        "description": "First line to read, counting from 1.",
-                    },
-                    "end": {
-                        "type": "integer",
-                        "description": "Last line to read, inclusive.",
-                    },
-                },
-                "required": ["path"],
-            },
-        },
-    },
-    {
-        "type": "function",
-        "function": {
-            "name": "find_files",
-            "description": "Find files by glob pattern, e.g. '**/*.py'.",
-            "parameters": {
-                "type": "object",
-                "properties": {"pattern": {"type": "string"}},
-                "required": ["pattern"],
-            },
-        },
-    },
-    {
-        "type": "function",
-        "function": {
-            "name": "grep",
-            "description": "Search file contents for a regular expression.",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "pattern": {"type": "string"},
-                    "path": {
-                        "type": "string",
-                        "description": "File or directory to search.",
-                    },
-                    "context": {
-                        "type": "integer",
-                        "description": (
-                            "Lines of context to show around each match."
-                        ),
-                    },
-                },
-                "required": ["pattern"],
-            },
-        },
-    },
-    {
-        "type": "function",
-        "function": {
-            "name": "git",
-            "description": (
-                "Run a read-only git command in the working directory, e.g. "
-                "['diff', 'main...HEAD'] for the changes on this branch. "
-                "Allowed subcommands: "
-                + ", ".join(sorted(GIT_SUBCOMMANDS))
-                + "."
-            ),
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "arguments": {
-                        "type": "array",
-                        "items": {"type": "string"},
-                        "description": "Arguments after 'git'.",
-                    }
-                },
-                "required": ["arguments"],
-            },
-        },
-    },
-]
 
 
 def sandbox_path(raw_path: str) -> Path:
