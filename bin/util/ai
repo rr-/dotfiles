@@ -108,6 +108,19 @@ FRONTMATTER_RE = re.compile(r"\A---\n(.*?)\n---\n", re.DOTALL)
 # what the endpoint said.
 NO_REASONING = [False]
 
+# Nothing else tells the model where it stands, so say it plainly: which
+# directory the paths are relative to, and that a path it has not seen listed
+# may still be worth reading.
+WORKING_DIRECTORY_PROMPT = (
+    "You are working in the directory {root}, and every path you pass to a "
+    "tool is read relative to it. Look around with the tools before "
+    "answering: list_dir shows a directory, read_file reads a file (give it "
+    "start and end to read part of a large one), find_files matches a glob, "
+    "and grep searches contents. If one tool says a path is the wrong kind "
+    "of thing, try the tool it names instead of concluding the path does "
+    "not exist."
+)
+
 # Writes need a human to confirm them; --yes stands in when there is no
 # terminal to ask on.
 ASSUME_YES = [False]
@@ -410,8 +423,10 @@ def truncated(lines: list[str], limit: int) -> str:
 )
 def list_dir(path: str = ".") -> str:
     directory = sandbox_path(path)
+    if directory.is_file():
+        return f"{show(directory)} is a file; read_file reads it."
     if not directory.is_dir():
-        return f"{show(directory)} is not a directory."
+        return f"{show(directory)} does not exist."
     entries = sorted(
         (f"{entry.name}/" if entry.is_dir() else entry.name)
         for entry in directory.iterdir()
@@ -429,8 +444,10 @@ def read_file(
     path: str, start: int | None = None, end: int | None = None
 ) -> str:
     file = sandbox_path(path)
+    if file.is_dir():
+        return f"{show(file)} is a directory; list_dir lists it."
     if not file.is_file():
-        return f"{show(file)} is not a file."
+        return f"{show(file)} does not exist."
     try:
         content = file.read_text()
     except UnicodeDecodeError:
@@ -1057,7 +1074,12 @@ def main() -> None:
     if args.temperature is not None:
         config.temperature = args.temperature
 
-    messages: list[Message] = []
+    messages: list[Message] = [
+        {
+            "role": "system",
+            "content": WORKING_DIRECTORY_PROMPT.format(root=ROOT),
+        }
+    ]
     if args.context_path:
         for path in args.context_path:
             print(f"Context file: {path.name}", file=sys.stderr)
