@@ -1,5 +1,14 @@
-#!/usr/bin/env python3
-"""A terminal Wordle clone that draws its answers from a dictionary file."""
+#!/usr/bin/env -S uv run --script
+# /// script
+# requires-python = ">=3.10"
+# dependencies = ["wordfreq"]
+# ///
+"""A terminal Wordle clone.
+
+Words come from the `wordfreq` corpus by default, or from a dictionary file
+given as an argument. Answers are drawn from the words common enough to be
+worth guessing; any word of the right length is still accepted as a guess.
+"""
 
 import argparse
 import random
@@ -20,6 +29,28 @@ def load_words(path: str, length: int) -> list[str]:
             if len(word) == length and word.isalpha() and word.isascii():
                 words.add(word)
     return sorted(words)
+
+
+def corpus_words(length: int, lang: str, size: int) -> list[str]:
+    """The corpus's own vocabulary, for when no dictionary file is given."""
+    from wordfreq import top_n_list
+
+    return sorted(
+        w
+        for w in top_n_list(lang, size)
+        if len(w) == length and w.isalpha() and w.isascii()
+    )
+
+
+def answer_pool(words: list[str], lang: str, min_zipf: float) -> list[str]:
+    """The words common enough to be fair answers.
+
+    A raw corpus slice is mostly filler no one would guess, so answers are
+    restricted by frequency while guesses are not.
+    """
+    from wordfreq import zipf_frequency
+
+    return [w for w in words if zipf_frequency(w, lang) >= min_zipf]
 
 
 def score(guess: str, answer: str) -> list[str]:
@@ -67,7 +98,7 @@ def play(words: list[str], answer: str, tries: int, color: bool) -> bool:
             print(f"Needs to be {len(answer)} letters.")
             continue
         if guess not in valid:
-            print("Not in the dictionary.")
+            print("Not a word I know.")
             continue
         marks = score(guess, answer)
         used.append(render(guess, marks, color))
@@ -81,11 +112,12 @@ def play(words: list[str], answer: str, tries: int, color: bool) -> bool:
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
-        description="Play Wordle against a dictionary file."
+        description="Play Wordle in the terminal."
     )
     parser.add_argument(
         "dictionary",
-        help="file with one word per line (e.g. /usr/share/dict/words)",
+        nargs="?",
+        help="file with one word per line; omit to use the corpus vocabulary",
     )
     parser.add_argument(
         "-l", "--length", type=int, default=5, help="word length (default 5)"
@@ -107,6 +139,25 @@ def main(argv: list[str] | None = None) -> int:
         "-a", "--answer", help="force a specific answer instead of picking one"
     )
     parser.add_argument(
+        "--corpus-size",
+        type=int,
+        default=200_000,
+        help="corpus words considered when no dictionary is given "
+        "(default 200000)",
+    )
+    parser.add_argument(
+        "--lang",
+        default="en",
+        help="wordfreq language for the vocabulary (default en)",
+    )
+    parser.add_argument(
+        "--answer-zipf",
+        type=float,
+        default=3.5,
+        help="how common an answer must be, in zipf units; 0 allows any word "
+        "of the right length (default 3.5)",
+    )
+    parser.add_argument(
         "--no-color",
         action="store_true",
         help="use *?. instead of colored blocks",
@@ -118,15 +169,24 @@ def main(argv: list[str] | None = None) -> int:
     if args.tries < 1:
         parser.error("tries must be positive")
 
-    try:
-        words = load_words(args.dictionary, args.length)
-    except OSError as exc:
-        parser.error(f"cannot read {args.dictionary}: {exc}")
+    if args.dictionary:
+        try:
+            words = load_words(args.dictionary, args.length)
+        except OSError as exc:
+            parser.error(f"cannot read {args.dictionary}: {exc}")
+        source = args.dictionary
+    else:
+        if args.corpus_size < 1:
+            parser.error("--corpus-size must be positive")
+        words = corpus_words(args.length, args.lang, args.corpus_size)
+        source = f"the top {args.corpus_size} {args.lang} words"
 
     if not words:
-        parser.error(
-            f"no {args.length}-letter words found in {args.dictionary}"
-        )
+        parser.error(f"no {args.length}-letter words found in {source}")
+
+    answers = words
+    if args.answer_zipf > 0:
+        answers = answer_pool(words, args.lang, args.answer_zipf) or words
 
     if args.answer:
         answer = args.answer.strip().lower()
@@ -134,11 +194,13 @@ def main(argv: list[str] | None = None) -> int:
             parser.error(f"answer must be {args.length} letters")
     else:
         rng = random.Random(args.seed)
-        answer = rng.choice(words)
+        answer = rng.choice(answers)
 
     color = not args.no_color and sys.stdout.isatty()
     print(
-        f"{len(words)} words loaded. {args.length} letters, {args.tries} guesses."
+        f"{len(words)} words from {source}, "
+        f"{len(answers)} of them possible answers. "
+        f"{args.length} letters, {args.tries} guesses."
     )
     return 0 if play(words, answer, args.tries, color) else 1
 
