@@ -9,17 +9,27 @@ import argparse
 import atexit
 import dataclasses as dc
 import datetime
+import difflib
 import json
+import re
 import select
 import sys
 import time
 from decimal import Decimal
 from pathlib import Path
+from typing import Any
 
 import tiktoken
 import yaml
 from openai import OpenAI
 from prompt_toolkit import HTML, PromptSession
+from prompt_toolkit.completion import (
+    CompleteEvent,
+    Completer,
+    Completion,
+    PathCompleter,
+)
+from prompt_toolkit.document import Document
 from prompt_toolkit.enums import DEFAULT_BUFFER
 from prompt_toolkit.filters import Condition, HasFocus
 from prompt_toolkit.history import FileHistory
@@ -48,6 +58,9 @@ BASE_ENDPOINT = "https://api.openai.com/v1"
 # across several reads.
 PASTE_KEY_INTERVAL = 0.01
 PASTE_BURST_GRACE = 0.2
+
+# "@path" in a prompt attaches the file and lets the model edit it back.
+MENTION_RE = re.compile(r"@(\S+)")
 SYSTEM_PROMPT_FILE = BASE_DIR / "system.txt"
 
 
@@ -117,7 +130,7 @@ MODEL_INFO = [
 ]
 
 
-Message = dict[str, str]
+Message = dict[str, Any]
 
 
 def get_model_info(model_name: str) -> ModelInfo | None:
@@ -133,6 +146,7 @@ class ChatContext:
     model: str
     temperature: float
     messages: list[Message] = dc.field(default_factory=list)
+    editable: set[Path] = dc.field(default_factory=set)
 
     @property
     def user_messages(self) -> list[Message]:
@@ -253,36 +267,215 @@ def display_expense(context: ChatContext) -> None:
         )
 
 
+TOOLS = [
+    {
+        "type": "function",
+        "function": {
+            "name": "write_file",
+            "description": (
+                "Overwrite an attached file with new contents. Only files the "
+                "user attached with @ can be written."
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "path": {"type": "string"},
+                    "content": {"type": "string"},
+                },
+                "required": ["path", "content"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "edit_file",
+            "description": (
+                "Replace an exact, unique snippet in an attached file. "
+                "Prefer this over write_file for small changes."
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "path": {"type": "string"},
+                    "old": {"type": "string"},
+                    "new": {"type": "string"},
+                },
+                "required": ["path", "old", "new"],
+            },
+        },
+    },
+]
+
+
+def expand_mentions(context: ChatContext, message: str) -> str:
+    """Attach every readable @path in the message and mark it editable."""
+    attachments = []
+    for match in MENTION_RE.finditer(message):
+        path = Path(match.group(1).rstrip(".,;:)]}")).expanduser()
+        if not path.is_file():
+            continue
+        try:
+            content = path.read_text()
+        except (OSError, UnicodeDecodeError) as error:
+            print(f"Could not read {path}: {error}", file=sys.stderr)
+            continue
+        context.editable.add(path.resolve())
+        print(f"Attached: {path}", file=sys.stderr)
+        attachments.append(f"=== {path} ===\n{content}")
+
+    if not attachments:
+        return message
+    return message + "\n\n" + "\n\n".join(attachments)
+
+
+def resolve_editable(context: ChatContext, raw_path: str) -> Path:
+    path = Path(raw_path).expanduser().resolve()
+    if path not in context.editable:
+        raise ValueError(
+            f"{raw_path} was not attached with @; refusing to write it"
+        )
+    return path
+
+
+def confirm_write(path: Path, old: str, new: str) -> bool:
+    diff = difflib.unified_diff(
+        old.splitlines(keepends=True),
+        new.splitlines(keepends=True),
+        fromfile=str(path),
+        tofile=str(path),
+    )
+    print(file=sys.stderr)
+    sys.stderr.writelines(diff)
+    if not sys.stdin.isatty():
+        return True
+    try:
+        return input(f"\nApply to {path}? [y/N] ").strip().lower() == "y"
+    except EOFError:
+        return False
+
+
+def apply_write(context: ChatContext, path_str: str, content: str) -> str:
+    path = resolve_editable(context, path_str)
+    old = path.read_text()
+    if old == content:
+        return "No change: file already has these contents."
+    if not confirm_write(path, old, content):
+        return "User rejected the change."
+    path.write_text(content)
+    return f"Wrote {path}."
+
+
+def apply_edit(
+    context: ChatContext, path_str: str, old: str, new: str
+) -> str:
+    path = resolve_editable(context, path_str)
+    text = path.read_text()
+    occurrences = text.count(old)
+    if occurrences == 0:
+        return "The old snippet was not found in the file."
+    if occurrences > 1:
+        return f"The old snippet appears {occurrences} times; make it unique."
+    return apply_write(context, path_str, text.replace(old, new, 1))
+
+
+def run_tool_call(context: ChatContext, call: dict) -> str:
+    name = call["function"]["name"]
+    try:
+        arguments = json.loads(call["function"]["arguments"] or "{}")
+        if name == "write_file":
+            return apply_write(
+                context, arguments["path"], arguments["content"]
+            )
+        if name == "edit_file":
+            return apply_edit(
+                context,
+                arguments["path"],
+                arguments["old"],
+                arguments["new"],
+            )
+        return f"Unknown tool {name}."
+    except (ValueError, KeyError, OSError) as error:
+        return f"Error: {error}"
+
+
+def collect_stream(result) -> tuple[str, list[dict]]:
+    """Consume a streamed completion into its text and its tool calls."""
+    output = ""
+    calls: list[dict] = []
+    for chunk in result:
+        delta = chunk.choices[0].delta
+        if delta.content:
+            print(delta.content, end="", flush=True)
+            output += delta.content
+        for part in delta.tool_calls or []:
+            while len(calls) <= part.index:
+                calls.append(
+                    {
+                        "id": "",
+                        "type": "function",
+                        "function": {"name": "", "arguments": ""},
+                    }
+                )
+            call = calls[part.index]
+            if part.id:
+                call["id"] = part.id
+            if part.function and part.function.name:
+                call["function"]["name"] += part.function.name
+            if part.function and part.function.arguments:
+                call["function"]["arguments"] += part.function.arguments
+    return output, calls
+
+
 def run_prompt(
     context: ChatContext, message: str, stream: bool = True
 ) -> None:
     """Ask the user for input, build the request and perform it."""
-    context.messages.append({"role": "user", "content": message})
-
-    result = context.client.chat.completions.create(
-        model=context.model,
-        messages=context.messages,
-        temperature=context.temperature,
-        stream=stream,
+    context.messages.append(
+        {"role": "user", "content": expand_mentions(context, message)}
     )
 
-    if stream:
-        try:
-            output = ""
-            for chunk in result:
-                if chunk.choices[0].delta.content is not None:
-                    print(chunk.choices[0].delta.content, end="", flush=True)
-                    output += chunk.choices[0].delta.content
-            context.messages.append({"role": "assistant", "content": output})
-        except KeyboardInterrupt:
-            pass
-        finally:
-            result.response.close()
-    else:
-        print(result.choices[0].message.content, end="", flush=True)
-        context.messages.append(
-            {"role": "assistant", "content": result.choices[0].message.content}
+    while True:
+        extra = {"tools": TOOLS} if context.editable else {}
+        result = context.client.chat.completions.create(
+            model=context.model,
+            messages=context.messages,
+            temperature=context.temperature,
+            stream=stream,
+            **extra,
         )
+
+        if stream:
+            try:
+                output, calls = collect_stream(result)
+            except KeyboardInterrupt:
+                result.response.close()
+                return
+            result.response.close()
+        else:
+            choice = result.choices[0].message
+            output = choice.content or ""
+            calls = [
+                call.model_dump() for call in (choice.tool_calls or [])
+            ]
+            print(output, end="", flush=True)
+
+        reply: Message = {"role": "assistant", "content": output}
+        if calls:
+            reply["tool_calls"] = calls
+        context.messages.append(reply)
+
+        if not calls:
+            return
+
+        for call in calls:
+            context.messages.append(
+                {
+                    "role": "tool",
+                    "tool_call_id": call["id"],
+                    "content": run_tool_call(context, call),
+                }
+            )
 
 
 def parse_args() -> argparse.Namespace:
@@ -323,6 +516,24 @@ def parse_args() -> argparse.Namespace:
         help="List the available models",
     )
     return parser.parse_args()
+
+
+class MentionCompleter(Completer):
+    """Complete filesystem paths for the @mention currently being typed."""
+
+    def __init__(self) -> None:
+        self.paths = PathCompleter(expanduser=True)
+
+    def get_completions(
+        self, document: Document, complete_event: CompleteEvent
+    ):
+        text = document.text_before_cursor
+        match = re.search(r"@(\S*)$", text)
+        if not match:
+            return
+        prefix = match.group(1)
+        sub = Document(prefix, len(prefix))
+        yield from self.paths.get_completions(sub, complete_event)
 
 
 class PasteDetector:
@@ -387,7 +598,13 @@ def run_interactive(context: ChatContext, args: argparse.Namespace) -> None:
         event.app.current_buffer.insert_text(data)
 
     history = FileHistory(HISTORY_FILE)
-    session = PromptSession(history=history, multiline=True, key_bindings=kb)
+    session = PromptSession(
+        history=history,
+        multiline=True,
+        key_bindings=kb,
+        completer=MentionCompleter(),
+        complete_while_typing=True,
+    )
     session.app.key_processor.before_key_press += paste.observe
 
     def get_prompt() -> HTML:
