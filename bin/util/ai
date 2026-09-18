@@ -11,6 +11,7 @@ import dataclasses as dc
 import datetime
 import difflib
 import json
+import os
 import re
 import select
 import sys
@@ -61,6 +62,19 @@ PASTE_BURST_GRACE = 0.2
 
 # "@path" in a prompt attaches the file and lets the model edit it back.
 MENTION_RE = re.compile(r"@(\S+)")
+
+# The model may look around under the working directory on its own. Symlinks
+# are followed, so a link inside the tree can legitimately lead outside it.
+ROOT = Path.cwd()
+SKIP_DIRS = {".git", ".venv", "node_modules", "__pycache__"}
+MAX_ENTRIES = 200
+MAX_MATCHES = 100
+MAX_READ_CHARS = 100_000
+MAX_TOOL_ROUNDS = 25
+
+# Writes need a human to confirm them; --yes stands in when there is no
+# terminal to ask on.
+ASSUME_YES = [False]
 SYSTEM_PROMPT_FILE = BASE_DIR / "system.txt"
 
 
@@ -146,7 +160,6 @@ class ChatContext:
     model: str
     temperature: float
     messages: list[Message] = dc.field(default_factory=list)
-    editable: set[Path] = dc.field(default_factory=set)
 
     @property
     def user_messages(self) -> list[Message]:
@@ -224,8 +237,9 @@ def num_tokens_from_messages(messages: list[Message], model: str) -> int:
     encoding = tiktoken.get_encoding("cl100k_base")
     num_tokens = 0
     for message in messages:
-        for key, value in message.items():
-            num_tokens += len(encoding.encode(value))
+        for value in message.values():
+            if isinstance(value, str):
+                num_tokens += len(encoding.encode(value))
     return num_tokens
 
 
@@ -267,14 +281,165 @@ def display_expense(context: ChatContext) -> None:
         )
 
 
-TOOLS = [
+READ_TOOLS = [
+    {
+        "type": "function",
+        "function": {
+            "name": "list_dir",
+            "description": "List the entries of a directory under the "
+            "working directory.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "path": {
+                        "type": "string",
+                        "description": "Defaults to the working directory.",
+                    }
+                },
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "read_file",
+            "description": "Read a text file under the working directory.",
+            "parameters": {
+                "type": "object",
+                "properties": {"path": {"type": "string"}},
+                "required": ["path"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "find_files",
+            "description": "Find files by glob pattern, e.g. '**/*.py'.",
+            "parameters": {
+                "type": "object",
+                "properties": {"pattern": {"type": "string"}},
+                "required": ["pattern"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "grep",
+            "description": "Search file contents for a regular expression.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "pattern": {"type": "string"},
+                    "path": {
+                        "type": "string",
+                        "description": "File or directory to search.",
+                    },
+                },
+                "required": ["pattern"],
+            },
+        },
+    },
+]
+
+
+def sandbox_path(raw_path: str) -> Path:
+    """Resolve a model-supplied path, keeping the entry point under ROOT."""
+    path = Path(raw_path).expanduser()
+    if not path.is_absolute():
+        path = ROOT / path
+    # Normalise ".." lexically so a symlink is allowed to point outside the
+    # tree while a literal escape from it is not.
+    normalised = Path(os.path.normpath(path))
+    if normalised != ROOT and ROOT not in normalised.parents:
+        raise ValueError(f"{raw_path} is outside {ROOT}")
+    return normalised
+
+
+def show(path: Path) -> str:
+    try:
+        return str(path.relative_to(ROOT))
+    except ValueError:
+        return str(path)
+
+
+def truncated(lines: list[str], limit: int) -> str:
+    if len(lines) > limit:
+        extra = len(lines) - limit
+        lines = lines[:limit] + [f"... {extra} more omitted"]
+    return "\n".join(lines) or "(nothing found)"
+
+
+def tool_list_dir(raw_path: str = ".") -> str:
+    path = sandbox_path(raw_path)
+    if not path.is_dir():
+        return f"{show(path)} is not a directory."
+    entries = sorted(
+        (f"{entry.name}/" if entry.is_dir() else entry.name)
+        for entry in path.iterdir()
+    )
+    return truncated(entries, MAX_ENTRIES)
+
+
+def tool_read_file(raw_path: str) -> str:
+    path = sandbox_path(raw_path)
+    if not path.is_file():
+        return f"{show(path)} is not a file."
+    try:
+        content = path.read_text()
+    except UnicodeDecodeError:
+        return f"{show(path)} is not text."
+    if len(content) > MAX_READ_CHARS:
+        content = content[:MAX_READ_CHARS] + "\n... truncated"
+    return content
+
+
+def walk_files(path: Path):
+    if path.is_file():
+        yield path
+        return
+    for entry in sorted(path.rglob("*")):
+        if any(part in SKIP_DIRS for part in entry.parts):
+            continue
+        if entry.is_file():
+            yield entry
+
+
+def tool_find_files(pattern: str) -> str:
+    matches = [
+        show(match)
+        for match in sorted(ROOT.glob(pattern))
+        if not any(part in SKIP_DIRS for part in match.parts)
+    ]
+    return truncated(matches, MAX_ENTRIES)
+
+
+def tool_grep(pattern: str, raw_path: str = ".") -> str:
+    regex = re.compile(pattern)
+    root = sandbox_path(raw_path)
+    matches = []
+    for file in walk_files(root):
+        try:
+            lines = file.read_text().splitlines()
+        except (OSError, UnicodeDecodeError):
+            continue
+        for number, line in enumerate(lines, 1):
+            if regex.search(line):
+                matches.append(f"{show(file)}:{number}: {line.strip()[:200]}")
+                if len(matches) > MAX_MATCHES:
+                    return truncated(matches, MAX_MATCHES)
+    return truncated(matches, MAX_MATCHES)
+
+
+WRITE_TOOLS = [
     {
         "type": "function",
         "function": {
             "name": "write_file",
             "description": (
-                "Overwrite an attached file with new contents. Only files the "
-                "user attached with @ can be written."
+                "Write a file under the working directory, creating it if "
+                "needed. The user confirms every write."
             ),
             "parameters": {
                 "type": "object",
@@ -291,8 +456,8 @@ TOOLS = [
         "function": {
             "name": "edit_file",
             "description": (
-                "Replace an exact, unique snippet in an attached file. "
-                "Prefer this over write_file for small changes."
+                "Replace an exact, unique snippet in a file under the "
+                "working directory. Prefer this over write_file."
             ),
             "parameters": {
                 "type": "object",
@@ -308,8 +473,8 @@ TOOLS = [
 ]
 
 
-def expand_mentions(context: ChatContext, message: str) -> str:
-    """Attach every readable @path in the message and mark it editable."""
+def expand_mentions(message: str) -> str:
+    """Inline the contents of every readable @path in the message."""
     attachments = []
     for match in MENTION_RE.finditer(message):
         path = Path(match.group(1).rstrip(".,;:)]}")).expanduser()
@@ -320,7 +485,6 @@ def expand_mentions(context: ChatContext, message: str) -> str:
         except (OSError, UnicodeDecodeError) as error:
             print(f"Could not read {path}: {error}", file=sys.stderr)
             continue
-        context.editable.add(path.resolve())
         print(f"Attached: {path}", file=sys.stderr)
         attachments.append(f"=== {path} ===\n{content}")
 
@@ -329,16 +493,9 @@ def expand_mentions(context: ChatContext, message: str) -> str:
     return message + "\n\n" + "\n\n".join(attachments)
 
 
-def resolve_editable(context: ChatContext, raw_path: str) -> Path:
-    path = Path(raw_path).expanduser().resolve()
-    if path not in context.editable:
-        raise ValueError(
-            f"{raw_path} was not attached with @; refusing to write it"
-        )
-    return path
-
-
 def confirm_write(path: Path, old: str, new: str) -> bool:
+    if not sys.stdin.isatty() and not ASSUME_YES[0]:
+        return False
     diff = difflib.unified_diff(
         old.splitlines(keepends=True),
         new.splitlines(keepends=True),
@@ -347,7 +504,7 @@ def confirm_write(path: Path, old: str, new: str) -> bool:
     )
     print(file=sys.stderr)
     sys.stderr.writelines(diff)
-    if not sys.stdin.isatty():
+    if ASSUME_YES[0]:
         return True
     try:
         return input(f"\nApply to {path}? [y/N] ").strip().lower() == "y"
@@ -355,47 +512,56 @@ def confirm_write(path: Path, old: str, new: str) -> bool:
         return False
 
 
-def apply_write(context: ChatContext, path_str: str, content: str) -> str:
-    path = resolve_editable(context, path_str)
-    old = path.read_text()
+def apply_write(path_str: str, content: str) -> str:
+    path = sandbox_path(path_str)
+    old = path.read_text() if path.exists() else ""
     if old == content:
         return "No change: file already has these contents."
     if not confirm_write(path, old, content):
-        return "User rejected the change."
+        return (
+            "The change was not applied: the user rejected it, or there is "
+            "no terminal to confirm it on (rerun with --yes to allow "
+            "unattended writes)."
+        )
+    path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(content)
     return f"Wrote {path}."
 
 
-def apply_edit(
-    context: ChatContext, path_str: str, old: str, new: str
-) -> str:
-    path = resolve_editable(context, path_str)
+def apply_edit(path_str: str, old: str, new: str) -> str:
+    path = sandbox_path(path_str)
     text = path.read_text()
     occurrences = text.count(old)
     if occurrences == 0:
         return "The old snippet was not found in the file."
     if occurrences > 1:
         return f"The old snippet appears {occurrences} times; make it unique."
-    return apply_write(context, path_str, text.replace(old, new, 1))
+    return apply_write(path_str, text.replace(old, new, 1))
 
 
-def run_tool_call(context: ChatContext, call: dict) -> str:
+def run_tool_call(call: dict) -> str:
     name = call["function"]["name"]
     try:
         arguments = json.loads(call["function"]["arguments"] or "{}")
-        if name == "write_file":
-            return apply_write(
-                context, arguments["path"], arguments["content"]
+        print(f"[{name} {arguments}]", file=sys.stderr, flush=True)
+        if name == "list_dir":
+            return tool_list_dir(arguments.get("path", "."))
+        if name == "read_file":
+            return tool_read_file(arguments["path"])
+        if name == "find_files":
+            return tool_find_files(arguments["pattern"])
+        if name == "grep":
+            return tool_grep(
+                arguments["pattern"], arguments.get("path", ".")
             )
+        if name == "write_file":
+            return apply_write(arguments["path"], arguments["content"])
         if name == "edit_file":
             return apply_edit(
-                context,
-                arguments["path"],
-                arguments["old"],
-                arguments["new"],
+                arguments["path"], arguments["old"], arguments["new"]
             )
         return f"Unknown tool {name}."
-    except (ValueError, KeyError, OSError) as error:
+    except (ValueError, KeyError, OSError, re.error) as error:
         return f"Error: {error}"
 
 
@@ -432,17 +598,17 @@ def run_prompt(
 ) -> None:
     """Ask the user for input, build the request and perform it."""
     context.messages.append(
-        {"role": "user", "content": expand_mentions(context, message)}
+        {"role": "user", "content": expand_mentions(message)}
     )
 
-    while True:
-        extra = {"tools": TOOLS} if context.editable else {}
+    tools = READ_TOOLS + WRITE_TOOLS
+    for _ in range(MAX_TOOL_ROUNDS):
         result = context.client.chat.completions.create(
             model=context.model,
             messages=context.messages,
             temperature=context.temperature,
             stream=stream,
-            **extra,
+            tools=tools,
         )
 
         if stream:
@@ -473,9 +639,13 @@ def run_prompt(
                 {
                     "role": "tool",
                     "tool_call_id": call["id"],
-                    "content": run_tool_call(context, call),
+                    "content": run_tool_call(call),
                 }
             )
+
+    print(
+        f"\nStopped after {MAX_TOOL_ROUNDS} tool rounds.", file=sys.stderr
+    )
 
 
 def parse_args() -> argparse.Namespace:
@@ -508,6 +678,12 @@ def parse_args() -> argparse.Namespace:
         "--multiline",
         action="store_true",
         help="Use the multiline input mode",
+    )
+    parser.add_argument(
+        "-y",
+        "--yes",
+        action="store_true",
+        help="Apply file writes without confirmation",
     )
     parser.add_argument(
         "-l",
@@ -654,6 +830,7 @@ def run_non_interactive(
 
 def main() -> None:
     args = parse_args()
+    ASSUME_YES[0] = args.yes
 
     try:
         config = load_config(CONFIG_FILE)
