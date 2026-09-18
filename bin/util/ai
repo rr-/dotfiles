@@ -72,8 +72,15 @@ ROOT = Path.cwd()
 SKIP_DIRS = {".git", ".venv", "node_modules", "__pycache__"}
 MAX_ENTRIES = 200
 MAX_MATCHES = 100
-MAX_READ_CHARS = 100_000
+MAX_READ_CHARS = 20_000
 MAX_TOOL_ROUNDS = 25
+
+# Every round of a tool loop resends the whole conversation, so the file read
+# in the first round is paid for again in each of the ones that follow. Keep
+# the newest results, which is what the model is still working from, and leave
+# a stub where the older ones were.
+KEEP_TOOL_RESULTS = 3
+MIN_STUB_CHARS = 500
 
 # Git is read through the porcelain the model already knows, limited to the
 # subcommands that only report. Anything writing a tree, a ref or a file is
@@ -366,6 +373,19 @@ def calculate_expense(
     ) / TOKENS_PER_PRICE_UNIT
 
 
+def session_expense(context: ChatContext) -> Decimal | None:
+    """What the conversation so far is estimated to have cost."""
+    model_info = get_model_info(context.model)
+    if model_info is None:
+        return None
+    return calculate_expense(
+        context.prompt_tokens,
+        context.completion_tokens,
+        model_info.input,
+        model_info.output,
+    )
+
+
 def display_expense(context: ChatContext) -> None:
     """
     Given the model used, display total tokens used and estimated expense
@@ -375,13 +395,7 @@ def display_expense(context: ChatContext) -> None:
         file=sys.stderr,
     )
 
-    if model_info := get_model_info(context.model):
-        total_expense = calculate_expense(
-            context.prompt_tokens,
-            context.completion_tokens,
-            model_info.input,
-            model_info.output,
-        )
+    if (total_expense := session_expense(context)) is not None:
         print(f"Estimated expense: ${total_expense:.6f}", file=sys.stderr)
     else:
         print(
@@ -453,8 +467,8 @@ def read_file(
     except UnicodeDecodeError:
         return f"{show(file)} is not text."
 
+    lines = content.splitlines()
     if start is not None or end is not None:
-        lines = content.splitlines()
         first = max(1, start or 1)
         last = min(len(lines), end or len(lines))
         if first > len(lines):
@@ -463,7 +477,11 @@ def read_file(
         content = header + "\n".join(lines[first - 1 : last])
 
     if len(content) > MAX_READ_CHARS:
-        content = content[:MAX_READ_CHARS] + "\n... truncated"
+        content = (
+            content[:MAX_READ_CHARS]
+            + f"\n... truncated; {show(file)} has {len(lines)} lines, "
+            "read the rest by passing start and end"
+        )
     return content
 
 
@@ -819,6 +837,29 @@ def create_completion(context: ChatContext, tools: list, stream: bool):
         )
 
 
+def stub_old_tool_results(messages: list[Message]) -> None:
+    """Leave a note where an older tool result used to be."""
+    calls = {
+        call["id"]: call["function"]
+        for message in messages
+        for call in message.get("tool_calls", [])
+    }
+    results = [
+        message for message in messages if message["role"] == "tool"
+    ]
+    for message in results[:-KEEP_TOOL_RESULTS]:
+        content = message["content"]
+        if len(content) < MIN_STUB_CHARS or content.startswith("[dropped "):
+            continue
+        call = calls.get(message["tool_call_id"], {})
+        name = call.get("name", "a tool")
+        arguments = call.get("arguments", "")
+        message["content"] = (
+            f"[dropped {len(content)} characters of {name} {arguments} "
+            "output; call it again if you still need it]"
+        )
+
+
 def run_prompt(
     context: ChatContext, message: str, stream: bool = True
 ) -> None:
@@ -832,6 +873,7 @@ def run_prompt(
 
     tools = [entry.schema for entry in TOOLS.values()]
     for _ in range(MAX_TOOL_ROUNDS):
+        stub_old_tool_results(context.messages)
         result = create_completion(context, tools, stream)
 
         if stream:
@@ -1035,8 +1077,16 @@ def run_interactive(context: ChatContext, args: argparse.Namespace) -> None:
             if message.lower() == "":
                 raise KeyboardInterrupt
 
+            before = session_expense(context)
             run_prompt(context, message, stream=True)
+            after = session_expense(context)
             print(file=sys.stderr)
+            if before is not None and after is not None:
+                print(
+                    f"\n(this turn ${after - before:.4f}, "
+                    f"session ${after:.4f})",
+                    file=sys.stderr,
+                )
             print(file=sys.stderr)
         except KeyboardInterrupt:
             continue
