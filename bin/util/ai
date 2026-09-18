@@ -14,6 +14,7 @@ import json
 import os
 import re
 import select
+import subprocess
 import sys
 import time
 from decimal import Decimal
@@ -71,6 +72,27 @@ MAX_ENTRIES = 200
 MAX_MATCHES = 100
 MAX_READ_CHARS = 100_000
 MAX_TOOL_ROUNDS = 25
+
+# Git is read through the porcelain the model already knows, limited to the
+# subcommands that only report. Anything writing a tree, a ref or a file is
+# left out, so a diff can be inspected but not committed or redirected.
+GIT_SUBCOMMANDS = {
+    "blame",
+    "branch",
+    "diff",
+    "log",
+    "ls-files",
+    "merge-base",
+    "shortlog",
+    "show",
+    "status",
+    "rev-parse",
+}
+GIT_TIMEOUT = 30
+
+# Rewriting a whole file to change a few lines is wasteful, so the model may
+# also hand over a unified diff for git to apply.
+MAX_CONTEXT_LINES = 20
 
 # Writes need a human to confirm them; --yes stands in when there is no
 # terminal to ask on.
@@ -303,10 +325,23 @@ READ_TOOLS = [
         "type": "function",
         "function": {
             "name": "read_file",
-            "description": "Read a text file under the working directory.",
+            "description": (
+                "Read a text file under the working directory, or just the "
+                "lines from 'start' to 'end' of it."
+            ),
             "parameters": {
                 "type": "object",
-                "properties": {"path": {"type": "string"}},
+                "properties": {
+                    "path": {"type": "string"},
+                    "start": {
+                        "type": "integer",
+                        "description": "First line to read, counting from 1.",
+                    },
+                    "end": {
+                        "type": "integer",
+                        "description": "Last line to read, inclusive.",
+                    },
+                },
                 "required": ["path"],
             },
         },
@@ -336,8 +371,38 @@ READ_TOOLS = [
                         "type": "string",
                         "description": "File or directory to search.",
                     },
+                    "context": {
+                        "type": "integer",
+                        "description": (
+                            "Lines of context to show around each match."
+                        ),
+                    },
                 },
                 "required": ["pattern"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "git",
+            "description": (
+                "Run a read-only git command in the working directory, e.g. "
+                "['diff', 'main...HEAD'] for the changes on this branch. "
+                "Allowed subcommands: "
+                + ", ".join(sorted(GIT_SUBCOMMANDS))
+                + "."
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "arguments": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "Arguments after 'git'.",
+                    }
+                },
+                "required": ["arguments"],
             },
         },
     },
@@ -382,7 +447,9 @@ def tool_list_dir(raw_path: str = ".") -> str:
     return truncated(entries, MAX_ENTRIES)
 
 
-def tool_read_file(raw_path: str) -> str:
+def tool_read_file(
+    raw_path: str, start: int | None = None, end: int | None = None
+) -> str:
     path = sandbox_path(raw_path)
     if not path.is_file():
         return f"{show(path)} is not a file."
@@ -390,6 +457,16 @@ def tool_read_file(raw_path: str) -> str:
         content = path.read_text()
     except UnicodeDecodeError:
         return f"{show(path)} is not text."
+
+    if start is not None or end is not None:
+        lines = content.splitlines()
+        first = max(1, start or 1)
+        last = min(len(lines), end or len(lines))
+        if first > len(lines):
+            return f"{show(path)} has only {len(lines)} lines."
+        header = f"{show(path)} lines {first}-{last} of {len(lines)}:\n"
+        content = header + "\n".join(lines[first - 1 : last])
+
     if len(content) > MAX_READ_CHARS:
         content = content[:MAX_READ_CHARS] + "\n... truncated"
     return content
@@ -415,21 +492,65 @@ def tool_find_files(pattern: str) -> str:
     return truncated(matches, MAX_ENTRIES)
 
 
-def tool_grep(pattern: str, raw_path: str = ".") -> str:
+def grep_file(file: Path, regex: re.Pattern[str], context: int) -> list[str]:
+    """Report the matching lines of one file, grep(1) style."""
+    try:
+        lines = file.read_text().splitlines()
+    except (OSError, UnicodeDecodeError):
+        return []
+
+    wanted: dict[int, bool] = {}
+    for number, line in enumerate(lines, 1):
+        if not regex.search(line):
+            continue
+        for around in range(number - context, number + context + 1):
+            if 1 <= around <= len(lines):
+                wanted.setdefault(around, False)
+        wanted[number] = True
+
+    output = []
+    previous = 0
+    for number in sorted(wanted):
+        if previous and number > previous + 1:
+            output.append("--")
+        separator = ":" if wanted[number] else "-"
+        text = lines[number - 1].strip()[:200]
+        output.append(f"{show(file)}:{number}{separator} {text}")
+        previous = number
+    return output
+
+
+def tool_grep(pattern: str, raw_path: str = ".", context: int = 0) -> str:
     regex = re.compile(pattern)
     root = sandbox_path(raw_path)
-    matches = []
+    context = max(0, min(context, MAX_CONTEXT_LINES))
+    matches: list[str] = []
     for file in walk_files(root):
-        try:
-            lines = file.read_text().splitlines()
-        except (OSError, UnicodeDecodeError):
-            continue
-        for number, line in enumerate(lines, 1):
-            if regex.search(line):
-                matches.append(f"{show(file)}:{number}: {line.strip()[:200]}")
-                if len(matches) > MAX_MATCHES:
-                    return truncated(matches, MAX_MATCHES)
+        matches.extend(grep_file(file, regex, context))
+        if len(matches) > MAX_MATCHES:
+            break
     return truncated(matches, MAX_MATCHES)
+
+
+def tool_git(arguments: list[str]) -> str:
+    if not arguments:
+        return "Pass a git subcommand."
+    if arguments[0] not in GIT_SUBCOMMANDS:
+        allowed = ", ".join(sorted(GIT_SUBCOMMANDS))
+        return f"git {arguments[0]} is not allowed. Allowed: {allowed}."
+    if any(argument.startswith(("-o", "--output")) for argument in arguments):
+        return "Redirecting git output to a file is not allowed."
+    result = subprocess.run(
+        ["git", "--no-pager", *arguments],
+        cwd=ROOT,
+        capture_output=True,
+        text=True,
+        timeout=GIT_TIMEOUT,
+    )
+    output = (result.stdout + result.stderr).strip()
+    if len(output) > MAX_READ_CHARS:
+        output = output[:MAX_READ_CHARS] + "\n... truncated"
+    return output or f"(no output, exit status {result.returncode})"
 
 
 WRITE_TOOLS = [
@@ -448,6 +569,30 @@ WRITE_TOOLS = [
                     "content": {"type": "string"},
                 },
                 "required": ["path", "content"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "apply_patch",
+            "description": (
+                "Apply a unified diff to files under the working directory, "
+                "the way 'git apply' would. Use it to change several places "
+                "at once; paths in the diff are relative to the working "
+                "directory. The user confirms every patch."
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "patch": {
+                        "type": "string",
+                        "description": (
+                            "The diff, with ---/+++ headers and @@ hunks."
+                        ),
+                    }
+                },
+                "required": ["patch"],
             },
         },
     },
@@ -493,23 +638,70 @@ def expand_mentions(message: str) -> str:
     return message + "\n\n" + "\n\n".join(attachments)
 
 
-def confirm_write(path: Path, old: str, new: str) -> bool:
+def confirm(diff: str, question: str) -> bool:
+    """Show a change and let the user accept it."""
     if not sys.stdin.isatty() and not ASSUME_YES[0]:
         return False
-    diff = difflib.unified_diff(
-        old.splitlines(keepends=True),
-        new.splitlines(keepends=True),
-        fromfile=str(path),
-        tofile=str(path),
-    )
     print(file=sys.stderr)
-    sys.stderr.writelines(diff)
+    print(diff, file=sys.stderr)
     if ASSUME_YES[0]:
         return True
     try:
-        return input(f"\nApply to {path}? [y/N] ").strip().lower() == "y"
+        return input(f"\n{question} [y/N] ").strip().lower() == "y"
     except EOFError:
         return False
+
+
+def confirm_write(path: Path, old: str, new: str) -> bool:
+    diff = "".join(
+        difflib.unified_diff(
+            old.splitlines(keepends=True),
+            new.splitlines(keepends=True),
+            fromfile=str(path),
+            tofile=str(path),
+        )
+    )
+    return confirm(diff, f"Apply to {path}?")
+
+
+REJECTED = (
+    "The change was not applied: the user rejected it, or there is no "
+    "terminal to confirm it on (rerun with --yes to allow unattended "
+    "writes)."
+)
+
+
+def run_git_apply(patch: str, flags: list[str]) -> subprocess.CompletedProcess:
+    return subprocess.run(
+        ["git", "apply", *flags, "-"],
+        cwd=ROOT,
+        input=patch,
+        capture_output=True,
+        text=True,
+        timeout=GIT_TIMEOUT,
+    )
+
+
+PATCH_PATH_RE = re.compile(r"^[-+]{3} (?:[ab]/)?(.+?)\s*$", re.MULTILINE)
+
+
+def apply_patch(patch: str) -> str:
+    """Hand a unified diff to git, after checking where it points."""
+    if not patch.endswith("\n"):
+        patch += "\n"
+    for raw_path in PATCH_PATH_RE.findall(patch):
+        if raw_path == "/dev/null":
+            continue
+        sandbox_path(raw_path)
+    check = run_git_apply(patch, ["--check"])
+    if check.returncode:
+        return f"The patch does not apply:\n{check.stderr.strip()}"
+    if not confirm(patch, "Apply this patch?"):
+        return REJECTED
+    result = run_git_apply(patch, [])
+    if result.returncode:
+        return f"The patch failed to apply:\n{result.stderr.strip()}"
+    return "Patch applied."
 
 
 def apply_write(path_str: str, content: str) -> str:
@@ -518,11 +710,7 @@ def apply_write(path_str: str, content: str) -> str:
     if old == content:
         return "No change: file already has these contents."
     if not confirm_write(path, old, content):
-        return (
-            "The change was not applied: the user rejected it, or there is "
-            "no terminal to confirm it on (rerun with --yes to allow "
-            "unattended writes)."
-        )
+        return REJECTED
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(content)
     return f"Wrote {path}."
@@ -547,13 +735,23 @@ def run_tool_call(call: dict) -> str:
         if name == "list_dir":
             return tool_list_dir(arguments.get("path", "."))
         if name == "read_file":
-            return tool_read_file(arguments["path"])
+            return tool_read_file(
+                arguments["path"],
+                arguments.get("start"),
+                arguments.get("end"),
+            )
         if name == "find_files":
             return tool_find_files(arguments["pattern"])
         if name == "grep":
             return tool_grep(
-                arguments["pattern"], arguments.get("path", ".")
+                arguments["pattern"],
+                arguments.get("path", "."),
+                int(arguments.get("context", 0)),
             )
+        if name == "git":
+            return tool_git(list(arguments["arguments"]))
+        if name == "apply_patch":
+            return apply_patch(arguments["patch"])
         if name == "write_file":
             return apply_write(arguments["path"], arguments["content"])
         if name == "edit_file":
@@ -561,7 +759,13 @@ def run_tool_call(call: dict) -> str:
                 arguments["path"], arguments["old"], arguments["new"]
             )
         return f"Unknown tool {name}."
-    except (ValueError, KeyError, OSError, re.error) as error:
+    except (
+        ValueError,
+        KeyError,
+        OSError,
+        re.error,
+        subprocess.SubprocessError,
+    ) as error:
         return f"Error: {error}"
 
 
