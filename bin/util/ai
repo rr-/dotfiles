@@ -10,6 +10,7 @@ import atexit
 import dataclasses as dc
 import datetime
 import difflib
+import inspect
 import json
 import os
 import re
@@ -19,7 +20,8 @@ import sys
 import time
 from decimal import Decimal
 from pathlib import Path
-from typing import Any
+from types import UnionType
+from typing import Any, Callable, get_args, get_origin
 
 import tiktoken
 import yaml
@@ -173,6 +175,83 @@ MODEL_INFO = [
 
 
 Message = dict[str, Any]
+
+# Every tool is a plain function; the decorator below turns its signature into
+# the schema the API is given, so the two cannot drift apart.
+TOOLS: dict[str, "Tool"] = {}
+SCALAR_TYPES = {
+    str: "string",
+    int: "integer",
+    float: "number",
+    bool: "boolean",
+}
+
+
+def json_type(annotation: Any) -> dict[str, Any]:
+    """Describe one parameter annotation the way the API asks for it."""
+    if isinstance(annotation, UnionType):
+        annotation = next(
+            argument
+            for argument in get_args(annotation)
+            if argument is not type(None)
+        )
+    if get_origin(annotation) is list:
+        return {
+            "type": "array",
+            "items": json_type(get_args(annotation)[0]),
+        }
+    return {"type": SCALAR_TYPES[annotation]}
+
+
+@dc.dataclass
+class Tool:
+    function: Callable[..., str]
+    schema: dict[str, Any]
+
+    @property
+    def properties(self) -> dict[str, Any]:
+        return self.schema["function"]["parameters"]["properties"]
+
+    def call(self, arguments: dict[str, Any]) -> str:
+        typed = {}
+        for name, value in arguments.items():
+            # a model that means 3 sometimes says "3"
+            if self.properties.get(name, {}).get("type") == "integer":
+                value = int(value)
+            typed[name] = value
+        return self.function(**typed)
+
+
+def tool(description: str, **parameter_docs: str) -> Callable:
+    """Register a function as a tool the model may call."""
+
+    def register(function: Callable[..., str]) -> Callable[..., str]:
+        properties = {}
+        required = []
+        for name, parameter in inspect.signature(function).parameters.items():
+            properties[name] = json_type(parameter.annotation)
+            if name in parameter_docs:
+                properties[name]["description"] = parameter_docs[name]
+            if parameter.default is inspect.Parameter.empty:
+                required.append(name)
+        TOOLS[function.__name__] = Tool(
+            function,
+            {
+                "type": "function",
+                "function": {
+                    "name": function.__name__,
+                    "description": description,
+                    "parameters": {
+                        "type": "object",
+                        "properties": properties,
+                        "required": required,
+                    },
+                },
+            },
+        )
+        return function
+
+    return register
 
 
 def get_model_info(model_name: str) -> ModelInfo | None:
@@ -442,35 +521,45 @@ def truncated(lines: list[str], limit: int) -> str:
     return "\n".join(lines) or "(nothing found)"
 
 
-def tool_list_dir(raw_path: str = ".") -> str:
-    path = sandbox_path(raw_path)
-    if not path.is_dir():
-        return f"{show(path)} is not a directory."
+@tool(
+    "List the entries of a directory under the working directory.",
+    path="Defaults to the working directory.",
+)
+def list_dir(path: str = ".") -> str:
+    directory = sandbox_path(path)
+    if not directory.is_dir():
+        return f"{show(directory)} is not a directory."
     entries = sorted(
         (f"{entry.name}/" if entry.is_dir() else entry.name)
-        for entry in path.iterdir()
+        for entry in directory.iterdir()
     )
     return truncated(entries, MAX_ENTRIES)
 
 
-def tool_read_file(
-    raw_path: str, start: int | None = None, end: int | None = None
+@tool(
+    "Read a text file under the working directory, or just the lines from "
+    "'start' to 'end' of it.",
+    start="First line to read, counting from 1.",
+    end="Last line to read, inclusive.",
+)
+def read_file(
+    path: str, start: int | None = None, end: int | None = None
 ) -> str:
-    path = sandbox_path(raw_path)
-    if not path.is_file():
-        return f"{show(path)} is not a file."
+    file = sandbox_path(path)
+    if not file.is_file():
+        return f"{show(file)} is not a file."
     try:
-        content = path.read_text()
+        content = file.read_text()
     except UnicodeDecodeError:
-        return f"{show(path)} is not text."
+        return f"{show(file)} is not text."
 
     if start is not None or end is not None:
         lines = content.splitlines()
         first = max(1, start or 1)
         last = min(len(lines), end or len(lines))
         if first > len(lines):
-            return f"{show(path)} has only {len(lines)} lines."
-        header = f"{show(path)} lines {first}-{last} of {len(lines)}:\n"
+            return f"{show(file)} has only {len(lines)} lines."
+        header = f"{show(file)} lines {first}-{last} of {len(lines)}:\n"
         content = header + "\n".join(lines[first - 1 : last])
 
     if len(content) > MAX_READ_CHARS:
@@ -489,7 +578,8 @@ def walk_files(path: Path):
             yield entry
 
 
-def tool_find_files(pattern: str) -> str:
+@tool("Find files by glob pattern, e.g. '**/*.py'.")
+def find_files(pattern: str) -> str:
     matches = [
         show(match)
         for match in sorted(ROOT.glob(pattern))
@@ -526,9 +616,14 @@ def grep_file(file: Path, regex: re.Pattern[str], context: int) -> list[str]:
     return output
 
 
-def tool_grep(pattern: str, raw_path: str = ".", context: int = 0) -> str:
+@tool(
+    "Search file contents for a regular expression.",
+    path="File or directory to search.",
+    context="Lines of context to show around each match.",
+)
+def grep(pattern: str, path: str = ".", context: int = 0) -> str:
     regex = re.compile(pattern)
-    root = sandbox_path(raw_path)
+    root = sandbox_path(path)
     context = max(0, min(context, MAX_CONTEXT_LINES))
     matches: list[str] = []
     for file in walk_files(root):
@@ -538,7 +633,13 @@ def tool_grep(pattern: str, raw_path: str = ".", context: int = 0) -> str:
     return truncated(matches, MAX_MATCHES)
 
 
-def tool_git(arguments: list[str]) -> str:
+@tool(
+    "Run a read-only git command in the working directory, e.g. "
+    "['diff', 'main...HEAD'] for the changes on this branch. Allowed "
+    "subcommands: " + ", ".join(sorted(GIT_SUBCOMMANDS)) + ".",
+    arguments="Arguments after 'git'.",
+)
+def git(arguments: list[str]) -> str:
     if not arguments:
         return "Pass a git subcommand."
     if arguments[0] not in GIT_SUBCOMMANDS:
@@ -557,71 +658,6 @@ def tool_git(arguments: list[str]) -> str:
     if len(output) > MAX_READ_CHARS:
         output = output[:MAX_READ_CHARS] + "\n... truncated"
     return output or f"(no output, exit status {result.returncode})"
-
-
-WRITE_TOOLS = [
-    {
-        "type": "function",
-        "function": {
-            "name": "write_file",
-            "description": (
-                "Write a file under the working directory, creating it if "
-                "needed. The user confirms every write."
-            ),
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "path": {"type": "string"},
-                    "content": {"type": "string"},
-                },
-                "required": ["path", "content"],
-            },
-        },
-    },
-    {
-        "type": "function",
-        "function": {
-            "name": "apply_patch",
-            "description": (
-                "Apply a unified diff to files under the working directory, "
-                "the way 'git apply' would. Use it to change several places "
-                "at once; paths in the diff are relative to the working "
-                "directory. The user confirms every patch."
-            ),
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "patch": {
-                        "type": "string",
-                        "description": (
-                            "The diff, with ---/+++ headers and @@ hunks."
-                        ),
-                    }
-                },
-                "required": ["patch"],
-            },
-        },
-    },
-    {
-        "type": "function",
-        "function": {
-            "name": "edit_file",
-            "description": (
-                "Replace an exact, unique snippet in a file under the "
-                "working directory. Prefer this over write_file."
-            ),
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "path": {"type": "string"},
-                    "old": {"type": "string"},
-                    "new": {"type": "string"},
-                },
-                "required": ["path", "old", "new"],
-            },
-        },
-    },
-]
 
 
 def read_command(path: Path) -> tuple[str, str]:
@@ -753,6 +789,13 @@ def run_git_apply(patch: str, flags: list[str]) -> subprocess.CompletedProcess:
 PATCH_PATH_RE = re.compile(r"^[-+]{3} (?:[ab]/)?(.+?)\s*$", re.MULTILINE)
 
 
+@tool(
+    "Apply a unified diff to files under the working directory, the way "
+    "'git apply' would. Use it to change several places at once; paths in "
+    "the diff are relative to the working directory. The user confirms "
+    "every patch.",
+    patch="The diff, with ---/+++ headers and @@ hunks.",
+)
 def apply_patch(patch: str) -> str:
     """Hand a unified diff to git, after checking where it points."""
     if not patch.endswith("\n"):
@@ -772,27 +815,34 @@ def apply_patch(patch: str) -> str:
     return "Patch applied."
 
 
-def apply_write(path_str: str, content: str) -> str:
-    path = sandbox_path(path_str)
-    old = path.read_text() if path.exists() else ""
+@tool(
+    "Write a file under the working directory, creating it if needed. The "
+    "user confirms every write."
+)
+def write_file(path: str, content: str) -> str:
+    file = sandbox_path(path)
+    old = file.read_text() if file.exists() else ""
     if old == content:
         return "No change: file already has these contents."
-    if not confirm_write(path, old, content):
+    if not confirm_write(file, old, content):
         return REJECTED
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(content)
-    return f"Wrote {path}."
+    file.parent.mkdir(parents=True, exist_ok=True)
+    file.write_text(content)
+    return f"Wrote {file}."
 
 
-def apply_edit(path_str: str, old: str, new: str) -> str:
-    path = sandbox_path(path_str)
-    text = path.read_text()
+@tool(
+    "Replace an exact, unique snippet in a file under the working "
+    "directory. Prefer this over write_file."
+)
+def edit_file(path: str, old: str, new: str) -> str:
+    text = sandbox_path(path).read_text()
     occurrences = text.count(old)
     if occurrences == 0:
         return "The old snippet was not found in the file."
     if occurrences > 1:
         return f"The old snippet appears {occurrences} times; make it unique."
-    return apply_write(path_str, text.replace(old, new, 1))
+    return write_file(path, text.replace(old, new, 1))
 
 
 def run_tool_call(call: dict) -> str:
@@ -800,36 +850,13 @@ def run_tool_call(call: dict) -> str:
     try:
         arguments = json.loads(call["function"]["arguments"] or "{}")
         print(f"[{name} {arguments}]", file=sys.stderr, flush=True)
-        if name == "list_dir":
-            return tool_list_dir(arguments.get("path", "."))
-        if name == "read_file":
-            return tool_read_file(
-                arguments["path"],
-                arguments.get("start"),
-                arguments.get("end"),
-            )
-        if name == "find_files":
-            return tool_find_files(arguments["pattern"])
-        if name == "grep":
-            return tool_grep(
-                arguments["pattern"],
-                arguments.get("path", "."),
-                int(arguments.get("context", 0)),
-            )
-        if name == "git":
-            return tool_git(list(arguments["arguments"]))
-        if name == "apply_patch":
-            return apply_patch(arguments["patch"])
-        if name == "write_file":
-            return apply_write(arguments["path"], arguments["content"])
-        if name == "edit_file":
-            return apply_edit(
-                arguments["path"], arguments["old"], arguments["new"]
-            )
-        return f"Unknown tool {name}."
+        if name not in TOOLS:
+            return f"Unknown tool {name}."
+        return TOOLS[name].call(arguments)
     except (
         ValueError,
         KeyError,
+        TypeError,
         OSError,
         re.error,
         subprocess.SubprocessError,
@@ -876,7 +903,7 @@ def run_prompt(
         {"role": "user", "content": expand_mentions(expanded)}
     )
 
-    tools = READ_TOOLS + WRITE_TOOLS
+    tools = [entry.schema for entry in TOOLS.values()]
     for _ in range(MAX_TOOL_ROUNDS):
         result = context.client.chat.completions.create(
             model=context.model,
@@ -896,9 +923,7 @@ def run_prompt(
         else:
             choice = result.choices[0].message
             output = choice.content or ""
-            calls = [
-                call.model_dump() for call in (choice.tool_calls or [])
-            ]
+            calls = [call.model_dump() for call in (choice.tool_calls or [])]
             print(output, end="", flush=True)
 
         reply: Message = {"role": "assistant", "content": output}
@@ -918,9 +943,7 @@ def run_prompt(
                 }
             )
 
-    print(
-        f"\nStopped after {MAX_TOOL_ROUNDS} tool rounds.", file=sys.stderr
-    )
+    print(f"\nStopped after {MAX_TOOL_ROUNDS} tool rounds.", file=sys.stderr)
 
 
 def parse_args() -> argparse.Namespace:
