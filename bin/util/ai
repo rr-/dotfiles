@@ -110,8 +110,8 @@ FRONTMATTER_RE = re.compile(r"\A---\n(.*?)\n---\n", re.DOTALL)
 
 # A reasoning model refuses function tools on the completions endpoint unless
 # its reasoning is turned off, and asking for that on a model without any is an
-# error too. Neither is worth a list of model names: ask once, and remember
-# what the endpoint said.
+# error too. Set reasoning_effort in the config to say which of the two this
+# model is; without it, ask once and remember what the endpoint said.
 NO_REASONING = [False]
 
 # Nothing else tells the model where it stands, so say it plainly: which
@@ -274,6 +274,7 @@ class ChatContext:
     client: OpenAI
     model: str
     temperature: float
+    reasoning_effort: str = ""
     messages: list[Message] = dc.field(default_factory=list)
     # what the endpoint says it billed, which counts the tool schemas and any
     # reasoning the model did, neither of which the local estimate can see
@@ -294,6 +295,9 @@ class Config:
     api_key: str = "INSERT API KEY HERE"
     model: str = "gpt-4o"
     temperature: float = 1.0
+    # "none", "minimal", "low", "medium" or "high"; empty leaves the choice to
+    # the endpoint, which is what a model with no reasoning to speak of wants
+    reasoning_effort: str = ""
 
 
 def load_config(config_file: Path) -> Config:
@@ -794,16 +798,23 @@ def create_completion(context: ChatContext, tools: list, stream: bool):
     }
     if stream:
         arguments["stream_options"] = {"include_usage": True}
-    if NO_REASONING[0]:
+    if context.reasoning_effort:
+        arguments["reasoning_effort"] = context.reasoning_effort
+    elif NO_REASONING[0]:
         arguments["reasoning_effort"] = "none"
     try:
         return context.client.chat.completions.create(**arguments)
     except BadRequestError as error:
-        if NO_REASONING[0] or "reasoning_effort" not in str(error):
+        if (
+            context.reasoning_effort
+            or NO_REASONING[0]
+            or "reasoning_effort" not in str(error)
+        ):
             raise
         print(
-            "\nThe model will not use tools while reasoning; "
-            "asking it again without.",
+            "\nThe model will not use tools while reasoning; asking it "
+            "again without. Set reasoning-effort in the config to skip "
+            "this.",
             file=sys.stderr,
         )
         NO_REASONING[0] = True
@@ -906,6 +917,12 @@ def parse_args() -> argparse.Namespace:
         help="Path to a context file",
     )
     parser.add_argument("-m", "--model", help="Set the model")
+    parser.add_argument(
+        "-r",
+        "--reasoning-effort",
+        choices=["none", "minimal", "low", "medium", "high"],
+        help="How hard the model should think before answering",
+    )
     parser.add_argument(
         "-t",
         "--temperature",
@@ -1113,6 +1130,8 @@ def main() -> None:
         config.model = args.model
     if args.temperature is not None:
         config.temperature = args.temperature
+    if args.reasoning_effort:
+        config.reasoning_effort = args.reasoning_effort
 
     messages: list[Message] = [
         {
@@ -1147,6 +1166,7 @@ def main() -> None:
         client=client,
         model=config.model,
         temperature=config.temperature,
+        reasoning_effort=config.reasoning_effort,
         messages=messages,
     )
 
