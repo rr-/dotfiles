@@ -2,7 +2,7 @@
 #
 # /// script
 # requires-python = ">=3.12"
-# dependencies = ["openai", "tiktoken", "pyyaml", "prompt-toolkit", "xdg-base-dirs"]
+# dependencies = ["openai", "pyyaml", "prompt-toolkit", "xdg-base-dirs"]
 # ///
 
 import argparse
@@ -23,7 +23,6 @@ from pathlib import Path
 from types import UnionType
 from typing import Any, Callable, get_args, get_origin
 
-import tiktoken
 import yaml
 from openai import BadRequestError, OpenAI
 from prompt_toolkit import HTML, PromptSession
@@ -175,6 +174,7 @@ MODEL_INFO = [
     ModelInfo("o4-mini", Decimal("1.10"), Decimal("4.40")),
 ]
 TOKENS_PER_PRICE_UNIT = Decimal(1_000_000)
+CACHE_DISCOUNT = Decimal(10)
 
 
 Message = dict[str, Any]
@@ -275,27 +275,19 @@ class ChatContext:
     model: str
     temperature: float
     messages: list[Message] = dc.field(default_factory=list)
+    # what the endpoint says it billed, which counts the tool schemas and any
+    # reasoning the model did, neither of which the local estimate can see
+    billed_input: int = 0
+    billed_cached: int = 0
+    billed_output: int = 0
 
-    @property
-    def user_messages(self) -> list[Message]:
-        return [
-            message for message in self.messages if message["role"] == "user"
-        ]
-
-    @property
-    def completion_messages(self) -> list[Message]:
-        return [
-            message for message in self.messages if message["role"] != "user"
-        ]
-
-    @property
-    def prompt_tokens(self) -> int:
-        return num_tokens_from_messages(self.user_messages, self.model)
-
-    @property
-    def completion_tokens(self) -> int:
-        return num_tokens_from_messages(self.completion_messages, self.model)
-
+    def record_usage(self, usage: Any) -> None:
+        if usage is None:
+            return
+        details = getattr(usage, "prompt_tokens_details", None)
+        self.billed_cached += getattr(details, "cached_tokens", 0) or 0
+        self.billed_input += usage.prompt_tokens
+        self.billed_output += usage.completion_tokens
 
 @dc.dataclass
 class Config:
@@ -338,8 +330,9 @@ def save_history(context: ChatContext) -> None:
             {
                 "model": context.model,
                 "messages": context.messages,
-                "prompt_tokens": context.prompt_tokens,
-                "completion_tokens": context.completion_tokens,
+                "billed_input": context.billed_input,
+                "billed_cached": context.billed_cached,
+                "billed_output": context.billed_output,
             },
             indent=4,
             ensure_ascii=False,
@@ -347,43 +340,18 @@ def save_history(context: ChatContext) -> None:
     )
 
 
-def num_tokens_from_messages(messages: list[Message], model: str) -> int:
-    """Returns the number of tokens used by a list of messages."""
-    encoding = tiktoken.get_encoding("cl100k_base")
-    num_tokens = 0
-    for message in messages:
-        for value in message.values():
-            if isinstance(value, str):
-                num_tokens += len(encoding.encode(value))
-    return num_tokens
-
-
-def calculate_expense(
-    prompt_tokens: int,
-    completion_tokens: int,
-    input_pricing: Decimal,
-    output_pricing: Decimal,
-) -> Decimal:
-    """
-    Calculate the expense, given the number of tokens and the pricing rates
-    """
-    return (
-        Decimal(prompt_tokens) * input_pricing
-        + Decimal(completion_tokens) * output_pricing
-    ) / TOKENS_PER_PRICE_UNIT
-
-
 def session_expense(context: ChatContext) -> Decimal | None:
-    """What the conversation so far is estimated to have cost."""
+    """What the endpoint says the conversation has cost so far."""
     model_info = get_model_info(context.model)
     if model_info is None:
         return None
-    return calculate_expense(
-        context.prompt_tokens,
-        context.completion_tokens,
-        model_info.input,
-        model_info.output,
-    )
+    # a cached prefix is billed at a tenth, and is included in the input count
+    fresh = context.billed_input - context.billed_cached
+    return (
+        Decimal(fresh) * model_info.input
+        + Decimal(context.billed_cached) * model_info.input / CACHE_DISCOUNT
+        + Decimal(context.billed_output) * model_info.output
+    ) / TOKENS_PER_PRICE_UNIT
 
 
 def display_expense(context: ChatContext) -> None:
@@ -391,12 +359,13 @@ def display_expense(context: ChatContext) -> None:
     Given the model used, display total tokens used and estimated expense
     """
     print(
-        f"\nTotal tokens used: {context.prompt_tokens + context.completion_tokens}",
+        f"\nTokens billed: {context.billed_input} in "
+        f"({context.billed_cached} cached), {context.billed_output} out",
         file=sys.stderr,
     )
 
     if (total_expense := session_expense(context)) is not None:
-        print(f"Estimated expense: ${total_expense:.6f}", file=sys.stderr)
+        print(f"Estimated expense: ${total_expense:.2f}", file=sys.stderr)
     else:
         print(
             f"No expense estimate available for model {context.model}",
@@ -782,11 +751,15 @@ def run_tool_call(call: dict) -> str:
         return f"Error: {error}"
 
 
-def collect_stream(result) -> tuple[str, list[dict]]:
+def collect_stream(context: ChatContext, result) -> tuple[str, list[dict]]:
     """Consume a streamed completion into its text and its tool calls."""
     output = ""
     calls: list[dict] = []
     for chunk in result:
+        context.record_usage(getattr(chunk, "usage", None))
+        if not chunk.choices:
+            # the chunk carrying the usage totals holds nothing else
+            continue
         delta = chunk.choices[0].delta
         if delta.content:
             print(delta.content, end="", flush=True)
@@ -819,6 +792,8 @@ def create_completion(context: ChatContext, tools: list, stream: bool):
         "stream": stream,
         "tools": tools,
     }
+    if stream:
+        arguments["stream_options"] = {"include_usage": True}
     if NO_REASONING[0]:
         arguments["reasoning_effort"] = "none"
     try:
@@ -871,19 +846,23 @@ def run_prompt(
         {"role": "user", "content": expand_mentions(expanded)}
     )
 
+    # pruning between rounds would rewrite the prefix the endpoint has cached,
+    # and a cached prefix is the cheapest part of the request
+    stub_old_tool_results(context.messages)
+
     tools = [entry.schema for entry in TOOLS.values()]
     for _ in range(MAX_TOOL_ROUNDS):
-        stub_old_tool_results(context.messages)
         result = create_completion(context, tools, stream)
 
         if stream:
             try:
-                output, calls = collect_stream(result)
+                output, calls = collect_stream(context, result)
             except KeyboardInterrupt:
                 result.response.close()
                 return
             result.response.close()
         else:
+            context.record_usage(result.usage)
             choice = result.choices[0].message
             output = choice.content or ""
             calls = [call.model_dump() for call in (choice.tool_calls or [])]
@@ -1054,11 +1033,24 @@ def run_interactive(context: ChatContext, args: argparse.Namespace) -> None:
     )
     session.app.key_processor.before_key_press += paste.observe
 
+    # The meter only changes when a reply lands, so build the line then rather
+    # than on every keystroke the right prompt is redrawn for.
+    status = [""]
+
+    def update_status(spent: Decimal | None = None) -> None:
+        billed = context.billed_input + context.billed_output
+        parts = [f"{billed} tokens"]
+        if spent is not None:
+            parts.append(f"+${spent:.2f}")
+        if (expense := session_expense(context)) is not None:
+            parts.append(f"${expense:.2f}")
+        status[0] = " ".join(parts)
+
     def get_prompt() -> HTML:
-        prompt = ">>>" if is_multiline[0] else ">"
-        return HTML(
-            f"<b>[{context.prompt_tokens + context.completion_tokens}] {prompt}</b> "
-        )
+        return HTML("<b>" + (">>>" if is_multiline[0] else ">") + "</b> ")
+
+    def get_rprompt() -> HTML:
+        return HTML(f"<ansibrightblack>{status[0]}</ansibrightblack>")
 
     print("ChatGPT CLI", file=sys.stderr)
     print(f"Model in use: {context.model}", file=sys.stderr)
@@ -1066,11 +1058,12 @@ def run_interactive(context: ChatContext, args: argparse.Namespace) -> None:
         print("/help lists the saved commands.", file=sys.stderr)
 
     atexit.register(display_expense, context=context)
+    update_status()
 
     while True:
         try:
             print(file=sys.stderr)
-            message = session.prompt(get_prompt)
+            message = session.prompt(get_prompt, rprompt=get_rprompt)
 
             if message.lower() == ".exit":
                 raise EOFError
@@ -1080,13 +1073,10 @@ def run_interactive(context: ChatContext, args: argparse.Namespace) -> None:
             before = session_expense(context)
             run_prompt(context, message, stream=True)
             after = session_expense(context)
+            update_status(
+                None if before is None or after is None else after - before
+            )
             print(file=sys.stderr)
-            if before is not None and after is not None:
-                print(
-                    f"\n(this turn ${after - before:.4f}, "
-                    f"session ${after:.4f})",
-                    file=sys.stderr,
-                )
             print(file=sys.stderr)
         except KeyboardInterrupt:
             continue
