@@ -119,12 +119,13 @@ NO_REASONING = [False]
 # may still be worth reading.
 WORKING_DIRECTORY_PROMPT = (
     "You are working in the directory {root}, and every path you pass to a "
-    "tool is read relative to it. Look around with the tools before "
-    "answering: list_dir shows a directory, read_file reads a file (give it "
-    "start and end to read part of a large one), find_files matches a glob, "
-    "and grep searches contents. If one tool says a path is the wrong kind "
-    "of thing, try the tool it names instead of concluding the path does "
-    "not exist."
+    "tool is read relative to it. The tools are there for questions that are "
+    "about those files: list_dir shows a directory, read_file reads a file "
+    "(give it start and end to read part of a large one), find_files matches "
+    "a glob, and grep searches contents. Reach for them only when the answer "
+    "depends on what is in the directory; anything else deserves a plain "
+    "answer. If a tool says a path is the wrong kind of thing, use the tool "
+    "it names instead of concluding the path does not exist."
 )
 
 # Writes need a human to confirm them; --yes stands in when there is no
