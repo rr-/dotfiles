@@ -118,14 +118,9 @@ NO_REASONING = [False]
 # directory the paths are relative to, and that a path it has not seen listed
 # may still be worth reading.
 WORKING_DIRECTORY_PROMPT = (
-    "You are working in the directory {root}, and every path you pass to a "
-    "tool is read relative to it. The tools are there for questions that are "
-    "about those files: list_dir shows a directory, read_file reads a file "
-    "(give it start and end to read part of a large one), find_files matches "
-    "a glob, and grep searches contents. Reach for them only when the answer "
-    "depends on what is in the directory; anything else deserves a plain "
-    "answer. If a tool says a path is the wrong kind of thing, use the tool "
-    "it names instead of concluding the path does not exist."
+    "You work in {root}; tool paths are relative to it. Use the tools only "
+    "when the answer depends on these files, and follow a tool that names a "
+    "better one for the path instead of giving up on it."
 )
 
 # Writes need a human to confirm them; --yes stands in when there is no
@@ -405,10 +400,7 @@ def truncated(lines: list[str], limit: int) -> str:
     return "\n".join(lines) or "(nothing found)"
 
 
-@tool(
-    "List the entries of a directory under the working directory.",
-    path="Defaults to the working directory.",
-)
+@tool("List a directory; defaults to the working directory.")
 def list_dir(path: str = ".") -> str:
     directory = sandbox_path(path)
     if directory.is_file():
@@ -422,12 +414,7 @@ def list_dir(path: str = ".") -> str:
     return truncated(entries, MAX_ENTRIES)
 
 
-@tool(
-    "Read a text file under the working directory, or just the lines from "
-    "'start' to 'end' of it.",
-    start="First line to read, counting from 1.",
-    end="Last line to read, inclusive.",
-)
+@tool("Read a text file, or its lines from start to end (1-based).")
 def read_file(
     path: str, start: int | None = None, end: int | None = None
 ) -> str:
@@ -470,7 +457,7 @@ def walk_files(path: Path):
             yield entry
 
 
-@tool("Find files by glob pattern, e.g. '**/*.py'.")
+@tool("Find files by glob, e.g. '**/*.py'.")
 def find_files(pattern: str) -> str:
     matches = [
         show(match)
@@ -510,8 +497,7 @@ def grep_file(file: Path, regex: re.Pattern[str], context: int) -> list[str]:
 
 @tool(
     "Search file contents for a regular expression.",
-    path="File or directory to search.",
-    context="Lines of context to show around each match.",
+    context="Lines of context per match.",
 )
 def grep(pattern: str, path: str = ".", context: int = 0) -> str:
     regex = re.compile(pattern)
@@ -526,10 +512,9 @@ def grep(pattern: str, path: str = ".", context: int = 0) -> str:
 
 
 @tool(
-    "Run a read-only git command in the working directory, e.g. "
-    "['diff', 'main...HEAD'] for the changes on this branch. Allowed "
-    "subcommands: " + ", ".join(sorted(GIT_SUBCOMMANDS)) + ".",
-    arguments="Arguments after 'git'.",
+    "Run git, e.g. ['diff', 'main...HEAD']. Only: "
+    + ", ".join(sorted(GIT_SUBCOMMANDS))
+    + "."
 )
 def git(arguments: list[str]) -> str:
     if not arguments:
@@ -681,13 +666,7 @@ def run_git_apply(patch: str, flags: list[str]) -> subprocess.CompletedProcess:
 PATCH_PATH_RE = re.compile(r"^[-+]{3} (?:[ab]/)?(.+?)\s*$", re.MULTILINE)
 
 
-@tool(
-    "Apply a unified diff to files under the working directory, the way "
-    "'git apply' would. Use it to change several places at once; paths in "
-    "the diff are relative to the working directory. The user confirms "
-    "every patch.",
-    patch="The diff, with ---/+++ headers and @@ hunks.",
-)
+@tool("Apply a unified diff, as 'git apply' would. The user confirms it.")
 def apply_patch(patch: str) -> str:
     """Hand a unified diff to git, after checking where it points."""
     if not patch.endswith("\n"):
@@ -707,10 +686,7 @@ def apply_patch(patch: str) -> str:
     return "Patch applied."
 
 
-@tool(
-    "Write a file under the working directory, creating it if needed. The "
-    "user confirms every write."
-)
+@tool("Write a whole file, creating it if needed. The user confirms it.")
 def write_file(path: str, content: str) -> str:
     file = sandbox_path(path)
     old = file.read_text() if file.exists() else ""
@@ -723,10 +699,7 @@ def write_file(path: str, content: str) -> str:
     return f"Wrote {file}."
 
 
-@tool(
-    "Replace an exact, unique snippet in a file under the working "
-    "directory. Prefer this over write_file."
-)
+@tool("Replace an exact, unique snippet. Prefer this over write_file.")
 def edit_file(path: str, old: str, new: str) -> str:
     text = sandbox_path(path).read_text()
     occurrences = text.count(old)
