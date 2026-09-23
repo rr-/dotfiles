@@ -72,7 +72,7 @@ SKIP_DIRS = {".git", ".venv", "node_modules", "__pycache__"}
 MAX_ENTRIES = 200
 MAX_MATCHES = 100
 MAX_READ_CHARS = 20_000
-MAX_TOOL_ROUNDS = 25
+MAX_TOOL_ROUNDS = 100
 
 # Every round of a tool loop resends the whole conversation, so the file read
 # in the first round is paid for again in each of the ones that follow. Keep
