@@ -15,6 +15,7 @@ import json
 import os
 import re
 import select
+import shutil
 import subprocess
 import sys
 import time
@@ -735,11 +736,23 @@ def edit_file(path: str, old: str, new: str) -> str:
     return write_file(path, text.replace(old, new, 1))
 
 
-def run_tool_call(call: dict) -> str:
+def print_tool_call(label: str, context: "ChatContext") -> None:
+    """Announce a tool call, with what the session has cost on the right."""
+    expense = session_expense(context)
+    right = "" if expense is None else f"${expense:.4f}"
+    width = shutil.get_terminal_size().columns
+    room = max(10, width - len(right) - 1)
+    if len(label) > room:
+        label = label[: room - 1] + "\u2026"
+    padding = " " * max(1, width - len(label) - len(right))
+    print(label + padding + colour(right, "grey"), file=sys.stderr, flush=True)
+
+
+def run_tool_call(call: dict, context: "ChatContext") -> str:
     name = call["function"]["name"]
     try:
         arguments = json.loads(call["function"]["arguments"] or "{}")
-        print(f"[{name} {arguments}]", file=sys.stderr, flush=True)
+        print_tool_call(f"[{name} {arguments}]", context)
         if name not in TOOLS:
             return f"Unknown tool {name}."
         return TOOLS[name].call(arguments)
@@ -891,7 +904,7 @@ def run_prompt(
                 {
                     "role": "tool",
                     "tool_call_id": call["id"],
-                    "content": run_tool_call(call),
+                    "content": run_tool_call(call, context),
                 }
             )
 
