@@ -1103,15 +1103,20 @@ def run_interactive(context: ChatContext, args: argparse.Namespace) -> None:
     atexit.register(display_expense, context=context)
     update_status()
 
+    # Ctrl-C abandons whatever is in flight and hands the prompt back; only
+    # a second one with nothing in between, or Ctrl-D, leaves the CLI.
+    pending_interrupt = [False]
+
     while True:
         try:
             print(file=sys.stderr)
             message = session.prompt(get_prompt, rprompt=get_rprompt)
+            pending_interrupt[0] = False
 
             if message.lower() == ".exit":
                 raise EOFError
-            if message.lower() == "":
-                raise KeyboardInterrupt
+            if not message.strip():
+                continue
 
             before = session_expense(context)
             run_prompt(context, message, stream=True)
@@ -1122,6 +1127,10 @@ def run_interactive(context: ChatContext, args: argparse.Namespace) -> None:
             print(file=sys.stderr)
             print(file=sys.stderr)
         except KeyboardInterrupt:
+            if pending_interrupt[0]:
+                break
+            pending_interrupt[0] = True
+            print("Ctrl-C again, or Ctrl-D, to exit.", file=sys.stderr)
             continue
         except EOFError:
             break
