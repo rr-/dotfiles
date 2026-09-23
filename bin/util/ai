@@ -899,14 +899,28 @@ def run_prompt(
         if not calls:
             return
 
+        # Ctrl-C gives the prompt back, but every call still needs a result
+        # or the next request is rejected for the ones left unanswered.
+        interrupted = False
         for call in calls:
+            if interrupted:
+                content = "Not run: the user interrupted the tool calls."
+            else:
+                try:
+                    content = run_tool_call(call, context)
+                except KeyboardInterrupt:
+                    interrupted = True
+                    content = "The user interrupted this tool call."
             context.messages.append(
                 {
                     "role": "tool",
                     "tool_call_id": call["id"],
-                    "content": run_tool_call(call, context),
+                    "content": content,
                 }
             )
+        if interrupted:
+            print("\nInterrupted.", file=sys.stderr)
+            return
 
     print(f"\nStopped after {MAX_TOOL_ROUNDS} tool rounds.", file=sys.stderr)
 
