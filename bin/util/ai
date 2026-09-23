@@ -618,12 +618,39 @@ def expand_mentions(message: str) -> str:
     return message + "\n\n" + "\n\n".join(attachments)
 
 
+# A diff is easier to skim in colour, but only a terminal wants the escapes.
+COLOURS = {"bold": "1", "cyan": "36", "green": "32", "red": "31", "grey": "90"}
+
+
+def colour(text: str, name: str) -> str:
+    if not sys.stderr.isatty():
+        return text
+    return f"\033[{COLOURS[name]}m{text}\033[0m"
+
+
+def colourise_diff(diff: str) -> str:
+    """Paint a unified diff the way git would."""
+    lines = []
+    for line in diff.splitlines():
+        if line.startswith(("+++", "---", "diff ", "index ")):
+            lines.append(colour(line, "bold"))
+        elif line.startswith("@@"):
+            lines.append(colour(line, "cyan"))
+        elif line.startswith("+"):
+            lines.append(colour(line, "green"))
+        elif line.startswith("-"):
+            lines.append(colour(line, "red"))
+        else:
+            lines.append(line)
+    return "\n".join(lines)
+
+
 def confirm(diff: str, question: str) -> bool:
     """Show a change and let the user accept it."""
     if not sys.stdin.isatty() and not ASSUME_YES[0]:
         return False
     print(file=sys.stderr)
-    print(diff, file=sys.stderr)
+    print(colourise_diff(diff), file=sys.stderr)
     if ASSUME_YES[0]:
         return True
     try:
