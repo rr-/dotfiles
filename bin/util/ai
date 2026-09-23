@@ -123,9 +123,8 @@ WORKING_DIRECTORY_PROMPT = (
     "better one for the path instead of giving up on it."
 )
 
-# Writes need a human to confirm them; --yes stands in when there is no
-# terminal to ask on.
-ASSUME_YES = [False]
+# Writes go through on their own; --confirm asks about each one first.
+ASSUME_YES = [True]
 SYSTEM_PROMPT_FILE = BASE_DIR / "system.txt"
 
 
@@ -647,8 +646,7 @@ def confirm_write(path: Path, old: str, new: str) -> bool:
 
 REJECTED = (
     "The change was not applied: the user rejected it, or there is no "
-    "terminal to confirm it on (rerun with --yes to allow unattended "
-    "writes)."
+    "terminal to confirm it on."
 )
 
 
@@ -911,10 +909,10 @@ def parse_args() -> argparse.Namespace:
         help="Use the multiline input mode",
     )
     parser.add_argument(
-        "-y",
-        "--yes",
+        "-n",
+        "--confirm",
         action="store_true",
-        help="Apply file writes without confirmation",
+        help="Ask before applying each file write",
     )
     parser.add_argument(
         "-l",
@@ -1092,7 +1090,7 @@ def run_non_interactive(
 
 def main() -> None:
     args = parse_args()
-    ASSUME_YES[0] = args.yes
+    ASSUME_YES[0] = not args.confirm
 
     try:
         config = load_config(CONFIG_FILE)
