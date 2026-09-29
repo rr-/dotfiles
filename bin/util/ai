@@ -823,15 +823,62 @@ def write_file(path: str, content: str) -> str:
     return f"Wrote {file}."
 
 
-@tool("Replace an exact, unique snippet. Prefer this over write_file.")
+@tool(
+    "Replace an exact, unique snippet of a few lines. Prefer this over "
+    "write_file for a local change; rewrite a whole file with write_file."
+)
 def edit_file(path: str, old: str, new: str) -> str:
     text = sandbox_path(path).read_text()
     occurrences = text.count(old)
-    if occurrences == 0:
-        return "The old snippet was not found in the file."
     if occurrences > 1:
         return f"The old snippet appears {occurrences} times; make it unique."
+    if occurrences == 0:
+        # Trailing whitespace is the usual difference, and no edit means it.
+        loose = match_loosely(text, old)
+        if loose is None:
+            return snippet_missing(text, old)
+        old = loose
     return write_file(path, text.replace(old, new, 1))
+
+
+def match_loosely(text: str, old: str) -> str | None:
+    """Return the text a snippet matches once trailing spaces are ignored."""
+    lines = text.split("\n")
+    wanted = [line.rstrip() for line in old.split("\n")]
+    found = None
+    for start in range(len(lines) - len(wanted) + 1):
+        window = lines[start : start + len(wanted)]
+        if [line.rstrip() for line in window] != wanted:
+            continue
+        if found is not None:
+            return None
+        found = "\n".join(window)
+    return found
+
+
+def snippet_missing(text: str, old: str) -> str:
+    """Report a snippet that does not match, naming the line it diverges on."""
+    lines = text.split("\n")
+    wanted = old.split("\n")
+    if not wanted[0] in lines:
+        return (
+            "The old snippet was not found in the file, from its first line "
+            "on. Read the file again before editing it."
+        )
+    start = lines.index(wanted[0])
+    for offset, line in enumerate(wanted):
+        if start + offset >= len(lines):
+            return f"The file ends {offset} lines into the old snippet."
+        if lines[start + offset] != line:
+            return (
+                f"The old snippet matches from line {start + 1}, then "
+                f"differs on its line {offset + 1}.\n"
+                f"The file has: {lines[start + offset]!r}\n"
+                f"The snippet has: {line!r}\n"
+                "Edit a snippet of a few lines, or pass the whole file to "
+                "write_file."
+            )
+    return "The old snippet was not found in the file."
 
 
 def print_tool_call(label: str, context: "ChatContext") -> None:
