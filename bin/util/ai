@@ -721,6 +721,8 @@ def colourise_diff(diff: str) -> str:
             lines.append(colour(line, "green"))
         elif line.startswith("-"):
             lines.append(colour(line, "red"))
+        elif line.startswith("\\"):
+            lines.append(colour(line, "grey"))
         else:
             lines.append(line)
     return "\n".join(lines)
@@ -741,15 +743,31 @@ def confirm(diff: str, question: str) -> bool:
 
 
 def confirm_write(path: Path, old: str, new: str) -> bool:
-    diff = "".join(
-        difflib.unified_diff(
-            old.splitlines(keepends=True),
-            new.splitlines(keepends=True),
-            fromfile=str(path),
-            tofile=str(path),
-        )
-    )
+    diff = "\n".join(unified_diff_lines(old, new, str(path), str(path)))
     return confirm(diff, f"Apply to {path}?")
+
+
+def unified_diff_lines(
+    old: str, new: str, fromfile: str, tofile: str
+) -> list[str]:
+    """Diff two texts into whole lines, as git writes them.
+
+    A file whose last line carries no newline gets git's marker rather than
+    a hunk line that runs into the one after it.
+    """
+    lines = []
+    for line in difflib.unified_diff(
+        old.splitlines(keepends=True),
+        new.splitlines(keepends=True),
+        fromfile=fromfile,
+        tofile=tofile,
+    ):
+        if line.endswith("\n"):
+            lines.append(line[:-1])
+        else:
+            lines.append(line)
+            lines.append("\\ No newline at end of file")
+    return lines
 
 
 REJECTED = (
