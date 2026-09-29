@@ -119,6 +119,21 @@ COMMANDS_DIR = BASE_DIR / "commands"
 COMMAND_RE = re.compile(r"^/([A-Za-z0-9_-]+)(?:\s+(.*))?$", re.DOTALL)
 FRONTMATTER_RE = re.compile(r"\A---\n(.*?)\n---\n", re.DOTALL)
 
+# Commands the CLI answers itself, rather than looking up in COMMANDS_DIR.
+BUILTIN_COMMANDS = [
+    ("help", "List the commands"),
+    ("copy", "Copy the last reply to the clipboard"),
+    ("clear", "Forget the conversation, keeping the system prompts"),
+]
+
+# The first of these that exists reads the text to copy on its standard input.
+CLIPBOARD_COMMANDS = [
+    ["wl-copy"],
+    ["xclip", "-selection", "clipboard"],
+    ["xsel", "--clipboard", "--input"],
+    ["pbcopy"],
+]
+
 # A reasoning model refuses function tools on the completions endpoint unless
 # its reasoning is turned off, and asking for that on a model without any is an
 # error too. Set reasoning_effort in the config to say which of the two this
@@ -572,21 +587,52 @@ def list_commands() -> list[tuple[str, str]]:
 
 
 def print_commands() -> None:
-    commands = list_commands()
-    if not commands:
-        print(f"No commands in {COMMANDS_DIR}.", file=sys.stderr)
-        return
+    commands = BUILTIN_COMMANDS + list_commands()
     width = max(len(name) for name, _ in commands)
     for name, description in commands:
         print(f"/{name:<{width}}  {description}", file=sys.stderr)
 
 
-def expand_command(message: str) -> str | None:
+def copy_to_clipboard(text: str) -> bool:
+    """Hand the text to whichever clipboard tool this machine has."""
+    for command in CLIPBOARD_COMMANDS:
+        if not shutil.which(command[0]):
+            continue
+        result = subprocess.run(command, input=text, text=True)
+        if result.returncode == 0:
+            return True
+        print(f"{command[0]} failed.", file=sys.stderr)
+        return False
+    print("No clipboard tool found.", file=sys.stderr)
+    return False
+
+
+def last_reply(context: "ChatContext") -> str:
+    """The text of the most recent assistant message, if there is one."""
+    for message in reversed(context.messages):
+        if message.get("role") == "assistant":
+            return str(message.get("content") or "")
+    return ""
+
+
+def clear_history(context: "ChatContext") -> None:
+    """Drop the conversation, keeping the system prompts it started with."""
+    kept = []
+    for message in context.messages:
+        if message.get("role") != "system":
+            break
+        kept.append(message)
+    dropped = len(context.messages) - len(kept)
+    context.messages = kept
+    print(f"Cleared {dropped} messages.", file=sys.stderr)
+
+
+def expand_command(context: "ChatContext", message: str) -> str | None:
     """Replace a leading "/name" with the prompt its command file holds.
 
     Returns the message unchanged when it names no command, and None when
-    there is nothing left to send: /help printed the list, or the command
-    does not exist.
+    there is nothing left to send: a built-in command did its work, or the
+    command does not exist.
     """
     match = COMMAND_RE.match(message.strip())
     if not match:
@@ -595,6 +641,17 @@ def expand_command(message: str) -> str | None:
 
     if name == "help":
         print_commands()
+        return None
+
+    if name == "copy":
+        if not (text := last_reply(context)):
+            print("Nothing to copy yet.", file=sys.stderr)
+        elif copy_to_clipboard(text):
+            print(f"Copied {len(text)} characters.", file=sys.stderr)
+        return None
+
+    if name == "clear":
+        clear_history(context)
         return None
 
     path = COMMANDS_DIR / f"{name}.md"
@@ -959,7 +1016,7 @@ def run_prompt(
     context: ChatContext, message: str, stream: bool = True
 ) -> None:
     """Ask the user for input, build the request and perform it."""
-    expanded = expand_command(message)
+    expanded = expand_command(context, message)
     if expanded is None:
         return
     context.messages.append(
@@ -1088,7 +1145,7 @@ class PromptCompleter(Completer):
         text = document.text_before_cursor
         if match := re.fullmatch(r"/([A-Za-z0-9_-]*)", text):
             prefix = match.group(1)
-            commands = [("help", "List the commands")] + list_commands()
+            commands = BUILTIN_COMMANDS + list_commands()
             for name, description in commands:
                 if name.startswith(prefix):
                     yield Completion(
@@ -1196,8 +1253,7 @@ def run_interactive(context: ChatContext, args: argparse.Namespace) -> None:
 
     print("ChatGPT CLI", file=sys.stderr)
     print(f"Model in use: {context.model}", file=sys.stderr)
-    if list_commands():
-        print("/help lists the saved commands.", file=sys.stderr)
+    print("/help lists the commands.", file=sys.stderr)
 
     atexit.register(display_expense, context=context)
     update_status()
