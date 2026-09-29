@@ -2,7 +2,13 @@
 #
 # /// script
 # requires-python = ">=3.12"
-# dependencies = ["openai", "pyyaml", "prompt-toolkit", "xdg-base-dirs"]
+# dependencies = [
+#     "openai",
+#     "pygments",
+#     "pyyaml",
+#     "prompt-toolkit",
+#     "xdg-base-dirs",
+# ]
 # ///
 
 import argparse
@@ -26,6 +32,10 @@ from typing import Any, Callable, get_args, get_origin
 
 import yaml
 from openai import BadRequestError, OpenAI
+from pygments import highlight
+from pygments.formatters import Terminal256Formatter
+from pygments.lexers import get_lexer_by_name, guess_lexer
+from pygments.util import ClassNotFound
 from prompt_toolkit import HTML, PromptSession
 from prompt_toolkit.completion import (
     CompleteEvent,
@@ -767,10 +777,96 @@ def run_tool_call(call: dict, context: "ChatContext") -> str:
         return f"Error: {error}"
 
 
+CODE_STYLE = "native"
+
+
+def highlight_code(code: str, language: str) -> str:
+    """Colour a code block, leaving it alone if the language is a mystery."""
+    if not sys.stdout.isatty() or not code:
+        return code
+    try:
+        lexer = (
+            get_lexer_by_name(language) if language else guess_lexer(code)
+        )
+    except ClassNotFound:
+        return code
+    formatter = Terminal256Formatter(style=CODE_STYLE)
+    return highlight(code, lexer, formatter).rstrip("\n")
+
+
+class StreamPrinter:
+    """Print a reply as it arrives, holding fenced code back to colour it.
+
+    Highlighting needs a whole block, so a fence is collected rather than
+    echoed; everything outside one still streams as it comes, apart from the
+    start of a line, which is held until it is clear it opens no fence.
+    """
+
+    def __init__(self) -> None:
+        self.pending = ""
+        self.started = False
+        self.language: str | None = None
+        self.block: list[str] = []
+
+    def write(self, text: str) -> None:
+        self.pending += text
+        while "\n" in self.pending:
+            line, self.pending = self.pending.split("\n", 1)
+            self.write_line(line)
+        self.write_partial()
+
+    def write_partial(self) -> None:
+        """Show the unfinished line, once it cannot be a fence."""
+        if self.language is not None or not self.pending:
+            return
+        if not self.started and "```".startswith(self.pending[:3]):
+            return
+        print(self.pending, end="", flush=True)
+        self.pending = ""
+        self.started = True
+
+    def write_line(self, line: str) -> None:
+        if self.language is not None:
+            if line.startswith("```"):
+                self.flush_block()
+                print(line, flush=True)
+            else:
+                self.block.append(line)
+            return
+        if not self.started and line.startswith("```"):
+            self.language = line[3:].strip()
+            self.block = []
+        print(line, flush=True)
+        self.started = False
+
+    def flush_block(self) -> None:
+        if self.block:
+            print(highlight_code("\n".join(self.block), self.language or ""))
+        self.language = None
+        self.block = []
+
+    def close(self) -> None:
+        """Finish the reply, leaving the cursor at the start of a line."""
+        if self.pending and self.language is not None:
+            self.block.append(self.pending)
+            self.pending = ""
+        if self.pending:
+            print(self.pending, end="")
+            self.started = True
+            self.pending = ""
+        if self.language is not None:
+            self.flush_block()
+        elif self.started:
+            print()
+        self.started = False
+        sys.stdout.flush()
+
+
 def collect_stream(context: ChatContext, result) -> tuple[str, list[dict]]:
     """Consume a streamed completion into its text and its tool calls."""
     output = ""
     calls: list[dict] = []
+    printer = StreamPrinter()
     for chunk in result:
         context.record_usage(getattr(chunk, "usage", None))
         if not chunk.choices:
@@ -778,7 +874,7 @@ def collect_stream(context: ChatContext, result) -> tuple[str, list[dict]]:
             continue
         delta = chunk.choices[0].delta
         if delta.content:
-            print(delta.content, end="", flush=True)
+            printer.write(delta.content)
             output += delta.content
         for part in delta.tool_calls or []:
             while len(calls) <= part.index:
@@ -796,6 +892,7 @@ def collect_stream(context: ChatContext, result) -> tuple[str, list[dict]]:
                 call["function"]["name"] += part.function.name
             if part.function and part.function.arguments:
                 call["function"]["arguments"] += part.function.arguments
+    printer.close()
     return output, calls
 
 
@@ -889,7 +986,9 @@ def run_prompt(
             choice = result.choices[0].message
             output = choice.content or ""
             calls = [call.model_dump() for call in (choice.tool_calls or [])]
-            print(output, end="", flush=True)
+            printer = StreamPrinter()
+            printer.write(output)
+            printer.close()
 
         reply: Message = {"role": "assistant", "content": output}
         if calls:
