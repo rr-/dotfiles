@@ -471,12 +471,25 @@ def read_file(
     return content
 
 
-def walk_files(path: Path):
+def skipped(path: Path, asked_for: str = "") -> bool:
+    """Say whether a path lies in noise nobody asked to see.
+
+    The skip list saves a search from drowning in .git or node_modules, but
+    naming one of them is a request for it, so only the parts the caller left
+    out are skipped.
+    """
+    wanted = set(Path(asked_for).parts)
+    return any(
+        part in SKIP_DIRS and part not in wanted for part in path.parts
+    )
+
+
+def walk_files(path: Path, asked_for: str = ""):
     if path.is_file():
         yield path
         return
     for entry in sorted(path.rglob("*")):
-        if any(part in SKIP_DIRS for part in entry.parts):
+        if skipped(entry, asked_for):
             continue
         if entry.is_file():
             yield entry
@@ -487,7 +500,7 @@ def find_files(pattern: str) -> str:
     matches = [
         show(match)
         for match in sorted(ROOT.glob(pattern))
-        if not any(part in SKIP_DIRS for part in match.parts)
+        if not skipped(match, pattern)
     ]
     return truncated(matches, MAX_ENTRIES)
 
@@ -529,7 +542,7 @@ def grep(pattern: str, path: str = ".", context: int = 0) -> str:
     root = sandbox_path(path)
     context = max(0, min(context, MAX_CONTEXT_LINES))
     matches: list[str] = []
-    for file in walk_files(root):
+    for file in walk_files(root, path):
         matches.extend(grep_file(file, regex, context))
         if len(matches) > MAX_MATCHES:
             break
