@@ -885,8 +885,13 @@ def print_tool_call(label: str, context: "ChatContext") -> None:
     """Announce a tool call, with what the session has cost on the right."""
     expense = session_expense(context)
     right = "" if expense is None else f"${expense:.4f}"
-    width = shutil.get_terminal_size().columns
-    room = max(10, width - len(right) - 1)
+    # Arguments arrive with whatever whitespace the model wrote into them;
+    # a line of its own per argument would break up the column of calls.
+    label = " ".join(label.split())
+    # One column is left bare: filling the last one makes a terminal wrap,
+    # which shows up as a blank line under every call.
+    width = max(20, shutil.get_terminal_size().columns - 1)
+    room = width - len(right) - 1
     if len(label) > room:
         label = label[: room - 1] + "\u2026"
     padding = " " * max(1, width - len(label) - len(right))
