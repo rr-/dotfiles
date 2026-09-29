@@ -6,8 +6,18 @@ from datetime import datetime
 from pathlib import Path
 
 
-def rename_files(paths: list[Path], discard: bool, dry_run: bool) -> None:
+def expand_dirs(paths: list[Path]) -> list[Path]:
+    expanded = []
     for path in paths:
+        if path.is_dir():
+            expanded.extend(sorted(p for p in path.iterdir() if p.is_file()))
+        else:
+            expanded.append(path)
+    return expanded
+
+
+def rename_files(paths: list[Path], discard: bool, dry_run: bool) -> None:
+    for path in expand_dirs(paths):
         timestamp = datetime.fromtimestamp(path.stat().st_mtime).strftime(
             "%Y%m%d_%H%M%S"
         )
