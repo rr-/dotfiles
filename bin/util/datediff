@@ -10,12 +10,17 @@ import re
 from datetime import datetime, timedelta
 
 import dateutil.parser
+from dateutil.relativedelta import relativedelta
 
 
 def parse_date(text: str) -> datetime:
     text = text.strip().lower()
     if text == "yesterday":
         return datetime.now() - timedelta(days=1)
+    if m := re.fullmatch(r"(.+?)\s+ago", text):
+        return parse_relative("-" + m[1], datetime.now())
+    if m := re.fullmatch(r"in\s+(.+)", text):
+        return parse_relative("+" + m[1], datetime.now())
     return dateutil.parser.parse(text)
 
 
@@ -43,11 +48,16 @@ def parse_relative(text: str, base: datetime) -> datetime:
         return base + delta
 
     matches = re.findall(r"(\d+(?:\.\d+)?)\s*([a-z]+)?", text)
+    months = 0
     total_seconds = 0
     for num, u in matches:
-        total_seconds += float(num) * unit.get(u, 1)
+        # Whole months and years step by the calendar, not by average length.
+        if unit.get(u) in (2629800, 31557600) and num.isdigit():
+            months += int(num) * (12 if unit[u] == 31557600 else 1)
+        else:
+            total_seconds += float(num) * unit.get(u, 1)
 
-    return base + timedelta(seconds=sign * total_seconds)
+    return base + relativedelta(months=sign * months) + timedelta(seconds=sign * total_seconds)
 
 
 def parse_args() -> argparse.Namespace:
