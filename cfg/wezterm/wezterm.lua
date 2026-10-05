@@ -36,6 +36,10 @@ config.window_decorations = "RESIZE"
 -- measured off the running window, which picom-trans had been carrying
 config.window_background_opacity = 0.93
 config.font = wezterm.font 'Input Mono'
+-- The light palette is inverted, so the bright half sits near the background:
+-- brightening bold text into it made bold black and blue (Claude Code's bold)
+-- all but vanish. Bold keeps its palette colour and only gains weight.
+config.bold_brightens_ansi_colors = 'No'
 
 config.adjust_window_size_when_changing_font_size = false
 config.hide_tab_bar_if_only_one_tab = true
