@@ -50,10 +50,6 @@
 [diff]
     tool = meld
 
-[pager]
-    diff = git-diff-view
-    show = git-diff-view
-
 [push]
     default = current
     followTags = true
