@@ -164,7 +164,7 @@ class PipPackageInstaller(PackageInstaller):
         import urllib.request
 
         request = urllib.request.Request(
-            f"https://pypi.org/project/{package}/", method="HEAD"
+            f"https://pypi.org/pypi/{package}/json", method="HEAD"
         )
         try:
             urllib.request.urlopen(request)
