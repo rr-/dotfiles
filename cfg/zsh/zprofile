@@ -34,7 +34,7 @@ export IMAGEGEN_DEFAULT_DIR=~/
 
 # Claude Code drops to 256 colors the moment it sees $TMUX, without asking tmux
 # whether it can do better - and ours has advertised RGB and Tc for years.
-# Not setting it breaks theme remapper.
+# This only stops the drop; tmux.conf sets COLORTERM so it starts at truecolor.
 export CLAUDE_CODE_TMUX_TRUECOLOR=1
 
 if [ -z "${DISPLAY}" ] && [ "$(tty)" = /dev/tty1 ]; then
