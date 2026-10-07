@@ -2,11 +2,20 @@ import json
 import sys
 
 from cfg.theme.render import CLAUDE_THEME
-from libdotfiles.util import HOME_DIR, create_dir, run
+from libdotfiles.util import (
+    HOME_DIR,
+    PKG_DIR,
+    create_dir,
+    create_symlinks,
+    run,
+)
 
 CLAUDE_DIR = HOME_DIR / ".claude"
 THEMES_DIR = CLAUDE_DIR / "themes"
 SETTINGS_PATH = CLAUDE_DIR / "settings.json"
+MODS_DIR = PKG_DIR / "mods"
+# plugins in skills/<name> load in every session
+SKILLS_DIR = CLAUDE_DIR / "skills"
 
 
 def point_at_our_theme() -> None:
@@ -26,3 +35,7 @@ def point_at_our_theme() -> None:
 create_dir(THEMES_DIR)
 point_at_our_theme()
 run([sys.executable, "-m", "cfg.theme"], check=True)
+
+create_symlinks(
+    [(mod_dir, SKILLS_DIR / mod_dir.name) for mod_dir in MODS_DIR.iterdir()]
+)

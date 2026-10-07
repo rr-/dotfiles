@@ -1,0 +1,5 @@
+{
+  "name": "commit-style",
+  "version": "0.1.0",
+  "description": "Commit messages without the Co-Authored-By trailer, following the 50/72 rule and no conventional commits"
+}
