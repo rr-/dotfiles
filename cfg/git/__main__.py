@@ -1,9 +1,17 @@
 from libdotfiles.packages import try_install
-from libdotfiles.util import HOME_DIR, PKG_DIR, create_symlinks
+from libdotfiles.util import (
+    HOME_DIR,
+    PKG_DIR,
+    create_symlinks,
+    get_distro_name,
+)
 
 try_install("git")
 try_install("git-extras")
-try_install("github-cli")
+if get_distro_name() == "arch":
+    try_install("github-cli")
+else:
+    try_install("gh", method="apt")
 
 # to generate a new key: gpg --full-generate-key
 
