@@ -13,6 +13,10 @@ setw -g mode-style "bg={{surface.raised}}"
 setw -g window-status-current-style "bg={{surface.sunken}} fg={{text.strong}}"
 setw -g window-status-style "bg={{surface.overlay}} fg={{text.dim}}"
 setw -g window-status-bell-style "bg={{state.warning}} fg={{text.inverse}} bold"
+# A cell with no color of its own goes out as this exact one. Termius paints
+# bold-on-default in its own bright white, ignoring OSC 10, which on the light
+# theme is grey on white. bg stays default so wezterm's wallpaper shows through.
+setw -g window-style "fg={{text.normal}}"
 set -g pane-border-style "bg=default fg={{surface.border}}"
 set -g pane-active-border-style "bg=default fg={{accent.primary}} bold"
 set -g pane-border-format '#[fg={{accent.info}}] #(ps --no-headers -t #{pane_tty} -o args -O-c)'
