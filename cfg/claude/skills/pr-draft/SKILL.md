@@ -109,4 +109,6 @@ The user greenlights by saying "go" in chat or with a `>> go` line.
 4. Without `gh`, run `<this skill's base directory>/compare_url.py <draft>`
    and give the user its output: a compare URL that opens GitHub's new PR
    form with the title and body already filled in.
-5. Stop the watcher. Leave the draft file for the user to delete.
+5. Stop the watcher. Once `gh pr create` has opened the PR, delete the draft
+   file: the PR holds the text now. Without `gh` the PR is not open yet, so
+   keep the draft until the user says it is.
