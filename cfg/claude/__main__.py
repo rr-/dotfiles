@@ -14,6 +14,7 @@ CLAUDE_DIR = HOME_DIR / ".claude"
 THEMES_DIR = CLAUDE_DIR / "themes"
 SETTINGS_PATH = CLAUDE_DIR / "settings.json"
 MODS_DIR = PKG_DIR / "mods"
+OWN_SKILLS_DIR = PKG_DIR / "skills"
 # plugins in skills/<name> load in every session
 SKILLS_DIR = CLAUDE_DIR / "skills"
 
@@ -37,5 +38,9 @@ point_at_our_theme()
 run([sys.executable, "-m", "cfg.theme"], check=True)
 
 create_symlinks(
-    [(mod_dir, SKILLS_DIR / mod_dir.name) for mod_dir in MODS_DIR.iterdir()]
+    [
+        (src_dir, SKILLS_DIR / src_dir.name)
+        for parent in (MODS_DIR, OWN_SKILLS_DIR)
+        for src_dir in parent.iterdir()
+    ]
 )
