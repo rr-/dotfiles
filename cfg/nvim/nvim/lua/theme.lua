@@ -117,21 +117,27 @@ end
 -- that hours late, when the pane comes back in front. Setting 'background'
 -- does not drop the handler: the VimEnter check that would skips values set
 -- from lua (last_set_sid == -8, runtime/lua/vim/_core/defaults.lua), which is
--- every value this file sets. So drop it here.
+-- every value this file sets. So drop it here - on VimEnter, after that
+-- check, since builds whose check does fire fail to delete it a second time.
 vim.o.termguicolors = true
 vim.o.background = detect_background()
 
-pcall(function()
-  local handlers = vim.api.nvim_get_autocmds({
-    group = 'nvim.tty',
-    event = 'TermResponse',
-  })
-  for _, handler in ipairs(handlers) do
-    if (handler.desc or ''):find('background') then
-      vim.api.nvim_del_autocmd(handler.id)
-    end
-  end
-end)
+vim.api.nvim_create_autocmd('VimEnter', {
+  once = true,
+  callback = function()
+    pcall(function()
+      local handlers = vim.api.nvim_get_autocmds({
+        group = 'nvim.tty',
+        event = 'TermResponse',
+      })
+      for _, handler in ipairs(handlers) do
+        if (handler.desc or ''):find('background') then
+          vim.api.nvim_del_autocmd(handler.id)
+        end
+      end
+    end)
+  end,
+})
 
 vim.cmd('colorscheme vim')
 apply_highlights()
