@@ -55,7 +55,8 @@ from pygments.util import ClassNotFound
 TAB = 4
 CONTEXT_STEP = 3
 FULL_CONTEXT = 1_000_000  # as -U, enough to show every line of a file
-ROLES_PATH = Path(__file__).resolve().parents[2] / "cfg/theme/roles.toml"
+CFG_DIR = Path(__file__).resolve().parents[2] / "cfg"
+ROLES_PATH = CFG_DIR / "theme/roles.toml"
 
 HELP = """\
 movement
@@ -417,6 +418,28 @@ def load_roles() -> dict:
 
 ROLES = load_roles()
 THEME = os.environ.get("THEME", "dark")
+
+
+def load_palette() -> dict[int | str, str]:
+    """The theme's palette, so indices go out as rgb: a terminal that ignores
+    the OSC 4 remap - Termius - would paint them from its own palette."""
+    try:
+        with (CFG_DIR / f"wezterm/colors/dash_{THEME}.toml").open("rb") as f:
+            colors = tomllib.load(f)["colors"]
+    except (OSError, KeyError):
+        return {}
+    palette: dict[int | str, str] = {
+        int(key): value for key, value in colors.get("indexed", {}).items()
+    }
+    for index, color in enumerate(colors.get("ansi", [])):
+        palette[index] = color
+    for index, color in enumerate(colors.get("brights", [])):
+        palette[index + 8] = color
+    palette["fg"] = colors.get("foreground")
+    return palette
+
+
+PALETTE = load_palette()
 FALLBACK_ROLES: dict[str, Color] = {
     "text.faint": 242,
     "text.muted": 7,
@@ -452,8 +475,12 @@ def role(name: str) -> Color:
         value = FALLBACK_ROLES.get(name)
     if isinstance(value, dict):
         value = value.get(THEME, value.get("value", value.get("dark")))
-    if value in ("fg", "bg"):
+    if value == "fg":
+        return PALETTE.get("fg")
+    if value == "bg":
         return None
+    if isinstance(value, int) and not isinstance(value, bool):
+        return PALETTE.get(value, value)
     return value
 
 
@@ -2014,7 +2041,7 @@ class App:
 
     def draw_status(self) -> str:
         bg = role("surface.overlay")
-        base = Style(bg=bg)
+        base = Style(fg=role("text.normal"), bg=bg)
         buf = LineBuf(self.width)
         if self.prompt is not None:
             kind, text = self.prompt
@@ -2046,14 +2073,14 @@ class App:
             )
             text = text or self.files[fi].label
         if not self.message[0]:
-            style = PLAIN
+            style = base
         if self.unified != self.base_context:
             where = f"{'full' if self.full else f'U{self.context}'}  {where}"
         right = f" {self.count or self.pending}  {where}  {pct}% "
         room = self.width - buf.col - len(right)
         buf.add_clipped(text, style._replace(bg=bg), max(1, room))
         buf.fill(base, self.width - len(right))
-        buf.add(right, base._replace(fg=role("text.faint")))
+        buf.add(right, base)
         buf.fill(base)
         return buf.render()
 
