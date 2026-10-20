@@ -1,0 +1,408 @@
+#!/usr/bin/env python3
+import argparse
+import re
+import signal
+import subprocess
+import sys
+import tkinter as tk
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Optional
+
+from PIL import Image, ImageOps, ImageTk
+
+UNITS_MM = {"mm": 1.0, "cm": 10.0, "in": 25.4, '"': 25.4, "pt": 25.4 / 72}
+
+
+def _iso_series(w: int, h: int) -> list[tuple[float, float]]:
+    sizes: list[tuple[float, float]] = []
+    for _ in range(11):
+        sizes.append((w, h))
+        w, h = h // 2, w
+    return sizes
+
+
+# portrait, in millimetres
+PAPER_SIZES_MM: dict[str, tuple[float, float]] = {
+    **{f"a{i}": size for i, size in enumerate(_iso_series(841, 1189))},
+    **{f"b{i}": size for i, size in enumerate(_iso_series(1000, 1414))},
+    "letter": (215.9, 279.4),
+    "legal": (215.9, 355.6),
+    "tabloid": (279.4, 431.8),
+}
+
+ANCHORS = {
+    (0, 0): ["top-left", "tl", "north-west", "nw"],
+    (1, 0): ["top", "t", "north", "n"],
+    (2, 0): ["top-right", "tr", "north-east", "ne"],
+    (0, 1): ["left", "l", "west", "w"],
+    (1, 1): ["center", "centre", "c", "middle", "m"],
+    (2, 1): ["right", "r", "east", "e"],
+    (0, 2): ["bottom-left", "bl", "south-west", "sw"],
+    (1, 2): ["bottom", "b", "south", "s"],
+    (2, 2): ["bottom-right", "br", "south-east", "se"],
+}
+ANCHOR_NAMES = {name: pos for pos, names in ANCHORS.items() for name in names}
+
+
+@dataclass
+class Output:
+    name: str
+    primary: bool
+    x: int
+    y: int
+    w: int
+    h: int
+    w_mm: int
+    h_mm: int
+
+
+def parse_length(text: str) -> float:
+    match = re.fullmatch(
+        r"\s*(\d+(?:\.\d*)?|\.\d+)\s*(mm|cm|in|\"|pt)?\s*", text.lower()
+    )
+    if not match:
+        raise argparse.ArgumentTypeError(f"not a valid length: {text!r}")
+    return float(match.group(1)) * UNITS_MM[match.group(2) or "mm"]
+
+
+def parse_size(text: str) -> tuple[float, float]:
+    if text.lower() in PAPER_SIZES_MM:
+        return PAPER_SIZES_MM[text.lower()]
+    match = re.fullmatch(r"(.+?)\s*x\s*(.+)", text.lower())
+    if match:
+        # "210x297mm": a unit on the second number applies to both
+        unit_match = re.search(r"(mm|cm|in|\"|pt)\s*$", match.group(2))
+        first = match.group(1)
+        if unit_match and not re.search(r"[a-z\"]\s*$", first):
+            first += unit_match.group(1)
+        return parse_length(first), parse_length(match.group(2))
+    raise argparse.ArgumentTypeError(
+        f"not a valid size: {text!r} "
+        f"(use WxH or one of {', '.join(PAPER_SIZES_MM)})"
+    )
+
+
+@dataclass
+class Levels:
+    black: float
+    gamma: float
+    white: float
+
+
+def parse_levels(text: str) -> Levels:
+    parts = text.split(",")
+    try:
+        if len(parts) == 1:
+            black, gamma, white = 0.0, float(parts[0]), 255.0
+        elif len(parts) == 3:
+            black, gamma, white = (float(part) for part in parts)
+        else:
+            raise ValueError
+    except ValueError:
+        raise argparse.ArgumentTypeError(
+            f"not valid levels: {text!r} (use gamma or black,gamma,white)"
+        ) from None
+    if not 0 <= black < white <= 255 or gamma <= 0:
+        raise argparse.ArgumentTypeError(
+            f"not valid levels: {text!r} "
+            "(need 0 <= black < white <= 255 and gamma > 0)"
+        )
+    return Levels(black=black, gamma=gamma, white=white)
+
+
+def apply_levels(image: Image.Image, levels: Levels) -> Image.Image:
+    lut = []
+    for value in range(256):
+        value_norm = (value - levels.black) / (levels.white - levels.black)
+        value_norm = min(1.0, max(0.0, value_norm))
+        lut.append(round(255 * value_norm ** (1 / levels.gamma)))
+    return image.point(lut * len(image.getbands()))
+
+
+def parse_anchor(text: str) -> tuple[int, int]:
+    try:
+        return ANCHOR_NAMES[text.lower()]
+    except KeyError:
+        raise argparse.ArgumentTypeError(
+            f"not a valid anchor: {text!r}"
+        ) from None
+
+
+def merge_detached_units(argv: list[str]) -> list[str]:
+    # allow "--width 29.7 cm" in addition to "--width 29.7cm"
+    result: list[str] = []
+    for arg in argv:
+        if (
+            result
+            and arg.lower() in UNITS_MM
+            and re.fullmatch(r"[\d.]+", result[-1])
+        ):
+            result[-1] += arg
+        else:
+            result.append(arg)
+    return result
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        description=(
+            "Show an image at a physical size on the auxiliary monitor, "
+            "with no window decorations and touch input disabled. "
+            "Press Escape or q to quit."
+        )
+    )
+    parser.add_argument("path", type=Path)
+    parser.add_argument(
+        "-s",
+        "--size",
+        type=parse_size,
+        help=(
+            "paper size (a4, letter, …) or WxH; the image is fit inside it "
+            "keeping its aspect ratio, in the image's orientation"
+        ),
+    )
+    parser.add_argument(
+        "-W",
+        "--width",
+        type=parse_length,
+        help="physical width (mm by default, or cm/in/pt)",
+    )
+    parser.add_argument(
+        "-H",
+        "--height",
+        type=parse_length,
+        help="physical height; with --width, the aspect ratio is ignored",
+    )
+    parser.add_argument("--flip-h", action="store_true")
+    parser.add_argument("--flip-v", action="store_true")
+    parser.add_argument(
+        "-a",
+        "--anchor",
+        type=parse_anchor,
+        default=(1, 1),
+        help="top-left/tl/north-west/nw, top/t/north/n, …, center/c",
+    )
+    for side, flags in (
+        ("top", ["--margin-t"]),
+        ("right", ["--margin-r"]),
+        ("bottom", ["--margin-d", "--margin-b"]),
+        ("left", ["--margin-l"]),
+    ):
+        parser.add_argument(
+            *flags,
+            dest=f"margin_{side}",
+            type=parse_length,
+            default=0.0,
+            metavar="LENGTH",
+            help=f"keep this much space free at the {side} when anchoring",
+        )
+    parser.add_argument(
+        "-o",
+        "--output",
+        help="xrandr output to use (default: the first non-primary one)",
+    )
+    parser.add_argument(
+        "--background", default="black", help="colour around the image"
+    )
+    parser.add_argument(
+        "--levels",
+        type=parse_levels,
+        metavar="[BLACK,]GAMMA[,WHITE]",
+        help=(
+            "input levels like in GIMP or Photoshop, e.g. 20,1.2,235; "
+            "a single value sets only the gamma"
+        ),
+    )
+    parser.add_argument(
+        "--keep-touch",
+        action="store_true",
+        help="leave touchscreens enabled",
+    )
+    args = parser.parse_args(merge_detached_units(sys.argv[1:]))
+    if args.size and (args.width or args.height):
+        parser.error("--size cannot be combined with --width or --height")
+    return args
+
+
+def get_outputs() -> list[Output]:
+    outputs = []
+    for line in subprocess.check_output(
+        ["xrandr", "--query"], text=True
+    ).splitlines():
+        match = re.match(
+            r"(\S+) connected (primary )?(\d+)x(\d+)\+(\d+)\+(\d+)"
+            r".*?(\d+)mm x (\d+)mm",
+            line,
+        )
+        if match:
+            outputs.append(
+                Output(
+                    name=match.group(1),
+                    primary=bool(match.group(2)),
+                    w=int(match.group(3)),
+                    h=int(match.group(4)),
+                    x=int(match.group(5)),
+                    y=int(match.group(6)),
+                    w_mm=int(match.group(7)),
+                    h_mm=int(match.group(8)),
+                )
+            )
+    return outputs
+
+
+def pick_output(name: Optional[str]) -> Output:
+    outputs = get_outputs()
+    if name:
+        for output in outputs:
+            if output.name == name:
+                return output
+        sys.exit(f"output {name} is not connected or has no mode")
+    for output in outputs:
+        if not output.primary:
+            return output
+    sys.exit("no auxiliary monitor found")
+
+
+def get_touchscreens() -> list[int]:
+    # touchscreens report direct touch mode, touchpads report dependent
+    result = []
+    device_id: Optional[int] = None
+    for line in subprocess.check_output(
+        ["xinput", "list", "--long"], text=True
+    ).splitlines():
+        if match := re.search(r"\bid=(\d+)\s+\[", line):
+            device_id = int(match.group(1))
+        elif "Touch mode: direct" in line and device_id is not None:
+            if device_id not in result:
+                result.append(device_id)
+    return result
+
+
+def is_device_enabled(device_id: int) -> bool:
+    props = subprocess.check_output(
+        ["xinput", "list-props", str(device_id)], text=True
+    )
+    match = re.search(r"Device Enabled \(\d+\):\s*(\d)", props)
+    return bool(match and match.group(1) == "1")
+
+
+def get_target_size_mm(
+    args: argparse.Namespace, image_w: int, image_h: int
+) -> Optional[tuple[float, float]]:
+    aspect = image_w / image_h
+    if args.size:
+        box_w, box_h = sorted(args.size)
+        if aspect > 1:
+            box_w, box_h = box_h, box_w
+        if box_w / box_h > aspect:
+            return box_h * aspect, box_h
+        return box_w, box_w / aspect
+    if args.width and args.height:
+        return args.width, args.height
+    if args.width:
+        return args.width, args.width / aspect
+    if args.height:
+        return args.height * aspect, args.height
+    return None
+
+
+def main() -> None:
+    args = parse_args()
+    output = pick_output(args.output)
+    if not output.w_mm or not output.h_mm:
+        sys.exit(f"{output.name} does not report its physical size")
+
+    image = ImageOps.exif_transpose(Image.open(args.path)).convert("RGB")
+    if args.flip_h:
+        image = ImageOps.mirror(image)
+    if args.flip_v:
+        image = ImageOps.flip(image)
+    if args.levels:
+        image = apply_levels(image, args.levels)
+
+    margin_l = round(args.margin_left * output.w / output.w_mm)
+    margin_r = round(args.margin_right * output.w / output.w_mm)
+    margin_t = round(args.margin_top * output.h / output.h_mm)
+    margin_b = round(args.margin_bottom * output.h / output.h_mm)
+    area_w = output.w - margin_l - margin_r
+    area_h = output.h - margin_t - margin_b
+    if area_w <= 0 or area_h <= 0:
+        sys.exit(
+            f"the margins leave no space on the "
+            f"{output.w_mm}x{output.h_mm}mm monitor"
+        )
+
+    target_mm = get_target_size_mm(args, image.width, image.height)
+    if target_mm:
+        target_w = round(target_mm[0] * output.w / output.w_mm)
+        target_h = round(target_mm[1] * output.h / output.h_mm)
+        image = image.resize((target_w, target_h), Image.Resampling.LANCZOS)
+        print(
+            f"{output.name}: {target_mm[0]:.1f}x{target_mm[1]:.1f}mm "
+            f"= {target_w}x{target_h}px",
+            file=sys.stderr,
+        )
+        if target_w > area_w or target_h > area_h:
+            print(
+                f"warning: the image does not fit on the "
+                f"{output.w_mm}x{output.h_mm}mm monitor inside the margins "
+                f"and will be cropped",
+                file=sys.stderr,
+            )
+
+    anchor_x, anchor_y = args.anchor
+    offset_x = margin_l + (area_w - image.width) * anchor_x // 2
+    offset_y = margin_t + (area_h - image.height) * anchor_y // 2
+
+    touchscreens = []
+    if not args.keep_touch:
+        touchscreens = [
+            device_id
+            for device_id in get_touchscreens()
+            if is_device_enabled(device_id)
+        ]
+        if not touchscreens:
+            print("warning: no touchscreen found to disable", file=sys.stderr)
+    for device_id in touchscreens:
+        subprocess.check_call(["xinput", "disable", str(device_id)])
+
+    try:
+        root = tk.Tk()
+        root.title("lightbox")
+        root.overrideredirect(True)
+        root.geometry(f"{output.w}x{output.h}+{output.x}+{output.y}")
+        root.attributes("-topmost", True)
+        root.configure(background=args.background, cursor="none")
+
+        canvas = tk.Canvas(
+            root,
+            width=output.w,
+            height=output.h,
+            background=args.background,
+            highlightthickness=0,
+            cursor="none",
+        )
+        canvas.pack()
+        photo = ImageTk.PhotoImage(image)
+        canvas.create_image(offset_x, offset_y, image=photo, anchor="nw")
+
+        root.bind("<Escape>", lambda _event: root.destroy())
+        root.bind("q", lambda _event: root.destroy())
+        signal.signal(signal.SIGINT, lambda *_: root.destroy())
+        signal.signal(signal.SIGTERM, lambda *_: root.destroy())
+
+        # let Python handle signals while Tk's main loop is running
+        def tick() -> None:
+            root.after(200, tick)
+
+        tick()
+        root.after(100, root.focus_force)
+        root.mainloop()
+    finally:
+        for device_id in touchscreens:
+            subprocess.call(["xinput", "enable", str(device_id)])
+
+
+if __name__ == "__main__":
+    main()
