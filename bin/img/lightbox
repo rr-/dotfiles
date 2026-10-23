@@ -120,6 +120,14 @@ def apply_levels(image: Image.Image, levels: Levels) -> Image.Image:
     return image.point(lut * len(image.getbands()))
 
 
+def parse_rotation(text: str) -> int:
+    if not re.fullmatch(r"\s*-?\d+\s*", text) or int(text) % 90:
+        raise argparse.ArgumentTypeError(
+            f"not a valid rotation: {text!r} (use a multiple of 90)"
+        )
+    return int(text) % 360
+
+
 def parse_anchor(text: str) -> tuple[int, int]:
     try:
         return ANCHOR_NAMES[text.lower()]
@@ -173,6 +181,17 @@ def parse_args() -> argparse.Namespace:
         "--height",
         type=parse_length,
         help="physical height; with --width, the aspect ratio is ignored",
+    )
+    parser.add_argument(
+        "-r",
+        "--rotate",
+        type=parse_rotation,
+        default=0,
+        metavar="DEGREES",
+        help=(
+            "rotate clockwise by a multiple of 90 degrees (negative for "
+            "counter-clockwise), before flipping and sizing"
+        ),
     )
     parser.add_argument("--flip-h", action="store_true")
     parser.add_argument("--flip-v", action="store_true")
@@ -314,6 +333,8 @@ def main() -> None:
         sys.exit(f"{output.name} does not report its physical size")
 
     image = ImageOps.exif_transpose(Image.open(args.path)).convert("RGB")
+    if args.rotate:
+        image = image.rotate(-args.rotate, expand=True)
     if args.flip_h:
         image = ImageOps.mirror(image)
     if args.flip_v:
