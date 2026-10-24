@@ -12,6 +12,8 @@ stops inheriting whatever the terminal booted with.
 """
 
 import os
+import select
+import time
 from pathlib import Path
 from subprocess import TimeoutExpired, run
 
@@ -32,6 +34,9 @@ BEL = "\a"
 # One sequence per batch rather than one per color - but not one sequence for
 # all 256, because a terminal is entitled to a limit on how long an OSC runs.
 BATCH = 16
+
+# how long a terminal gets to take the palette before it is skipped
+WRITE_TIMEOUT = 1.0
 
 # the terminal's cursor, from the role nvim already paints its own with
 CURSOR_ROLE = "editor.cursor_bg"
@@ -102,13 +107,36 @@ def terminals() -> list[str]:
     return list(dict.fromkeys(ttys))
 
 
+def write_with_deadline(tty: str, data: bytes) -> None:
+    """Write without blocking, giving up on a terminal that stops reading.
+
+    A client whose ssh peer went away without closing the connection (a laptop
+    asleep, a dropped network) keeps its pty open with nobody draining it. Once
+    the buffer fills, a blocking write there never returns.
+    """
+    fd = os.open(tty, os.O_WRONLY | os.O_NOCTTY | os.O_NONBLOCK)
+    try:
+        deadline = time.monotonic() + WRITE_TIMEOUT
+        while data:
+            try:
+                data = data[os.write(fd, data) :]
+                continue
+            except BlockingIOError:
+                pass
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                return
+            select.select([], [fd], [], remaining)
+    finally:
+        os.close(fd)
+
+
 def repaint(theme: str) -> None:
     """Push the palette at every terminal we can reach right now."""
-    text = payload(theme)
+    data = payload(theme).encode()
     for tty in terminals():
         try:
-            with open(tty, "w") as handle:
-                handle.write(text)
+            write_with_deadline(tty, data)
         except OSError:
             pass  # a client that detached between listing it and writing to it
 
