@@ -25,6 +25,8 @@ base = 234
 raised = 235
 overlay = 238
 border = 234
+# the terminal's own default background, for whoever has to paint it in its place
+ground = "bg"
 
 [accent]
 primary = 39    # the thing you're on: active border, selection

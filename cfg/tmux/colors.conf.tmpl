@@ -13,10 +13,30 @@ setw -g mode-style "bg={{surface.raised}}"
 setw -g window-status-current-style "bg={{surface.sunken}} fg={{text.strong}}"
 setw -g window-status-style "bg={{surface.overlay}} fg={{text.dim}}"
 setw -g window-status-bell-style "bg={{state.warning}} fg={{text.inverse}} bold"
-# A cell with no color of its own goes out as this exact one. Termius paints
-# bold-on-default in its own bright white, ignoring OSC 10, which on the light
-# theme is grey on white. bg stays default so wezterm's wallpaper shows through.
-setw -g window-style "fg={{text.normal}}"
-set -g pane-border-style "bg=default fg={{surface.border}}"
-set -g pane-active-border-style "bg=default fg={{accent.primary}} bold"
+# Termius has ignored OSC 4, 10 and 11 since it moved onto libghostty, so
+# tmux paints in its place: indexed cells go out as the rgb in pane-colours,
+# and a cell with no color of its own as the exact one in window-style. That
+# also covers Termius painting bold-on-default in its own bright white.
+source-file -q ~/.config/theme.d/{{theme}}.palette.tmux.conf
+
+# bg stays default so wezterm's wallpaper shows through, unless a Termius is
+# attached, which would leave it at whatever its own scheme says. The client
+# only reports itself a moment after attaching, hence the second look.
+#
+# Each style is spelled out both ways and -F only picks one: a color written
+# inline would be expanded too, and #F is the window flags.
+set -g @termius-attached '#{m:*Termius*,#{L:#{client_termtype} }}'
+set -g @window-style-opaque "fg={{text.normal}} bg={{surface.ground}}"
+set -g @window-style-clear "fg={{text.normal}}"
+set -g @pane-border-style-opaque "bg={{surface.ground}} fg={{surface.border}}"
+set -g @pane-border-style-clear "bg=default fg={{surface.border}}"
+set -g @pane-active-border-style-opaque "bg={{surface.ground}} fg={{accent.primary}} bold"
+set -g @pane-active-border-style-clear "bg=default fg={{accent.primary}} bold"
+set -g @ground-fit '\
+setw -gF window-style "#{?#{E:@termius-attached},#{@window-style-opaque},#{@window-style-clear}}" ; \
+set -gF pane-border-style "#{?#{E:@termius-attached},#{@pane-border-style-opaque},#{@pane-border-style-clear}}" ; \
+set -gF pane-active-border-style "#{?#{E:@termius-attached},#{@pane-active-border-style-opaque},#{@pane-active-border-style-clear}}"'
+set-hook -g client-attached[90] { run -C '#{@ground-fit}' ; run -C -d 2 '#{@ground-fit}' }
+set-hook -g client-detached[90] { run -C '#{@ground-fit}' }
+run -C '#{@ground-fit}'
 set -g pane-border-format '#[fg={{accent.info}}] #(ps --no-headers -t #{pane_tty} -o args -O-c)'

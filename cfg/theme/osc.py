@@ -68,6 +68,19 @@ def payload(theme: str) -> str:
     return "".join(pieces)
 
 
+def tmux_palette(theme: str) -> str:
+    """The same 256 indices as tmux pane-colours, for a terminal that ignores
+    OSC 4 (Termius since it moved onto libghostty). tmux resolves an indexed
+    cell through pane-colours and sends the client rgb instead.
+    """
+    palette = load_palette(theme)
+    indices = sorted(key for key in palette if isinstance(key, int))
+    return "".join(
+        f"set -gw pane-colours[{index}] '{palette[index]}'\n"
+        for index in indices
+    )
+
+
 def through_tmux(text: str) -> str:
     """Wrap escapes aimed past tmux at the terminal behind it.
 
@@ -149,4 +162,7 @@ def generate(target_dir: Path = THEME_DIR) -> None:
         (target_dir / f"{theme}.palette.osc").write_text(text)
         (target_dir / f"{theme}.palette.tmux.osc").write_text(
             through_tmux(text)
+        )
+        (target_dir / f"{theme}.palette.tmux.conf").write_text(
+            tmux_palette(theme)
         )
