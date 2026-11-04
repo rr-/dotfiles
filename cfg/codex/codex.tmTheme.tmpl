@@ -1,0 +1,209 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>name</key>
+  <string>Dash</string>
+  <key>settings</key>
+  <array>
+    <dict>
+      <key>settings</key>
+      <dict>
+        <key>foreground</key>
+        <string>{{text.normal|tm}}</string>
+        <key>background</key>
+        <string>{{surface.ground}}</string>
+        <key>caret</key>
+        <string>{{editor.cursor_bg}}</string>
+        <key>selection</key>
+        <string>{{surface.overlay}}</string>
+        <key>lineHighlight</key>
+        <string>{{editor.cursorline}}</string>
+      </dict>
+    </dict>
+    <dict>
+      <key>scope</key>
+      <string>comment, punctuation.definition.comment</string>
+      <key>settings</key>
+      <dict>
+        <key>foreground</key>
+        <string>{{syntax.comment|tm}}</string>
+      </dict>
+    </dict>
+    <dict>
+      <key>scope</key>
+      <string>comment.block.documentation, string.quoted.docstring</string>
+      <key>settings</key>
+      <dict>
+        <key>foreground</key>
+        <string>{{syntax.doc|tm}}</string>
+      </dict>
+    </dict>
+    <dict>
+      <key>scope</key>
+      <string>string, punctuation.definition.string</string>
+      <key>settings</key>
+      <dict>
+        <key>foreground</key>
+        <string>{{syntax.string|tm}}</string>
+        <key>fontStyle</key>
+        <string>bold</string>
+      </dict>
+    </dict>
+    <dict>
+      <key>scope</key>
+      <string>constant.character</string>
+      <key>settings</key>
+      <dict>
+        <key>foreground</key>
+        <string>{{syntax.character|tm}}</string>
+      </dict>
+    </dict>
+    <dict>
+      <key>scope</key>
+      <string>constant.numeric, constant.language.boolean</string>
+      <key>settings</key>
+      <dict>
+        <key>foreground</key>
+        <string>{{syntax.number|tm}}</string>
+      </dict>
+    </dict>
+    <dict>
+      <key>scope</key>
+      <string>constant.other, variable.other.constant, support.constant</string>
+      <key>settings</key>
+      <dict>
+        <key>foreground</key>
+        <string>{{syntax.constant|tm}}</string>
+      </dict>
+    </dict>
+    <dict>
+      <key>scope</key>
+      <string>constant.character.escape, string.regexp</string>
+      <key>settings</key>
+      <dict>
+        <key>foreground</key>
+        <string>{{syntax.constant_alt|tm}}</string>
+      </dict>
+    </dict>
+    <dict>
+      <key>scope</key>
+      <string>keyword, storage, constant.language</string>
+      <key>settings</key>
+      <dict>
+        <key>foreground</key>
+        <string>{{syntax.keyword|tm}}</string>
+      </dict>
+    </dict>
+    <dict>
+      <key>scope</key>
+      <string>entity.name.type, entity.name.class, entity.name.struct, entity.name.enum, entity.name.trait, entity.name.namespace, entity.other.inherited-class, support.type, support.class</string>
+      <key>settings</key>
+      <dict>
+        <key>foreground</key>
+        <string>{{syntax.type_alt|tm}}</string>
+      </dict>
+    </dict>
+    <dict>
+      <key>scope</key>
+      <string>keyword.operator, punctuation.separator, punctuation.accessor</string>
+      <key>settings</key>
+      <dict>
+        <key>foreground</key>
+        <string>{{text.normal|tm}}</string>
+      </dict>
+    </dict>
+    <dict>
+      <key>scope</key>
+      <string>keyword.operator.word</string>
+      <key>settings</key>
+      <dict>
+        <key>foreground</key>
+        <string>{{syntax.keyword|tm}}</string>
+      </dict>
+    </dict>
+    <dict>
+      <key>scope</key>
+      <string>meta.preprocessor, meta.annotation, entity.name.function.decorator</string>
+      <key>settings</key>
+      <dict>
+        <key>foreground</key>
+        <string>{{syntax.preproc|tm}}</string>
+      </dict>
+    </dict>
+    <dict>
+      <key>scope</key>
+      <string>entity.name.function, support.function, variable.function</string>
+      <key>settings</key>
+      <dict>
+        <key>foreground</key>
+        <string>{{syntax.function|tm}}</string>
+        <key>fontStyle</key>
+        <string>bold</string>
+      </dict>
+    </dict>
+    <dict>
+      <key>scope</key>
+      <string>entity.other.attribute-name, meta.mapping.key, support.type.property-name</string>
+      <key>settings</key>
+      <dict>
+        <key>foreground</key>
+        <string>{{syntax.special_key|tm}}</string>
+      </dict>
+    </dict>
+    <dict>
+      <key>scope</key>
+      <string>markup.heading</string>
+      <key>settings</key>
+      <dict>
+        <key>foreground</key>
+        <string>{{accent.primary|tm}}</string>
+        <key>fontStyle</key>
+        <string>bold</string>
+      </dict>
+    </dict>
+    <dict>
+      <key>scope</key>
+      <string>markup.underline.link, string.other.link</string>
+      <key>settings</key>
+      <dict>
+        <key>foreground</key>
+        <string>{{accent.link|tm}}</string>
+      </dict>
+    </dict>
+    <dict>
+      <key>scope</key>
+      <string>markup.inserted, diff.inserted</string>
+      <key>settings</key>
+      <dict>
+        <key>foreground</key>
+        <string>{{diff.add.accent|tm}}</string>
+        <key>background</key>
+        <string>{{diff.add.bg}}</string>
+      </dict>
+    </dict>
+    <dict>
+      <key>scope</key>
+      <string>markup.deleted, diff.deleted</string>
+      <key>settings</key>
+      <dict>
+        <key>foreground</key>
+        <string>{{diff.del.accent|tm}}</string>
+        <key>background</key>
+        <string>{{diff.del.bg}}</string>
+      </dict>
+    </dict>
+    <dict>
+      <key>scope</key>
+      <string>invalid</string>
+      <key>settings</key>
+      <dict>
+        <key>foreground</key>
+        <string>{{syntax.error_fg|tm}}</string>
+        <key>background</key>
+        <string>{{syntax.error_bg|tm}}</string>
+      </dict>
+    </dict>
+  </array>
+</dict>
+</plist>

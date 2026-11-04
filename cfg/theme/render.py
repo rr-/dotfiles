@@ -17,6 +17,8 @@ THEMES = ("light", "dark")
 
 CLAUDE_SLUG = "dash"
 CLAUDE_THEME = f"custom:{CLAUDE_SLUG}"
+# codex looks a [tui] theme up as $CODEX_HOME/themes/<name>.tmTheme
+CODEX_THEME = "dash"
 
 CFG_DIR = Path(__file__).resolve().parents[1]
 MARKER_PATH = HOME_DIR / ".config" / "theme"
@@ -43,6 +45,10 @@ class Role:
     light: str
     dark: str
     attrs: list[str] = field(default_factory=list)
+    # the palette entry both themes name, if they name the same one: a
+    # consumer that refers to it rather than to its rgb follows the terminal's
+    # palette as it changes, without being re-rendered
+    palette_entry: int | str | None = None
 
     def color(self, theme: str) -> str:
         return self.light if theme == "light" else self.dark
@@ -98,10 +104,18 @@ def resolve_role(spec: Any, where: str) -> Role:
     else:
         attrs = []
         per_theme = dict.fromkeys(THEMES, spec)
+    shared = per_theme["light"]
     return Role(
         light=resolve_color(per_theme["light"], "light", where),
         dark=resolve_color(per_theme["dark"], "dark", where),
         attrs=attrs,
+        palette_entry=(
+            shared
+            if shared == per_theme["dark"]
+            and not isinstance(shared, bool)
+            and (isinstance(shared, int) or shared in ("fg", "bg"))
+            else None
+        ),
     )
 
 
@@ -141,7 +155,21 @@ FILTERS: dict[str, Callable[[Role, str], str]] = {
         ("%B" if "bold" in role.attrs else "") + f"%F{{{role.color(theme)}}}"
     ),
     "attrs": lambda role, theme: " ".join(role.attrs),
+    "tm": lambda role, theme: tm_color(role, theme),
 }
+
+
+def tm_color(role: Role, theme: str) -> str:
+    """A tmTheme color, by palette entry where the role has one.
+
+    bat's convention, which codex follows: alpha 00 makes red an ANSI index,
+    and alpha 01 means the terminal's own default color.
+    """
+    if isinstance(role.palette_entry, int):
+        return "#%02x000000" % role.palette_entry
+    if role.palette_entry in ("fg", "bg"):
+        return "#00000001"
+    return role.color(theme)
 
 
 def render(template: str, roles: dict[str, Role], theme: str) -> str:
@@ -172,10 +200,12 @@ def generate(target_dir: Path = THEME_DIR) -> None:
 
 
 # rendered name -> the one path that consumer reads, for the consumers that
-# can't pick a fragment at runtime: git run from outside zsh, and Claude Code
+# can't pick a fragment at runtime: git run from outside zsh, Claude Code and
+# codex
 INSTALLED = {
     "colors.gitconfig": THEME_DIR / "current.gitconfig",
     "claude.json": HOME_DIR / ".claude" / "themes" / f"{CLAUDE_SLUG}.json",
+    "codex.tmTheme": HOME_DIR / ".codex" / "themes" / f"{CODEX_THEME}.tmTheme",
     # brave reads a theme as an unpacked extension directory
     "brave.manifest.json": THEME_DIR / "brave-theme" / "manifest.json",
 }
