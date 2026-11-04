@@ -2,7 +2,10 @@ local wezterm = require 'wezterm'
 local runtime = require 'runtime'
 local act = wezterm.action
 
-local config = wezterm.config_builder()
+-- not config_builder: it checks every assignment, which made one evaluation
+-- take ~150ms, and wezterm evaluates the config ~15 times whenever the desktop
+-- flips light/dark (gsettings color-scheme), freezing it for seconds
+local config = {}
 
 local function active_tab_index(window)
   for _, item in ipairs(window:mux_window():tabs_with_info()) do
@@ -190,5 +193,16 @@ config.keys = {
 }
 
 runtime.apply_to_config(config)
+
+-- theme(1) rewrites runtime.lua, but the file watcher takes seconds to notice,
+-- so it also sets THEME as a user var (cfg/theme/osc.py) to reload right away
+wezterm.on('user-var-changed', function(window, pane, name, value)
+  if name ~= 'THEME' then
+    return
+  end
+  if window:effective_config().color_scheme ~= 'dash_' .. value then
+    wezterm.reload_configuration()
+  end
+end)
 
 return config

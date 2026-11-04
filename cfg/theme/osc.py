@@ -11,6 +11,7 @@ cfg/zsh/zshrc emits the same bytes on the way up, so a pane opened afterwards
 stops inheriting whatever the terminal booted with.
 """
 
+import base64
 import os
 import select
 import time
@@ -144,9 +145,19 @@ def write_with_deadline(tty: str, data: bytes) -> None:
         os.close(fd)
 
 
+def user_var(theme: str) -> str:
+    """Tell wezterm which theme it is on, for cfg/wezterm/wezterm.lua.
+
+    Only on a switch: a shell starting up has no news to give, and every
+    pane announcing it would reload the config for nothing.
+    """
+    value = base64.b64encode(theme.encode()).decode()
+    return f"{OSC}1337;SetUserVar=THEME={value}{BEL}"
+
+
 def repaint(theme: str) -> None:
     """Push the palette at every terminal we can reach right now."""
-    data = payload(theme).encode()
+    data = (payload(theme) + user_var(theme)).encode()
     for tty in terminals():
         try:
             write_with_deadline(tty, data)

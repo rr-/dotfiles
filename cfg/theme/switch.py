@@ -6,6 +6,7 @@ Installed onto PATH as `theme` by cfg/theme/__main__.py.
 import argparse
 import os
 import re
+import signal
 from pathlib import Path
 from subprocess import DEVNULL, TimeoutExpired, run
 
@@ -82,6 +83,31 @@ def update_running_tmux(theme: str) -> None:
         "source-file",
         HOME_DIR / ".config" / "theme.d" / f"{theme}.colors.conf",
     )
+
+
+def update_tmux_client_colors() -> None:
+    """Have tmux ask each terminal for its new background.
+
+    osc.repaint writes to the client ttys past tmux, so tmux keeps answering
+    a pane's OSC 11 with the color it learned at attach, and codex paints its
+    composer for the wrong theme. tmux asks again on a client resize, at most
+    every 30 seconds, and a WINCH to the client is a resize.
+    """
+    try:
+        clients = run(
+            ["tmux", "list-clients", "-F", "#{client_pid}"],
+            capture_output=True,
+            text=True,
+            timeout=5,
+            check=False,
+        )
+    except (OSError, TimeoutExpired):
+        return
+    for pid in clients.stdout.split():
+        try:
+            os.kill(int(pid), signal.SIGWINCH)
+        except (OSError, ValueError):
+            pass
 
 
 def update_running_zsh() -> None:
@@ -256,6 +282,7 @@ def main() -> None:
     install_theme(theme)
     update_wezterm_config(theme)
     osc.repaint(theme)
+    update_tmux_client_colors()
     update_theme_marker(theme)
     update_running_nvim(theme)
     update_running_tmux(theme)
