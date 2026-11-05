@@ -1,0 +1,5 @@
+{
+  "name": "search-scope",
+  "version": "0.1.0",
+  "description": "Stops find, fd, rg and friends from sweeping the whole disk: nothing rooted at /, and broad roots stay on one filesystem"
+}
