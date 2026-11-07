@@ -79,6 +79,11 @@
 [gpg]
     program = gpg
 
+# Without this, %G? in git hist errors on every SSH-signed commit. Empty, so
+# such commits show as unverified; add "<email> <pubkey>" lines to trust them.
+[gpg "ssh"]
+    allowedSignersFile = ~/.config/git/allowed_signers
+
 [includeIf "gitdir:*/oc/"]
     path = ~/.config/git/config-priv
 [includeIf "gitdir:*/srv/"]
