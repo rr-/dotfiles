@@ -10,11 +10,18 @@ return {
   text_dim      = '{{text.dim}}',
   text_faint    = '{{text.faint}}',
   text_inverse  = '{{text.inverse}}',
+  text_ghost    = '{{text.ghost}}',
 
   surface_sunken  = '{{surface.sunken}}',
   surface_base    = '{{surface.base}}',
   surface_raised  = '{{surface.raised}}',
   surface_overlay = '{{surface.overlay}}',
+
+  -- what a shade of gray can't set apart on this theme, as highlight attrs
+  surface_sunken_attrs  = {{surface.sunken|lua}},
+  surface_raised_attrs  = {{surface.raised|lua}},
+  surface_overlay_attrs = {{surface.overlay|lua}},
+  editor_search_attrs   = {{editor.search_bg|lua}},
 
   state_error        = '{{state.error}}',
   state_warning      = '{{state.warning}}',
@@ -55,9 +62,9 @@ return {
   -- gets from cfg/zsh/colors.zsh.tmpl, and the two windows come out alike.
   -- The base scheme leads, because it decides the handful fzf lets no one
   -- name - spinner, query, separator, scrollbar - and its default is dark.
-  fzf_colors = '{{base}},fg:{{text.dim}},bg:-1,hl:{{state.error}}'
-    .. ',fg+:{{text.strong}},bg+:{{surface.raised}},hl+:{{state.error}}'
-    .. ',info:{{text.faint}},border:{{surface.overlay}}'
+  fzf_colors = '{{base}},fg:{{text.dim}},bg:-1,hl:{{state.error|fzf}}'
+    .. ',fg+:{{text.selected}},bg+:{{surface.selected}},hl+:{{text.selected_match|fzf}}'
+    .. ',info:{{text.faint}},border:{{text.ghost}}'
     .. ',prompt:{{accent.link}},pointer:{{accent.primary}}'
     .. ',marker:{{state.success}},header:{{text.faint}}',
 }

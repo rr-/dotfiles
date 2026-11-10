@@ -55,6 +55,12 @@ local function current_theme()
   return vim.o.background
 end
 
+-- a highlight plus the attrs its role carries on this theme: reverse, on
+-- light-hc, where there is no gray to set it apart with
+local function with(attrs, spec)
+  return vim.tbl_extend('force', spec, attrs or {})
+end
+
 local function apply_highlights()
   local p = load_colors(current_theme())
   local hl = vim.api.nvim_set_hl
@@ -72,10 +78,10 @@ local function apply_highlights()
   hl(0, 'Todo',                  { bg = p.state_attention_bg, ctermbg = 58 })
   hl(0, 'NonText',               { ctermfg = 'yellow', bold = true })
   hl(0, 'SpecialKey',            { fg = p.syntax_special_key, ctermfg = 167 })
-  hl(0, 'LineNr',                { fg = p.surface_overlay, ctermfg = 238 })
+  hl(0, 'LineNr',                { fg = p.text_ghost, ctermfg = 238 })
   hl(0, 'ErrorMsg',              { bg = p.syntax_error_bg, fg = p.syntax_error_fg, ctermbg = 196, ctermfg = 16 })
-  hl(0, 'StatusLine',            { bg = p.surface_raised, ctermbg = 235 })
-  hl(0, 'StatusLineNC',          { bg = p.surface_raised, ctermbg = 235 })
+  hl(0, 'StatusLine',            with(p.surface_raised_attrs, { bg = p.surface_raised, ctermbg = 235 }))
+  hl(0, 'StatusLineNC',          with(p.surface_raised_attrs, { bg = p.surface_raised, ctermbg = 235 }))
   hl(0, 'Folded',                { bg = p.editor_folded_bg, fg = p.text_faint, ctermfg = 242, ctermbg = 233 })
   hl(0, 'ColorColumn',           { bg = p.state_error_bg, ctermbg = 52 })
   hl(0, 'SignColumn',            { bg = p.state_attention_bg, ctermbg = 58 })
@@ -83,18 +89,18 @@ local function apply_highlights()
   hl(0, 'SpellCap',              { bg = p.state_attention_bg, ctermbg = 58 })
   hl(0, 'SpellRare',             { bg = p.state_info_bg, ctermbg = 23 })
   hl(0, 'SpellLocal',            { bg = p.state_info_bg, ctermbg = 23 })
-  hl(0, 'Search',                { bg = p.editor_search_bg, fg = p.text_strong, ctermbg = 142, ctermfg = 255 })
+  hl(0, 'Search',                with(p.editor_search_attrs, { bg = p.editor_search_bg, fg = p.text_strong, ctermbg = 142, ctermfg = 255 }))
   hl(0, 'Cursor',                { bg = p.editor_cursor_bg, fg = p.editor_cursor_fg })
   hl(0, 'CursorLine',            { bg = p.editor_cursorline })
   hl(0, 'CursorLineNr',          { fg = p.state_warning, ctermfg = 173 })
-  hl(0, 'VertSplit',             { fg = p.surface_raised, bg = p.surface_raised, ctermfg = 235, ctermbg = 235 })
+  hl(0, 'VertSplit',             with(p.surface_raised_attrs, { fg = p.surface_raised, bg = p.surface_raised, ctermfg = 235, ctermbg = 235 }))
   hl(0, 'EndOfBuffer',           { fg = p.surface_sunken, ctermfg = 232 })
   hl(0, 'TabLineFill',           { fg = p.surface_base, ctermbg = 234 })
   hl(0, 'TabLine',               { fg = p.text_dim, bg = p.surface_overlay, ctermfg = 250, ctermbg = 238 })
-  hl(0, 'TabLineSel',            { fg = p.text_strong, bg = p.surface_sunken, ctermfg = 255, ctermbg = 232 })
+  hl(0, 'TabLineSel',            with(p.surface_sunken_attrs, { fg = p.text_strong, bg = p.surface_sunken, ctermfg = 255, ctermbg = 232 }))
 
   hl(0, 'pythonFunction',        { fg = p.editor_function_fg, bg = p.editor_folded_bg, ctermfg = 111, ctermbg = 233 })
-  hl(0, 'FzfLuaCursorLine',      { bg = p.editor_search_bg, ctermbg = 142 })
+  hl(0, 'FzfLuaCursorLine',      with(p.editor_search_attrs, { bg = p.editor_search_bg, ctermbg = 142 }))
   hl(0, 'FzfLuaCursorLineNr',    { })
 
   hl(0, '@identifier',           { fg = p.text_strong, ctermfg = 255 })
@@ -120,6 +126,11 @@ local function apply_highlights()
   hl(0, '@struct.specifier',     { link = '@keyword' })
 
   hl(0, 'Pmenu',                 { link = 'Normal' })
+  -- the stock Visual is a gray, so only a theme that marks selections some
+  -- other way replaces it
+  if next(p.surface_overlay_attrs or {}) then
+    hl(0, 'Visual',              p.surface_overlay_attrs)
+  end
 
   if p.fzf_colors then
     vim.env.FZF_DEFAULT_OPTS = FZF_BASE_OPTS .. ' --color=' .. p.fzf_colors

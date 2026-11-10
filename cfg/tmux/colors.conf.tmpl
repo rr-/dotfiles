@@ -5,12 +5,14 @@
 # its own palette, where colour235 is anybody's guess.
 
 set -g message-command-style "bg={{state.success_bg}}"
-set -g message-style "bg={{surface.raised}} fg={{text.dim}}"
+set -g message-style "bg={{surface.raised|tmux}} fg={{text.dim}}"
+# the window list draws over status-style and keeps any attr it sets, so on
+# light-hc the bar stays plain and only the current window turns over
 set -g status-style "bg={{surface.raised}} fg={{text.dim}}"
 set -g status-left-style "bg={{surface.raised}} fg={{text.dim}}"
 set -g status-right-style "bg={{surface.raised}} fg={{text.dim}}"
-setw -g mode-style "bg={{surface.raised}}"
-setw -g window-status-current-style "bg={{surface.sunken}} fg={{text.strong}}"
+setw -g mode-style "bg={{surface.raised|tmux}}"
+setw -g window-status-current-style "bg={{surface.sunken|tmux}} fg={{text.strong}}"
 setw -g window-status-style "bg={{surface.overlay}} fg={{text.dim}}"
 setw -g window-status-bell-style "bg={{state.warning}} fg={{text.inverse}} bold"
 # Termius has ignored OSC 4, 10 and 11 since it moved onto libghostty, so

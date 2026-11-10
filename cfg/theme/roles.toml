@@ -10,7 +10,10 @@
 # isn't named it takes light's spec, through its own palette - which turns an
 # index black or white, but leaves a literal "#rrggbb" alone, so every literal
 # names a light-hc of its own. Anything a background is white there, anything
-# drawn on one black.
+# drawn on one black, and what a shade of gray would have set apart is set
+# apart by `reverse` instead:
+#
+#     raised = { value = 235, attrs = { light-hc = ["reverse"] } }
 #
 # No program names here - add a tone and let the template pick it.
 
@@ -23,14 +26,21 @@ muted = 7
 dim = 250
 faint = 242
 inverse = 232
+# fainter still, for what only frames the text: line numbers, borders
+ghost = { value = 238, light-hc = "fg" }
+# the row you're on in a list, and the matches in it
+selected = { value = 255, light-hc = "bg" }
+selected_match = { value = 203, light-hc = "bg", attrs = { light-hc = ["bold", "underline"] } }
 
 # background tones, deepest to closest to the surface
 [surface]
-sunken = 232
+sunken = { value = 232, attrs = { light-hc = ["reverse"] } }
 base = 234
-raised = 235
+raised = { value = 235, attrs = { light-hc = ["reverse"] } }
 # white on light-hc: tmux paints its window list on it
-overlay = { value = 238, light-hc = "bg" }
+overlay = { value = 238, light-hc = "bg", attrs = { light-hc = ["reverse"] } }
+# behind the row you're on in a list
+selected = { value = 235, light-hc = "fg" }
 border = { value = 234, light-hc = "fg" }
 # the terminal's own default background, for whoever has to paint it in its place
 ground = "bg"
@@ -42,7 +52,7 @@ info = 110      # supporting detail: pane titles, docstrings
 link = 14       # branches, urls, anything you'd follow
 
 [state]
-error = 203
+error = { value = 203, attrs = { light-hc = ["bold", "underline"] } }
 warning = 173
 success = 150
 success_bg = { value = 150, light-hc = "bg" }
@@ -130,7 +140,7 @@ error_bg = { value = "#FF0000", light-hc = "fg" }
 cursor_fg = { value = "#FFFFFF", light-hc = "bg" }
 cursor_bg = { value = "#40AF40", light-hc = "fg" }
 cursorline = { light = "#F4F8EA", dark = "#0F140A", light-hc = "bg" }
-search_bg = 142
+search_bg = { value = 142, attrs = { light-hc = ["reverse"] } }
 folded_bg = 233
 function_bg = 233
 function_fg = 111

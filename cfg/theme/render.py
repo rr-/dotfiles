@@ -46,7 +46,7 @@ def current_theme(default: str = "light") -> str:
 @dataclass
 class Role:
     colors: dict[str, str]
-    attrs: list[str] = field(default_factory=list)
+    attrs: dict[str, list[str]] = field(default_factory=dict)
     # the palette entry every theme names, if they name the same one: a
     # consumer that refers to it rather than to its rgb follows the terminal's
     # palette as it changes, without being re-rendered
@@ -54,6 +54,9 @@ class Role:
 
     def color(self, theme: str) -> str:
         return self.colors[theme]
+
+    def attrs_for(self, theme: str) -> list[str]:
+        return self.attrs.get(theme, [])
 
 
 @cache
@@ -98,10 +101,19 @@ def resolve_role(spec: Any, where: str) -> Role:
     """A bare spec, or a table giving per-theme specs and attrs.
 
     A theme the table doesn't name takes its base's spec, read through its
-    own palette.
+    own palette. `attrs` is a list for every theme, or a table of lists by
+    theme with the same fallback.
     """
+    attrs: dict[str, list[str]] = {}
     if isinstance(spec, dict):
-        attrs = list(spec.get("attrs", []))
+        given = spec.get("attrs", [])
+        for theme in THEMES:
+            if isinstance(given, dict):
+                attrs[theme] = list(
+                    given.get(theme, given.get(BASE[theme], []))
+                )
+            else:
+                attrs[theme] = list(given)
         per_theme = {
             theme: spec.get(theme, spec.get(BASE[theme], spec.get("value")))
             for theme in THEMES
@@ -109,7 +121,6 @@ def resolve_role(spec: Any, where: str) -> Role:
         if any(value is None for value in per_theme.values()):
             raise ValueError(f"{where}: needs `value`, or both light and dark")
     else:
-        attrs = []
         per_theme = dict.fromkeys(THEMES, spec)
     shared = per_theme["light"]
     return Role(
@@ -161,9 +172,19 @@ FILTERS: dict[str, Callable[[Role, str], str]] = {
     "rgb": lambda role, theme: "%d, %d, %d" % to_rgb(role.color(theme)),
     "sgrbg": lambda role, theme: "48;2;%d;%d;%d" % to_rgb(role.color(theme)),
     "zsh": lambda role, theme: (
-        ("%B" if "bold" in role.attrs else "") + f"%F{{{role.color(theme)}}}"
+        ("%B" if "bold" in role.attrs_for(theme) else "")
+        + f"%F{{{role.color(theme)}}}"
     ),
-    "attrs": lambda role, theme: " ".join(role.attrs),
+    "attrs": lambda role, theme: " ".join(role.attrs_for(theme)),
+    # a color with its attrs riding along, the way each program spells it
+    "tmux": lambda role, theme: "".join(
+        [role.color(theme), *(f",{attr}" for attr in role.attrs_for(theme))]
+    ),
+    "fzf": lambda role, theme: "".join(
+        [role.color(theme), *(f":{attr}" for attr in role.attrs_for(theme))]
+    ),
+    "lua": lambda role, theme: "{%s}"
+    % ", ".join(f"{attr} = true" for attr in role.attrs_for(theme)),
     "tm": lambda role, theme: tm_color(role, theme),
 }
 
