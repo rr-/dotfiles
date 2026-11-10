@@ -32,8 +32,8 @@ set -g @window-style-opaque "fg={{text.normal}} bg={{surface.ground}}"
 set -g @window-style-clear "fg={{text.normal}}"
 set -g @pane-border-style-opaque "bg={{surface.ground}} fg={{surface.border}}"
 set -g @pane-border-style-clear "bg=default fg={{surface.border}}"
-set -g @pane-active-border-style-opaque "bg={{surface.ground}} fg={{accent.primary}} bold"
-set -g @pane-active-border-style-clear "bg=default fg={{accent.primary}} bold"
+set -g @pane-active-border-style-opaque "bg={{surface.border_active}} fg={{accent.primary}} bold"
+set -g @pane-active-border-style-clear "bg={{surface.border_active|clear}} fg={{accent.primary}} bold"
 set -g @ground-fit '\
 setw -gF window-style "#{?#{E:@termius-attached},#{@window-style-opaque},#{@window-style-clear}}" ; \
 set -gF pane-border-style "#{?#{E:@termius-attached},#{@pane-border-style-opaque},#{@pane-border-style-clear}}" ; \

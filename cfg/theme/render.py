@@ -186,6 +186,13 @@ FILTERS: dict[str, Callable[[Role, str], str]] = {
     "lua": lambda role, theme: "{%s}"
     % ", ".join(f"{attr} = true" for attr in role.attrs_for(theme)),
     "tm": lambda role, theme: tm_color(role, theme),
+    # tmux's own default where the role is only the terminal's background, so
+    # whatever the terminal draws behind it - the wallpaper - shows through
+    "clear": lambda role, theme: (
+        "default"
+        if role.color(theme) == load_palette(theme)["bg"].lower()
+        else role.color(theme)
+    ),
 }
 
 

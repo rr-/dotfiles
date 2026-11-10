@@ -42,6 +42,9 @@ overlay = { value = 238, light-hc = "bg", attrs = { light-hc = ["reverse"] } }
 # behind the row you're on in a list
 selected = { value = 235, light-hc = "fg" }
 border = { value = 234, light-hc = "fg" }
+# behind the active pane's border. Elsewhere that is just the ground, but on
+# light-hc a heavier line alone is hard to tell from the others
+border_active = { value = "bg", light-hc = "#FF8800" }
 # the terminal's own default background, for whoever has to paint it in its place
 ground = "bg"
 
