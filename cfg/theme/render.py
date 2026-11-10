@@ -13,7 +13,10 @@ from typing import Any, Callable
 
 from libdotfiles.util import HOME_DIR
 
-THEMES = ("light", "dark")
+THEMES = ("light", "dark", "light-hc")
+# what each theme is a variant of, for the programs that only know light and
+# dark. A theme's roles fall back to its base's spec, too.
+BASE = {"light": "light", "dark": "dark", "light-hc": "light"}
 
 CLAUDE_SLUG = "dash"
 CLAUDE_THEME = f"custom:{CLAUDE_SLUG}"
@@ -42,16 +45,15 @@ def current_theme(default: str = "light") -> str:
 
 @dataclass
 class Role:
-    light: str
-    dark: str
+    colors: dict[str, str]
     attrs: list[str] = field(default_factory=list)
-    # the palette entry both themes name, if they name the same one: a
+    # the palette entry every theme names, if they name the same one: a
     # consumer that refers to it rather than to its rgb follows the terminal's
     # palette as it changes, without being re-rendered
     palette_entry: int | str | None = None
 
     def color(self, theme: str) -> str:
-        return self.light if theme == "light" else self.dark
+        return self.colors[theme]
 
 
 @cache
@@ -93,11 +95,16 @@ def resolve_color(spec: Any, theme: str, where: str) -> str:
 
 
 def resolve_role(spec: Any, where: str) -> Role:
-    """A bare spec, or a table giving per-theme specs and attrs."""
+    """A bare spec, or a table giving per-theme specs and attrs.
+
+    A theme the table doesn't name takes its base's spec, read through its
+    own palette.
+    """
     if isinstance(spec, dict):
         attrs = list(spec.get("attrs", []))
         per_theme = {
-            theme: spec.get(theme, spec.get("value")) for theme in THEMES
+            theme: spec.get(theme, spec.get(BASE[theme], spec.get("value")))
+            for theme in THEMES
         }
         if any(value is None for value in per_theme.values()):
             raise ValueError(f"{where}: needs `value`, or both light and dark")
@@ -106,12 +113,14 @@ def resolve_role(spec: Any, where: str) -> Role:
         per_theme = dict.fromkeys(THEMES, spec)
     shared = per_theme["light"]
     return Role(
-        light=resolve_color(per_theme["light"], "light", where),
-        dark=resolve_color(per_theme["dark"], "dark", where),
+        colors={
+            theme: resolve_color(value, theme, where)
+            for theme, value in per_theme.items()
+        },
         attrs=attrs,
         palette_entry=(
             shared
-            if shared == per_theme["dark"]
+            if all(value == shared for value in per_theme.values())
             and not isinstance(shared, bool)
             and (isinstance(shared, int) or shared in ("fg", "bg"))
             else None
@@ -130,7 +139,7 @@ def load_roles() -> dict[str, Role]:
             name = f"{prefix}.{key}" if prefix else key
             keys = value.keys() if isinstance(value, dict) else set()
             if isinstance(value, dict) and not (
-                keys & {"value", "light", "dark", "attrs"}
+                keys & {"value", "attrs", *THEMES}
             ):
                 walk(value, name)
             else:
@@ -175,8 +184,11 @@ def tm_color(role: Role, theme: str) -> str:
 def render(template: str, roles: dict[str, Role], theme: str) -> str:
     def substitute(match: re.Match[str]) -> str:
         name, filter_name = match[1], match[2] or "hex"
-        if name == "theme":  # the one thing that isn't a color
+        # the few things that aren't colors
+        if name == "theme":
             return theme
+        if name == "base":
+            return BASE[theme]
         if name not in roles:
             raise KeyError(f"template asks for unknown role {name!r}")
         if filter_name not in FILTERS:
@@ -187,7 +199,7 @@ def render(template: str, roles: dict[str, Role], theme: str) -> str:
 
 
 def generate(target_dir: Path = THEME_DIR) -> None:
-    """Render every consumer's template, for both themes, into target_dir."""
+    """Render every consumer's template, for every theme, into target_dir."""
     target_dir.mkdir(parents=True, exist_ok=True)
     roles = load_roles()
     for template in sorted(CFG_DIR.glob("**/*.tmpl")):

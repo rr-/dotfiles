@@ -418,6 +418,8 @@ def load_roles() -> dict:
 
 ROLES = load_roles()
 THEME = os.environ.get("THEME", "dark")
+# a variant of light takes light's spec for whatever it doesn't name itself
+BASE = "light" if THEME.startswith("light") else "dark"
 
 
 def load_palette() -> dict[int | str, str]:
@@ -474,7 +476,9 @@ def role(name: str) -> Color:
     if value is None:
         value = FALLBACK_ROLES.get(name)
     if isinstance(value, dict):
-        value = value.get(THEME, value.get("value", value.get("dark")))
+        value = value.get(
+            THEME, value.get(BASE, value.get("value", value.get("dark")))
+        )
     if value == "fg":
         return PALETTE.get("fg")
     if value == "bg":

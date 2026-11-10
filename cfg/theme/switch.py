@@ -1,4 +1,4 @@
-"""Switch this machine between the light and dark theme.
+"""Switch this machine between the light, dark and light-hc themes.
 
 Installed onto PATH as `theme` by cfg/theme/__main__.py.
 """
@@ -12,6 +12,7 @@ from subprocess import DEVNULL, TimeoutExpired, run
 
 from cfg.theme import osc, xfwm
 from cfg.theme.render import (
+    BASE,
     MARKER_PATH,
     THEMES,
     current_theme,
@@ -47,7 +48,7 @@ def update_wezterm_config(theme: str) -> None:
     if not path.exists():
         return
     path.write_text(
-        re.sub(r"((dash|stardust)[_-])\w+", rf"\1{theme}", path.read_text())
+        re.sub(r"((dash|stardust)[_-])[\w-]+", rf"\1{theme}", path.read_text())
     )
 
 
@@ -58,6 +59,10 @@ def update_theme_marker(theme: str) -> None:
 
 
 def update_running_nvim(theme: str) -> None:
+    """'background' only knows light and dark, so the theme rides along in
+    g:theme, and the ColorScheme a 'background' change fires repaints with it.
+    Fired by hand as well, since light to light-hc leaves 'background' be.
+    """
     # --headless, or the client spends a second waiting on the terminal
     runtime_dir = Path(
         os.environ.get("XDG_RUNTIME_DIR", f"/run/user/{os.getuid()}")
@@ -69,7 +74,9 @@ def update_running_nvim(theme: str) -> None:
             "--server",
             socket,
             "--remote-expr",
-            f"execute('set background={theme}')",
+            f"execute(['let g:theme = \"{theme}\"', "
+            f"'set background={BASE[theme]}', "
+            f"'doautocmd ColorScheme'])",
         )
 
 
@@ -116,7 +123,7 @@ def update_running_zsh() -> None:
 
 
 def gtk_theme(theme: str) -> str:
-    return "Adwaita-dark" if theme == "dark" else "Adwaita"
+    return "Adwaita-dark" if BASE[theme] == "dark" else "Adwaita"
 
 
 def update_wallpaper(theme: str) -> None:
@@ -192,7 +199,7 @@ def update_xfce_theme(theme: str) -> None:
         "-t",
         "bool",
         "-s",
-        "true" if theme == "dark" else "false",
+        "true" if BASE[theme] == "dark" else "false",
         "--create",
     )
 
@@ -260,13 +267,14 @@ def update_gtk_config(theme: str) -> None:
         "set",
         "org.gnome.desktop.interface",
         "color-scheme",
-        "prefer-dark" if theme == "dark" else "default",
+        "prefer-dark" if BASE[theme] == "dark" else "default",
     )
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(
-        description="Switch this machine between the light and dark theme, "
+        description="Switch this machine between the light, dark and "
+        "light-hc themes, "
         "or print the theme it is on."
     )
     parser.add_argument("theme", choices=THEMES, nargs="?")

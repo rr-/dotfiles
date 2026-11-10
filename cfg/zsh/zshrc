@@ -20,7 +20,7 @@ eval "$(zoxide init zsh)"
 # up light on a black terminal. Export it so nothing downstream has to guess.
 THEME=
 [[ -r ~/.config/theme ]] && THEME=$(<~/.config/theme)
-[[ $THEME == (light|dark) ]] || THEME=light
+[[ $THEME == (light|dark|light-hc) ]] || THEME=light
 export THEME
 
 # everything in this shell that depends on the theme, rebuilt from scratch.
@@ -54,7 +54,7 @@ __apply_theme() {
 __refresh_theme() {
     local was=$THEME
     [[ -r ~/.config/theme ]] && THEME=$(<~/.config/theme)
-    [[ $THEME == (light|dark) ]] || THEME=$was
+    [[ $THEME == (light|dark|light-hc) ]] || THEME=$was
     [[ $THEME != $was ]] && __apply_theme
     return 0
 }

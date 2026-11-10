@@ -9,21 +9,24 @@ local COLORS_DIR = vim.fn.expand('~/.config/theme.d')
 -- repaint.
 local FZF_BASE_OPTS = (vim.env.FZF_DEFAULT_OPTS or ''):gsub('%-%-color[=%s]%S+', '')
 
+-- what 'background' has to be for each theme, which only knows light and dark
+local BASE = { light = 'light', dark = 'dark', ['light-hc'] = 'light' }
+
 -- The marker first, like cfg/zsh/zshrc: $THEME is whatever our parent started
 -- with, and a parent older than the last switch hands down the old theme. It
 -- is the fallback for a machine with no marker, which over ssh is the only
 -- thing describing the terminal. 'background' is last because its default is
 -- dark, so only was_set means the terminal answered.
-local function detect_background()
+local function detect_theme()
   local ok, lines = pcall(vim.fn.readfile, THEME_FILE)
   if ok and lines[1] then
     local theme = vim.trim(lines[1])
-    if theme == 'dark' or theme == 'light' then
+    if BASE[theme] then
       return theme
     end
   end
   local env = vim.env.THEME
-  if env == 'dark' or env == 'light' then
+  if BASE[env] then
     return env
   end
   if vim.api.nvim_get_option_info2('background', {}).was_set then
@@ -42,8 +45,18 @@ local function load_colors(theme)
   return chunk()
 end
 
+-- g:theme says which variant of 'background' we're on, unless someone has
+-- set 'background' by hand since
+local function current_theme()
+  local theme = vim.g.theme
+  if BASE[theme] == vim.o.background then
+    return theme
+  end
+  return vim.o.background
+end
+
 local function apply_highlights()
-  local p = load_colors(vim.o.background)
+  local p = load_colors(current_theme())
   local hl = vim.api.nvim_set_hl
 
   hl(0, 'Number',                { fg = p.syntax_number_alt, ctermfg = 217 })
@@ -120,7 +133,8 @@ end
 -- every value this file sets. So drop it here - on VimEnter, after that
 -- check, since builds whose check does fire fail to delete it a second time.
 vim.o.termguicolors = true
-vim.o.background = detect_background()
+vim.g.theme = detect_theme()
+vim.o.background = BASE[vim.g.theme]
 
 vim.api.nvim_create_autocmd('VimEnter', {
   once = true,
@@ -142,9 +156,9 @@ vim.api.nvim_create_autocmd('VimEnter', {
 vim.cmd('colorscheme vim')
 apply_highlights()
 
--- theme(1) sets 'background' over the rpc socket, which reloads the color
--- scheme and wipes our highlights - so hook the reload, not OptionSet, which
--- fires before it.
+-- theme(1) sets g:theme and 'background' over the rpc socket, which reloads
+-- the color scheme and wipes our highlights - so hook the reload, not
+-- OptionSet, which fires before it.
 vim.api.nvim_create_autocmd('ColorScheme', { callback = apply_highlights })
 
 vim.o.cursorline = true

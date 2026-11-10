@@ -194,6 +194,13 @@ config.keys = {
 
 runtime.apply_to_config(config)
 
+-- the high-contrast theme is for an e-ink screen: plain white, with neither
+-- the stardust nor the desktop showing through
+if config.color_scheme:match('%-hc$') then
+  config.background = nil
+  config.window_background_opacity = 1
+end
+
 -- theme(1) rewrites runtime.lua, but the file watcher takes seconds to notice,
 -- so it also sets THEME as a user var (cfg/theme/osc.py) to reload right away
 wezterm.on('user-var-changed', function(window, pane, name, value)

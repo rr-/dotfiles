@@ -71,9 +71,9 @@ super + f
 alt + F12
     killall -SIGUSR1 sxhkd
 
-# switch between light and dark themes
-shift + {F11,F12}
-    theme {light,dark}
+# switch between light, dark and the black-and-white e-ink themes
+shift + {F10,F11,F12}
+    theme {light-hc,light,dark}
 
 # toggle bigger and smaller font
 super + grave

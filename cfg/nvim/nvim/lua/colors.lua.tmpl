@@ -55,7 +55,7 @@ return {
   -- gets from cfg/zsh/colors.zsh.tmpl, and the two windows come out alike.
   -- The base scheme leads, because it decides the handful fzf lets no one
   -- name - spinner, query, separator, scrollbar - and its default is dark.
-  fzf_colors = '{{theme}},fg:{{text.dim}},bg:-1,hl:{{state.error}}'
+  fzf_colors = '{{base}},fg:{{text.dim}},bg:-1,hl:{{state.error}}'
     .. ',fg+:{{text.strong}},bg+:{{surface.raised}},hl+:{{state.error}}'
     .. ',info:{{text.faint}},border:{{surface.overlay}}'
     .. ',prompt:{{accent.link}},pointer:{{accent.primary}}'

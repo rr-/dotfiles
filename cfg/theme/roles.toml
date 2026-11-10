@@ -1,10 +1,16 @@
 # What each color is FOR; cfg/wezterm/colors says what it is.
 #
-# A value is a palette index, a literal "#rrggbb", or "fg"/"bg". Where the two
-# themes were tuned apart, give both, and `attrs` rides along:
+# A value is a palette index, a literal "#rrggbb", or "fg"/"bg". Where the
+# themes were tuned apart, give each, and `attrs` rides along:
 #
 #     comment = { light = "#6F8F3A", dark = "#9DBF63" }
 #     default = { value = 145, attrs = ["bold"] }
+#
+# light-hc is the light theme in black and white, for an e-ink screen. Where it
+# isn't named it takes light's spec, through its own palette - which turns an
+# index black or white, but leaves a literal "#rrggbb" alone, so every literal
+# names a light-hc of its own. Anything a background is white there, anything
+# drawn on one black.
 #
 # No program names here - add a tone and let the template pick it.
 
@@ -23,8 +29,9 @@ inverse = 232
 sunken = 232
 base = 234
 raised = 235
-overlay = 238
-border = 234
+# white on light-hc: tmux paints its window list on it
+overlay = { value = 238, light-hc = "bg" }
+border = { value = 234, light-hc = "fg" }
 # the terminal's own default background, for whoever has to paint it in its place
 ground = "bg"
 
@@ -38,12 +45,13 @@ link = 14       # branches, urls, anything you'd follow
 error = 203
 warning = 173
 success = 150
+success_bg = { value = 150, light-hc = "bg" }
 # muted backgrounds to lay behind a whole line
 error_bg = 52
 attention_bg = 58
 info_bg = 23
 # the gold Claude Code uses for "auto mode on", turned down
-warning_dim = { light = "#8A7220", dark = "#8A7220" }
+warning_dim = { light = "#8A7220", dark = "#8A7220", light-hc = "fg" }
 
 [diff]
 whitespace = 4
@@ -59,7 +67,7 @@ accent = 10
 [diff.del]
 fg = "fg"
 bg = 130
-emph = 166
+emph = { value = 166, light-hc = "bg" }
 quiet = 94
 accent = 9
 
@@ -87,41 +95,41 @@ special = 11
 default = { value = 145, attrs = ["bold"] }
 drizzle = 75
 oldcastle = { value = 150, attrs = ["bold"] }
-snowflake = "#00DDDD"
-lightning = "#FFAA00"
-nebula = "#FF99EE"
+snowflake = { value = "#00DDDD", light-hc = "fg" }
+lightning = { value = "#FFAA00", light-hc = "fg" }
+nebula = { value = "#FF99EE", light-hc = "fg" }
 
 # the second half of a two-tone host name, where it has one
 [host2]
-snowflake = "#00AADD"
-lightning = "#EE8800"
-nebula = "#DD77DD"
+snowflake = { value = "#00AADD", light-hc = "fg" }
+lightning = { value = "#EE8800", light-hc = "fg" }
+nebula = { value = "#DD77DD", light-hc = "fg" }
 
 [syntax]
-comment = { light = "#6F8F3A", dark = "#9DBF63" }
+comment = { light = "#6F8F3A", dark = "#9DBF63", light-hc = "fg" }
 doc = 242
-string = { light = "#5FAF00", dark = "#99FF66" }
-string_bg = { light = "#F8FFF0", dark = "#0A1004" }
-character = { light = "#5FAF00", dark = "#99FF66" }
-number = { light = "#D78000", dark = "#E0A040" }
-number_alt = { light = "#ff0000", dark = "#FF5555" }
+string = { light = "#5FAF00", dark = "#99FF66", light-hc = "fg" }
+string_bg = { light = "#F8FFF0", dark = "#0A1004", light-hc = "bg" }
+character = { light = "#5FAF00", dark = "#99FF66", light-hc = "fg" }
+number = { light = "#D78000", dark = "#E0A040", light-hc = "fg" }
+number_alt = { light = "#ff0000", dark = "#FF5555", light-hc = "fg" }
 constant = 75
 constant_alt = 174
 keyword = 203
 statement = 167
 type = 146
-type_alt = { light = "#408000", dark = "#8FBF40" }
+type_alt = { light = "#408000", dark = "#8FBF40", light-hc = "fg" }
 preproc = 4
 identifier = 252
 function = 15
 special_key = 167
-error_fg = "#ffffff"
-error_bg = "#FF0000"
+error_fg = { value = "#ffffff", light-hc = "bg" }
+error_bg = { value = "#FF0000", light-hc = "fg" }
 
 [editor]
-cursor_fg = "#FFFFFF"
-cursor_bg = "#40AF40"
-cursorline = { light = "#F4F8EA", dark = "#0F140A" }
+cursor_fg = { value = "#FFFFFF", light-hc = "bg" }
+cursor_bg = { value = "#40AF40", light-hc = "fg" }
+cursorline = { light = "#F4F8EA", dark = "#0F140A", light-hc = "bg" }
 search_bg = 142
 folded_bg = 233
 function_bg = 233
@@ -131,10 +139,10 @@ function_fg = 111
 # reads these - they exist so the panel, window frames and browser chrome can
 # be their own thing without dragging the editor's colors along.
 [pane]
-film = { light = "#67A6E5", dark = "#0E1A33" }
-film_deep = { light = "#5293D0", dark = "#16233F" }
-edge = { light = "#2E67A4", dark = "#3E5885" }
-ink = { light = "#EAF3FB", dark = "#DCEAFC" }
-ink_faint = { light = "#5F7FBE", dark = "#7FA3E4" }
-accent = { light = "#0A4276", dark = "#78A8F8" }
-hot = { light = "#B33FA0", dark = "#EEB7F0" }
+film = { light = "#67A6E5", dark = "#0E1A33", light-hc = "bg" }
+film_deep = { light = "#5293D0", dark = "#16233F", light-hc = "bg" }
+edge = { light = "#2E67A4", dark = "#3E5885", light-hc = "fg" }
+ink = { light = "#EAF3FB", dark = "#DCEAFC", light-hc = "fg" }
+ink_faint = { light = "#5F7FBE", dark = "#7FA3E4", light-hc = "fg" }
+accent = { light = "#0A4276", dark = "#78A8F8", light-hc = "fg" }
+hot = { light = "#B33FA0", dark = "#EEB7F0", light-hc = "fg" }
