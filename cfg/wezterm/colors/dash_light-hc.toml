@@ -5,6 +5,14 @@
 [colors]
 background = "#FFFFFF"
 foreground = "#000000"
+# wezterm's own defaults are a green cursor and a lavender selection, which an
+# e-ink screen can't show; OSC 112 puts the cursor back to this one
+cursor_bg = "#FF0000"
+cursor_fg = "#FFFFFF"
+cursor_border = "#FF0000"
+selection_bg = "#000000"
+selection_fg = "#FFFFFF"
+split = "#000000"
 
 ansi = [
     "#FFFFFF",

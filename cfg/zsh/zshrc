@@ -238,24 +238,23 @@ fi
 export HOST_USER_UID=$(id -u)
 export HOST_USER_GID=$(id -g)
 
-# change cursor for vim insert mode
+# change cursor for vim insert mode. Insert mode sets the theme's own caret
+# rather than resetting it (OSC 112), which would fall back to whatever the
+# terminal's scheme says - over ssh, not ours.
 zle-line-init zle-keymap-select () {
+    local caret
     case $KEYMAP in
-        vicmd)
-            if [[ $TMUX = '' ]]; then
-                echo -ne "\033]12;red\007"
-            else
-                printf '\033Ptmux;\033\033]12;red\007\033\\'
-            fi
-            ;;
-        viins|main)
-            if [[ $TMUX = '' ]]; then
-                echo -ne "\033]112\007"
-            else
-                printf '\033Ptmux;\033\033]112\007\033\\'
-            fi
-            ;;
+        vicmd) caret=red ;;
+        viins|main) caret=${theme_cursor:-} ;;
+        *) return ;;
     esac
+    local seq=$'\e]112\a'
+    [[ -n $caret ]] && seq=$'\e]12;'$caret$'\a'
+    if [[ -z $TMUX ]]; then
+        print -rn -- $seq
+    else
+        print -rn -- $'\ePtmux;'${seq//$'\e'/$'\e\e'}$'\e\\'
+    fi
 }
 zle -N zle-line-init
 zle -N zle-keymap-select

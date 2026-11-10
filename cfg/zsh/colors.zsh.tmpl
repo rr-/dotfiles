@@ -27,6 +27,9 @@ theme_ps1_host2=(
     nebula    '{{host2.nebula|zsh}}'
 )
 
+# the caret, which vi insert mode puts back after command mode turns it red
+theme_cursor='{{editor.cursor_bg}}'
+
 # man pager, which only speaks raw escapes
 theme_less_mb=$'\e[01;{{state.error|sgr}}m'
 theme_less_md=$'\e[01;{{accent.info|sgr}}m'

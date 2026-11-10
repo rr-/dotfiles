@@ -138,7 +138,8 @@ error_bg = { value = "#FF0000", light-hc = "fg" }
 
 [editor]
 cursor_fg = { value = "#FFFFFF", light-hc = "bg" }
-cursor_bg = { value = "#40AF40", light-hc = "fg" }
+# the one color light-hc keeps, since a black caret gets lost in black text
+cursor_bg = { value = "#40AF40", light-hc = "#FF0000" }
 cursorline = { light = "#F4F8EA", dark = "#0F140A", light-hc = "bg" }
 search_bg = { value = 142, attrs = { light-hc = ["reverse"] } }
 folded_bg = 233
