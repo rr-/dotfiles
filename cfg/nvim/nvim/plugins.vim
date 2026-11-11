@@ -40,8 +40,11 @@ let g:fern#default_exclude = '__pycache__'
 let g:fern#hide_cursor = 1
 let g:fern#drawer_keep = 1
 function! s:init_fern() abort
-  "pressing <F3> in fern causes it to go up
-  nmap <buffer> <F3> <BS>
+  "pressing <F3> or <leader>k in fern causes it to go up; fern maps <BS>
+  "with <nowait>, which would shadow <leader>k, so remap it without
+  nmap <buffer> <F3> <Plug>(fern-action-leave)
+  nmap <buffer> <BS> <Plug>(fern-action-leave)
+  nmap <buffer> <leader>k <Plug>(fern-action-leave)
   nmap <buffer> D <Plug>(fern-action-remove)
   nmap <buffer> R <Plug>(fern-action-rename)
 endfunction

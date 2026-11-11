@@ -51,6 +51,7 @@ map('t', '<Esc>', '<C-\\><C-n>', { silent = true })
 -- file explorer
 map('i', '<F3>', '<Esc>:Fern %:h -reveal=%:p<CR>', { silent = true })
 map('n', '<F3>', ':Fern %:h -reveal=%:p<CR>', { silent = true })
+map('n', '<leader>k', ':Fern %:h -reveal=%:p<CR>', { silent = true })
 
 -- EasyAlign
 map('n', 'ga', '<Plug>(EasyAlign)', {})
