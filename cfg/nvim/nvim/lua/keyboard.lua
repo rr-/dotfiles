@@ -53,6 +53,9 @@ map('i', '<F3>', '<Esc>:Fern %:h -reveal=%:p<CR>', { silent = true })
 map('n', '<F3>', ':Fern %:h -reveal=%:p<CR>', { silent = true })
 map('n', '<leader>k', ':Fern %:h -reveal=%:p<CR>', { silent = true })
 
+-- blockwise visual, since the terminal app eats <C-v>
+map({ 'n', 'x' }, '<leader>b', '<C-v>', { silent = true })
+
 -- EasyAlign
 map('n', 'ga', '<Plug>(EasyAlign)', {})
 map('x', 'ga', '<Plug>(EasyAlign)', {})

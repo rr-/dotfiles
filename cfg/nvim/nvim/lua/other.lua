@@ -131,6 +131,6 @@ end
 
 
 vim.api.nvim_create_user_command('AI', pass_through_chatgpt, { range = true, nargs = 1 })
-vim.api.nvim_set_keymap('n', '<leader>b', ':lua ConvertToBinary()<CR>', { noremap = true, silent = true })
+vim.api.nvim_set_keymap('n', '<leader>B', ':lua ConvertToBinary()<CR>', { noremap = true, silent = true })
 vim.api.nvim_set_keymap('n', '<leader>x', ':lua ConvertToHex()<CR>', { noremap = true, silent = true })
 vim.api.nvim_set_keymap('n', '<Leader>ev', [[:lua insert_lua_expression()<CR>]], { noremap = true, silent = true })
