@@ -44,7 +44,14 @@ def recreate_session(spec: SessionSpec) -> None:
         return
 
     result = run(
-        ["tmux", "list-windows", "-t", spec["name"], "-F", "#{window_name}"],
+        [
+            "tmux",
+            "list-windows",
+            "-t",
+            "=" + spec["name"] + ":",
+            "-F",
+            "#{window_name}",
+        ],
         capture_output=True,
         text=True,
     )
@@ -54,10 +61,12 @@ def recreate_session(spec: SessionSpec) -> None:
         existing_windows = result.stdout.splitlines()
 
     if existing_windows:
-        last_created_window = spec["name"] + ":" + existing_windows[-1]
+        last_created_window = "=" + spec["name"] + ":" + existing_windows[-1]
     else:
         first_window = windows_to_create.pop(0)
-        last_created_window = spec["name"] + ":" + first_window["window_name"]
+        last_created_window = (
+            "=" + spec["name"] + ":" + first_window["window_name"]
+        )
         run(
             [
                 "tmux",
@@ -88,7 +97,7 @@ def recreate_session(spec: SessionSpec) -> None:
                     Path(window["cwd"]).expanduser(),
                 ]
             )
-        last_created_window = spec["name"] + ":" + window["window_name"]
+        last_created_window = "=" + spec["name"] + ":" + window["window_name"]
 
 
 def recreate_sessions() -> None:
