@@ -21,5 +21,10 @@ fw:
 
   - name: nordhealth
     windows:
-    - window_name: kraken-main
-      cwd: ~/work/nordhealth/kraken/
+    - window_name: provetcloud
+      cwd: ~/work/nordhealth/provetcloud/
+
+  - name: opentouhou
+    windows:
+    - window_name: main
+      cwd: ~/work/priv/opentouhou/
