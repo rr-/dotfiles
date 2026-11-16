@@ -388,6 +388,44 @@ pub fn purge(entry: &Entry) -> Result<(), String> {
     fs::remove_file(info_path(&entry.id)?).map_err(|error| error.to_string())
 }
 
+/// What a trash holds.
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+pub struct Usage {
+    pub items: u64,
+    /// Disk space taken, counted the way du does: allocated blocks, not
+    /// apparent sizes, with symlinks not followed.
+    pub bytes: u64,
+}
+
+fn disk_usage(path: &Path) -> io::Result<u64> {
+    let metadata = match fs::symlink_metadata(path) {
+        Ok(metadata) => metadata,
+        Err(error) if error.kind() == io::ErrorKind::NotFound => return Ok(0),
+        Err(error) => return Err(error),
+    };
+    let mut bytes = metadata.blocks() * 512;
+    if metadata.is_dir() {
+        for entry in fs::read_dir(path)? {
+            bytes += disk_usage(&entry?.path())?;
+        }
+    }
+    Ok(bytes)
+}
+
+/// What one trash holds; one that isn't there holds nothing.
+pub fn usage(trash: &Path) -> Result<Usage, String> {
+    let items = match fs::read_dir(trash.join("info")) {
+        Ok(infos) => infos
+            .flatten()
+            .filter(|info| info.file_name().as_bytes().ends_with(b".trashinfo"))
+            .count() as u64,
+        Err(_) => 0,
+    };
+    let files = trash.join("files");
+    let bytes = disk_usage(&files).map_err(|error| format!("{}: {error}", files.display()))?;
+    Ok(Usage { items, bytes })
+}
+
 /// Remember the ids of the last batch put away, for restoring it as one.
 pub fn set_last(ids: &[PathBuf]) -> Result<(), String> {
     let state = state_dir()?;
@@ -462,6 +500,9 @@ mod tests {
         assert_eq!(second.id, root.join("data/Trash/files/a b.png.2"));
         assert_eq!(entry(&second.id).unwrap().original, file);
         assert_eq!(list().unwrap().len(), 2);
+        let usage = usage(&root.join("data/Trash")).unwrap();
+        assert_eq!(usage.items, 2);
+        assert!(usage.bytes > 0);
 
         assert_eq!(restore(&second.id).unwrap(), file);
         assert_eq!(fs::read_to_string(&file).unwrap(), "two");

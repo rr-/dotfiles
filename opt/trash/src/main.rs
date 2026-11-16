@@ -6,6 +6,7 @@ trash put FILE...           move files to the trash, printing where each went
 trash restore ID...         put items back where they came from
 trash restore --last        put back the last batch put away
 trash list                  date, original path and id of everything trashed
+trash stat                  items and disk space in each trash
 trash empty [--older DAYS] [--yes]
                             delete trashed items for good";
 
@@ -61,9 +62,51 @@ fn run() -> Result<(), String> {
             }
             Ok(())
         }
+        Some("stat") if arguments.is_empty() => stat(),
         Some("empty") => empty(&arguments),
         _ => Err(USAGE.into()),
     }
+}
+
+fn stat() -> Result<(), String> {
+    let mut rows = Vec::new();
+    let mut total = trash::Usage::default();
+    for dir in trash::trashes()? {
+        if !dir.exists() {
+            continue;
+        }
+        let usage = trash::usage(&dir)?;
+        total.items += usage.items;
+        total.bytes += usage.bytes;
+        rows.push((dir.display().to_string(), usage));
+    }
+    if rows.len() > 1 {
+        rows.push(("total".into(), total));
+    }
+    let width = rows.iter().map(|(name, _)| name.len()).max().unwrap_or(0);
+    for (name, usage) in rows {
+        println!(
+            "{name:<width$}  {:>6} items  {:>10}",
+            usage.items,
+            human(usage.bytes)
+        );
+    }
+    Ok(())
+}
+
+fn human(bytes: u64) -> String {
+    let mut size = bytes as f64;
+    for unit in ["B", "KiB", "MiB", "GiB"] {
+        if size < 1024.0 {
+            return if unit == "B" {
+                format!("{bytes} B")
+            } else {
+                format!("{size:.1} {unit}")
+            };
+        }
+        size /= 1024.0;
+    }
+    format!("{size:.1} TiB")
 }
 
 fn empty(arguments: &[std::ffi::OsString]) -> Result<(), String> {
