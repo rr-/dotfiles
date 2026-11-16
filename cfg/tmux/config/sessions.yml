@@ -4,6 +4,16 @@ fw:
     - window_name: main
       cwd: ~/
 
+  - name: nordhealth
+    windows:
+    - window_name: provetcloud
+      cwd: ~/work/nordhealth/provetcloud/
+
+  - name: opentouhou
+    windows:
+    - window_name: main
+      cwd: ~/work/priv/opentouhou/
+
   - name: trx
     windows:
     - window_name: TRX
@@ -18,13 +28,3 @@ fw:
     windows:
     - window_name: main
       cwd: ~/work/priv/trcustoms/
-
-  - name: nordhealth
-    windows:
-    - window_name: provetcloud
-      cwd: ~/work/nordhealth/provetcloud/
-
-  - name: opentouhou
-    windows:
-    - window_name: main
-      cwd: ~/work/priv/opentouhou/
