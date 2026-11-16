@@ -102,6 +102,60 @@ pub fn group(path: &Path, discard: bool) -> Result<Renames, String> {
     Ok(result)
 }
 
+/// How a discarded group went away, so undo knows how to bring it back.
+pub enum Discarded {
+    /// Into the trash; the ids of its items.
+    Trashed(Vec<PathBuf>),
+    /// Renamed aside with a ~, where the trash wouldn't take it.
+    Renamed(Renames),
+}
+
+/// Trash path and the files sharing its stem, or failing that rename them
+/// aside with a ~. The second value says why the trash wasn't used.
+pub fn discard(path: &Path) -> Result<(Discarded, Option<String>), String> {
+    let renames = group(path, true)?;
+    let mut ids = Vec::new();
+    let mut failure = None;
+    for (source, _) in &renames {
+        match trash::put(source) {
+            Ok(entry) => ids.push(entry.id),
+            Err(error) => {
+                failure = Some(error);
+                break;
+            }
+        }
+    }
+    let Some(failure) = failure else {
+        return Ok((Discarded::Trashed(ids), None));
+    };
+    // a group goes as one, so put back what did make it into the trash
+    for id in ids.iter().rev() {
+        trash::restore(id)?;
+    }
+    rename_group(&renames)?;
+    Ok((
+        Discarded::Renamed(renames),
+        Some(format!("Not trashed ({failure}), renamed with ~")),
+    ))
+}
+
+pub fn undo_discard(discarded: &Discarded) -> Result<(), String> {
+    match discarded {
+        Discarded::Trashed(ids) => {
+            for id in ids {
+                trash::restore(id)?;
+            }
+            Ok(())
+        }
+        Discarded::Renamed(renames) => rename_group(
+            &renames
+                .iter()
+                .map(|(old, new)| (new.clone(), old.clone()))
+                .collect(),
+        ),
+    }
+}
+
 pub fn rename_group(renames: &Renames) -> Result<(), String> {
     for (source, destination) in renames {
         if source != destination && destination.exists() {
@@ -183,6 +237,36 @@ mod tests {
                 "a/IMG_.jpg"
             ]
         );
+    }
+
+    #[test]
+    fn discard_trashes_the_whole_group_and_undo_brings_it_back() {
+        let root = std::env::temp_dir().join(format!("cull-discard-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&root);
+        std::fs::create_dir_all(root.join("shoot")).unwrap();
+        // safe: the only test that touches the environment
+        unsafe {
+            std::env::set_var("XDG_DATA_HOME", root.join("data"));
+            std::env::set_var("XDG_STATE_HOME", root.join("state"));
+        }
+        let jpeg = root.join("shoot/DSC_1.JPG");
+        let raw = root.join("shoot/DSC_1.NEF");
+        let other = root.join("shoot/DSC_2.JPG");
+        for path in [&jpeg, &raw, &other] {
+            std::fs::write(path, "").unwrap();
+        }
+
+        let (discarded, note) = discard(&jpeg).unwrap();
+        assert!(note.is_none());
+        let Discarded::Trashed(ids) = &discarded else {
+            panic!("renamed rather than trashed");
+        };
+        assert_eq!(ids.len(), 2);
+        assert!(!jpeg.exists() && !raw.exists() && other.exists());
+
+        undo_discard(&discarded).unwrap();
+        assert!(jpeg.exists() && raw.exists());
+        std::fs::remove_dir_all(&root).unwrap();
     }
 
     #[test]

@@ -113,7 +113,7 @@ pub fn run() -> Result<(), String> {
         match argument.as_str() {
             "--help" | "-h" => {
                 println!(
-                    "cull [--recurse] [--select FILE] [--playlist FILE|-] [PATH ...]\nNavigation: j/k, 10j/10k, gg first, G last, 100G jump to image 100\nView: v toggle original, p toggle pixel peek, f fullscreen, Alt+1/2/3 fit/fill/original, Z reset, +/-; HJKL pan, Alt+h/l rotate\nOverlays: c zoom overview; i image details; b filmstrip, filename and counter\nCull: S or ], x discard, X undo; zs slideshow\nClipboard: yp or Ctrl+c full path; yy image bitmap\nEscape cancels a pending numeric count or key sequence."
+                    "cull [--recurse] [--select FILE] [--playlist FILE|-] [PATH ...]\nNavigation: j/k, 10j/10k, gg first, G last, 100G jump to image 100\nView: v toggle original, p toggle pixel peek, f fullscreen, Alt+1/2/3 fit/fill/original, Z reset, +/-; HJKL pan, Alt+h/l rotate\nOverlays: c zoom overview; i image details; b filmstrip, filename and counter\nCull: S or ], x trash, X undo; zs slideshow\nClipboard: yp or Ctrl+c full path; yy image bitmap\nEscape cancels a pending numeric count or key sequence."
                 );
                 return Ok(());
             }
@@ -189,7 +189,7 @@ pub fn run() -> Result<(), String> {
     let (sender, receiver) = mpsc::channel();
     let mut pending = std::collections::HashSet::new();
     let mut cache = HashMap::new();
-    let mut undo: Vec<(usize, PathBuf, files::Renames)> = Vec::new();
+    let mut undo: Vec<(usize, PathBuf, files::Discarded)> = Vec::new();
     let mut mode = 0;
     let mut previous_view = 0;
     let mut previous_pixel_view = 0;
@@ -392,12 +392,8 @@ pub fn run() -> Result<(), String> {
                         }
                     }
                     Action::Undo => {
-                        if let Some((position, path, renames)) = undo.last() {
-                            let reversed = renames
-                                .iter()
-                                .map(|(old, new)| (new.clone(), old.clone()))
-                                .collect();
-                            match files::rename_group(&reversed) {
+                        if let Some((position, path, discarded)) = undo.last() {
+                            match files::undo_discard(discarded) {
                                 Ok(()) => {
                                     let position = (*position).min(paths.len());
                                     let path = path.clone();
@@ -409,20 +405,17 @@ pub fn run() -> Result<(), String> {
                             }
                         }
                     }
-                    Action::Discard => {
-                        let result = files::group(&paths[index], true).and_then(|renames| {
-                            files::rename_group(&renames)?;
-                            Ok(renames)
-                        });
-                        match result {
-                            Ok(renames) => {
-                                let path = paths.remove(index);
-                                undo.push((index, path, renames));
-                                index = index.min(paths.len().saturating_sub(1));
+                    Action::Discard => match files::discard(&paths[index]) {
+                        Ok((discarded, note)) => {
+                            let path = paths.remove(index);
+                            undo.push((index, path, discarded));
+                            index = index.min(paths.len().saturating_sub(1));
+                            if let Some(note) = note {
+                                message = note;
                             }
-                            Err(error) => message = error,
                         }
-                    }
+                        Err(error) => message = error,
+                    },
                     Action::FileManager => {
                         crate::vifm::reveal(&paths[index]);
                         break 'app;
