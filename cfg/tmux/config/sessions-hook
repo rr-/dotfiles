@@ -164,26 +164,103 @@ def session_bar(names: list[str]) -> str:
     return "".join(entries)
 
 
-def recreate_sessions() -> None:
-    """Recreate sessions that should be persisted across machines."""
+def load_specs() -> Spec | None:
     if not HAS_YAML:
         print("pyyaml module not installed", file=sys.stderr)
-        return
+        return None
 
     if not SESSIONS_PATH.exists():
         print("sessions file does not exist", file=sys.stderr)
-        return
+        return None
 
     config = yaml.safe_load(SESSIONS_PATH.read_text())
-    machine_name = socket.gethostname()
+    specs: Spec = config.get(socket.gethostname(), [])
+    return specs
 
-    specs = config.get(machine_name, [])
+
+def recreate_sessions() -> None:
+    """Recreate sessions that should be persisted across machines."""
+    specs = load_specs()
+    if specs is None:
+        return
+
     for spec in specs:
         recreate_session(spec)
     number_sessions(specs)
 
 
+def move_session(delta: int) -> None:
+    """Move the current session one place in this machine's part of the
+    sessions file, wrapping around at either end like prefix Left/Right do
+    for windows.
+
+    The file is edited as text, so its comments and blank lines survive.
+    """
+    current = run(
+        ["tmux", "display", "-p", "#S"], capture_output=True, text=True
+    ).stdout.strip()
+    lines = SESSIONS_PATH.read_text().splitlines(keepends=True)
+
+    header = socket.gethostname() + ":"
+    try:
+        start = next(
+            i for i, line in enumerate(lines) if line.rstrip() == header
+        )
+    except StopIteration:
+        run(["tmux", "display", f"no {header} section in {SESSIONS_PATH}"])
+        return
+    end = next(
+        (
+            i
+            for i in range(start + 1, len(lines))
+            if lines[i].strip() and not lines[i][0].isspace()
+        ),
+        len(lines),
+    )
+
+    # each entry runs from its "- name:" line to the next one; blank lines
+    # trailing it stay in their slot, so the spacing doesn't move along
+    firsts = [
+        i
+        for i in range(start + 1, end)
+        if lines[i].lstrip().startswith("- name:")
+    ]
+    if not firsts:
+        return
+    bodies: list[list[str]] = []
+    gaps: list[list[str]] = []
+    for first, after in zip(firsts, [*firsts[1:], end]):
+        chunk = lines[first:after]
+        cut = len(chunk)
+        while cut > 1 and not chunk[cut - 1].strip():
+            cut -= 1
+        bodies.append(chunk[:cut])
+        gaps.append(chunk[cut:])
+
+    names = [body[0].split(":", 1)[1].strip().strip("'\"") for body in bodies]
+    if current not in names:
+        run(["tmux", "display", f"{current} is not in {SESSIONS_PATH}"])
+        return
+
+    i = names.index(current)
+    body = bodies.pop(i)
+    if delta < 0 and i == 0:
+        bodies.append(body)
+    elif delta > 0 and i == len(names) - 1:
+        bodies.insert(0, body)
+    else:
+        bodies.insert(i + delta, body)
+
+    entries = [line for body, gap in zip(bodies, gaps) for line in body + gap]
+    lines[firsts[0] : end] = entries
+    SESSIONS_PATH.write_text("".join(lines))
+    recreate_sessions()
+
+
 def main() -> None:
+    if sys.argv[1:2] == ["move"]:
+        move_session(int(sys.argv[2]))
+        return
     renumber_sessions()
     recreate_sessions()
 
