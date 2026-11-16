@@ -1,0 +1,165 @@
+#!/usr/bin/env -S uv run --script
+#
+# /// script
+# requires-python = ">=3.12"
+# dependencies = []
+# ///
+#
+# Prints PDFs and images on the HP LaserJet. Uses a local CUPS queue when
+# the printer is plugged into this machine, otherwise prints through the
+# Windows desktop over SSH (rasterized, since it has no silent PDF printer).
+
+import argparse
+import base64
+import re
+import shlex
+import shutil
+import subprocess
+import sys
+import tempfile
+import uuid
+from pathlib import Path
+
+REMOTE_HOST = "desktop"
+REMOTE_PRINTER = "HP LaserJet M14-M17 PCLmS"
+LOCAL_QUEUE_PATTERN = re.compile(r"M1[4-7]|LaserJet", re.IGNORECASE)
+IMAGE_SUFFIXES = {".png", ".jpg", ".jpeg"}
+DPI = 300
+
+# Draws every page image at 1:1 page size. The graphics origin sits at the
+# printer's hard margin, so shift by it to keep the page centered.
+REMOTE_SCRIPT = r"""
+$ProgressPreference = "SilentlyContinue"
+$ErrorActionPreference = "Stop"
+Add-Type -AssemblyName System.Drawing
+$dir = Join-Path $env:USERPROFILE "{dir}"
+$pages = @(Get-ChildItem $dir -File | Sort-Object Name)
+$script:i = 0
+$pd = New-Object System.Drawing.Printing.PrintDocument
+$pd.PrinterSettings.PrinterName = "{printer}"
+$pd.PrinterSettings.Copies = {copies}
+$pd.DocumentName = "{name}"
+$pd.add_PrintPage({{
+    param($s, $e)
+    $img = [System.Drawing.Image]::FromFile($pages[$script:i].FullName)
+    $b = $e.PageBounds
+    $x = -$e.PageSettings.HardMarginX
+    $y = -$e.PageSettings.HardMarginY
+    $e.Graphics.DrawImage($img, $x, $y, $b.Width, $b.Height)
+    $img.Dispose()
+    $script:i++
+    $e.HasMorePages = $script:i -lt $pages.Count
+}})
+try {{ $pd.Print() }}
+catch {{ [Console]::Error.WriteLine($_.Exception.InnerException.Message); exit 1 }}
+finally {{ Remove-Item -Recurse -Force $dir }}
+"""
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("files", type=Path, nargs="+")
+    parser.add_argument("-n", "--copies", type=int, default=1)
+    parser.add_argument(
+        "--via",
+        choices=["auto", "usb", "desktop"],
+        default="auto",
+        help="auto uses the local CUPS queue if the printer is connected",
+    )
+    return parser.parse_args()
+
+
+def find_local_queue() -> str | None:
+    if not shutil.which("lpstat"):
+        return None
+    result = subprocess.run(
+        ["lpstat", "-p"], capture_output=True, text=True, check=False
+    )
+    for line in result.stdout.splitlines():
+        # "printer NAME is idle.  enabled since ..."
+        parts = line.split()
+        if (
+            len(parts) >= 2
+            and parts[0] == "printer"
+            and LOCAL_QUEUE_PATTERN.search(parts[1])
+            and "disabled" not in line
+        ):
+            return parts[1]
+    return None
+
+
+def print_local(queue: str, files: list[Path], copies: int) -> None:
+    for path in files:
+        subprocess.run(
+            ["lp", "-d", queue, "-n", str(copies), str(path)], check=True
+        )
+        print(f"{path.name}: sent to {queue}")
+
+
+def rasterize(files: list[Path], out_dir: Path) -> None:
+    for i, path in enumerate(files):
+        prefix = out_dir / f"{i:03}"
+        if path.suffix.lower() in IMAGE_SUFFIXES:
+            shutil.copy(path, prefix.with_suffix(path.suffix.lower()))
+        else:
+            subprocess.run(
+                ["pdftoppm", "-r", str(DPI), "-png", str(path), str(prefix)],
+                check=True,
+            )
+
+
+def print_remote(files: list[Path], copies: int) -> None:
+    remote_dir = f"printdoc-{uuid.uuid4().hex[:8]}"
+    with tempfile.TemporaryDirectory() as tmp:
+        pages_dir = Path(tmp) / remote_dir
+        pages_dir.mkdir()
+        rasterize(files, pages_dir)
+        page_count = len(list(pages_dir.iterdir()))
+        subprocess.run(
+            ["scp", "-q", "-r", str(pages_dir), f"{REMOTE_HOST}:{remote_dir}"],
+            check=True,
+        )
+
+    script = REMOTE_SCRIPT.format(
+        dir=remote_dir,
+        printer=REMOTE_PRINTER,
+        copies=copies,
+        name=files[0].stem.replace('"', "'"),
+    )
+    encoded = base64.b64encode(script.encode("utf-16-le")).decode()
+    subprocess.run(
+        [
+            "ssh",
+            "-o",
+            "LogLevel=ERROR",
+            REMOTE_HOST,
+            f"powershell -NoProfile -NonInteractive -EncodedCommand {encoded}",
+        ],
+        check=True,
+    )
+    print(
+        f"{page_count} page(s) x {copies} sent to "
+        f"{REMOTE_PRINTER!r} on {REMOTE_HOST}"
+    )
+
+
+def main() -> None:
+    args = parse_args()
+    for path in args.files:
+        if not path.is_file():
+            sys.exit(f"not a file: {shlex.quote(str(path))}")
+
+    queue = find_local_queue() if args.via != "desktop" else None
+    try:
+        if queue:
+            print_local(queue, args.files, args.copies)
+        elif args.via == "usb":
+            sys.exit("no local CUPS queue for the LaserJet (is it plugged in?)")
+        else:
+            print_remote(args.files, args.copies)
+    except subprocess.CalledProcessError as ex:
+        sys.exit(f"printing failed: {ex.cmd[0]} exited with {ex.returncode}")
+
+
+if __name__ == "__main__":
+    main()
