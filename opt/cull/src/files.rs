@@ -27,6 +27,39 @@ pub fn scan(path: &Path, recurse: bool, output: &mut Vec<PathBuf>) -> Result<(),
     Ok(())
 }
 
+/// Order paths the way people count: digit runs compare as numbers, so
+/// IMG_9 sorts before IMG_10.
+pub fn natural_cmp(a: &Path, b: &Path) -> std::cmp::Ordering {
+    fn chunks(text: &str) -> Vec<(bool, &str)> {
+        let mut result = Vec::new();
+        let mut start = 0;
+        let bytes = text.as_bytes();
+        for i in 1..=bytes.len() {
+            if i == bytes.len() || bytes[i].is_ascii_digit() != bytes[start].is_ascii_digit() {
+                result.push((bytes[start].is_ascii_digit(), &text[start..i]));
+                start = i;
+            }
+        }
+        result
+    }
+    let (a, b) = (a.to_string_lossy(), b.to_string_lossy());
+    for (left, right) in chunks(&a).into_iter().zip(chunks(&b)) {
+        let order = match (left, right) {
+            ((true, left), (true, right)) => {
+                let (left, right) = (left.trim_start_matches('0'), right.trim_start_matches('0'));
+                left.len().cmp(&right.len()).then_with(|| left.cmp(right))
+            }
+            ((left_digit, left), (right_digit, right)) => {
+                right_digit.cmp(&left_digit).then_with(|| left.cmp(right))
+            }
+        };
+        if order.is_ne() {
+            return order;
+        }
+    }
+    a.cmp(&b)
+}
+
 fn stem(path: &Path) -> String {
     path.file_stem()
         .unwrap_or_default()
@@ -117,6 +150,32 @@ fn rename_noreplace(source: &Path, destination: &Path) -> std::io::Result<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn natural_order_counts_digit_runs() {
+        let mut paths: Vec<PathBuf> = [
+            "a/IMG_10.jpg",
+            "a/IMG_9.jpg",
+            "a/IMG_009b.jpg",
+            "a/IMG_1.jpg",
+            "a/IMG_.jpg",
+        ]
+        .iter()
+        .map(PathBuf::from)
+        .collect();
+        paths.sort_by(|a, b| natural_cmp(a, b));
+        let names: Vec<_> = paths.iter().map(|path| path.to_str().unwrap()).collect();
+        assert_eq!(
+            names,
+            [
+                "a/IMG_1.jpg",
+                "a/IMG_9.jpg",
+                "a/IMG_009b.jpg",
+                "a/IMG_10.jpg",
+                "a/IMG_.jpg"
+            ]
+        );
+    }
 
     #[test]
     fn collision_does_not_overwrite_and_failed_group_rolls_back() {

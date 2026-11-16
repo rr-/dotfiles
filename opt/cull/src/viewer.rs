@@ -107,6 +107,7 @@ pub fn run() -> Result<(), String> {
     let mut paths = Vec::new();
     let mut selected = None;
     let mut recurse = false;
+    let mut from_playlist = false;
     let mut arguments = std::env::args().skip(1);
     while let Some(argument) = arguments.next() {
         match argument.as_str() {
@@ -118,11 +119,13 @@ pub fn run() -> Result<(), String> {
             }
             "-r" | "--recurse" => recurse = true,
             "-s" | "--select" | "--vifm" => {
-                selected = Some(
-                    PathBuf::from(arguments.next().ok_or("missing selected path")?)
-                        .canonicalize()
-                        .map_err(|error| error.to_string())?,
-                );
+                let path = PathBuf::from(arguments.next().ok_or("missing selected path")?)
+                    .canonicalize()
+                    .map_err(|error| error.to_string())?;
+                if argument == "--vifm" && crate::vifm::relaunch(&path) {
+                    return Ok(());
+                }
+                selected = Some(path);
             }
             "-" | "--playlist" => {
                 let name = arguments.next().ok_or("missing playlist")?;
@@ -135,9 +138,15 @@ pub fn run() -> Result<(), String> {
                 } else {
                     std::fs::read_to_string(name).map_err(|error| error.to_string())?
                 };
+                // a listing keeps its own order and names directories only to
+                // skip them, as a file manager's view of one does
                 for line in text.lines() {
-                    files::scan(std::path::Path::new(line), recurse, &mut paths)?;
+                    let path = std::path::Path::new(line);
+                    if path.is_file() {
+                        files::scan(path, recurse, &mut paths)?;
+                    }
                 }
+                from_playlist = true;
             }
             _ => files::scan(std::path::Path::new(&argument), recurse, &mut paths)?,
         }
@@ -152,8 +161,11 @@ pub fn run() -> Result<(), String> {
             &mut paths,
         )?;
     }
-    paths.sort();
-    paths.dedup();
+    if !from_playlist {
+        paths.sort_by(|a, b| files::natural_cmp(a, b));
+    }
+    let mut seen = std::collections::HashSet::new();
+    paths.retain(|path| seen.insert(path.clone()));
     if paths.is_empty() {
         return Err("no supported files".into());
     }
@@ -402,7 +414,8 @@ pub fn run() -> Result<(), String> {
                         }
                     }
                     Action::FileManager => {
-                        let _ = Command::new("vifm").arg(&paths[index]).spawn();
+                        crate::vifm::reveal(&paths[index]);
+                        break 'app;
                     }
                     Action::CopyHome => {
                         if let Some(home) = std::env::var_os("HOME") {
