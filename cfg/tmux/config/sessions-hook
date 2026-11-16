@@ -113,11 +113,26 @@ def recreate_session(spec: SessionSpec) -> None:
 
 
 def number_sessions(specs: Spec) -> None:
-    """Number sessions in file order and bind alt+shift+digit to each."""
+    """Number and chain sessions in file order, bind alt+shift+digit to each."""
     for num, (spec, key) in enumerate(zip(specs, SESSION_KEYS), 1):
         target = "=" + spec["name"] + ":"
         run(["tmux", "set", "-t", target, "@session-num", str(num)])
         run(["tmux", "bind", "-n", key, "switch-client", "-t", target])
+
+    names = [spec["name"] for spec in specs]
+    for i, name in enumerate(names):
+        target = "=" + name + ":"
+        run(
+            [
+                "tmux",
+                "set",
+                "-t",
+                target,
+                "@session-next",
+                names[(i + 1) % len(names)],
+            ]
+        )
+        run(["tmux", "set", "-t", target, "@session-prev", names[i - 1]])
 
 
 def recreate_sessions() -> None:
