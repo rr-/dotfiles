@@ -129,22 +129,30 @@ pub fn rename_group(renames: &Renames) -> Result<(), String> {
 
 fn rename_noreplace(source: &Path, destination: &Path) -> std::io::Result<()> {
     use std::os::unix::ffi::OsStrExt;
-    let source = std::ffi::CString::new(source.as_os_str().as_bytes())?;
-    let destination = std::ffi::CString::new(destination.as_os_str().as_bytes())?;
+    let c_source = std::ffi::CString::new(source.as_os_str().as_bytes())?;
+    let c_destination = std::ffi::CString::new(destination.as_os_str().as_bytes())?;
     let result = unsafe {
         libc::renameat2(
             libc::AT_FDCWD,
-            source.as_ptr(),
+            c_source.as_ptr(),
             libc::AT_FDCWD,
-            destination.as_ptr(),
+            c_destination.as_ptr(),
             libc::RENAME_NOREPLACE,
         )
     };
     if result == 0 {
-        Ok(())
-    } else {
-        Err(std::io::Error::last_os_error())
+        return Ok(());
     }
+    let error = std::io::Error::last_os_error();
+    // FUSE filesystems such as sshfs can't refuse an overwrite themselves, so
+    // look before renaming there; rename_group has looked once already
+    if error.raw_os_error() == Some(libc::EINVAL) {
+        if destination.exists() {
+            return Err(std::io::ErrorKind::AlreadyExists.into());
+        }
+        return std::fs::rename(source, destination);
+    }
+    Err(error)
 }
 
 #[cfg(test)]
