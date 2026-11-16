@@ -275,6 +275,16 @@ pub fn run() -> Result<(), String> {
             dirty = true;
             {
                 let old_index = index;
+                if matches!(
+                    command,
+                    Action::Select
+                        | Action::Undo
+                        | Action::Discard
+                        | Action::CopyHome
+                        | Action::MoveHome
+                ) {
+                    message.clear();
+                }
                 match command {
                     Action::Quit => break 'app,
                     Action::Fullscreen => {
@@ -484,6 +494,16 @@ pub fn run() -> Result<(), String> {
                         ))
                     }
                     Action::CopyBitmap | Action::CopyPath => Some(message.clone()),
+                    // a file operation only leaves a message when it failed
+                    Action::Select
+                    | Action::Undo
+                    | Action::Discard
+                    | Action::CopyHome
+                    | Action::MoveHome
+                        if !message.is_empty() =>
+                    {
+                        Some(message.clone())
+                    }
                     _ => None,
                 };
                 if let Some(feedback) = feedback {
