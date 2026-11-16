@@ -13,6 +13,18 @@ except ImportError:
     HAS_YAML = False
 
 SESSIONS_PATH = Path("~/.config/tmux/sessions.yml").expanduser()
+SESSION_KEYS = [
+    "M-!",
+    "M-@",
+    "M-#",
+    "M-$",
+    "M-%",
+    "M-^",
+    "M-&",
+    "M-*",
+    "M-(",
+    "M-)",
+]
 
 
 class WindowSpec(TypedDict):
@@ -100,6 +112,14 @@ def recreate_session(spec: SessionSpec) -> None:
         last_created_window = "=" + spec["name"] + ":" + window["window_name"]
 
 
+def number_sessions(specs: Spec) -> None:
+    """Number sessions in file order and bind alt+shift+digit to each."""
+    for num, (spec, key) in enumerate(zip(specs, SESSION_KEYS), 1):
+        target = "=" + spec["name"] + ":"
+        run(["tmux", "set", "-t", target, "@session-num", str(num)])
+        run(["tmux", "bind", "-n", key, "switch-client", "-t", target])
+
+
 def recreate_sessions() -> None:
     """Recreate sessions that should be persisted across machines."""
     if not HAS_YAML:
@@ -116,6 +136,7 @@ def recreate_sessions() -> None:
     specs = config.get(machine_name, [])
     for spec in specs:
         recreate_session(spec)
+    number_sessions(specs)
 
 
 def main() -> None:
