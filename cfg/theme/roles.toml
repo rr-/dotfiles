@@ -31,6 +31,8 @@ ghost = { value = 238, light-hc = "fg" }
 # the row you're on in a list, and the matches in it
 selected = { value = 255, light-hc = "bg" }
 selected_match = { value = 203, light-hc = "bg", attrs = { light-hc = ["bold", "underline"] } }
+# drawn on surface.current
+on_current = { light = "fg", dark = 232, light-hc = "bg" }
 
 # background tones, deepest to closest to the surface
 [surface]
@@ -47,6 +49,8 @@ border = { value = 234, light-hc = "fg" }
 border_active = { value = "bg", light-hc = "#FF8800" }
 # the terminal's own default background, for whoever has to paint it in its place
 ground = "bg"
+# behind the one you're on among its siblings, where primary would be too loud
+current = { value = "#FFFF00", light-hc = "fg" }
 
 [accent]
 primary = 39    # the thing you're on: active border, selection

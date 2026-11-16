@@ -120,6 +120,7 @@ def number_sessions(specs: Spec) -> None:
         run(["tmux", "bind", "-n", key, "switch-client", "-t", target])
 
     names = [spec["name"] for spec in specs]
+    run(["tmux", "set", "-g", "@session-bar", session_bar(names)])
     for i, name in enumerate(names):
         target = "=" + name + ":"
         run(
@@ -133,6 +134,34 @@ def number_sessions(specs: Spec) -> None:
             ]
         )
         run(["tmux", "set", "-t", target, "@session-prev", names[i - 1]])
+
+
+def escape_format(text: str) -> str:
+    """Make text literal inside a tmux format."""
+    return text.replace("#", "##").replace(",", "#,").replace("}", "#}")
+
+
+def session_bar(names: list[str]) -> str:
+    """A status format listing the sessions in file order, current one lit.
+
+    Built here rather than with tmux's own session loop, which goes in the
+    order the sessions were created in, so a recreated one would land last.
+    """
+    entries = []
+    for num, name in enumerate(names, 1):
+        session_id = run(
+            ["tmux", "display", "-p", "-t", "=" + name + ":", "#{session_id}"],
+            capture_output=True,
+            text=True,
+        ).stdout.strip()
+        label = f" {num}:{escape_format(name)} "
+        entries.append(
+            f"#{{?#{{==:#{{session_name}},{escape_format(name)}}},"
+            f"#[range=session|{session_id} #{{@session-current-style}}]"
+            f"{label}#[norange default],"
+            f"#[range=session|{session_id}]{label}#[norange]}}"
+        )
+    return "".join(entries)
 
 
 def recreate_sessions() -> None:
