@@ -1,5 +1,8 @@
+import json
 import logging
+import re
 from functools import lru_cache
+from urllib.error import HTTPError
 
 from libdotfiles.util import has_executable, run
 
@@ -7,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 
 class PackageInstaller:
-    name: str = NotImplemented
+    name: str = ""
 
     @property
     def is_supported(self) -> bool:
@@ -31,11 +34,14 @@ class AptPackageInstaller(PackageInstaller):
         return has_executable("apt")
 
     def has_installed(self, package: str) -> bool:
-        return (
-            run(
-                ["dpkg", "-l", package], check=False, capture_output=True
-            ).returncode
-            == 0
+        result = run(
+            ["dpkg-query", "-W", "-f=${Status}", package],
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+        return result.returncode == 0 and result.stdout.endswith(
+            " ok installed"
         )
 
     def is_available(self, package: str) -> bool:
@@ -73,7 +79,7 @@ class PacmanPackageInstaller(PackageInstaller):
     def is_available(self, package: str) -> bool:
         return (
             run(
-                ["pacman", "-Ss", package], check=False, capture_output=True
+                ["pacman", "-Si", package], check=False, capture_output=True
             ).returncode
             == 0
         )
@@ -126,33 +132,33 @@ class PipPackageInstaller(PackageInstaller):
 
     @property
     def is_supported(self) -> bool:
-        return has_executable("python3")
+        return (
+            has_executable("python3")
+            and run(
+                ["python3", "-m", "pip", "--version"],
+                check=False,
+                capture_output=True,
+            ).returncode
+            == 0
+        )
 
     @lru_cache
     def get_installed_packages(self) -> list[tuple[str, str, str | None]]:
         output = run(
-            ["python3", "-m", "pip", "list"],
-            check=False,
+            ["python3", "-m", "pip", "list", "--format=json"],
+            check=True,
             text=True,
             capture_output=True,
         ).stdout
-        ret = []
-        for line in output.splitlines()[2:]:
-            if line:
-                result = line.split(maxsplit=2)
-                if len(result) == 2:
-                    package, version = result
-                    location = None
-                elif len(result) == 3:
-                    package, version, location = result
-                else:
-                    raise RuntimeError("unexpected output")
-                ret.append((package, version, location))
-        return ret
+        return [
+            (item["name"], item["version"], None)
+            for item in json.loads(output)
+        ]
 
     def has_installed(self, package: str) -> bool:
         return any(
-            other_package == package
+            re.sub(r"[-_.]+", "-", other_package).lower()
+            == re.sub(r"[-_.]+", "-", package).lower()
             for (
                 other_package,
                 _other_version,
@@ -167,8 +173,9 @@ class PipPackageInstaller(PackageInstaller):
             f"https://pypi.org/pypi/{package}/json", method="HEAD"
         )
         try:
-            urllib.request.urlopen(request)
-        except urllib.error.HTTPError:
+            with urllib.request.urlopen(request, timeout=30):
+                pass
+        except HTTPError:
             return False
         else:
             return True
@@ -190,6 +197,7 @@ INSTALLERS = [cls() for cls in PackageInstaller.__subclasses__()]
 
 
 def try_install(package: str, method: str | None = None) -> bool:
+    """Attempt installation without blocking configuration on package errors."""
     try:
         return install(package, method)
     except Exception as ex:
@@ -216,7 +224,11 @@ def install(package: str, method: str | None = None) -> bool:
                 package,
                 installer.name,
             )
-            return installer.install(package)
+            if not installer.install(package):
+                raise RuntimeError(
+                    f"Failed to install {package} with {installer.name}"
+                )
+            return True
     if method is None:
         raise RuntimeError(
             f"No package manager is capable of installing {package}"
