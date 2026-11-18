@@ -73,11 +73,24 @@ def read_encrypted_file(path: Path, key: str) -> str:
 
 def write_encrypted_file(path: Path, key: str, content: str) -> None:
     aes = AESCipher(key)
-    path.write_bytes(
-        aes.encrypt(
-            zlib.compress(content.encode(), level=zlib.Z_BEST_COMPRESSION)
-        )
+    encrypted = aes.encrypt(
+        zlib.compress(content.encode(), level=zlib.Z_BEST_COMPRESSION)
     )
+    # Follow an existing symlink, as reading the encrypted file does.
+    target = path.resolve()
+    temporary: Path | None = None
+    try:
+        with tempfile.NamedTemporaryFile(
+            dir=target.parent, prefix=f".{target.name}.", delete=False
+        ) as handle:
+            temporary = Path(handle.name)
+            handle.write(encrypted)
+            handle.flush()
+            os.fsync(handle.fileno())
+        temporary.replace(target)
+    finally:
+        if temporary is not None:
+            temporary.unlink(missing_ok=True)
 
 
 def parse_args() -> argparse.Namespace:
