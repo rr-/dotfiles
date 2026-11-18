@@ -26,12 +26,6 @@ tnoremap <silent> <M-k> <C-\><C-n>:TmuxNavigateUp<CR>
 tnoremap <silent> <M-l> <C-\><C-n>:TmuxNavigateRight<CR>
 tnoremap <silent> <M-\> <C-\><C-n>:TmuxNavigatePrevious<CR>
 
-"set black line length
-let g:black_linelength = 79
-
-"source code formatters
-let g:vim_isort_map = ''
-
 "don't mess with my formatoptions
 let g:EditorConfig_preserve_formatoptions = 1
 

@@ -1,8 +1,5 @@
-[tool.black]
-line-length = 79
-py36 = true
+[tool.ruff]
+extend = "../../pyproject.toml"
 
-[tool.isort]
-known_third_party = "ass_tag_parser,bubblesub"
-multi_line_output = 3
-include_trailing_comma = true
+[tool.ruff.lint.isort]
+known-third-party = ["ass_tag_parser", "bubblesub"]

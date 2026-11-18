@@ -3,12 +3,15 @@ import logging
 import os
 from collections.abc import Callable
 from logging import *  # noqa: F403
+from types import ModuleType
 from typing import Any
 
 try:
     import coloredlogs
 except ImportError:
-    coloredlogs = None
+    _coloredlogs: ModuleType | None = None
+else:
+    _coloredlogs = coloredlogs
 
 
 def _add_custom_level(
@@ -33,9 +36,9 @@ SUCCESS, success = _add_custom_level(29, "success")
 
 
 def setup_colored_logs(fmt: str = "%(message)s") -> None:
-    if coloredlogs is None:
+    if _coloredlogs is None:
         return
-    coloredlogs.install(
+    _coloredlogs.install(
         fmt=fmt,
         level_styles={
             "warning": {"color": "yellow"},

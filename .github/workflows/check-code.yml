@@ -2,9 +2,12 @@ name: Check code
 
 on: [push, pull_request]
 
+permissions:
+  contents: read
+
 jobs:
   check:
-    name: Check code
+    name: Python checks and regression tests
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -18,7 +21,26 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install black==24.8.0
+        python -m pip install '.[dev]'
     - name: Check formatting
-      run: |
-        black . -l79 --check --diff
+      run: ruff format --check .
+    - name: Lint Python
+      run: ruff check .
+    - name: Type check installer helpers, encrypted editor, and tests
+      run: ty check libdotfiles tests bin/util/aes-edit
+    - name: Run Python regression tests
+      run: python -m unittest discover -s tests -v
+
+  rust:
+    name: Rust regression tests
+    runs-on: ubuntu-latest
+    # Arch packages SDL3, which cull needs even for its headless tests.
+    container: archlinux:base-devel
+    steps:
+    - name: Install Rust and SDL3
+      run: pacman -Syu --noconfirm --needed rust sdl3 git
+    - uses: actions/checkout@v4
+    - name: Test trash
+      run: cargo test --locked --manifest-path opt/trash/Cargo.toml
+    - name: Test cull
+      run: cargo test --locked --manifest-path opt/cull/Cargo.toml

@@ -23,8 +23,8 @@ elif get_distro_name() == "linuxmint":
 elif get_distro_name() == "ubuntu":
     try_install("neovim")
     try_install("pynvim", method="pip")
-try_install("black", method="pip")
-try_install("isort", method="pip")
+try_install("ruff", method="pip")
+try_install("ty", method="pip")
 
 for dirname in ["undo", "backup", "swap", "spell"]:
     create_dir(NVIM_DIR / dirname)

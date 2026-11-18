@@ -82,10 +82,18 @@ vim.api.nvim_set_keymap('n', '<C-b>', '', {callback = function()
   if vim.bo.filetype == 'json' then
     vim.cmd('%!jq .')
   else
-    vim.cmd('Isort')
     local buf = vim.api.nvim_get_current_buf()
     local content = table.concat(vim.api.nvim_buf_get_lines(buf, 0, -1, false), "\n")
-    local formatted = vim.fn.systemlist({ "black", "-q", "-l79", "-" }, content)
+    local filename = vim.api.nvim_buf_get_name(buf)
+    if filename == "" or not filename:match("%.pyi?$") then
+      filename = filename .. ".py"
+    end
+    local sorted = vim.fn.systemlist({ "ruff", "check", "--quiet", "--select", "I", "--fix", "--stdin-filename", filename, "-" }, content)
+    if vim.v.shell_error ~= 0 then
+      print(table.concat(sorted, "\n"))
+      return
+    end
+    local formatted = vim.fn.systemlist({ "ruff", "format", "--line-length", "79", "--stdin-filename", filename, "-" }, table.concat(sorted, "\n"))
     if vim.v.shell_error == 0 then
       vim.api.nvim_buf_set_lines(buf, 0, -1, false, formatted)
     else

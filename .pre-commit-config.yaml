@@ -3,32 +3,29 @@ default_stages: [pre-commit]
 
 repos:
 
-- repo: https://github.com/pycqa/isort
-  rev: 5.13.2
-  hooks:
-  - id: isort
-    additional_dependencies: [toml]
-- repo: https://github.com/psf/black
-  rev: 24.8.0
-  hooks:
-  - id: black
-- repo: https://github.com/pre-commit/mirrors-mypy
-  rev: v1.11.2
-  hooks:
-  - id: mypy
-    args: [--scripts-are-modules, --explicit-package-bases]
-    additional_dependencies:
-    - types-python-dateutil
-    - types-pyyaml
-    - types-requests
-    - types-toml
 - repo: https://github.com/astral-sh/ruff-pre-commit
-  rev: v0.6.3
+  rev: v0.17.5
   hooks:
-  - id: ruff
+  - id: ruff-check
+    args: [--fix]
+    types: [file]
+    types_or: []
+    files: '(\.pyi?$|^bin/util/aes-edit$)'
+  - id: ruff-format
+    types: [file]
+    types_or: []
+    files: '(\.pyi?$|^bin/util/aes-edit$)'
 
 - repo: local
   hooks:
+  - id: ty
+    name: Type check installer helpers and tests
+    entry: ty check libdotfiles tests bin/util/aes-edit
+    language: python
+    additional_dependencies: [ty==0.0.105, coloredlogs>=15.0.1, pycryptodome>=3.20]
+    pass_filenames: false
+    types: [file]
+    files: '(\.pyi?$|^bin/util/aes-edit$|(^|/)pyproject\.toml$)'
   - id: commit-msg-50-72
     name: Commit message 50/72 rule
     entry: python3 tools/check_commit_msg

@@ -1,15 +1,19 @@
-[tool.black]
+[tool.ruff]
 line-length = 79
+target-version = "py313"
+extend-include = ["bin/util/aes-edit"]
 
-[tool.isort]
-multi_line_output = 3
-include_trailing_comma = true
-known_first_party = ["authenticator", "launcher"]
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F", "I"]
 
-[tool.mypy]
-strict = true
-ignore_missing_imports = true
-disallow_subclassing_any = false
+[tool.ruff.lint.isort]
+known-first-party = ["authenticator", "launcher"]
+
+[tool.ty.environment]
+root = ["."]
+
+[tool.ty.src]
+include = ["libdotfiles", "tests", "bin/util/aes-edit"]
 
 [project]
 name = "libdotfiles"
@@ -24,6 +28,12 @@ authors = [
 
 [project.optional-dependencies]
 color = ["coloredlogs>=15.0.1"]
+dev = [
+    "ruff==0.17.5",
+    "ty==0.0.105",
+    "coloredlogs>=15.0.1",
+    "pycryptodome>=3.20",
+]
 
 [tool.setuptools]
 packages = ["libdotfiles"]

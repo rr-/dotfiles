@@ -7,7 +7,6 @@ Plug 'junegunn/vim-easy-align'          "replace :column ...
 Plug 'bronson/vim-visual-star-search'   "enable * and # in visual mode
 Plug 'duggiefresh/vim-easydir'          "create directories on save
 Plug 'christoomey/vim-tmux-navigator'   "integration with tmux
-Plug 'fisadev/vim-isort'                "sort includes in python source code
 Plug 'editorconfig/editorconfig-vim'    "respect .editorconfig
 Plug 'Asheq/close-buffers.vim'          "close hidden buffers
 Plug 'lambdalisue/fern.vim'             "alternative to buggy and unwieldy netrw
