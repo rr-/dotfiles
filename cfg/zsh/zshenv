@@ -101,18 +101,35 @@ atl() {
     echo "$text" | ai --context "Translate input text from the following language: ${source} to: ${target}.${query:+ Additionally, answer this question about the input: ${query}}" 2>/dev/null | less -rFX
 }
 
-c-nh() {
-    cp -f ~/.codex/auth_nh.json ~/.codex/auth.json
-    live-palette codex --sandbox workspace-write -a never ${@}
+_codex-account() {
+    local account="$1"
+    shift
+    local codex_root="$HOME/.codex"
+    local account_home="$codex_root/accounts/$account"
+    local shared
+
+    # The background server and credential store are scoped to CODEX_HOME.
+    # Seed once: copying on every launch would discard refreshed login tokens.
+    mkdir -p -m 700 "$account_home" || return
+    if [[ ! -e "$account_home/auth.json" ]]; then
+        if [[ -r "$codex_root/auth_$account.json" ]]; then
+            (umask 077; cp "$codex_root/auth_$account.json" "$account_home/auth.json") || return
+        fi
+    fi
+    for shared in config.toml AGENTS.md instructions.md themes skills rules plugins; do
+        if [[ ! -e "$account_home/$shared" && ! -L "$account_home/$shared" ]]; then
+            ln -s "$codex_root/$shared" "$account_home/$shared" || return
+        fi
+    done
+
+    CODEX_HOME="$account_home" live-palette codex \
+        -c 'cli_auth_credentials_store="file"' \
+        --sandbox workspace-write -a never "$@"
 }
-c-api() {
-    cp -f ~/.codex/auth_api.json ~/.codex/auth.json
-    live-palette codex --sandbox workspace-write -a never ${@}
-}
-c-web() {
-    cp -f ~/.codex/auth_web.json ~/.codex/auth.json
-    live-palette codex --sandbox workspace-write -a never ${@}
-}
+
+c-nh() { _codex-account nh "$@" }
+c-api() { _codex-account api "$@" }
+c-web() { _codex-account web "$@" }
 
 claude-nh() {
     export CLAUDE_CONFIG_DIR=~/.claude-nh
