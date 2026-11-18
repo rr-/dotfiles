@@ -5,26 +5,37 @@
 # dependencies = []
 # ///
 #
-# Prints PDFs and images on the HP LaserJet. Uses a local CUPS queue when
-# the printer is plugged into this machine, otherwise prints through the
-# Windows desktop over SSH (rasterized, since it has no silent PDF printer).
+# Prints PDFs and images on the HP LaserJet. When the printer is plugged
+# into this machine, encodes the pages as PWG raster and writes them straight
+# to its USB device, with no CUPS or driver needed. Otherwise prints through
+# the Windows desktop over SSH (rasterized, since it has no silent PDF
+# printer).
 
 import argparse
 import base64
 import re
 import shlex
 import shutil
+import struct
 import subprocess
 import sys
 import tempfile
 import uuid
+from collections.abc import Iterator
 from pathlib import Path
+from urllib.parse import unquote, urlparse
 
 REMOTE_HOST = "desktop"
 REMOTE_PRINTER = "HP LaserJet M14-M17 PCLmS"
-LOCAL_QUEUE_PATTERN = re.compile(r"M1[4-7]|LaserJet", re.IGNORECASE)
+USB_MODEL_PATTERN = re.compile(r"MDL:HP LaserJet M1[4-7]")
 IMAGE_SUFFIXES = {".png", ".jpg", ".jpeg"}
 DPI = 300
+USB_DPI = 600
+A4_PIXELS = (4960, 7016)  # at USB_DPI
+A4_POINTS = (595, 842)
+PWG_SYNC = b"RaS2"
+PWG_SGRAY = 18
+RUN_PATTERN = re.compile(rb"(.)\1*", re.DOTALL)
 
 # Draws every page image at 1:1 page size. The graphics origin sits at the
 # printer's hard margin, so shift by it to keep the page centered.
@@ -56,44 +67,149 @@ finally {{ Remove-Item -Recurse -Force $dir }}
 """
 
 
+def file_arg(value: str) -> Path:
+    # Accepts file:// URLs as copied from a browser's address bar.
+    url = urlparse(value)
+    if url.scheme == "file":
+        return Path(unquote(url.path))
+    return Path(value)
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("files", type=Path, nargs="+")
+    parser.add_argument("files", type=file_arg, nargs="+")
     parser.add_argument("-n", "--copies", type=int, default=1)
     parser.add_argument(
         "--via",
         choices=["auto", "usb", "desktop"],
         default="auto",
-        help="auto uses the local CUPS queue if the printer is connected",
+        help="auto prints over USB if the printer is connected",
     )
     return parser.parse_args()
 
 
-def find_local_queue() -> str | None:
-    if not shutil.which("lpstat"):
-        return None
-    result = subprocess.run(
-        ["lpstat", "-p"], capture_output=True, text=True, check=False
-    )
-    for line in result.stdout.splitlines():
-        # "printer NAME is idle.  enabled since ..."
-        parts = line.split()
-        if (
-            len(parts) >= 2
-            and parts[0] == "printer"
-            and LOCAL_QUEUE_PATTERN.search(parts[1])
-            and "disabled" not in line
+def find_usb_device() -> Path | None:
+    for lp in sorted(Path("/sys/class/usbmisc").glob("lp*")):
+        device_id = lp / "device" / "ieee1284_id"
+        if device_id.is_file() and USB_MODEL_PATTERN.search(
+            device_id.read_text(errors="replace")
         ):
-            return parts[1]
+            return Path("/dev/usb") / lp.name
     return None
 
 
-def print_local(queue: str, files: list[Path], copies: int) -> None:
-    for path in files:
-        subprocess.run(
-            ["lp", "-d", queue, "-n", str(copies), str(path)], check=True
-        )
-        print(f"{path.name}: sent to {queue}")
+def read_pgm(path: Path) -> tuple[int, int, bytes]:
+    data = path.read_bytes()
+    # "P5\n<width> <height>\n255\n<pixels>"
+    magic, width, height, maxval, pixels = data.split(maxsplit=4)
+    if magic != b"P5" or maxval != b"255":
+        raise ValueError(f"{path}: not an 8-bit PGM")
+    return int(width), int(height), pixels
+
+
+def rasterize_gray(files: list[Path], out_dir: Path) -> list[Path]:
+    width, height = A4_PIXELS
+    for i, path in enumerate(files):
+        prefix = out_dir / f"{i:03}"
+        if path.suffix.lower() in IMAGE_SUFFIXES:
+            subprocess.run(
+                [
+                    "magick", str(path), "-colorspace", "gray",
+                    "-resize", f"{width}x{height}", "-background", "white",
+                    "-gravity", "center", "-extent", f"{width}x{height}",
+                    "-depth", "8", f"pgm:{prefix}-1.pgm",
+                ],
+                check=True,
+            )
+        else:
+            subprocess.run(
+                [
+                    "pdftoppm", "-r", str(USB_DPI), "-gray",
+                    str(path), str(prefix),
+                ],
+                check=True,
+            )
+    return sorted(out_dir.glob("*.pgm"))
+
+
+def pwg_header(width: int, height: int, page_count: int) -> bytes:
+    header = bytearray(1796)
+    header[0:9] = b"PwgRaster"
+
+    def put(offset: int, *values: int) -> None:
+        struct.pack_into(f">{len(values)}I", header, offset, *values)
+
+    put(276, USB_DPI, USB_DPI)  # HWResolution
+    put(340, 1)  # NumCopies
+    points = (round(width * 72 / USB_DPI), round(height * 72 / USB_DPI))
+    put(352, *points)  # PageSize
+    put(372, width, height)
+    put(384, 8, 8, width)  # BitsPerColor, BitsPerPixel, BytesPerLine
+    put(400, PWG_SGRAY)
+    put(420, 1)  # NumColors
+    put(452, page_count, 1, 1)  # TotalPageCount, Cross/FeedTransform
+    if points == A4_POINTS:
+        header[1732:1748] = b"iso_a4_210x297mm"
+    return bytes(header)
+
+
+def encode_line(line: bytes) -> bytes:
+    # PackBits-like: n < 128 repeats the next pixel n+1 times, n > 128
+    # copies 257-n literal pixels.
+    out = bytearray()
+    literals = bytearray()
+
+    def flush_literals() -> None:
+        for i in range(0, len(literals), 128):
+            chunk = literals[i : i + 128]
+            out.append(257 - len(chunk) if len(chunk) > 1 else 0)
+            out.extend(chunk)
+        literals.clear()
+
+    for match in RUN_PATTERN.finditer(line):
+        run = match.end() - match.start()
+        if run == 1:
+            literals += match.group()
+            continue
+        flush_literals()
+        while run:
+            n = min(run, 128)
+            out += bytes((n - 1,)) + match.group()[:1]
+            run -= n
+    flush_literals()
+    return bytes(out)
+
+
+def encode_page(width: int, height: int, pixels: bytes) -> Iterator[bytes]:
+    y = 0
+    while y < height:
+        line = pixels[y * width : (y + 1) * width]
+        repeat = 1
+        while (
+            repeat < 256
+            and y + repeat < height
+            and pixels[(y + repeat) * width : (y + repeat + 1) * width] == line
+        ):
+            repeat += 1
+        yield bytes((repeat - 1,)) + encode_line(line)
+        y += repeat
+
+
+def print_usb(device: Path, files: list[Path], copies: int) -> None:
+    with tempfile.TemporaryDirectory() as tmp:
+        pages = rasterize_gray(files, Path(tmp)) * copies
+        try:
+            out = device.open("wb")
+        except PermissionError:
+            sys.exit(f"no write access to {device} (add yourself to the lp group)")
+        with out:
+            out.write(PWG_SYNC)
+            for page in pages:
+                width, height, pixels = read_pgm(page)
+                out.write(pwg_header(width, height, len(pages)))
+                for chunk in encode_page(width, height, pixels):
+                    out.write(chunk)
+    print(f"{len(pages) // copies} page(s) x {copies} sent to {device}")
 
 
 def rasterize(files: list[Path], out_dir: Path) -> None:
@@ -149,12 +265,12 @@ def main() -> None:
         if not path.is_file():
             sys.exit(f"not a file: {shlex.quote(str(path))}")
 
-    queue = find_local_queue() if args.via != "desktop" else None
+    device = find_usb_device() if args.via != "desktop" else None
     try:
-        if queue:
-            print_local(queue, args.files, args.copies)
+        if device:
+            print_usb(device, args.files, args.copies)
         elif args.via == "usb":
-            sys.exit("no local CUPS queue for the LaserJet (is it plugged in?)")
+            sys.exit("the LaserJet is not on USB (is it plugged in?)")
         else:
             print_remote(args.files, args.copies)
     except subprocess.CalledProcessError as ex:
