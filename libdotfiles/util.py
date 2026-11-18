@@ -151,9 +151,9 @@ def git_clone(repo: str, path: str | Path) -> None:
     target_path = Path(path).absolute()
     if target_path.exists():
         if not (target_path / ".git").exists():
-            logger.error(
-                "Target directory %s already exists and is not a git repository.",
-                target_path,
+            raise RuntimeError(
+                f"Target directory {target_path} already exists "
+                "and is not a git repository."
             )
         remote_url = run(
             ["git", "-C", target_path, "remote", "get-url", "origin"],
@@ -162,11 +162,9 @@ def git_clone(repo: str, path: str | Path) -> None:
             text=True,
         ).stdout.strip()
         if remote_url.removesuffix(".git") != repo.removesuffix(".git"):
-            logger.error(
-                "Target repository %s points to %s, expected %s.",
-                target_path,
-                remote_url,
-                repo,
+            raise RuntimeError(
+                f"Target repository {target_path} points to {remote_url}, "
+                f"expected {repo}."
             )
         return
     run(["git", "clone", repo, target_path], check=True)
