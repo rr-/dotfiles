@@ -4,6 +4,7 @@ import shlex
 import shutil
 import socket
 import subprocess
+import tempfile
 import urllib.request
 from pathlib import Path
 from subprocess import CompletedProcess
@@ -16,7 +17,7 @@ logger = logging.getLogger(__name__)
 LIBDOTFILES_DIR = Path(__file__).parent.absolute()
 REPO_ROOT_DIR = LIBDOTFILES_DIR.parent
 HOME_DIR = Path("~").expanduser()
-PKG_DIR = Path(__main__.__file__).parent
+PKG_DIR = Path(getattr(__main__, "__file__", REPO_ROOT_DIR / "install")).parent
 
 
 def run(command: list[Any], **kwargs: Any) -> CompletedProcess[str]:
@@ -35,9 +36,20 @@ def download_file(url: str, path: Path, overwrite: bool = False) -> None:
         request = urllib.request.Request(url)
         request.add_header("User-Agent", "mozilla")
         request.add_header("Referer", url)
-        response = urllib.request.urlopen(request)
-        with path.open("wb") as handle:
-            handle.write(response.read())
+        temporary: Path | None = None
+        try:
+            with urllib.request.urlopen(request, timeout=60) as response:
+                with tempfile.NamedTemporaryFile(
+                    dir=path.parent, prefix=f".{path.name}.", delete=False
+                ) as handle:
+                    temporary = Path(handle.name)
+                    shutil.copyfileobj(response, handle)
+                    handle.flush()
+                    os.fsync(handle.fileno())
+            temporary.replace(path)
+        finally:
+            if temporary is not None:
+                temporary.unlink(missing_ok=True)
 
 
 def create_file(
