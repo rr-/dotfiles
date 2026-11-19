@@ -1,0 +1,123 @@
+#!/usr/bin/env -S uv run --script
+#
+# /// script
+# requires-python = ">=3.12"
+# dependencies = ["pyzipper"]
+# ///
+
+import argparse
+import os
+import shutil
+import sys
+import tempfile
+import zipfile
+from getpass import getpass
+from pathlib import Path
+
+import pyzipper
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        description="Remove the password from a ZIP archive."
+    )
+    parser.add_argument("path", type=Path, help="encrypted ZIP archive")
+    parser.add_argument(
+        "-o",
+        "--output",
+        type=Path,
+        help="write here instead of replacing the input",
+    )
+    parser.add_argument(
+        "-p", "--password", help="password (prompted for if omitted)"
+    )
+    return parser.parse_args()
+
+
+def is_encrypted(info: zipfile.ZipInfo) -> bool:
+    return bool(info.flag_bits & 0x1)
+
+
+def check_password(archive: pyzipper.AESZipFile, password: bytes) -> bool:
+    # Wrong ZipCrypto passwords pass the one-byte header check 1 in 256
+    # times, so read a whole entry to let its CRC catch them.
+    entry = next(info for info in archive.infolist() if is_encrypted(info))
+    try:
+        with archive.open(entry, pwd=password) as handle:
+            while handle.read(1 << 20):
+                pass
+    except (RuntimeError, zipfile.BadZipFile):
+        return False
+    return True
+
+
+def plain_info(info: zipfile.ZipInfo) -> zipfile.ZipInfo:
+    copy = zipfile.ZipInfo(info.filename, info.date_time)
+    # AES entries record compression method 99; their real method was
+    # recovered when the archive was read.
+    copy.compress_type = info.compress_type
+    copy.comment = info.comment
+    copy.create_system = info.create_system
+    copy.external_attr = info.external_attr
+    copy.internal_attr = info.internal_attr
+    return copy
+
+
+def write_plain(
+    archive: pyzipper.AESZipFile, password: bytes, target: Path
+) -> None:
+    target = target.resolve()
+    temporary: Path | None = None
+    try:
+        with tempfile.NamedTemporaryFile(
+            dir=target.parent, prefix=f".{target.name}.", delete=False
+        ) as handle:
+            temporary = Path(handle.name)
+            with zipfile.ZipFile(handle, "w") as out:
+                out.comment = archive.comment
+                for info in archive.infolist():
+                    with (
+                        archive.open(info, pwd=password) as src,
+                        out.open(plain_info(info), "w") as dst,
+                    ):
+                        shutil.copyfileobj(src, dst, 1 << 20)
+            handle.flush()
+            os.fsync(handle.fileno())
+        if target.exists():
+            shutil.copymode(target, temporary)
+        temporary.replace(target)
+    finally:
+        if temporary is not None:
+            temporary.unlink(missing_ok=True)
+
+
+def main() -> None:
+    args = parse_args()
+    try:
+        unlock(args)
+    except (EOFError, KeyboardInterrupt):
+        sys.exit(1)
+
+
+def unlock(args: argparse.Namespace) -> None:
+    with pyzipper.AESZipFile(args.path) as archive:
+        if not any(is_encrypted(info) for info in archive.infolist()):
+            print(f"{args.path}: not encrypted", file=sys.stderr)
+            return
+
+        if args.password is not None:
+            password = args.password.encode()
+            if not check_password(archive, password):
+                sys.exit(f"{args.path}: incorrect password")
+        else:
+            while True:
+                password = getpass("ZIP password: ").encode()
+                if check_password(archive, password):
+                    break
+                print("incorrect password", file=sys.stderr)
+
+        write_plain(archive, password, args.output or args.path)
+
+
+if __name__ == "__main__":
+    main()
