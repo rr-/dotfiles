@@ -1,0 +1,86 @@
+#!/usr/bin/env -S uv run --script
+#
+# /// script
+# requires-python = ">=3.12"
+# dependencies = ["pikepdf"]
+# ///
+
+import argparse
+import os
+import shutil
+import sys
+import tempfile
+from getpass import getpass
+from pathlib import Path
+
+import pikepdf
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        description="Remove the password from a PDF."
+    )
+    parser.add_argument("path", type=Path, help="encrypted PDF")
+    parser.add_argument(
+        "-o",
+        "--output",
+        type=Path,
+        help="write here instead of replacing the input",
+    )
+    parser.add_argument(
+        "-p", "--password", help="password (prompted for if omitted)"
+    )
+    return parser.parse_args()
+
+
+def open_pdf(path: Path, password: str | None) -> pikepdf.Pdf:
+    try:
+        # An empty password opens PDFs that only restrict permissions.
+        return pikepdf.open(path, password=password or "")
+    except pikepdf.PasswordError:
+        if password is not None:
+            raise
+    while True:
+        try:
+            return pikepdf.open(path, password=getpass("PDF password: "))
+        except pikepdf.PasswordError as ex:
+            print(ex, file=sys.stderr)
+
+
+def save_pdf(pdf: pikepdf.Pdf, target: Path) -> None:
+    target = target.resolve()
+    temporary: Path | None = None
+    try:
+        with tempfile.NamedTemporaryFile(
+            dir=target.parent, prefix=f".{target.name}.", delete=False
+        ) as handle:
+            temporary = Path(handle.name)
+        pdf.save(temporary, encryption=False)
+        with temporary.open("rb") as handle:
+            os.fsync(handle.fileno())
+        if target.exists():
+            shutil.copymode(target, temporary)
+        temporary.replace(target)
+    finally:
+        if temporary is not None:
+            temporary.unlink(missing_ok=True)
+
+
+def main() -> None:
+    args = parse_args()
+    try:
+        pdf = open_pdf(args.path, args.password)
+    except pikepdf.PasswordError as ex:
+        sys.exit(str(ex))
+    except (EOFError, KeyboardInterrupt):
+        sys.exit(1)
+    with pdf:
+        if not pdf.is_encrypted:
+            print(f"{args.path}: not encrypted", file=sys.stderr)
+            if args.output is None:
+                return
+        save_pdf(pdf, args.output or args.path)
+
+
+if __name__ == "__main__":
+    main()
