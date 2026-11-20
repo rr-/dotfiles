@@ -1,5 +1,5 @@
 from libdotfiles.packages import try_install
-from libdotfiles.util import run
+from libdotfiles.util import PKG_DIR, run
 
 try_install("bluez")
 try_install("bluez-utils")
@@ -16,3 +16,6 @@ run(
         'sed -i "s/#AutoEnable=false/AutoEnable=true/" /etc/bluetooth/main.conf',
     ]
 )
+
+# USB autosuspend makes the MT7922 drop and lag HID devices
+run(["sudo", "cp", PKG_DIR / "btusb.conf", "/etc/modprobe.d/btusb.conf"])
