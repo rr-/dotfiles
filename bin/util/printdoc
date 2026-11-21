@@ -61,7 +61,16 @@ $pd.add_PrintPage({{
     $script:i++
     $e.HasMorePages = $script:i -lt $pages.Count
 }})
-try {{ $pd.Print() }}
+try {{
+    # Windows spools jobs for an unplugged printer and holds them until it
+    # comes back, so refuse instead.
+    $printer = Get-CimInstance Win32_Printer -Filter "Name='{printer}'"
+    if ($printer.WorkOffline) {{
+        [Console]::Error.WriteLine("{printer} is offline on $env:COMPUTERNAME")
+        exit 1
+    }}
+    $pd.Print()
+}}
 catch {{ [Console]::Error.WriteLine($_.Exception.InnerException.Message); exit 1 }}
 finally {{ Remove-Item -Recurse -Force $dir }}
 """
