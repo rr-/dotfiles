@@ -1,0 +1,18 @@
+#!/bin/sh
+# Switch to a workspace (counted from 0) and focus its topmost window.
+#
+# xfwm4 hands focus to the desktop instead when that window is fullscreen, and
+# leaves the panel stacked above it. Activating the window lifts it back over
+# the panel. Windows on every workspace (the panel, the desktop) and minimized
+# ones are skipped, so an empty workspace just keeps the desktop.
+target=$1
+wmctrl -s "$target"
+
+top=
+for id in $(xprop -root _NET_CLIENT_LIST_STACKING | sed 's/.*# //; s/,//g'); do
+    desktop=$(xprop -id "$id" _NET_WM_DESKTOP | awk '{print $3}')
+    [ "$desktop" = "$target" ] || continue
+    xprop -id "$id" _NET_WM_STATE | grep -q _NET_WM_STATE_HIDDEN && continue
+    top=$id
+done
+[ -n "$top" ] && wmctrl -i -a "$top"
