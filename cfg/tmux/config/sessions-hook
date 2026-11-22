@@ -124,8 +124,19 @@ def number_sessions(specs: Spec) -> None:
     run(["tmux", "set", "-g", "@session-bar", full])
     run(["tmux", "set", "-g", "@session-bar-current", current])
     run(["tmux", "set", "-g", "@session-bar-width", str(width)])
+    run(["tmux", "set", "-g", "@session-menu", session_menu(names)])
     for i, name in enumerate(names):
         target = "=" + name + ":"
+        run(
+            [
+                "tmux",
+                "set",
+                "-t",
+                target,
+                "@session-menu",
+                session_menu(names, i),
+            ]
+        )
         run(
             [
                 "tmux",
@@ -174,6 +185,38 @@ def session_bar(names: list[str]) -> tuple[str, str, int]:
         )
         current_entries.append(f"#{{?{is_current},{lit},}}")
     return "".join(entries), "".join(current_entries), width
+
+
+def quote_command(text: str) -> str:
+    """Make text a single word in a tmux command."""
+    return "'" + text.replace("'", "'\\''") + "'"
+
+
+def session_menu(names: list[str], current: int | None = None) -> str:
+    """A display-menu command listing the sessions in file order.
+
+    choose-tree only sorts sessions by id, name or activity, so it can't
+    follow the file. Each entry's key is its alt+shift+digit one, unshifted,
+    and the current session is starred. The menu opens on the current entry,
+    so each session gets a copy of its own.
+    """
+    words = [
+        "display-menu",
+        "-T",
+        "#[align=centre]sessions",
+        "-x",
+        "C",
+        "-y",
+        "C",
+    ]
+    if current is not None:
+        words += ["-C", str(current)]
+    for num, (name, key) in enumerate(zip(names, "1234567890"), 1):
+        is_current = f"#{{==:#{{session_name}},{escape_format(name)}}}"
+        label = f"#{{?{is_current},*, }} {num}:{escape_format(name)}"
+        target = "=" + name + ":"
+        words += [label, key, f"switch-client -t {quote_command(target)}"]
+    return " ".join(quote_command(word) for word in words)
 
 
 def load_specs() -> Spec | None:

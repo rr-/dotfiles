@@ -17,6 +17,10 @@ setw -g window-status-style "bg={{surface.overlay}} fg={{text.dim}}"
 setw -g window-status-bell-style "bg={{state.warning}} fg={{text.inverse}} bold"
 # the current session in status-right
 set -g @session-current-style "bg={{surface.current}} fg={{text.on_current}}"
+# the session menu on F12, its current row lit like the session bar's
+set -g menu-style "bg={{surface.raised}} fg={{text.normal}}"
+set -g menu-border-style "bg={{surface.raised}} fg={{text.ghost}}"
+set -g menu-selected-style "bg={{surface.current}} fg={{text.on_current}}"
 # Termius has ignored OSC 4, 10 and 11 since it moved onto libghostty, so
 # tmux paints in its place: indexed cells go out as the rgb in pane-colours,
 # and a cell with no color of its own as the exact one in window-style. That
