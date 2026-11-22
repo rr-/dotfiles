@@ -120,7 +120,10 @@ def number_sessions(specs: Spec) -> None:
         run(["tmux", "bind", "-n", key, "switch-client", "-t", target])
 
     names = [spec["name"] for spec in specs]
-    run(["tmux", "set", "-g", "@session-bar", session_bar(names)])
+    full, current, width = session_bar(names)
+    run(["tmux", "set", "-g", "@session-bar", full])
+    run(["tmux", "set", "-g", "@session-bar-current", current])
+    run(["tmux", "set", "-g", "@session-bar-width", str(width)])
     for i, name in enumerate(names):
         target = "=" + name + ":"
         run(
@@ -141,13 +144,17 @@ def escape_format(text: str) -> str:
     return text.replace("#", "##").replace(",", "#,").replace("}", "#}")
 
 
-def session_bar(names: list[str]) -> str:
+def session_bar(names: list[str]) -> tuple[str, str, int]:
     """A status format listing the sessions in file order, current one lit.
 
     Built here rather than with tmux's own session loop, which goes in the
     order the sessions were created in, so a recreated one would land last.
+    Also returns a format with only the current session, for when the full
+    list doesn't fit, and the full list's width.
     """
     entries = []
+    current_entries = []
+    width = 0
     for num, name in enumerate(names, 1):
         session_id = run(
             ["tmux", "display", "-p", "-t", "=" + name + ":", "#{session_id}"],
@@ -155,13 +162,18 @@ def session_bar(names: list[str]) -> str:
             text=True,
         ).stdout.strip()
         label = f" {num}:{escape_format(name)} "
-        entries.append(
-            f"#{{?#{{==:#{{session_name}},{escape_format(name)}}},"
+        width += len(f" {num}:{name} ")
+        is_current = f"#{{==:#{{session_name}},{escape_format(name)}}}"
+        lit = (
             f"#[range=session|{session_id} #{{@session-current-style}}]"
-            f"{label}#[norange default],"
+            f"{label}#[norange default]"
+        )
+        entries.append(
+            f"#{{?{is_current},{lit},"
             f"#[range=session|{session_id}]{label}#[norange]}}"
         )
-    return "".join(entries)
+        current_entries.append(f"#{{?{is_current},{lit},}}")
+    return "".join(entries), "".join(current_entries), width
 
 
 def load_specs() -> Spec | None:
