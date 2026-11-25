@@ -23,6 +23,11 @@ and on disk it reads !decrypt(...) with the ciphertext inside. The first
 line of the file holds the format, the token pair, the salt and a MAC over
 the whole file. --decrypt prints the file with the secrets in place and
 no tokens, for scripts.
+
+--agent-start asks for the password once and keeps it in a background
+process; --decrypt --agent then has that process decrypt the file, so a
+script (or someone piloting one) never needs to see the password. The
+agent answers only processes of the same user and quits after --timeout.
 """
 
 import argparse
@@ -30,9 +35,12 @@ import base64
 import hashlib
 import hmac
 import io
+import json
 import os
 import re
 import shlex
+import socket
+import struct
 import subprocess
 import sys
 import tempfile
@@ -62,6 +70,10 @@ class InvalidKey(RuntimeError):
 
 
 class MarkupError(ValueError):
+    pass
+
+
+class AgentError(RuntimeError):
     pass
 
 
@@ -136,6 +148,157 @@ def write_atomically(path: Path, data: bytes) -> None:
     finally:
         if temporary is not None:
             temporary.unlink(missing_ok=True)
+
+
+def decrypt_text(data: bytes, password: str) -> str:
+    """The file's text with its secrets in place, in either format."""
+    if is_marked_file(data):
+        opened, plain = MarkedFile.open(data, password)
+        return opened.reveal(plain)
+    return zlib.decompress(AESCipher(password).decrypt(data)).decode()
+
+
+def agent_socket() -> Path:
+    base = os.environ.get("XDG_RUNTIME_DIR") or tempfile.gettempdir()
+    return Path(base) / f"aes-edit-{os.getuid()}.sock"
+
+
+def receive_all(connection: socket.socket) -> bytes:
+    chunks = []
+    while chunk := connection.recv(65536):
+        chunks.append(chunk)
+    return b"".join(chunks)
+
+
+def bind_agent(path: Path) -> socket.socket:
+    path.unlink(missing_ok=True)
+    umask = os.umask(0o177)
+    server = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+    try:
+        server.bind(str(path))
+    except OSError:
+        server.close()
+        raise
+    finally:
+        os.umask(umask)
+    server.listen()
+    return server
+
+
+def serve_agent(
+    path: Path,
+    password: str,
+    timeout: float,
+    server: socket.socket | None = None,
+) -> None:
+    """Decrypt files for processes of this user until the timeout."""
+    server = server or bind_agent(path)
+    server.settimeout(1)
+    deadline = time.monotonic() + timeout
+    try:
+        while time.monotonic() < deadline:
+            try:
+                connection, _ = server.accept()
+            except TimeoutError:
+                continue
+            with connection:
+                credentials = connection.getsockopt(
+                    socket.SOL_SOCKET,
+                    socket.SO_PEERCRED,
+                    struct.calcsize("3i"),
+                )
+                if struct.unpack("3i", credentials)[1] != os.getuid():
+                    continue
+                connection.settimeout(10)
+                request = json.loads(receive_all(connection))
+                if request.get("op") == "stop":
+                    connection.sendall(json.dumps({"ok": True}).encode())
+                    return
+                try:
+                    reply = answer(request, password)
+                except (InvalidKey, MarkupError, ValueError, KeyError) as ex:
+                    reply = {"ok": False, "error": str(ex)}
+                connection.sendall(json.dumps(reply).encode())
+    finally:
+        server.close()
+        path.unlink(missing_ok=True)
+
+
+def answer(request: dict, password: str) -> dict:
+    if request.get("op") == "seal":
+        existing = base64.b64decode(request.get("existing", ""))
+        if existing:
+            opened, _ = MarkedFile.open(existing, password)
+        else:
+            tokens = request.get("tokens", DEFAULT_TOKENS)
+            opened = MarkedFile.create(password, (tokens[0], tokens[1]))
+        data = opened.seal(request["plain"])
+        return {"ok": True, "data": base64.b64encode(data).decode()}
+    data = base64.b64decode(request["data"])
+    return {"ok": True, "text": decrypt_text(data, password)}
+
+
+def ask_agent(request: dict, path: Path | None = None) -> dict:
+    path = path or agent_socket()
+    with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as connection:
+        try:
+            connection.connect(str(path))
+        except (FileNotFoundError, ConnectionRefusedError):
+            raise AgentError(
+                "no aes-edit agent is running; start one with "
+                "aes-edit --agent-start"
+            ) from None
+        except OSError as ex:
+            raise AgentError(
+                f"can't reach the agent at {path}: {ex}"
+            ) from None
+        connection.sendall(json.dumps(request).encode())
+        connection.shutdown(socket.SHUT_WR)
+        reply = json.loads(receive_all(connection))
+    if not reply.get("ok"):
+        raise AgentError(reply.get("error", "the agent refused"))
+    return reply
+
+
+def encrypt_with_agent(path: Path, plain: str, tokens: str | None) -> None:
+    request: dict = {"op": "seal", "plain": plain}
+    if path.exists():
+        existing = path.read_bytes()
+        if not is_marked_file(existing):
+            raise MarkupError(f"{path} has the old format; --upgrade it first")
+        request["existing"] = base64.b64encode(existing).decode()
+    else:
+        request["tokens"] = list(parse_tokens(tokens))
+    reply = ask_agent(request)
+    write_atomically(path, base64.b64decode(reply["data"]))
+
+
+def parse_duration(value: str) -> float:
+    units = {"s": 1, "m": 60, "h": 3600, "d": 86400}
+    if value[-1:] in units:
+        return float(value[:-1]) * units[value[-1]]
+    return float(value)
+
+
+def start_agent(timeout: float) -> None:
+    password = getpass("Master password for the agent: ")
+    path = agent_socket()
+    try:
+        server = bind_agent(path)
+    except OSError as ex:
+        raise AgentError(f"can't listen on {path}: {ex}") from None
+    if os.fork():
+        server.close()
+        print(f"aes-edit agent on {path} for {timeout / 3600:g}h")
+        return
+    os.setsid()
+    devnull = os.open(os.devnull, os.O_RDWR)
+    for fd in (0, 1, 2):
+        os.dup2(devnull, fd)
+    try:
+        serve_agent(path, password, timeout, server)
+    finally:
+        os._exit(0)
 
 
 def is_marked_file(data: bytes) -> bool:
@@ -349,7 +512,9 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawTextHelpFormatter
     )
-    parser.add_argument("path", type=Path, help="path to edit")
+    parser.add_argument(
+        "path", type=Path, nargs="?", help="path to edit or decrypt"
+    )
     parser.add_argument(
         "--editor",
         type=str,
@@ -376,7 +541,41 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="ask for a new password and save the file with it",
     )
-    return parser.parse_args()
+    parser.add_argument(
+        "--encrypt",
+        action="store_true",
+        help="with --agent: write the text on stdin, with its marked\n"
+        "secrets, encrypted to the path",
+    )
+    parser.add_argument(
+        "--agent",
+        action="store_true",
+        help="with --decrypt or --encrypt: let the running agent do it,\n"
+        "never prompt",
+    )
+    parser.add_argument(
+        "--agent-start",
+        action="store_true",
+        help="ask for the password and keep it in a background agent",
+    )
+    parser.add_argument(
+        "--agent-stop",
+        action="store_true",
+        help="stop the running agent",
+    )
+    parser.add_argument(
+        "--timeout",
+        default="8h",
+        help="how long the agent lives, like 30m or 8h (8h)",
+    )
+    args = parser.parse_args()
+    if args.agent and not (args.decrypt or args.encrypt):
+        parser.error("--agent works only with --decrypt or --encrypt")
+    if args.encrypt and not args.agent:
+        parser.error("--encrypt works only with --agent")
+    if not (args.agent_start or args.agent_stop) and args.path is None:
+        parser.error("the path is required")
+    return args
 
 
 def ask_new_password() -> str:
@@ -430,6 +629,29 @@ def parse_tokens(value: str | None) -> tuple[str, str]:
 
 def main() -> None:
     args = parse_args()
+    if args.agent_start:
+        try:
+            start_agent(parse_duration(args.timeout))
+        except AgentError as ex:
+            sys.exit(str(ex))
+        return
+    if args.agent_stop:
+        try:
+            ask_agent({"op": "stop"})
+        except AgentError as ex:
+            sys.exit(str(ex))
+        return
+    if args.agent:
+        try:
+            if args.encrypt:
+                encrypt_with_agent(args.path, sys.stdin.read(), args.tokens)
+            else:
+                data = base64.b64encode(args.path.read_bytes()).decode()
+                reply = ask_agent({"op": "decrypt", "data": data})
+                sys.stdout.write(reply["text"])
+        except (AgentError, MarkupError, OSError) as ex:
+            sys.exit(str(ex))
+        return
     tokens = parse_tokens(args.tokens)
     exists = args.path.exists()
     data = args.path.read_bytes() if exists else b""

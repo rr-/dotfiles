@@ -146,3 +146,78 @@ class MarkedFileTests(unittest.TestCase):
             self.assertEqual(
                 aes_edit.wrap("encrypt", content), "!encrypt[x = (1\n]"
             )
+
+
+class AgentTests(unittest.TestCase):
+    def setUp(self) -> None:
+        import threading
+
+        self.scratch = tempfile.TemporaryDirectory()
+        self.addCleanup(self.scratch.cleanup)
+        self.socket = Path(self.scratch.name) / "agent.sock"
+        self.thread = threading.Thread(
+            target=aes_edit.serve_agent, args=(self.socket, "pw", 30)
+        )
+        self.thread.start()
+        self.addCleanup(self.stop)
+        for _ in range(100):
+            if self.socket.exists():
+                break
+            import time
+
+            time.sleep(0.01)
+
+    def stop(self) -> None:
+        if self.thread.is_alive():
+            aes_edit.ask_agent({"op": "stop"}, self.socket)
+            self.thread.join(5)
+
+    def decrypt(self, data: bytes) -> str:
+        import base64
+
+        request = {"op": "decrypt", "data": base64.b64encode(data).decode()}
+        return aes_edit.ask_agent(request, self.socket)["text"]
+
+    def test_decrypts_the_current_format(self) -> None:
+        sealed = aes_edit.MarkedFile.create("pw").seal("a = !encrypt(x)\n")
+        self.assertEqual(self.decrypt(sealed), "a = x\n")
+
+    def test_decrypts_the_old_format(self) -> None:
+        old = Path(self.scratch.name) / "old"
+        aes_edit.write_encrypted_file(old, "pw", "old text")
+        self.assertEqual(self.decrypt(old.read_bytes()), "old text")
+
+    def test_wrong_password_is_an_error(self) -> None:
+        sealed = aes_edit.MarkedFile.create("other").seal("a = !encrypt(x)\n")
+        with self.assertRaises(aes_edit.AgentError):
+            self.decrypt(sealed)
+
+    def test_stop_removes_the_socket(self) -> None:
+        aes_edit.ask_agent({"op": "stop"}, self.socket)
+        self.thread.join(5)
+        self.assertFalse(self.socket.exists())
+        with self.assertRaises(aes_edit.AgentError):
+            aes_edit.ask_agent({"op": "stop"}, self.socket)
+
+    def test_seals_new_and_existing_files(self) -> None:
+        import base64
+
+        reply = aes_edit.ask_agent(
+            {"op": "seal", "plain": "a = !encrypt(x)\nb = !encrypt(y)\n"},
+            self.socket,
+        )
+        first = base64.b64decode(reply["data"])
+        self.assertEqual(self.decrypt(first), "a = x\nb = y\n")
+        reply = aes_edit.ask_agent(
+            {
+                "op": "seal",
+                "plain": "a = !encrypt(x)\nb = !encrypt(z)\n",
+                "existing": base64.b64encode(first).decode(),
+            },
+            self.socket,
+        )
+        second = base64.b64decode(reply["data"])
+        self.assertEqual(self.decrypt(second), "a = x\nb = z\n")
+        self.assertEqual(
+            first.decode().splitlines()[1], second.decode().splitlines()[1]
+        )
