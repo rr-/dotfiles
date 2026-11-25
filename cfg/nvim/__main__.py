@@ -7,24 +7,13 @@ from libdotfiles.util import (
     create_symlink,
     create_symlinks,
     download_file,
-    get_distro_name,
     run,
 )
 
 NVIM_DIR = HOME_DIR / ".config" / "nvim"
 NVIM_SPELL_DIR = NVIM_DIR / "spell"
 
-if get_distro_name() == "arch":
-    try_install("neovim")
-    try_install("pynvim", method="pip")
-elif get_distro_name() == "linuxmint":
-    try_install("neovim")
-    try_install("python3-neovim")
-elif get_distro_name() == "ubuntu":
-    try_install("neovim")
-    try_install("pynvim", method="pip")
-try_install("ruff", method="pip")
-try_install("ty", method="pip")
+try_install("neovim")
 
 for dirname in ["undo", "backup", "swap", "spell"]:
     create_dir(NVIM_DIR / dirname)
@@ -50,17 +39,17 @@ download_file(
     "ftp://ftp.vim.org/pub/vim/runtime/spell/pl.utf-8.spl",
     NVIM_SPELL_DIR / "pl.utf-8.spl",
 )
-download_file(
-    "https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim",
-    NVIM_DIR / "autoload" / "plug.vim",
-)
 create_file(
     HOME_DIR / ".config" / "zsh" / "editor.sh",
     "export EDITOR=nvim;alias vim=nvim",
     overwrite=True,
 )
 
-commands = ["PlugInstall"]
-for path in (NVIM_SPELL_DIR).glob("*.add"):
-    commands.append("mkspell! " + str(path))
-run(["nvim"] + sum([["-c", cmd] for cmd in commands], []), check=False)
+commands = ["mkspell! " + str(path) for path in NVIM_SPELL_DIR.glob("*.add")]
+if commands:
+    run(
+        ["nvim", "--headless"]
+        + sum([["-c", cmd] for cmd in commands], [])
+        + ["-c", "qa"],
+        check=False,
+    )

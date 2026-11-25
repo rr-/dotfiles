@@ -1,0 +1,56 @@
+{
+  "plugins": {
+    "aerial.nvim": {
+      "rev": "645d108a5242ec7b378cbe643eb6d04d4223f034",
+      "src": "https://github.com/stevearc/aerial.nvim"
+    },
+    "close-buffers.vim": {
+      "rev": "a679b99cee5f3349a83f95f8200e7c1fe6603b13",
+      "src": "https://github.com/Asheq/close-buffers.vim"
+    },
+    "editorconfig-vim": {
+      "rev": "13b86c5c691785ffbf2d6508c621dabb08e93df0",
+      "src": "https://github.com/editorconfig/editorconfig-vim"
+    },
+    "fern-hijack.vim": {
+      "rev": "f65524899231b15528066744e714fb344abf0892",
+      "src": "https://github.com/lambdalisue/fern-hijack.vim"
+    },
+    "fern.vim": {
+      "rev": "d0b5befc0321126384981d6cf3c1b561014c65a2",
+      "src": "https://github.com/lambdalisue/fern.vim"
+    },
+    "fzf-lua": {
+      "rev": "e791360b37daa2f064ab41f3ab177390136acba2",
+      "src": "https://github.com/ibhagwan/fzf-lua"
+    },
+    "vim-better-whitespace": {
+      "rev": "de99b55a6fe8c96a69f9376f16b1d5d627a56e81",
+      "src": "https://github.com/ntpeters/vim-better-whitespace"
+    },
+    "vim-easy-align": {
+      "rev": "9815a55dbcd817784458df7a18acacc6f82b1241",
+      "src": "https://github.com/junegunn/vim-easy-align"
+    },
+    "vim-easydir": {
+      "rev": "2efbed9e24438f626971a526d19af719b89e8040",
+      "src": "https://github.com/duggiefresh/vim-easydir"
+    },
+    "vim-hexdec": {
+      "rev": "3f23eac8fcece31c604a24ab79ab177fdc1346d2",
+      "src": "https://github.com/rr-/vim-hexdec"
+    },
+    "vim-move": {
+      "rev": "267fd1cff61fc643dfb5f9b188c434906f5214aa",
+      "src": "https://github.com/matze/vim-move"
+    },
+    "vim-tmux-navigator": {
+      "rev": "e41c431a0c7b7388ae7ba341f01a0d217eb3a432",
+      "src": "https://github.com/christoomey/vim-tmux-navigator"
+    },
+    "vim-visual-star-search": {
+      "rev": "7c32edb9e3c85d473d9be4dec721a4c9d5d4d69c",
+      "src": "https://github.com/bronson/vim-visual-star-search"
+    }
+  }
+}

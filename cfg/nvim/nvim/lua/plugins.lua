@@ -1,3 +1,24 @@
+local function gh(repo)
+  return 'https://github.com/' .. repo
+end
+
+-- nvim-pack-lock.json pins every plugin; only vim.pack.update() moves them
+vim.pack.add({
+  { src = gh('ibhagwan/fzf-lua') },               -- open files using fuzzy matching
+  { src = gh('ntpeters/vim-better-whitespace') }, -- highlight and strip trailing whitespace
+  { src = gh('matze/vim-move') },                 -- move lines up/down with c-k/c-j
+  { src = gh('rr-/vim-hexdec') },                 -- convert hex to dec and vice versa
+  { src = gh('junegunn/vim-easy-align') },        -- replace :column ...
+  { src = gh('bronson/vim-visual-star-search') }, -- enable * and # in visual mode
+  { src = gh('duggiefresh/vim-easydir') },        -- create directories on save
+  { src = gh('christoomey/vim-tmux-navigator') }, -- integration with tmux
+  { src = gh('editorconfig/editorconfig-vim') },  -- respect .editorconfig
+  { src = gh('Asheq/close-buffers.vim') },        -- close hidden buffers
+  { src = gh('lambdalisue/fern.vim') },           -- alternative to buggy and unwieldy netrw
+  { src = gh('lambdalisue/fern-hijack.vim') },    -- replace netrw
+  { src = gh('stevearc/aerial.nvim') },           -- outline of the symbols
+}, { confirm = false })
+
 local actions = require "fzf-lua.actions"
 
 local M = {}
