@@ -35,7 +35,8 @@ class MarkSecretsTests(unittest.TestCase):
             "DATABASE_URL=!encrypt(postgres://u:hunter2@db/x)\n"
             "ID=!encrypt(QzzvIufaZhypvhMqUPHGO2CX9TQHGk)\n",
         )
-        self.assertIn("DEBUG: plain", report)
+        self.assertIn("line 1: DEBUG: plain", report)
+        self.assertIn("line 2: SECRET_KEY: secret, name", report)
         self.assertFalse(any("hunter2" in line for line in report))
 
     def test_empty_and_harmless_values_stay_plain(self) -> None:
