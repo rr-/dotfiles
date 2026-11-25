@@ -48,17 +48,8 @@ map('n', '<M-C>', ':cp<CR>', { silent = true })
 -- exit terminal mode via escape
 map('t', '<Esc>', '<C-\\><C-n>', { silent = true })
 
--- file explorer
-map('i', '<F3>', '<Esc>:Fern %:h -reveal=%:p<CR>', { silent = true })
-map('n', '<F3>', ':Fern %:h -reveal=%:p<CR>', { silent = true })
-map('n', '<leader>k', ':Fern %:h -reveal=%:p<CR>', { silent = true })
-
 -- blockwise visual, since the terminal app eats <C-v>
 map({ 'n', 'x' }, '<leader>b', '<C-v>', { silent = true })
-
--- EasyAlign
-map('n', 'ga', '<Plug>(EasyAlign)', {})
-map('x', 'ga', '<Plug>(EasyAlign)', {})
 
 -- readline emulation
 map('c', '<C-a>', '<Home>', { noremap = true })
@@ -71,11 +62,6 @@ map('c', '<C-d>', '<Del>', { noremap = true })
 map('c', '<C-k>', '<C-\\>e getcmdpos() == 1 and \'\' or getcmdline()[:getcmdpos()-2]<CR>', { noremap = true })
 map('c', '<M-b>', '<S-Left>', { noremap = true })
 map('c', '<M-f>', '<S-Right>', { noremap = true })
-
--- Aerial
-map("n", "<M-[>", "<cmd>AerialPrev<CR>", { buffer = bufnr })
-map("n", "<M-]>", "<cmd>AerialNext<CR>", { buffer = bufnr })
-map("n", "<leader>a", "<cmd>AerialToggle!<CR>")
 
 -- Formatting
 vim.api.nvim_set_keymap('n', '<C-b>', '', {callback = function()

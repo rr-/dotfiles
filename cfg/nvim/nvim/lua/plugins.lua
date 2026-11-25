@@ -47,12 +47,32 @@ end, { desc = "Fzf grep" })
 vim.keymap.set("n", "<c-p>", require('fzf-lua').files, { desc = "Fzf files" })
 vim.keymap.set("n", "<c-l>", require('fzf-lua').buffers, { desc = "Fzf open buffers" })
 
-vim.api.nvim_create_user_command(
-    'SudoSave',
-    function()
-        vim.cmd('w !sudo tee >/dev/null %')
-    end, {}
-)
+local map = vim.keymap.set
+
+-- file explorer
+map('i', '<F3>', '<Esc>:Fern %:h -reveal=%:p<CR>', { silent = true })
+map('n', '<F3>', ':Fern %:h -reveal=%:p<CR>', { silent = true })
+map('n', '<leader>k', ':Fern %:h -reveal=%:p<CR>', { silent = true })
+
+-- EasyAlign
+map('n', 'ga', '<Plug>(EasyAlign)', {})
+map('x', 'ga', '<Plug>(EasyAlign)', {})
+
+-- Aerial
+map("n", "<M-[>", "<cmd>AerialPrev<CR>")
+map("n", "<M-]>", "<cmd>AerialNext<CR>")
+map("n", "<leader>a", "<cmd>AerialToggle!<CR>")
+
+-- strip trailing whitespace for common source code
+vim.api.nvim_create_autocmd('FileType', {
+  pattern = 'c,cc,cxx,cpp,h,hpp,java,php,python,ruby,vim',
+  callback = function()
+    vim.api.nvim_create_autocmd('BufWritePre', {
+      buffer = 0,
+      command = 'StripWhitespace'
+    })
+  end
+})
 
 require("aerial").setup({
   post_jump_cmd = "",

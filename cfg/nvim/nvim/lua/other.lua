@@ -134,3 +134,10 @@ vim.api.nvim_create_user_command('AI', pass_through_chatgpt, { range = true, nar
 vim.api.nvim_set_keymap('n', '<leader>B', ':lua ConvertToBinary()<CR>', { noremap = true, silent = true })
 vim.api.nvim_set_keymap('n', '<leader>x', ':lua ConvertToHex()<CR>', { noremap = true, silent = true })
 vim.api.nvim_set_keymap('n', '<Leader>ev', [[:lua insert_lua_expression()<CR>]], { noremap = true, silent = true })
+
+vim.api.nvim_create_user_command(
+    'SudoSave',
+    function()
+        vim.cmd('w !sudo tee >/dev/null %')
+    end, {}
+)

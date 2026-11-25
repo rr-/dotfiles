@@ -14,17 +14,6 @@ vim.api.nvim_create_autocmd({'BufRead', 'BufNewFile'}, {
   command = 'set syntax=c'
 })
 
--- strip trailing whitespace for common source code
-vim.api.nvim_create_autocmd('FileType', {
-  pattern = 'c,cc,cxx,cpp,h,hpp,java,php,python,ruby,vim',
-  callback = function()
-    vim.api.nvim_create_autocmd('BufWritePre', {
-      buffer = 0,
-      command = 'StripWhitespace'
-    })
-  end
-})
-
 -- set c/c++ options
 vim.api.nvim_create_autocmd('FileType', {
   pattern = 'c,cc,cxx,cpp,h,hpp',
