@@ -2,10 +2,17 @@
 #
 # /// script
 # requires-python = ">=3.13"
-# dependencies = ["numpy", "pillow", "libdotfiles"]
+# dependencies = [
+#     "numpy==2.5.5",
+#     "pillow==13.0.0",
+#     "libdotfiles",
+# ]
 #
 # [tool.uv.sources]
 # libdotfiles = { path = "../../libdotfiles" }
+#
+# [tool.uv]
+# exclude-newer = "2026-11-25T00:00:00Z"
 # ///
 
 import argparse

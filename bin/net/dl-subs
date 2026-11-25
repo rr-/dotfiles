@@ -3,13 +3,16 @@
 # /// script
 # requires-python = ">=3.13"
 # dependencies = [
-#     "requests",
-#     "coloredlogs",
+#     "requests==2.34.2",
+#     "coloredlogs==15.0.1",
 #     "libdotfiles",
 # ]
 #
 # [tool.uv.sources]
 # libdotfiles = { path = "../../libdotfiles" }
+#
+# [tool.uv]
+# exclude-newer = "2026-11-25T00:00:00Z"
 # ///
 
 # Downloads movie subtitles from Napiprojekt database

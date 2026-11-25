@@ -2,7 +2,14 @@
 #
 # /// script
 # requires-python = ">=3.12"
-# dependencies = ["tqdm", "pycryptodome", "requests"]
+# dependencies = [
+#     "tqdm==4.70.1",
+#     "pycryptodome==4.6.0",
+#     "requests==2.34.2",
+# ]
+#
+# [tool.uv]
+# exclude-newer = "2026-11-25T00:00:00Z"
 # ///
 
 import argparse

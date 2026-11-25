@@ -2,7 +2,14 @@
 #
 # /// script
 # requires-python = ">=3.12"
-# dependencies = ["xdg", "pyotp", "pyyaml"]
+# dependencies = [
+#     "xdg==6.0.0",
+#     "pyotp==2.12.1",
+#     "pyyaml==6.0.4",
+# ]
+#
+# [tool.uv]
+# exclude-newer = "2026-11-25T00:00:00Z"
 # ///
 
 import argparse

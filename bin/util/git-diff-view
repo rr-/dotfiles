@@ -2,7 +2,12 @@
 #
 # /// script
 # requires-python = ">=3.12"
-# dependencies = ["pygments"]
+# dependencies = [
+#     "pygments==2.21.0",
+# ]
+#
+# [tool.uv]
+# exclude-newer = "2026-11-25T00:00:00Z"
 # ///
 """Browse a diff in the terminal with vim keys.
 
