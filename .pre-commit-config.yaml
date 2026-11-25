@@ -4,7 +4,7 @@ default_stages: [pre-commit]
 repos:
 
 - repo: https://github.com/astral-sh/ruff-pre-commit
-  rev: v0.17.5
+  rev: ef6cf06c079dd6b299dfc720b0f14400c9d168e1  # frozen: v0.17.5
   hooks:
   - id: ruff-check
     args: [--fix]
@@ -22,7 +22,7 @@ repos:
     name: Type check installer helpers and tests
     entry: ty check libdotfiles tests bin/util/aes-edit
     language: python
-    additional_dependencies: [ty==0.0.105, coloredlogs>=15.0.1, pycryptodome>=3.20]
+    additional_dependencies: [ty==0.0.105, coloredlogs==15.0.1, pycryptodome==4.6.0]
     pass_filenames: false
     types: [file]
     files: '(\.pyi?$|^bin/util/aes-edit$|(^|/)pyproject\.toml$)'

@@ -6,10 +6,10 @@ requires-python = ">=3.13"
 dependencies = []
 
 [project.optional-dependencies]
-color = ["coloredlogs>=15.0.1"]
+color = ["coloredlogs==15.0.1"]
 
 [build-system]
-requires = ["setuptools>=68"]
+requires = ["setuptools==84.2.1"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools]

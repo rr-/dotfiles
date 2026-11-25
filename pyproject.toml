@@ -27,17 +27,17 @@ authors = [
 ]
 
 [project.optional-dependencies]
-color = ["coloredlogs>=15.0.1"]
+color = ["coloredlogs==15.0.1"]
 dev = [
     "ruff==0.17.5",
     "ty==0.0.105",
-    "coloredlogs>=15.0.1",
-    "pycryptodome>=3.20",
+    "coloredlogs==15.0.1",
+    "pycryptodome==4.6.0",
 ]
 
 [tool.setuptools]
 packages = ["libdotfiles"]
 
 [build-system]
-requires = ["setuptools>=68"]
+requires = ["setuptools==84.2.1"]
 build-backend = "setuptools.build_meta"
