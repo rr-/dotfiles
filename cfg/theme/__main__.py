@@ -1,8 +1,8 @@
 from cfg.theme.render import current_theme
-from libdotfiles.packages import try_install
+from cfg.uv import install_uv
 from libdotfiles.util import HOME_DIR, create_script, run
 
-try_install("uv")
+install_uv()
 
 create_script("cfg.theme.switch", "theme")
 # a machine where theme(1) has never run has nothing for zsh and tmux to
