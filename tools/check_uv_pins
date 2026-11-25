@@ -1,0 +1,78 @@
+#!/usr/bin/env python3
+"""Fail the commit if a uv script leaves a dependency unpinned.
+
+Every dependency in a script's inline metadata (PEP 723) has to name one
+exact version with `==`, except those that [tool.uv.sources] points at a
+path in this repo. [tool.uv] exclude-newer has to be set too, since it is
+what holds the dependencies of the dependencies still. Wired in as a
+prek/pre-commit hook so a script cannot pull in whatever is newest.
+"""
+
+import re
+import sys
+import tomllib
+from collections.abc import Sequence
+from pathlib import Path
+
+BLOCK_RE = re.compile(r"^# /// script$\n((?:^#(?: .*)?$\n)*?)^# ///$", re.M)
+NAME_RE = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]*")
+EXACT_RE = re.compile(r"^\s*==\s*[^,*\s]+\s*$")
+
+
+def normalize(name: str) -> str:
+    return re.sub(r"[-_.]+", "-", name).lower()
+
+
+def read_metadata(text: str) -> dict | None:
+    match = BLOCK_RE.search(text)
+    if not match:
+        return None
+    toml = "".join(
+        line[2:] if line.startswith("# ") else line[1:]
+        for line in match.group(1).splitlines(keepends=True)
+    )
+    return tomllib.loads(toml)
+
+
+def check(metadata: dict) -> list[str]:
+    errors: list[str] = []
+    uv = metadata.get("tool", {}).get("uv", {})
+    local = {normalize(name) for name in uv.get("sources", {})}
+    dependencies = metadata.get("dependencies", [])
+    for dependency in dependencies:
+        name = NAME_RE.match(dependency)
+        if not name or normalize(name.group()) in local:
+            continue
+        rest = dependency[name.end() :]
+        rest = re.sub(r"^\s*\[[^\]]*\]", "", rest)
+        rest = rest.split(";", 1)[0]
+        if not EXACT_RE.match(rest):
+            errors.append(f"`{dependency}` is not pinned with ==")
+    if dependencies and "exclude-newer" not in uv:
+        errors.append("[tool.uv] has no exclude-newer")
+    return errors
+
+
+def main(argv: Sequence[str]) -> int:
+    failed = False
+    for path in map(Path, argv[1:]):
+        try:
+            text = path.read_text(encoding="utf-8")
+        except (OSError, UnicodeDecodeError):
+            continue
+        try:
+            metadata = read_metadata(text)
+        except tomllib.TOMLDecodeError as ex:
+            sys.stderr.write(f"{path}: broken script metadata: {ex}\n")
+            failed = True
+            continue
+        if metadata is None:
+            continue
+        for error in check(metadata):
+            sys.stderr.write(f"{path}: {error}\n")
+            failed = True
+    return 1 if failed else 0
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv))

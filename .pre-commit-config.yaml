@@ -31,3 +31,8 @@ repos:
     entry: python3 tools/check_commit_msg
     language: system
     stages: [commit-msg]
+  - id: uv-pins
+    name: Pin the dependencies of uv scripts
+    entry: python3 tools/check_uv_pins
+    language: system
+    types: [text]
