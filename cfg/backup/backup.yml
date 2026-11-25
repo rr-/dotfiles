@@ -21,30 +21,11 @@ items:
     exclude: !flatten
     - *defaults_exclude
     - "/home/dash/.cache/"
-  - source: nebula:/etc/supervisor/
-    target: frost:data/backup/nebula/
-    exclude:
-    - *defaults_exclude
-  - source: nebula:/etc/nginx/
-    target: frost:data/backup/nebula/
-    exclude:
-    - *defaults_exclude
 
   - source: oc:/home/rr-/
     target: frost:data/backup/oc/
     <<: *defaults
   - source: oc:/var/log/nginx/
     target: frost:data/backup/oc/
-    <<: *defaults
-    traverse_links: true
-
-  - source: trcustoms:/home/trcustoms/
-    target: frost:data/backup/trcustoms/
-    <<: *defaults
-    exclude: !flatten
-    - *defaults_exclude
-    - "volumes/"
-  - source: trcustoms:/etc/
-    target: frost:data/backup/trcustoms/
     <<: *defaults
     traverse_links: true
