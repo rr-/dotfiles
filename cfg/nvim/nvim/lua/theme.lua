@@ -164,7 +164,11 @@ vim.api.nvim_create_autocmd('VimEnter', {
   end,
 })
 
-vim.cmd('colorscheme vim')
+if vim.fn.has('nvim-0.10') == 1 then
+  vim.cmd.colorscheme('vim')
+else
+  vim.cmd.highlight('clear')
+end
 apply_highlights()
 
 -- theme(1) sets g:theme and 'background' over the rpc socket, which reloads

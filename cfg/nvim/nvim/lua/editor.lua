@@ -100,4 +100,6 @@ vim.api.nvim_create_autocmd('InsertLeave', {
     end,
 })
 
-vim.lsp.enable('ty')
+if vim.lsp.enable and vim.fn.executable('ty') == 1 then
+  vim.lsp.enable('ty')
+end
