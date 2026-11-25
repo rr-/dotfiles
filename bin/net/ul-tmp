@@ -25,7 +25,7 @@ from typing import BinaryIO
 
 from tqdm import tqdm
 
-BASE_DIR = "/home/dash/srv/files/data/pub/"
+BASE_DIR = "/data/pub/"
 BASE_URL = "https://files.bad.pink/serve/pub/"
 REMOTE_HOST = "bad.pink"
 
