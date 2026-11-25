@@ -64,19 +64,21 @@ def create_file(
 
 
 def create_script(module: str, name: str) -> None:
-    """Put an executable on PATH that runs `python3 -m <module>`.
+    """Put an executable on PATH that runs <module> as a uv script.
 
-    Only ./install puts the repo on sys.path, so the launcher has to carry it
+    The module names its own dependencies in its inline metadata. Only
+    ./install puts the repo on sys.path, so the launcher has to carry it
     itself; writing it at install time is what lets the checkout live wherever
     this machine keeps it.
     """
     path = HOME_DIR / ".local" / "bin" / name
+    script = REPO_ROOT_DIR.joinpath(*module.split(".")).with_suffix(".py")
     create_dir(path.parent)
     logger.info("Creating script %s...", path)
     path.write_text(
         "#!/bin/sh\n"
         f"export PYTHONPATH={shlex.quote(str(REPO_ROOT_DIR))}\n"
-        f'exec python3 -m {module} "$@"\n'
+        f'exec uv run --script {shlex.quote(str(script))} "$@"\n'
     )
     path.chmod(0o755)
 

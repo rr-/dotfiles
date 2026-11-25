@@ -1,3 +1,12 @@
+# /// script
+# requires-python = ">=3.13"
+# dependencies = [
+#     "pillow==13.0.0",
+# ]
+#
+# [tool.uv]
+# exclude-newer = "2026-11-25T00:00:00Z"
+# ///
 """Switch this machine between the light, dark and light-hc themes.
 
 Installed onto PATH as `theme` by cfg/theme/__main__.py.
