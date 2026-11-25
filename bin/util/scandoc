@@ -1,0 +1,148 @@
+#!/usr/bin/env -S uv run --script
+#
+# /// script
+# requires-python = ">=3.12"
+# dependencies = []
+# ///
+#
+# Scans documents on the Epson Stylus SX235 flatbed into a PDF or an image.
+# Talks to the scanner through SANE's epson2 backend (the sane package), so
+# no Epson driver is needed. With --multi, keeps scanning pages into one PDF
+# until told to stop.
+
+import argparse
+import shutil
+import subprocess
+import sys
+import tempfile
+from datetime import datetime
+from pathlib import Path
+
+USB_VENDOR = "04b8"
+USB_PRODUCT = "0885"
+MODES = {"color": "Color", "gray": "Gray", "lineart": "Lineart"}
+IMAGE_SUFFIXES = {".png", ".jpg", ".jpeg"}
+A4_MM = (210, 297)
+JPEG_QUALITY = 85
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "output",
+        type=Path,
+        nargs="?",
+        help="a .pdf, .png or .jpg file (default: scan-<timestamp>.pdf)",
+    )
+    parser.add_argument("-r", "--resolution", type=int, default=300)
+    parser.add_argument("-m", "--mode", choices=MODES, default="color")
+    parser.add_argument(
+        "--multi",
+        action="store_true",
+        help="prompt for more pages after each scan (PDF only)",
+    )
+    parser.add_argument(
+        "-f", "--force", action="store_true", help="overwrite the output file"
+    )
+    return parser.parse_args()
+
+
+def find_device() -> str:
+    for dev in Path("/sys/bus/usb/devices").iterdir():
+        vendor, product = dev / "idVendor", dev / "idProduct"
+        if (
+            vendor.is_file()
+            and vendor.read_text().strip() == USB_VENDOR
+            and product.read_text().strip() == USB_PRODUCT
+        ):
+            bus = int((dev / "busnum").read_text())
+            num = int((dev / "devnum").read_text())
+            return f"epson2:libusb:{bus:03}:{num:03}"
+    sys.exit("the SX235 is not on USB (is it plugged in and switched on?)")
+
+
+def scan_page(device: str, args: argparse.Namespace, out: Path) -> None:
+    width, height = A4_MM
+    subprocess.run(
+        [
+            "scanimage",
+            "--device-name", device,
+            "--mode", MODES[args.mode],
+            "--resolution", str(args.resolution),
+            "-x", str(width), "-y", str(height),
+            "--format", "png",
+            "--output-file", str(out),
+        ],
+        check=True,
+    )
+
+
+def want_another_page(count: int) -> bool:
+    try:
+        answer = input(
+            f"{count} page(s) scanned. Place the next page and press Enter, "
+            "or q to finish: "
+        )
+    except EOFError:
+        print()
+        return False
+    return answer.strip().lower() not in {"q", "n", "no"}
+
+
+def write_output(
+    pages: list[Path], output: Path, resolution: int, mode: str
+) -> None:
+    if output.suffix.lower() == ".png":
+        shutil.copy(pages[0], output)
+        return
+    compress = ["-quality", str(JPEG_QUALITY)]
+    if output.suffix.lower() == ".pdf":
+        # JPEG smears 1-bit scans; fax compression keeps them sharp and tiny.
+        compress = ["-compress", "group4" if mode == "lineart" else "jpeg"]
+        if mode != "lineart":
+            compress += ["-quality", str(JPEG_QUALITY)]
+    subprocess.run(
+        [
+            "magick", *map(str, pages),
+            "-units", "PixelsPerInch", "-density", str(resolution),
+            *compress, str(output),
+        ],
+        check=True,
+    )
+
+
+def main() -> None:
+    args = parse_args()
+    output = args.output or Path(f"scan-{datetime.now():%Y%m%d-%H%M%S}.pdf")
+    suffix = output.suffix.lower()
+    if suffix != ".pdf" and suffix not in IMAGE_SUFFIXES:
+        sys.exit(f"unsupported output type: {output.suffix or output.name}")
+    if args.multi and suffix != ".pdf":
+        sys.exit("--multi needs a .pdf output")
+    if output.exists() and not args.force:
+        sys.exit(f"{output} already exists (use --force to overwrite)")
+    if not shutil.which("scanimage"):
+        sys.exit("scanimage not found (install the sane package)")
+
+    device = find_device()
+
+    try:
+        with tempfile.TemporaryDirectory() as tmp:
+            pages: list[Path] = []
+            while True:
+                page = Path(tmp) / f"{len(pages):03}.png"
+                print(f"scanning page {len(pages) + 1}...", file=sys.stderr)
+                scan_page(device, args, page)
+                pages.append(page)
+                if not args.multi or not want_another_page(len(pages)):
+                    break
+            write_output(pages, output, args.resolution, args.mode)
+    except subprocess.CalledProcessError as ex:
+        sys.exit(f"scanning failed: {ex.cmd[0]} exited with {ex.returncode}")
+    except KeyboardInterrupt:
+        sys.exit("\ncancelled")
+    print(f"{len(pages)} page(s) saved to {output}")
+
+
+if __name__ == "__main__":
+    main()
