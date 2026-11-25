@@ -69,7 +69,11 @@ round state) goes in `/tmp/claude-1000`.
   build, test, push. Other conflicts stop it; resolve them by hand.
 - `$S/attr` (`docs/CHANGELOG.md merge=union`) keeps both sides of changelog
   conflicts. It also re-adds lines a fixup removes, so never use it for a
-  fixup that deletes a changelog line.
+  fixup that deletes a changelog line. It can also leave a PR's "Added"
+  lines after develop's newer "Changed"/"Fixed" lines, which CI's changelog
+  guard rejects; rebuild each commit's tree with `scripts/clorder.py`
+  (stable sort Added, Changed, Fixed per [Unreleased] subsection) and
+  `git commit-tree -S`, keeping author and message.
 
 ## Tickets through the resident worker
 
