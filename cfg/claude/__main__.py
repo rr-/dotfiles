@@ -41,6 +41,7 @@ create_symlinks(
     [
         (src_dir, SKILLS_DIR / src_dir.name)
         for parent in (MODS_DIR, OWN_SKILLS_DIR)
+        if parent.exists()
         for src_dir in parent.iterdir()
     ]
 )
