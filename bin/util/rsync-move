@@ -9,6 +9,7 @@
 # SOURCE are removed. Run it again at any time to continue.
 #
 # -n: show what would be moved and change nothing.
+# RSYNC_RSH: the ssh command to use, e.g. with -i for another key.
 
 set -u
 
@@ -18,7 +19,7 @@ if [ "${1:-}" = "-n" ]; then
     shift
 fi
 if [ $# -ne 2 ]; then
-    sed -n '2,12s/^# \{0,1\}//p' "$0" >&2
+    sed -n '2,13s/^# \{0,1\}//p' "$0" >&2
     exit 2
 fi
 source=${1%/}/
@@ -40,7 +41,7 @@ while :; do
     rsync --archive --partial --partial-dir=.rsync-partial \
         --remove-source-files --no-inc-recursive --info=progress2 \
         --human-readable --timeout=300 \
-        -e "ssh -o ServerAliveInterval=15 -o ServerAliveCountMax=4" \
+        -e "${RSYNC_RSH:-ssh} -o ServerAliveInterval=15 -o ServerAliveCountMax=4" \
         $dry_run "$source" "$dest"
     status=$?
     case $status in
