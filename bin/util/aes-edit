@@ -9,17 +9,37 @@
 # [tool.uv]
 # exclude-newer = "2026-11-25T00:00:00Z"
 # ///
+"""Edit an encrypted file.
+
+A file of the old format is one encrypted blob. A file of the current
+format is text in which only the marked parts are encrypted, so a diff
+still shows what changed around them. In the editor a part to keep secret
+is written as a token and a balanced group:
+
+    password = !encrypt(hunter2)
+    const char *const token = "!encrypt[a(b)c]";
+
+and on disk it reads !decrypt(...) with the ciphertext inside. The first
+line of the file holds the format, the token pair, the salt and a MAC over
+the whole file. --decrypt prints the file with the secrets in place and
+no tokens, for scripts.
+"""
 
 import argparse
+import base64
 import hashlib
+import hmac
 import io
 import os
+import re
 import shlex
 import subprocess
 import sys
 import tempfile
 import time
 import zlib
+from collections.abc import Callable
+from dataclasses import dataclass, field
 from getpass import getpass
 from pathlib import Path
 
@@ -27,10 +47,22 @@ from Crypto import Random
 from Crypto.Cipher import AES
 from Crypto.Util.Padding import pad, unpad
 
+GROUPS = {"(": ")", "[": "]", "{": "}", "<": ">"}
+DEFAULT_TOKENS = ("encrypt", "decrypt")
+TOKEN_RE = re.compile(r"[A-Za-z][A-Za-z0-9_-]*")
+HEADER_RE = re.compile(r"!([A-Za-z][A-Za-z0-9_-]*)-file\(v2 ([^\n]*)\)\n")
+SCRYPT_LOG_N = 15
+NONCE_SIZE = 12
+TAG_SIZE = 16
+
 
 class InvalidKey(RuntimeError):
     def __init__(self) -> None:
         super().__init__("the supplied key appears to be invalid")
+
+
+class MarkupError(ValueError):
+    pass
 
 
 class EditorError(RuntimeError):
@@ -39,6 +71,8 @@ class EditorError(RuntimeError):
 
 
 class AESCipher:
+    """The old format: the whole file in one AES-CBC blob."""
+
     def __init__(self, key: str) -> None:
         self.key = hashlib.sha256(key.encode()).digest()
         self.chk = bytes(range(AES.block_size))
@@ -78,9 +112,15 @@ def read_encrypted_file(path: Path, key: str) -> str:
 
 def write_encrypted_file(path: Path, key: str, content: str) -> None:
     aes = AESCipher(key)
-    encrypted = aes.encrypt(
-        zlib.compress(content.encode(), level=zlib.Z_BEST_COMPRESSION)
+    write_atomically(
+        path,
+        aes.encrypt(
+            zlib.compress(content.encode(), level=zlib.Z_BEST_COMPRESSION)
+        ),
     )
+
+
+def write_atomically(path: Path, data: bytes) -> None:
     # Follow an existing symlink, as reading the encrypted file does.
     target = path.resolve()
     temporary: Path | None = None
@@ -89,7 +129,7 @@ def write_encrypted_file(path: Path, key: str, content: str) -> None:
             dir=target.parent, prefix=f".{target.name}.", delete=False
         ) as handle:
             temporary = Path(handle.name)
-            handle.write(encrypted)
+            handle.write(data)
             handle.flush()
             os.fsync(handle.fileno())
         temporary.replace(target)
@@ -98,8 +138,217 @@ def write_encrypted_file(path: Path, key: str, content: str) -> None:
             temporary.unlink(missing_ok=True)
 
 
+def is_marked_file(data: bytes) -> bool:
+    return HEADER_RE.match(data[:4096].decode("utf-8", "replace")) is not None
+
+
+@dataclass
+class Group:
+    start: int
+    end: int
+    opener: str
+    inner: str
+
+
+def find_groups(text: str, token: str) -> list[Group]:
+    """Every !<token> with a balanced group right after it."""
+    groups = []
+    marker = f"!{token}"
+    index = 0
+    while (index := text.find(marker, index)) != -1:
+        opener_at = index + len(marker)
+        opener = text[opener_at : opener_at + 1]
+        if opener not in GROUPS:
+            index = opener_at
+            continue
+        closer = GROUPS[opener]
+        depth = 0
+        for position in range(opener_at, len(text)):
+            char = text[position]
+            if char == opener:
+                depth += 1
+            elif char == closer:
+                depth -= 1
+                if depth == 0:
+                    break
+        else:
+            line = text.count("\n", 0, index) + 1
+            raise MarkupError(f"line {line}: {marker}{opener} is never closed")
+        groups.append(
+            Group(index, position + 1, opener, text[opener_at + 1 : position])
+        )
+        index = position + 1
+    return groups
+
+
+def replace_groups(
+    text: str, groups: list[Group], replace: Callable[[Group], str]
+) -> str:
+    parts = []
+    last = 0
+    for group in groups:
+        parts.append(text[last : group.start])
+        parts.append(replace(group))
+        last = group.end
+    parts.append(text[last:])
+    return "".join(parts)
+
+
+def balanced_opener(text: str) -> str | None:
+    """A kind of group that can hold the text as it is."""
+    for opener, closer in GROUPS.items():
+        depth = 0
+        for char in text:
+            if char == opener:
+                depth += 1
+            elif char == closer:
+                depth -= 1
+                if depth < 0:
+                    break
+        else:
+            if depth == 0:
+                return opener
+    return None
+
+
+def wrap(token: str, text: str) -> str:
+    opener = balanced_opener(text)
+    if opener is None:
+        raise MarkupError("no kind of brackets is balanced in this text")
+    return f"!{token}{opener}{text}{GROUPS[opener]}"
+
+
+def check_tokens(tokens: tuple[str, str]) -> None:
+    for token in tokens:
+        if not TOKEN_RE.fullmatch(token):
+            raise MarkupError(f"{token!r} can't be a token")
+    if tokens[0] == tokens[1]:
+        raise MarkupError("the two tokens must differ")
+
+
+@dataclass
+class MarkedFile:
+    """A file of the current format, opened with its password."""
+
+    tokens: tuple[str, str]
+    salt: bytes
+    encryption_key: bytes
+    mac_key: bytes
+    known: dict[tuple[str, str], str] = field(default_factory=dict)
+
+    @classmethod
+    def create(
+        cls, password: str, tokens: tuple[str, str] = DEFAULT_TOKENS
+    ) -> "MarkedFile":
+        check_tokens(tokens)
+        return cls.derive(password, tokens, os.urandom(16))
+
+    @classmethod
+    def derive(
+        cls, password: str, tokens: tuple[str, str], salt: bytes
+    ) -> "MarkedFile":
+        keys = hashlib.scrypt(
+            password.encode(),
+            salt=salt,
+            n=2**SCRYPT_LOG_N,
+            r=8,
+            p=1,
+            maxmem=64 * 1024 * 1024,
+            dklen=64,
+        )
+        return cls(tokens, salt, keys[:32], keys[32:])
+
+    def header(self) -> str:
+        salt = base64.b64encode(self.salt).decode()
+        return (
+            f"v2 tokens={self.tokens[0]},{self.tokens[1]}"
+            f" n={SCRYPT_LOG_N} salt={salt}"
+        )
+
+    def mac(self, header: str, body: str) -> str:
+        digest = hmac.new(
+            self.mac_key, f"{header}\n{body}".encode(), hashlib.sha256
+        ).digest()
+        return base64.b64encode(digest).decode()
+
+    def seal(self, plain: str) -> bytes:
+        """The editor's text, as it goes to disk.
+
+        A secret that was in the file when it was opened keeps its
+        ciphertext, so saving changes only the lines that changed.
+        """
+        plain_token, sealed_token = self.tokens
+
+        def encrypt(group: Group) -> str:
+            sealed = self.known.get((group.opener, group.inner))
+            if sealed is None:
+                nonce = os.urandom(NONCE_SIZE)
+                cipher = AES.new(self.encryption_key, AES.MODE_GCM, nonce)
+                ciphertext, tag = cipher.encrypt_and_digest(
+                    group.inner.encode()
+                )
+                sealed = base64.b64encode(nonce + ciphertext + tag).decode()
+                self.known[(group.opener, group.inner)] = sealed
+            closer = GROUPS[group.opener]
+            return f"!{sealed_token}{group.opener}{sealed}{closer}"
+
+        if find_groups(plain, sealed_token):
+            raise MarkupError(
+                f"!{sealed_token}(...) is how a secret looks on disk; "
+                f"write !{plain_token}(...)"
+            )
+        body = replace_groups(plain, find_groups(plain, plain_token), encrypt)
+        header = self.header()
+        mac = self.mac(header, body)
+        return f"!{sealed_token}-file({header} mac={mac})\n{body}".encode()
+
+    @classmethod
+    def open(cls, data: bytes, password: str) -> tuple["MarkedFile", str]:
+        """The file and its text for the editor, with the plain tokens."""
+        text = data.decode()
+        match = HEADER_RE.match(text)
+        if match is None:
+            raise MarkupError("not a file of the current format")
+        fields = dict(item.split("=", 1) for item in match.group(2).split(" "))
+        plain_token, sealed_token = fields["tokens"].split(",")
+        if sealed_token != match.group(1) or fields["n"] != str(SCRYPT_LOG_N):
+            raise MarkupError("unsupported file header")
+        opened = cls.derive(
+            password,
+            (plain_token, sealed_token),
+            base64.b64decode(fields["salt"]),
+        )
+        body = text[match.end() :]
+        header = "v2 " + match.group(2).rsplit(" mac=", 1)[0]
+        if not hmac.compare_digest(fields["mac"], opened.mac(header, body)):
+            raise InvalidKey
+
+        def decrypt(group: Group) -> str:
+            raw = base64.b64decode(group.inner)
+            nonce = raw[:NONCE_SIZE]
+            ciphertext, tag = raw[NONCE_SIZE:-TAG_SIZE], raw[-TAG_SIZE:]
+            cipher = AES.new(opened.encryption_key, AES.MODE_GCM, nonce)
+            inner = cipher.decrypt_and_verify(ciphertext, tag).decode()
+            opened.known[(group.opener, inner)] = group.inner
+            closer = GROUPS[group.opener]
+            return f"!{plain_token}{group.opener}{inner}{closer}"
+
+        plain = replace_groups(body, find_groups(body, sealed_token), decrypt)
+        return opened, plain
+
+    def reveal(self, plain: str) -> str:
+        """The text with its secrets in place and no tokens."""
+        return replace_groups(
+            plain,
+            find_groups(plain, self.tokens[0]),
+            lambda group: group.inner,
+        )
+
+
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawTextHelpFormatter
+    )
     parser.add_argument("path", type=Path, help="path to edit")
     parser.add_argument(
         "--editor",
@@ -107,42 +356,129 @@ def parse_args() -> argparse.Namespace:
         default=os.environ.get("EDITOR") or "nano",
         help="use this particular editor",
     )
+    parser.add_argument(
+        "--decrypt",
+        action="store_true",
+        help="print the file with its secrets in place and exit",
+    )
+    parser.add_argument(
+        "--upgrade",
+        action="store_true",
+        help="convert a file of the old format, all of it one secret",
+    )
+    parser.add_argument(
+        "--tokens",
+        metavar="PLAIN,SEALED",
+        help="the token pair of a new or upgraded file (encrypt,decrypt)",
+    )
+    parser.add_argument(
+        "--rekey",
+        action="store_true",
+        help="ask for a new password and save the file with it",
+    )
     return parser.parse_args()
+
+
+def ask_new_password() -> str:
+    while True:
+        password = getpass("New password: ")
+        if password and password == getpass("Again: "):
+            return password
+        print("the passwords differ or are empty", file=sys.stderr)
+
+
+def edit(editor: str, content: str, save: Callable[[str], None]) -> None:
+    """Run the editor on a copy of the content and save every change."""
+    old_content = content
+    with tempfile.NamedTemporaryFile() as tmp_file:
+        tmp_path = Path(tmp_file.name)
+        tmp_path.write_text(content)
+
+        def check_write() -> bool:
+            nonlocal old_content
+            new_content = tmp_path.read_text()
+            if new_content == old_content:
+                return True
+            try:
+                save(new_content)
+            except MarkupError as ex:
+                print(f"not saved: {ex}", file=sys.stderr)
+                return False
+            old_content = new_content
+            return True
+
+        while True:
+            process = subprocess.Popen([*shlex.split(editor), str(tmp_path)])
+            while process.poll() is None:
+                check_write()
+                time.sleep(1)
+            if process.returncode != 0:
+                raise EditorError(editor, process.returncode)
+            if check_write():
+                return
+            input("Press enter to fix it in the editor...")
+
+
+def parse_tokens(value: str | None) -> tuple[str, str]:
+    if value is None:
+        return DEFAULT_TOKENS
+    first, _, second = value.partition(",")
+    tokens = (first, second)
+    check_tokens(tokens)
+    return tokens
 
 
 def main() -> None:
     args = parse_args()
+    tokens = parse_tokens(args.tokens)
+    exists = args.path.exists()
+    data = args.path.read_bytes() if exists else b""
+    marked = not exists or is_marked_file(data)
+    if marked and exists and (args.upgrade or args.tokens):
+        sys.exit("the file already has the current format and its tokens")
+
+    opened: MarkedFile | None = None
     while True:
+        password = getpass("Master password: ")
         try:
-            key = getpass("Master password: ")
-            content = read_encrypted_file(args.path, key)
+            if not exists:
+                opened, plain = MarkedFile.create(password, tokens), ""
+            elif marked:
+                opened, plain = MarkedFile.open(data, password)
+            else:
+                plain = read_encrypted_file(args.path, password)
         except InvalidKey as ex:
             print(ex, file=sys.stderr)
         else:
             break
 
-    old_content = content
-    tmp_file = tempfile.NamedTemporaryFile()
-    tmp_path = Path(tmp_file.name)
-    tmp_path.write_text(content)
+    if args.decrypt:
+        sys.stdout.write(opened.reveal(plain) if opened else plain)
+        return
 
-    def check_write(tmp_path: Path) -> None:
-        nonlocal old_content
-        new_content = tmp_path.read_text()
-        if new_content != old_content:
-            write_encrypted_file(args.path, key, new_content)
-            old_content = new_content
+    if opened is None and args.upgrade:
+        if args.rekey:
+            password = ask_new_password()
+        opened = MarkedFile.create(password, tokens)
+        plain = wrap(tokens[0], plain) if plain else ""
+        write_atomically(args.path, opened.seal(plain))
+    elif opened is not None and args.rekey:
+        opened = MarkedFile.create(ask_new_password(), opened.tokens)
+        write_atomically(args.path, opened.seal(plain))
 
-    cmd = [*shlex.split(args.editor), str(tmp_path)]
-    process = subprocess.Popen(cmd)
-    while process.poll() is None:
-        check_write(tmp_path)
-        time.sleep(1)
-
-    if process.returncode != 0:
-        raise EditorError(args.editor, process.returncode)
-
-    check_write(tmp_path)
+    if opened is None:
+        edit(
+            args.editor,
+            plain,
+            lambda text: write_encrypted_file(args.path, password, text),
+        )
+        return
+    sealing = opened
+    edit(
+        args.editor,
+        plain,
+        lambda text: write_atomically(args.path, sealing.seal(text)),
+    )
 
 
 if __name__ == "__main__":
