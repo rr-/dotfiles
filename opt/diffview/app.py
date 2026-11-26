@@ -11,6 +11,7 @@ from .gitio import git_root, initial_context, run_git
 from .highlight import Highlight, highlight_file
 from .model import TRAILER_RE, Commit, FileDiff, Hunk, parse_diff, wrap
 from .notes import NOTE_PROMPTS, Notes
+from .prompt import edit_line
 from .review import Review
 from .rows import Quit, Row
 from .term import Mouse, Terminal
@@ -47,6 +48,8 @@ class App(Draw, Notes):
         self.count = ""
         self.pending = ""
         self.prompt: tuple[str, str] | None = None
+        self.prompt_pos = 0  # the cursor, in characters
+        self.drafts: dict[tuple, str] = {}  # comments left with Esc
         self.search: tuple[re.Pattern, int] | None = None
         self.message = ("", PLAIN)
         self.show_help = False
@@ -678,6 +681,7 @@ class App(Draw, Notes):
                 self.focus = "diff"
             case "/" | "?" | ":":
                 self.prompt = (key, "")
+                self.prompt_pos = 0
             case "n":
                 self.search_next(1)
             case "N":
@@ -723,17 +727,13 @@ class App(Draw, Notes):
         if key in ("esc", "C-c") or (key == "backspace" and not text):
             self.prompt = None
             if kind in NOTE_PROMPTS:
-                self.prompt_target = None
-                self.flash("dropped the comment" if text else "")
+                self.keep_draft(text)
         elif key == "C-e" and kind in NOTE_PROMPTS:
             self.prompt = None
             self.submit_comment(self.edit_text(text) or "")
-        elif key == "backspace":
-            self.prompt = (kind, text[:-1])
-        elif key == "C-u":
-            self.prompt = (kind, "")
-        elif key == "C-w":
-            self.prompt = (kind, re.sub(r"\S*\s*$", "", text))
+        elif edited := edit_line(text, self.prompt_pos, key):
+            text, self.prompt_pos = edited
+            self.prompt = (kind, text)
         elif key == "enter":
             self.prompt = None
             if kind in NOTE_PROMPTS:
@@ -742,8 +742,6 @@ class App(Draw, Notes):
                 self.command(text.strip())
             elif text or self.search:
                 self.start_search(text, 1 if kind == "/" else -1)
-        elif len(key) == 1:
-            self.prompt = (kind, text + key)
 
     def command(self, cmd: str) -> None:
         if cmd.isdigit():

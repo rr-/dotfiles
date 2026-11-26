@@ -103,6 +103,10 @@ KEYS_CSI = {
     "3~": "delete",
     "5~": "pgup",
     "6~": "pgdn",
+    "1;5C": "C-right",
+    "1;5D": "C-left",
+    "1;3C": "C-right",
+    "1;3D": "C-left",
 }
 
 
@@ -178,6 +182,22 @@ class Terminal:
                 self.buf = self.buf[m.end() :]
                 code = (m[1] or m[2]).decode()
                 return KEYS_CSI.get(code, f"<{code}>")
+            # Alt and a key comes as ESC and the key: M-b, never a lone Esc
+            # with a stray b after it.
+            if len(self.buf) > 1 and self.buf[1] != 0x1B:
+                self.buf = self.buf[1:]
+                key = self.read_key()
+                if isinstance(key, str) and (
+                    len(key) == 1
+                    or key
+                    in (
+                        "backspace",
+                        "enter",
+                        "tab",
+                    )
+                ):
+                    return f"M-{key}"
+                return key
             self.buf = self.buf[1:]
             return "esc"
         lead = self.buf[0]

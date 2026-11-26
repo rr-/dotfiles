@@ -112,8 +112,9 @@ class Notes:
         if row.kind == "note" and not whole_commit:
             author = self.review.comments[row.thread].get("author", "?")
             self.prompt_target = ("reply", row.thread)
-            self.prompt = ("reply", "")
-            self.flash(f"replying to {author}")
+            self.open_prompt("reply")
+            if not self.message[0]:
+                self.flash(f"replying to {author}")
             return
         if row.kind == "line" and not whole_commit:
             f = self.files[row.file]
@@ -131,11 +132,43 @@ class Notes:
                 return
             self.prompt_target = ("commit", ci)
             self.flash(f"on the whole commit: {self.commits[ci].subject}")
-        self.prompt = ("comment", "")
+        self.open_prompt("comment")
+
+    def draft_key(self, target: tuple) -> tuple:
+        """The target in terms that survive reloading the diff."""
+        if target[0] == "line":
+            _, fi, hi, li = target
+            f = self.files[fi]
+            anchor = make_anchor(f, hi, li)
+            return (
+                self.commits[f.commit].subject,
+                anchor["path"],
+                anchor["side"],
+                anchor["line_text"],
+                anchor["line"],
+            )
+        if target[0] == "commit":
+            return ("commit", self.commits[target[1]].subject)
+        return target
+
+    def open_prompt(self, kind: str) -> None:
+        text = self.drafts.pop(self.draft_key(self.prompt_target), "")
+        self.prompt = (kind, text)
+        self.prompt_pos = len(text)
+        if text:
+            self.flash("your draft is back")
+
+    def keep_draft(self, text: str) -> None:
+        target, self.prompt_target = self.prompt_target, None
+        if text.strip() and target is not None:
+            self.drafts[self.draft_key(target)] = text
+            self.flash("kept as a draft: c here brings it back")
 
     def submit_comment(self, text: str) -> None:
         text = text.strip()
         target, self.prompt_target = self.prompt_target, None
+        if target is not None:
+            self.drafts.pop(self.draft_key(target), None)
         if not text or target is None:
             self.flash("nothing to save", "text.faint")
             return

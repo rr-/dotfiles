@@ -14,6 +14,7 @@ from pathlib import Path
 from diffview.app import App
 from diffview.gitio import log_args, run_git
 from diffview.model import parse_diff
+from diffview.prompt import edit_line
 from diffview.review import Review, make_anchor, place
 from diffview.term import Mouse
 
@@ -131,6 +132,54 @@ class AnchorTests(RepoTest):
     def test_commit_comment(self) -> None:
         cid = self.store.add("me", "split", commit_title="Add two lines")
         self.assertEqual(self.where(cid), ("commit", 0))
+
+
+class PromptTests(unittest.TestCase):
+    def run_keys(self, text: str, pos: int, *keys: str) -> tuple[str, int]:
+        for key in keys:
+            text, pos = edit_line(text, pos, key) or (text, pos)
+        return text, pos
+
+    def test_words(self) -> None:
+        self.assertEqual(
+            self.run_keys("foo bar.baz", 11, "M-b"), ("foo bar.baz", 8)
+        )
+        self.assertEqual(
+            self.run_keys("foo bar", 7, "M-b", "M-b"), ("foo bar", 0)
+        )
+        self.assertEqual(self.run_keys("foo bar", 0, "M-f"), ("foo bar", 3))
+        self.assertEqual(
+            self.run_keys("foo bar", 7, "M-backspace"), ("foo ", 4)
+        )
+        self.assertEqual(self.run_keys("foo bar", 0, "M-d"), (" bar", 0))
+        self.assertEqual(self.run_keys("a b.c", 5, "C-w"), ("a ", 2))
+
+    def test_insert_and_kill(self) -> None:
+        self.assertEqual(self.run_keys("ac", 1, "b"), ("abc", 2))
+        self.assertEqual(self.run_keys("abc", 1, "C-k"), ("a", 1))
+        self.assertEqual(self.run_keys("abc", 1, "C-u"), ("bc", 0))
+        self.assertEqual(self.run_keys("abc", 1, "backspace"), ("bc", 0))
+        self.assertEqual(self.run_keys("abc", 1, "delete"), ("ac", 1))
+        self.assertIsNone(edit_line("abc", 1, "enter"))
+
+
+class KeyTests(unittest.TestCase):
+    def test_alt_keys_are_not_esc(self) -> None:
+        import pty
+        import tty
+
+        from diffview.term import Terminal
+
+        master, slave = pty.openpty()
+        tty.setraw(slave)
+        term = Terminal.__new__(Terminal)
+        term.fd, term.buf = slave, b""
+        term.wake_r, term.wake_w = os.pipe()
+        os.write(master, b"\x1bb\x1b\x7f\x1b[1;5D\x1b")
+        keys = [term.read_key() for _ in range(4)]
+        self.assertEqual(keys, ["M-b", "M-backspace", "C-left", "esc"])
+        for fd in (master, slave, term.wake_r, term.wake_w):
+            os.close(fd)
 
 
 class RangeTests(RepoTest):
@@ -268,6 +317,19 @@ class AppTests(RepoTest):
         self.assertTrue(any(r.kind == "note" for r in app.rows))
         self.keys(app, "]", "n", "x", "]", "n", "x")
         self.assertFalse(any(r.kind == "note" for r in app.rows))
+
+    def test_alt_b_and_esc_keep_the_comment(self) -> None:
+        app = self.app()
+        self.goto_text(app, "new one")
+        self.keys(app, "c", *"fix this", "M-b", "M-b", *"please ", "esc")
+        self.assertIsNone(app.prompt)
+        self.assertEqual(self.store.threads(), [])
+        self.keys(app, "c")
+        self.assertEqual(app.prompt, ("comment", "please fix this"))
+        self.keys(app, "end", "!", "enter")
+        (root,) = self.store.threads()
+        self.assertEqual(root["text"], "please fix this!")
+        self.assertEqual(app.drafts, {})
 
     def test_one_commit_still_shows_its_badge(self) -> None:
         self.store.approve("Add two lines", True)

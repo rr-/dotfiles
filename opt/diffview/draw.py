@@ -4,7 +4,7 @@ from .help import HELP
 from .model import Commit, relative_date
 from .notes import NOTE_PROMPTS
 from .rows import Row
-from .term import TAB, LineBuf, expand
+from .term import TAB, LineBuf, cwidth, expand
 from .theme import PLAIN, Color, Style, role, sgr, token_color
 from .tree import tree_guides
 
@@ -421,6 +421,21 @@ class Draw:
             col += cw
         buf.fill(base)
 
+    def draw_prompt_text(
+        self, buf: LineBuf, text: str, pos: int, base: Style
+    ) -> None:
+        """The line with its cursor, scrolled so the cursor shows."""
+        room = buf.width - buf.col - 1
+        start = 0
+        while start < pos and sum(map(cwidth, text[start:pos])) > room - 2:
+            start += 1
+        if start:
+            buf.add("…", base._replace(fg=role("text.faint")))
+        buf.add(text[start:pos], base)
+        under = text[pos : pos + 1] or " "
+        buf.add(under, base._replace(rev=True))
+        buf.add(text[pos + 1 :], base)
+
     def draw_status(self) -> str:
         bg = role("surface.overlay")
         base = Style(fg=role("text.normal"), bg=bg)
@@ -428,12 +443,8 @@ class Draw:
         if self.prompt is not None:
             kind, text = self.prompt
             label = NOTE_PROMPTS.get(kind, kind)
-            room = self.width - len(label) - 2
-            if len(text) > room:
-                text = "…" + text[-(room - 1) :]
             buf.add(label, base._replace(bold=kind in NOTE_PROMPTS))
-            buf.add(text, base)
-            buf.add("▏", base._replace(fg=role("accent.primary")))
+            self.draw_prompt_text(buf, text, self.prompt_pos, base)
             buf.fill(base)
             return buf.render()
 
