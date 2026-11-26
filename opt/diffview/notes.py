@@ -27,14 +27,18 @@ class Notes:
         self.placed: dict[str, tuple] = {}
         self.at_line: dict[tuple[int, int, int], list[dict]] = {}
         self.at_commit: dict[int, list[dict]] = {}
+        self.at_file: dict[int, list[dict]] = {}
         self.open_threads: dict[int, int] = {}
         if self.review is None:
             return
         for root in self.review.threads():
-            where = place(root, self.files, self.commits)
+            where = place(root, self.files, self.commits, self.review.branch)
             self.placed[root["id"]] = where
             if where[0] == "line":
                 self.at_line.setdefault(where[1:], []).append(root)
+                ci = self.files[where[1]].commit
+            elif where[0] == "file":
+                self.at_file.setdefault(where[1], []).append(root)
                 ci = self.files[where[1]].commit
             elif where[0] in ("commit", "outdated"):
                 self.at_commit.setdefault(where[1], []).append(root)
@@ -51,6 +55,14 @@ class Notes:
         rows: list[Row] = []
         for root in self.at_line.get((fi, hi, li), []):
             rows += self.thread_rows(root, fi, hi, li)
+        return rows
+
+    def file_notes(self, fi: int) -> list[Row]:
+        """Threads about a whole file, under its header. Their rows have
+        no hunk: hunk -1."""
+        rows: list[Row] = []
+        for root in self.at_file.get(fi, []):
+            rows += self.thread_rows(root, fi, -1, 0)
         return rows
 
     def commit_notes(self, ci: int, start: int) -> list[Row]:
@@ -81,7 +93,9 @@ class Notes:
         for c in [root, *self.review.replies(rid)]:
             add("head", str(c.get("author", "?")), c["id"])
             if c is root and self.placed.get(rid, ("",))[0] == "outdated":
-                where = f"{root.get('path')}:{root.get('line')}"
+                where = str(root.get("path"))
+                if root.get("line_text") is not None:
+                    where += f":{root.get('line')}"
                 text = str(root.get("line_text", "")).strip()
                 add("where", f"was on {where}: {text}", rid)
             for para in str(c.get("text", "")).split("\n"):
@@ -125,6 +139,13 @@ class Notes:
                 self.flash("that line is in no commit", "state.error")
                 return
             self.prompt_target = ("line", row.file, row.hunk, row.line)
+        elif row.kind in ("file", "meta", "hunk") and not whole_commit:
+            f = self.files[row.file]
+            if f.commit < 0 or not self.commits[f.commit].subject:
+                self.flash("that file is in no commit", "state.error")
+                return
+            self.prompt_target = ("file", row.file)
+            self.flash(f"on the whole file: {f.path}")
         else:
             ci = self.current_commit()
             if ci is None:
@@ -149,6 +170,9 @@ class Notes:
             )
         if target[0] == "commit":
             return ("commit", self.commits[target[1]].subject)
+        if target[0] == "file":
+            f = self.files[target[1]]
+            return ("file", self.commits[f.commit].subject, f.path)
         return target
 
     def open_prompt(self, kind: str) -> None:
@@ -191,6 +215,18 @@ class Notes:
                 **make_anchor(f, hi, li),
             )
             self.flash("commented")
+        elif target[0] == "file":
+            f = self.files[target[1]]
+            self.review.add(
+                "me",
+                text,
+                commit_title=self.commits[f.commit].subject,
+                path=f.path,
+                side=None,
+                line_text=None,
+                line=None,
+            )
+            self.flash("commented on the file")
         else:
             self.review.add(
                 "me",

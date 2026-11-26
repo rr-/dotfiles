@@ -30,7 +30,8 @@ tree
   Enter o          open the file and focus the diff
 
 review (git review)
-  c                comment on the line, or reply in a thread
+  c                comment on the line, on the file from its header,
+                   or reply in a thread
   C                comment on the whole commit
   x                resolve the thread, or open it again
   M-a              approve the commit, or take it back (Alt+a)

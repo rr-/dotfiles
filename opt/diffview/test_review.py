@@ -129,6 +129,20 @@ class AnchorTests(RepoTest):
         c = {"commit_title": "Dups", **make_anchor(files[0], 0, second)}
         self.assertEqual(place(c, files, commits), ("line", 0, 0, second))
 
+    def test_a_thread_stays_on_its_branch(self) -> None:
+        git(self.repo, "branch", "other")
+        self.store.branch = "topic"
+        cid = self.comment_on("new one")
+        self.assertEqual(self.store.comments[cid]["branch"], "topic")
+        reply = self.store.add("claude", "ok", reply_to=cid)
+        self.assertNotIn("branch", self.store.comments[reply])
+        files, commits = parse_diff(run_git("log", log_args("main..other")))
+        c = self.store.comments[cid]
+        self.assertEqual(place(c, files, commits, "other"), ("elsewhere",))
+        self.assertEqual(place(c, files, commits, "topic")[0], "line")
+        old = {k: v for k, v in c.items() if k != "branch"}
+        self.assertEqual(place(old, files, commits, "other")[0], "line")
+
     def test_commit_comment(self) -> None:
         cid = self.store.add("me", "split", commit_title="Add two lines")
         self.assertEqual(self.where(cid), ("commit", 0))
@@ -364,6 +378,24 @@ class AppTests(RepoTest):
         self.assertIn("git failed", app.alert[0])
         self.assertTrue(any("main" in line for line in app.alert[1]))
         self.assertEqual(len(app.files), before)
+
+    def test_a_comment_on_the_file_header_stays_with_the_file(self) -> None:
+        app = self.app()
+        header = next(i for i, r in enumerate(app.rows) if r.kind == "file")
+        app.set_cur(header)
+        self.keys(app, "c", *"rename it", "enter")
+        (root,) = self.store.threads()
+        self.assertEqual((root["path"], root["line_text"]), ("a.txt", None))
+        files, commits = self.diff()
+        self.assertEqual(place(root, files, commits), ("file", 0))
+        after = app.rows[header + 1]
+        self.assertEqual((after.kind, after.thread), ("note", root["id"]))
+        git(self.repo, "checkout", "HEAD~1", "--", "a.txt")
+        self.write("c.txt", ["other"])
+        git(self.repo, "add", "a.txt", "c.txt")
+        git(self.repo, "commit", "-q", "--amend", "--no-edit")
+        files, commits = self.diff()
+        self.assertEqual(place(root, files, commits)[0], "outdated")
 
     def test_one_commit_still_shows_its_badge(self) -> None:
         self.store.approve("Add two lines", True)

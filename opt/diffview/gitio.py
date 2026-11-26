@@ -93,6 +93,20 @@ def review_range(arg: str | None) -> str:
     return f"{default_base()}..{tip}"
 
 
+def range_branch(rng: str) -> str:
+    """The branch a range reviews: its tip, HEAD named as its branch."""
+    _, _, tip = rng.partition("..")
+    tip = tip.lstrip(".") or "HEAD"
+    if tip == "HEAD":
+        proc = subprocess.run(
+            ["git", "symbolic-ref", "--short", "-q", "HEAD"],
+            capture_output=True,
+            text=True,
+        )
+        tip = proc.stdout.strip() or "HEAD"
+    return tip.removeprefix("refs/heads/")
+
+
 def range_base(rng: str) -> str:
     base, _, _ = rng.partition("..")
     return base or "HEAD"

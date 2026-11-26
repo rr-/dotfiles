@@ -126,7 +126,7 @@ class App(Draw, Notes):
         for fi, f in enumerate(self.files):
             add_commits(f.commit)
             self.file_rows.append(len(self.rows))
-            rows = [Row("file", fi)]
+            rows = [Row("file", fi), *self.file_notes(fi)]
             if f.path not in self.folded:
                 rows += [Row("meta", fi, text=m) for m in f.meta]
                 for hi, hunk in enumerate(f.hunks):
@@ -228,7 +228,7 @@ class App(Draw, Notes):
             return row.page, offset, None, None, row.note
         f = self.files[row.file]
         line = None
-        if row.kind in ("line", "note"):
+        if row.kind in ("line", "note") and row.hunk >= 0:
             at = f.hunks[row.hunk].lines[row.line]
             line = (at.old, at.new)
         return row.page, offset, f.path, line, row.note
@@ -351,7 +351,7 @@ class App(Draw, Notes):
         if row.file < 0:
             return 1
         f = self.files[row.file]
-        if row.kind in ("hunk", "line", "note") and f.hunks:
+        if row.kind in ("hunk", "line", "note") and f.hunks and row.hunk >= 0:
             hunk = f.hunks[row.hunk]
             return (
                 hunk.new_start

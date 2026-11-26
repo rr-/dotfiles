@@ -16,7 +16,12 @@ before updates the fields it names, so resolving a thread is one more line:
 
     {"id": "a1b2c3", "status": "resolved"}
 
-A comment with no `path` is about the whole commit. Comments find their
+A thread's root names the `branch` it was written on review of, and shows
+only when that branch is reviewed, though another branch may have a
+commit of the same title. One without a `branch` shows on every branch.
+
+A comment with no `path` is about the whole commit, and one with a `path`
+but no `line_text` about that whole file. Comments find their
 line again by `commit_title`, `path`, `side` and `line_text`, with `before`,
 `after`, `hunk` and `line` to choose between equal lines, so they survive a
 rebase. One whose line is gone is outdated, and shows on its commit's page.
@@ -54,8 +59,9 @@ def now_iso() -> str:
 
 
 class Review:
-    def __init__(self, path: Path) -> None:
+    def __init__(self, path: Path, branch: str | None = None) -> None:
         self.path = path
+        self.branch = branch  # new threads are about this branch only
         self.load()
 
     def load(self) -> None:
@@ -111,6 +117,8 @@ class Review:
         }
         if fields.get("reply_to") is None:
             rec["status"] = "open"
+            if self.branch:
+                rec["branch"] = self.branch
         self.append(rec | fields)
         return cid
 
@@ -259,18 +267,31 @@ def commits_titled(commits: list[Commit], title: object) -> list[int]:
     return [ci for ci, c in enumerate(commits) if c.subject == title]
 
 
-def place(c: dict, files: list[FileDiff], commits: list[Commit]) -> tuple:
-    """Where a thread's root sits in this diff now.
+def place(
+    c: dict,
+    files: list[FileDiff],
+    commits: list[Commit],
+    branch: str | None = None,
+) -> tuple:
+    """Where a thread's root sits in this diff of a branch now.
 
-    ("line", fi, hi, li), ("commit", ci), ("outdated", ci), or
-    ("elsewhere",) when no commit in the range has its title.
+    ("line", fi, hi, li), ("file", fi), ("commit", ci), ("outdated", ci), or
+    ("elsewhere",) when it is about another branch, or no commit in the
+    range has its title.
     """
+    if branch and c.get("branch") and c["branch"] != branch:
+        return ("elsewhere",)
     cis = commits_titled(commits, c.get("commit_title"))
     if not cis:
         return ("elsewhere",)
     path = c.get("path")
     if not path:
         return ("commit", cis[0])
+    if c.get("line_text") is None:
+        for fi, f in enumerate(files):
+            if f.commit in cis and path in (f.old_path, f.new_path):
+                return ("file", fi)
+        return ("outdated", cis[0])
     side = "old" if c.get("side") == "old" else "new"
     text = c.get("line_text")
     before = list(c.get("before") or [])

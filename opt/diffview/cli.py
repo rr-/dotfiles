@@ -11,6 +11,7 @@ from .gitio import (
     git_common_dir,
     log_args,
     range_base,
+    range_branch,
     review_range,
     run_git,
     titles_in,
@@ -100,7 +101,7 @@ def review_main(argv: list[str]) -> None:
     if len(argv) > 1 or any(a.startswith("-") for a in argv):
         raise SystemExit(REVIEW_USAGE)
     rng = review_range(argv[0] if argv else None)
-    store = Review(git_common_dir() / REVIEW_FILE)
+    store = Review(git_common_dir() / REVIEW_FILE, range_branch(rng))
     args = log_args(rng)
     text = run_git("log", args)
     if not sys.stdout.isatty():
@@ -132,9 +133,13 @@ def pruned(store: Review, rng: str) -> str:
 
 
 def where_now(c: dict, at: tuple, files: list[FileDiff]) -> str:
+    if at[0] == "file":
+        return f"{c.get('path')}, the whole file"
     if at[0] == "commit":
         return "the whole commit"
     side = f"({c.get('side')})"
+    if at[0] == "outdated" and c.get("line_text") is None:
+        return f"{c.get('path')}, the whole file, gone from the commit"
     if at[0] == "outdated":
         return f"{c.get('path')}:{c.get('line')} {side}, line gone"
     _, fi, hi, li = at
@@ -144,18 +149,21 @@ def where_now(c: dict, at: tuple, files: list[FileDiff]) -> str:
 
 
 def review_list(rng: str, show_all: bool) -> str:
-    store = Review(git_common_dir() / REVIEW_FILE)
+    store = Review(git_common_dir() / REVIEW_FILE, range_branch(rng))
     files, commits = parse_diff(run_git("log", log_args(rng)))
-    placed = {c["id"]: place(c, files, commits) for c in store.threads()}
+    placed = {
+        c["id"]: place(c, files, commits, store.branch)
+        for c in store.threads()
+    }
     by_commit: dict[int, list[dict]] = {}
     for c in store.threads():
         at = placed[c["id"]]
         if at[0] == "elsewhere":
             continue
-        ci = files[at[1]].commit if at[0] == "line" else at[1]
+        ci = files[at[1]].commit if at[0] in ("line", "file") else at[1]
         by_commit.setdefault(ci, []).append(c)
 
-    out = [f"review of {rng}, in {store.path}", ""]
+    out = [f"review of {rng}, branch {store.branch}, in {store.path}", ""]
     if store.bad:
         out += [f"skipped {store.bad} lines that are not records", ""]
     for ci, commit in enumerate(commits):
@@ -191,8 +199,8 @@ def review_list(rng: str, show_all: bool) -> str:
                 f"#{c['id']} {status}, on "
                 f"{where_now(c, placed[c['id']], files)}"
             )
-            if c.get("path"):
-                out.append(f"  > {c.get('line_text', '')}")
+            if c.get("line_text") is not None:
+                out.append(f"  > {c['line_text']}")
             for entry in [c, *store.replies(c["id"])]:
                 head = f"  {entry.get('author', '?')}, {entry.get('created')}"
                 out.append(f"{head} (#{entry['id']}):")
