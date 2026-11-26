@@ -8,6 +8,30 @@ zstyle ':completion:*' matcher-list \
 setopt NO_NOMATCH                       # if extended glob fails, run cmd as-is
 setopt NO_CASE_GLOB                     # ignore case in glob searches
 setopt nullglob                         # nonexisting wildcards expand to ''
+
+# git review (bin/util/git-review): zsh's _git calls _git-<command> for
+# commands of our own, with words starting at the command's name; past
+# list or prune, words shift once more so _arguments counts from there
+_git-review() {
+    local -a subcommands=(
+        'list:print where the review stands'
+        'prune:drop what already landed'
+    )
+    if (( CURRENT == 2 )); then
+        local ret=1
+        _describe -t subcommands command subcommands && ret=0
+        __git_commit_ranges && ret=0
+        return ret
+    fi
+    shift words
+    (( CURRENT-- ))
+    case $words[1] in
+        list) _arguments '--all[every thread, resolved ones too]' \
+                  ':range:__git_commit_ranges' ;;
+        prune) _arguments ':range:__git_commit_ranges' ;;
+    esac
+}
+
 source ~/.zprofile
 eval "$(zoxide init zsh)"
 
