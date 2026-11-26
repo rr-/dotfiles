@@ -327,6 +327,13 @@ class PruneTests(RepoTest):
         self.assertIn("not json", self.store.path.read_text())
         self.assertEqual(self.store.prune({"Base"}, set()), (0, 0))
 
+    def test_file_verdicts_go_with_their_commit(self) -> None:
+        self.store.approve("Base", True, path="a.txt")
+        self.store.approve("Live", True, path="a.txt")
+        self.assertEqual(self.store.prune({"Base"}, set()), (0, 1))
+        self.assertEqual(self.store.file_verdict("Base", "a.txt"), "")
+        self.assertEqual(self.store.file_verdict("Live", "a.txt"), "approved")
+
     def test_an_append_meanwhile_is_not_lost(self) -> None:
         self.store.add("me", "old", commit_title="Base")
         real_load = self.store.load
@@ -390,7 +397,7 @@ class AppTests(RepoTest):
 
         self.keys(app, "C", *"split it", "enter", "a")
         self.assertNotIn("Add two lines", self.store.approvals)
-        self.keys(app, "M-a")
+        self.keys(app, "<", "M-a")
         self.assertTrue(self.store.approvals["Add two lines"])
         self.assertEqual(len(self.store.threads()), 2)
         self.assertEqual(app.review_summary(), "2 open  ✓1/1")
@@ -492,6 +499,27 @@ class AppTests(RepoTest):
         self.assertEqual(app.file_badge(0), (" ●1", "state.warning"))
         self.keys(app, "]", "n", "x")
         self.assertEqual(app.file_badge(0), (" ○", "text.faint"))
+
+    def test_verdicts_go_to_the_file_or_the_commit(self) -> None:
+        app = self.app()
+        title = "Add two lines"
+        self.keys(app, ".", "M-a")
+        self.assertEqual(self.store.file_verdict(title, "a.txt"), "approved")
+        self.assertEqual(self.store.verdict(title), "")
+        self.assertEqual(app.here_verdict(), "approved")
+        self.keys(app, "M-r")
+        self.assertEqual(
+            self.store.file_verdict(title, "a.txt"), "changes requested"
+        )
+        self.keys(app, "<", "M-a")
+        self.assertEqual(self.store.verdict(title), "approved")
+        self.assertEqual(
+            self.store.file_verdict(title, "a.txt"), "changes requested"
+        )
+        self.assertEqual(app.here_verdict(), "approved")
+        self.keys(app, ".", "M-r")
+        self.assertEqual(self.store.file_verdict(title, "a.txt"), "")
+        self.assertEqual(self.store.verdict(title), "approved")
 
     def test_one_commit_still_shows_its_badge(self) -> None:
         self.store.approve("Add two lines", True)

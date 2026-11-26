@@ -166,6 +166,10 @@ def review_list(rng: str, show_all: bool) -> str:
         if n:
             state = ", ".join(filter(None, [state, f"{n} open"]))
         out.append(f"{commit.sha[:10]}  {commit.subject}  [{state or '-'}]")
+        for path, verdict in session.file_verdicts_of(ci):
+            if verdict == "changes requested":
+                verdict = "CHANGES REQUESTED"
+            out.append(f"{' ' * 12}{path}  [{verdict}]")
     if elsewhere := session.elsewhere():
         out += ["", f"{elsewhere} open threads are on commits not in it"]
 

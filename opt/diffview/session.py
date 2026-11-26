@@ -150,6 +150,32 @@ class Session:
         )
         return now
 
+    def file_verdict(self, fi: int) -> str:
+        ci = self.files[fi].commit
+        if not self.has_key(ci):
+            return ""
+        return self.store.file_verdict(self.unit_key(ci), self.files[fi].path)
+
+    def toggle_file_verdict(self, fi: int, verdict: str) -> str:
+        """As toggle_verdict, for one file of a unit."""
+        assert verdict in VERDICTS
+        now = "" if self.file_verdict(fi) == verdict else verdict
+        self.store.approve(
+            self.unit_key(self.files[fi].commit),
+            now == "approved",
+            now == "changes requested",
+            path=self.files[fi].path,
+        )
+        return now
+
+    def file_verdicts_of(self, ci: int) -> list[tuple[str, str]]:
+        """The files of a unit that have a verdict, with it."""
+        return [
+            (f.path, v)
+            for fi, f in enumerate(self.files)
+            if f.commit == ci and (v := self.file_verdict(fi))
+        ]
+
     def summary(self) -> tuple[int, int, int]:
         """Open threads, approved units, and units."""
         keyed = [ci for ci in range(len(self.commits)) if self.has_key(ci)]

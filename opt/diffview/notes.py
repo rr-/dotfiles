@@ -235,35 +235,36 @@ class Notes:
         self.flash("resolved" if resolved else "opened again")
 
     def toggle_approve(self) -> None:
+        self.toggle_here("approved")
+
+    def toggle_changes(self) -> None:
+        self.toggle_here("changes requested")
+
+    def toggle_here(self, verdict: str) -> None:
+        """Give a verdict to the file whose page this is, or on a commit's
+        message page to the commit, or take it back."""
         if not self.reviewing():
             return
         ci = self.current_commit()
         if ci is None:
             self.flash("not in a commit", "state.error")
             return
-        title = self.commits[ci].subject
-        approved = self.session.toggle_verdict(ci, "approved") == "approved"
-        if not approved:
-            self.flash(f"took back the approval of {title}")
-        elif n := self.open_threads.get(ci):
+        kind, index = self.pages[self.current_page()]
+        if kind == "file":
+            what = self.files[index].path
+            now = self.session.toggle_file_verdict(index, verdict)
+        else:
+            what = self.commits[ci].subject
+            now = self.session.toggle_verdict(ci, verdict)
+        if not now:
+            self.flash(f"took back the verdict on {what}")
+        elif now == "changes requested":
+            self.flash(f"changes requested on {what}", "state.error")
+        elif kind == "commit" and (n := self.open_threads.get(ci)):
             noun = "thread" if n == 1 else "threads"
             self.flash(f"approved, with {n} open {noun}", "state.warning")
         else:
-            self.flash(f"approved {title}", "state.success")
-
-    def toggle_changes(self) -> None:
-        if not self.reviewing():
-            return
-        ci = self.current_commit()
-        if ci is None:
-            self.flash("not in a commit", "state.error")
-            return
-        title = self.commits[ci].subject
-        now = self.session.toggle_verdict(ci, "changes requested")
-        if now:
-            self.flash(f"changes requested on {title}", "state.error")
-        else:
-            self.flash(f"took back the request on {title}")
+            self.flash(f"approved {what}", "state.success")
 
     def toggle_hide_resolved(self) -> None:
         if not self.reviewing():
@@ -317,6 +318,17 @@ class Notes:
 
     def verdict(self, ci: int | None) -> str:
         return self.session.verdict(ci) if self.session else ""
+
+    def file_verdict(self, fi: int) -> str:
+        return self.session.file_verdict(fi) if self.session else ""
+
+    def here_verdict(self) -> str:
+        """The verdict M-a and M-r would change: the open file's, or on a
+        message page the commit's."""
+        kind, index = self.pages[self.current_page()]
+        if kind == "file":
+            return self.file_verdict(index)
+        return self.verdict(self.current_commit())
 
     def approved(self, ci: int) -> bool:
         return self.verdict(ci) == "approved"

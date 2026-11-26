@@ -108,6 +108,18 @@ class Draw:
                     self.draw_verdict_node(buf, node, depth, selected, verdict)
                 )
                 continue
+            if node.file is not None and (
+                file_verdict := self.file_verdict(node.file)
+            ):
+                selected = (
+                    i == self.tree_cur and self.focus == "tree"
+                ) or self.node_page(node) == current
+                lines.append(
+                    self.draw_verdict_file(
+                        buf, node, depth, selected, file_verdict
+                    )
+                )
+                continue
             tint = self.verdict(self.commit_of(node))
             here = (
                 i == self.tree_cur and self.focus == "tree"
@@ -193,6 +205,31 @@ class Draw:
         parts += [" ", self.commits[ci].subject]
         style = VERDICT_CHIP[verdict]
         buf.add_clipped("".join(parts), style, buf.width)
+        buf.fill(style)
+        return buf.render()
+
+    def draw_verdict_file(
+        self,
+        buf: LineBuf,
+        node: Node,
+        depth: int,
+        selected: bool,
+        verdict: str,
+    ) -> str:
+        """A file's row, loud from edge to edge, once it has a verdict."""
+        f = self.files[node.file]
+        style = VERDICT_CHIP[verdict]
+        head = "▶" if selected else " "
+        head += tree_guides(node, depth) + f"{f.status} {node.name} "
+        head += VERDICT_MARK[verdict]
+        tail = self.file_badge(node.file)[0]
+        tail += f" +{f.added} -{f.deleted}" if not f.binary else ""
+        if len(head) + len(tail) + 1 <= buf.width:
+            buf.add(head, style)
+            buf.fill(style, buf.width - len(tail) - 1)
+            buf.add(tail, style)
+        else:
+            buf.add_clipped(head, style, buf.width)
         buf.fill(style)
         return buf.render()
 
@@ -381,6 +418,9 @@ class Draw:
                 }
                 buf.add(" ", base)
                 buf.add(f.label, base)
+                if verdict := self.file_verdict(row.file):
+                    buf.add("  ", base)
+                    self.add_verdict(buf, verdict)
                 if f.path in self.folded:
                     buf.add("  (folded)", base._replace(bold=False))
                 buf.add("  ", base)
@@ -526,7 +566,7 @@ class Draw:
         mode = " TREE " if self.focus == "tree" else " DIFF "
         buf.add(mode, Style(fg=role("accent.primary"), bold=True, rev=True))
         buf.add(" ", base)
-        if verdict := self.verdict(self.current_commit()):
+        if verdict := self.here_verdict() if self.review else "":
             self.add_verdict(buf, verdict)
             buf.add(" ", base)
         row = self.rows[self.cur]

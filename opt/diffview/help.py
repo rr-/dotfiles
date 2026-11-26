@@ -35,8 +35,9 @@ review (git review)
                    or reply in a thread
   C                comment on the whole commit
   x                resolve the thread, or open it again
-  M-a              approve the commit, or take it back (Alt+a)
-  M-r              request changes on the commit, or take it back (Alt+r)
+  M-a              approve the file whose page this is, or on a message
+                   page the commit, or take it back (Alt+a)
+  M-r              request changes, the same way (Alt+r)
   ]n [n            next / previous open thread
   zu               hide / show resolved threads
   in the prompt    Enter saves, C-e goes on in $EDITOR, Esc drops it

@@ -38,6 +38,13 @@ set, and means: do not turn this commit into a pull request yet.
      "approved": false, "changes_requested": true}
 
 Both false is neutral: an approval or a request taken back.
+
+A file of a commit has a verdict of its own, in the same record with the
+file's `path`. That marks how far the review got; the commit's own
+verdict, the record without `path`, is what decides the pull request.
+
+    {"type": "approval", "commit_title": "Add font cells",
+     "path": "src/font.c", "approved": true, "changes_requested": false}
 """
 
 import json
@@ -68,6 +75,7 @@ class Review:
         self.comments: dict[str, dict] = {}
         self.approvals: dict[str, bool] = {}
         self.changes: dict[str, bool] = {}
+        self.file_verdicts: dict[tuple[str, str], str] = {}
         self.bad = 0
         try:
             text = self.path.read_text()
@@ -91,6 +99,14 @@ class Review:
             title = rec.get("commit_title")
             if not isinstance(title, str):
                 return False
+            if path := rec.get("path"):
+                verdict = ""
+                if rec.get("approved"):
+                    verdict = "approved"
+                elif rec.get("changes_requested"):
+                    verdict = "changes requested"
+                self.file_verdicts[title, str(path)] = verdict
+                return True
             self.approvals[title] = bool(rec.get("approved"))
             self.changes[title] = bool(rec.get("changes_requested"))
             return True
@@ -126,17 +142,27 @@ class Review:
         self.append({"id": cid, **fields})
 
     def approve(
-        self, title: str, approved: bool, changes: bool = False
+        self,
+        title: str,
+        approved: bool,
+        changes: bool = False,
+        path: str | None = None,
     ) -> None:
+        """A commit's verdict, or with path one of its files'."""
+        rec = {"type": "approval", "commit_title": title}
+        if path:
+            rec["path"] = path
         self.append(
-            {
-                "type": "approval",
-                "commit_title": title,
+            rec
+            | {
                 "approved": approved,
                 "changes_requested": changes,
                 "created": now_iso(),
             }
         )
+
+    def file_verdict(self, title: str, path: str) -> str:
+        return self.file_verdicts.get((title, path), "")
 
     def verdict(self, title: str) -> str:
         """ "approved", "changes requested", or "" for neutral."""
@@ -198,7 +224,11 @@ class Review:
                 for cid, c in self.comments.items()
                 if self.root(cid) == cid and c.get("commit_title") in gone
             }
-            approvals = {t for t in self.approvals if t in gone}
+            approvals = {
+                t
+                for t in [*self.approvals, *(t for t, _ in self.file_verdicts)]
+                if t in gone
+            }
             if not roots and not approvals:
                 return 0, 0
             kept = []
