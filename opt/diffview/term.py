@@ -7,10 +7,21 @@ import signal
 import termios
 import tty
 import unicodedata
+from typing import NamedTuple
 
 from .theme import Style, role, sgr
 
 TAB = 4
+MOUSE_RE = re.compile(rb"\x1b\[<(\d+);(\d+);(\d+)([Mm])")
+
+
+class Mouse(NamedTuple):
+    """An SGR mouse report: cells count from 1, wheel buttons are 64+."""
+
+    button: int
+    x: int
+    y: int
+    press: bool
 
 
 def cwidth(ch: str) -> int:
@@ -96,8 +107,10 @@ KEYS_CSI = {
 
 
 class Terminal:
-    ENTER = "\x1b[?1049h\x1b[?25l\x1b[?7l"
-    LEAVE = "\x1b[?7h\x1b[?25h\x1b[?1049l"
+    # Clicks and the wheel come as SGR reports. Shift and drag still
+    # selects text in most terminals.
+    ENTER = "\x1b[?1049h\x1b[?25l\x1b[?7l\x1b[?1000h\x1b[?1006h"
+    LEAVE = "\x1b[?1006l\x1b[?1000l\x1b[?7h\x1b[?25h\x1b[?1049l"
 
     def __enter__(self) -> "Terminal":
         self.fd = os.open("/dev/tty", os.O_RDWR)
@@ -146,13 +159,18 @@ class Terminal:
             return True
         return False
 
-    def read_key(self) -> str | None:
+    def read_key(self) -> str | Mouse | None:
         """The next key, or None when the terminal was resized."""
         if not self.buf and not self._fill(None):
             return None
         if self.buf[:1] == b"\x1b":
             if len(self.buf) == 1:
                 self._fill(0.03)
+            if self.buf[:3] == b"\x1b[<" and not MOUSE_RE.match(self.buf):
+                self._fill(0.03)
+            if m := MOUSE_RE.match(self.buf):
+                self.buf = self.buf[m.end() :]
+                return Mouse(int(m[1]), int(m[2]), int(m[3]), m[4] == b"M")
             m = re.match(
                 rb"\x1b(?:\[([0-9;]*[~A-Za-z])|O([A-Za-z]))", self.buf
             )

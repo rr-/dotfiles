@@ -2,6 +2,7 @@
 
 from .help import HELP
 from .model import Commit, relative_date
+from .notes import NOTE_PROMPTS
 from .rows import Row
 from .term import TAB, LineBuf, expand
 from .theme import PLAIN, Color, Style, role, sgr, token_color
@@ -37,17 +38,15 @@ class Draw:
         tree_w = self.tree_width() if self.tree_visible else 0
         diff_w = self.diff_width()
         tree_lines = self.draw_tree(tree_w) if tree_w else []
-        diff_lines = (
-            self.draw_help(diff_w)
-            if self.show_help
-            else self.draw_diff(diff_w)
-        )
+        diff_lines = self.draw_diff(diff_w)
         sep = sgr(Style(fg=role("text.faint"))) + "│\x1b[0m"
         for y in range(self.body_h):
             out.append(f"\x1b[{y + 1};1H")
             if tree_w:
                 out.append(tree_lines[y] + sep)
             out.append(diff_lines[y])
+        if self.show_help:
+            out.append(self.draw_modal())
         out.append(f"\x1b[{self.height};1H")
         out.append(self.draw_status())
         out.append("\x1b[?2026l")
@@ -57,9 +56,11 @@ class Draw:
         rows = self.tree_rows()
         h = self.body_h - 1
         self.tree_cur = self.clamp(self.tree_cur, 0, len(rows) - 1)
-        if self.tree_cur < self.tree_top:
+        if self.tree_free:
+            pass
+        elif self.tree_cur < self.tree_top:
             self.tree_top = self.tree_cur
-        if self.tree_cur >= self.tree_top + h:
+        elif self.tree_cur >= self.tree_top + h:
             self.tree_top = self.tree_cur - h + 1
         self.tree_top = self.clamp(self.tree_top, 0, max(0, len(rows) - h))
 
@@ -103,6 +104,8 @@ class Draw:
                 buf.add(arrow, style)
                 name = node.name if node.commit else node.name + "/"
                 buf.add_clipped(name, style, width - buf.col)
+                if node.commit and node.rank >= 0:
+                    self.draw_commit_node(buf, node.rank, bg)
             elif node.message is not None:
                 style = Style(fg=role("state.warning"), bg=bg, bold=True)
                 buf.add("≡ ", style)
@@ -131,21 +134,107 @@ class Draw:
             lines.append(buf.render())
         return lines
 
-    def draw_help(self, width: int) -> list[str]:
-        lines = []
-        for text in [""] + HELP.splitlines() + ["", "  any key to close"]:
+    def draw_commit_node(self, buf: LineBuf, ci: int, bg: Color) -> None:
+        """A commit's review badge, then as much of its subject as fits."""
+        if badge := self.commit_badge(ci):
+            text, color = badge
+            buf.add(" " + text, Style(fg=role(color), bg=bg, bold=True))
+        subject = self.commits[ci].subject
+        if subject and self.review is not None:
+            muted = Style(fg=role("text.muted"), bg=bg)
+            if buf.width - buf.col > 4:
+                buf.add(" ", muted)
+                buf.add_clipped(subject, muted, buf.width - buf.col)
+
+    # the keys, in a box over the diff
+
+    def help_lines(self) -> list[str]:
+        return HELP.rstrip("\n").splitlines()
+
+    def help_box(self) -> tuple[int, int, int, int]:
+        """Left, top, width and the rows of text inside the box."""
+        widest = max(len(line) for line in self.help_lines())
+        width = min(widest + 6, self.width - 2)
+        rows = min(len(self.help_lines()), self.body_h - 2)
+        return (
+            (self.width - width) // 2,
+            (self.body_h - rows - 2) // 2,
+            width,
+            rows,
+        )
+
+    def help_scroll(self, delta: int) -> None:
+        rows = self.help_box()[3]
+        most = max(0, len(self.help_lines()) - rows)
+        self.help_top = self.clamp(self.help_top + delta, 0, most)
+
+    def help_key(self, key: str) -> None:
+        rows = self.help_box()[3]
+        steps = {
+            "j": 1,
+            "down": 1,
+            "C-n": 1,
+            "C-e": 1,
+            "k": -1,
+            "up": -1,
+            "C-p": -1,
+            "C-y": -1,
+            "C-d": rows // 2,
+            "C-u": -(rows // 2),
+            "C-f": rows,
+            " ": rows,
+            "pgdn": rows,
+            "C-b": -rows,
+            "pgup": -rows,
+            "g": -(10**6),
+            "G": 10**6,
+        }
+        if key in steps:
+            self.help_scroll(steps[key])
+        else:
+            self.show_help = False
+
+    def draw_modal(self) -> str:
+        left, top, width, rows = self.help_box()
+        bg = role("surface.raised")
+        edge = Style(fg=role("accent.primary"), bg=bg)
+        lines = self.help_lines()
+        more = len(lines) - rows
+        title = " keys "
+        foot = " j k scroll · any other key closes "
+        if more > 0:
+            pct = 100 * self.help_top // more
+            foot = f" {pct}%{foot}"
+        out = []
+
+        def border(left_ch: str, label: str, right_ch: str) -> str:
             buf = LineBuf(width)
+            buf.add(left_ch + "─", edge)
+            buf.add_clipped(label, edge._replace(bold=True), width - 4)
+            while buf.col < width - 1:
+                buf.add("─", edge)
+            buf.add(right_ch, edge)
+            return buf.render()
+
+        out.append(border("╭", title, "╮"))
+        for text in lines[self.help_top : self.help_top + rows]:
+            buf = LineBuf(width)
+            buf.add("│ ", edge)
+            heading = text and not text.startswith(" ")
             style = (
-                Style(bold=True)
-                if text and not text.startswith(" ")
-                else PLAIN
+                Style(bg=bg, bold=True, fg=role("state.warning"))
+                if heading
+                else Style(bg=bg)
             )
-            buf.add("  " + text, style)
-            buf.fill(PLAIN)
-            lines.append(buf.render())
-        blank = LineBuf(width)
-        blank.fill(PLAIN)
-        return (lines + [blank.render()] * self.body_h)[: self.body_h]
+            buf.add_clipped(" " + text, style, width - 4)
+            buf.fill(Style(bg=bg), width - 2)
+            buf.add(" │", edge)
+            out.append(buf.render())
+        out.append(border("╰", foot, "╯"))
+        return "".join(
+            f"\x1b[{top + y + 1};{left + 1}H{line}"
+            for y, line in enumerate(out)
+        )
 
     def draw_diff(self, width: int) -> list[str]:
         lines = []
@@ -255,6 +344,8 @@ class Draw:
                 buf.fill(base)
             case "line":
                 self.draw_code(buf, row, is_cur, sign_col)
+            case "note":
+                self.draw_note(buf, row, is_cur, sign_col)
 
     def draw_code(
         self, buf: LineBuf, row: Row, is_cur: bool, sign_col
@@ -336,7 +427,12 @@ class Draw:
         buf = LineBuf(self.width)
         if self.prompt is not None:
             kind, text = self.prompt
-            buf.add(f"{kind}{text}", base)
+            label = NOTE_PROMPTS.get(kind, kind)
+            room = self.width - len(label) - 2
+            if len(text) > room:
+                text = "…" + text[-(room - 1) :]
+            buf.add(label, base._replace(bold=kind in NOTE_PROMPTS))
+            buf.add(text, base)
             buf.add("▏", base._replace(fg=role("accent.primary")))
             buf.fill(base)
             return buf.render()
@@ -348,16 +444,18 @@ class Draw:
         lo, hi = self.span
         pct = 100 * (self.cur - lo) // max(1, hi - lo)
         text, style = self.message
-        if row.kind == "commit":
+        if row.file < 0:
             commit = self.commits[row.hunk]
             where = f"commit {row.hunk + 1}/{len(self.commits)}"
-            if not text and row.tone == "head":
+            if not text and row.kind == "commit" and row.tone == "head":
                 text = " ".join([commit.sha, commit.author, commit.date])
             text = text or commit.title
         else:
             fi = row.file
             hunks = [r for r in self.rows if r.kind == "hunk" and r.file == fi]
-            hunk_no = row.hunk + 1 if row.kind in ("hunk", "line") else 0
+            hunk_no = (
+                row.hunk + 1 if row.kind in ("hunk", "line", "note") else 0
+            )
             where = (
                 f"hunk {hunk_no}/{len(hunks)}  file {fi + 1}/{len(self.files)}"
             )
@@ -366,6 +464,8 @@ class Draw:
             style = base
         if self.unified != self.base_context:
             where = f"{'full' if self.full else f'U{self.context}'}  {where}"
+        if summary := self.review_summary():
+            where = f"{summary}  {where}"
         right = f" {self.count or self.pending}  {where}  {pct}% "
         room = self.width - buf.col - len(right)
         buf.add_clipped(text, style._replace(bg=bg), max(1, room))

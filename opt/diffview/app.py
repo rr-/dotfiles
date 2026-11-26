@@ -10,8 +10,10 @@ from .draw import Draw
 from .gitio import git_root, initial_context, run_git
 from .highlight import Highlight, highlight_file
 from .model import TRAILER_RE, Commit, FileDiff, Hunk, parse_diff, wrap
+from .notes import NOTE_PROMPTS, Notes
+from .review import Review
 from .rows import Quit, Row
-from .term import Terminal
+from .term import Mouse, Terminal
 from .theme import PLAIN, Style, role
 from .tree import Node, build_tree, walk_tree
 
@@ -19,10 +21,22 @@ CONTEXT_STEP = 3
 FULL_CONTEXT = 1_000_000  # as -U, enough to show every line of a file
 
 
-class App(Draw):
-    def __init__(self, git_args: list[str] | None, text: str) -> None:
+class App(Draw, Notes):
+    def __init__(
+        self,
+        git_args: list[str] | None,
+        text: str,
+        review: Review | None = None,
+        git_cmd: str = "diff",
+    ) -> None:
         self.git_args = git_args
-        self.git_cmd = "diff"
+        self.git_cmd = git_cmd
+        self.review = review
+        self.hide_resolved = False
+        self.prompt_target: tuple | None = None
+        self.last_click, self.last_time = -1, 0.0
+        self.tree_free = False  # the wheel scrolled the tree off its cursor
+        self.help_top = 0
         self.root = git_root()
         self.folded: set[str] = set()
         self.cur = self.top = self.hscroll = 0
@@ -72,6 +86,20 @@ class App(Draw):
         self.commit_page: dict[int, int] = {}
         shown = -1
 
+        width = max(
+            (
+                len(str(n))
+                for f in self.files
+                for h in f.hunks
+                for line in h.lines
+                for n in (line.old, line.new)
+                if n is not None
+            ),
+            default=1,
+        )
+        self.num_width = max(width, 3)
+        self.place_threads()
+
         def add_page(kind: str, index: int, rows: list[Row]) -> int:
             page = len(self.pages)
             self.pages.append((kind, index))
@@ -97,25 +125,11 @@ class App(Draw):
                 for hi, hunk in enumerate(f.hunks):
                     if hunk.header:
                         rows.append(Row("hunk", fi, hi))
-                    rows += [
-                        Row("line", fi, hi, li)
-                        for li in range(len(hunk.lines))
-                    ]
+                    for li in range(len(hunk.lines)):
+                        rows.append(Row("line", fi, hi, li))
+                        rows += self.line_notes(fi, hi, li)
             self.file_page[fi] = add_page("file", fi, rows)
         add_commits(len(self.commits) - 1)
-
-        width = max(
-            (
-                len(str(n))
-                for f in self.files
-                for h in f.hunks
-                for line in h.lines
-                for n in (line.old, line.new)
-                if n is not None
-            ),
-            default=1,
-        )
-        self.num_width = max(width, 3)
 
     def message_rows(self, ci: int) -> list[Row]:
         commit = self.commits[ci]
@@ -143,10 +157,11 @@ class App(Draw):
             if commit.extra:
                 texts.append(("", ""))
                 texts += [("dim", line) for line in commit.extra]
-        return [
+        rows = [
             Row("commit", -1, ci, li, text, tone)
             for li, (tone, text) in enumerate(texts)
         ]
+        return rows + self.commit_notes(ci, len(rows))
 
     def rewrap(self, width: int) -> None:
         """Rebuild the message pages for a new pane width."""
@@ -163,6 +178,7 @@ class App(Draw):
         self.top = min(lo + top, hi)
 
     def reload(self) -> None:
+        self.reload_review()
         if self.git_args is None:
             self.flash(
                 "can't rerun a diff that came from stdin", "state.error"
@@ -180,16 +196,16 @@ class App(Draw):
         row = self.rows[self.cur]
         offset = self.cur - self.spans[row.page][0]
         if row.file < 0:
-            return row.page, offset, None, None
+            return row.page, offset, None, None, row.note
         f = self.files[row.file]
         line = None
-        if row.kind == "line":
+        if row.kind in ("line", "note"):
             at = f.hunks[row.hunk].lines[row.line]
             line = (at.old, at.new)
-        return row.page, offset, f.path, line
+        return row.page, offset, f.path, line, row.note
 
     def restore(self, mark: tuple) -> None:
-        page, offset, path, line = mark
+        page, offset, path, line, note = mark
         page = self.clamp(page, 0, len(self.pages) - 1)
         kind, index = self.pages[page]
         if path is not None and (
@@ -215,6 +231,11 @@ class App(Draw):
                 if found:
                     self.cur = i
                     break
+        if note:
+            self.cur = next(
+                (i for i, row in enumerate(self.rows) if row.note == note),
+                self.cur,
+            )
         self.set_cur(self.cur, "center")
 
     # context
@@ -298,12 +319,12 @@ class App(Draw):
         if row.file < 0:
             return 1
         f = self.files[row.file]
-        if row.kind in ("hunk", "line") and f.hunks:
+        if row.kind in ("hunk", "line", "note") and f.hunks:
             hunk = f.hunks[row.hunk]
             return (
-                hunk.lines[row.line].anchor
-                if row.kind == "line"
-                else hunk.new_start
+                hunk.new_start
+                if row.kind == "hunk"
+                else hunk.lines[row.line].anchor
             )
         return 1
 
@@ -330,9 +351,16 @@ class App(Draw):
         return self.show_tree and self.width >= 50
 
     def tree_width(self) -> int:
+        def room(depth: int, node: Node) -> int:
+            n = depth * 2 + 2 + len(node.name) + (1 if node.is_dir else 0)
+            if node.commit and node.rank >= 0 and self.review is not None:
+                # a badge, and the start of the subject
+                n += 4 + min(30, len(self.commits[node.rank].subject))
+            return n
+
         widest = max(
             (
-                depth * 2 + 2 + len(node.name) + (1 if node.is_dir else 0)
+                room(depth, node)
                 for depth, node in walk_tree(self.tree, everything=True)
             ),
             default=10,
@@ -456,6 +484,7 @@ class App(Draw):
         return None
 
     def sync_tree(self) -> None:
+        self.tree_free = False
         page = self.current_page()
         node = next(
             n
@@ -476,6 +505,7 @@ class App(Draw):
             self.goto_page(page)
 
     def tree_key(self, key: str, n: int | None) -> None:
+        self.tree_free = False
         rows = self.tree_rows()
         node = rows[self.tree_cur][1]
         if key in ("j", "down", "C-n"):
@@ -509,7 +539,7 @@ class App(Draw):
 
     def handle(self, key: str) -> None:
         if self.show_help:
-            self.show_help = False
+            self.help_key(key)
             return
         if self.prompt is not None:
             self.prompt_key(key)
@@ -661,6 +691,22 @@ class App(Draw):
                 self.set_context(self.base_context, False)
             case "F":
                 self.set_context(self.context, not self.full)
+            case "c":
+                self.start_comment()
+            case "C":
+                self.start_comment(whole_commit=True)
+            case "x":
+                self.toggle_resolve()
+            case "a":
+                self.toggle_approve()
+            case "]n":
+                for _ in range(n or 1):
+                    self.goto_thread(1)
+            case "[n":
+                for _ in range(n or 1):
+                    self.goto_thread(-1)
+            case "zu":
+                self.toggle_hide_resolved()
             case "C-l":
                 pass
             case _:
@@ -673,6 +719,12 @@ class App(Draw):
         kind, text = self.prompt
         if key in ("esc", "C-c") or (key == "backspace" and not text):
             self.prompt = None
+            if kind in NOTE_PROMPTS:
+                self.prompt_target = None
+                self.flash("dropped the comment" if text else "")
+        elif key == "C-e" and kind in NOTE_PROMPTS:
+            self.prompt = None
+            self.submit_comment(self.edit_text(text) or "")
         elif key == "backspace":
             self.prompt = (kind, text[:-1])
         elif key == "C-u":
@@ -681,7 +733,9 @@ class App(Draw):
             self.prompt = (kind, re.sub(r"\S*\s*$", "", text))
         elif key == "enter":
             self.prompt = None
-            if kind == ":":
+            if kind in NOTE_PROMPTS:
+                self.submit_comment(text)
+            elif kind == ":":
                 self.command(text.strip())
             elif text or self.search:
                 self.start_search(text, 1 if kind == "/" else -1)
@@ -695,6 +749,7 @@ class App(Draw):
             raise Quit()
         elif cmd in ("h", "help"):
             self.show_help = True
+            self.help_top = 0
         elif cmd:
             self.flash(f"not a command: {cmd}", "state.error")
 
@@ -711,7 +766,7 @@ class App(Draw):
         self.search_next(1)
 
     def row_text(self, row: Row) -> str:
-        if row.kind == "commit":
+        if row.kind in ("commit", "note"):
             return row.text
         f = self.files[row.file]
         match row.kind:
@@ -774,13 +829,16 @@ class App(Draw):
 
     def run(self) -> None:
         with Terminal() as self.term:
-            self.flash(":h for help", "text.faint")
+            self.flash(":help for the keys", "text.faint")
             while True:
                 self.draw()
                 key = self.term.read_key()
                 if key is None:
                     continue
                 try:
-                    self.handle(key)
+                    if isinstance(key, Mouse):
+                        self.mouse(key)
+                    else:
+                        self.handle(key)
                 except Quit:
                     return

@@ -88,9 +88,14 @@ class Commit:
 
 
 def relative_date(text: str) -> str:
-    try:
-        when = datetime.strptime(text, "%a %b %d %H:%M:%S %Y %z")
-    except ValueError:
+    """A git date, or an ISO one, as "2 hours ago"."""
+    for fmt in ("%a %b %d %H:%M:%S %Y %z", "%Y-%m-%dT%H:%M:%S%z"):
+        try:
+            when = datetime.strptime(text, fmt)
+            break
+        except ValueError:
+            continue
+    else:
         return text
     secs = (datetime.now(timezone.utc) - when).total_seconds()
     for unit, size in (
@@ -131,6 +136,7 @@ def trim_blank(lines: list[str]) -> list[str]:
     return lines
 
 
+COMMIT_RE = re.compile(r"commit (?:[0-9a-f]{7,}|-)( |$)")
 HUNK_RE = re.compile(r"^@@ -(\d+)(?:,(\d+))? \+(\d+)(?:,(\d+))? @@ ?(.*)$")
 ANSI_RE = re.compile(r"\x1b\[[0-9;]*m")
 INDEX_RE = re.compile(r"^index ([0-9a-f]+)\.\.([0-9a-f]+)\b")
@@ -193,11 +199,20 @@ def parse_diff(text: str) -> tuple[list[FileDiff], list[Commit]]:
     old_left = new_left = 0
     old_no = new_no = 0
 
+    def add_commits(lines: list[str]) -> None:
+        # git log shows a commit without changes as a header with no diff,
+        # so a stretch of text can hold several commits.
+        chunk: list[str] = []
+        for line in lines + ["commit -"]:
+            if COMMIT_RE.match(line) and trim_blank(chunk):
+                commits.append(Commit(trim_blank(chunk)))
+                chunk = []
+            chunk.append(line)
+
     def start_file(old: str | None, new: str | None) -> FileDiff:
         nonlocal preamble
         # Text between two files' diffs opens a new commit, as in git show.
-        if lines := trim_blank(preamble):
-            commits.append(Commit(lines))
+        add_commits(preamble)
         preamble = []
         f = FileDiff(old, new, commit=len(commits) - 1)
         files.append(f)
@@ -297,6 +312,5 @@ def parse_diff(text: str) -> tuple[list[FileDiff], list[Commit]]:
             f.status = "D"
         if not f.hunks and not f.meta:
             f.meta.append("no content changes")
-    if lines := trim_blank(preamble):
-        commits.append(Commit(lines))
+    add_commits(preamble)
     return files, commits

@@ -29,9 +29,25 @@ tree
   l h              expand / collapse a directory
   Enter o          open the file and focus the diff
 
+review (git review)
+  c                comment on the line, or reply in a thread
+  C                comment on the whole commit
+  x                resolve the thread, or open it again
+  a                approve the commit, or take it back
+  ]n [n            next / previous open thread
+  zu               hide / show resolved threads
+  in the prompt    Enter saves, C-e goes on in $EDITOR, Esc drops it
+
+mouse
+  click            move the cursor, open a file, fold a directory
+  double-click     comment, as c
+  wheel            scroll the pane under the pointer
+  shift-drag       select text, as without the viewer
+
 other
   / ?  n N         search forward / backward, next / previous match
   e                open $EDITOR at the cursor line
-  r                rerun git diff
+  r                rerun git, and read the comments again
+  :h :help         this list
   q ZZ :q          quit
 """

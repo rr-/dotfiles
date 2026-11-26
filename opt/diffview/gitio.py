@@ -51,3 +51,46 @@ def run_git(cmd: str, args: list[str]) -> str:
         sys.stderr.write(proc.stderr.decode(errors="replace"))
         raise SystemExit(proc.returncode)
     return proc.stdout.decode(errors="replace")
+
+
+def git_common_dir() -> Path:
+    """The .git shared by every worktree of the repository."""
+    proc = subprocess.run(
+        ["git", "rev-parse", "--path-format=absolute", "--git-common-dir"],
+        capture_output=True,
+        text=True,
+    )
+    if proc.returncode:
+        raise SystemExit("not in a git repository")
+    return Path(proc.stdout.strip())
+
+
+def default_base() -> str:
+    for ref in ("origin/HEAD", "origin/main", "origin/master", "main"):
+        proc = subprocess.run(
+            ["git", "rev-parse", "--verify", "--quiet", f"{ref}^{{commit}}"],
+            capture_output=True,
+        )
+        if proc.returncode == 0:
+            return ref
+    raise SystemExit("no base branch found: pass a range like main..HEAD")
+
+
+def review_range(arg: str | None) -> str:
+    """A range as given, or a branch (HEAD by default) since the base."""
+    if arg and ".." in arg:
+        return arg
+    return f"{default_base()}..{arg or 'HEAD'}"
+
+
+def log_args(rng: str) -> list[str]:
+    """git log arguments that show each commit of a range like git show."""
+    return [
+        "-p",
+        "--reverse",
+        "--no-merges",
+        "--format=medium",
+        "--no-decorate",
+        rng,
+        "--",
+    ]
