@@ -376,8 +376,11 @@ pub fn list() -> Result<Vec<Entry>, String> {
     Ok(entries)
 }
 
-/// Delete an entry for good: the item, then its info file.
-pub fn purge(entry: &Entry) -> Result<(), String> {
+/// Delete an entry for good: the item, then its info file. Returns the disk
+/// space freed, counted as Usage counts it.
+pub fn purge(entry: &Entry) -> Result<u64, String> {
+    let bytes =
+        disk_usage(&entry.id).map_err(|error| format!("{}: {error}", entry.id.display()))?;
     let removed = match fs::symlink_metadata(&entry.id) {
         Ok(metadata) if metadata.is_dir() => fs::remove_dir_all(&entry.id),
         Ok(_) => fs::remove_file(&entry.id),
@@ -385,7 +388,8 @@ pub fn purge(entry: &Entry) -> Result<(), String> {
         Err(error) => Err(error),
     };
     removed.map_err(|error| format!("{}: {error}", entry.id.display()))?;
-    fs::remove_file(info_path(&entry.id)?).map_err(|error| error.to_string())
+    fs::remove_file(info_path(&entry.id)?).map_err(|error| error.to_string())?;
+    Ok(bytes)
 }
 
 /// What a trash holds.

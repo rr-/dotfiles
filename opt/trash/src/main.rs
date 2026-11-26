@@ -154,11 +154,18 @@ fn empty(arguments: &[std::ffi::OsString]) -> Result<(), String> {
         }
     }
     let mut failed = None;
+    let mut purged = 0;
+    let mut reclaimed = 0;
     for entry in &entries {
-        if let Err(error) = trash::purge(entry) {
-            failed = Some(error);
+        match trash::purge(entry) {
+            Ok(bytes) => {
+                purged += 1;
+                reclaimed += bytes;
+            }
+            Err(error) => failed = Some(error),
         }
     }
+    println!("deleted {purged} items, reclaimed {}", human(reclaimed));
     failed.map_or(Ok(()), Err)
 }
 
