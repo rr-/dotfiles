@@ -418,6 +418,15 @@ class AppTests(RepoTest):
         self.keys(app, "<")
         self.assertEqual(where(), ("commit", 0))
 
+    def test_files_with_threads_get_a_badge(self) -> None:
+        app = self.app()
+        self.assertEqual(app.file_badge(0), ("", ""))
+        self.goto_text(app, "new one")
+        self.keys(app, "c", *"hm", "enter")
+        self.assertEqual(app.file_badge(0), (" ●1", "state.warning"))
+        self.keys(app, "]", "n", "x")
+        self.assertEqual(app.file_badge(0), (" ○", "text.faint"))
+
     def test_one_commit_still_shows_its_badge(self) -> None:
         self.store.approve("Add two lines", True)
         app = self.app()

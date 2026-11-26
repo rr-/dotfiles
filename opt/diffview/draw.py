@@ -148,11 +148,16 @@ class Draw:
                     ),
                 )
                 counts = f" +{f.added} -{f.deleted}" if not f.binary else ""
+                badge, badge_color = self.file_badge(node.file)
                 room = width - buf.col
                 name_style = Style(bg=bg, bold=self.node_page(node) == current)
-                if len(node.name) + len(counts) + 1 <= room:
+                tail = len(badge) + len(counts)
+                if len(node.name) + tail + 1 <= room:
                     buf.add(node.name, name_style)
-                    buf.fill(base, width - len(counts) - 1)
+                    buf.fill(base, width - tail - 1)
+                    if badge:
+                        style = Style(fg=role(badge_color), bg=bg, bold=True)
+                        buf.add(badge, style)
                     buf.add(counts, Style(fg=role("text.faint"), bg=bg))
                 else:
                     buf.add_clipped(node.name, name_style, room)

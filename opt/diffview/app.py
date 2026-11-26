@@ -388,6 +388,8 @@ class App(Draw, Notes):
             if node.commit and node.rank >= 0 and self.review is not None:
                 # a badge, and the start of the subject
                 n += 4 + min(30, len(self.commits[node.rank].subject))
+            elif node.file is not None and self.review is not None:
+                n += len(self.file_badge(node.file)[0])
             return n
 
         widest = max(

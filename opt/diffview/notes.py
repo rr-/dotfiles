@@ -29,6 +29,8 @@ class Notes:
         self.at_commit: dict[int, list[dict]] = {}
         self.at_file: dict[int, list[dict]] = {}
         self.open_threads: dict[int, int] = {}
+        # per file: its open threads, and all of them
+        self.file_threads: dict[int, tuple[int, int]] = {}
         if self.review is None:
             return
         for root in self.review.threads():
@@ -45,7 +47,11 @@ class Notes:
                 ci = where[1]
             else:
                 continue
-            if self.review.is_open(root["id"]):
+            is_open = self.review.is_open(root["id"])
+            if where[0] in ("line", "file"):
+                n_open, n_all = self.file_threads.get(where[1], (0, 0))
+                self.file_threads[where[1]] = (n_open + is_open, n_all + 1)
+            if is_open:
                 self.open_threads[ci] = self.open_threads.get(ci, 0) + 1
         for roots in self.at_commit.values():
             # the whole commit's threads first, then those that lost a line
@@ -373,6 +379,15 @@ class Notes:
         """A chip no one can miss on a commit with a verdict."""
         mark = VERDICT_MARK[verdict]
         buf.add(f" {mark} {verdict.upper()} ", VERDICT_CHIP[verdict])
+
+    def file_badge(self, fi: int) -> tuple[str, str]:
+        """●N for a file's open threads, ○ when all are resolved."""
+        n_open, n_all = self.file_threads.get(fi, (0, 0))
+        if n_open:
+            return f" ●{n_open}", "state.warning"
+        if n_all:
+            return " ○", "text.faint"
+        return "", ""
 
     def commit_badge(self, ci: int) -> tuple[str, str] | None:
         if self.review is None or ci < 0:
