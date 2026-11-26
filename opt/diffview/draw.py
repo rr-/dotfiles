@@ -8,6 +8,7 @@ from .term import TAB, LineBuf, cwidth, expand
 from .theme import (
     PLAIN,
     VERDICT_CHIP,
+    VERDICT_HERE,
     VERDICT_MARK,
     VERDICT_TINT,
     Color,
@@ -108,11 +109,14 @@ class Draw:
                 )
                 continue
             tint = self.verdict(self.commit_of(node))
+            here = (
+                i == self.tree_cur and self.focus == "tree"
+            ) or self.node_page(node) == current
             bg = None
-            if i == self.tree_cur and self.focus == "tree":
+            if tint:
+                bg = VERDICT_HERE[tint] if here else VERDICT_TINT[tint]
+            elif i == self.tree_cur and self.focus == "tree":
                 bg = role("surface.overlay")
-            elif tint:
-                bg = VERDICT_TINT[tint]
             elif self.node_page(node) == current:
                 bg = role("surface.raised")
             base = Style(bg=bg)

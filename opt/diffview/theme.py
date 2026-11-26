@@ -62,6 +62,11 @@ VERDICT_TINT = {
     "approved": "#dcffd4" if BASE == "light" else "#173d12",
     "changes requested": "#ffdcdc" if BASE == "light" else "#3d1414",
 }
+# and the one of them that is open, or under the cursor
+VERDICT_HERE = {
+    "approved": "#9cf28c" if BASE == "light" else "#2f7a22",
+    "changes requested": "#ff9e9e" if BASE == "light" else "#7a2626",
+}
 
 
 def load_palette() -> dict[int | str, str]:
