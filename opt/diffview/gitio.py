@@ -83,6 +83,21 @@ def review_range(arg: str | None) -> str:
     return f"{default_base()}..{arg or 'HEAD'}"
 
 
+def range_base(rng: str) -> str:
+    base, _, _ = rng.partition("..")
+    return base or "HEAD"
+
+
+def titles_in(rev: str) -> set[str]:
+    """The subject of every commit reachable from rev."""
+    proc = subprocess.run(
+        ["git", "log", "--format=%s", rev, "--"],
+        capture_output=True,
+        text=True,
+    )
+    return set(proc.stdout.splitlines()) if proc.returncode == 0 else set()
+
+
 def log_args(rng: str) -> list[str]:
     """git log arguments that show each commit of a range like git show."""
     return [

@@ -829,7 +829,8 @@ class App(Draw, Notes):
 
     def run(self) -> None:
         with Terminal() as self.term:
-            self.flash(":help for the keys", "text.faint")
+            if not self.message[0]:
+                self.flash(":help for the keys", "text.faint")
             while True:
                 self.draw()
                 key = self.term.read_key()

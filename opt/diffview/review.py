@@ -27,6 +27,7 @@ An approval is a record of its own, the last one per title winning:
 """
 
 import json
+import os
 import secrets
 from datetime import datetime, timezone
 from pathlib import Path
@@ -146,6 +147,57 @@ class Review:
 
     def is_open(self, rid: str) -> bool:
         return self.comments.get(rid, {}).get("status", "open") == "open"
+
+    def prune(self, done: set[str], keep: set[str]) -> tuple[int, int]:
+        """Drop the threads and approvals of commits that have landed.
+
+        A title in done and not in keep goes, with every reply to its
+        threads. The file is written anew and renamed over the old one,
+        unless something appended to it meanwhile: then it is read again.
+        Gives how many threads and approvals went.
+        """
+        gone = done - keep
+        for _ in range(5):
+            try:
+                seen = self.path.stat()
+            except FileNotFoundError:
+                return 0, 0
+            self.load()
+            roots = {
+                cid
+                for cid, c in self.comments.items()
+                if self.root(cid) == cid and c.get("commit_title") in gone
+            }
+            approvals = {t for t in self.approvals if t in gone}
+            if not roots and not approvals:
+                return 0, 0
+            kept = []
+            for line in self.path.read_text().splitlines():
+                try:
+                    rec = json.loads(line)
+                except json.JSONDecodeError:
+                    kept.append(line)  # not ours to judge
+                    continue
+                if not isinstance(rec, dict):
+                    kept.append(line)
+                elif rec.get("type") == "approval":
+                    if rec.get("commit_title") not in approvals:
+                        kept.append(line)
+                elif self.root(str(rec.get("id"))) not in roots:
+                    kept.append(line)
+            tmp = self.path.with_name(self.path.name + ".prune")
+            tmp.write_text("".join(line + "\n" for line in kept))
+            now = self.path.stat()
+            if (now.st_size, now.st_mtime_ns) == (
+                seen.st_size,
+                seen.st_mtime_ns,
+            ):
+                os.replace(tmp, self.path)
+                self.load()
+                return len(roots), len(approvals)
+            tmp.unlink(missing_ok=True)
+        self.load()
+        return 0, 0
 
 
 def side_lines(hunk: Hunk, side: str) -> list[tuple[int, Line]]:

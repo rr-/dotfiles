@@ -5,7 +5,14 @@ import sys
 
 from . import review
 from .app import App
-from .gitio import git_common_dir, log_args, review_range, run_git
+from .gitio import (
+    git_common_dir,
+    log_args,
+    range_base,
+    review_range,
+    run_git,
+    titles_in,
+)
 from .model import ANSI_RE, FileDiff, parse_diff
 from .review import REVIEW_FILE, Review, place
 
@@ -39,12 +46,17 @@ REVIEW_USAGE = """\
 usage: git review [<range>]          review commits in the viewer
        git review list [<range>] [--all]
                                      print where the review stands
+       git review prune [<range>]    drop what already landed
 
 <range> is base..branch, or a branch to take from the default base
 (origin/HEAD, origin/main, origin/master or main). HEAD by default.
 
 list prints a line per commit, with its approval and open threads, and
 then each open thread (every thread with --all) with where it sits now.
+
+prune drops the threads and approvals of commits whose title is in the
+range's base but on no commit of the range. git review does it too, each
+time it starts; list never changes the file.
 """
 
 
@@ -61,6 +73,13 @@ def review_main(argv: list[str]) -> None:
             raise SystemExit(REVIEW_USAGE)
         print(review_list(review_range(rest[0] if rest else None), show_all))
         return
+    if argv[:1] == ["prune"]:
+        if len(argv) > 2 or any(a.startswith("-") for a in argv[1:]):
+            raise SystemExit(REVIEW_USAGE)
+        rng = review_range(argv[1] if len(argv) > 1 else None)
+        store = Review(git_common_dir() / REVIEW_FILE)
+        print(pruned(store, rng) or "nothing has landed yet")
+        return
     if len(argv) > 1 or any(a.startswith("-") for a in argv):
         raise SystemExit(REVIEW_USAGE)
     rng = review_range(argv[0] if argv else None)
@@ -70,11 +89,29 @@ def review_main(argv: list[str]) -> None:
     if not sys.stdout.isatty():
         sys.stdout.write(text)
         return
+    notice = pruned(store, rng)
     app = App(args, text, store, "log")
+    if notice:
+        app.flash(notice, "text.faint")
     if not app.files:
         print(f"no changes in {rng}")
         return
     app.run()
+
+
+def pruned(store: Review, rng: str) -> str:
+    """Drop what landed in the range's base, and say what went."""
+    keep = {c.subject for c in parse_diff(run_git("log", log_args(rng)))[1]}
+    base = range_base(rng)
+    threads, approvals = store.prune(titles_in(base), keep)
+    if not threads and not approvals:
+        return ""
+    what = [
+        f"{n} {noun}{'' if n == 1 else 's'}"
+        for n, noun in ((threads, "thread"), (approvals, "approval"))
+        if n
+    ]
+    return f"pruned {' and '.join(what)} of commits already in {base}"
 
 
 def where_now(c: dict, at: tuple, files: list[FileDiff]) -> str:

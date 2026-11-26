@@ -17,6 +17,7 @@
 
     git review [<range>]
     git review list [<range>] [--all]
+    git review prune [<range>]
 
 Comments and approvals go to review.jsonl in the repository's .git, for
 whoever fixes the commits to read and answer. `git review --help` gives

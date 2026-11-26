@@ -164,6 +164,49 @@ class StoreTests(RepoTest):
         )
 
 
+class PruneTests(RepoTest):
+    def test_drops_what_landed_and_keeps_the_rest(self) -> None:
+        landed = self.store.add("me", "old", commit_title="Base")
+        self.store.add("claude", "fixed", reply_to=landed)
+        self.store.approve("Base", True)
+        live = self.store.add("me", "split", commit_title="Add two lines")
+        self.store.approve("Add two lines", True)
+        mine = self.store.add("me", "both", commit_title="In both")
+        with self.store.path.open("a") as handle:
+            handle.write("not json\n")
+        threads, approvals = self.store.prune(
+            {"Base", "In both"}, {"Add two lines", "In both"}
+        )
+        self.assertEqual((threads, approvals), (1, 1))
+        self.assertEqual(
+            sorted(c["id"] for c in self.store.threads()), sorted([live, mine])
+        )
+        self.assertNotIn("Base", self.store.approvals)
+        self.assertTrue(self.store.approvals["Add two lines"])
+        self.assertIn("not json", self.store.path.read_text())
+        self.assertEqual(self.store.prune({"Base"}, set()), (0, 0))
+
+    def test_an_append_meanwhile_is_not_lost(self) -> None:
+        self.store.add("me", "old", commit_title="Base")
+        real_load = self.store.load
+        calls = []
+
+        def load_then_append() -> None:
+            real_load()
+            if not calls:
+                calls.append(1)
+                with self.store.path.open("a") as handle:
+                    handle.write(json.dumps({"id": "late", "text": "hi"}))
+                    handle.write("\n")
+
+        self.store.load = load_then_append
+        self.store.prune({"Base"}, set())
+        self.store.load = real_load
+        self.store.load()
+        self.assertIn("late", self.store.comments)
+        self.assertEqual(self.store.threads()[0]["id"], "late")
+
+
 class AppTests(RepoTest):
     def app(self) -> App:
         args = log_args("main..topic")
