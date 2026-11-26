@@ -704,8 +704,10 @@ class App(Draw, Notes):
                 self.start_comment(whole_commit=True)
             case "x":
                 self.toggle_resolve()
-            case "a":
+            case "M-a":
                 self.toggle_approve()
+            case "a" if self.review is not None:
+                self.flash("approving is Alt+a now", "state.warning")
             case "]n":
                 for _ in range(n or 1):
                     self.goto_thread(1)

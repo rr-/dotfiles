@@ -309,6 +309,8 @@ class AppTests(RepoTest):
         self.assertEqual(len(self.store.replies(root["id"])), 1)
 
         self.keys(app, "C", *"split it", "enter", "a")
+        self.assertNotIn("Add two lines", self.store.approvals)
+        self.keys(app, "M-a")
         self.assertTrue(self.store.approvals["Add two lines"])
         self.assertEqual(len(self.store.threads()), 2)
         self.assertEqual(app.review_summary(), "2 open  ✓1/1")

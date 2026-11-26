@@ -33,7 +33,7 @@ review (git review)
   c                comment on the line, or reply in a thread
   C                comment on the whole commit
   x                resolve the thread, or open it again
-  a                approve the commit, or take it back
+  M-a              approve the commit, or take it back (Alt+a)
   ]n [n            next / previous open thread
   zu               hide / show resolved threads
   in the prompt    Enter saves, C-e goes on in $EDITOR, Esc drops it

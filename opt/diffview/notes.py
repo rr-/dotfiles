@@ -310,6 +310,16 @@ class Notes:
 
     # the summary
 
+    def approved(self, ci: int) -> bool:
+        if self.review is None or ci < 0:
+            return False
+        return bool(self.review.approvals.get(self.commits[ci].subject))
+
+    def add_approved(self, buf: LineBuf) -> None:
+        """A chip no one can miss on an approved commit."""
+        style = Style(fg=role("text.inverse"), bg=role("state.success"))
+        buf.add(" ✓ APPROVED ", style._replace(bold=True))
+
     def commit_badge(self, ci: int) -> tuple[str, str] | None:
         if self.review is None or ci < 0:
             return None

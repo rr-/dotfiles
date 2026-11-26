@@ -100,6 +100,8 @@ class Draw:
             if node.is_dir:
                 arrow = "▾ " if node.expanded else "▸ "
                 color = "state.warning" if node.commit else "file.dir"
+                if node.commit and self.approved(node.rank):
+                    color = "state.success"
                 style = Style(fg=role(color), bg=bg, bold=True)
                 buf.add(arrow, style)
                 name = node.name if node.commit else node.name + "/"
@@ -260,6 +262,10 @@ class Draw:
         """sha, author and date on one line, the subject after them if any."""
         muted = base._replace(fg=role("text.muted"))
         buf.add("  ", base)
+        ci = next((i for i, c in enumerate(self.commits) if c is commit), -1)
+        if self.approved(ci):
+            self.add_approved(buf)
+            buf.add(" ", base)
         buf.add(
             commit.sha[:7], base._replace(fg=role("state.warning"), bold=True)
         )
@@ -451,6 +457,11 @@ class Draw:
         mode = " TREE " if self.focus == "tree" else " DIFF "
         buf.add(mode, Style(fg=role("accent.primary"), bold=True, rev=True))
         buf.add(" ", base)
+        if self.review is not None and self.approved(
+            self.current_commit() if self.current_commit() is not None else -1
+        ):
+            self.add_approved(buf)
+            buf.add(" ", base)
         row = self.rows[self.cur]
         lo, hi = self.span
         pct = 100 * (self.cur - lo) // max(1, hi - lo)
