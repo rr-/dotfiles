@@ -8,8 +8,9 @@ import time
 from pathlib import Path
 
 from .model import relative_date, wrap
-from .review import Review, can_anchor, make_anchor, place
+from .review import Review, can_anchor, make_anchor
 from .rows import Row
+from .session import Session
 from .term import LineBuf, Mouse
 from .theme import VERDICT_CHIP, VERDICT_MARK, Style, role
 
@@ -24,38 +25,17 @@ class Notes:
     # placing
 
     def place_threads(self) -> None:
-        self.placed: dict[str, tuple] = {}
-        self.at_line: dict[tuple[int, int, int], list[dict]] = {}
-        self.at_commit: dict[int, list[dict]] = {}
-        self.at_file: dict[int, list[dict]] = {}
-        self.open_threads: dict[int, int] = {}
-        # per file: its open threads, and all of them
-        self.file_threads: dict[int, tuple[int, int]] = {}
-        if self.review is None:
-            return
-        for root in self.review.threads():
-            where = place(root, self.files, self.commits, self.review.branch)
-            self.placed[root["id"]] = where
-            if where[0] == "line":
-                self.at_line.setdefault(where[1:], []).append(root)
-                ci = self.files[where[1]].commit
-            elif where[0] == "file":
-                self.at_file.setdefault(where[1], []).append(root)
-                ci = self.files[where[1]].commit
-            elif where[0] in ("commit", "outdated"):
-                self.at_commit.setdefault(where[1], []).append(root)
-                ci = where[1]
-            else:
-                continue
-            is_open = self.review.is_open(root["id"])
-            if where[0] in ("line", "file"):
-                n_open, n_all = self.file_threads.get(where[1], (0, 0))
-                self.file_threads[where[1]] = (n_open + is_open, n_all + 1)
-            if is_open:
-                self.open_threads[ci] = self.open_threads.get(ci, 0) + 1
-        for roots in self.at_commit.values():
-            # the whole commit's threads first, then those that lost a line
-            roots.sort(key=lambda r: self.placed[r["id"]][0] == "outdated")
+        """A session over the units now shown, and its counts as ours."""
+        self.session = None
+        if self.review is not None:
+            self.session = Session(self.review, self.files, self.commits)
+        s = self.session
+        self.placed = s.placed if s else {}
+        self.at_line = s.at_line if s else {}
+        self.at_file = s.at_file if s else {}
+        self.at_commit = s.at_commit if s else {}
+        self.open_threads = s.open_threads if s else {}
+        self.file_threads = s.file_threads if s else {}
 
     def line_notes(self, fi: int, hi: int, li: int) -> list[Row]:
         rows: list[Row] = []
@@ -204,46 +184,19 @@ class Notes:
             return
         mark = self.mark()
         if target[0] == "reply":
-            rid = target[1]
-            self.review.add("me", text, reply_to=rid)
-            if not self.review.is_open(rid):
-                self.review.update(rid, status="open")
+            if self.session.reply(target[1], text):
                 self.flash("replied, and opened the thread again")
             else:
                 self.flash("replied")
-        elif target[0] == "line":
-            _, fi, hi, li = target
-            f = self.files[fi]
-            self.review.add(
-                "me",
-                text,
-                commit_title=self.commits[f.commit].subject,
-                **make_anchor(f, hi, li),
-            )
-            self.flash("commented")
-        elif target[0] == "file":
-            f = self.files[target[1]]
-            self.review.add(
-                "me",
-                text,
-                commit_title=self.commits[f.commit].subject,
-                path=f.path,
-                side=None,
-                line_text=None,
-                line=None,
-            )
-            self.flash("commented on the file")
         else:
-            self.review.add(
-                "me",
-                text,
-                commit_title=self.commits[target[1]].subject,
-                path=None,
-                side=None,
-                line_text=None,
-                line=None,
+            self.session.comment(target, text)
+            self.flash(
+                {
+                    "line": "commented",
+                    "file": "commented on the file",
+                    "commit": "commented on the commit",
+                }[target[0]]
             )
-            self.flash("commented on the commit")
         self.build_rows()
         self.restore(mark)
 
@@ -275,11 +228,8 @@ class Notes:
         if row.kind != "note":
             self.flash("not on a comment", "state.error")
             return
-        resolved = self.review.is_open(row.thread)
         mark = self.mark()
-        self.review.update(
-            row.thread, status="resolved" if resolved else "open"
-        )
+        resolved = self.session.toggle_resolve(row.thread)
         self.build_rows()
         self.restore(mark)
         self.flash("resolved" if resolved else "opened again")
@@ -292,8 +242,7 @@ class Notes:
             self.flash("not in a commit", "state.error")
             return
         title = self.commits[ci].subject
-        approved = not self.review.approvals.get(title, False)
-        self.review.approve(title, approved)
+        approved = self.session.toggle_verdict(ci, "approved") == "approved"
         if not approved:
             self.flash(f"took back the approval of {title}")
         elif n := self.open_threads.get(ci):
@@ -310,9 +259,8 @@ class Notes:
             self.flash("not in a commit", "state.error")
             return
         title = self.commits[ci].subject
-        changes = not self.review.changes.get(title, False)
-        self.review.approve(title, False, changes)
-        if changes:
+        now = self.session.toggle_verdict(ci, "changes requested")
+        if now:
             self.flash(f"changes requested on {title}", "state.error")
         else:
             self.flash(f"took back the request on {title}")
@@ -368,9 +316,7 @@ class Notes:
     # the summary
 
     def verdict(self, ci: int | None) -> str:
-        if self.review is None or ci is None or ci < 0:
-            return ""
-        return self.review.verdict(self.commits[ci].subject)
+        return self.session.verdict(ci) if self.session else ""
 
     def approved(self, ci: int) -> bool:
         return self.verdict(ci) == "approved"
@@ -392,7 +338,7 @@ class Notes:
     def commit_badge(self, ci: int) -> tuple[str, str] | None:
         if self.review is None or ci < 0:
             return None
-        approved = self.review.approvals.get(self.commits[ci].subject)
+        approved = self.verdict(ci) == "approved"
         if n := self.open_threads.get(ci):
             return f"{'✓' if approved else ''}●{n}", "state.warning"
         if approved:
@@ -400,12 +346,10 @@ class Notes:
         return None
 
     def review_summary(self) -> str:
-        if self.review is None:
+        if self.session is None:
             return ""
-        titles = [c.subject for c in self.commits if c.subject]
-        approved = sum(bool(self.review.approvals.get(t)) for t in titles)
-        open_ = sum(self.open_threads.values())
-        return f"{open_} open  ✓{approved}/{len(titles)}"
+        open_, approved, units = self.session.summary()
+        return f"{open_} open  ✓{approved}/{units}"
 
     # drawing
 

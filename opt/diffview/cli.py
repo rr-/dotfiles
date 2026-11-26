@@ -17,7 +17,8 @@ from .gitio import (
     titles_in,
 )
 from .model import ANSI_RE, FileDiff, parse_diff
-from .review import REVIEW_FILE, Review, place
+from .review import REVIEW_FILE, Review
+from .session import Session
 
 
 def exit_on_git_error(fn):
@@ -151,42 +152,27 @@ def where_now(c: dict, at: tuple, files: list[FileDiff]) -> str:
 def review_list(rng: str, show_all: bool) -> str:
     store = Review(git_common_dir() / REVIEW_FILE, range_branch(rng))
     files, commits = parse_diff(run_git("log", log_args(rng)))
-    placed = {
-        c["id"]: place(c, files, commits, store.branch)
-        for c in store.threads()
-    }
-    by_commit: dict[int, list[dict]] = {}
-    for c in store.threads():
-        at = placed[c["id"]]
-        if at[0] == "elsewhere":
-            continue
-        ci = files[at[1]].commit if at[0] in ("line", "file") else at[1]
-        by_commit.setdefault(ci, []).append(c)
+    session = Session(store, files, commits)
+    placed = session.placed
 
     out = [f"review of {rng}, branch {store.branch}, in {store.path}", ""]
     if store.bad:
         out += [f"skipped {store.bad} lines that are not records", ""]
     for ci, commit in enumerate(commits):
-        threads = by_commit.get(ci, [])
-        n = sum(store.is_open(c["id"]) for c in threads)
-        state = store.verdict(commit.subject)
+        n = session.open_threads.get(ci, 0)
+        state = session.verdict(ci)
         if state == "changes requested":
             state = "CHANGES REQUESTED, no pull request yet"
         if n:
             state = ", ".join(filter(None, [state, f"{n} open"]))
         out.append(f"{commit.sha[:10]}  {commit.subject}  [{state or '-'}]")
-    elsewhere = sum(
-        store.is_open(c["id"])
-        for c in store.threads()
-        if placed[c["id"]][0] == "elsewhere"
-    )
-    if elsewhere:
+    if elsewhere := session.elsewhere():
         out += ["", f"{elsewhere} open threads are on commits not in it"]
 
     for ci, commit in enumerate(commits):
         threads = [
             c
-            for c in by_commit.get(ci, [])
+            for c in session.threads_of(ci)
             if show_all or store.is_open(c["id"])
         ]
         if not threads:

@@ -16,6 +16,7 @@ from diffview.gitio import log_args, run_git
 from diffview.model import parse_diff
 from diffview.prompt import edit_line
 from diffview.review import Review, make_anchor, place
+from diffview.session import Session
 from diffview.term import Mouse
 
 BODY = [f"line {i}" for i in range(1, 21)]
@@ -237,6 +238,71 @@ class StoreTests(RepoTest):
         self.assertEqual(
             [c.subject for c in commits], ["Add two lines", "Empty", "Undo"]
         )
+
+
+class SessionTests(RepoTest):
+    def session(self) -> Session:
+        files, commits = self.diff()
+        return Session(self.store, files, commits)
+
+    def line_target(self, s: Session, text: str) -> tuple:
+        hunk = s.files[0].hunks[0]
+        li = next(i for i, ln in enumerate(hunk.lines) if ln.text == text)
+        return ("line", 0, 0, li)
+
+    def test_comments_on_each_target(self) -> None:
+        s = self.session()
+        line = s.comment(self.line_target(s, "new one"), "a")
+        whole_file = s.comment(("file", 0), "b")
+        whole = s.comment(("commit", 0), "c")
+        rec = self.store.comments
+        self.assertEqual(rec[line]["line_text"], "new one")
+        self.assertEqual(
+            (rec[whole_file]["path"], rec[whole_file]["line_text"]),
+            ("a.txt", None),
+        )
+        self.assertIsNone(rec[whole]["path"])
+        for cid in (line, whole_file, whole):
+            self.assertEqual(rec[cid]["commit_title"], "Add two lines")
+        self.assertEqual(s.placed[line][0], "line")
+        self.assertEqual(s.placed[whole_file], ("file", 0))
+        self.assertEqual(s.placed[whole], ("commit", 0))
+        self.assertEqual(s.open_threads, {0: 3})
+        self.assertEqual(s.file_threads, {0: (2, 2)})
+        self.assertEqual(
+            [c["id"] for c in s.threads_of(0)], [line, whole_file, whole]
+        )
+
+    def test_resolve_and_reply(self) -> None:
+        s = self.session()
+        cid = s.comment(("commit", 0), "split")
+        self.assertTrue(s.toggle_resolve(cid))
+        self.assertEqual(s.open_threads, {})
+        self.assertTrue(s.reply(cid, "no", author="me"))
+        self.assertTrue(self.store.is_open(cid))
+        self.assertFalse(s.reply(cid, "still no"))
+        self.assertEqual(s.open_threads, {0: 1})
+
+    def test_verdicts(self) -> None:
+        s = self.session()
+        self.assertEqual(s.summary(), (0, 0, 1))
+        self.assertEqual(s.toggle_verdict(0, "approved"), "approved")
+        self.assertEqual(s.summary(), (0, 1, 1))
+        self.assertEqual(
+            s.toggle_verdict(0, "changes requested"), "changes requested"
+        )
+        self.assertEqual(s.verdict(0), "changes requested")
+        self.assertEqual(s.toggle_verdict(0, "changes requested"), "")
+        self.assertEqual(s.verdict(0), "")
+
+    def test_threads_of_other_branches_are_elsewhere(self) -> None:
+        self.store.branch = "other"
+        s = self.session()
+        s.comment(("commit", 0), "x")
+        self.store.branch = "topic"
+        s = self.session()
+        self.assertEqual(s.open_threads, {})
+        self.assertEqual(s.elsewhere(), 1)
 
 
 class PruneTests(RepoTest):
