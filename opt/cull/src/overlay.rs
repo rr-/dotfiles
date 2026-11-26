@@ -1,5 +1,6 @@
 use sdl3::{
-    render::{Canvas, FPoint, FRect},
+    pixels::Color,
+    render::{BlendMode, Canvas, FPoint, FRect},
     video::Window,
 };
 
@@ -33,5 +34,27 @@ pub fn outline(
                 .map_err(|error| error.to_string())?;
         }
     }
+    Ok(())
+}
+
+/// A see-through black box whose edge fades out instead of ending in a line.
+pub fn panel(canvas: &mut Canvas<Window>, rect: FRect, dpi: f32) -> Result<(), String> {
+    // The layers straddle the edge and stack to 75% black inside it:
+    // 1 - (1 - 28/255)^12 ≈ 0.75.
+    let layers = 12;
+    canvas.set_blend_mode(BlendMode::Blend);
+    canvas.set_draw_color(Color::RGBA(0, 0, 0, 28));
+    for layer in 0..layers {
+        let grow = (layer as f32 - layers as f32 / 2.0) * dpi;
+        canvas
+            .fill_rect(FRect::new(
+                rect.x - grow,
+                rect.y - grow,
+                rect.w + grow * 2.0,
+                rect.h + grow * 2.0,
+            ))
+            .map_err(|error| error.to_string())?;
+    }
+    canvas.set_blend_mode(BlendMode::None);
     Ok(())
 }

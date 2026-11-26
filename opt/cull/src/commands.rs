@@ -34,6 +34,7 @@ pub enum Command {
     CopyHome,
     MoveHome,
     Filter(Filter, f32),
+    Help,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -136,6 +137,35 @@ pub const REGISTRY: &[Binding] = &[
     binding!(_6, SHIFT, Filter(Filter::Gamma, 0.01)),
     binding!(_7, SHIFT, Filter(Filter::Saturation, -0.01)),
     binding!(_8, SHIFT, Filter(Filter::Saturation, 0.01)),
+    binding!(Slash, SHIFT, Help),
+];
+
+/// What the ? overlay lists, in reading order.
+pub const HELP: &[(&str, &str)] = &[
+    ("j  k  Space  Left  Right", "next, previous"),
+    ("gg  G  5G", "first, last, jump"),
+    ("f", "fullscreen"),
+    ("v", "original size"),
+    ("p", "pixel peek"),
+    ("Alt+1 2 3  Z", "fit, fill, original"),
+    ("+  -", "zoom"),
+    ("H J K L  Ctrl+hjkl", "pan"),
+    ("Alt+h l  Alt+H L", "rotate"),
+    ("Ctrl+[  Ctrl+]  a", "aspect, reset"),
+    ("Shift+1 to 8", "contrast, brightness, gamma, saturation"),
+    ("n  N", "blur on, off"),
+    ("b", "filmstrip"),
+    ("c", "overview"),
+    ("i", "image details"),
+    ("zs  Alt+=  Alt+-", "slideshow, interval"),
+    ("S  ]", "select"),
+    ("x  X", "trash, undo"),
+    ("[  {  }", "copy, move to home"),
+    ("yp  Ctrl+c", "copy path"),
+    ("yy", "copy image"),
+    ("h  Enter", "show in vifm"),
+    ("?", "this help"),
+    ("q  Esc", "quit; Esc closes this first"),
 ];
 
 pub const SEQUENCES: &[(Keycode, Keycode, Command)] = &[

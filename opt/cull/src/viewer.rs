@@ -113,7 +113,7 @@ pub fn run() -> Result<(), String> {
         match argument.as_str() {
             "--help" | "-h" => {
                 println!(
-                    "cull [--recurse] [--select FILE] [--playlist FILE|-] [PATH ...]\nNavigation: j/k, 10j/10k, gg first, G last, 100G jump to image 100\nView: v toggle original, p toggle pixel peek, f fullscreen, Alt+1/2/3 fit/fill/original, Z reset, +/-; HJKL pan, Alt+h/l rotate\nOverlays: c zoom overview; i image details; b filmstrip, filename and counter\nCull: S or ], x trash, X undo; zs slideshow\nClipboard: yp or Ctrl+c full path; yy image bitmap\nEscape cancels a pending numeric count or key sequence."
+                    "cull [--recurse] [--select FILE] [--playlist FILE|-] [PATH ...]\nNavigation: j/k, 10j/10k, gg first, G last, 100G jump to image 100\nView: v toggle original, p toggle pixel peek, f fullscreen, Alt+1/2/3 fit/fill/original, Z reset, +/-; HJKL pan, Alt+h/l rotate\nOverlays: c zoom overview; i image details; b filmstrip, filename and counter\nCull: S or ], x trash, X undo; zs slideshow\nClipboard: yp or Ctrl+c full path; yy image bitmap\nEscape cancels a pending numeric count or key sequence; ? lists every key."
                 );
                 return Ok(());
             }
@@ -212,6 +212,7 @@ pub fn run() -> Result<(), String> {
     let mut visible = false;
     let mut dirty = true;
     let mut osd: Option<(String, Instant)> = None;
+    let mut help = false;
     let mut input = commands::Input::default();
     'app: loop {
         if paths.is_empty() {
@@ -267,6 +268,16 @@ pub fn run() -> Result<(), String> {
         let mut actions = Vec::new();
         for event in events.poll_iter() {
             dirty = true;
+            // Escape closes the help before it quits; q always quits
+            if help
+                && let sdl3::event::Event::KeyDown {
+                    keycode: Some(sdl3::keyboard::Keycode::Escape),
+                    ..
+                } = event
+            {
+                help = false;
+                continue;
+            }
             if let Some(command) = input.event(&event, events_keyboard_ctrl()) {
                 actions.push(command);
             }
@@ -344,6 +355,7 @@ pub fn run() -> Result<(), String> {
                     Action::Aspect(delta) => aspect = (aspect + delta).max(0.05),
                     Action::ResetAspect => aspect = 1.0,
                     Action::Exif => exif = !exif,
+                    Action::Help => help = !help,
                     Action::Overview => crop = !crop,
                     Action::Slideshow => {
                         slide = !slide;
@@ -764,6 +776,9 @@ pub fn run() -> Result<(), String> {
             let left = (window_width as f32 - text.width(feedback, size)) / 2.0;
             text.draw(&mut canvas, feedback, left, 24.0 * dpi, size)?;
         }
+        if help {
+            draw_help(&mut canvas, &mut text, window_width, window_height, dpi)?;
+        }
         canvas.present();
         if !visible {
             canvas.window_mut().show();
@@ -771,6 +786,58 @@ pub fn run() -> Result<(), String> {
             dirty = true;
         }
         std::thread::sleep(Duration::from_millis(8));
+    }
+    Ok(())
+}
+
+/// List the bindings in two columns in a box in the middle of the window.
+fn draw_help(
+    canvas: &mut sdl3::render::Canvas<sdl3::video::Window>,
+    text: &mut crate::text::Text,
+    window_width: u32,
+    window_height: u32,
+    dpi: f32,
+) -> Result<(), String> {
+    let size = 17.0 * dpi;
+    let line = size * 1.4;
+    let padding = 24.0 * dpi;
+    let gap = 12.0 * dpi;
+    let gutter = 36.0 * dpi;
+    let columns: Vec<_> = commands::HELP
+        .chunks(commands::HELP.len().div_ceil(2))
+        .collect();
+    let widths: Vec<(f32, f32)> = columns
+        .iter()
+        .map(|column| {
+            column
+                .iter()
+                .fold((0.0_f32, 0.0_f32), |(keys, what), (key, description)| {
+                    (
+                        keys.max(text.width(key, size)),
+                        what.max(text.width(description, size)),
+                    )
+                })
+        })
+        .collect();
+    let rows = columns[0].len();
+    let width = widths
+        .iter()
+        .map(|(keys, what)| keys + gap + what)
+        .sum::<f32>()
+        + gutter * (columns.len() - 1) as f32
+        + padding * 2.0;
+    let height = rows as f32 * line + padding * 2.0;
+    let left = ((window_width as f32 - width) / 2.0).max(0.0);
+    let top = ((window_height as f32 - height) / 2.0).max(0.0);
+    crate::overlay::panel(canvas, FRect::new(left, top, width, height), dpi)?;
+    let mut x = left + padding;
+    for (column, (keys_width, what_width)) in columns.iter().zip(&widths) {
+        for (row, (key, description)) in column.iter().enumerate() {
+            let y = top + padding + row as f32 * line - size * 0.3;
+            text.draw(canvas, key, x, y, size)?;
+            text.draw(canvas, description, x + keys_width + gap, y, size)?;
+        }
+        x += keys_width + gap + what_width + gutter;
     }
     Ok(())
 }
