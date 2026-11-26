@@ -133,6 +133,18 @@ class AnchorTests(RepoTest):
         self.assertEqual(self.where(cid), ("commit", 0))
 
 
+class RangeTests(RepoTest):
+    def test_a_commit_that_landed_as_a_copy_is_left_out(self) -> None:
+        self.write("b.txt", ["more"])
+        git(self.repo, "add", "b.txt")
+        git(self.repo, "commit", "-qm", "Add b")
+        git(self.repo, "switch", "-q", "main")
+        git(self.repo, "cherry-pick", "topic~1")
+        git(self.repo, "switch", "-q", "topic")
+        _, commits = self.diff()
+        self.assertEqual([c.subject for c in commits], ["Add b"])
+
+
 class StoreTests(RepoTest):
     def test_later_lines_update_and_bad_lines_are_skipped(self) -> None:
         cid = self.comment_on("new one")

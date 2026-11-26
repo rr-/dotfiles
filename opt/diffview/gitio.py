@@ -99,11 +99,22 @@ def titles_in(rev: str) -> set[str]:
 
 
 def log_args(rng: str) -> list[str]:
-    """git log arguments that show each commit of a range like git show."""
+    """git log arguments that show each commit of a range like git show.
+
+    base..tip goes in as base...tip, keeping only commits whose patch is
+    not in base yet: one that landed as a copy, by a rebase or squash
+    merge, has a sha of its own there and would show again otherwise.
+    """
+    base, dots, tip = rng.partition("..")
+    picks = []
+    if dots and not tip.startswith("."):
+        rng = f"{base}...{tip}"
+        picks = ["--cherry-pick", "--right-only"]
     return [
         "-p",
         "--reverse",
         "--no-merges",
+        *picks,
         "--format=medium",
         "--no-decorate",
         rng,
