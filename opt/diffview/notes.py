@@ -395,11 +395,12 @@ class Notes:
     # mouse
 
     def mouse(self, ev: Mouse) -> None:
-        if self.show_help:
+        if self.show_help or self.alert:
             if ev.button & 64:
                 self.help_scroll(WHEEL_STEP if ev.button & 1 else -WHEEL_STEP)
             elif ev.press:
                 self.show_help = False
+                self.alert = None
             return
         if self.prompt is not None:
             return

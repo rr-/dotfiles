@@ -350,6 +350,21 @@ class AppTests(RepoTest):
             (last["approved"], last["changes_requested"]), (False, False)
         )
 
+    def test_a_failed_reload_keeps_the_view_and_says_why(self) -> None:
+        app = self.app()
+        before = len(app.files)
+        git(self.repo, "reset", "-q", "--hard", "main")
+        self.keys(app, "r")
+        self.assertIn("nothing is left", app.alert[0])
+        self.assertEqual(len(app.files), before)
+        self.keys(app, "q")
+        self.assertIsNone(app.alert)
+        git(self.repo, "branch", "-m", "main", "gone")
+        self.keys(app, "r")
+        self.assertIn("git failed", app.alert[0])
+        self.assertTrue(any("main" in line for line in app.alert[1]))
+        self.assertEqual(len(app.files), before)
+
     def test_one_commit_still_shows_its_badge(self) -> None:
         self.store.approve("Add two lines", True)
         app = self.app()

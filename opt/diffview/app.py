@@ -7,7 +7,7 @@ import subprocess
 from pathlib import Path
 
 from .draw import Draw
-from .gitio import git_root, initial_context, run_git
+from .gitio import GitError, git_root, initial_context, run_git
 from .highlight import Highlight, highlight_file
 from .model import TRAILER_RE, Commit, FileDiff, Hunk, parse_diff, wrap
 from .notes import NOTE_PROMPTS, Notes
@@ -53,6 +53,7 @@ class App(Draw, Notes):
         self.search: tuple[re.Pattern, int] | None = None
         self.message = ("", PLAIN)
         self.show_help = False
+        self.alert: tuple[str, list[str]] | None = None  # a box for errors
         self.width, self.height = 80, 24
         self.wrap_width = 0
         self.base_context = self.context = initial_context(git_args)
@@ -191,11 +192,33 @@ class App(Draw, Notes):
             )
             return
         mark = self.mark()
-        self.load(run_git(self.git_cmd, self.diff_args()))
-        if not self.files:
-            raise Quit("no changes left")
+        text = self.rerun()
+        if text is None:
+            return
+        self.load(text)
         self.restore(mark)
         self.flash("reloaded")
+
+    def rerun(self) -> str | None:
+        """git's output again, or None, with a box that says why not."""
+        try:
+            text = run_git(self.git_cmd, self.diff_args())
+        except GitError as ex:
+            self.show_alert(
+                "git failed, so this is the diff from before", str(ex)
+            )
+            return None
+        if not parse_diff(text)[0]:
+            self.show_alert(
+                "nothing is left to show, so this is the diff from before",
+                f"git {self.git_cmd} {shlex.join(self.diff_args())}",
+            )
+            return None
+        return text
+
+    def show_alert(self, title: str, text: str) -> None:
+        self.alert = (title, text.splitlines() or [""])
+        self.help_top = 0
 
     def mark(self) -> tuple:
         """Where the cursor is, in terms that survive rebuilding the rows."""
@@ -263,12 +286,15 @@ class App(Draw, Notes):
         if (context, full) == (self.context, self.full):
             return
         mark = self.mark()
+        was = self.context, self.full
         self.context, self.full = context, full
         failed = 0
         if self.git_args is not None:
-            self.load(run_git(self.git_cmd, self.diff_args()))
-            if not self.files:
-                raise Quit("no changes left")
+            text = self.rerun()
+            if text is None:
+                self.context, self.full = was
+                return
+            self.load(text)
         else:
             # From stdin there is no command to rerun, so each file is diffed
             # again from the blobs named on its index line.
@@ -544,7 +570,7 @@ class App(Draw, Notes):
         self.message = (text, Style(fg=role(color) if color else None))
 
     def handle(self, key: str) -> None:
-        if self.show_help:
+        if self.show_help or self.alert:
             self.help_key(key)
             return
         if self.prompt is not None:

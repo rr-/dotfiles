@@ -55,7 +55,7 @@ class Draw:
             if tree_w:
                 out.append(tree_lines[y] + sep)
             out.append(diff_lines[y])
-        if self.show_help:
+        if self.show_help or self.alert:
             out.append(self.draw_modal())
         out.append(f"\x1b[{self.height};1H")
         out.append(self.draw_status())
@@ -203,11 +203,15 @@ class Draw:
     # the keys, in a box over the diff
 
     def help_lines(self) -> list[str]:
+        if self.alert:
+            return self.alert[1]
         return HELP.rstrip("\n").splitlines()
 
     def help_box(self) -> tuple[int, int, int, int]:
         """Left, top, width and the rows of text inside the box."""
         widest = max(len(line) for line in self.help_lines())
+        if self.alert:
+            widest = max(widest, len(self.alert[0]) + 4)
         width = min(widest + 6, self.width - 2)
         rows = min(len(self.help_lines()), self.body_h - 2)
         return (
@@ -247,6 +251,7 @@ class Draw:
             self.help_scroll(steps[key])
         else:
             self.show_help = False
+            self.alert = None
 
     def draw_modal(self) -> str:
         left, top, width, rows = self.help_box()
@@ -255,6 +260,9 @@ class Draw:
         lines = self.help_lines()
         more = len(lines) - rows
         title = " keys "
+        if self.alert:
+            edge = Style(fg=role("state.error"), bg=bg)
+            title = f" {self.alert[0]} "
         foot = " j k scroll · any other key closes "
         if more > 0:
             pct = 100 * self.help_top // more

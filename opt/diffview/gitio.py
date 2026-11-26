@@ -2,7 +2,6 @@
 
 import re
 import subprocess
-import sys
 from pathlib import Path
 
 
@@ -31,6 +30,10 @@ def git_root() -> Path | None:
     return Path(proc.stdout.strip()) if proc.returncode == 0 else None
 
 
+class GitError(Exception):
+    """git failed: the message is what it wrote to stderr."""
+
+
 def run_git(cmd: str, args: list[str]) -> str:
     """The output of git diff, or git log -p, as plain text."""
     proc = subprocess.run(
@@ -48,8 +51,8 @@ def run_git(cmd: str, args: list[str]) -> str:
         capture_output=True,
     )
     if proc.returncode not in (0, 1):
-        sys.stderr.write(proc.stderr.decode(errors="replace"))
-        raise SystemExit(proc.returncode)
+        message = proc.stderr.decode(errors="replace").strip()
+        raise GitError(message or f"git {cmd} exited with {proc.returncode}")
     return proc.stdout.decode(errors="replace")
 
 
@@ -80,7 +83,14 @@ def review_range(arg: str | None) -> str:
     """A range as given, or a branch (HEAD by default) since the base."""
     if arg and ".." in arg:
         return arg
-    return f"{default_base()}..{arg or 'HEAD'}"
+    tip = arg or "HEAD"
+    proc = subprocess.run(
+        ["git", "rev-parse", "--verify", "--quiet", f"{tip}^{{commit}}"],
+        capture_output=True,
+    )
+    if proc.returncode:
+        raise SystemExit(f"no branch or commit named {tip}")
+    return f"{default_base()}..{tip}"
 
 
 def range_base(rng: str) -> str:

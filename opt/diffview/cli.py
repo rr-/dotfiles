@@ -1,11 +1,13 @@
 """The git-diff-view and git-review commands."""
 
+import functools
 import subprocess
 import sys
 
 from . import review
 from .app import App
 from .gitio import (
+    GitError,
     git_common_dir,
     log_args,
     range_base,
@@ -17,6 +19,20 @@ from .model import ANSI_RE, FileDiff, parse_diff
 from .review import REVIEW_FILE, Review, place
 
 
+def exit_on_git_error(fn):
+    """Say what git said and stop, for a git that fails on the way in."""
+
+    @functools.wraps(fn)
+    def run(*args):
+        try:
+            return fn(*args)
+        except GitError as ex:
+            raise SystemExit(str(ex))
+
+    return run
+
+
+@exit_on_git_error
 def main() -> None:
     if sys.stdin.isatty():
         git_args: list[str] | None = sys.argv[1:]
@@ -60,6 +76,7 @@ time it starts; list never changes the file.
 """
 
 
+@exit_on_git_error
 def review_main(argv: list[str]) -> None:
     if argv[:1] in (["-h"], ["--help"], ["help"]):
         print(REVIEW_USAGE)
