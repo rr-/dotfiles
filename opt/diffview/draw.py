@@ -15,7 +15,7 @@ from .theme import (
     sgr,
     token_color,
 )
-from .tree import tree_guides
+from .tree import Node, tree_guides
 
 
 class Draw:
@@ -97,6 +97,14 @@ class Draw:
                 lines.append(buf.render() + " " * width)
                 continue
             depth, node = rows[i]
+            if node.commit and self.approved(node.rank):
+                selected = (
+                    i == self.tree_cur and self.focus == "tree"
+                ) or self.node_page(node) == current
+                lines.append(
+                    self.draw_approved_node(buf, node, depth, selected)
+                )
+                continue
             bg = None
             if i == self.tree_cur and self.focus == "tree":
                 bg = role("surface.overlay")
@@ -144,6 +152,25 @@ class Draw:
             buf.fill(base)
             lines.append(buf.render())
         return lines
+
+    def draw_approved_node(
+        self, buf: LineBuf, node: Node, depth: int, selected: bool
+    ) -> str:
+        """An approved commit's row, neon from edge to edge."""
+        ci = node.rank
+        parts = [
+            "▶" if selected else " ",
+            tree_guides(node, depth),
+            "▾ " if node.expanded else "▸ ",
+            node.name,
+            " ✓",
+        ]
+        if n := self.open_threads.get(ci):
+            parts.append(f" ●{n}")
+        parts += [" ", self.commits[ci].subject]
+        buf.add_clipped("".join(parts), NEON_CHIP, buf.width)
+        buf.fill(NEON_CHIP)
+        return buf.render()
 
     def draw_commit_node(self, buf: LineBuf, ci: int, bg: Color) -> None:
         """A commit's review badge, then as much of its subject as fits."""
