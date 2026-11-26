@@ -4,7 +4,8 @@ use crate::{
 };
 use sdl3::{
     pixels::{Color, PixelFormat},
-    render::{FRect, ScaleMode},
+    render::{FRect, ScaleMode, Texture, TextureCreator},
+    video::WindowContext,
 };
 use std::{
     collections::HashMap,
@@ -15,10 +16,10 @@ use std::{
     time::{Duration, Instant},
 };
 
-struct Image {
-    width: u32,
-    height: u32,
-    pixels: Vec<u8>,
+pub struct Image {
+    pub width: u32,
+    pub height: u32,
+    pub pixels: Vec<u8>,
 }
 
 fn decode(path: &PathBuf) -> Result<Image, String> {
@@ -47,7 +48,7 @@ fn decode(path: &PathBuf) -> Result<Image, String> {
 /// Use the dimensions attached to the decoded pixels, after FFmpeg has
 /// applied EXIF orientation. Probed source dimensions can be transposed while
 /// retaining the same byte count, silently corrupting raw RGBA row strides.
-fn parse_frame(mut data: Vec<u8>) -> Result<Image, String> {
+pub fn parse_frame(mut data: Vec<u8>) -> Result<Image, String> {
     let marker = b"ENDHDR\n";
     let end = data
         .windows(marker.len())
@@ -86,6 +87,27 @@ fn parse_frame(mut data: Vec<u8>) -> Result<Image, String> {
         height,
         pixels: data,
     })
+}
+
+fn upload<'a>(
+    creator: &'a TextureCreator<WindowContext>,
+    image: &Image,
+) -> Result<Texture<'a>, String> {
+    let mut texture = creator
+        .create_texture_static(PixelFormat::RGBA32, image.width, image.height)
+        .map_err(|error| error.to_string())?;
+    texture
+        .update(None, &image.pixels, image.width as usize * 4)
+        .map_err(|error| error.to_string())?;
+    Ok(texture)
+}
+
+fn load_thumb<'a>(
+    creator: &'a TextureCreator<WindowContext>,
+    path: &std::path::Path,
+) -> Option<(Texture<'a>, u32, u32)> {
+    let image = crate::thumbs::load(path)?;
+    Some((upload(creator, &image).ok()?, image.width, image.height))
 }
 
 #[cfg(test)]
@@ -172,6 +194,7 @@ pub fn run() -> Result<(), String> {
     let mut index = selected
         .and_then(|path| paths.iter().position(|candidate| *candidate == path))
         .unwrap_or(0);
+    std::thread::spawn(crate::thumbs::prune);
     let sdl = sdl3::init().map_err(|error| error.to_string())?;
     let video = sdl.video().map_err(|error| error.to_string())?;
     let window = video
@@ -189,6 +212,8 @@ pub fn run() -> Result<(), String> {
     let (sender, receiver) = mpsc::channel();
     let mut pending = std::collections::HashSet::new();
     let mut cache = HashMap::new();
+    // filmstrip previews from disk; None marks a file that has none yet
+    let mut thumbs: HashMap<PathBuf, Option<(Texture, u32, u32)>> = HashMap::new();
     let mut undo: Vec<(usize, PathBuf, files::Discarded)> = Vec::new();
     let mut mode = 0;
     let mut previous_view = 0;
@@ -228,12 +253,25 @@ pub fn run() -> Result<(), String> {
                 continue;
             }
             let path = paths[candidate as usize].clone();
+            // beyond the next couple, decoding only fed the filmstrip, and a
+            // preview from disk already does that
+            if offset.abs() > 2 {
+                if !thumbs.contains_key(&path) {
+                    thumbs.insert(path.clone(), load_thumb(&creator, &path));
+                }
+                if thumbs[&path].is_some() {
+                    continue;
+                }
+            }
             if cache.contains_key(&path) || pending.len() >= 3 || !pending.insert(path.clone()) {
                 continue;
             }
             let sender = sender.clone();
             std::thread::spawn(move || {
                 let result = decode(&path);
+                if let Ok(image) = &result {
+                    crate::thumbs::store(&path, image);
+                }
                 let _ = sender.send((path, result));
             });
         }
@@ -242,12 +280,11 @@ pub fn run() -> Result<(), String> {
             pending.remove(&path);
             match result {
                 Ok(image) => {
-                    let mut texture = creator
-                        .create_texture_static(PixelFormat::RGBA32, image.width, image.height)
-                        .map_err(|error| error.to_string())?;
-                    texture
-                        .update(None, &image.pixels, image.width as usize * 4)
-                        .map_err(|error| error.to_string())?;
+                    let texture = upload(&creator, &image)?;
+                    // a missing preview was just stored, so look again
+                    if thumbs.get(&path).is_some_and(Option::is_none) {
+                        thumbs.remove(&path);
+                    }
                     cache.insert(
                         path,
                         (texture, image.width, image.height, image.pixels, 0_u64),
@@ -264,6 +301,9 @@ pub fn run() -> Result<(), String> {
                     // pixels and uploaded texture even after leaving the area.
                     || undo.last().is_some_and(|(_, removed, _)| removed == path)
             });
+        }
+        if thumbs.len() > 128 {
+            thumbs.clear();
         }
         let mut actions = Vec::new();
         for event in events.poll_iter() {
@@ -754,15 +794,27 @@ pub fn run() -> Result<(), String> {
                 let left = slot_index as f32 * slot_width + (slot_width - thumbnail_width) / 2.0;
                 let top = window_height as f32 - strip_height + 6.4 * dpi;
                 let slot = FRect::new(left, top, thumbnail_width, thumbnail_height);
-                if let Some((texture, width, height, _, _)) = path.and_then(|path| cache.get(path))
+                if let Some(path) = path
+                    && !thumbs.contains_key(path)
                 {
+                    thumbs.insert(path.clone(), load_thumb(&creator, path));
+                }
+                // the preview wins over the decoded image so a slot doesn't
+                // change look when its neighbour finishes decoding
+                let shown = path.and_then(|path| match thumbs.get(path).and_then(Option::as_ref) {
+                    Some((texture, width, height)) => Some((texture, *width, *height)),
+                    None => cache
+                        .get(path)
+                        .map(|(texture, width, height, _, _)| (texture, *width, *height)),
+                });
+                if let Some((texture, width, height)) = shown {
                     let scale =
-                        (thumbnail_width / *width as f32).min(thumbnail_height / *height as f32);
+                        (thumbnail_width / width as f32).min(thumbnail_height / height as f32);
                     let destination = FRect::new(
-                        left + (thumbnail_width - *width as f32 * scale) / 2.0,
-                        top + (thumbnail_height - *height as f32 * scale) / 2.0,
-                        *width as f32 * scale,
-                        *height as f32 * scale,
+                        left + (thumbnail_width - width as f32 * scale) / 2.0,
+                        top + (thumbnail_height - height as f32 * scale) / 2.0,
+                        width as f32 * scale,
+                        height as f32 * scale,
                     );
                     canvas
                         .copy(texture, None, destination)

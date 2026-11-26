@@ -5,6 +5,7 @@ mod files;
 mod filters;
 mod overlay;
 mod text;
+mod thumbs;
 mod viewer;
 mod vifm;
 
