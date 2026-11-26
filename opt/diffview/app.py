@@ -451,6 +451,16 @@ class App(Draw, Notes):
         page = self.clamp(page, 0, len(self.pages) - 1)
         self.set_cur(self.spans[page][0], "top")
 
+    def goto_file_page(self, step: int) -> None:
+        """The next file's page, past any commit message on the way."""
+        page = self.current_page() + step
+        while 0 <= page < len(self.pages):
+            if self.pages[page][0] == "file":
+                self.goto_page(page)
+                return
+            page += step
+        self.flash("no more files", "state.warning")
+
     def goto_file(self, fi: int) -> None:
         self.goto_page(self.file_page[fi])
 
@@ -730,6 +740,18 @@ class App(Draw, Notes):
                 self.start_comment(whole_commit=True)
             case "x":
                 self.toggle_resolve()
+            case ".":
+                for _ in range(n or 1):
+                    self.goto_file_page(1)
+            case ",":
+                for _ in range(n or 1):
+                    self.goto_file_page(-1)
+            case ">":
+                for _ in range(n or 1):
+                    self.goto_next("commit", 1)
+            case "<":
+                for _ in range(n or 1):
+                    self.goto_next("commit", -1)
             case "M-a":
                 self.toggle_approve()
             case "M-r":

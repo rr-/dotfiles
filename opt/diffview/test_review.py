@@ -397,6 +397,27 @@ class AppTests(RepoTest):
         files, commits = self.diff()
         self.assertEqual(place(root, files, commits)[0], "outdated")
 
+    def test_dot_comma_and_angles_jump(self) -> None:
+        self.write("b.txt", ["b"])
+        git(self.repo, "add", "b.txt")
+        git(self.repo, "commit", "-qm", "Add b")
+        app = self.app()
+
+        def where() -> tuple:
+            return app.pages[app.current_page()]
+
+        self.assertEqual(where(), ("commit", 0))
+        self.keys(app, ".")
+        self.assertEqual(where(), ("file", 0))
+        self.keys(app, ".")
+        self.assertEqual(where(), ("file", 1))
+        self.keys(app, ",")
+        self.assertEqual(where(), ("file", 0))
+        self.keys(app, ">")
+        self.assertEqual(where(), ("commit", 1))
+        self.keys(app, "<")
+        self.assertEqual(where(), ("commit", 0))
+
     def test_one_commit_still_shows_its_badge(self) -> None:
         self.store.approve("Add two lines", True)
         app = self.app()

@@ -15,7 +15,8 @@ movement
 files and hunks
   C-j C-k  J K     next / previous page: a commit message, or a file
   } {  ]c [c       next / previous hunk
-  ]] [[            next / previous commit
+  ]] [[  > <       next / previous commit
+  . ,              next / previous file, past commit messages
   za               fold the current file
   + -              more / less context, by a count or 3 lines
   =  F             default context, toggle the full file
