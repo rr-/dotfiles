@@ -810,7 +810,7 @@ pub fn run() -> Result<(), String> {
         if let Some((feedback, _)) = &osd {
             let size = 22.0 * dpi;
             let left = (window_width as f32 - text.width(feedback, size)) / 2.0;
-            text.draw(&mut canvas, feedback, left, 24.0 * dpi, size)?;
+            text.draw_outlined(&mut canvas, feedback, left, 24.0 * dpi, size, 1.5 * dpi)?;
         }
         if help {
             draw_help(&mut canvas, &mut text, window_width, window_height, dpi)?;

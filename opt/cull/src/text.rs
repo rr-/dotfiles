@@ -42,6 +42,32 @@ impl<'a> Text<'a> {
         y: f32,
         size: f32,
     ) -> Result<(), String> {
+        self.draw_styled(canvas, text, x, y, size, 0.0)
+    }
+
+    /// Draw with a soft dark outline `stroke` pixels wide inside a wider
+    /// shadow spreading evenly all round.
+    pub fn draw_outlined(
+        &mut self,
+        canvas: &mut Canvas<Window>,
+        text: &str,
+        x: f32,
+        y: f32,
+        size: f32,
+        stroke: f32,
+    ) -> Result<(), String> {
+        self.draw_styled(canvas, text, x, y, size, stroke)
+    }
+
+    fn draw_styled(
+        &mut self,
+        canvas: &mut Canvas<Window>,
+        text: &str,
+        x: f32,
+        y: f32,
+        size: f32,
+        stroke: f32,
+    ) -> Result<(), String> {
         let key = (text.to_owned(), size.round() as u32);
         if !self.cached.contains_key(&key) {
             if self.cached.len() > 64 {
@@ -99,6 +125,36 @@ impl<'a> Text<'a> {
         }
         let (texture, width, height) = self.cached.get_mut(&key).expect("text cached above");
         texture.set_color_mod(0, 0, 0);
+        let mut copy = |texture: &mut Texture, dx: f32, dy: f32, alpha: u8| {
+            texture.set_alpha_mod(alpha);
+            canvas
+                .copy(
+                    texture,
+                    None,
+                    FRect::new(x + dx, y + dy, *width as f32, *height as f32),
+                )
+                .map_err(|error| error.to_string())
+        };
+        if stroke > 0.0 {
+            // a wide faint glow for the shadow, then a narrow denser one for
+            // the outline, both centred so neither leans a way
+            for (radius, alpha) in [
+                ((stroke * 3.0).round() as i32, 8),
+                (stroke.round() as i32, 60),
+            ] {
+                for dy in -radius..=radius {
+                    for dx in -radius..=radius {
+                        if dx * dx + dy * dy <= radius * radius {
+                            copy(texture, dx as f32, dy as f32, alpha)?;
+                        }
+                    }
+                }
+            }
+            texture.set_alpha_mod(255);
+            texture.set_color_mod(255, 255, 255);
+            return copy(texture, 0.0, 0.0, 255);
+        }
+        texture.set_alpha_mod(255);
         canvas
             .copy(
                 texture,
