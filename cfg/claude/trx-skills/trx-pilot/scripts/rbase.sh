@@ -11,6 +11,7 @@ want=$(git diff $obs $old -- docs/CHANGELOG.md | grep '^+- ' | sort)
 git worktree add -q $W --detach $old || exit 1
 cd $W
 GIT_SEQUENCE_EDITOR=true git -c core.attributesFile=$D/attr rebase -q -i --autosquash --gpg-sign --onto $nbs $obs >/dev/null 2>&1 || { git rebase --abort 2>/dev/null; echo "#$n REBASE FAILED"; cd $R; git worktree remove --force $W; exit 1; }
+bash $D/clfix.sh $nbs
 got=$(git diff $nbs HEAD -- docs/CHANGELOG.md | grep '^+- ' | sort)
 gone=$(git diff $nbs HEAD -- docs/CHANGELOG.md | grep -c '^-- ')
 fix=$(git log --format=%s $nbs..HEAD | grep -c '^fixup! ')

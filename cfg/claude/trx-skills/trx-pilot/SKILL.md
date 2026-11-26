@@ -73,7 +73,13 @@ round state) goes in `/tmp/claude-1000`.
   lines after develop's newer "Changed"/"Fixed" lines, which CI's changelog
   guard rejects; rebuild each commit's tree with `scripts/clorder.py`
   (stable sort Added, Changed, Fixed per [Unreleased] subsection) and
-  `git commit-tree -S`, keeping author and message.
+  `git commit-tree -S`, keeping author and message. `rbase.sh` and `rbcat.sh`
+  run this as `scripts/clfix.sh <base>` after every rebase.
+- When `rbcat.sh` reports "autosquash failed", the folded regenerated files
+  (CATALOG.md and friends) collide with a later commit. Abort the rebase in
+  its worktree and run `scripts/regen-each.sh origin/develop HEAD~1`: it
+  rebuilds each commit with its own regenerated files and a clean `prek`,
+  dropping the fold commit. Then build, test and push by hand.
 
 ## Tickets through the resident worker
 

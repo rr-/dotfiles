@@ -25,6 +25,7 @@ while [ -d "$(git rev-parse --git-path rebase-merge)" ]; do
   fi
   GIT_EDITOR=true git -c core.attributesFile=$D/attr rebase --continue >/dev/null 2>&1
 done
+bash $D/clfix.sh origin/develop
 TRX_DATA_DIR=/home/dash/work/priv/TRX-data prek -a >/dev/null 2>&1
 if [ -n "$(git status --short | grep -v '^??')" ]; then
   tgt=$(git log --format=%H --reverse origin/develop..HEAD -- src/trx/game/catalog/objects.def | head -1)
