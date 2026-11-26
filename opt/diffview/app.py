@@ -800,6 +800,10 @@ class App(Draw, Notes):
                 self.toggle_approve()
             case "M-r":
                 self.toggle_changes()
+            case "M-A":
+                self.toggle_here("approved", whole_commit=True)
+            case "M-R":
+                self.toggle_here("changes requested", whole_commit=True)
             case "a" if self.review is not None:
                 self.flash("approving is Alt+a now", "state.warning")
             case "]n":

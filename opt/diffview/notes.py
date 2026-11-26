@@ -242,9 +242,10 @@ class Notes:
     def toggle_changes(self) -> None:
         self.toggle_here("changes requested")
 
-    def toggle_here(self, verdict: str) -> None:
+    def toggle_here(self, verdict: str, whole_commit: bool = False) -> None:
         """Give a verdict to the file whose page this is, or on a commit's
-        message page to the commit, or take it back."""
+        message page, or with whole_commit anywhere, to the commit; or
+        take it back."""
         if not self.reviewing():
             return
         ci = self.current_commit()
@@ -252,6 +253,8 @@ class Notes:
             self.flash("not in a commit", "state.error")
             return
         kind, index = self.pages[self.current_page()]
+        if whole_commit:
+            kind = "commit"
         if kind == "file":
             what = self.files[index].path
             now = self.session.toggle_file_verdict(index, verdict)

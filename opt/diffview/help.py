@@ -38,6 +38,8 @@ review (git review)
   M-a              approve the file whose page this is, or on a message
                    page the commit, or take it back (Alt+a)
   M-r              request changes, the same way (Alt+r)
+  M-A M-R          approve the commit or request changes on it, from
+                   any of its pages (Alt+Shift+a and r)
   ]n [n            next / previous open thread
   zu               hide / show resolved threads
   in the prompt    Enter saves, C-e goes on in $EDITOR, Esc drops it

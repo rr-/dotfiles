@@ -641,6 +641,17 @@ class AppTests(RepoTest):
         self.assertEqual(self.store.file_verdict(title, "a.txt"), "")
         self.assertEqual(self.store.verdict(title), "approved")
 
+    def test_alt_shift_judges_the_commit_from_a_file(self) -> None:
+        app = self.app()
+        title = "Add two lines"
+        self.keys(app, ".", "M-A")
+        self.assertEqual(self.store.verdict(title), "approved")
+        self.assertEqual(self.store.file_verdict(title, "a.txt"), "")
+        self.keys(app, "M-R")
+        self.assertEqual(self.store.verdict(title), "changes requested")
+        self.keys(app, "M-R")
+        self.assertEqual(self.store.verdict(title), "")
+
     def test_one_commit_still_shows_its_badge(self) -> None:
         self.store.approve("Add two lines", True)
         app = self.app()
