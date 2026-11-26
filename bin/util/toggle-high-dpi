@@ -1,6 +1,10 @@
 #!/usr/bin/env python3
+import fcntl
+import os
 import re
+import tempfile
 from decimal import Decimal
+from pathlib import Path
 from subprocess import run
 
 from libdotfiles.util import HOME_DIR
@@ -28,7 +32,22 @@ class WeztermExecutor(BaseExecutor):
         return self.config_path.read_text()
 
     def save_config(self, config: str) -> None:
-        self.config_path.write_text(config)
+        # atomic, as in cfg/theme/switch.py: wezterm's file watcher never sees
+        # a half-written file
+        temporary: Path | None = None
+        try:
+            with tempfile.NamedTemporaryFile(
+                "w",
+                dir=self.config_path.parent,
+                prefix=f".{self.config_path.name}.",
+                delete=False,
+            ) as handle:
+                temporary = Path(handle.name)
+                handle.write(config)
+            temporary.replace(self.config_path)
+        finally:
+            if temporary is not None:
+                temporary.unlink(missing_ok=True)
 
     def get(self) -> bool:
         return self.get_font_size() != self.font_size_small
@@ -87,6 +106,17 @@ class XFontExecutor(BaseExecutor):
 
 
 def main() -> None:
+    # theme(1) rewrites runtime.lua as well and holds the same lock; spelled
+    # out here because this imports the installed libdotfiles, not the repo's
+    runtime_dir = Path(
+        os.environ.get("XDG_RUNTIME_DIR", f"/run/user/{os.getuid()}")
+    )
+    with (runtime_dir / "theme.lock").open("w") as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX)
+        toggle()
+
+
+def toggle() -> None:
     executors = [cls() for cls in BaseExecutor.__subclasses__()]
 
     is_enabled = any(executor.get() for executor in executors)

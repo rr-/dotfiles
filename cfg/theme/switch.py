@@ -30,7 +30,7 @@ from cfg.theme.render import (
     load_roles,
     to_rgb,
 )
-from libdotfiles.util import HOME_DIR
+from libdotfiles.util import HOME_DIR, runtime_lock, write_atomically
 
 
 def quiet(*command: object) -> None:
@@ -56,8 +56,11 @@ def update_wezterm_config(theme: str) -> None:
     path = HOME_DIR / ".config" / "wezterm" / "runtime.lua"
     if not path.exists():
         return
-    path.write_text(
-        re.sub(r"((dash|stardust)[_-])[\w-]+", rf"\1{theme}", path.read_text())
+    write_atomically(
+        path,
+        re.sub(
+            r"((dash|stardust)[_-])[\w-]+", rf"\1{theme}", path.read_text()
+        ),
     )
 
 
@@ -291,6 +294,14 @@ def main() -> None:
     if theme is None:
         print(current_theme("unknown"))
         return
+    # two switches fired in quick succession would otherwise interleave their
+    # read-modify-writes; the second waits and then wins. toggle-high-dpi
+    # rewrites runtime.lua too and takes the same lock
+    with runtime_lock("theme"):
+        switch(theme)
+
+
+def switch(theme: str) -> None:
     # rendering here rather than at install time means editing a role shows up
     # on the next switch
     generate()

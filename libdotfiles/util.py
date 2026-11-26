@@ -1,3 +1,4 @@
+import fcntl
 import logging
 import os
 import shlex
@@ -6,6 +7,8 @@ import socket
 import subprocess
 import tempfile
 import urllib.request
+from collections.abc import Generator
+from contextlib import contextmanager
 from pathlib import Path
 from subprocess import CompletedProcess
 from typing import Any
@@ -170,3 +173,31 @@ def git_clone(repo: str, path: str | Path) -> None:
             )
         return
     run(["git", "clone", repo, target_path], check=True)
+
+
+def write_atomically(path: Path, text: str) -> None:
+    """A reader, a file watcher among them, never sees a half-written file,
+    and two writers cannot leave the tail of the longer one behind.
+    """
+    temporary: Path | None = None
+    try:
+        with tempfile.NamedTemporaryFile(
+            "w", dir=path.parent, prefix=f".{path.name}.", delete=False
+        ) as handle:
+            temporary = Path(handle.name)
+            handle.write(text)
+        temporary.replace(path)
+    finally:
+        if temporary is not None:
+            temporary.unlink(missing_ok=True)
+
+
+@contextmanager
+def runtime_lock(name: str) -> Generator[None]:
+    """Hold an exclusive lock shared by every script that names it."""
+    runtime_dir = Path(
+        os.environ.get("XDG_RUNTIME_DIR", f"/run/user/{os.getuid()}")
+    )
+    with (runtime_dir / f"{name}.lock").open("w") as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX)
+        yield
