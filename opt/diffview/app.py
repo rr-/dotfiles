@@ -64,14 +64,17 @@ class App(Draw, Notes):
 
     def load(self, text: str) -> None:
         files, self.commits = parse_diff(text)
-        tree = build_tree(files, self.commits)
+        # A review keeps a commit node even for one commit: its badge
+        # tells whether it is approved.
+        by_commit = self.review is not None
+        tree = build_tree(files, self.commits, by_commit)
         order = [
             n.file
             for _, n in walk_tree(tree, everything=True)
             if n.file is not None
         ]
         self.files = [files[i] for i in order]
-        self.tree = build_tree(self.files, self.commits)
+        self.tree = build_tree(self.files, self.commits, by_commit)
         self.highlights: dict[int, Highlight] = {}
         self.build_rows()
 

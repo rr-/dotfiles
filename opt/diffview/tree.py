@@ -28,9 +28,15 @@ class Node:
         return sorted(self.children.values(), key=key)
 
 
-def build_tree(files: list[FileDiff], commits: list[Commit]) -> Node:
+def build_tree(
+    files: list[FileDiff], commits: list[Commit], by_commit: bool = False
+) -> Node:
+    """Files under their directories, and under their commit when there
+    are several, or always with by_commit."""
     root = Node("")
-    grouped = len({f.commit for f in files} | set(range(len(commits)))) > 1
+    grouped = by_commit or (
+        len({f.commit for f in files} | set(range(len(commits)))) > 1
+    )
 
     def group(ci: int) -> Node:
         if not grouped:

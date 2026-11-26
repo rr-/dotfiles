@@ -269,6 +269,12 @@ class AppTests(RepoTest):
         self.keys(app, "]", "n", "x", "]", "n", "x")
         self.assertFalse(any(r.kind == "note" for r in app.rows))
 
+    def test_one_commit_still_shows_its_badge(self) -> None:
+        self.store.approve("Add two lines", True)
+        app = self.app()
+        (node,) = [n for n in app.tree.children.values() if n.commit]
+        self.assertEqual(app.commit_badge(node.rank), ("✓", "state.success"))
+
     def test_mouse_and_help(self) -> None:
         app = self.app()
         tree_w = app.tree_width()
