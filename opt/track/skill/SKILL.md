@@ -55,9 +55,9 @@ size; none and proposed are left out.
 
 ## Rules
 
-- **Order:** work goes top to bottom. `track_next` names the one todo that
+- **Order:** work starts top to bottom. `track_next` names the one todo that
   may start; at most 3 leaves are wip at once. A blocked todo is set to hold
-  with its reason, never walked past.
+  with its reason, never walked past. Finished work is set done in any order.
 - **Growth:** the plan grows only by the user's say.
   - `track_split` breaks up the work at hand (a wip leaf or the next todo)
     within one and a half times its size.

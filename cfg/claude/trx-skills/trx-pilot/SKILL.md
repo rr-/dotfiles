@@ -1,6 +1,6 @@
 ---
 name: trx-pilot
-description: Pilot rr-'s open TRX pull requests and work the current tracker milestone through one resident worker — 30-minute review rounds, merges under the lahm + aredfan approval rules, just-in-time rebases, stacked PRs, review-comment fixes, ticket status. Use when the user asks to pilot, babysit, shepherd or merge the TRX PRs, to "resume" the pilot, or to work through the milestone tickets.
+description: Pilot rr-'s open TRX pull requests and work the current tracker milestone through one resident worker — hourly review rounds, merges under the lahm + aredfan approval rules, just-in-time rebases, stacked PRs, review-comment fixes, ticket status. Use when the user asks to pilot, babysit, shepherd or merge the TRX PRs, to "resume" the pilot, or to work through the milestone tickets.
 ---
 
 # Skill: trx-pilot
@@ -30,7 +30,7 @@ round state) goes in `/tmp/claude-1000`.
 - **Work only current-milestone tickets.** New tickets the user names go to
   the front of the queue.
 - **Never write under `test/`**, never copy or symlink game data.
-- **Rounds** every 30 minutes and never before 08:00. After
+- **Rounds** every hour and never before 08:00. After
   midnight, one background sleep until 08:00. Ending a turn is fine only
   while a background wait for the next round is armed.
 
@@ -56,7 +56,7 @@ round state) goes in `/tmp/claude-1000`.
    (fixup commits on the branch, autosquash, push with lease, then reply on
    the PR); questions and design calls to the user; QA findings that are
    out of scope become tickets.
-5. Arm the next wait: `sleep 1800` in the background (after midnight: sleep
+5. Arm the next wait: `sleep 3600` in the background (after midnight: sleep
    until 08:00).
 
 ## Rebasing without merging
