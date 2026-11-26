@@ -767,6 +767,21 @@ pub fn run() -> Result<(), String> {
                     canvas
                         .copy(texture, None, destination)
                         .map_err(|error| error.to_string())?;
+                } else if path.is_none() {
+                    let arm = thumbnail_height * 0.15;
+                    let (center_x, center_y) =
+                        (left + thumbnail_width / 2.0, top + thumbnail_height / 2.0);
+                    canvas.set_draw_color(Color::RGB(55, 55, 55));
+                    for (dx, dy) in [(arm, arm), (arm, -arm)] {
+                        crate::overlay::outline(
+                            &mut canvas,
+                            &[
+                                sdl3::render::FPoint::new(center_x - dx, center_y - dy),
+                                sdl3::render::FPoint::new(center_x + dx, center_y + dy),
+                            ],
+                            border_width,
+                        )?;
+                    }
                 }
                 canvas.set_draw_color(if candidate == index {
                     Color::RGB(255, 210, 60)
