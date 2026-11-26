@@ -6,9 +6,10 @@ from .notes import NOTE_PROMPTS
 from .rows import Row
 from .term import TAB, LineBuf, cwidth, expand
 from .theme import (
-    NEON_CHIP,
-    NEON_TEXT,
     PLAIN,
+    VERDICT_CHIP,
+    VERDICT_MARK,
+    VERDICT_TINT,
     Color,
     Style,
     role,
@@ -97,17 +98,21 @@ class Draw:
                 lines.append(buf.render() + " " * width)
                 continue
             depth, node = rows[i]
-            if node.commit and self.approved(node.rank):
+            verdict = self.verdict(node.rank) if node.commit else ""
+            if verdict:
                 selected = (
                     i == self.tree_cur and self.focus == "tree"
                 ) or self.node_page(node) == current
                 lines.append(
-                    self.draw_approved_node(buf, node, depth, selected)
+                    self.draw_verdict_node(buf, node, depth, selected, verdict)
                 )
                 continue
+            tint = self.verdict(self.commit_of(node))
             bg = None
             if i == self.tree_cur and self.focus == "tree":
                 bg = role("surface.overlay")
+            elif tint:
+                bg = VERDICT_TINT[tint]
             elif self.node_page(node) == current:
                 bg = role("surface.raised")
             base = Style(bg=bg)
@@ -118,8 +123,6 @@ class Draw:
                 arrow = "▾ " if node.expanded else "▸ "
                 color = "state.warning" if node.commit else "file.dir"
                 style = Style(fg=role(color), bg=bg, bold=True)
-                if node.commit and self.approved(node.rank):
-                    style = NEON_TEXT._replace(bg=bg)
                 buf.add(arrow, style)
                 name = node.name if node.commit else node.name + "/"
                 buf.add_clipped(name, style, width - buf.col)
@@ -153,30 +156,39 @@ class Draw:
             lines.append(buf.render())
         return lines
 
-    def draw_approved_node(
-        self, buf: LineBuf, node: Node, depth: int, selected: bool
+    def commit_of(self, node: Node) -> int | None:
+        """The commit a tree row sits under, if any."""
+        while node is not None and not node.commit:
+            node = node.parent
+        return node.rank if node is not None else None
+
+    def draw_verdict_node(
+        self,
+        buf: LineBuf,
+        node: Node,
+        depth: int,
+        selected: bool,
+        verdict: str,
     ) -> str:
-        """An approved commit's row, neon from edge to edge."""
+        """A commit's row, loud from edge to edge, once it has a verdict."""
         ci = node.rank
         parts = [
             "▶" if selected else " ",
             tree_guides(node, depth),
             "▾ " if node.expanded else "▸ ",
             node.name,
-            " ✓",
+            " " + VERDICT_MARK[verdict],
         ]
         if n := self.open_threads.get(ci):
             parts.append(f" ●{n}")
         parts += [" ", self.commits[ci].subject]
-        buf.add_clipped("".join(parts), NEON_CHIP, buf.width)
-        buf.fill(NEON_CHIP)
+        style = VERDICT_CHIP[verdict]
+        buf.add_clipped("".join(parts), style, buf.width)
+        buf.fill(style)
         return buf.render()
 
     def draw_commit_node(self, buf: LineBuf, ci: int, bg: Color) -> None:
         """A commit's review badge, then as much of its subject as fits."""
-        if self.approved(ci):
-            buf.add(" ", Style(bg=bg))
-            buf.add("✓", NEON_CHIP)
         if (badge := self.commit_badge(ci)) and "●" in badge[0]:
             text, color = badge
             text = text.lstrip("✓")
@@ -303,8 +315,8 @@ class Draw:
         muted = base._replace(fg=role("text.muted"))
         buf.add("  ", base)
         ci = next((i for i, c in enumerate(self.commits) if c is commit), -1)
-        if self.approved(ci):
-            self.add_approved(buf)
+        if verdict := self.verdict(ci):
+            self.add_verdict(buf, verdict)
             buf.add(" ", base)
         buf.add(
             commit.sha[:7], base._replace(fg=role("state.warning"), bold=True)
@@ -497,10 +509,8 @@ class Draw:
         mode = " TREE " if self.focus == "tree" else " DIFF "
         buf.add(mode, Style(fg=role("accent.primary"), bold=True, rev=True))
         buf.add(" ", base)
-        if self.review is not None and self.approved(
-            self.current_commit() if self.current_commit() is not None else -1
-        ):
-            self.add_approved(buf)
+        if verdict := self.verdict(self.current_commit()):
+            self.add_verdict(buf, verdict)
             buf.add(" ", base)
         row = self.rows[self.cur]
         lo, hi = self.span

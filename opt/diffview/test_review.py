@@ -333,6 +333,23 @@ class AppTests(RepoTest):
         self.assertEqual(root["text"], "please fix this!")
         self.assertEqual(app.drafts, {})
 
+    def test_three_states(self) -> None:
+        app = self.app()
+        title = "Add two lines"
+        self.assertEqual(self.store.verdict(title), "")
+        self.keys(app, "M-r")
+        self.assertEqual(self.store.verdict(title), "changes requested")
+        self.keys(app, "M-a")
+        self.assertEqual(self.store.verdict(title), "approved")
+        self.keys(app, "M-r")
+        self.assertEqual(self.store.verdict(title), "changes requested")
+        self.keys(app, "M-r")
+        self.assertEqual(self.store.verdict(title), "")
+        last = json.loads(self.store.path.read_text().splitlines()[-1])
+        self.assertEqual(
+            (last["approved"], last["changes_requested"]), (False, False)
+        )
+
     def test_one_commit_still_shows_its_badge(self) -> None:
         self.store.approve("Add two lines", True)
         app = self.app()

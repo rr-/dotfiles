@@ -24,6 +24,15 @@ rebase. One whose line is gone is outdated, and shows on its commit's page.
 An approval is a record of its own, the last one per title winning:
 
     {"type": "approval", "commit_title": "Add font cells", "approved": true}
+
+A commit is in one of three states: neutral, approved, or changes
+requested. Changes requested is the same record with `changes_requested`
+set, and means: do not turn this commit into a pull request yet.
+
+    {"type": "approval", "commit_title": "Add font cells",
+     "approved": false, "changes_requested": true}
+
+Both false is neutral: an approval or a request taken back.
 """
 
 import json
@@ -52,6 +61,7 @@ class Review:
     def load(self) -> None:
         self.comments: dict[str, dict] = {}
         self.approvals: dict[str, bool] = {}
+        self.changes: dict[str, bool] = {}
         self.bad = 0
         try:
             text = self.path.read_text()
@@ -76,6 +86,7 @@ class Review:
             if not isinstance(title, str):
                 return False
             self.approvals[title] = bool(rec.get("approved"))
+            self.changes[title] = bool(rec.get("changes_requested"))
             return True
         if not isinstance(rec.get("id"), str):
             return False
@@ -106,15 +117,26 @@ class Review:
     def update(self, cid: str, **fields) -> None:
         self.append({"id": cid, **fields})
 
-    def approve(self, title: str, approved: bool) -> None:
+    def approve(
+        self, title: str, approved: bool, changes: bool = False
+    ) -> None:
         self.append(
             {
                 "type": "approval",
                 "commit_title": title,
                 "approved": approved,
+                "changes_requested": changes,
                 "created": now_iso(),
             }
         )
+
+    def verdict(self, title: str) -> str:
+        """ "approved", "changes requested", or "" for neutral."""
+        if self.approvals.get(title):
+            return "approved"
+        if self.changes.get(title):
+            return "changes requested"
+        return ""
 
     def root(self, cid: str) -> str:
         """The thread a comment belongs to, through replies to replies."""

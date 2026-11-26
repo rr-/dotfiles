@@ -706,6 +706,8 @@ class App(Draw, Notes):
                 self.toggle_resolve()
             case "M-a":
                 self.toggle_approve()
+            case "M-r":
+                self.toggle_changes()
             case "a" if self.review is not None:
                 self.flash("approving is Alt+a now", "state.warning")
             case "]n":

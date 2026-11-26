@@ -144,7 +144,9 @@ def review_list(rng: str, show_all: bool) -> str:
     for ci, commit in enumerate(commits):
         threads = by_commit.get(ci, [])
         n = sum(store.is_open(c["id"]) for c in threads)
-        state = "approved" if store.approvals.get(commit.subject) else ""
+        state = store.verdict(commit.subject)
+        if state == "changes requested":
+            state = "CHANGES REQUESTED, no pull request yet"
         if n:
             state = ", ".join(filter(None, [state, f"{n} open"]))
         out.append(f"{commit.sha[:10]}  {commit.subject}  [{state or '-'}]")

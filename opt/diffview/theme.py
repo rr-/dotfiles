@@ -51,7 +51,17 @@ BASE = "light" if THEME.startswith("light") else "dark"
 # Approval is meant to be loud, so it skips the theme's calmer greens.
 NEON = "#39ff14"
 NEON_CHIP = Style(fg="#000000", bg=NEON, bold=True)
-NEON_TEXT = Style(fg=NEON if BASE == "dark" else "#000000", bold=True)
+CHANGES = "#ff1a1a"
+VERDICT_CHIP = {
+    "approved": NEON_CHIP,
+    "changes requested": Style(fg="#ffffff", bg=CHANGES, bold=True),
+}
+VERDICT_MARK = {"approved": "✓", "changes requested": "✗"}
+# the rows under a commit with a verdict
+VERDICT_TINT = {
+    "approved": "#dcffd4" if BASE == "light" else "#173d12",
+    "changes requested": "#ffdcdc" if BASE == "light" else "#3d1414",
+}
 
 
 def load_palette() -> dict[int | str, str]:

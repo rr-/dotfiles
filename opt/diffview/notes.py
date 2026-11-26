@@ -11,7 +11,7 @@ from .model import relative_date, wrap
 from .review import Review, can_anchor, make_anchor, place
 from .rows import Row
 from .term import LineBuf, Mouse
-from .theme import NEON_CHIP, Style, role
+from .theme import VERDICT_CHIP, VERDICT_MARK, Style, role
 
 NOTE_PROMPTS = {"comment": "comment: ", "reply": "reply: "}
 DOUBLE_CLICK = 0.5
@@ -260,6 +260,21 @@ class Notes:
         else:
             self.flash(f"approved {title}", "state.success")
 
+    def toggle_changes(self) -> None:
+        if not self.reviewing():
+            return
+        ci = self.current_commit()
+        if ci is None:
+            self.flash("not in a commit", "state.error")
+            return
+        title = self.commits[ci].subject
+        changes = not self.review.changes.get(title, False)
+        self.review.approve(title, False, changes)
+        if changes:
+            self.flash(f"changes requested on {title}", "state.error")
+        else:
+            self.flash(f"took back the request on {title}")
+
     def toggle_hide_resolved(self) -> None:
         if not self.reviewing():
             return
@@ -310,14 +325,18 @@ class Notes:
 
     # the summary
 
-    def approved(self, ci: int) -> bool:
-        if self.review is None or ci < 0:
-            return False
-        return bool(self.review.approvals.get(self.commits[ci].subject))
+    def verdict(self, ci: int | None) -> str:
+        if self.review is None or ci is None or ci < 0:
+            return ""
+        return self.review.verdict(self.commits[ci].subject)
 
-    def add_approved(self, buf: LineBuf) -> None:
-        """A chip no one can miss on an approved commit."""
-        buf.add(" ✓ APPROVED ", NEON_CHIP)
+    def approved(self, ci: int) -> bool:
+        return self.verdict(ci) == "approved"
+
+    def add_verdict(self, buf: LineBuf, verdict: str) -> None:
+        """A chip no one can miss on a commit with a verdict."""
+        mark = VERDICT_MARK[verdict]
+        buf.add(f" {mark} {verdict.upper()} ", VERDICT_CHIP[verdict])
 
     def commit_badge(self, ci: int) -> tuple[str, str] | None:
         if self.review is None or ci < 0:
