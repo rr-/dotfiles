@@ -1,0 +1,16 @@
+[project]
+name = "diffview"
+version = "0.1.0"
+description = "A diff viewer for the terminal, with vim keys"
+requires-python = ">=3.12"
+dependencies = ["pygments"]
+
+[build-system]
+requires = ["setuptools==84.2.1"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["diffview"]
+
+[tool.setuptools.package-dir]
+diffview = "."

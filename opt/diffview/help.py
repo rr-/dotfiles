@@ -1,0 +1,37 @@
+"""The keys, as :h shows them."""
+
+HELP = """\
+movement
+  j k ↓ ↑          line down / up (takes a count)
+  C-d C-u          half page down / up
+  C-f C-b space    page down / up
+  C-e C-y          scroll the view
+  gg G             first / last line, or line N with a count
+  H M L            top / middle / bottom of the view
+  zz zt zb         cursor line to middle / top / bottom
+  h l  0 $         scroll sideways, back to the start, to the end
+  :N               line N of the new file
+
+files and hunks
+  C-j C-k  J K     next / previous page: a commit message, or a file
+  } {  ]c [c       next / previous hunk
+  ]] [[            next / previous commit
+  za               fold the current file
+  + -              more / less context, by a count or 3 lines
+  =  F             default context, toggle the full file
+  zM zR            fold / unfold every file
+
+tree
+  Tab  C-w w       switch between tree and diff
+  C-w h  C-w l     focus the tree / the diff
+  t                show or hide the tree
+  j k              move, opening files as you go
+  l h              expand / collapse a directory
+  Enter o          open the file and focus the diff
+
+other
+  / ?  n N         search forward / backward, next / previous match
+  e                open $EDITOR at the cursor line
+  r                rerun git diff
+  q ZZ :q          quit
+"""
