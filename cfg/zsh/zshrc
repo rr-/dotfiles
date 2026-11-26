@@ -16,6 +16,7 @@ _git-review() {
     local -a subcommands=(
         'list:print where the review stands'
         'prune:drop what already landed'
+        'tree:review the files of a tree as they are'
     )
     if (( CURRENT == 2 )); then
         local ret=1
@@ -29,6 +30,9 @@ _git-review() {
         list) _arguments '--all[every thread, resolved ones too]' \
                   ':range:__git_commit_ranges' ;;
         prune) _arguments ':range:__git_commit_ranges' ;;
+        tree) _arguments '--list[print where the review stands]' \
+                  '--all[with --list, resolved threads too]' \
+                  ':revision:__git_commits' '*:path:_files' ;;
     esac
 }
 
