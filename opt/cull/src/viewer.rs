@@ -389,6 +389,16 @@ pub fn run() -> Result<(), String> {
                         });
                         match result {
                             Ok(renames) => {
+                                message = if renames.first().is_some_and(|(_, new)| {
+                                    new.file_stem()
+                                        .unwrap_or_default()
+                                        .to_string_lossy()
+                                        .ends_with("-SELECTED")
+                                }) {
+                                    "Selected".into()
+                                } else {
+                                    "Unselected".into()
+                                };
                                 for (old, new) in renames {
                                     if let Some(image) = cache.remove(&old) {
                                         cache.insert(new.clone(), image);
@@ -412,6 +422,7 @@ pub fn run() -> Result<(), String> {
                                     paths.insert(position, path);
                                     index = position;
                                     undo.pop();
+                                    message = "Restored".into();
                                 }
                                 Err(error) => message = error,
                             }
@@ -422,9 +433,7 @@ pub fn run() -> Result<(), String> {
                             let path = paths.remove(index);
                             undo.push((index, path, discarded));
                             index = index.min(paths.len().saturating_sub(1));
-                            if let Some(note) = note {
-                                message = note;
-                            }
+                            message = note.unwrap_or_else(|| "Trashed".into());
                         }
                         Err(error) => message = error,
                     },
@@ -459,8 +468,12 @@ pub fn run() -> Result<(), String> {
                         if let Some(home) = std::env::var_os("HOME") {
                             let destination = PathBuf::from(home)
                                 .join(paths[index].file_name().ok_or("missing filename")?);
-                            match files::rename_group(&vec![(paths[index].clone(), destination)]) {
+                            match files::rename_group(&vec![(
+                                paths[index].clone(),
+                                destination.clone(),
+                            )]) {
                                 Ok(()) => {
+                                    message = format!("Moved to {}", destination.display());
                                     paths.remove(index);
                                     index = index.min(paths.len().saturating_sub(1));
                                 }
@@ -468,10 +481,6 @@ pub fn run() -> Result<(), String> {
                             }
                         }
                     }
-                }
-                if index != old_index {
-                    changed = Instant::now();
-                    message.clear();
                 }
                 let feedback = match command {
                     Action::Filter(filter, _) => {
@@ -498,9 +507,32 @@ pub fn run() -> Result<(), String> {
                             }
                         ))
                     }
-                    Action::CopyBitmap | Action::CopyPath => Some(message.clone()),
-                    // a file operation only leaves a message when it failed
-                    Action::Select
+                    Action::Rotate(_) => Some(format!("Rotation: {rotation:.0}°")),
+                    Action::Pan(..) => Some(format!(
+                        "Pan: {:+.0}%, {:+.0}%",
+                        pan_x * 100.0,
+                        pan_y * 100.0
+                    )),
+                    Action::Aspect(_) | Action::ResetAspect => Some(format!("Aspect: {aspect:.2}")),
+                    Action::Interval(_) => Some(format!("Slideshow interval: {interval:.3}s")),
+                    Action::Slideshow => {
+                        Some(format!("Slideshow: {}", if slide { "on" } else { "off" }))
+                    }
+                    Action::Fullscreen => Some(format!(
+                        "Fullscreen: {}",
+                        if fullscreen { "on" } else { "off" }
+                    )),
+                    Action::Status => {
+                        Some(format!("Filmstrip: {}", if status { "on" } else { "off" }))
+                    }
+                    Action::Exif => Some(format!("Details: {}", if exif { "on" } else { "off" })),
+                    Action::Overview => {
+                        Some(format!("Overview: {}", if crop { "on" } else { "off" }))
+                    }
+                    Action::Help => None,
+                    Action::CopyBitmap
+                    | Action::CopyPath
+                    | Action::Select
                     | Action::Undo
                     | Action::Discard
                     | Action::CopyHome
@@ -513,6 +545,10 @@ pub fn run() -> Result<(), String> {
                 };
                 if let Some(feedback) = feedback {
                     osd = Some((feedback, Instant::now()));
+                }
+                if index != old_index {
+                    changed = Instant::now();
+                    message.clear();
                 }
             }
         }
