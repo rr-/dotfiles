@@ -21,11 +21,3 @@ items:
     exclude: !flatten
     - *defaults_exclude
     - "/home/dash/.cache/"
-
-  - source: oc:/home/rr-/
-    target: frost:data/backup/oc/
-    <<: *defaults
-  - source: oc:/var/log/nginx/
-    target: frost:data/backup/oc/
-    <<: *defaults
-    traverse_links: true
