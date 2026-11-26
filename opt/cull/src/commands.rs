@@ -194,6 +194,12 @@ impl Input {
             return None;
         }
         let modifiers = modifiers & !(Mod::CAPSMOD | Mod::NUMMOD);
+        // q quits at once, even halfway through a count or a key sequence
+        if key == Keycode::Q && modifiers.is_empty() {
+            self.count = None;
+            self.prefix = None;
+            return (!repeat).then_some(Quit);
+        }
         if modifiers.is_empty() {
             if let Some(prefix) = self.prefix.take() {
                 if repeat {
@@ -357,6 +363,8 @@ mod tests {
         );
         input.key(Keycode::Z, Mod::NOMOD, false, now);
         assert_eq!(input.key(Keycode::V, Mod::NOMOD, false, now), None);
+        input.key(Keycode::Y, Mod::NOMOD, false, now);
+        assert_eq!(input.key(Keycode::Q, Mod::NOMOD, false, now), Some(Quit));
     }
 
     #[test]
