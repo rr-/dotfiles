@@ -16,6 +16,11 @@ before updates the fields it names, so resolving a thread is one more line:
 
     {"id": "a1b2c3", "status": "resolved"}
 
+A review of a tree (git review tree) has no commits: its records name
+`"unit": "tree"` where a commit's have `commit_title`, and belong to the
+paths alone, whatever revision the tree was reviewed at. They carry no
+`branch`.
+
 A thread's root names the `branch` it was written on review of, and shows
 only when that branch is reviewed, though another branch may have a
 commit of the same title. One without a `branch` shows on every branch.
