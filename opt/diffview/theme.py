@@ -48,6 +48,11 @@ THEME = os.environ.get("THEME", "dark")
 # a variant of light takes light's spec for whatever it doesn't name itself
 BASE = "light" if THEME.startswith("light") else "dark"
 
+# Approval is meant to be loud, so it skips the theme's calmer greens.
+NEON = "#39ff14"
+NEON_CHIP = Style(fg="#000000", bg=NEON, bold=True)
+NEON_TEXT = Style(fg=NEON if BASE == "dark" else "#000000", bold=True)
+
 
 def load_palette() -> dict[int | str, str]:
     """The theme's palette, so indices go out as rgb: a terminal that ignores

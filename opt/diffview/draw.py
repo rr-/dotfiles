@@ -5,7 +5,16 @@ from .model import Commit, relative_date
 from .notes import NOTE_PROMPTS
 from .rows import Row
 from .term import TAB, LineBuf, cwidth, expand
-from .theme import PLAIN, Color, Style, role, sgr, token_color
+from .theme import (
+    NEON_CHIP,
+    NEON_TEXT,
+    PLAIN,
+    Color,
+    Style,
+    role,
+    sgr,
+    token_color,
+)
 from .tree import tree_guides
 
 
@@ -100,9 +109,9 @@ class Draw:
             if node.is_dir:
                 arrow = "▾ " if node.expanded else "▸ "
                 color = "state.warning" if node.commit else "file.dir"
-                if node.commit and self.approved(node.rank):
-                    color = "state.success"
                 style = Style(fg=role(color), bg=bg, bold=True)
+                if node.commit and self.approved(node.rank):
+                    style = NEON_TEXT._replace(bg=bg)
                 buf.add(arrow, style)
                 name = node.name if node.commit else node.name + "/"
                 buf.add_clipped(name, style, width - buf.col)
@@ -138,8 +147,12 @@ class Draw:
 
     def draw_commit_node(self, buf: LineBuf, ci: int, bg: Color) -> None:
         """A commit's review badge, then as much of its subject as fits."""
-        if badge := self.commit_badge(ci):
+        if self.approved(ci):
+            buf.add(" ", Style(bg=bg))
+            buf.add("✓", NEON_CHIP)
+        if (badge := self.commit_badge(ci)) and "●" in badge[0]:
             text, color = badge
+            text = text.lstrip("✓")
             buf.add(" " + text, Style(fg=role(color), bg=bg, bold=True))
         subject = self.commits[ci].subject
         if subject and self.review is not None:

@@ -11,7 +11,7 @@ from .model import relative_date, wrap
 from .review import Review, can_anchor, make_anchor, place
 from .rows import Row
 from .term import LineBuf, Mouse
-from .theme import Style, role
+from .theme import NEON_CHIP, Style, role
 
 NOTE_PROMPTS = {"comment": "comment: ", "reply": "reply: "}
 DOUBLE_CLICK = 0.5
@@ -317,8 +317,7 @@ class Notes:
 
     def add_approved(self, buf: LineBuf) -> None:
         """A chip no one can miss on an approved commit."""
-        style = Style(fg=role("text.inverse"), bg=role("state.success"))
-        buf.add(" ✓ APPROVED ", style._replace(bold=True))
+        buf.add(" ✓ APPROVED ", NEON_CHIP)
 
     def commit_badge(self, ci: int) -> tuple[str, str] | None:
         if self.review is None or ci < 0:
