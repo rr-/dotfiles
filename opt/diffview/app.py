@@ -4,6 +4,7 @@ import os
 import re
 import shlex
 import subprocess
+import time
 from pathlib import Path
 
 from .draw import Draw
@@ -14,11 +15,13 @@ from .notes import NOTE_PROMPTS, Notes
 from .prompt import edit_line
 from .review import Review
 from .rows import Quit, Row
+from .sources import TreeSource
 from .term import Mouse, Terminal
 from .theme import PLAIN, Style, role
 from .tree import Node, build_tree, walk_tree
 
 CONTEXT_STEP = 3
+REBUILD_EVERY = 0.1  # seconds between rebuilds while a source reads
 FULL_CONTEXT = 1_000_000  # as -U, enough to show every line of a file
 
 
@@ -29,6 +32,7 @@ class App(Draw, Notes):
         text: str,
         review: Review | None = None,
         git_cmd: str = "diff",
+        source: TreeSource | None = None,
     ) -> None:
         self.git_args = git_args
         self.git_cmd = git_cmd
@@ -38,6 +42,8 @@ class App(Draw, Notes):
         self.last_click, self.last_time = -1, 0.0
         self.tree_free = False  # the wheel scrolled the tree off its cursor
         self.help_top = 0
+        self.source = source
+        self.rebuilt = 0.0  # when rows were last rebuilt for the source
         self.root = git_root()
         self.folded: set[str] = set()
         self.cur = self.top = self.hscroll = 0
@@ -62,12 +68,18 @@ class App(Draw, Notes):
         self.hunk_cache: dict[
             tuple[int, int], tuple[list[Hunk], int, int]
         ] = {}
-        self.load(text)
+        if source is not None:
+            self.load_units(*source.listing())
+        else:
+            self.load(text)
 
     # model
 
     def load(self, text: str) -> None:
-        files, self.commits = parse_diff(text)
+        self.load_units(*parse_diff(text))
+
+    def load_units(self, files: list[FileDiff], commits: list[Commit]) -> None:
+        self.commits = commits
         # A review keeps a commit node even for one commit: its badge
         # tells whether it is approved.
         by_commit = self.review is not None
@@ -184,8 +196,38 @@ class App(Draw, Notes):
         self.cur = min(lo + cur, hi)
         self.top = min(lo + top, hi)
 
+    def poll_source(self, force: bool = False) -> None:
+        """Take in what the source has read, and ask for the open file."""
+        source = self.source
+        if source is None:
+            return
+        fi = self.current_file()
+        if fi is not None and self.files[fi].meta == ["loading…"]:
+            source.want(fi)
+        filled = source.take()
+        for fi in filled:
+            self.highlights.pop(fi, None)
+        self.pending_rows = getattr(self, "pending_rows", False) or filled
+        now = time.monotonic()
+        if self.pending_rows and (
+            force or not source.loading or now - self.rebuilt > REBUILD_EVERY
+        ):
+            mark = self.mark()
+            top = self.top - self.span[0]
+            self.build_rows()
+            self.restore(mark)
+            self.top = self.span[0] + top
+            self.follow()
+            self.rebuilt, self.pending_rows = now, False
+
     def reload(self) -> None:
         self.reload_review()
+        if self.source is not None:
+            mark = self.mark()
+            self.build_rows()
+            self.restore(mark)
+            self.flash("read the comments again")
+            return
         if self.git_args is None:
             self.flash(
                 "can't rerun a diff that came from stdin", "state.error"
@@ -886,7 +928,10 @@ class App(Draw, Notes):
         with Terminal() as self.term:
             if not self.message[0]:
                 self.flash(":help for the keys", "text.faint")
+            if self.source is not None:
+                self.source.start(self.files, self.term._wake)
             while True:
+                self.poll_source()
                 self.draw()
                 key = self.term.read_key()
                 if key is None:

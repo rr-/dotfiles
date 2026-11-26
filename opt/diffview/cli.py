@@ -19,6 +19,7 @@ from .gitio import (
 from .model import ANSI_RE, FileDiff, parse_diff
 from .review import REVIEW_FILE, Review
 from .session import Session
+from .sources import TreeSource
 
 
 def exit_on_git_error(fn):
@@ -65,12 +66,21 @@ usage: git review [<range>]          review commits in the viewer
        git review list [<range>] [--all]
                                      print where the review stands
        git review prune [<range>]    drop what already landed
+       git review tree [--list] <rev> [<path>...]
+                                     review the files of a tree as they
+                                     are, or with --list print where
+                                     that review stands
 
 <range> is base..branch, or a branch to take from the default base
 (origin/HEAD, origin/main, origin/master or main). HEAD by default.
 
 list prints a line per commit, with its approval and open threads, and
 then each open thread (every thread with --all) with where it sits now.
+
+tree shows every file of <rev>, limited to the paths given, whole. Its
+comments belong to the paths, not the revision: review the tree at a
+later rev and they find their lines again. Files come in as they are
+read, the open one first.
 
 prune drops the threads and approvals of commits whose title is in the
 range's base but on no commit of the range. git review does it too, each
@@ -91,6 +101,23 @@ def review_main(argv: list[str]) -> None:
         if len(rest) > 1 or any(a.startswith("-") for a in rest):
             raise SystemExit(REVIEW_USAGE)
         print(review_list(review_range(rest[0] if rest else None), show_all))
+        return
+    if argv[:1] == ["tree"]:
+        args = argv[1:]
+        show_list = "--list" in args
+        show_all = "--all" in args
+        rest = [a for a in args if a not in ("--list", "--all")]
+        if not rest or any(a.startswith("-") for a in rest):
+            raise SystemExit(REVIEW_USAGE)
+        if show_list:
+            print(tree_list(rest[0], rest[1:], show_all))
+            return
+        store = Review(git_common_dir() / REVIEW_FILE)
+        app = App(None, "", store, source=TreeSource(rest[0], rest[1:]))
+        if not app.files:
+            print(f"no files in {' '.join(rest)}")
+            return
+        app.run()
         return
     if argv[:1] == ["prune"]:
         if len(argv) > 2 or any(a.startswith("-") for a in argv[1:]):
@@ -152,10 +179,24 @@ def where_now(c: dict, at: tuple, files: list[FileDiff]) -> str:
 def review_list(rng: str, show_all: bool) -> str:
     store = Review(git_common_dir() / REVIEW_FILE, range_branch(rng))
     files, commits = parse_diff(run_git("log", log_args(rng)))
-    session = Session(store, files, commits)
+    head = f"review of {rng}, branch {store.branch}, in {store.path}"
+    return format_list(Session(store, files, commits), head, show_all)
+
+
+def tree_list(rev: str, paths: list[str], show_all: bool) -> str:
+    store = Review(git_common_dir() / REVIEW_FILE)
+    source = TreeSource(rev, paths)
+    files, units = source.listing()
+    source.load_all(files)
+    head = f"review of {units[0].lines[0]}, in {store.path}"
+    return format_list(Session(store, files, units), head, show_all)
+
+
+def format_list(session: Session, head: str, show_all: bool) -> str:
+    store, files, commits = session.store, session.files, session.commits
     placed = session.placed
 
-    out = [f"review of {rng}, branch {store.branch}, in {store.path}", ""]
+    out = [head, ""]
     if store.bad:
         out += [f"skipped {store.bad} lines that are not records", ""]
     for ci, commit in enumerate(commits):
@@ -165,7 +206,10 @@ def review_list(rng: str, show_all: bool) -> str:
             state = "CHANGES REQUESTED, no pull request yet"
         if n:
             state = ", ".join(filter(None, [state, f"{n} open"]))
-        out.append(f"{commit.sha[:10]}  {commit.subject}  [{state or '-'}]")
+        name = f"{commit.sha[:10]}  {commit.subject}"
+        if commit.unit:
+            name = commit.lines[0]
+        out.append(f"{name}  [{state or '-'}]")
         for path, verdict in session.file_verdicts_of(ci):
             if verdict == "changes requested":
                 verdict = "CHANGES REQUESTED"
@@ -181,7 +225,8 @@ def review_list(rng: str, show_all: bool) -> str:
         ]
         if not threads:
             continue
-        out += ["", f"== {commit.sha[:10]} {commit.subject}"]
+        name = commit.lines[0] if commit.unit else ""
+        out += ["", f"== {name or commit.sha[:10] + ' ' + commit.subject}"]
         for c in threads:
             status = c.get("status", "open")
             out.append("")

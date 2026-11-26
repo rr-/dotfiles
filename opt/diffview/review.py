@@ -96,7 +96,7 @@ class Review:
         if not isinstance(rec, dict):
             return False
         if rec.get("type") == "approval":
-            title = rec.get("commit_title")
+            title = rec_key(rec)
             if not isinstance(title, str):
                 return False
             if path := rec.get("path"):
@@ -149,7 +149,7 @@ class Review:
         path: str | None = None,
     ) -> None:
         """A commit's verdict, or with path one of its files'."""
-        rec = {"type": "approval", "commit_title": title}
+        rec = {"type": "approval", **key_fields(title)}
         if path:
             rec["path"] = path
         self.append(
@@ -293,8 +293,22 @@ def make_anchor(f: FileDiff, hi: int, li: int) -> dict:
     }
 
 
-def commits_titled(commits: list[Commit], title: object) -> list[int]:
-    return [ci for ci, c in enumerate(commits) if c.subject == title]
+def rec_key(rec: dict) -> str | None:
+    """The unit a record is about, as Commit.key names it."""
+    if unit := rec.get("unit"):
+        return f"unit:{unit}"
+    return rec.get("commit_title")
+
+
+def key_fields(key: str) -> dict:
+    """The fields that name a unit in a record."""
+    if key.startswith("unit:"):
+        return {"unit": key.removeprefix("unit:")}
+    return {"commit_title": key}
+
+
+def commits_titled(commits: list[Commit], key: object) -> list[int]:
+    return [ci for ci, c in enumerate(commits) if c.key == key]
 
 
 def place(
@@ -311,7 +325,7 @@ def place(
     """
     if branch and c.get("branch") and c["branch"] != branch:
         return ("elsewhere",)
-    cis = commits_titled(commits, c.get("commit_title"))
+    cis = commits_titled(commits, rec_key(c))
     if not cis:
         return ("elsewhere",)
     path = c.get("path")

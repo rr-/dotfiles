@@ -94,7 +94,7 @@ class Notes:
     def current_commit(self) -> int | None:
         kind, index = self.pages[self.current_page()]
         ci = index if kind == "commit" else self.files[index].commit
-        if ci < 0 or not self.commits[ci].subject:
+        if ci < 0 or not self.commits[ci].key:
             return None
         return ci
 
@@ -121,13 +121,13 @@ class Notes:
             if not can_anchor(f.hunks[row.hunk].lines[row.line]):
                 self.flash("can't comment on that line", "state.error")
                 return
-            if f.commit < 0 or not self.commits[f.commit].subject:
+            if f.commit < 0 or not self.commits[f.commit].key:
                 self.flash("that line is in no commit", "state.error")
                 return
             self.prompt_target = ("line", row.file, row.hunk, row.line)
         elif row.kind in ("file", "meta", "hunk") and not whole_commit:
             f = self.files[row.file]
-            if f.commit < 0 or not self.commits[f.commit].subject:
+            if f.commit < 0 or not self.commits[f.commit].key:
                 self.flash("that file is in no commit", "state.error")
                 return
             self.prompt_target = ("file", row.file)
@@ -138,7 +138,9 @@ class Notes:
                 self.flash("not in a commit", "state.error")
                 return
             self.prompt_target = ("commit", ci)
-            self.flash(f"on the whole commit: {self.commits[ci].subject}")
+            self.flash(
+                f"on the whole of {self.commits[ci].subject or self.commits[ci].lines[0]}"
+            )
         self.open_prompt("comment")
 
     def draft_key(self, target: tuple) -> tuple:
@@ -148,17 +150,17 @@ class Notes:
             f = self.files[fi]
             anchor = make_anchor(f, hi, li)
             return (
-                self.commits[f.commit].subject,
+                self.commits[f.commit].key,
                 anchor["path"],
                 anchor["side"],
                 anchor["line_text"],
                 anchor["line"],
             )
         if target[0] == "commit":
-            return ("commit", self.commits[target[1]].subject)
+            return ("commit", self.commits[target[1]].key)
         if target[0] == "file":
             f = self.files[target[1]]
-            return ("file", self.commits[f.commit].subject, f.path)
+            return ("file", self.commits[f.commit].key, f.path)
         return target
 
     def open_prompt(self, kind: str) -> None:
@@ -254,7 +256,7 @@ class Notes:
             what = self.files[index].path
             now = self.session.toggle_file_verdict(index, verdict)
         else:
-            what = self.commits[ci].subject
+            what = self.commits[ci].subject or self.commits[ci].lines[0]
             now = self.session.toggle_verdict(ci, verdict)
         if not now:
             self.flash(f"took back the verdict on {what}")

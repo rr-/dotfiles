@@ -45,6 +45,8 @@ def build_tree(
         name = "no commit"
         if ci >= 0:
             name = commits[ci].sha[:7] or f"commit {ci + 1}"
+            if commits[ci].unit:
+                name = commits[ci].lines[0]
         return root.children.setdefault(
             f"c:{ci}", Node(name, parent=root, commit=True, rank=ci)
         )

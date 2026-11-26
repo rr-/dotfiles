@@ -17,6 +17,7 @@ from diffview.model import parse_diff
 from diffview.prompt import edit_line
 from diffview.review import Review, make_anchor, place
 from diffview.session import Session
+from diffview.sources import TreeSource
 from diffview.term import Mouse
 
 BODY = [f"line {i}" for i in range(1, 21)]
@@ -303,6 +304,125 @@ class SessionTests(RepoTest):
         s = self.session()
         self.assertEqual(s.open_threads, {})
         self.assertEqual(s.elsewhere(), 1)
+
+
+class TreeTests(RepoTest):
+    def setUp(self) -> None:
+        super().setUp()
+        (self.repo / "src").mkdir()
+        self.write("src/one.py", ["def one():", "    return 1"])
+        self.write("src/two.py", ["two = 2"])
+        (self.repo / "src/blob.bin").write_bytes(b"\0\1\2")
+        (self.repo / "src/empty").write_text("")
+        git(self.repo, "add", ".")
+        git(self.repo, "commit", "-qm", "Add src")
+
+    def loaded(self, rev: str = "HEAD", *paths: str):
+        source = TreeSource(rev, list(paths))
+        files, units = source.listing()
+        source.load_all(files)
+        return files, units
+
+    def test_lists_and_reads_whole_files(self) -> None:
+        files, units = self.loaded("HEAD", "src")
+        self.assertEqual(
+            sorted(f.path for f in files),
+            ["src/blob.bin", "src/empty", "src/one.py", "src/two.py"],
+        )
+        self.assertEqual((units[0].unit, units[0].key), ("tree", "unit:tree"))
+        by_path = {f.path: f for f in files}
+        one = by_path["src/one.py"]
+        self.assertTrue(one.whole)
+        self.assertEqual(
+            [(ln.kind, ln.text, ln.new) for ln in one.hunks[0].lines],
+            [(" ", "def one():", 1), (" ", "    return 1", 2)],
+        )
+        self.assertTrue(by_path["src/blob.bin"].binary)
+        self.assertEqual(by_path["src/empty"].meta, ["empty file"])
+
+    def test_paths_limit_the_tree(self) -> None:
+        files, _ = self.loaded("HEAD", "src/two.py")
+        self.assertEqual([f.path for f in files], ["src/two.py"])
+
+    def test_comments_belong_to_paths_not_revisions(self) -> None:
+        files, units = self.loaded("HEAD", "src")
+        s = Session(self.store, files, units)
+        fi = next(i for i, f in enumerate(files) if f.path == "src/one.py")
+        cid = s.comment(("line", fi, 0, 1), "why 1")
+        self.assertEqual(self.store.comments[cid]["unit"], "tree")
+        self.assertNotIn("commit_title", self.store.comments[cid])
+        self.assertNotIn("branch", self.store.comments[cid])
+        s.toggle_file_verdict(fi, "approved")
+        self.write("src/one.py", ["# head", "def one():", "    return 1"])
+        git(self.repo, "commit", "-qam", "Grow one")
+        files, units = self.loaded("HEAD", "src")
+        s = Session(self.store, files, units)
+        where = s.placed[cid]
+        line = files[where[1]].hunks[where[2]].lines[where[3]]
+        self.assertEqual(
+            (where[0], line.text, line.new), ("line", "    return 1", 3)
+        )
+        fi = next(i for i, f in enumerate(files) if f.path == "src/one.py")
+        self.assertEqual(s.file_verdict(fi), "approved")
+        diff_files, commits = self.diff()
+        self.assertEqual(
+            place(self.store.comments[cid], diff_files, commits)[0],
+            "elsewhere",
+        )
+
+    def test_the_wanted_file_is_read_next(self) -> None:
+        source = TreeSource("HEAD", ["src"])
+        files, _ = source.listing()
+        source.order(files)
+        source.want(len(files) - 1)
+        self.assertEqual(source.next_file(), len(files) - 1)
+        self.assertEqual(source.next_file(), 0)
+
+    def test_the_viewer_fills_in_as_files_arrive(self) -> None:
+        source = TreeSource("HEAD", ["src"])
+        app = App(None, "", self.store, source=source)
+        app.term = FakeTerm()
+        self.assertTrue(all(f.meta == ["loading…"] for f in app.files))
+        woken = []
+        source.start(app.files, lambda: woken.append(1))
+        source.thread.join(5)
+        app.poll_source(force=True)
+        app.draw()
+        self.assertFalse(source.loading)
+        self.assertEqual(len(woken), 4)
+        lines = [r for r in app.rows if r.kind == "line"]
+        self.assertEqual(len(lines), 3)
+        self.goto_line_text(app, "two = 2")
+        self.keys(app, "c", *"rename", "enter")
+        (root,) = self.store.threads()
+        self.assertEqual(
+            (root["unit"], root["path"], root["line_text"]),
+            ("tree", "src/two.py", "two = 2"),
+        )
+
+    def keys(self, app: App, *keys: str) -> None:
+        for key in keys:
+            app.handle(key)
+            app.draw()
+
+    def goto_line_text(self, app: App, text: str) -> None:
+        app.set_cur(
+            next(
+                i
+                for i, r in enumerate(app.rows)
+                if r.kind == "line" and app.row_text(r) == text
+            )
+        )
+
+    def test_tree_list(self) -> None:
+        files, units = self.loaded("HEAD", "src")
+        fi = next(i for i, f in enumerate(files) if f.path == "src/two.py")
+        Session(self.store, files, units).comment(("file", fi), "hm")
+        from diffview.cli import tree_list
+
+        out = tree_list("HEAD", ["src"], False)
+        self.assertIn("tree HEAD src  [1 open]", out)
+        self.assertIn("src/two.py, the whole file", out)
 
 
 class PruneTests(RepoTest):

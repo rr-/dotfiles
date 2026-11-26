@@ -14,7 +14,7 @@ A target is what a new comment is about:
 """
 
 from .model import Commit, FileDiff
-from .review import Review, make_anchor, place
+from .review import Review, key_fields, make_anchor, place
 
 VERDICTS = ("approved", "changes requested")
 
@@ -31,7 +31,7 @@ class Session:
     # units
 
     def unit_key(self, ci: int) -> str:
-        return self.commits[ci].subject
+        return self.commits[ci].key
 
     def unit_of(self, target: tuple) -> int:
         if target[0] == "commit":
@@ -101,7 +101,7 @@ class Session:
 
     def comment(self, target: tuple, text: str, author: str = "me") -> str:
         ci = self.unit_of(target)
-        fields: dict = {"commit_title": self.unit_key(ci)}
+        fields: dict = key_fields(self.unit_key(ci))
         if target[0] == "line":
             _, fi, hi, li = target
             fields |= make_anchor(self.files[fi], hi, li)

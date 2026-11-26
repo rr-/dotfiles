@@ -1,7 +1,7 @@
 """Drawing the tree, the diff and the status line."""
 
 from .help import HELP
-from .model import Commit, relative_date
+from .model import Commit, FileDiff, relative_date
 from .notes import NOTE_PROMPTS
 from .rows import Row
 from .term import TAB, LineBuf, cwidth, expand
@@ -80,8 +80,11 @@ class Draw:
         title = LineBuf(width)
         noun = "file" if len(self.files) == 1 else "files"
         title.add(f" {len(self.files)} {noun} ", Style(bold=True))
-        title.add(f"+{added} ", Style(fg=role("diff.add.accent")))
-        title.add(f"-{deleted}", Style(fg=role("diff.del.accent")))
+        if self.files and all(f.whole for f in self.files):
+            title.add(f"{added} lines", Style(fg=role("text.muted")))
+        else:
+            title.add(f"+{added} ", Style(fg=role("diff.add.accent")))
+            title.add(f"-{deleted}", Style(fg=role("diff.del.accent")))
         title.fill(PLAIN)
         lines = [title.render()]
 
@@ -159,7 +162,7 @@ class Draw:
                         bold=True,
                     ),
                 )
-                counts = f" +{f.added} -{f.deleted}" if not f.binary else ""
+                counts = self.file_counts(f)
                 badge, badge_color = self.file_badge(node.file)
                 room = width - buf.col
                 name_style = Style(bg=bg, bold=self.node_page(node) == current)
@@ -208,6 +211,14 @@ class Draw:
         buf.fill(style)
         return buf.render()
 
+    def file_counts(self, f: FileDiff) -> str:
+        """+added -deleted, or a whole file's lines, for the tree."""
+        if f.binary:
+            return ""
+        if f.whole:
+            return f" {f.added}" if f.hunks else ""
+        return f" +{f.added} -{f.deleted}"
+
     def draw_verdict_file(
         self,
         buf: LineBuf,
@@ -223,7 +234,7 @@ class Draw:
         head += tree_guides(node, depth) + f"{f.status} {node.name} "
         head += VERDICT_MARK[verdict]
         tail = self.file_badge(node.file)[0]
-        tail += f" +{f.added} -{f.deleted}" if not f.binary else ""
+        tail += self.file_counts(f)
         if len(head) + len(tail) + 1 <= buf.width:
             buf.add(head, style)
             buf.fill(style, buf.width - len(tail) - 1)
@@ -426,13 +437,19 @@ class Draw:
                 buf.add("  ", base)
                 if f.status in status:
                     buf.add(status[f.status] + "  ", base._replace(bold=False))
-                buf.add(
-                    f"+{f.added}", base._replace(fg=role("diff.add.accent"))
-                )
-                buf.add(" ", base)
-                buf.add(
-                    f"-{f.deleted}", base._replace(fg=role("diff.del.accent"))
-                )
+                if f.whole:
+                    lines = f"{f.added} line{'' if f.added == 1 else 's'}"
+                    buf.add(lines, base._replace(bold=False))
+                else:
+                    buf.add(
+                        f"+{f.added}",
+                        base._replace(fg=role("diff.add.accent")),
+                    )
+                    buf.add(" ", base)
+                    buf.add(
+                        f"-{f.deleted}",
+                        base._replace(fg=role("diff.del.accent")),
+                    )
                 buf.fill(base)
             case "meta":
                 sign_col()
@@ -479,7 +496,7 @@ class Draw:
         gutter = Style(fg=role("text.faint"), bg=bg)
         if is_cur:
             gutter = Style(fg=role("accent.primary"), bg=bg, bold=True)
-        old = "" if line.old is None else str(line.old)
+        old = "" if line.old is None or f.whole else str(line.old)
         new = "" if line.new is None else str(line.new)
         buf.add(f"{old:>{w}} {new:>{w}} ", gutter)
         marker_color = {"+": "diff.add.accent", "-": "diff.del.accent"}.get(
@@ -595,6 +612,8 @@ class Draw:
             where = f"{'full' if self.full else f'U{self.context}'}  {where}"
         if summary := self.review_summary():
             where = f"{summary}  {where}"
+        if self.source is not None and self.source.loading:
+            where = f"{self.source.progress()}  {where}"
         right = f" {self.count or self.pending}  {where}  {pct}% "
         room = self.width - buf.col - len(right)
         buf.add_clipped(text, style._replace(bg=bg), max(1, room))

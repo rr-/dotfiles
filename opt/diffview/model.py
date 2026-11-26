@@ -34,6 +34,7 @@ class FileDiff:
     binary: bool = False
     commit: int = -1  # index into the commits, -1 for a bare diff
     blobs: tuple[str, str] | None = None  # from the index line
+    whole: bool = False  # a whole file, as a tree shows it, not a diff
 
     @property
     def path(self) -> str:
@@ -58,6 +59,7 @@ class Commit:
     headers: list[str] = dc.field(default_factory=list)
     message: list[str] = dc.field(default_factory=list)
     extra: list[str] = dc.field(default_factory=list)
+    unit: str = ""  # what this is when it is no commit, such as "tree"
 
     def __post_init__(self) -> None:
         for line in self.lines:
@@ -78,6 +80,12 @@ class Commit:
     @property
     def subject(self) -> str:
         return self.message[0].strip() if self.message else ""
+
+    @property
+    def key(self) -> str:
+        """What the review file calls this: a commit's title, or unit:tree
+        and the like for what is no commit."""
+        return f"unit:{self.unit}" if self.unit else self.subject
 
     @property
     def title(self) -> str:
